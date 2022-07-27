@@ -127,8 +127,8 @@ try {
 		## Exit the script, returning the exit code to SCCM
 		If (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
 	}
-	Set-PackageArchitecture
-	If ($deploymentType -ne 'Uninstall') { Uninstall-Old }
+	Set-NxtPackageArchitecture
+	If ($deploymentType -ne 'Uninstall') { Uninstall-NxtOld }
 	#endregion
 	##* Do not modify section above	=============================================================================================================================================
 	
@@ -245,26 +245,26 @@ function Main {
 			}
 			"InstallUserPart"
 			{
-				# START OF USERPARTINSTALL
+				## START OF USERPARTINSTALL
 
 				# CustomInstallUserPart
 
-				# END OF USERPARTINSTALL
+				## END OF USERPARTINSTALL
 			 }
 			"UninstallUserPart"
 			{
-				# START OF USERPARTUNINSTALL
+				## START OF USERPARTUNINSTALL
 
 				# CustomUninstallUserPart
 
-				# END OF USERPARTUNINSTALL
+				## END OF USERPARTUNINSTALL
 			}
 			Default {}
 		}
 
 		## Calculate exit code
-		If ($Reboot -eq '1') { [int32]$mainExitCode = 3010 }
-		If ($Reboot -eq '2' -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
+		If ($reboot -eq '1') { [int32]$mainExitCode = 3010 }
+		If ($reboot -eq '2' -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
 		Exit-Script -ExitCode $mainExitCode
 	}
 	catch {
@@ -324,6 +324,7 @@ function Install-NxtApplication {
 	Else {
 		Copy-File -Path "$envCommonStartMenuPrograms\FreeCommander XE\FreeCommander XE.lnk" -Destination "$envCommonDesktop\" 
 	}
+
 	Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
 	
 	If ($true -eq $userPartOnInstallation) {
