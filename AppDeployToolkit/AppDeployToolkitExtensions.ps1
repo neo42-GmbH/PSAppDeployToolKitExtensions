@@ -397,17 +397,17 @@ Function Stop-NxtProcess {
 }
 #endregion
 
-#region Get-ComputerManufacturer
+#region Get-NxtComputerManufacturer
 
 <#
 .DESCRIPTION
     gets manufacturer of computersystem
 .EXAMPLE
-    Get-ComputerManufacturer
+    Get-NxtComputerManufacturer
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-ComputerManufacturer {
+function Get-NxtComputerManufacturer {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -430,17 +430,17 @@ function Get-ComputerManufacturer {
 
 #endregion
 
-#region Get-ComputerModel
+#region Get-NxtComputerModel
 
 <#
 .DESCRIPTION
     gets model of computersystem
 .EXAMPLE
-    Get-ComputerModel
+    Get-NxtComputerModel
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-ComputerModel {
+function Get-NxtComputerModel {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -463,7 +463,7 @@ function Get-ComputerModel {
 
 #endregion
 
-#region Get-FileVersion
+#region Get-NxtFileVersion
 
 <#
 .DESCRIPTION
@@ -472,11 +472,11 @@ function Get-ComputerModel {
 .PARAMETER FilePath
     Full path to the file.
 .EXAMPLE
-    Get-FileVersion "D:\setup.exe"
+    Get-NxtFileVersion "D:\setup.exe"
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-FileVersion([string]$FilePath) {
+function Get-NxtFileVersion([string]$FilePath) {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -499,7 +499,7 @@ function Get-FileVersion([string]$FilePath) {
 
 #endregion
 
-#region Get-FolderSize
+#region Get-NxtFolderSize
 
 <#
 .DESCRIPTION
@@ -507,11 +507,11 @@ function Get-FileVersion([string]$FilePath) {
 .PARAMETER FolderPath
     Path to the folder.
 .EXAMPLE
-    Get-FolderSize "D:\setup\"
+    Get-NxtFolderSize "D:\setup\"
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-FolderSize([string]$FolderPath) {
+function Get-NxtFolderSize([string]$FolderPath) {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -535,7 +535,7 @@ function Get-FolderSize([string]$FolderPath) {
 
 #endregion
 
-#region Get-DriveType 
+#region Get-NxtDriveType 
 
 Add-Type -TypeDefinition @"
    public enum DriveType
@@ -565,11 +565,11 @@ Add-Type -TypeDefinition @"
 .PARAMETER FolderPath
     Name of the drive
 .EXAMPLE
-    Get-DriveType "c:"
+    Get-NxtDriveType "c:"
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-DriveType([string]$DriveName)
+function Get-NxtDriveType([string]$DriveName)
 {
 	Begin {
 		## Get the name of this function and write header
@@ -593,7 +593,7 @@ function Get-DriveType([string]$DriveName)
 
 #endregion
 
-#region Get-DriveFreeSpace
+#region Get-NxtDriveFreeSpace
 
 <#
 .DESCRIPTION
@@ -601,11 +601,11 @@ function Get-DriveType([string]$DriveName)
 .PARAMETER FolderPath
     Name of the drive
 .EXAMPLE
-    Get-DriveFreeSpace "c:"
+    Get-NxtDriveFreeSpace "c:"
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-DriveFreeSpace([string]$DriveName)
+function Get-NxtDriveFreeSpace([string]$DriveName)
 {
 	Begin {
 		## Get the name of this function and write header
