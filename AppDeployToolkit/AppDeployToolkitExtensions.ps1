@@ -397,6 +397,238 @@ Function Stop-NxtProcess {
 }
 #endregion
 
+#region Get-ComputerManufacturer
+
+<#
+.DESCRIPTION
+    gets manufacturer of computersystem
+.EXAMPLE
+    Get-ComputerManufacturer
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-ComputerManufacturer {
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[string]$result = [string]::Empty
+		try {
+			$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Manufacturer).Manufacturer
+		}
+		catch {
+			Write-Log -Message "Failed to get Computermanufacturer. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+    	return $result
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-ComputerModel
+
+<#
+.DESCRIPTION
+    gets model of computersystem
+.EXAMPLE
+    Get-ComputerModel
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-ComputerModel {
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[string]$result = [string]::Empty
+		try {
+			$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Model).Model
+		}
+		catch {
+			Write-Log -Message "Failed to get Computermodel. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+		return $result
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-FileVersion
+
+<#
+.DESCRIPTION
+    Gets version of file.
+    The return value is a version object.
+.PARAMETER FilePath
+    Full path to the file.
+.EXAMPLE
+    Get-FileVersion "D:\setup.exe"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-FileVersion([string]$FilePath) {
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[version]$result = $null
+		try {
+			$result = (New-Object -TypeName System.IO.FileInfo -ArgumentList $FilePath).VersionInfo.FileVersion
+		}
+		catch {
+			Write-Log -Message "Failed to get version from file '$FilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+		return $result
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-FolderSize
+
+<#
+.DESCRIPTION
+    Gets size of folder recursive in bytes
+.PARAMETER FolderPath
+    Path to the folder.
+.EXAMPLE
+    Get-FolderSize "D:\setup\"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-FolderSize([string]$FolderPath) {
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[long]$result = 0
+		try {
+			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string,System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
+			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo,long]] { param($x) $x.Length })
+		}
+		catch {
+			Write-Log -Message "Failed to get size from folder '$FolderPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+    	return $result
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-DriveType 
+
+Add-Type -TypeDefinition @"
+   public enum DriveType
+   {
+      Unknown = 0,
+      NoRootDirectory = 1,
+      Removeable = 2,
+      Local = 3,
+      Network = 4,
+      Compact = 5,
+      Ram = 6
+   }
+"@
+
+<#
+.DESCRIPTION
+    Gets drivetype.
+
+    Return values:
+    Unknown = 0
+    NoRootDirectory = 1
+    Removeable = 2
+    Local = 3
+    Network = 4
+    Compact = 5
+    Ram = 6
+.PARAMETER FolderPath
+    Name of the drive
+.EXAMPLE
+    Get-DriveType "c:"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-DriveType([string]$DriveName)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
+			return [DriveType]$disk.DriveType
+		}
+		catch {
+			Write-Log -Message "Failed to get drive type for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+		return [DriveType]::Unknown
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-DriveFreeSpace
+
+<#
+.DESCRIPTION
+    Gets free space of drive in bytes.
+.PARAMETER FolderPath
+    Name of the drive
+.EXAMPLE
+    Get-DriveFreeSpace "c:"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-DriveFreeSpace([string]$DriveName)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
+			return $disk.FreeSpace
+		}
+		catch {
+			Write-Log -Message "Failed to get freespace for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+		return 0
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
