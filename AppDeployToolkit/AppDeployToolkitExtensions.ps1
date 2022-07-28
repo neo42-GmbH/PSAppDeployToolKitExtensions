@@ -35,6 +35,67 @@ Param (
 ##* FUNCTION LISTINGS
 ##*===============================================
 
+#region Function Initialize-NxtEnvironment
+Function Initialize-NxtEnvironment {
+	<#
+	.SYNOPSIS
+		Initializes all neo42 functions and variables
+	.DESCRIPTION
+		Should be called on top of at any 'Deploy-Application.ps1' 
+	.EXAMPLE
+		Initialize-NxtEnvironment
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+	)
+		
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Get-NxtPackageConfig
+		Set-NxtPackageArchitecture
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
+#region Function Initialize-NxtEnvironment
+Function Get-NxtPackageConfig {
+	<#
+	.SYNOPSIS
+		Initializes all neo42 functions and variables
+	.DESCRIPTION
+		Should be called on top of at any 'Deploy-Application.ps1' 
+	.EXAMPLE
+		Initialize-NxtEnvironment
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+	)
+		
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		$global:PackageConfig = Get-Content "$scriptDirectory\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
 #region Function Set-NxtPackageArchitecture
 Function Set-NxtPackageArchitecture {
 	<#
@@ -61,21 +122,22 @@ Function Set-NxtPackageArchitecture {
 	Process {
 		Write-Log -Message "Setting package architecture variables..." -Source ${CmdletName}
 		Try {
-			If ($appArch -ine 'x86' -and $appArch -ine 'x64' -and $appArch -ine '*') {
+			[string]$currentArch = $global:PackageConfig.AppArch
+			If ($currentArch -ine 'x86' -and $currentArch -ine 'x64' -and $currentArch -ine '*') {
 				[int32]$mainExitCode = 70001
 				[string]$mainErrorMessage = 'ERROR: The value of $appArch arch must be set to "x86", "x64" or "*". Abort!'
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 				Exit-Script -ExitCode $mainExitCode
 			}
-			ElseIf ($appArch -ieq 'x64' -and $env:PROCESSOR_ARCHITECTURE -ieq 'x86') {
+			ElseIf ($currentArch -ieq 'x64' -and $env:PROCESSOR_ARCHITECTURE -ieq 'x86') {
 				[int32]$mainExitCode = 70001
 				[string]$mainErrorMessage = 'ERROR: This software package can only be installed on 64 bit Windows systems. Abort!'
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 				Exit-Script -ExitCode $mainExitCode
 			}
-			ElseIf ($appArch -ieq 'x86' -and $env:PROCESSOR_ARCHITECTURE -ieq 'AMD64') {
+			ElseIf ($currentArch -ieq 'x86' -and $env:PROCESSOR_ARCHITECTURE -ieq 'AMD64') {
 				[string]$global:ProgramFilesDir = ${env:ProgramFiles(x86)}
 				[string]$global:ProgramFilesDirx86 = ${env:ProgramFiles(x86)}
 				[string]$global:CommonFilesDir = ${env:CommonProgramFiles(x86)}
@@ -83,7 +145,7 @@ Function Set-NxtPackageArchitecture {
 				[string]$global:System = "${env:SystemRoot}\SysWOW64"
 				[string]$global:Wow6432Node = '\Wow6432Node'
 			}
-			ElseIf (($appArch -ieq 'x86' -or $appArch -ieq '*') -and $env:PROCESSOR_ARCHITECTURE -ieq 'x86') {
+			ElseIf (($currentArch -ieq 'x86' -or $currentArch -ieq '*') -and $env:PROCESSOR_ARCHITECTURE -ieq 'x86') {
 				[string]$global:ProgramFilesDir = ${env:ProgramFiles}
 				[string]$global:ProgramFilesDirx86 = ${env:ProgramFiles}
 				[string]$global:CommonFilesDir = ${env:CommonProgramFiles}
@@ -144,7 +206,7 @@ Function Uninstall-NxtOld {
 			Else {
 				[string]$regUninstallKeyName = "HKLM\Software\neoPackages\$uninstallKeyName"
 			}
-			If ($UninstallOld -ieq '1' -and (Get-RegistryKey -Key $regUninstallKeyName -Value 'Version') -ilt $appVersion -and (Test-RegistryValue -Key $regUninstallKeyName -Value 'UninstallString')) {
+			If (($true -eq $uninstallOld) -and (Get-RegistryKey -Key $regUninstallKeyName -Value 'Version') -ilt $appVersion -and (Test-RegistryValue -Key $regUninstallKeyName -Value 'UninstallString')) {
 				Write-Log -Message "$uninstallOld is set to '1' and an old package version was found: Uninstalling old package..." -Source ${cmdletName}
 				cmd /c (Get-RegistryKey -Key $regUninstallKeyName -Value 'UninstallString')
 				If (Test-RegistryValue -Key $regUninstallKeyName -Value 'UninstallString') {

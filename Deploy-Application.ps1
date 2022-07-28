@@ -53,110 +53,105 @@ Param (
 	[switch]$DisableLogging = $false
 )
 
+##* Do not modify section below =============================================================================================================================================
+#region DoNotModify
 ## Set the script execution policy for this process
 Try { Set-ExecutionPolicy -ExecutionPolicy 'ByPass' -Scope 'Process' -Force -ErrorAction 'Stop' } Catch {}
+## Variables: Exit Code
+[int32]$mainExitCode = 0
+## Variables: Script
+[string]$deployAppScriptFriendlyName = 'Deploy Application'
+[version]$deployAppScriptVersion = [version]'3.8.4'
+[string]$deployAppScriptDate = '26/01/2021'
+[hashtable]$deployAppScriptParameters = $psBoundParameters
+## Variables: Environment
+If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
+[string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
+## Dot source the required App Deploy Toolkit Functions
+Try {
+	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
+	If (-not (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
+	If ($DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
+}
+Catch {
+	If ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
+	Write-Error -Message "Module [$moduleAppDeployToolkitMain] failed to load: `n$($_.Exception.Message)`n `n$($_.InvocationInfo.PositionMessage)" -ErrorAction 'Continue'
+	## Exit the script, returning the exit code to SCCM
+	If (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
+}
+#endregion
+##* Do not modify section above	=============================================================================================================================================
+
 try {
+	Initialize-NxtEnvironment
+	
 	##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
-	## Variables: Application
-	
-	[string]$appScriptAuthor = 'neo42 GmbH'
-	[string]$appScriptDate = '30/03/2022'
-	[string]$inventoryID = 'hjt62446EA0'
-	[string]$description = 'Marek Jasinski FreeCommander XE 2022.0.0.861'
-	[string]$method = 'Inno Setup'
-	[string]$testedon = 'Win10 x64'
-	[string]$dependencies = ''
-	[string]$lastChange = '30/03/2022'
-	[string]$build = '0'
-	
-	[string]$appArch = 'x86'
-	
-	[string]$appName = 'FreeCommander XE'
-	[string]$appVendor = 'Marek Jasinski'
-	[string]$appVersion = '2022.0.0.861'
-	[string]$appRevision = '0'
-	[string]$appLang = 'MUI'
-	[string]$appScriptVersion = '1.0.0'
-	
-	[string]$uninstallKeyName = '{04213D79-A073-452C-BC99-8FF978055AEE}'
-	[string]$uninstallDisplayName = 'neoPackage', $appVendor, $appName, $appVersion
-	[string]$app = $env:ProgramData + '\neoPackages\' + $appVendor + '\' + $appName + '\' + $appVersion
-	[string]$uninstallDisplayIcon = $APP + '\neoInstall\AppDeployToolkit\Setup.ico'
-	[string]$src = $PSScriptRoot
-	[bool]$ininstallOld = 1
-	[int]$reboot = 0
-	[int]$deferDays = 3
-	[bool]$reinstallModeIsRepair = 0
-	[bool]$userPartOnInstallation = 1
-	[bool]$userPartOnUninstallation = 1
-	[string]$userPartRevision = '2022,05,19,01'
-	[bool]$softMigration = 1
-	[bool]$hidePackageUninstallButton = 0
-	[bool]$hidePackageUninstallEntry = 0
-	
-	[bool]$registerPackage = 1
+
+	## Variables not from neo42PackageConfig.json
 	[string]$setupCfgPath = "$dirSupportFiles\Setup.cfg"
+	[string]$timestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
+
+	## Variables: Application
+	[string]$appScriptAuthor = $global:PackageConfig.ScriptAuthor
+	[string]$appScriptDate = $global:PackageConfig.ScriptDate
+	[string]$inventoryID = $global:PackageConfig.InventoryID
+	[string]$description = $global:PackageConfig.Description
+	[string]$method = $global:PackageConfig.Method
+	[string]$testedOn = $global:PackageConfig.TestedOn
+	[string]$dependencies = $global:PackageConfig.Dependencies
+	[string]$lastChange = $global:PackageConfig.LastChange
+	[string]$build = $global:PackageConfig.Build
+	
+	[string]$appArch = $global:PackageConfig.AppArch
+	
+	[string]$appName = $global:PackageConfig.AppName
+	[string]$appVendor = $global:PackageConfig.AppVendor
+	[string]$appVersion = $global:PackageConfig.AppVersion
+	[string]$appRevision = $global:PackageConfig.AppRevision
+	[string]$appLang = $global:PackageConfig.AppLang
+	[string]$appScriptVersion = $global:PackageConfig.AppScriptVersion
+	
+	[string]$uninstallKeyName = $global:PackageConfig.UninstallKeyName
+	[string]$uninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstallDisplayName)
+	[string]$app = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
+	[string]$uninstallDisplayIcon = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstallDisplayIcon)
+
+	[bool]$uninstallOld = $global:PackageConfig.UninstallOld
+	[int]$reboot = $global:PackageConfig.Reboot
+	[int]$deferDays = $global:PackageConfig.DeferDays
+	[bool]$reinstallModeIsRepair = $global:PackageConfig.ReinstallModeIsRepair
+	[bool]$userPartOnInstallation = $global:PackageConfig.UserPartOnInstallation
+	[bool]$userPartOnUninstallation = $global:PackageConfig.UserPartOnUninstallation
+	[string]$userPartRevision = $global:PackageConfig.UserPartRevision
+	[bool]$softMigration = $global:PackageConfig.SoftMigration
+	[bool]$hidePackageUninstallButton = $global:PackageConfig.HidePackageUninstallButton
+	[bool]$hidePackageUninstallEntry = $global:PackageConfig.HidePackageUninstallEntry
+	
+	[bool]$registerPackage = $global:PackageConfig.RegisterPackage
+	
 	##*===============================================
 	## Variables: Install Titles (Only set here to override defaults set by the toolkit)
-	[string]$installName = ''
-	[string]$installTitle = ''
-	
-	##* Do not modify section below =============================================================================================================================================
-	#region DoNotModify
-	## Variables: Exit Code
-	[int32]$mainExitCode = 0
-	## Variables: Script
-	[string]$deployAppScriptFriendlyName = 'Deploy Application'
-	[version]$deployAppScriptVersion = [version]'3.8.4'
-	[string]$deployAppScriptDate = '26/01/2021'
-	[hashtable]$deployAppScriptParameters = $psBoundParameters
-	## Variables: Environment
-	If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
-	[string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
-	## Dot source the required App Deploy Toolkit Functions
-	Try {
-		[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
-		If (-not (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
-		If ($DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
-	}
-	Catch {
-		If ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
-		Write-Error -Message "Module [$moduleAppDeployToolkitMain] failed to load: `n$($_.Exception.Message)`n `n$($_.InvocationInfo.PositionMessage)" -ErrorAction 'Continue'
-		## Exit the script, returning the exit code to SCCM
-		If (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
-	}
-	Set-NxtPackageArchitecture
-	If ($deploymentType -ne 'Uninstall') { Uninstall-NxtOld }
-	#endregion
-	##* Do not modify section above	=============================================================================================================================================
-	
+	[string]$installName = $global:PackageConfig.InstallName
+	[string]$installTitle = $global:PackageConfig.InstallTitle
+
 	## Environment
-	[string]$displayVersion = '2022.0.0.861'
-	[string]$uninstallKey = '{D3C705DC-9743-4FEF-8358-E1AC9FA69C73}_is1'
-	[string]$installLocation = $programFilesDir + '\FreeCommander XE'
-	[string]$timestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
-	[string]$instLogFile = $APP + '\Install.' + $timestamp + '.log'
-	[string]$uninstLogFile = $APP + '\Uninstall.' + $timestamp + '.log'
-	[string]$regUninstallKey = "HKLM:Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$uninstallKey"
+	[string]$displayVersion = $global:PackageConfig.DisplayVersion
+	[string]$uninstallKey = $global:PackageConfig.UninstallKey
+	[string]$installLocation = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstallLocation)
+	
+	[string]$instLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstLogFile)
+	[string]$uninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstLogFile)
+	[string]$regUninstallKey = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.RegUninstallKey)
 	[string]$detectedDisplayVersion = Get-RegistryKey -Key $regUninstallKey -Value 'DisplayVersion'
 
-	[string]$instPara = 'Execute-Process -Path "FreeCommanderXE-32-de-public_setup.exe" -Parameters "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /LOG=""' + $instLogFile + '"" /NOCANCEL /NORESTART"'
-	[string]$uninstPara = 'Execute-Process -Path "' + $installLocation + '\unins000.exe" -Parameters "/SILENT /SUPPRESSMSGBOXES /LOG=""' + $uninstLogFile + '"" /NOCANCEL /NORESTART"'
+	[string]$instPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstPara)
+	[string]$uninstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstPara)
 
-	## Processes
-	[string]$app1 = 'FreeCommander' # oder 'FreeCommander=FreeCommander XE'
-	# [string]$App2 = (Get-WindowTitle -WindowTitle ' - Notepad').ParentProcess
+	[string]$askKillProcessApps = $global:PackageConfig.AppKillProcesses -join ","
 
-
-	#Join all Apps to one string
-	$i = 1
-	[Array]$appArray = while (Get-Variable -Name "app$i" -ValueOnly -ea 0) {
-		Get-Variable -Name "app$i" -ValueOnly
-		$i++
-	}
-	[String]$apps = $appArray -join ","
+	return
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -171,7 +166,7 @@ catch {
 }
 
 function Main {
-<#
+	<#
 .SYNOPSIS
 	Defines the flow of the installation script
 .DESCRIPTION
@@ -187,7 +182,7 @@ function Main {
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
 				## START OF INSTALL
-
+				Uninstall-NxtOld 
 				if ($true -eq $(Get-NxtRegisterOnly)) {
 					## Application is present. Only register the package
 					[string]$installPhase = 'Package-Registration'
@@ -243,16 +238,14 @@ function Main {
 
 				## END OF UNINSTALL
 			}
-			"InstallUserPart"
-			{
+			"InstallUserPart" {
 				## START OF USERPARTINSTALL
 
 				# CustomInstallUserPart
 
 				## END OF USERPARTINSTALL
-			 }
-			"UninstallUserPart"
-			{
+			}
+			"UninstallUserPart" {
 				## START OF USERPARTUNINSTALL
 
 				# CustomUninstallUserPart
@@ -280,7 +273,7 @@ function Main {
 #region neo42 default functions used in Main
 
 function Install-NxtApplication {
-<#
+	<#
 .SYNOPSIS
 	Defines the required steps to install the application based on the target installer type
 .DESCRIPTION
@@ -344,15 +337,15 @@ function Install-NxtApplication {
 		Invoke-HKCURegistrySettingsForAllUsers -RegistrySettings $HKCURegistrySettings
 
 		## <Userpart-Installation-Batch: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the neo42-Userpart.cmd.>
-		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$APP\neo42-Userpart\SupportFiles"
-		Copy-item -Path "$src/*" -Exclude "Files","SupportFiles" -Destination "$APP\neo42-Userpart\"
-		Set-ActiveSetup -StubExePath "$APP\neo42-Userpart\Deploy-Application.exe" -Arguments "/installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$app\neo42-Userpart\SupportFiles"
+		Copy-item -Path "$scriptDirectory/*" -Exclude "Files", "SupportFiles" -Destination "$app\neo42-Userpart\"
+		Set-ActiveSetup -StubExePath "$app\neo42-Userpart\Deploy-Application.exe" -Arguments "/installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
 	}
 	return $true
 }
 
 function Uninstall-NxtApplication {
-<#
+	<#
 .SYNOPSIS
 	Defines the required steps to uninstall the application based on the target installer type
 .DESCRIPTION
@@ -417,7 +410,7 @@ function Uninstall-NxtApplication {
 }
 
 function Get-NxtRegisterOnly {
-<#
+	<#
 .SYNOPSIS
 	Detects if the target application is already installed
 .DESCRIPTION
@@ -460,7 +453,7 @@ function Repair-NxtApplication {
 }
 
 function Get-NxtShouldReinstall {
-<#
+	<#
 .SYNOPSIS
 	Detects if the target application is already installed
 .DESCRIPTION
@@ -474,7 +467,7 @@ function Get-NxtShouldReinstall {
 }
 
 function Show-NxtInstallationWelcome {
-<#
+	<#
 .SYNOPSIS
 	Defines the required steps to uninstall the application based on the target installer type
 .DESCRIPTION
@@ -489,7 +482,7 @@ function Show-NxtInstallationWelcome {
 		[bool]$IsInstall
 	)
 	#ifelse install uninstall
-	Show-InstallationWelcome -CloseApps $Apps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace	
+	Show-InstallationWelcome -CloseApps $askKillProcessApps -CloseAppsCountdown $closeAppsCountdown -PersistPrompt -BlockExecution -AllowDeferCloseApps -DeferDays $deferDays -CheckDiskSpace	
 }
 
 #endregion
