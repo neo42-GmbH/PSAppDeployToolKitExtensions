@@ -680,6 +680,54 @@ function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false)
 
 #endregion
 
+#region Watch-NxtRegistryKey
+
+<#
+.DESCRIPTION
+    Tests if a registry key exists in a given time
+.PARAMETER RegistryKey
+    Name of the registry key to watch
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the key
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtRegistryKey -RegistryKey "Notepad"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				if($key){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait for registry key '$RegistryKey'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
