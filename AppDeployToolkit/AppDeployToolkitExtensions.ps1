@@ -874,6 +874,118 @@ function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60)
 
 #endregion
 
+#region Watch-NxtProcess
+
+<#
+.DESCRIPTION
+    Tests if a process exists by name or custom WQL query in a given time.
+.PARAMETER ProcessName
+    Name of the process or WQL search string
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the process to start
+.PARAMETER IsWql
+    Defines if the given ProcessName is a WQL search string
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtProcess -ProcessName "Notepad.exe"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				if($IsWql){
+					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
+				}
+				else{
+					$result = Test-NxtProcessExists -ProcessName $ProcessName
+				}
+				
+				if($result){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until process '$ProcessName' is started. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Watch-NxtProcessIsStopped
+
+<#
+.DESCRIPTION
+    Tests if a process stops by name or custom WQL query in a given time.
+.PARAMETER ProcessName
+    Name of the process or WQL search string
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the process the stop
+.PARAMETER IsWql
+    Defines if the given ProcessName is a WQL search string
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtProcessIsStopped -ProcessName "Notepad.exe"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				if($IsWql){
+					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
+				}
+				else{
+					$result = Test-NxtProcessExists -ProcessName $ProcessName
+				}
+				
+				if($false -eq $result){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until process '$ProcessName' is stopped. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
