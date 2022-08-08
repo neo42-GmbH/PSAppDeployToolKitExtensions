@@ -986,6 +986,49 @@ function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [sw
 
 #endregion
 
+#region Get-NxtServiceState
+
+<#
+.DESCRIPTION
+    Gets the state of the given service name.
+	Returns $null if service was not found.
+.PARAMETER ServiceName
+    Name of the service
+.OUTPUTS
+	System.String
+.EXAMPLE
+    Get-NxtServiceState "BITS"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtServiceState([string]$ServiceName)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$service = Get-CimInstance -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
+			if($service){
+				Write-Output $service.State
+			}
+			else {
+				return $null
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get state for service '$ServiceName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
