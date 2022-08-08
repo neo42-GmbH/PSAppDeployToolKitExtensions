@@ -629,6 +629,45 @@ function Get-NxtDriveFreeSpace([string]$DriveName)
 
 #endregion
 
+#region Get-NxtProcessName
+
+<#
+.DESCRIPTION
+    Gets name of process.
+    Returns:
+        The name of process or empty string.
+.PARAMETER FolderPath
+    Process Id
+.EXAMPLE
+    Get-NxtProcessName 1004
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtProcessName([int]$ProcessId)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+        [string]$result = [string]::Empty
+		try {
+            $result = (Get-Process -Id $ProcessId).Name
+		}
+		catch {
+			Write-Log -Message "Failed to get freespace for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+        Write-Output $result
+        return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
