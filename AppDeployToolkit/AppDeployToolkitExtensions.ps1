@@ -629,6 +629,57 @@ function Get-NxtDriveFreeSpace([string]$DriveName)
 
 #endregion
 
+#region Test-NxtProcessExists
+
+<#
+.DESCRIPTION
+    Tests if a process exists by name or custom WQL query.
+.PARAMETER ProcessName
+    Name of the process or WQL search string
+.PARAMETER IsWql
+    Defines if the given ProcessName is a WQL search string
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Test-NxtProcessExists "Notepad"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[string]$wqlString = ""
+			if($IsWql){
+				$wqlString = $ProcessName
+			}
+			else {
+				$wqlString = "Name LIKE '$($ProcessName)'"
+			}
+			$processes = Get-CimInstance -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
+			if($processes){
+				Write-Output $true
+			}
+			else {
+				Write-Output $false
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get processes for '$ProcessName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
