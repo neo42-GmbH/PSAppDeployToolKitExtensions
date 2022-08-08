@@ -629,6 +629,109 @@ function Get-NxtDriveFreeSpace([string]$DriveName)
 
 #endregion
 
+#region Get-NxtWindowsVersion
+
+<#
+.DESCRIPTION
+    Gets the Windows Version (CurrentVersion) from the Registry
+.EXAMPLE
+    Get-NxtWindowsVersion
+.OUTPUTS
+	System.String
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtWindowsVersion
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			(Get-ItemProperty 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\' -Name CurrentVersion).CurrentVersion
+		}
+		catch {
+			Write-Log -Message "Failed to get WindowsVersion from Registry. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtOsLanguage
+
+<#
+.DESCRIPTION
+    Gets OsLanguage as LCID Code from Get-Culture 
+.EXAMPLE
+    Get-NxtOsLanguage
+.OUTPUTS
+	System.Int32
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtOsLanguage
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			Write-Output (Get-Culture).LCID
+		}
+		catch {
+			Write-Log -Message "Failed to get OsLanguage LCID Code. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtUILanguage
+
+<#
+.DESCRIPTION
+    Gets UiLanguage as LCID Code from Get-UICulture 
+.EXAMPLE
+    Get-NxtUILanguage
+.OUTPUTS
+	System.Int32
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtUILanguage
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			Write-Output (Get-UICulture).LCID
+		}
+		catch {
+			Write-Log -Message "Failed to get UILanguage LCID Code. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+(Get-UICulture).lcid
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
