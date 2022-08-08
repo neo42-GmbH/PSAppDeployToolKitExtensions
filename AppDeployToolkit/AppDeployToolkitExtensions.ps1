@@ -776,6 +776,104 @@ function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60)
 
 #endregion
 
+#region Watch-NxtFile
+
+<#
+.DESCRIPTION
+    Tests if a file exists in a given time.
+	Automatically resolves cmd environment variables.
+.PARAMETER FileName
+    Name of the file to watch
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the file to appear
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtFile -FileName "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtFile([string]$FileName, [int]$Timeout = 60)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
+				if($result){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until file '$FileName' appears. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Watch-NxtFileIsRemoved
+
+<#
+.DESCRIPTION
+    Tests if a file disappears in a given time.
+	Automatically resolves cmd environment variables.
+.PARAMETER FileName
+    Name of the file to watch
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the file the disappear
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtFileIsRemoved -FileName "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
+				if($false -eq $result){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until file '$FileName' is removed. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
