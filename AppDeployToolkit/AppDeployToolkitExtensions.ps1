@@ -1015,11 +1015,57 @@ function Get-NxtServiceState([string]$ServiceName)
 				Write-Output $service.State
 			}
 			else {
-				return $null
+				Write-Output $null
+				return
 			}
 		}
 		catch {
 			Write-Log -Message "Failed to get state for service '$ServiceName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtNameBySid
+
+<#
+.DESCRIPTION
+    Gets the netbios user name for a SID.
+	Returns $null if SID was not found.
+.PARAMETER Sid
+    SID to search
+.OUTPUTS
+	System.String
+.EXAMPLE
+    Get-NxtNameBySid -Sid "S-1-5-21-3072877179-2344900292-1557472252-500"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtNameBySid([string]$Sid)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[System.Management.ManagementObject]$wmiAccount = ([wmi]"win32_SID.SID='$Sid'")
+			[string]$result = "$($wmiAccount.ReferencedDomainName)\$($wmiAccount.AccountName)"
+			if($result -eq "\"){
+				Write-Output $null
+				return
+			}
+			else {
+				Write-Output $result
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get user name for SID '$Sid'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
