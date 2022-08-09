@@ -647,7 +647,7 @@ function Get-NxtWindowsVersion {
 	}
 	Process {
 		try {
-			(Get-ItemProperty 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\' -Name CurrentVersion).CurrentVersion
+			Write-Output (Get-ItemProperty 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\' -Name CurrentVersion).CurrentVersion
 		}
 		catch {
 			Write-Log -Message "Failed to get WindowsVersion from Registry. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -808,11 +808,13 @@ function Get-NxtWindowsBits {
 function Move-NxtItem {
 <#
 .DESCRIPTION
-    Renames a File or Directory
+    Renames or moves a File or Directory to the DestinationPath
 .EXAMPLE
-    Move-NxtItem
-.PARAMETER SourcePath
+    Move-NxtItem -SourcePath C:\Temp\Sources\Installer.exe -DestinationPath C:\Temp\Sources\Installer_bak.exe
+.PARAMETER Path
+	Source Path of the File or Directory 
 .PARAMETER DestinationPath
+	Destination Path for the File or Directory
 .OUTPUTS
 	none
 .LINK
@@ -825,7 +827,7 @@ function Move-NxtItem {
 		$Path,
 		[Parameter(Mandatory = $true)]
 		[String]
-		$Destination
+		$DestinationPath
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -834,10 +836,10 @@ function Move-NxtItem {
 	}
 	Process {
 		try {
-			Move-Item -Path $Path -Destination $Destination
+			Move-Item -Path $Path -Destination $DestinationPath
 		}
 		catch {
-			Write-Log -Message "Failed to move $path to $Destination. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to move $path to $DestinationPath. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
