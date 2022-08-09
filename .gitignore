@@ -4,4 +4,5 @@ AppDeployToolkit/AppDeployToolkitLogo.ico
 AppDeployToolkit/AppDeployToolkitMain.cs
 AppDeployToolkit/AppDeployToolkitMain.ps1
 AppDeployToolkit/logo.png
-SupportFiles/Setup.ico
+SupportFiles
+Files
