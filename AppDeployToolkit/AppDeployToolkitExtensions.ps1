@@ -661,7 +661,7 @@ function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false)
 			else {
 				$wqlString = "Name LIKE '$($ProcessName)'"
 			}
-			$processes = Get-CimInstance -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
+			$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
 			if($processes){
 				Write-Output $true
 			}
@@ -1010,7 +1010,7 @@ function Get-NxtServiceState([string]$ServiceName)
 	}
 	Process {
 		try {
-			$service = Get-CimInstance -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
+			$service = Get-WmiObject -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
 			if($service){
 				Write-Output $service.State
 			}
