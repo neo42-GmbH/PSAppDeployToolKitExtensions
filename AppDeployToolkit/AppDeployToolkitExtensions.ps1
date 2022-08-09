@@ -32,6 +32,79 @@ Param (
 [hashtable]$appDeployExtScriptParameters = $PSBoundParameters
 
 ##*===============================================
+##* FUNCTION C# HELPER
+##*===============================================
+
+$helperCode = @"
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+
+namespace AppDeploymentToolkit
+{
+	public class Extensions
+	{
+        public static ProcessIdentity GetProcessIdentity(int processId)
+        {
+            IntPtr processHandle = IntPtr.Zero;
+            WindowsIdentity wi = null;
+            try
+            {
+                var process = Process.GetProcessById(processId);
+                OpenProcessToken(process.Handle, 8, out processHandle);
+                wi = new WindowsIdentity(processHandle);
+                return new ProcessIdentity(wi);
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                if (wi != null)
+                {
+                    wi.Dispose();
+                }
+
+                if (processHandle != IntPtr.Zero)
+                {
+                    CloseHandle(processHandle);
+                }
+            }
+        }
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        private static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CloseHandle(IntPtr hObject);
+	}
+
+    public class ProcessIdentity
+    {
+        public ProcessIdentity(WindowsIdentity identity)
+        {
+            Name = identity.Name;
+            SID = identity.Owner.Value;
+            IsSystem = identity.IsSystem;
+        }
+
+        public string Name { get; private set; }
+        public string SID { get; private set; }
+        public bool IsSystem { get; private set; }
+    }
+}
+"@
+ 
+Add-Type -TypeDefinition $helperCode -Language CSharp
+
+##*===============================================
+##* END FUNCTION C# HELPER
+##*===============================================
+
+##*===============================================
 ##* FUNCTION LISTINGS
 ##*===============================================
 
@@ -621,6 +694,83 @@ function Get-NxtDriveFreeSpace([string]$DriveName)
 			Write-Log -Message "Failed to get freespace for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 		return 0
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtProcessName
+
+<#
+.DESCRIPTION
+    Gets name of process.
+    Returns:
+        The name of process or empty string.
+.PARAMETER FolderPath
+    Process Id
+.EXAMPLE
+    Get-NxtProcessName 1004
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtProcessName([int]$ProcessId)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+        [string]$result = [string]::Empty
+		try {
+            $result = (Get-Process -Id $ProcessId).Name
+		}
+		catch {
+			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+        Write-Output $result
+        return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtIsSystemProcess
+
+<#
+.DESCRIPTION
+    Gets process is running with System-Account or not.
+    Returns:
+        $True or $False
+.PARAMETER FolderPath
+    Process Id
+.EXAMPLE
+    Get-NxtIsSystemProcess 1004
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtIsSystemProcess([int]$ProcessId)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            Write-Output [AppDeploymentToolkit.Extensions]::GetProcessIdentity($ProcessId).IsSystem
+		}
+		catch {
+			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
+		}
+        return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
