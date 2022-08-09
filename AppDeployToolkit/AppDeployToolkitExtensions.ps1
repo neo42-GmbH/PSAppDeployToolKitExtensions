@@ -671,7 +671,7 @@ function Get-NxtWindowsVersion
 .EXAMPLE
     Get-NxtOsLanguage
 .OUTPUTS
-	System.Int32
+	System.Int
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
@@ -705,7 +705,7 @@ function Get-NxtOsLanguage
 .EXAMPLE
     Get-NxtUILanguage
 .OUTPUTS
-	System.Int32
+	System.Int
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
@@ -731,7 +731,84 @@ function Get-NxtUILanguage
 
 #endregion
 
-(Get-UICulture).lcid
+#region Get-NxtProcessorArchiteW6432
+
+<#
+.DESCRIPTION
+    Gets the Environment Variable $env:PROCESSOR_ARCHITEW6432 which is only set in a x86_32 process, returns empty string if run under 64-Bit Process
+.EXAMPLE
+    Get-NxtProcessorArchiteW6432
+.OUTPUTS
+	System.String
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtProcessorArchiteW6432
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			Write-Output $env:PROCESSOR_ARCHITEW6432
+		}
+		catch {
+			Write-Log -Message "Failed to get the PROCESSOR_ARCHITEW6432 variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtWindowsBits
+
+<#
+.DESCRIPTION
+    Translates the  Environment Variable $env:PROCESSOR_ARCHITECTURE from x86 and amd64 to 32 / 64
+.EXAMPLE
+    Get-NxtWindowsBits
+.OUTPUTS
+	System.Int
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtWindowsBits
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			switch ($env:PROCESSOR_ARCHITECTURE) {
+				"AMD64" { 
+					Write-Output 64
+				}
+				"x86" {
+					Write-Output 32
+				}
+				Default {
+					Write-Error "$($env:PROCESSOR_ARCHITECTURE) could not be translated to CPU Wordlength 'WindowsBits'"
+				}
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get $($env:PROCESSOR_ARCHITECTURE) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
