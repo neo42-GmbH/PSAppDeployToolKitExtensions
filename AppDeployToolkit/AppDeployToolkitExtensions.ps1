@@ -999,6 +999,452 @@ function Move-NxtItem {
 
 #endregion
 
+#region Test-NxtProcessExists
+
+<#
+.DESCRIPTION
+    Tests if a process exists by name or custom WQL query.
+.PARAMETER ProcessName
+    Name of the process or WQL search string
+.PARAMETER IsWql
+    Defines if the given ProcessName is a WQL search string
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Test-NxtProcessExists "Notepad"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[string]$wqlString = ""
+			if($IsWql){
+				$wqlString = $ProcessName
+			}
+			else {
+				$wqlString = "Name LIKE '$($ProcessName)'"
+			}
+			$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
+			if($processes){
+				Write-Output $true
+			}
+			else {
+				Write-Output $false
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get processes for '$ProcessName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Watch-NxtRegistryKey
+
+<#
+.DESCRIPTION
+    Tests if a registry key exists in a given time
+.PARAMETER RegistryKey
+    Name of the registry key to watch
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the key
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtRegistryKey -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				if($key){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait for registry key '$RegistryKey'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Watch-NxtRegistryKeyIsRemoved
+
+<#
+.DESCRIPTION
+    Tests if a registry key disappears in a given time
+.PARAMETER RegistryKey
+    Name of the registry key to watch
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the key the disappear
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtRegistryKeyIsRemoved -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				if($null -eq $key){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until registry key '$RegistryKey' is removed. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Watch-NxtFile
+
+<#
+.DESCRIPTION
+    Tests if a file exists in a given time.
+	Automatically resolves cmd environment variables.
+.PARAMETER FileName
+    Name of the file to watch
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the file to appear
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtFile -FileName "C:\Temp\Sources\Installer.exe"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtFile([string]$FileName, [int]$Timeout = 60)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
+				if($result){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until file '$FileName' appears. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Watch-NxtFileIsRemoved
+
+<#
+.DESCRIPTION
+    Tests if a file disappears in a given time.
+	Automatically resolves cmd environment variables.
+.PARAMETER FileName
+    Name of the file to watch
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the file the disappear
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtFileIsRemoved -FileName "C:\Temp\Sources\Installer.exe"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
+				if($false -eq $result){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until file '$FileName' is removed. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Watch-NxtProcess
+
+<#
+.DESCRIPTION
+    Tests if a process exists by name or custom WQL query in a given time.
+.PARAMETER ProcessName
+    Name of the process or WQL search string
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the process to start
+.PARAMETER IsWql
+    Defines if the given ProcessName is a WQL search string
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtProcess -ProcessName "Notepad.exe"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				if($IsWql){
+					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
+				}
+				else{
+					$result = Test-NxtProcessExists -ProcessName $ProcessName
+				}
+				
+				if($result){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until process '$ProcessName' is started. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Watch-NxtProcessIsStopped
+
+<#
+.DESCRIPTION
+    Tests if a process stops by name or custom WQL query in a given time.
+.PARAMETER ProcessName
+    Name of the process or WQL search string
+.PARAMETER Timeout
+    Timeout in seconds the function waits for the process the stop
+.PARAMETER IsWql
+    Defines if the given ProcessName is a WQL search string
+.OUTPUTS
+	System.Boolean
+.EXAMPLE
+    Watch-NxtProcessIsStopped -ProcessName "Notepad.exe"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$waited = 0
+			while($waited -lt $Timeout) {
+				if($IsWql){
+					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
+				}
+				else{
+					$result = Test-NxtProcessExists -ProcessName $ProcessName
+				}
+				
+				if($false -eq $result){
+					Write-Output $true
+					return
+				}
+				$waited += 1
+				Start-Sleep -Seconds 1
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to wait until process '$ProcessName' is stopped. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtServiceState
+
+<#
+.DESCRIPTION
+    Gets the state of the given service name.
+	Returns $null if service was not found.
+.PARAMETER ServiceName
+    Name of the service
+.OUTPUTS
+	System.String
+.EXAMPLE
+    Get-NxtServiceState "BITS"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtServiceState([string]$ServiceName)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$service = Get-WmiObject -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
+			if($service){
+				Write-Output $service.State
+			}
+			else {
+				Write-Output $null
+				return
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get state for service '$ServiceName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtNameBySid
+
+<#
+.DESCRIPTION
+    Gets the netbios user name for a SID.
+	Returns $null if SID was not found.
+.PARAMETER Sid
+    SID to search
+.OUTPUTS
+	System.String
+.EXAMPLE
+    Get-NxtNameBySid -Sid "S-1-5-21-3072877179-2344900292-1557472252-500"
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+function Get-NxtNameBySid([string]$Sid)
+{
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[System.Management.ManagementObject]$wmiAccount = ([wmi]"win32_SID.SID='$Sid'")
+			[string]$result = "$($wmiAccount.ReferencedDomainName)\$($wmiAccount.AccountName)"
+			if($result -eq "\"){
+				Write-Output $null
+				return
+			}
+			else {
+				Write-Output $result
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get user name for SID '$Sid'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
