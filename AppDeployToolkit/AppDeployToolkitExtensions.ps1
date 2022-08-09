@@ -421,7 +421,7 @@ function Get-NxtComputerManufacturer {
 		catch {
 			Write-Log -Message "Failed to get Computermanufacturer. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-    	return $result
+		return $result
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -520,13 +520,13 @@ function Get-NxtFolderSize([string]$FolderPath) {
 	Process {
 		[long]$result = 0
 		try {
-			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string,System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
-			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo,long]] { param($x) $x.Length })
+			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
+			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
 		}
 		catch {
 			Write-Log -Message "Failed to get size from folder '$FolderPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-    	return $result
+		return $result
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -569,8 +569,7 @@ Add-Type -TypeDefinition @"
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-NxtDriveType([string]$DriveName)
-{
+function Get-NxtDriveType([string]$DriveName) {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -605,8 +604,7 @@ function Get-NxtDriveType([string]$DriveName)
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-NxtDriveFreeSpace([string]$DriveName)
-{
+function Get-NxtDriveFreeSpace([string]$DriveName) {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -641,8 +639,7 @@ function Get-NxtDriveFreeSpace([string]$DriveName)
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-NxtWindowsVersion
-{
+function Get-NxtWindowsVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -665,6 +662,7 @@ function Get-NxtWindowsVersion
 
 #region Get-NxtOsLanguage
 
+function Get-NxtOsLanguage {
 <#
 .DESCRIPTION
     Gets OsLanguage as LCID Code from Get-Culture 
@@ -675,8 +673,6 @@ function Get-NxtWindowsVersion
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-NxtOsLanguage
-{
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -699,6 +695,7 @@ function Get-NxtOsLanguage
 
 #region Get-NxtUILanguage
 
+function Get-NxtUILanguage {
 <#
 .DESCRIPTION
     Gets UiLanguage as LCID Code from Get-UICulture 
@@ -709,8 +706,6 @@ function Get-NxtOsLanguage
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-NxtUILanguage
-{
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -733,6 +728,7 @@ function Get-NxtUILanguage
 
 #region Get-NxtProcessorArchiteW6432
 
+function Get-NxtProcessorArchiteW6432 {
 <#
 .DESCRIPTION
     Gets the Environment Variable $env:PROCESSOR_ARCHITEW6432 which is only set in a x86_32 process, returns empty string if run under 64-Bit Process
@@ -743,8 +739,6 @@ function Get-NxtUILanguage
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-NxtProcessorArchiteW6432
-{
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -767,6 +761,7 @@ function Get-NxtProcessorArchiteW6432
 
 #region Get-NxtWindowsBits
 
+function Get-NxtWindowsBits {
 <#
 .DESCRIPTION
     Translates the  Environment Variable $env:PROCESSOR_ARCHITECTURE from x86 and amd64 to 32 / 64
@@ -777,8 +772,6 @@ function Get-NxtProcessorArchiteW6432
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
-function Get-NxtWindowsBits
-{
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -794,12 +787,57 @@ function Get-NxtWindowsBits
 					Write-Output 32
 				}
 				Default {
-					Write-Error "$($env:PROCESSOR_ARCHITECTURE) could not be translated to CPU Wordlength 'WindowsBits'"
+					Write-Error "$($env:PROCESSOR_ARCHITECTURE) could not be translated to CPU bitness 'WindowsBits'"
 				}
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to get $($env:PROCESSOR_ARCHITECTURE) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to translate $($env:PROCESSOR_ARCHITECTURE) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Move-NxtItem
+
+
+function Move-NxtItem {
+<#
+.DESCRIPTION
+    Renames a File or Directory
+.EXAMPLE
+    Move-NxtItem
+.PARAMETER SourcePath
+.PARAMETER DestinationPath
+.OUTPUTS
+	none
+.LINK
+    https://neo42.de/psappdeploytoolkit
+#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path,
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Destination
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			Move-Item -Path $Path -Destination $Destination
+		}
+		catch {
+			Write-Log -Message "Failed to move $path to $Destination. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
