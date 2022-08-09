@@ -1159,7 +1159,7 @@ function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60)
 .OUTPUTS
 	System.Boolean
 .EXAMPLE
-    Watch-NxtFile -FileName "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+    Watch-NxtFile -FileName "C:\Temp\Sources\Installer.exe"
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
@@ -1208,7 +1208,7 @@ function Watch-NxtFile([string]$FileName, [int]$Timeout = 60)
 .OUTPUTS
 	System.Boolean
 .EXAMPLE
-    Watch-NxtFileIsRemoved -FileName "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+    Watch-NxtFileIsRemoved -FileName "C:\Temp\Sources\Installer.exe"
 .LINK
     https://neo42.de/psappdeploytoolkit
 #>
