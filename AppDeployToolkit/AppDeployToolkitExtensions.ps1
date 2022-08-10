@@ -1416,8 +1416,29 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 	}
 	Process {
 		try {
-			[System.Version]$instVersion = Get-ParseNxtVersion $InstalledPackageVersion
-			[System.Version]$newVersion = Get-ParseNxtVersion $NewPackageVersion
+			$parseVersion = { param($version) 	
+				[int[]]$result = 0,0,0,0
+				$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string,PSADTNXT.VersionKeyValuePair]]{ param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x,([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char,PSADTNXT.VersionPartInfo]]{ param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
+				for ($i=0; $i -lt $versionParts.count; $i++){
+					[int]$versionPartValue = 0
+					$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
+					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo,bool]]{ param($x) [System.Char]::IsDigit($x.Value) })) {
+						$versionPartValue = [int]::Parse($pair.Key)
+					}
+					else {
+						$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
+						 if ($value -ne $null -and [System.Char]::IsLetter($value.Value)) {
+							#Importent for compare (An upper 'A'==65 char must have the value 10) 
+							$versionPartValue = $value.AsciiValue - 55
+						}
+					}
+					$result[$i] = $versionPartValue
+				}
+				Write-Output (New-Object System.Version -ArgumentList $result[0],$result[1],$result[2],$result[3])
+				return }.GetNewClosure()
+
+			[System.Version]$instVersion = &$parseVersion -Version $InstalledPackageVersion
+			[System.Version]$newVersion = &$parseVersion -Version $NewPackageVersion
 			if ($instVersion -eq $newVersion)
 			{
 				Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
@@ -1439,41 +1460,6 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
-}
-
-function Get-ParseNxtVersion([string]$Version, [char]$delimiter = '.')
-{
-	<#
-	.DESCRIPTION
-		Parses a version.
-	.PARAMETER Version
-		Version
-	.OUTPUTS
-		System.Version
-	.EXAMPLE
-		Get-ParseNxtVersion "1.7.2"
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[int[]]$result = 0,0,0,0
-	$versionParts = [Linq.Enumerable]::ToArray([Linq.Enumerable]::Select($Version.Split($delimiter), [Func[string,PSADTNXT.VersionKeyValuePair]]{ param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x,([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [Func[char,PSADTNXT.VersionPartInfo]]{ param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
-	for ($i=0; $i -lt $versionParts.count; $i++){
-		[int]$versionPartValue = 0
-		$pair = [Linq.Enumerable]::ElementAt($versionParts, $i)
-		if ([Linq.Enumerable]::All($pair.Value, [Func[PSADTNXT.VersionPartInfo,bool]]{ param($x) [System.Char]::IsDigit($x.Value) })) {
-			$versionPartValue = [int]::Parse($pair.Key)
-		}
-		else {
-			$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
-		 	if ($value -ne $null -and [System.Char]::IsLetter($value.Value)) {
-				#Importent for compare (An upper 'A'==65 char must have the value 10) 
-				$versionPartValue = $value.AsciiValue - 55
-			}
-		}
-		$result[$i] = $versionPartValue
-	}
-	Write-Output (New-Object System.Version -ArgumentList $result[0],$result[1],$result[2],$result[3])
-	return
 }
 
 #endregion
