@@ -1539,7 +1539,7 @@ function Remove-NxtLocalGroupMembers {
 		Returns the amount of members removed.
 		Returns $null if the groups was not found.
 	.EXAMPLE
-		Remove-NxtLocalGroupMembers -GroupName "Users" All
+		Remove-NxtLocalGroupMembers -GroupName "Users" -All
 	.PARAMETER Users
 		If defined all users are removed
 	.PARAMETER Groups
