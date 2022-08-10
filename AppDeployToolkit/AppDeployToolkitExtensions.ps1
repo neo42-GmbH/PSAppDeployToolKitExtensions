@@ -1388,41 +1388,6 @@ function Get-NxtNameBySid([string]$Sid)
 
 #region Compare-NxtVersion
 
-Add-Type -TypeDefinition @"
-using System.Collections.Generic;
-using System.Linq;
-
-public class VersionPartInfo
-{
-	public VersionPartInfo(char value)
-	{
-		Value = value;
-		AsciiValue = System.Text.Encoding.ASCII.GetBytes(new char[] { value }).FirstOrDefault();
-	}
-
-	public char Value { get; private set; }
-	public byte AsciiValue { get; private set; }
-}
-
-public class VersionKeyValuePair
-{
-	public VersionKeyValuePair(string key, VersionPartInfo[] value)
-	{
-		Key = key;
-		Value = value.ToList();
-	}
-
-	public string Key { get; private set; }
-	public List<VersionPartInfo> Value { get; private set; }
-}
-
-public enum VersionCompareResult
-{
-   Equal = 1,
-   Update = 2,
-   Downgrade = 3
-}
-"@
 function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackageVersion)
 {
 	<#
@@ -1438,7 +1403,7 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 	.PARAMETER NewPackageVersion
 		Version of the new package.
 	.OUTPUTS
-		VersionCompareResult
+		PSADTNXT.VersionCompareResult
 	.EXAMPLE
 		Compare-NxtVersion "1.7" "1.7.2"
 	.LINK
@@ -1451,19 +1416,19 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 	}
 	Process {
 		try {
-			[System.Version]$instVersion = ParseNxtVersion $InstalledPackageVersion
-			[System.Version]$newVersion = ParseNxtVersion $NewPackageVersion
+			[System.Version]$instVersion = Get-ParseNxtVersion $InstalledPackageVersion
+			[System.Version]$newVersion = Get-ParseNxtVersion $NewPackageVersion
 			if ($instVersion -eq $newVersion)
 			{
-				Write-Output ([VersionCompareResult]::Equal)
+				Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
 			}
 			elseif ($newVersion -gt $instVersion)
 			{
-				Write-Output ([VersionCompareResult]::Update)
+				Write-Output ([PSADTNXT.VersionCompareResult]::Update)
 			}
 			else
 			{
-				Write-Output ([VersionCompareResult]::Downgrade)
+				Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade)
 			}
 		}
 		catch {
@@ -1476,14 +1441,14 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 	}
 }
 
-function ParseNxtVersion([string]$Version, [char]$delimiter = '.')
+function Get-ParseNxtVersion([string]$Version, [char]$delimiter = '.')
 {
 	[int[]]$result = 0,0,0,0
-	$versionParts = [Linq.Enumerable]::ToArray([Linq.Enumerable]::Select($Version.Split($delimiter), [Func[string,VersionKeyValuePair]]{ param($x) New-Object VersionKeyValuePair -ArgumentList $x,([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [Func[char,VersionPartInfo]]{ param($x) New-Object -TypeName "VersionPartInfo" -ArgumentList $x }))) }))
+	$versionParts = [Linq.Enumerable]::ToArray([Linq.Enumerable]::Select($Version.Split($delimiter), [Func[string,PSADTNXT.VersionKeyValuePair]]{ param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x,([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [Func[char,PSADTNXT.VersionPartInfo]]{ param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
 	for ($i=0; $i -lt $versionParts.count; $i++){
 		[int]$versionPartValue = 0
 		$pair = [Linq.Enumerable]::ElementAt($versionParts, $i)
-		if ([Linq.Enumerable]::All($pair.Value, [Func[VersionPartInfo,bool]]{ param($x) [System.Char]::IsDigit($x.Value) })) {
+		if ([Linq.Enumerable]::All($pair.Value, [Func[PSADTNXT.VersionPartInfo,bool]]{ param($x) [System.Char]::IsDigit($x.Value) })) {
 			$versionPartValue = [int]::Parse($pair.Key)
 		}
 		else {
