@@ -583,11 +583,11 @@ function Get-NxtDriveType {
 	Process {
 		try {
 			$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
-			Write-Output [PSADTNXT.DriveType]$disk.DriveType 
+			Write-Output ([PSADTNXT.DriveType]$disk.DriveType) 
 		}
 		catch {
 			Write-Log -Message "Failed to get drive type for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			Write-Output [PSADTNXT.DriveType]::Unknown
+			Write-Output ([PSADTNXT.DriveType]::Unknown)
 		}
 	}
 	End {
