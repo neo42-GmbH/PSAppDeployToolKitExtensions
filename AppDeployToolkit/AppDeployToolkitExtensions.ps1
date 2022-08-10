@@ -1386,6 +1386,84 @@ function Get-NxtNameBySid([string]$Sid)
 
 #endregion
 
+#region Compare-NxtVersion
+
+function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackageVersion)
+{
+	<#
+	.DESCRIPTION
+		Compares two versions.
+
+	    Return values:
+			Equal = 1
+   			Update = 2
+   			Downgrade = 3
+	.PARAMETER InstalledPackageVersion
+		Version of the installed package.
+	.PARAMETER NewPackageVersion
+		Version of the new package.
+	.OUTPUTS
+		PSADTNXT.VersionCompareResult
+	.EXAMPLE
+		Compare-NxtVersion "1.7" "1.7.2"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$parseVersion = { param($version) 	
+				[int[]]$result = 0,0,0,0
+				$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string,PSADTNXT.VersionKeyValuePair]]{ param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x,([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char,PSADTNXT.VersionPartInfo]]{ param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
+				for ($i=0; $i -lt $versionParts.count; $i++){
+					[int]$versionPartValue = 0
+					$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
+					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo,bool]]{ param($x) [System.Char]::IsDigit($x.Value) })) {
+						$versionPartValue = [int]::Parse($pair.Key)
+					}
+					else {
+						$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
+						 if ($value -ne $null -and [System.Char]::IsLetter($value.Value)) {
+							#Importent for compare (An upper 'A'==65 char must have the value 10) 
+							$versionPartValue = $value.AsciiValue - 55
+						}
+					}
+					$result[$i] = $versionPartValue
+				}
+				Write-Output (New-Object System.Version -ArgumentList $result[0],$result[1],$result[2],$result[3])
+				return }.GetNewClosure()
+
+			[System.Version]$instVersion = &$parseVersion -Version $InstalledPackageVersion
+			[System.Version]$newVersion = &$parseVersion -Version $NewPackageVersion
+			if ($instVersion -eq $newVersion)
+			{
+				Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
+			}
+			elseif ($newVersion -gt $instVersion)
+			{
+				Write-Output ([PSADTNXT.VersionCompareResult]::Update)
+			}
+			else
+			{
+				Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade)
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+        return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
