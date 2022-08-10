@@ -1443,6 +1443,18 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 
 function Get-ParseNxtVersion([string]$Version, [char]$delimiter = '.')
 {
+	<#
+	.DESCRIPTION
+		Parses a version.
+	.PARAMETER Version
+		Version
+	.OUTPUTS
+		System.Version
+	.EXAMPLE
+		Get-ParseNxtVersion "1.7.2"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	[int[]]$result = 0,0,0,0
 	$versionParts = [Linq.Enumerable]::ToArray([Linq.Enumerable]::Select($Version.Split($delimiter), [Func[string,PSADTNXT.VersionKeyValuePair]]{ param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x,([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [Func[char,PSADTNXT.VersionPartInfo]]{ param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
 	for ($i=0; $i -lt $versionParts.count; $i++){
