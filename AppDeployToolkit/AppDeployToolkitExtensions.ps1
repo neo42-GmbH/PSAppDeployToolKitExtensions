@@ -1464,6 +1464,86 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 
 #endregion
 
+function Remove-NxtLocalGroupMembers {
+	<#
+	.DESCRIPTION
+		Removes a type of member from the given group by name.
+		Returns the amount of members removed.
+		Returns $null if the groups was not found.
+	.EXAMPLE
+		Move-NxtItem -SourcePath C:\Temp\Sources\Installer.exe -DestinationPath C:\Temp\Sources\Installer_bak.exe
+	.PARAMETER Path
+		Source Path of the File or Directory 
+	.PARAMETER DestinationPath
+		Destination Path for the File or Directory
+	.OUTPUTS
+		System.Int32
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName,
+			[Parameter(ParameterSetName='-Users', Mandatory=$false)]
+			[Switch]
+			$Users,
+			[Parameter(ParameterSetName='-Groups', Mandatory=$false)]
+			[Switch]
+			$Groups,
+			[Parameter(ParameterSetName='-All', Mandatory=$false)]
+			[Switch]
+			$All
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName"))
+				if($groupExists){
+					[int]$count = 0
+					[System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+					foreach($member in $group.psbase.Invoke("Members"))
+					{
+						$class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
+						if($All){
+							$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+							$count++
+						}
+						elseif($Users){
+							if($class -eq "user"){
+								$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+								$count++
+							}
+						}
+						elseif($Groups){
+							if($class -eq "group"){
+								$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+								$count++
+							}
+						}
+					}
+					Write-Output $count
+				}
+				else{
+					Write-Output $null
+				}
+			}
+			catch {
+				Write-Log -Message "Failed to move $path to $DestinationPath. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $null
+			}
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+	}
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
