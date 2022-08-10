@@ -1464,6 +1464,111 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 
 #endregion
 
+#region Function Get-NxtFileEncoding
+function Get-NxtFileEncoding {
+	<#
+  .SYNOPSIS
+		  Returns the estimated Encoding based on Bom Detection, Defaults to ASCII
+  .DESCRIPTION
+	  Returns the estimated Encoding based on Bom Detection, Defaults to ASCII,
+	  Used to get the default encoding for Add-NxtContent
+  .PARAMETER Path
+	  The Path to the File
+  .OUTPUTS
+	  System.String
+  .EXAMPLE
+		  Get-NxtFileEncoding -Path C:\Temp\testfile.txt
+  .LINK
+		  https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+	  [Parameter()]
+	  [String]
+	  $Path
+	)
+	Begin {
+	  ## Get the name of this function and write header
+	  [string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	  Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+	  try {
+		$encoding = [PSADTNXT.Extensions]::GetEncoding($Path)
+		Write-Output $encoding
+		return
+	  }
+	  catch {
+		  Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+	  }
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	  }
+  }
+  #endregion
+  
+  #region Add-NxtContent
+  
+  function Add-NxtContent
+  {
+	  <#
+  .DESCRIPTION
+	  Appends Files
+  .PARAMETER InputObject
+	  String to be appended to the File
+  .PARAMETER Path
+	  Path to the File to be appended
+  .PARAMETER Encoding
+	  Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding
+  .EXAMPLE
+	  Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
+  .LINK
+	  https://neo42.de/psappdeploytoolkit
+  #>
+	  [CmdletBinding()]
+	  param(
+		  [Parameter()]
+		  [String]
+		  $Path,
+		  [Parameter()]
+		  [String]
+		  $Value,
+		  [Parameter()]
+		  [String]
+		  $Encoding
+	  )
+	  Begin {
+		  ## Get the name of this function and write header
+		  [string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		  Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	  }
+	  Process {
+		  if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($Encoding))) {
+			  $Encoding = "UTF8"
+		  }elseif((Test-Path $Path) -and ([String]::IsNullOrEmpty($Encoding))){
+			try {
+				$Encoding = (Get-NxtFileEncoding -Path $Path)
+			}
+			catch {
+				$Encoding = "UTF8"
+			}
+		  }
+		  try {
+			  Add-Content -Path $Path -Value $Value -Encoding $Encoding
+		  }
+		  catch {
+			  Write-Log -Message "Failed to Add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		  }
+		  return
+	  }
+	  End {
+		  Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	  }
+  }
+  
+  #endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================

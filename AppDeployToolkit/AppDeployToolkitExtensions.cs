@@ -1,5 +1,5 @@
 // Date Modified: 10.08.2022
-// Version Number: 0.1.0
+// Version Number: 0.1.1
 
 using System;
 using System.Diagnostics;
@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.IO;
 
 namespace PSADTNXT
 {
@@ -47,6 +49,26 @@ namespace PSADTNXT
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool CloseHandle(IntPtr hObject);
+
+        public static String GetEncoding(string filename)
+        {
+            // Read the BOM
+            var bom = new byte[4];
+            using (var file = new FileStream(filename, FileMode.Open, FileAccess.Read))
+            {
+                file.Read(bom, 0, 4);
+            }
+            // Analyze the BOM
+            if (bom[0] == 0x2b && bom[1] == 0x2f && bom[2] == 0x76) return "UTF7";
+            if (bom[0] == 0xef && bom[1] == 0xbb && bom[2] == 0xbf) return "UTF8";
+            if (bom[0] == 0xff && bom[1] == 0xfe && bom[2] == 0 && bom[3] == 0) return "UTF32"; //UTF-32LE
+            if (bom[0] == 0xff && bom[1] == 0xfe) return "Unicode"; //UTF-16LE
+            if (bom[0] == 0xfe && bom[1] == 0xff) return "BigEndianUnicode"; //UTF-16BE
+            if (bom[0] == 0 && bom[1] == 0 && bom[2] == 0xfe && bom[3] == 0xff) return "BigEndianUnicode";  //UTF-32BE
+            // We actually have no idea what the encoding is if we reach this point, so
+            // you may wish to return null instead of defaulting to ASCII
+            return "ASCII";
+        }
 	}
 
     public class ProcessIdentity
