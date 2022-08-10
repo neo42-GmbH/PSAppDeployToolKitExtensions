@@ -659,17 +659,16 @@ Function Remove-NxtEmptyFolder {
 		Write-Log -Message "Check if [$path] exists and is empty..." -Source ${CmdletName}
 		If (Test-Path -LiteralPath $Path -PathType 'Container') {
 			Try {
-				if( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
+				If( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
 					Write-Log -Message "Delete empty folder [$path]..." -Source ${CmdletName}
 					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveFolder'
+					If ($ErrorRemoveFolder) {
+						Write-Log -Message "The following error(s) took place while deleting the empty folder [$path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${CmdletName}
+					} else {
+						Write-Log -Message "Empty folder [$Path] was deleted successfully..." -Source ${CmdletName}
+					}
 				} else {
 					Write-Log -Message "Folder [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
-				}
-
-				If ($ErrorRemoveFolder) {
-					Write-Log -Message "The following error(s) took place while deleting the empty folder [$path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${CmdletName}
-				} else {
-					Write-Log -Message "Empty folder [$Path] was deleted successfully..." -Source ${CmdletName}
 				}
 			}
 			Catch {
