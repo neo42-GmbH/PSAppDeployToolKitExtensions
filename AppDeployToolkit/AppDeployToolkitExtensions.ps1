@@ -1445,6 +1445,121 @@ function Get-NxtNameBySid([string]$Sid)
 
 #endregion
 
+#region Compare-NxtVersion
+
+Add-Type -TypeDefinition @"
+using System.Collections.Generic;
+using System.Linq;
+
+public class VersionPartInfo
+{
+	public VersionPartInfo(char value)
+	{
+		Value = value;
+		AsciiValue = System.Text.Encoding.ASCII.GetBytes(new char[] { value }).FirstOrDefault();
+	}
+
+	public char Value { get; private set; }
+	public byte AsciiValue { get; private set; }
+}
+
+public class VersionKeyValuePair
+{
+	public VersionKeyValuePair(string key, VersionPartInfo[] value)
+	{
+		Key = key;
+		Value = value.ToList();
+	}
+
+	public string Key { get; private set; }
+	public List<VersionPartInfo> Value { get; private set; }
+}
+
+public enum VersionCompareResult
+{
+   Equal = 1,
+   Update = 2,
+   Downgrade = 3
+}
+"@
+function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackageVersion)
+{
+	<#
+	.DESCRIPTION
+		Compares two versions.
+
+	    Return values:
+			Equal = 1
+   			Update = 2
+   			Downgrade = 3
+	.PARAMETER InstalledPackageVersion
+		Version of the installed package.
+	.PARAMETER NewPackageVersion
+		Version of the new package.
+	.OUTPUTS
+		VersionCompareResult
+	.EXAMPLE
+		Compare-NxtVersion "1.7" "1.7.2"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[System.Version]$instVersion = ParseNxtVersion $InstalledPackageVersion
+			[System.Version]$newVersion = ParseNxtVersion $NewPackageVersion
+			if ($instVersion -eq $newVersion)
+			{
+				Write-Output ([VersionCompareResult]::Equal)
+			}
+			elseif ($newVersion -gt $instVersion)
+			{
+				Write-Output ([VersionCompareResult]::Update)
+			}
+			else
+			{
+				Write-Output ([VersionCompareResult]::Downgrade)
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+        return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+function ParseNxtVersion([string]$Version, [char]$delimiter = '.')
+{
+	[int[]]$result = 0,0,0,0
+	$versionParts = [Linq.Enumerable]::ToArray([Linq.Enumerable]::Select($Version.Split($delimiter), [Func[string,VersionKeyValuePair]]{ param($x) New-Object VersionKeyValuePair -ArgumentList $x,([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [Func[char,VersionPartInfo]]{ param($x) New-Object -TypeName "VersionPartInfo" -ArgumentList $x }))) }))
+	for ($i=0; $i -lt $versionParts.count; $i++){
+		[int]$versionPartValue = 0
+		$pair = [Linq.Enumerable]::ElementAt($versionParts, $i)
+		if ([Linq.Enumerable]::All($pair.Value, [Func[VersionPartInfo,bool]]{ param($x) [System.Char]::IsDigit($x.Value) })) {
+			$versionPartValue = [int]::Parse($pair.Key)
+		}
+		else {
+			$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
+		 	if ($value -ne $null -and [System.Char]::IsLetter($value.Value)) {
+				#Importent for compare (An upper 'A'==65 char must have the value 10) 
+				$versionPartValue = $value.AsciiValue - 55
+			}
+		}
+		$result[$i] = $versionPartValue
+	}
+	Write-Output (New-Object System.Version -ArgumentList $result[0],$result[1],$result[2],$result[3])
+	return
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
