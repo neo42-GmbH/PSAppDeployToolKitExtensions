@@ -1,4 +1,4 @@
-// Date Modified: 10.08/2022
+// Date Modified: 10.08.2022
 // Version Number: 0.1.0
 
 using System;
