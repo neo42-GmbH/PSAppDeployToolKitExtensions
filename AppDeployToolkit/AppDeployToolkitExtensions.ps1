@@ -1540,10 +1540,12 @@ function Remove-NxtLocalGroupMembers {
 		Returns $null if the groups was not found.
 	.EXAMPLE
 		Remove-NxtLocalGroupMembers -GroupName "Users" All
-	.PARAMETER Path
-		Source Path of the File or Directory 
-	.PARAMETER DestinationPath
-		Destination Path for the File or Directory
+	.PARAMETER Users
+		If defined all users are removed
+	.PARAMETER Groups
+		If defined all groups are removed
+	.PARAMETER All
+		If defined all members are removed
 	.OUTPUTS
 		System.Int32
 	.LINK
