@@ -32,79 +32,6 @@ Param (
 [hashtable]$appDeployExtScriptParameters = $PSBoundParameters
 
 ##*===============================================
-##* FUNCTION C# HELPER
-##*===============================================
-
-$helperCode = @"
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
-
-namespace AppDeploymentToolkit
-{
-	public class Extensions
-	{
-        public static ProcessIdentity GetProcessIdentity(int processId)
-        {
-            IntPtr processHandle = IntPtr.Zero;
-            WindowsIdentity wi = null;
-            try
-            {
-                var process = Process.GetProcessById(processId);
-                OpenProcessToken(process.Handle, 8, out processHandle);
-                wi = new WindowsIdentity(processHandle);
-                return new ProcessIdentity(wi);
-            }
-            catch
-            {
-                throw;
-            }
-            finally
-            {
-                if (wi != null)
-                {
-                    wi.Dispose();
-                }
-
-                if (processHandle != IntPtr.Zero)
-                {
-                    CloseHandle(processHandle);
-                }
-            }
-        }
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        private static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool CloseHandle(IntPtr hObject);
-	}
-
-    public class ProcessIdentity
-    {
-        public ProcessIdentity(WindowsIdentity identity)
-        {
-            Name = identity.Name;
-            SID = identity.Owner.Value;
-            IsSystem = identity.IsSystem;
-        }
-
-        public string Name { get; private set; }
-        public string SID { get; private set; }
-        public bool IsSystem { get; private set; }
-    }
-}
-"@
- 
-Add-Type -TypeDefinition $helperCode -Language CSharp
-
-##*===============================================
-##* END FUNCTION C# HELPER
-##*===============================================
-
-##*===============================================
 ##* FUNCTION LISTINGS
 ##*===============================================
 
@@ -130,6 +57,15 @@ Function Initialize-NxtEnvironment {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
+		If (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
+			[string]$extensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs"
+			if(Test-Path -Path $extensionCsPath) {
+				Add-Type -Path $extensionCsPath -IgnoreWarnings -ErrorAction 'Stop'
+			}
+			else {
+				throw "File not found: $extensionCsPath"
+			}
+		}
 		Get-NxtPackageConfig
 		Set-NxtPackageArchitecture
 	}
@@ -610,39 +546,35 @@ function Get-NxtFolderSize([string]$FolderPath) {
 
 #region Get-NxtDriveType 
 
-Add-Type -TypeDefinition @"
-   public enum DriveType
-   {
-      Unknown = 0,
-      NoRootDirectory = 1,
-      Removeable = 2,
-      Local = 3,
-      Network = 4,
-      Compact = 5,
-      Ram = 6
-   }
-"@
+function Get-NxtDriveType {
+	<#
+	.DESCRIPTION
+		Gets drivetype.
 
-<#
-.DESCRIPTION
-    Gets drivetype.
-
-    Return values:
-    Unknown = 0
-    NoRootDirectory = 1
-    Removeable = 2
-    Local = 3
-    Network = 4
-    Compact = 5
-    Ram = 6
-.PARAMETER FolderPath
-    Name of the drive
-.EXAMPLE
-    Get-NxtDriveType "c:"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Get-NxtDriveType([string]$DriveName) {
+		Return values:
+		Unknown = 0
+		NoRootDirectory = 1
+		Removeable = 2
+		Local = 3
+		Network = 4
+		Compact = 5
+		Ram = 6
+	.PARAMETER FolderPath
+		Name of the drive
+	.OUTPUTS
+		PSADTNXT.DriveType
+	.EXAMPLE
+		Get-NxtDriveType "c:"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$DriveName
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -651,12 +583,12 @@ function Get-NxtDriveType([string]$DriveName) {
 	Process {
 		try {
 			$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
-			return [DriveType]$disk.DriveType
+			Write-Output ([PSADTNXT.DriveType]$disk.DriveType) 
 		}
 		catch {
 			Write-Log -Message "Failed to get drive type for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output ([PSADTNXT.DriveType]::Unknown)
 		}
-		return [DriveType]::Unknown
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -741,20 +673,28 @@ function Get-NxtProcessName([int]$ProcessId)
 
 #region Get-NxtIsSystemProcess
 
-<#
-.DESCRIPTION
-    Gets process is running with System-Account or not.
-    Returns:
-        $True or $False
-.PARAMETER FolderPath
-    Process Id
-.EXAMPLE
-    Get-NxtIsSystemProcess 1004
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Get-NxtIsSystemProcess([int]$ProcessId)
-{
+function Get-NxtIsSystemProcess {
+	<#
+	.DESCRIPTION
+		Gets process is running with System-Account or not.
+		Returns:
+			$True or $False
+	.PARAMETER FolderPath
+		Process Id
+	.OUTPUTS
+		System.Boolean
+	.EXAMPLE
+		Get-NxtIsSystemProcess 1004
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullOrEmpty()]
+		[int]
+		$ProcessId
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -762,7 +702,8 @@ function Get-NxtIsSystemProcess([int]$ProcessId)
 	}
 	Process {
 		try {
-            Write-Output [AppDeploymentToolkit.Extensions]::GetProcessIdentity($ProcessId).IsSystem
+			[PSADTNXT.ProcessIdentity]$pi = [PSADTNXT.Extensions]::GetProcessIdentity($ProcessId)
+            Write-Output $pi.IsSystem
 		}
 		catch {
 			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
