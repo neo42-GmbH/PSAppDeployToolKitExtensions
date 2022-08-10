@@ -629,6 +629,66 @@ function Get-NxtDriveFreeSpace([string]$DriveName)
 
 #endregion
 
+#region Function Remove-NxtEmptyFolder
+Function Remove-NxtEmptyFolder {
+	<#
+	.SYNOPSIS
+		Removes only empty folders
+	.DESCRIPTION
+		Removes folders only if they are empty and continues otherwise without any action.
+	.PARAMETER Path
+		Path to the empty folder to remove
+	.EXAMPLE
+		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullorEmpty()]
+		[string]$Path
+	)
+		
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Write-Log -Message "Check if [$path] exists and is empty..." -Source ${CmdletName}
+		If (Test-Path -LiteralPath $Path -PathType 'Container') {
+			Try {
+				if( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
+					Write-Log -Message "Delete empty folder [$path]..." -Source ${CmdletName}
+					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveFolder'
+				} else {
+					Write-Log -Message "Folder [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
+				}
+
+				If ($ErrorRemoveFolder) {
+					Write-Log -Message "The following error(s) took place while deleting the empty folder [$path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${CmdletName}
+				} else {
+					Write-Log -Message "Empty folder [$Path] was deleted successfully..." -Source ${CmdletName}
+				}
+			}
+			Catch {
+				Write-Log -Message "Failed to delete empty folder [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+				If (-not $ContinueOnError) {
+					Throw "Failed to delete empty folder [$path]: $($_.Exception.Message)"
+				}
+			}
+		}
+		Else {
+			Write-Log -Message "Folder [$Path] does not exist..." -Source ${CmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
