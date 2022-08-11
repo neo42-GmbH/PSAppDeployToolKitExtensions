@@ -1464,6 +1464,55 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 
 #endregion
 
+#region Get-NxtSidByName
+
+function Get-NxtSidByName {
+	<#
+	.DESCRIPTION
+		Gets the SID for a given user name.
+		Returns $null if user is not found.
+	.PARAMETER UserName
+		Name of the user to search.
+	.EXAMPLE
+		Get-NxtSidByName -UserName "Workgroup\Administrator"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$UserName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [string]$sid = (Get-WmiObject -Query "Select SID from Win32_UserAccount Where Caption LIKE '$($UserName.Replace("\","\\").Replace("\\\\","\\"))'").Sid
+			if([string]::IsNullOrEmpty($sid)) {
+				Write-Output $null
+			}
+			else {
+				Write-Output $sid
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+        return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
