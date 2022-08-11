@@ -2143,6 +2143,89 @@ function Remove-NxtLocalGroupMember {
 
 #endregion
 
+#region Add-NxtLocalGroupMember
+function Add-NxtLocalGroupMember {
+	<#
+	.DESCRIPTION
+		Adds local member to a local group
+	.EXAMPLE
+		Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestUser" -MemberType "User"
+	.PARAMETER GroupName
+		Name of the target group
+	.PARAMETER MemberName
+		Name of the member to add
+	.PARAMETER MemberType
+		Defines the type of member
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName,
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$MemberName,
+			[Parameter(Mandatory=$true)]
+			[ValidateSet('Group','User')]
+			[string]
+			$MemberType
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+				if($false -eq $groupExists){
+					Write-Output $false
+					return
+				}
+				[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+				if($MemberType -eq "Group"){
+					[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $MemberName
+					if($false -eq $groupExists){
+						Write-Output $false
+						return
+					}
+					[System.DirectoryServices.DirectoryEntry]$memberGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,group"
+					#$targetGroup.psbase.Invoke("Add", "WinNT://$($env:COMPUTERNAME)/$MemberName,")
+					$targetGroup.psbase.Invoke("Add", $memberGroup.path)
+					Write-Output $true
+					return
+				}
+				elseif($MemberType -eq "User"){
+					[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName
+					if($false -eq $userExists ){
+						Write-Output $false
+						return
+					}
+					[System.DirectoryServices.DirectoryEntry]$memberUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,user"
+					$targetGroup.psbase.Invoke("Add", $memberUser.path)
+					Write-Output $true
+					return
+				}
+				Write-Output $false
+			}
+			catch {
+				Write-Log -Message "Failed to add $MemberName of type $MemberType to $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
 #region Remove-NxtLocalGroupMembers
 function Remove-NxtLocalGroupMembers {
 	<#
