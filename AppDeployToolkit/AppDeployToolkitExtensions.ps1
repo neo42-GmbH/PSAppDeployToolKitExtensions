@@ -1765,7 +1765,7 @@ function Test-NxtLocalUserExists {
 		End {
 			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 		}
-	}
+}
 #endregion
 
 #region Add-NxtLocalUser
@@ -1869,9 +1869,9 @@ function Add-NxtLocalUser {
 		End {
 			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 		}
-	}
-	#endregion
-	
+}
+#endregion
+
 #region Test-NxtLocalGroupExists
 function Test-NxtLocalGroupExists {
 	<#
@@ -1911,7 +1911,69 @@ function Test-NxtLocalGroupExists {
 		End {
 			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 		}
-	}
+}
+#endregion
+
+#region Add-NxtLocalGroup
+function Add-NxtLocalGroup {
+	<#
+	.DESCRIPTION
+		Creates a local group with the given parameter.
+		If group already exists only the description parameter is processed.
+	.EXAMPLE
+		Add-NxtLocalGroup -GroupName "TestGroup"
+	.PARAMETER GroupName
+		Name of the group
+	.PARAMETER Description
+		Description for the new group
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName,
+			[Parameter(Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$Description
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+				if($false -eq $groupExists){
+					[System.DirectoryServices.DirectoryEntry]$objGroup = $adsiObj.Create("Group", $GroupName)
+					$objGroup.SetInfo()
+				}
+				else {
+					[System.DirectoryServices.DirectoryEntry]$objGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+				}
+				if(-NOT [string]::IsNullOrEmpty($Description)){
+					$objGroup.Put("Description",$Description)
+					$objGroup.SetInfo()
+				}
+				return $true
+			}
+			catch {
+				Write-Log -Message "Failed to ceate user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
 #endregion
 
 #region Remove-NxtLocalGroupMember
