@@ -1861,7 +1861,7 @@ function Add-NxtLocalUser {
 				return $true
 			}
 			catch {
-				Write-Log -Message "Failed to ceate user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Log -Message "Failed to create user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				Write-Output $false
 			}
 			
@@ -1904,7 +1904,7 @@ function Test-NxtLocalGroupExists {
 				Write-Output $groupExists
 			}
 			catch {
-				Write-Log -Message "Failed to seach for group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Log -Message "Failed to search for group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				Write-Output $false
 			}
 		}
@@ -1965,7 +1965,57 @@ function Add-NxtLocalGroup {
 				return $true
 			}
 			catch {
-				Write-Log -Message "Failed to ceate user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Log -Message "Failed to create group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
+region Remove-NxtLocalGroup
+function Remove-NxtLocalGroup {
+	<#
+	.DESCRIPTION
+		Deletes a local group with the given name.
+	.EXAMPLE
+		Remove-NxtLocalGroup -GroupName "TestGroup"
+	.PARAMETER GroupName
+		Name of the group
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				
+				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+				if($groupExists){
+					[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+					$adsiObj.Delete("Group", $GroupName)
+					Write-Output $true
+					return
+				}
+				Write-Output $false
+			}
+			catch {
+				Write-Log -Message "Failed to delete group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				Write-Output $false
 			}
 			
