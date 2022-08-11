@@ -1758,7 +1758,49 @@ function Test-NxtLocalUserExists {
 			}
 			catch {
 				## Skip log output since [ADSI]::Exists throws if user is not found
-				#Write-Log -Message "Failed to move $path to $DestinationPath. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				#Write-Log -Message "Failed to search for user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+	}
+#endregion
+
+#region Test-NxtLocalGroupExists
+function Test-NxtLocalGroupExists {
+	<#
+	.DESCRIPTION
+		Checks if a local group exists by name
+	.EXAMPLE
+		Test-NxtLocalGroupExists -GroupName "Administrators"
+	.PARAMETER GroupName
+		Name of the group
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
+				Write-Output $groupExists
+			}
+			catch {
+				Write-Log -Message "Failed to seach for group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				Write-Output $false
 			}
 		}
