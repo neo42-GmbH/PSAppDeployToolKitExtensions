@@ -1725,6 +1725,49 @@ function Remove-NxtSystemEnvironmentVariable([string]$Key)  {
 
 #endregion
 
+#region Test-NxtLocalUserExists
+function Test-NxtLocalUserExists {
+	<#
+	.DESCRIPTION
+		Checks if a local user exists by name
+	.EXAMPLE
+		Test-NxtLocalUserExists -UserName "Administrator"
+	.PARAMETER UserName
+		Name of the user
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$UserName
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[bool]$userExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$UserName,user"))
+				Write-Output $userExists
+			}
+			catch {
+				## Skip log output since [ADSI]::Exists throws if user is not found
+				#Write-Log -Message "Failed to move $path to $DestinationPath. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+	}
+#endregion
+
 #region Remove-NxtLocalGroupMember
 function Remove-NxtLocalGroupMember {
 	<#
@@ -1760,7 +1803,7 @@ function Remove-NxtLocalGroupMember {
 		}
 		Process {
 			try {
-				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName"))
+				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
 				if($groupExists){
 					[System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
 					foreach($member in $group.psbase.Invoke("Members"))
@@ -1835,7 +1878,7 @@ function Remove-NxtLocalGroupMembers {
 		}
 		Process {
 			try {
-				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName"))
+				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
 				if($groupExists){
 					[int]$count = 0
 					[System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
