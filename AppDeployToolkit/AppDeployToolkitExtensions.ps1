@@ -1872,6 +1872,56 @@ function Add-NxtLocalUser {
 }
 #endregion
 
+#region Remove-NxtLocalUser
+function Remove-NxtLocalUser {
+	<#
+	.DESCRIPTION
+		Deletes a local group with the given name.
+	.EXAMPLE
+		Remove-NxtLocalUser -UserName "Test"
+	.PARAMETER UserName
+		Name of the user
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$UserName
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				
+				[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+				if($userExists){
+					[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+					$adsiObj.Delete("User", $UserName)
+					Write-Output $true
+					return
+				}
+				Write-Output $false
+			}
+			catch {
+				Write-Log -Message "Failed to delete user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
 #region Test-NxtLocalGroupExists
 function Test-NxtLocalGroupExists {
 	<#
