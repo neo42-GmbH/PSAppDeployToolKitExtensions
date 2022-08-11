@@ -1768,6 +1768,110 @@ function Test-NxtLocalUserExists {
 	}
 #endregion
 
+#region Add-NxtLocalUser
+function Add-NxtLocalUser {
+	<#
+	.DESCRIPTION
+		Creates a local user with the given parameter.
+		If the user already exists only FullName, Description, SetPwdExpired and SetPwdNeverExpires are processed.
+	.EXAMPLE
+		Add-NxtLocalUser -UserName "ServiceUser" -Password "123!abc" -Description "User to run service" -SetPwdNeverExpires
+	.PARAMETER UserName
+		Name of the user
+	.PARAMETER Password
+		Password for the new user. The password does not meet the password policy requirements. Check the minimum password length, password complexity and password history requirements.
+	.PARAMETER FullName
+		Full name of the user
+	.PARAMETER Description
+		Description for the new user
+	.PARAMETER SetPwdExpired
+		If set the user has to change the password at first logon.
+	.PARAMETER SetPwdNeverExpires
+		If set the password is set to not expire.
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$UserName,
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$Password,
+			[Parameter(Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$FullName,
+			[Parameter(Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$Description,
+			[Parameter(ParameterSetName='-SetPwdExpired', Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[switch]
+			$SetPwdExpired,
+			[Parameter(ParameterSetName='-SetPwdNeverExpires', Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[switch]
+			$SetPwdNeverExpires
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+				[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+				if($false -eq $userExists){
+					[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
+					$objUser.setpassword($Password)
+					$objUser.SetInfo()
+				}
+				else {
+					[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$UserName,user"
+				}
+				if(-NOT [string]::IsNullOrEmpty($FullName)){
+					$objUser.Put("FullName",$FullName)
+					$objUser.SetInfo()
+				}
+				if(-NOT [string]::IsNullOrEmpty($Description)){
+					$objUser.Put("Description",$Description)
+					$objUser.SetInfo()
+				}
+				if($SetPwdExpired){
+					## Reset to normal account flag ADS_UF_NORMAL_ACCOUNT
+					$objUser.UserFlags = 512
+					$objUser.SetInfo()
+					## Set password expired
+					$objUser.Put("PasswordExpired",1)
+					$objUser.SetInfo()
+				}
+				if($SetPwdNeverExpires){
+					## Set flag ADS_UF_DONT_EXPIRE_PASSWD 
+					$objUser.UserFlags = 65536
+					$objUser.SetInfo()
+				}
+				return $true
+			}
+			catch {
+				Write-Log -Message "Failed to ceate user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+	}
+	#endregion
+	
 #region Test-NxtLocalGroupExists
 function Test-NxtLocalGroupExists {
 	<#
