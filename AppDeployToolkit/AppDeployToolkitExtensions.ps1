@@ -1464,6 +1464,267 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 
 #endregion
 
+#region Get-NxtSidByName
+
+function Get-NxtSidByName {
+	<#
+	.DESCRIPTION
+		Gets the SID for a given user name.
+		Returns $null if user is not found.
+	.PARAMETER UserName
+		Name of the user to search.
+	.EXAMPLE
+		Get-NxtSidByName -UserName "Workgroup\Administrator"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$UserName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [string]$sid = (Get-WmiObject -Query "Select SID from Win32_UserAccount Where Caption LIKE '$($UserName.Replace("\","\\").Replace("\\\\","\\"))'").Sid
+			if([string]::IsNullOrEmpty($sid)) {
+				Write-Output $null
+			}
+			else {
+				Write-Output $sid
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+        return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtProcessEnvironmentVariable
+
+function Get-NxtProcessEnvironmentVariable([string]$Key)  {
+	<#
+	.DESCRIPTION
+		Gets the value of the process enviroment variable.
+	.PARAMETER Key
+		Key of the variable
+	.OUTPUTS
+		string
+	.EXAMPLE
+		Get-NxtProcessEnvironmentVariable "Test"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+        [string]$result = $null
+		try {
+            $result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Process)
+		}
+		catch {
+			Write-Log -Message "Failed to get the process enviroment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+        Write-Output $result
+        return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Set-NxtProcessEnvironmentVariable
+
+function Set-NxtProcessEnvironmentVariable([string]$Key, [string]$Value)  {
+	<#
+	.DESCRIPTION
+		Sets a process enviroment variable.
+	.PARAMETER Key
+		Key of the variable
+	.PARAMETER Key
+		Value of the variable
+	.EXAMPLE
+		Set-NxtProcessEnvironmentVariable "Test" "Hello world"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Process)
+		}
+		catch {
+			Write-Log -Message "Failed to set the process enviroment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Remove-NxtProcessEnvironmentVariable
+
+function Remove-NxtProcessEnvironmentVariable([string]$Key)  {
+	<#
+	.DESCRIPTION
+		Deletes a process enviroment variable.
+	.PARAMETER Key
+		Key of the variable
+	.EXAMPLE
+		Remove-NxtProcessEnvironmentVariable "Test"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [System.Environment]::SetEnvironmentVariable($Key, $null, [System.EnvironmentVariableTarget]::Process)
+		}
+		catch {
+			Write-Log -Message "Failed to remove the process enviroment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Get-NxtSystemEnvironmentVariable
+
+function Get-NxtSystemEnvironmentVariable([string]$Key)  {
+	<#
+	.DESCRIPTION
+		Gets the value of the system enviroment variable.
+	.PARAMETER Key
+		Key of the variable
+	.OUTPUTS
+		string
+	.EXAMPLE
+		Get-NxtSystemEnvironmentVariable "windir"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+        [string]$result = $null
+		try {
+            $result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Machine)
+		}
+		catch {
+			Write-Log -Message "Failed to get the system enviroment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+        Write-Output $result
+        return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Set-NxtSystemEnvironmentVariable
+
+function Set-NxtSystemEnvironmentVariable([string]$Key, [string]$Value)  {
+	<#
+	.DESCRIPTION
+		Sets a system enviroment variable.
+	.PARAMETER Key
+		Key of the variable
+	.PARAMETER Key
+		Value of the variable
+	.EXAMPLE
+		Set-NxtSystemEnvironmentVariable "Test" "Hello world"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Machine)
+		}
+		catch {
+			Write-Log -Message "Failed to set the system enviroment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Remove-NxtSystemEnvironmentVariable
+
+function Remove-NxtSystemEnvironmentVariable([string]$Key)  {
+	<#
+	.DESCRIPTION
+		Deletes a system enviroment variable.
+	.PARAMETER Key
+		Key of the variable
+	.EXAMPLE
+		Remove-NxtSystemEnvironmentVariable "Test"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [System.Environment]::SetEnvironmentVariable($Key, $null, [System.EnvironmentVariableTarget]::Machine)
+		}
+		catch {
+			Write-Log -Message "Failed to remove the system enviroment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 #region Remove-NxtLocalGroupMember
 function Remove-NxtLocalGroupMember {
 	<#
