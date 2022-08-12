@@ -1489,6 +1489,7 @@ function Get-NxtFileEncoding {
 		[String]
 		$Path,
 		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$DefaultEncoding
 	)
@@ -1498,12 +1499,13 @@ function Get-NxtFileEncoding {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
+		[String]$intEncoding = $Encoding
 		try {
-			$Encoding = [PSADTNXT.Extensions]::GetEncoding($Path)
-			if ([System.String]::IsNullOrEmpty($Encoding)) {
-				$Encoding = $DefaultEncoding
+			$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
+			if ([System.String]::IsNullOrEmpty($intEncoding)) {
+				$intEncoding = $DefaultEncoding
 			}
-			Write-Output $Encoding
+			Write-Output $intEncoding
 			return
 		}
 		catch {
@@ -1544,9 +1546,11 @@ function Add-NxtContent {
 		[String]
 		$Value,
 		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$Encoding,
 		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$DefaultEncoding
 	)
@@ -1556,41 +1560,42 @@ function Add-NxtContent {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($Encoding))) {
-			$Encoding = "UTF8"
+		[String]$intEncoding = $Encoding
+		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			[String]$intEncoding = "UTF8"
 		}
-		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($Encoding))) {
+		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			try {
-				$GetFileEncodingParams = @{
+				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
 				}
 				if ($DefaultEncoding) {
-					$GetFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				$Encoding = (Get-NxtFileEncoding @GetFileEncodingParams)
-				if($Encoding -eq "UTF8"){
-					$noBOMDetected = $true
-				}ElseIf($Encoding -eq "UTF8withBom"){
-					$noBOMDetected = $false
-					$Encoding = "UTF8"
+				$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+				if($intEncoding -eq "UTF8"){
+					[bool]$noBOMDetected = $true
+				}ElseIf($intEncoding -eq "UTF8withBom"){
+					[bool]$noBOMDetected = $false
+					$intEncoding = "UTF8"
 				}
 			}
 			catch {
-				$Encoding = "UTF8"
+				$intEncoding = "UTF8"
 			}
 		}
 		try {
-			$params = @{
+			[hashtable]$contentParams = @{
 				Path  = $Path
 				Value = $Value
 			}
-			if ($Encoding) {
-				$params['Encoding'] = $Encoding 
+			if ($intEncoding) {
+				$contentParams['Encoding'] = $intEncoding 
 			}
-			if($noBOMDetected -and ($Encoding -eq "UTF8")){
-				[System.IO.File]::WriteAllLines($Path, $Content)
+			if($noBOMDetected -and ($intEncoding -eq "UTF8")){
+				[System.IO.File]::AppendAllLines($Path, $Content)
 			}else{
-				Add-Content @params
+				Add-Content @contentParams
 			}
 			
 		}
@@ -1637,16 +1642,18 @@ function Update-NxtTextInFile {
 		[Parameter(Mandatory = $true)]
 		[String]
 		$SearchString,
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[String]
 		$ReplaceString,
 		[Parameter()]
 		[Int]
 		$Count = [int]::MaxValue,
 		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$Encoding,
 		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$DefaultEncoding,
 		[Parameter()]
@@ -1659,50 +1666,52 @@ function Update-NxtTextInFile {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($Encoding))) {
-			$Encoding = "UTF8"
+		[String]$intEncoding = $Encoding
+		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			$intEncoding = "UTF8"
 		}
-		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($Encoding))) {
+		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			try {
-				$GetFileEncodingParams = @{
+				$getFileEncodingParams = @{
 					Path = $Path
 				}
 				if ($DefaultEncoding) {
-					$GetFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				$Encoding = (Get-NxtFileEncoding @GetFileEncodingParams)
-				if($Encoding -eq "UTF8"){
-					$noBOMDetected = $true
-				}ElseIf($Encoding -eq "UTF8withBom"){
-					$noBOMDetected = $false
-					$Encoding = "UTF8"
+				$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				if($intEncoding -eq "UTF8"){
+					[bool]$noBOMDetected = $true
+				}ElseIf($intEncoding -eq "UTF8withBom"){
+					[bool]$noBOMDetected = $false
+					$intEncoding = "UTF8"
 				}
 			}
 			catch {
-				$Encoding = "UTF8"
+				$intEncoding = "UTF8"
 			}
 		}
 		try {
-			$params = @{
+			[hashtable]$contentParams = @{
 				Path = $Path
 			}
-			if ($Encoding) {
-				$params['Encoding'] = $Encoding
+			if ($intEncoding) {
+				$contentParams['Encoding'] = $intEncoding
 			}
-			$Content = Get-Content @params -Raw
+			$Content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
-			$regexmatches = $pattern.Matches($Content) | Select-Object -First $Count
-			if ($regexmatches.count -eq 0){
+			[Array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
+			if ($regexMatches.count -eq 0){
 				Write-Log -Message "Did not find anything to replace in file '$Path'."
 				return
 			}
-			foreach ($match in $regexmatches) {
+			[ARRAY]::Reverse($regexMatches)
+			foreach ($match in $regexMatches) {
 				$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
 			}
-			if($noBOMDetected -and ($Encoding -eq "UTF8")){
+			if($noBOMDetected -and ($intEncoding -eq "UTF8")){
 				[System.IO.File]::WriteAllLines($Path, $Content)
 			}else{
-				$Content | Set-Content @params -NoNewline
+				$Content | Set-Content @contentParams -NoNewline
 			}
 		}
 		catch {
