@@ -104,4 +104,38 @@ namespace PSADTNXT
         Update = 2,
         Downgrade = 3
     }
+
+    public class XmlNodeModel
+    {
+        private readonly Dictionary<string, string> _attributes;
+
+        public XmlNodeModel()
+        {
+            _attributes = new Dictionary<string, string>();
+        }
+
+        public IReadOnlyDictionary<string, string> Attributes { get { return _attributes; } }
+
+        public XmlNodeModel Child { get; set; }
+        public string Name { get; set; }
+        public string Value { get; set; }
+
+        public void AddAttribute(string key, string value)
+        {
+            if (!_attributes.ContainsKey(key))
+            {
+                _attributes.Add(key, value);
+                return;
+            }
+            _attributes[key] = value;
+        }
+
+        public void RemoveAttribute(string key)
+        {
+            if (_attributes.ContainsKey(key))
+            {
+                _attributes.Remove(key);
+            }
+        }
+    }
 }

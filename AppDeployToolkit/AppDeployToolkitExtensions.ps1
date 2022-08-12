@@ -1725,6 +1725,167 @@ function Remove-NxtSystemEnvironmentVariable([string]$Key)  {
 
 #endregion
 
+#region Read-NxtSingleXmlNode
+
+function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName) 
+{
+	<#
+	.DESCRIPTION
+		Reads single node of xml-file.
+	.PARAMETER XmlFilePath
+		Path to the Xml-File.
+	.PARAMETER SingleNodeName
+		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
+	.OUTPUTS
+		string
+	.EXAMPLE
+		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            $xmlDoc = New-Object System.Xml.XmlDocument
+            $xmlDoc.Load($XmlFilePath)
+            Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText)
+		}
+		finally {
+			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Write-NxtSingleXmlNode
+
+function Write-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName, [string]$Value) 
+{
+	<#
+	.DESCRIPTION
+		Writes single node to xml-file.
+	.PARAMETER XmlFilePath
+		Path to the Xml-File.
+	.PARAMETER SingleNodeName
+		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
+	.PARAMETER Value
+		Node value.
+	.EXAMPLE
+		Write-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -Value "müller"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            $xmlDoc = New-Object System.Xml.XmlDocument
+            $xmlDoc.Load($XmlFilePath)
+            $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
+            $xmlDoc.Save($XmlFilePath)
+		}
+		catch {
+			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Write-NxtXmlNode
+
+function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model) 
+{
+	<#
+	.DESCRIPTION
+		Adds a node with attributes and values to an existing xml-file.
+	.PARAMETER XmlFilePath
+		Path to the Xml-File.
+	.PARAMETER Model
+		Xml Node model.
+	.EXAMPLE
+		$newNode = New-Object PSADTNXT.XmlNodeModel
+		$newNode.name = "item"
+		$newNode.AddAttribute("oor:path", "/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Fac-tory[com.sun.star.presentation.PresentationDocument]")
+		$newNode.Child = New-Object PSADTNXT.XmlNodeModel
+		$newNode.Child.name = "prop"
+		$newNode.Child.AddAttribute("oor:name", "ooSetupFactoryDefaultFilter")
+		$newNode.Child.AddAttribute("oor:op", "fuse")
+		$newNode.Child.Child = New-Object PSADTNXT.XmlNodeModel
+		$newNode.Child.Child.name = "value"
+		$newNode.Child.Child.value = "Impress MS PowerPoint 2007 XML"
+		Write-NxtXmlNode -XmlFilePath "C:\Test\setup.xml" -Model $newNode
+
+		Creates this node:
+
+		<item oor:path="/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Fac-tory[com.sun.star.presentation.PresentationDocument]">
+			<prop oor:name="ooSetupFactoryDefaultFilter" oor:op="fuse">
+				<value>Impress MS PowerPoint 2007 XML</value>
+ 			</prop>
+		</item>
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            $xmlDoc = New-Object System.Xml.XmlDocument
+            $xmlDoc.Load($XmlFilePath)
+
+			$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
+				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, "")
+
+				for ($i=0; $i -lt $child.Attributes.count; $i++) {
+					$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
+					$xmlAttribute = $doc.CreateAttribute($attribute.Key, "http://www.w3.org/1999/XSL/Transform")
+					$xmlAttribute.Value = $attribute.Value
+					[void]$xmlNode.Attributes.Append($xmlAttribute)
+				}
+			
+				if ($false -eq [string]::IsNullOrEmpty($child.Value)) {
+					$xmlNode.InnerText = $child.Value
+				}
+				elseif ($null -ne $child.Child) {
+					$node = &$createXmlNode -Doc $doc -Child ($child.Child)
+					[void]$xmlNode.AppendChild($node)
+				}
+
+				return $xmlNode
+			}
+			
+			$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
+			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
+            [void]$xmlDoc.Save($XmlFilePath)
+		}
+		catch {
+			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
