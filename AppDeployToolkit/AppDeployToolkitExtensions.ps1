@@ -1750,12 +1750,12 @@ function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName)
 	}
 	Process {
 		try {
-            $xmlDoc = New-Object System.Xml.XmlDocument
+            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
             $xmlDoc.Load($XmlFilePath)
             Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText)
 		}
 		finally {
-			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to read single node '$SingleNodeName' from Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -1790,13 +1790,13 @@ function Write-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName, [
 	}
 	Process {
 		try {
-            $xmlDoc = New-Object System.Xml.XmlDocument
+            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
             $xmlDoc.Load($XmlFilePath)
             $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
             $xmlDoc.Save($XmlFilePath)
 		}
 		catch {
-			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to write value '$Value' to single node '$SingleNodeName' in Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -1847,7 +1847,7 @@ function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model)
 	}
 	Process {
 		try {
-            $xmlDoc = New-Object System.Xml.XmlDocument
+            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
             $xmlDoc.Load($XmlFilePath)
 
 			$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
@@ -1855,7 +1855,7 @@ function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model)
 
 				for ($i=0; $i -lt $child.Attributes.count; $i++) {
 					$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
-					$xmlAttribute = $doc.CreateAttribute($attribute.Key, "http://www.w3.org/1999/XSL/Transform")
+					[System.Xml.XmlAttribute]$xmlAttribute = $doc.CreateAttribute($attribute.Key, "http://www.w3.org/1999/XSL/Transform")
 					$xmlAttribute.Value = $attribute.Value
 					[void]$xmlNode.Attributes.Append($xmlAttribute)
 				}
@@ -1876,7 +1876,7 @@ function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model)
             [void]$xmlDoc.Save($XmlFilePath)
 		}
 		catch {
-			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to write node in Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
