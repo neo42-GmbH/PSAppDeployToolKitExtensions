@@ -1499,7 +1499,6 @@ function Get-NxtFileEncoding {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[String]$intEncoding = $Encoding
 		try {
 			$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
 			if ([System.String]::IsNullOrEmpty($intEncoding)) {
@@ -1569,7 +1568,7 @@ function Add-NxtContent {
 				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
 				}
-				if ($DefaultEncoding) {
+				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
 					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
 				$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
@@ -1589,7 +1588,7 @@ function Add-NxtContent {
 				Path  = $Path
 				Value = $Value
 			}
-			if ($intEncoding) {
+			if (![string]::IsNullOrEmpty($intEncoding)) {
 				$contentParams['Encoding'] = $intEncoding 
 			}
 			if($noBOMDetected -and ($intEncoding -eq "UTF8")){
@@ -1675,7 +1674,7 @@ function Update-NxtTextInFile {
 				$getFileEncodingParams = @{
 					Path = $Path
 				}
-				if ($DefaultEncoding) {
+				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
 					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
 				$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
@@ -1694,7 +1693,7 @@ function Update-NxtTextInFile {
 			[hashtable]$contentParams = @{
 				Path = $Path
 			}
-			if ($intEncoding) {
+			if (![string]::IsNullOrEmpty($intEncoding)) {
 				$contentParams['Encoding'] = $intEncoding
 			}
 			$Content = Get-Content @contentParams -Raw
