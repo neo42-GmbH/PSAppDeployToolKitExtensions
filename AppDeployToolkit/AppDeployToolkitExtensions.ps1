@@ -1793,7 +1793,7 @@ function Add-NxtLocalUser {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding()]
+		[CmdletBinding(DefaultParameterSetName = 'Default')]
 		param (
 			[Parameter(ParameterSetName='Default', Mandatory=$true)]
 			[Parameter(ParameterSetName='SetPwdNeverExpires', Mandatory=$true)]
@@ -2028,7 +2028,7 @@ function Add-NxtLocalGroup {
 }
 #endregion
 
-region Remove-NxtLocalGroup
+#region Remove-NxtLocalGroup
 function Remove-NxtLocalGroup {
 	<#
 	.DESCRIPTION
