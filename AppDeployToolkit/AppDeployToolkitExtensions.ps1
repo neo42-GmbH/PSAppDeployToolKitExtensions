@@ -1986,6 +1986,550 @@ function Remove-NxtSystemEnvironmentVariable([string]$Key)  {
 
 #endregion
 
+#region Test-NxtLocalUserExists
+function Test-NxtLocalUserExists {
+	<#
+	.DESCRIPTION
+		Checks if a local user exists by name
+	.EXAMPLE
+		Test-NxtLocalUserExists -UserName "Administrator"
+	.PARAMETER UserName
+		Name of the user
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$UserName
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[bool]$userExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$UserName,user"))
+				Write-Output $userExists
+			}
+			catch {
+				## Skip log output since [ADSI]::Exists throws if user is not found
+				#Write-Log -Message "Failed to search for user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
+#region Add-NxtLocalUser
+function Add-NxtLocalUser {
+	<#
+	.DESCRIPTION
+		Creates a local user with the given parameter.
+		If the user already exists only FullName, Description, SetPwdExpired and SetPwdNeverExpires are processed.
+	.EXAMPLE
+		Add-NxtLocalUser -UserName "ServiceUser" -Password "123!abc" -Description "User to run service" -SetPwdNeverExpires
+	.PARAMETER UserName
+		Name of the user
+	.PARAMETER Password
+		Password for the new user.
+	.PARAMETER FullName
+		Full name of the user
+	.PARAMETER Description
+		Description for the new user
+	.PARAMETER SetPwdExpired
+		If set the user has to change the password at first logon.
+	.PARAMETER SetPwdNeverExpires
+		If set the password is set to not expire.
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding(DefaultParameterSetName = 'Default')]
+		param (
+			[Parameter(ParameterSetName='Default', Mandatory=$true)]
+			[Parameter(ParameterSetName='SetPwdNeverExpires', Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$UserName,
+			[Parameter(ParameterSetName='Default', Mandatory=$true)]
+			[Parameter(ParameterSetName='SetPwdNeverExpires', Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$Password,
+			[Parameter(Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$FullName,
+			[Parameter(Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$Description,
+            [Parameter(ParameterSetName='Default', Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[switch]
+			$SetPwdExpired,
+            [Parameter(ParameterSetName='SetPwdNeverExpires', Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[switch]
+			$SetPwdNeverExpires
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+				[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+				if($false -eq $userExists){
+					[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
+					$objUser.setpassword($Password)
+					$objUser.SetInfo()
+				}
+				else {
+					[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$UserName,user"
+				}
+				if(-NOT [string]::IsNullOrEmpty($FullName)){
+					$objUser.Put("FullName",$FullName)
+					$objUser.SetInfo()
+				}
+				if(-NOT [string]::IsNullOrEmpty($Description)){
+					$objUser.Put("Description",$Description)
+					$objUser.SetInfo()
+				}
+				if($SetPwdExpired){
+					## Reset to normal account flag ADS_UF_NORMAL_ACCOUNT
+					$objUser.UserFlags = 512
+					$objUser.SetInfo()
+					## Set password expired
+					$objUser.Put("PasswordExpired",1)
+					$objUser.SetInfo()
+				}
+				if($SetPwdNeverExpires){
+					## Set flag ADS_UF_DONT_EXPIRE_PASSWD 
+					$objUser.UserFlags = 65536
+					$objUser.SetInfo()
+				}
+				return $true
+			}
+			catch {
+				Write-Log -Message "Failed to create user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
+#region Remove-NxtLocalUser
+function Remove-NxtLocalUser {
+	<#
+	.DESCRIPTION
+		Deletes a local group with the given name.
+	.EXAMPLE
+		Remove-NxtLocalUser -UserName "Test"
+	.PARAMETER UserName
+		Name of the user
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$UserName
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				
+				[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+				if($userExists){
+					[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+					$adsiObj.Delete("User", $UserName)
+					Write-Output $true
+					return
+				}
+				Write-Output $false
+			}
+			catch {
+				Write-Log -Message "Failed to delete user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
+#region Test-NxtLocalGroupExists
+function Test-NxtLocalGroupExists {
+	<#
+	.DESCRIPTION
+		Checks if a local group exists by name
+	.EXAMPLE
+		Test-NxtLocalGroupExists -GroupName "Administrators"
+	.PARAMETER GroupName
+		Name of the group
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
+				Write-Output $groupExists
+			}
+			catch {
+				Write-Log -Message "Failed to search for group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
+#region Add-NxtLocalGroup
+function Add-NxtLocalGroup {
+	<#
+	.DESCRIPTION
+		Creates a local group with the given parameter.
+		If group already exists only the description parameter is processed.
+	.EXAMPLE
+		Add-NxtLocalGroup -GroupName "TestGroup"
+	.PARAMETER GroupName
+		Name of the group
+	.PARAMETER Description
+		Description for the new group
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName,
+			[Parameter(Mandatory=$false)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$Description
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+				if($false -eq $groupExists){
+					[System.DirectoryServices.DirectoryEntry]$objGroup = $adsiObj.Create("Group", $GroupName)
+					$objGroup.SetInfo()
+				}
+				else {
+					[System.DirectoryServices.DirectoryEntry]$objGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+				}
+				if(-NOT [string]::IsNullOrEmpty($Description)){
+					$objGroup.Put("Description",$Description)
+					$objGroup.SetInfo()
+				}
+				return $true
+			}
+			catch {
+				Write-Log -Message "Failed to create group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
+#region Remove-NxtLocalGroup
+function Remove-NxtLocalGroup {
+	<#
+	.DESCRIPTION
+		Deletes a local group with the given name.
+	.EXAMPLE
+		Remove-NxtLocalGroup -GroupName "TestGroup"
+	.PARAMETER GroupName
+		Name of the group
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				
+				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+				if($groupExists){
+					[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+					$adsiObj.Delete("Group", $GroupName)
+					Write-Output $true
+					return
+				}
+				Write-Output $false
+			}
+			catch {
+				Write-Log -Message "Failed to delete group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
+#region Remove-NxtLocalGroupMember
+function Remove-NxtLocalGroupMember {
+	<#
+	.DESCRIPTION
+		Removes a single member or a type of member from the given group by name.
+		Returns the amount of members removed.
+		Returns $null if the groups was not found.
+	.EXAMPLE
+		Remove-NxtLocalGroupMember -GroupName "Users" -All
+	.EXAMPLE
+		Remove-NxtLocalGroupMember -GroupName "Administrators" -MemberName "Dummy"
+	.PARAMETER MemberName
+		Name of the member to remove
+	.PARAMETER Users
+		If defined all users are removed
+	.PARAMETER Groups
+		If defined all groups are removed
+	.PARAMETER All
+		If defined all members are removed
+	.OUTPUTS
+		System.Int32
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName,
+			[Parameter(ParameterSetName='SingleMember')]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$MemberName,
+			[Parameter(ParameterSetName='Users')]
+			[Switch]
+			$AllUsers,
+			[Parameter(ParameterSetName='Groups')]
+			[Switch]
+			$AllGroups,
+			[Parameter(ParameterSetName='All')]
+			[Switch]
+			$AllMember
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
+				if($groupExists){
+                    [System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+                    if([string]::IsNullOrEmpty($MemberName))
+                    {
+                        [int]$count = 0
+					    foreach($member in $group.psbase.Invoke("Members"))
+					    {
+						    $class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
+						    if($AllMember){
+							    $group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+							    $count++
+						    }
+						    elseif($AllUsers){
+							    if($class -eq "user"){
+								    $group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+								    $count++
+							    }
+						    }
+						    elseif($AllGroups){
+							    if($class -eq "group"){
+								    $group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+								    $count++
+							    }
+						    }
+					    }
+					    Write-Output $count
+                    }
+					else{
+                        foreach($member in $group.psbase.Invoke("Members"))
+					    {
+						    [string]$name = $member.GetType().InvokeMember("Name", 'GetProperty', $Null, $member, $Null)
+						    if($name -eq $MemberName)
+						    {
+							    $group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+							    Write-Output 1
+							    return
+						    }
+					    }
+                    }
+				}
+				else{
+					Write-Output $null
+				}
+			}
+			catch {
+				Write-Log -Message "Failed to remove members from $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $null
+			}
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
+
+#region Add-NxtLocalGroupMember
+function Add-NxtLocalGroupMember {
+	<#
+	.DESCRIPTION
+		Adds local member to a local group
+	.EXAMPLE
+		Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestUser" -MemberType "User"
+	.PARAMETER GroupName
+		Name of the target group
+	.PARAMETER MemberName
+		Name of the member to add
+	.PARAMETER MemberType
+		Defines the type of member
+	.OUTPUTS
+		System.Boolean
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+		[CmdletBinding()]
+		param (
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$GroupName,
+			[Parameter(Mandatory=$true)]
+			[ValidateNotNullorEmpty()]
+			[string]
+			$MemberName,
+			[Parameter(Mandatory=$true)]
+			[ValidateSet('Group','User')]
+			[string]
+			$MemberType
+		)
+		Begin {
+			## Get the name of this function and write header
+			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		}
+		Process {
+			try {
+				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+				if($false -eq $groupExists){
+					Write-Output $false
+					return
+				}
+				[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+				if($MemberType -eq "Group"){
+					[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $MemberName
+					if($false -eq $groupExists){
+						Write-Output $false
+						return
+					}
+					[System.DirectoryServices.DirectoryEntry]$memberGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,group"
+					#$targetGroup.psbase.Invoke("Add", "WinNT://$($env:COMPUTERNAME)/$MemberName,")
+					$targetGroup.psbase.Invoke("Add", $memberGroup.path)
+					Write-Output $true
+					return
+				}
+				elseif($MemberType -eq "User"){
+					[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName
+					if($false -eq $userExists ){
+						Write-Output $false
+						return
+					}
+					[System.DirectoryServices.DirectoryEntry]$memberUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,user"
+					$targetGroup.psbase.Invoke("Add", $memberUser.path)
+					Write-Output $true
+					return
+				}
+				Write-Output $false
+			}
+			catch {
+				Write-Log -Message "Failed to add $MemberName of type $MemberType to $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Write-Output $false
+			}
+			
+		}
+		End {
+			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		}
+}
+#endregion
+
 #region Read-NxtSingleXmlNode
 
 function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName) 
