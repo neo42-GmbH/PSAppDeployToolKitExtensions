@@ -654,15 +654,15 @@ function Get-NxtProcessName([int]$ProcessId)
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-        [string]$result = [string]::Empty
+		[string]$result = [string]::Empty
 		try {
-            $result = (Get-Process -Id $ProcessId).Name
+			$result = (Get-Process -Id $ProcessId).Name
 		}
 		catch {
 			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-        Write-Output $result
-        return
+		Write-Output $result
+		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -703,13 +703,13 @@ function Get-NxtIsSystemProcess {
 	Process {
 		try {
 			[PSADTNXT.ProcessIdentity]$pi = [PSADTNXT.Extensions]::GetProcessIdentity($ProcessId)
-            Write-Output $pi.IsSystem
+			Write-Output $pi.IsSystem
 		}
 		catch {
 			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Write-Output $false
 		}
-        return
+		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -754,7 +754,7 @@ function Get-NxtWindowsVersion {
 #region Get-NxtOsLanguage
 
 function Get-NxtOsLanguage {
-<#
+	<#
 .DESCRIPTION
     Gets OsLanguage as LCID Code from Get-Culture 
 .EXAMPLE
@@ -787,7 +787,7 @@ function Get-NxtOsLanguage {
 #region Get-NxtUILanguage
 
 function Get-NxtUILanguage {
-<#
+	<#
 .DESCRIPTION
     Gets UiLanguage as LCID Code from Get-UICulture 
 .EXAMPLE
@@ -820,7 +820,7 @@ function Get-NxtUILanguage {
 #region Get-NxtProcessorArchiteW6432
 
 function Get-NxtProcessorArchiteW6432 {
-<#
+	<#
 .DESCRIPTION
     Gets the Environment Variable $env:PROCESSOR_ARCHITEW6432 which is only set in a x86_32 process, returns empty string if run under 64-Bit Process
 .EXAMPLE
@@ -853,7 +853,7 @@ function Get-NxtProcessorArchiteW6432 {
 #region Get-NxtWindowsBits
 
 function Get-NxtWindowsBits {
-<#
+	<#
 .DESCRIPTION
     Translates the  Environment Variable $env:PROCESSOR_ARCHITECTURE from x86 and amd64 to 32 / 64
 .EXAMPLE
@@ -897,7 +897,7 @@ function Get-NxtWindowsBits {
 
 
 function Move-NxtItem {
-<#
+	<#
 .DESCRIPTION
     Renames or moves a File or Directory to the DestinationPath
 .EXAMPLE
@@ -1427,7 +1427,7 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 					}
 					else {
 						$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
-						 if ($value -ne $null -and [System.Char]::IsLetter($value.Value)) {
+						if ($value -ne $null -and [System.Char]::IsLetter($value.Value)) {
 							#Importent for compare (An upper 'A'==65 char must have the value 10) 
 							$versionPartValue = $value.AsciiValue - 55
 						}
@@ -1455,13 +1455,274 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 		catch {
 			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-        return
+		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 
+#endregion
+
+#region Function Get-NxtFileEncoding
+function Get-NxtFileEncoding {
+	<#
+  	.SYNOPSIS
+		Returns the estimated Encoding based on Bom Detection, Defaults to ASCII
+  	.DESCRIPTION
+		Returns the estimated Encoding based on Bom Detection, Defaults to ASCII,
+		Used to get the default encoding for Add-NxtContent
+  	.PARAMETER Path
+		The Path to the File
+	.PARAMETER DefaultEncoding
+	  	Encoding to be returned in case the encoding could not be detected
+  	.OUTPUTS
+		System.String
+  	.EXAMPLE
+		Get-NxtFileEncoding -Path C:\Temp\testfile.txt
+  	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$DefaultEncoding
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
+			if ([System.String]::IsNullOrEmpty($intEncoding)) {
+				$intEncoding = $DefaultEncoding
+			}
+			Write-Output $intEncoding
+			return
+		}
+		catch {
+			Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+  
+#region Add-NxtContent
+  
+function Add-NxtContent {
+	<#
+	.DESCRIPTION
+		Appends Files
+  .PARAMETER Path
+	  Path to the File to be appended
+  	.PARAMETER Value
+		String to be appended to the File
+  .PARAMETER Encoding
+	  Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding
+  .PARAMETER DefaultEncoding
+	  Encoding to be used in case the encoding could not be detected
+  .EXAMPLE
+	  Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
+  .LINK
+	  https://neo42.de/psappdeploytoolkit
+  #>
+	[CmdletBinding()]
+	param(
+		[Parameter()]
+		[String]
+		$Path,
+		[Parameter()]
+		[String]
+		$Value,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$Encoding,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$DefaultEncoding
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[String]$intEncoding = $Encoding
+		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			[String]$intEncoding = "UTF8"
+		}
+		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			try {
+				[hashtable]$getFileEncodingParams = @{
+					Path = $Path
+				}
+				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
+					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+				}
+				$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+				if($intEncoding -eq "UTF8"){
+					[bool]$noBOMDetected = $true
+				}ElseIf($intEncoding -eq "UTF8withBom"){
+					[bool]$noBOMDetected = $false
+					$intEncoding = "UTF8"
+				}
+			}
+			catch {
+				$intEncoding = "UTF8"
+			}
+		}
+		try {
+			[hashtable]$contentParams = @{
+				Path  = $Path
+				Value = $Value
+			}
+			if (![string]::IsNullOrEmpty($intEncoding)) {
+				$contentParams['Encoding'] = $intEncoding 
+			}
+			if($noBOMDetected -and ($intEncoding -eq "UTF8")){
+				[System.IO.File]::AppendAllLines($Path, $Content)
+			}else{
+				Add-Content @contentParams
+			}
+			
+		}
+		catch {
+			Write-Log -Message "Failed to Add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+		return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+  
+#endregion
+
+#region Update-NxtTextInFile
+  
+function Update-NxtTextInFile {
+	<#
+  	.DESCRIPTION
+	  Replaces the text in a file by searchstring
+  	.PARAMETER Path
+	  Path to the File to be updated
+  	.PARAMETER SearchString
+	  String to be updated in the File
+  	.PARAMETER ReplaceString
+	  The String to be inserted to the found occurences
+  	.PARAMETER Count
+	  Number of occurences to be replaced
+  	.PARAMETER Encoding
+	  Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding
+	.PARAMETER DefaultEncoding
+	  Encoding to be used in case the encoding could not be detected
+  	.EXAMPLE
+	  Update-NxtTextInFile -Path C:\Temp\testfile.txt -SearchString "Hello" 
+  	.LINK
+	  https://neo42.de/psappdeploytoolkit
+  #>
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path,
+		[Parameter(Mandatory = $true)]
+		[String]
+		$SearchString,
+		[Parameter(Mandatory = $true)]
+		[String]
+		$ReplaceString,
+		[Parameter()]
+		[Int]
+		$Count = [int]::MaxValue,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$Encoding,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$DefaultEncoding,
+		[Parameter()]
+		[Bool]
+		$AddBOMIfUTF8 = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[String]$intEncoding = $Encoding
+		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			$intEncoding = "UTF8"
+		}
+		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			try {
+				$getFileEncodingParams = @{
+					Path = $Path
+				}
+				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
+					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+				}
+				$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				if($intEncoding -eq "UTF8"){
+					[bool]$noBOMDetected = $true
+				}ElseIf($intEncoding -eq "UTF8withBom"){
+					[bool]$noBOMDetected = $false
+					$intEncoding = "UTF8"
+				}
+			}
+			catch {
+				$intEncoding = "UTF8"
+			}
+		}
+		try {
+			[hashtable]$contentParams = @{
+				Path = $Path
+			}
+			if (![string]::IsNullOrEmpty($intEncoding)) {
+				$contentParams['Encoding'] = $intEncoding
+			}
+			$Content = Get-Content @contentParams -Raw
+			[regex]$pattern = $SearchString
+			[Array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
+			if ($regexMatches.count -eq 0){
+				Write-Log -Message "Did not find anything to replace in file '$Path'."
+				return
+			}
+			[ARRAY]::Reverse($regexMatches)
+			foreach ($match in $regexMatches) {
+				$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
+			}
+			if($noBOMDetected -and ($intEncoding -eq "UTF8")){
+				[System.IO.File]::WriteAllLines($Path, $Content)
+			}else{
+				$Content | Set-Content @contentParams -NoNewline
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to Add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+		return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+  
 #endregion
 
 #region Get-NxtSidByName
@@ -2267,6 +2528,167 @@ function Add-NxtLocalGroupMember {
 			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 		}
 }
+#endregion
+
+#region Read-NxtSingleXmlNode
+
+function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName) 
+{
+	<#
+	.DESCRIPTION
+		Reads single node of xml-file.
+	.PARAMETER XmlFilePath
+		Path to the Xml-File.
+	.PARAMETER SingleNodeName
+		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
+	.OUTPUTS
+		string
+	.EXAMPLE
+		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
+            $xmlDoc.Load($XmlFilePath)
+            Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText)
+		}
+		finally {
+			Write-Log -Message "Failed to read single node '$SingleNodeName' from Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Write-NxtSingleXmlNode
+
+function Write-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName, [string]$Value) 
+{
+	<#
+	.DESCRIPTION
+		Writes single node to xml-file.
+	.PARAMETER XmlFilePath
+		Path to the Xml-File.
+	.PARAMETER SingleNodeName
+		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
+	.PARAMETER Value
+		Node value.
+	.EXAMPLE
+		Write-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -Value "müller"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
+            $xmlDoc.Load($XmlFilePath)
+            $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
+            $xmlDoc.Save($XmlFilePath)
+		}
+		catch {
+			Write-Log -Message "Failed to write value '$Value' to single node '$SingleNodeName' in Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
+
+#region Write-NxtXmlNode
+
+function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model) 
+{
+	<#
+	.DESCRIPTION
+		Adds a node with attributes and values to an existing xml-file.
+	.PARAMETER XmlFilePath
+		Path to the Xml-File.
+	.PARAMETER Model
+		Xml Node model.
+	.EXAMPLE
+		$newNode = New-Object PSADTNXT.XmlNodeModel
+		$newNode.name = "item"
+		$newNode.AddAttribute("oor:path", "/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Fac-tory[com.sun.star.presentation.PresentationDocument]")
+		$newNode.Child = New-Object PSADTNXT.XmlNodeModel
+		$newNode.Child.name = "prop"
+		$newNode.Child.AddAttribute("oor:name", "ooSetupFactoryDefaultFilter")
+		$newNode.Child.AddAttribute("oor:op", "fuse")
+		$newNode.Child.Child = New-Object PSADTNXT.XmlNodeModel
+		$newNode.Child.Child.name = "value"
+		$newNode.Child.Child.value = "Impress MS PowerPoint 2007 XML"
+		Write-NxtXmlNode -XmlFilePath "C:\Test\setup.xml" -Model $newNode
+
+		Creates this node:
+
+		<item oor:path="/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Fac-tory[com.sun.star.presentation.PresentationDocument]">
+			<prop oor:name="ooSetupFactoryDefaultFilter" oor:op="fuse">
+				<value>Impress MS PowerPoint 2007 XML</value>
+ 			</prop>
+		</item>
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
+            $xmlDoc.Load($XmlFilePath)
+
+			$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
+				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, "")
+
+				for ($i=0; $i -lt $child.Attributes.count; $i++) {
+					$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
+					[System.Xml.XmlAttribute]$xmlAttribute = $doc.CreateAttribute($attribute.Key, "http://www.w3.org/1999/XSL/Transform")
+					$xmlAttribute.Value = $attribute.Value
+					[void]$xmlNode.Attributes.Append($xmlAttribute)
+				}
+			
+				if ($false -eq [string]::IsNullOrEmpty($child.Value)) {
+					$xmlNode.InnerText = $child.Value
+				}
+				elseif ($null -ne $child.Child) {
+					$node = &$createXmlNode -Doc $doc -Child ($child.Child)
+					[void]$xmlNode.AppendChild($node)
+				}
+
+				return $xmlNode
+			}
+			
+			$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
+			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
+            [void]$xmlDoc.Save($XmlFilePath)
+		}
+		catch {
+			Write-Log -Message "Failed to write node in Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
 #endregion
 
 ##*===============================================
