@@ -16,6 +16,7 @@
     "AppLang": "MUI",
     "AppScriptVersion": "1.0.0",
     "UninstallKeyName": "{04213D79-A073-452C-BC99-8FF978055AEE}",
+    "RegPackagesKey": "neoPackages",
     "UninstallDisplayName": "'neoPackage', $appVendor, $appName, $appVersion",
     "App": "$($env:ProgramData)\\neoPackages\\$appVendor\\$appName\\$appVersion",
     "UninstallDisplayIcon": "$app\\neoInstall\\AppDeployToolkit\\Setup.ico",

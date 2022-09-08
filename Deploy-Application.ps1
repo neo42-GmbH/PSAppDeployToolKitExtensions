@@ -114,6 +114,7 @@ try {
 	[string]$appScriptVersion = $global:PackageConfig.AppScriptVersion
 	
 	[string]$uninstallKeyName = $global:PackageConfig.UninstallKeyName
+	[string]$regPackagesKey = $global:PackageConfig.RegPackagesKey
 	[string]$uninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstallDisplayName)
 	[string]$app = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
 	[string]$uninstallDisplayIcon = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstallDisplayIcon)

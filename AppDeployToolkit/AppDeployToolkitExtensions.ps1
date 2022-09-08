@@ -132,41 +132,47 @@ Function Set-NxtPackageArchitecture {
 		Write-Log -Message "Setting package architecture variables..." -Source ${CmdletName}
 		Try {
 			[string]$currentArch = $global:PackageConfig.AppArch
-			If ($currentArch -ine 'x86' -and $currentArch -ine 'x64' -and $currentArch -ine '*') {
+			If ($currentArch -ne 'x86' -and $currentArch -ne 'x64' -and $currentArch -ne '*') {
 				[int32]$mainExitCode = 70001
 				[string]$mainErrorMessage = 'ERROR: The value of $appArch arch must be set to "x86", "x64" or "*". Abort!'
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 				Exit-Script -ExitCode $mainExitCode
 			}
-			ElseIf ($currentArch -ieq 'x64' -and $env:PROCESSOR_ARCHITECTURE -ieq 'x86') {
+			ElseIf ($currentArch -eq 'x64' -and $env:PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[int32]$mainExitCode = 70001
 				[string]$mainErrorMessage = 'ERROR: This software package can only be installed on 64 bit Windows systems. Abort!'
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 				Exit-Script -ExitCode $mainExitCode
 			}
-			ElseIf ($currentArch -ieq 'x86' -and $env:PROCESSOR_ARCHITECTURE -ieq 'AMD64') {
+			ElseIf ($currentArch -eq 'x86' -and $env:PROCESSOR_ARCHITECTURE -eq 'AMD64') {
 				[string]$global:ProgramFilesDir = ${env:ProgramFiles(x86)}
 				[string]$global:ProgramFilesDirx86 = ${env:ProgramFiles(x86)}
+				[string]$global:ProgramW6432 = ${env:ProgramFiles}
 				[string]$global:CommonFilesDir = ${env:CommonProgramFiles(x86)}
 				[string]$global:CommonFilesDirx86 = ${env:CommonProgramFiles(x86)}
+				[string]$global:CommonProgramW6432 = ${env:CommonProgramFiles}
 				[string]$global:System = "${env:SystemRoot}\SysWOW64"
 				[string]$global:Wow6432Node = '\Wow6432Node'
 			}
-			ElseIf (($currentArch -ieq 'x86' -or $currentArch -ieq '*') -and $env:PROCESSOR_ARCHITECTURE -ieq 'x86') {
+			ElseIf (($currentArch -eq 'x86' -or $currentArch -eq '*') -and $env:PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[string]$global:ProgramFilesDir = ${env:ProgramFiles}
 				[string]$global:ProgramFilesDirx86 = ${env:ProgramFiles}
+				[string]$global:ProgramW6432 = ''
 				[string]$global:CommonFilesDir = ${env:CommonProgramFiles}
 				[string]$global:CommonFilesDirx86 = ${env:CommonProgramFiles}
+				[string]$global:CommonProgramW6432 = ''
 				[string]$global:System = "${env:SystemRoot}\System32"
 				[string]$global:Wow6432Node = ''
 			}
 			Else {
 				[string]$global:ProgramFilesDir = ${env:ProgramFiles}
 				[string]$global:ProgramFilesDirx86 = ${env:ProgramFiles(x86)}
+				[string]$global:ProgramW6432 = ${env:ProgramFiles}
 				[string]$global:CommonFilesDir = ${env:CommonProgramFiles}
 				[string]$global:CommonFilesDirx86 = ${env:CommonProgramFiles(x86)}
+				[string]$global:CommonProgramW6432 = ${env:CommonProgramFiles}
 				[string]$global:System = "${env:SystemRoot}\System32"
 				[string]$global:Wow6432Node = ''
 			}
@@ -207,34 +213,124 @@ Function Uninstall-NxtOld {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Write-Log -Message "Checking if old packages need to be uninstalled..." -Source ${cmdletName}
-		Try {
-			If (Test-RegistryValue -Key HKLM\Software\Wow6432Node\neoPackages\$uninstallKeyName -Value 'UninstallString') {
-				[string]$regUninstallKeyName = "HKLM\Software\Wow6432Node\neoPackages\$uninstallKeyName"
-			}
-			Else {
-				[string]$regUninstallKeyName = "HKLM\Software\neoPackages\$uninstallKeyName"
-			}
-			If (($true -eq $uninstallOld) -and (Get-RegistryKey -Key $regUninstallKeyName -Value 'Version') -ilt $appVersion -and (Test-RegistryValue -Key $regUninstallKeyName -Value 'UninstallString')) {
-				Write-Log -Message "$uninstallOld is set to '1' and an old package version was found: Uninstalling old package..." -Source ${cmdletName}
-				cmd /c (Get-RegistryKey -Key $regUninstallKeyName -Value 'UninstallString')
-				If (Test-RegistryValue -Key $regUninstallKeyName -Value 'UninstallString') {
-					[int32]$mainExitCode = 70001
-					[string]$mainErrorMessage = 'ERROR: Uninstallation of old package failed. Abort!'
-					Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-					Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
-					Exit-Script -ExitCode $mainExitCode
+		If (($true -eq $uninstallOld) -and ($startedBy -ne "Empirum")) {
+			Write-Log -Message "Checking for old packages..." -Source ${cmdletName}
+			Try {
+				## Check for Empirum packages under "HKLM:SOFTWARE\WOW6432Node\"
+				If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor") {
+					If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor\$appName") {
+						$appEmpirumPackageVersions=Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor\$appName"
+						If (($appEmpirumPackageVersions).Count -eq 0) {
+							Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor\$appName"
+							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor\$appName" -Source ${cmdletName}
+						}
+						Else {
+							Foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
+								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+								If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+									Try {
+										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
+									}
+									Catch {
+									}
+									If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+										[int32]$mainExitCode = 70001
+										[string]$mainErrorMessage = "Uninstallation of Empirum package failed: $($appEmpirumPackageVersion.name)"
+										Write-Log -Message $mainErrorMessage -Source ${cmdletName}
+										Exit-Script -ExitCode $mainExitCode
+									}
+									Else {
+										Write-Log -Message "Successfully uninstalled Empirum package: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+									}
+								}
+								Else {
+									$appEmpirumPackageVersion | Remove-Item
+									Write-Log -Message "This key contained no 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+								}
+							}
+							If ((($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor\$appName")) {
+								Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor\$appName"
+								Write-Log -Message "Deleted the now empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor\$appName" -Source ${cmdletName}
+							}
+						}
+					}
+					If ((Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor").Count -eq 0) {
+						Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor"
+						Write-Log -Message "Deleted empty Empirum vendor key: HKLM:SOFTWARE\WOW6432Node\$regPackagesKey\$appVendor" -Source ${cmdletName}
+					}
+				}
+				## Check for Empirum packages under "HKLM:SOFTWARE\"
+				If (Test-Path -Path "HKLM:SOFTWARE\$regPackagesKey\$appVendor") {
+					If (Test-Path -Path "HKLM:SOFTWARE\$regPackagesKey\$appVendor\$appName") {
+						$appEmpirumPackageVersions=Get-ChildItem "HKLM:SOFTWARE\$regPackagesKey\$appVendor\$appName"
+						If (($appEmpirumPackageVersions).Count -eq 0) {
+							Remove-Item -Path "HKLM:SOFTWARE\$regPackagesKey\$appVendor\$appName"
+							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\$regPackagesKey\$appVendor\$appName" -Source ${cmdletName}
+						}
+						Else {
+							Foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
+								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+								If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+									Try {
+										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
+									}
+									Catch {
+									}
+									If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+										[int32]$mainExitCode = 70001
+										[string]$mainErrorMessage = "Uninstallation of Empirum package failed: $($appEmpirumPackageVersion.name)"
+										Write-Log -Message $mainErrorMessage -Source ${cmdletName}
+										Exit-Script -ExitCode $mainExitCode
+									}
+									Else {
+										Write-Log -Message "Successfully uninstalled Empirum package: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+									}
+								}
+								Else {
+									$appEmpirumPackageVersion | Remove-Item
+									Write-Log -Message "This key contained no 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+								}
+							}
+							If ((($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\$regPackagesKey\$appVendor\$appName")) {
+								Remove-Item -Path "HKLM:SOFTWARE\$regPackagesKey\$appVendor\$appName"
+								Write-Log -Message "Deleted the now empty Empirum application key: HKLM:SOFTWARE\$regPackagesKey\$appVendor\$appName" -Source ${cmdletName}
+							}
+						}
+					}
+					If ((Get-ChildItem "HKLM:SOFTWARE\$regPackagesKey\$appVendor").Count -eq 0) {
+						Remove-Item -Path "HKLM:SOFTWARE\$regPackagesKey\$appVendor"
+						Write-Log -Message "Deleted empty Empirum vendor key: HKLM:SOFTWARE\$regPackagesKey\$appVendor" -Source ${cmdletName}
+					}
+				}
+				## Check for VBS or PSADT packages
+				If (Test-RegistryValue -Key HKLM\Software\Wow6432Node\$regPackagesKey\$uninstallKeyName -Value 'UninstallString') {
+					[string]$regUninstallKeyName = "HKLM\Software\Wow6432Node\$regPackagesKey\$uninstallKeyName"
 				}
 				Else {
-					Write-Log -Message "Uninstallation of old package successful." -Source ${cmdletName}
+					[string]$regUninstallKeyName = "HKLM\Software\$regPackagesKey\$uninstallKeyName"
+				}
+				## Check if the installed package's version is lower than the current one's and if the UninstallString entry exists
+				If ((Get-RegistryKey -Key $regUninstallKeyName -Value 'Version') -lt $appVersion -and (Test-RegistryValue -Key $regUninstallKeyName -Value 'UninstallString')) {
+					Write-Log -Message "$uninstallOld is set to '1' and an old package version was found: Uninstalling old package..." -Source ${cmdletName}
+					cmd /c (Get-RegistryKey -Key $regUninstallKeyName -Value 'UninstallString')
+					If (Test-RegistryValue -Key $regUninstallKeyName -Value 'UninstallString') {
+						[int32]$mainExitCode = 70001
+						[string]$mainErrorMessage = 'ERROR: Uninstallation of old package failed. Abort!'
+						Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+						Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
+						Exit-Script -ExitCode $mainExitCode
+					}
+					Else {
+						Write-Log -Message "Uninstallation of old package successful." -Source ${cmdletName}
+					}
+				}
+				Else {
+					Write-Log -Message "No need to uninstall old packages." -Source ${cmdletName}
 				}
 			}
-			Else {
-				Write-Log -Message "No need to uninstall old packages." -Source ${cmdletName}
+			Catch {
+				Write-Log -Message "The Uninstall-Old function threw an error. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			}
-		}
-		Catch {
-			Write-Log -Message "The Uninstall-Old function threw an error. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -249,7 +345,7 @@ Function Register-NxtPackage {
 	.SYNOPSIS
 		Copies package files and registers the package in the registry.
 	.DESCRIPTION
-		Copies the package files to "$APP\neoInstall\" and writes the package's registry keys under "HKLM\Software[\Wow6432Node]\neoPackages\$UninstallKeyName" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName".
+		Copies the package files to "$APP\neoInstall\" and writes the package's registry keys under "HKLM\Software[\Wow6432Node]\$regPackagesKey\$UninstallKeyName" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName".
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -274,32 +370,33 @@ Function Register-NxtPackage {
 			Copy-File -Path "$src\Deploy-Application.exe.config" -Destination "$app\neoInstall\"
 			Copy-File -Path "$src\Deploy-Application.ps1" -Destination "$app\neoInstall\"
 
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'AppPath' -Value $app
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'DebugLogFile' -Value $configToolkitLogDir\$logName
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'DeveloperName' -Value $appVendor
-			# Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'PackageStatus' -Value '$PackageStatus'
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'ProductName' -Value $appName
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'ReturnCode (%ERRORLEVEL%)' -Value $mainExitCode
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'Revision' -Value $appRevision
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'SrcPath' -Value $src
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'StartupProcessor_Architecture' -Value $envArchitecture
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'StartupProcessOwner' -Value $envUserDomain\$envUserName
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'UninstallString' -Value ('"' + $app + '\neoInstall\Deploy-Application.exe"', 'uninstall')
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'UserPart' -Value $UserPart -Type 'DWord'
-			If ($userPart -ieq '1') {
-				Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'UserPartPath' -Value ('"' + $app + '\neo42-Uerpart"')
-				Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'UserPartUninstPath' -Value ('"%AppData%\neoPackages\' + $uninstallKeyName + '"')
-				Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'UserPartRevision' -Value $userPartRevision
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'AppPath' -Value $app
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'DebugLogFile' -Value $configToolkitLogDir\$logName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'DeveloperName' -Value $appVendor
+			# Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'PackageStatus' -Value '$PackageStatus'
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'ProductName' -Value $appName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'ReturnCode (%ERRORLEVEL%)' -Value $mainExitCode
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'Revision' -Value $appRevision
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'SrcPath' -Value $src
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'StartupProcessor_Architecture' -Value $envArchitecture
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'StartupProcessOwner' -Value $envUserDomain\$envUserName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'UninstallString' -Value ('"' + $app + '\neoInstall\Deploy-Application.exe"', 'uninstall')
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'UserPartOnInstallation' -Value $userPartOnInstallation -Type 'DWord'
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'UserPartOnUninstallation' -Value $userPartOnUninstallation -Type 'DWord'
+			If ($userPart -eq '1') {
+				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'UserPartPath' -Value ('"' + $app + '\neo42-Uerpart"')
+				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'UserPartUninstPath' -Value ('"%AppData%\neoPackages\' + $uninstallKeyName + '"')
+				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'UserPartRevision' -Value $userPartRevision
 			}
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Name 'Version' -Value $appVersion
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'Version' -Value $appVersion
 
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayIcon' -Value $uninstallDisplayIcon
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayName' -Value $uninstallDisplayName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayVersion' -Value $appVersion
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'MachineKeyName' -Value ('neoPackages\' + $uninstallKeyName)
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'MachineKeyName' -Value ('$regPackagesKey\' + $uninstallKeyName)
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoModify' -Type 'Dword' -Value '1'
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRemove' -Type 'Dword' -Value $hidePackageUninstallButton
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRepair' -Type 'Dword' -Value '1'
@@ -327,7 +424,7 @@ Function Unregister-NxtPackage {
 	.SYNOPSIS
 		Removes package files and unregisters the package in the registry.
 	.DESCRIPTION
-		Removes the package files from "$APP\neoInstall\" and deletes the package's registry keys under "HKLM\Software[\Wow6432Node]\neoPackages\$UninstallKeyName" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName".
+		Removes the package files from "$APP\neoInstall\" and deletes the package's registry keys under "HKLM\Software[\Wow6432Node]\$regPackagesKey\$UninstallKeyName" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName".
 	.EXAMPLE
 		Unregister-NxtPackage
 	.NOTES
@@ -351,7 +448,7 @@ Function Unregister-NxtPackage {
 			Start-Sleep 1
 			Execute-Process -Path "$APP\CleanUp.cmd" -NoWait
 			Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$uninstallKeyName
-			Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\neoPackages\$uninstallKeyName
+			Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\$regPackagesKey\$uninstallKeyName
 			Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
 		}
 		Catch {
