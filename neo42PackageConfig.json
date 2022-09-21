@@ -14,12 +14,10 @@
     "AppVersion": "2022.0.0.861",
     "AppRevision": "0",
     "AppLang": "MUI",
-    "AppScriptVersion": "1.0.0",
     "UninstallKeyName": "{04213D79-A073-452C-BC99-8FF978055AEE}",
     "RegPackagesKey": "neoPackages",
     "UninstallDisplayName": "'neoPackage', $appVendor, $appName, $appVersion",
     "App": "$($env:ProgramData)\\neoPackages\\$appVendor\\$appName\\$appVersion",
-    "UninstallDisplayIcon": "$app\\neoInstall\\AppDeployToolkit\\Setup.ico",
     "UninstallOld": true,
     "Reboot": 0,
     "DeferDays": 3,
@@ -30,9 +28,6 @@
     "SoftMigration": true,
     "HidePackageUninstallButton": false,
     "HidePackageUninstallEntry": false,
-    "RegisterPackage": true,
-    "InstallName": "",
-    "InstallTitle": "",
     "DisplayVersion": "2022.0.0.861",
     "UninstallKey": "{D3C705DC-9743-4FEF-8358-E1AC9FA69C73}_is1",
     "InstallLocation": "$programFilesDir\\FreeCommander XE",
@@ -43,5 +38,21 @@
     "UninstPara": "Execute-Process -Path \"$installLocation\\unins000.exe\" -Parameters \"/SILENT /SUPPRESSMSGBOXES /LOG=\"$uninstLogFile\" /NOCANCEL /NORESTART\"",
     "AppKillProcesses": [
       "FreeCommander XE"
+    ],
+    "CommonDesktopSortcutsToDelete": [
+      "FreeCommander XE.lnk"
+    ],
+    "CommonStartmenuSortcutsToCopyToCommonDesktop": [
+      "Programs\\FreeCommander XE\\FreeCommander XE.lnk"
+    ],
+    "UserDesktopSortcutsToDelete": [
+      "FreeCommander XE.lnk"
+    ],
+    "UserDesktopSortcutsToCreate": [
+      {"Name":"FreeCommander XE.lnk","Command":...}
+    ],
+    "UninstallKeysToHide":[
+      {"Is64Bit":false,"KeyName":"$uninstallKey"},
+      {"Is64Bit":true,"KeyName":"<CustomKeyName>"}
     ]
   }
