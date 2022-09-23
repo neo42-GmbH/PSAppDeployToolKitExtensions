@@ -26,7 +26,7 @@
 		<!-- Same as TempPath but used when RequireAdmin is False. -->
 		<Toolkit_RegPathNoAdminRights>HKCU:\SOFTWARE</Toolkit_RegPathNoAdminRights>
 		<!-- Same as RegPath but used when RequireAdmin is False. Bear in mind that since this Registry Key should be writable without admin permission, regular users can modify it also. -->
-		<Toolkit_LogPathNoAdminRights>$envProgramData\Logs\Software</Toolkit_LogPathNoAdminRights>
+		<Toolkit_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</Toolkit_LogPathNoAdminRights>
 		<!-- Same as LogPath but used when RequireAdmin is False. -->
 		<Toolkit_CompressLogs>False</Toolkit_CompressLogs>
 		<!-- Specify if the log files should be bundled together in a compressed zip file -->

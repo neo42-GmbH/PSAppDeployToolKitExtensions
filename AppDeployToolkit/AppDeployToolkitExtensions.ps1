@@ -75,7 +75,7 @@ Function Initialize-NxtEnvironment {
 }
 #endregion
 
-#region Function Initialize-NxtEnvironment
+#region Function Get-NxtPackageConfig
 Function Get-NxtPackageConfig {
 	<#
 	.SYNOPSIS
@@ -83,7 +83,7 @@ Function Get-NxtPackageConfig {
 	.DESCRIPTION
 		Should be called on top of any 'Deploy-Application.ps1' 
 	.EXAMPLE
-		Initialize-NxtEnvironment
+		Get-NxtPackageConfig
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -189,17 +189,17 @@ Function Set-NxtPackageArchitecture {
 }
 #endregion
 
-#region Function get-NxtVariablesFromDeploymentSystem
-Function get-NxtVariablesFromDeploymentSystem {
+#region Function Get-NxtVariablesFromDeploymentSystem
+Function Get-NxtVariablesFromDeploymentSystem {
 	<#
 	.SYNOPSIS
-		Gets Enviroment Variables set by the deployment system
+		Gets enviroment variables set by the deployment system
 	.DESCRIPTION
 		Should be called at the end of the variable definition section of any 'Deploy-Application.ps1' 
 		Variables not set by the deployment system (or set to an unsuitable value) get a default value (e.g. [bool]$global:$registerPackage = $true)
 		Variables set by the deployment system overwrite the values from the neo42PackageConfig.json
 	.EXAMPLE
-		get-NxtVariablesFromDeploymentSystem
+		Get-NxtVariablesFromDeploymentSystem
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -213,9 +213,16 @@ Function get-NxtVariablesFromDeploymentSystem {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		If ("false" -eq $env:registerPackage) {[bool]$global:registerPackage = $false} Else {[bool]$global:registerPackage = $true}
-		If ("false" -eq $env:uninstallOld) {[bool]$global:uninstallOld = $false}
-		If ($null -ne $env:Reboot) {[int]$global:reboot = $env:Reboot}
+		Write-Log -Message "Getting enviroment variables set by the deployment system..." -Source ${cmdletName}
+		Try {
+			If ("false" -eq $env:registerPackage) {[bool]$global:registerPackage = $false} Else {[bool]$global:registerPackage = $true}
+			If ("false" -eq $env:uninstallOld) {[bool]$global:uninstallOld = $false}
+			If ($null -ne $env:Reboot) {[int]$global:reboot = $env:Reboot}
+			Write-Log -Message "Enviroment variables successfully read." -Source ${cmdletName}
+		}
+		Catch {
+			Write-Log -Message "Failed to get enviroment variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -427,9 +434,8 @@ Function Register-NxtPackage {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
 		Try {
 			Copy-File -Path "$scriptParentPath\AppDeployToolkit" -Destination "$app\neoInstall\" -Recurse
-			Copy-File -Path "$scriptParentPath\Deploy-Application.exe" -Destination "$app\neoInstall\"
-			Copy-File -Path "$scriptParentPath\Deploy-Application.exe.config" -Destination "$app\neoInstall\"
 			Copy-File -Path "$scriptParentPath\Deploy-Application.ps1" -Destination "$app\neoInstall\"
+			Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$app\neoInstall\"
 
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'AppPath' -Value $app
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
@@ -454,13 +460,13 @@ Function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$regPackagesKey\$UninstallKeyName -Name 'Version' -Value $appVersion
 
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayIcon' -Value '$app\neoInstall\AppDeployToolkit\Setup.ico'
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayIcon' -Value $app\neoInstall\Setup.ico
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayName' -Value $uninstallDisplayName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayVersion' -Value $appVersion
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'MachineKeyName' -Value ('$regPackagesKey\' + $uninstallKeyName)
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoModify' -Type 'Dword' -Value '1'
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'MachineKeyName' -Value $regPackagesKey\$uninstallKeyName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoModify' -Type 'Dword' -Value 1
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRemove' -Type 'Dword' -Value $hidePackageUninstallButton
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRepair' -Type 'Dword' -Value '1'
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRepair' -Type 'Dword' -Value 1
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageApplicationDir' -Value $app
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageProductName' -Value $appName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageRevision' -Value $appRevision
@@ -505,7 +511,7 @@ Function Unregister-NxtPackage {
 	Process {
 		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
 		Try {
-			Copy-File -Path "$scriptParentPath\CleanUp.cmd" -Destination "$app\"
+			Copy-File -Path "$scriptRoot\CleanUp.cmd" -Destination "$app\"
 			Start-Sleep 1
 			Execute-Process -Path "$APP\CleanUp.cmd" -NoWait
 			Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$uninstallKeyName
@@ -521,6 +527,87 @@ Function Unregister-NxtPackage {
 	}
 }
 #endregion
+
+#region Function Remove-NxtDesktopShortcuts
+Function Remove-NxtDesktopShortcuts {
+	<#
+	.SYNOPSIS
+		Removes the Shortcots defined under "CommonDesktopSortcutsToDelete" in the neo42PackageConfig.json from the common desktop
+	.DESCRIPTION
+		Is called after an installation/reinstallation if DESKTOPSHORTCUT=0 is defined in the Setup.cfg.
+		Is always called before the uninstallation.
+	.EXAMPLE
+		Remove-NxtDesktopShortcuts
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+	)
+		
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Try {
+			foreach($value in $global:PackageConfig.CommonDesktopSortcutsToDelete) {
+				Write-Log -Message "Removing desktop shortcut '$envCommonDesktop\$value'..." -Source ${cmdletName}
+				Remove-File -Path "$envCommonDesktop\$value"
+				Write-Log -Message "Desktop shortcut succesfully removed." -Source ${cmdletName}
+			}
+		}
+		Catch {
+			Write-Log -Message "Failed to remove desktopshortcuts. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
+
+#region Function Copy-NxtDesktopShortcuts
+Function Copy-NxtDesktopShortcuts {
+	<#
+	.SYNOPSIS
+		Copys the Shortcots defined under "CommonStartmenuSortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop
+	.DESCRIPTION
+		Is called after an installation/reinstallation if DESKTOPSHORTCUT=1 is defined in the Setup.cfg.
+	.EXAMPLE
+		Copy-NxtDesktopShortcuts
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+	)
+		
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Try {
+			foreach($value in $global:PackageConfig.CommonStartmenuSortcutsToCopyToCommonDesktop) {
+				Write-Log -Message "Copying start menu shortcut'$envCommonStartMenu\$($value.Source)' to the common desktop..." -Source ${cmdletName}
+				Copy-File -Path "$envCommonStartMenu\$($value.Source)" -Destination "$envCommonDesktop\$($value.TargetName)"
+				Write-Log -Message "Shortcut succesfully copied." -Source ${cmdletName}
+			}
+		}
+		Catch {
+			Write-Log -Message "Failed to copy shortcuts to the common desktop. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
 
 #region Function Stop-NxtProcess
 Function Stop-NxtProcess {
@@ -1683,7 +1770,7 @@ function Add-NxtContent {
 		Appends Files
   .PARAMETER Path
 	  Path to the File to be appended
-  	.PARAMETER Value
+  .PARAMETER Value
 		String to be appended to the File
   .PARAMETER Encoding
 	  Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding
@@ -1978,10 +2065,10 @@ function Set-NxtProcessEnvironmentVariable([string]$Key, [string]$Value)  {
 		Sets a process enviroment variable.
 	.PARAMETER Key
 		Key of the variable
-	.PARAMETER Key
+	.PARAMETER Value
 		Value of the variable
 	.EXAMPLE
-		Set-NxtProcessEnvironmentVariable "Test" "Hello world"
+		Set-NxtProcessEnvironmentVariable -Key "Test" -Value "Hello world"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2084,7 +2171,7 @@ function Set-NxtSystemEnvironmentVariable([string]$Key, [string]$Value)  {
 		Sets a system enviroment variable.
 	.PARAMETER Key
 		Key of the variable
-	.PARAMETER Key
+	.PARAMETER Value
 		Value of the variable
 	.EXAMPLE
 		Set-NxtSystemEnvironmentVariable "Test" "Hello world"

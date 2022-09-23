@@ -1,55 +1,59 @@
 {
     "ScriptAuthor": "neo42",
-    "ScriptDate": "30/03/2022",
-    "InventoryID": "hjt62446EA0",
-    "Description": "Marek Jasinski FreeCommander XE 2022.0.0.861",
+    "ScriptDate": "22/09/2022",
+    "InventoryID": "hjt632C168F",
+    "Description": "Jens Hoetger Scribble Papers 2.10.2",
     "Method": "Inno Setup",
     "TestedOn": "Win10 x64",
     "Dependencies": "",
-    "LastChange": "30/03/2022",
+    "LastChange": "22/09/2022",
     "Build": "0",
     "AppArch": "x86",
-    "AppName": "FreeCommander XE",
-    "AppVendor": "Marek Jasinski",
-    "AppVersion": "2022.0.0.861",
+    "AppVendor": "Jens Hoetger",
+    "AppName": "Scribble Papers",
+    "AppVersion": "2.10.2",
     "AppRevision": "0",
-    "AppLang": "MUI",
-    "UninstallKeyName": "{04213D79-A073-452C-BC99-8FF978055AEE}",
+    "AppLang": "DEU",
+    "UninstallKeyName": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
     "RegPackagesKey": "neoPackages",
-    "UninstallDisplayName": "'neoPackage', $appVendor, $appName, $appVersion",
+    "UninstallDisplayName": "neoPackage $appVendor $appName $appVersion",
     "App": "$($env:ProgramData)\\neoPackages\\$appVendor\\$appName\\$appVersion",
     "UninstallOld": true,
     "Reboot": 0,
     "DeferDays": 3,
     "ReinstallModeIsRepair": false,
-    "UserPartOnInstallation": true,
+    "UserPartOnInstallation": false,
     "UserPartOnUninstallation": false,
-    "UserPartRevision": "2022,05,19,01",
+    "UserPartRevision": "2022,09,22,01",
     "SoftMigration": true,
     "HidePackageUninstallButton": false,
     "HidePackageUninstallEntry": false,
-    "DisplayVersion": "2022.0.0.861",
-    "UninstallKey": "{D3C705DC-9743-4FEF-8358-E1AC9FA69C73}_is1",
-    "InstallLocation": "$programFilesDir\\FreeCommander XE",
+    "DisplayVersion": "2.10.2",
+    "UninstallKey": "Scribble Papers_is1",
+    "InstallLocation": "$programFilesDir\\Scribble Papers",
     "InstLogFile": "$app\\Install.$timestamp.log",
     "UninstLogFile": "$app\\Uninstall.$timestamp.log",
     "RegUninstallKey": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$uninstallKey",
-    "InstPara": "Execute-Process -Path \"FreeCommanderXE-32-de-public_setup.exe\" -Parameters \"/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /LOG=\"$instLogFile\" /NOCANCEL /NORESTART\"",
-    "UninstPara": "Execute-Process -Path \"$installLocation\\unins000.exe\" -Parameters \"/SILENT /SUPPRESSMSGBOXES /LOG=\"$uninstLogFile\" /NOCANCEL /NORESTART\"",
+	  "InstFile": "SPSetup.exe",
+    "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$instLogFile\"",
+    "UninstFile": "$installLocation\\unins000.exe",
+    "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$uninstLogFile\"",
     "AppKillProcesses": [
-      "FreeCommander XE"
+      "ScPapers"
     ],
     "CommonDesktopSortcutsToDelete": [
-      "FreeCommander XE.lnk"
+	  "Scribble Papers Programmdokumentation.lnk",
+	  "Scribble Papers 2022.lnk"
     ],
     "CommonStartmenuSortcutsToCopyToCommonDesktop": [
-      "Programs\\FreeCommander XE\\FreeCommander XE.lnk"
+      {"Source":"Programs\\Scribble Papers\\Scribble Papers.lnk","TargetName":"Scribble Papers 2022.lnk"},
+      {"Source":"Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"}
     ],
     "UserDesktopSortcutsToDelete": [
-      "FreeCommander XE.lnk"
+      ""
     ],
     "UserDesktopSortcutsToCreate": [
-      {"Name":"FreeCommander XE.lnk","Command":...}
+      {}
     ],
     "UninstallKeysToHide":[
       {"Is64Bit":false,"KeyName":"$uninstallKey"},

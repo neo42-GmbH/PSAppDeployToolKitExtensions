@@ -53,6 +53,12 @@ Param (
 	[switch]$DisableLogging = $false
 )
 
+## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT this section! <-- HJT
+$global:PackageConfig = Get-Content "$PSScriptRoot\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
+[string]$appVendor = $global:PackageConfig.AppVendor
+[string]$appName = $global:PackageConfig.AppName
+[string]$appVersion = $global:PackageConfig.AppVersion
+
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
@@ -83,6 +89,7 @@ Catch {
 ##* Do not modify section above	=============================================================================================================================================
 
 try {
+	[string]$global:installPhase = 'Initialize-Environment'
 	Initialize-NxtEnvironment
 	
 	##*===============================================
@@ -124,17 +131,19 @@ try {
 	[string]$instLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstLogFile)
 	[string]$uninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstLogFile)
 	[string]$regUninstallKey = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.RegUninstallKey)
-	## ToDo: DetectedDisplayVersion anhand des Anzeigenamens auslesen!
+	## ToDo: DetectedDisplayVersion anhand des Anzeigenamens aus der Registry auslesen!
 	[string]$detectedDisplayVersion = Get-RegistryKey -Key $regUninstallKey -Value 'DisplayVersion'
 
+	[string]$instFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstFile)
 	[string]$instPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstPara)
+	[string]$uninstFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstFile)
 	[string]$uninstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstPara)
 
 	[string]$askKillProcessApps = $global:PackageConfig.AppKillProcesses -join ","
 
-	get-NxtVariablesFromDeploymentSystem
+	Get-NxtVariablesFromDeploymentSystem
 
-	return
+	# return
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -165,16 +174,19 @@ function Main {
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
 				## START OF INSTALL
+				[string]$global:installPhase = 'Pre-InstallationChecks'
+
 				Uninstall-NxtOld 
-				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:$registerPackage)) {
+				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
 					## Application is present. Only register the package
-					[string]$installPhase = 'Package-Registration'
+					[string]$global:installPhase = 'Package-Registration'
 					Register-NxtPackage
 					Exit-Script -ExitCode $mainExitCode
 				}
 				Show-NxtInstallationWelcome -IsInstall $true
 				CustomPreInstallAndReinstall
 				[bool]$isInstalled = $false
+				[string]$global:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtShouldReinstall)) {
 					if ($false -eq $ReinstallModeIsRepair) {
 						## Reinstall mode is set to default
@@ -202,9 +214,9 @@ function Main {
 				If ($true -eq $isInstalled) {
 					Complete-NxtPackageInstallation
 				}
-				if (($true -eq $isInstalled) -and ($true -eq $global:$registerPackage)) {
+				if (($true -eq $isInstalled) -and ($true -eq $global:registerPackage)) {
 					## Register package for uninstall
-					[string]$installPhase = 'Package-Registration'
+					[string]$global:installPhase = 'Package-Registration'
 					Register-NxtPackage
 				}
 				
@@ -217,11 +229,9 @@ function Main {
 				CustomPreUninstall
 				[bool]$isUninstalled = Uninstall-NxtApplication
 				CustomPostUninstall
-				If ($true -eq $isUninstalled) {
-					Complete-NxtPackageUninstallation
-				}
 				if ($true -eq $isUninstalled) {
-					[string]$installPhase = 'Package-Registration'
+					Complete-NxtPackageUninstallation
+					[string]$global:installPhase = 'Package-Unregistration'
 					Unregister-NxtPackage
 				}
 
@@ -230,14 +240,14 @@ function Main {
 			"InstallUserPart" {
 				## START OF USERPARTINSTALL
 
-				# CustomInstallUserPart
+				CustomInstallUserPart
 
 				## END OF USERPARTINSTALL
 			}
 			"UninstallUserPart" {
 				## START OF USERPARTUNINSTALL
 
-				# CustomUninstallUserPart
+				CustomUninstallUserPart
 
 				## END OF USERPARTUNINSTALL
 			}
@@ -273,11 +283,12 @@ function Install-NxtApplication {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[string]$installPhase = 'Installation'
+	[string]$global:installPhase = 'Installation'
 
 	## <Perform Installation tasks here>
 
-	Invoke-Expression $InstPara
+	Execute-Process -Path "$instFile" -Parameters "$instPara"
+	Start-Sleep 5
 
 	return $true
 }
@@ -295,32 +306,32 @@ function Complete-NxtPackageInstallation {
 		https://neo42.de/psappdeploytoolkit
 	#>
 
-	[string]$installPhase = 'Complete-NxtPackageInstallation'
+	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
 
 	## <Perform Complete-NxtPackageInstallation tasks here>
 
-
-	Manage-NxtDesktopShortcuts
-
 	[string]$desktopShortcut = Get-IniValue -FilePath $setupCfgPath -Section 'Options' -Key 'DESKTOPSHORTCUT'
 	If ($desktopShortcut -ne '1') {
-		Remove-File -Path "$envCommonDesktop\FreeCommander XE.lnk"
+		Remove-NxtDesktopShortcuts
 	}
 	Else {
-		Copy-File -Path "$envCommonStartMenuPrograms\FreeCommander XE\FreeCommander XE.lnk" -Destination "$envCommonDesktop\" 
+		Copy-NxtDesktopShortcuts
 	}
 
 
-	Hide-NxtAppUninstallEntries
+	# Hide-NxtAppUninstallEntries
 
 	Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
 	
 
 	If ($true -eq $userPartOnInstallation) {
-		## <Userpart-Installation-Batch: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the neo42-Userpart.cmd.>
+		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomInstallUserPart-function below.>
+		Set-ActiveSetup -PurgeActiveSetupKey -Key "$uninstallKeyName.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$app\neo42-Userpart\SupportFiles"
-		Copy-item -Path "$scriptDirectory/*" -Exclude "Files", "SupportFiles" -Destination "$app\neo42-Userpart\"
-		Set-ActiveSetup -StubExePath "$app\neo42-Userpart\Deploy-Application.exe" -Arguments "/installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
+		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$app\neo42-Userpart\SupportFiles"
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$app\neo42-Userpart\" -Recurse
+		Write-NxtSingleXmlNode -XmlFilePath "$app\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$app\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
 	}
 }
 
@@ -339,20 +350,21 @@ function Uninstall-NxtApplication {
 	##*===============================================
 	##* PRE-UNINSTALLATION
 	##*===============================================
-	[string]$installPhase = 'Pre-Uninstallation'
+	[string]$global:installPhase = 'Pre-Uninstallation'
 	
 	## <Perform Pre-Uninstallation tasks here>
 	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent'
-	
+
 	##*===============================================
 	##* UNINSTALLATION
 	##*===============================================
-	[string]$installPhase = 'Uninstallation'
+	[string]$global:installPhase = 'Uninstallation'
 	
 	If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
 	
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
-		Invoke-Expression $UninstPara
+		Execute-Process -Path "$uninstFile" -Parameters "$uninstPara"
+		Start-Sleep 5
 	}
 	## <Perform Uninstallation tasks here, which should always be executed, even if the software is not installed anymore.>
 		
@@ -372,17 +384,20 @@ function Complete-NxtPackageUninstallation {
 		https://neo42.de/psappdeploytoolkit
 	#>
 
-	[string]$installPhase = 'Complete-NxtPackageUninstallation'
+	[string]$global:installPhase = 'Complete-NxtPackageUninstallation'
 
 	## <Perform Complete-NxtPackageUninstallation tasks here>
 
+	Remove-NxtDesktopShortcuts
+	
 	If ($true -eq $userPartOnUninstallation) {
+		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$uninstallKeyName"
-		Set-RegistryKey -Key "HKLM\Software\Microsoft\Active Setup\Installed Components\$uninstallKeyName.uninstall" -Name '(Default)' -Value "$installName" -ContinueOnError $false
-		Set-RegistryKey -Key "HKLM\Software\Microsoft\Active Setup\Installed Components\$uninstallKeyName.uninstall" -Name 'StubPath' -Value "cmd /c ""%AppData%\neoPackages\$uninstallKeyName\neo42-Userpart.cmd"" /uninstall $timestamp" -Type 'String' -ContinueOnError $false
-		Set-RegistryKey -Key "HKLM\Software\Microsoft\Active Setup\Installed Components\$uninstallKeyName.uninstall" -Name 'Version' -Value $userPartRevision -ContinueOnError $false
-		Set-RegistryKey -Key "HKLM\Software\Microsoft\Active Setup\Installed Components\$uninstallKeyName.uninstall" -Name 'IsInstalled' -Value 1 -Type 'DWord' -ContinueOnError $false
-		#Set-ActiveSetup -StubExePath "%AppData%\neoPackages\$UninstallKeyName\neo42-Userpart.cmd" -Arguments "/uninstall $timestamp" -Version $UserPartRevision -Key "<$UninstallKeyName.uninstall"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$app\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$app\neo42-Userpart\SupportFiles"
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$app\neo42-Userpart\" -Recurse
+		Write-NxtSingleXmlNode -XmlFilePath "$app\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$app\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$UninstallKeyName.uninstall"
 	}
 }
 
@@ -399,7 +414,7 @@ function Repair-NxtApplication {
 		https://neo42.de/psappdeploytoolkit
 	#>
 
-	[string]$installPhase = 'Repair-NxtApplication'
+	[string]$global:installPhase = 'Repair-NxtApplication'
 
 	## <Perform repair tasks here>
 }
@@ -442,79 +457,79 @@ function Show-NxtInstallationWelcome {
 #region Entry point funtions to perform custom tasks during script run
 
 function CustomPreInit {
-	[string]$installPhase = 'CustomPreInit'
+	[string]$global:installPhase = 'CustomPreInit'
 
 	## Executes at the start of the Main function
 }
 
 function CustomPreInstallAndReinstall {
-	[string]$installPhase = 'CustomPreInstallAndReinstall'
+	[string]$global:installPhase = 'CustomPreInstallAndReinstall'
 
 	## Executes before any installation or reinstallation tasks are performed
 }
 
 function CustomPreUninstallReinstall {
-	[string]$installPhase = 'CustomPreUninstallReinstall'
+	[string]$global:installPhase = 'CustomPreUninstallReinstall'
 
 	## Executes before the uninstallation in the reinstall process
 }
 
 function CustomPostUninstallReinstall {
-	[string]$installPhase = 'CustomPostUninstallReinstall'
+	[string]$global:installPhase = 'CustomPostUninstallReinstall'
 
 	## Executes at after the uninstallation in the reinstall process
 }
 
 function CustomPreInstallReinstall {
-	[string]$installPhase = 'CustomPreInstallReinstall'
+	[string]$global:installPhase = 'CustomPreInstallReinstall'
 
 	## Executes before the installation in the reinstall process
 }
 
 function CustomPostInstallReinstall {
-	[string]$installPhase = 'CustomPostInstallReinstall'
+	[string]$global:installPhase = 'CustomPostInstallReinstall'
 
 	## Executes after the installation in the reinstall process
 }
 
 function CustomPreInstall {
-	[string]$installPhase = 'CustomPreInstall'
+	[string]$global:installPhase = 'CustomPreInstall'
 
 	## Executes before the installation in the install process
 }
 
 function CustomPostInstall {
-	[string]$installPhase = 'CustomPostInstall'
+	[string]$global:installPhase = 'CustomPostInstall'
 
 	## Executes after the installation in the install process
 }
 
 function CustomPostInstallAndReinstall {
-	[string]$installPhase = 'CustomPostInstallAndReinstall'
+	[string]$global:installPhase = 'CustomPostInstallAndReinstall'
 
 	## Executes after the completed install or repair process
 }
 
 function CustomPreUninstall {
-	[string]$installPhase = 'CustomPreUninstall'
+	[string]$global:installPhase = 'CustomPreUninstall'
 
 	## Executes before the uninstallation in the uninstall process
 }
 
 function CustomPostUninstall {
-	[string]$installPhase = 'CustomPostUninstall'
+	[string]$global:installPhase = 'CustomPostUninstall'
 
 	## Executes after the uninstallation in the uninstall process
 }
 
 function CustomInstallUserPart {
-	[string]$installPhase = 'CustomInstallUserPart'
+	[string]$global:installPhase = 'CustomInstallUserPart'
 
 	## Executes if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
 }
 
 function CustomUninstallUserPart {
-	[string]$installPhase = 'CustomUninstallUserPart'
+	[string]$global:installPhase = 'CustomUninstallUserPart'
 
 	## Executes if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
 }
