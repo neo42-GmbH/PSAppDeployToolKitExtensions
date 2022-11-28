@@ -89,7 +89,7 @@ namespace PSADTNXT
     {
         Unknown = 0,
         NoRootDirectory = 1,
-        Removeable = 2,
+        Removable = 2,
         Local = 3,
         Network = 4,
         Compact = 5,
