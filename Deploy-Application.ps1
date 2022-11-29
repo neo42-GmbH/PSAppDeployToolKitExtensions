@@ -53,7 +53,7 @@ Param (
 	[switch]$DisableLogging = $false
 )
 
-## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT this section! <-- HJT
+## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT delete this section! <-- HJT
 $global:PackageConfig = Get-Content "$PSScriptRoot\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
 [string]$appVendor = $global:PackageConfig.AppVendor
 [string]$appName = $global:PackageConfig.AppName

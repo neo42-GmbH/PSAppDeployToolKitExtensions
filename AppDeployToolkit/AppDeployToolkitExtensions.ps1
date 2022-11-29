@@ -2995,6 +2995,238 @@ Function Remove-NxtEmptyFolder {
 }
 #endregion
 
+#region Function Execute-NxtInnoSetup
+function Execute-NxtInnoSetup {
+    <#
+	.SYNOPSIS
+		Executes the following actions for InnoSetup installations: install (with installation file), uninstall (with UninstallKey).
+	.DESCRIPTION
+		Sets default switches to be passed to un-/installation file based on the preferences in the XML configuration file.
+		Automatically generates a log file name and creates a log file.
+		Expects the installation file to be located in the "Files" sub directory of the App Deploy Toolkit.
+	.PARAMETER Action
+		The action to perform. Options: Install, Uninstall. Default is: Install.
+	.PARAMETER Path
+		The path to the Inno Setup EXE-File in case of an installation. In case of an uninstallation the UninstallKey (name of the uninstall registry key) of the application.
+	.PARAMETER Parameters
+		Overrides the default parameters specified in the XML configuration file.
+		Install default is: "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
+		Uninstall default is: "/SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
+	.PARAMETER AddParameters
+		Adds to the default parameters specified in the XML configuration file. Install default is: "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
+		Uninstall default is: "/SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
+	.PARAMETER MergeTasks
+		Specifies the tasks which should be done WITHOUT(!) overriding the default tasks (preselected default tasks from the setup).
+		Use "!" before a task name for deselecting a specific task, otherwise it is selected. For specific informations see: https://jrsoftware.org/ishelp/topic_setupcmdline.htm
+	.PARAMETER Log
+		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$timestamp.log"')
+		If only a name ist specified the log path is taken from AppDeployToolkitConfig.xml (node "InnoSetup_LogPath").
+		If this parameter is not specified a log name is generated automatically and the log log path is again taken from AppDeployToolkitConfig.xml (node "InnoSetup_LogPath").
+	.PARAMETER PassThru
+		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $false.
+	.EXAMPLE
+		Execute-NxtInnoSetup -Path "FreeCommanderXE-32-de-public_setup.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`""  -Log "InstallationLog"
+	.EXAMPLE
+		Execute-NxtInnoSetup -Action "Uninstall" -Path "Scribble Papers_is1" -Log "$app\Uninstall.$timestamp.log"
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+			https://neo42.de/psappdeploytoolkit
+	#>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Install', 'Uninstall')]
+        [string]$Action = 'Install',
+
+        [Parameter(Mandatory = $true)]
+        [Alias('FilePath')]
+        [string]$Path,
+
+        [Parameter(Mandatory = $false)]
+        [Alias('Arguments')]
+        [ValidateNotNullorEmpty()]
+        [string]$Parameters,
+        
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [string]$AddParameters,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$MergeTasks,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [string]$Log,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [switch]$PassThru = $false,
+        
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [boolean]$ContinueOnError = $false
+    )
+    Begin {
+        ## read config data
+        [Xml.XmlElement]$xmlConfigInnoSetup = $xmlConfig.InnoSetup_Options
+        [string]$configInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.InnoSetup_InstallParams)
+        [string]$configInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.InnoSetup_UninstallParams)
+        [string]$configInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.InnoSetup_LogPath)
+
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+    Process {
+        ## Test for installation file in case of "Install" action
+        if (($Action -eq 'Install') -and -not(Test-Path -LiteralPath $Path -PathType 'Leaf' -ErrorAction 'SilentlyContinue')) {
+            Write-Log -Message "Specified path for setup file not found: `"$Path`"." -Severity 3 -Source ${CmdletName}
+            if ($ContinueOnError) {
+                return
+            }
+            else {
+                throw "Specified path for setup file not found: `"$Path`"."
+            }
+        }
+    
+        [string]$innoSetupPath = $Path
+   
+        switch ($Action) {
+            'Install' {
+                $InnoSetupDefaultParams = $configInnoSetupInstallParams
+            }
+            'Uninstall' {
+                $InnoSetupDefaultParams = $configInnoSetupUninstallParams
+                $InstalledAppResults = Get-InstalledApplication -ProductCode $innoSetupPath -Exact -ErrorAction 'SilentlyContinue'
+    
+                if (!$InstalledAppResults) {
+                    Write-Log -Message "No Application with UninstallKey `"$innoSetupPath`" found." -Severity 3 -Source ${CmdletName}
+
+                    if ($ContinueOnError) {
+                        return
+                    }
+                    else {
+                        throw "No Application with UninstallKey `"$innoSetupPath`" found on the system."
+                    }
+                }
+    
+                [string]$innoSetupPath = $InstalledAppResults.UninstallString
+    
+                ## check for quotation marks around the uninstall string
+                if ($innoSetupPath.StartsWith('"')) {
+                    [string]$innoSetupPath = $innoSetupPath.Substring(1, $innoSetupPath.IndexOf('"', 1) - 1)
+                }
+                else {
+                    [string]$innoSetupPath = $innoSetupPath.Substring(0, $innoSetupPath.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+                }
+
+				## Check, if UninstallString is not Null or empty and/or uninstall file exists
+				if (![string]::IsNullOrEmpty($innoSetupPath) -or [System.IO.File]::Exists($innoSetupPath)) {
+					## Check if uninstall file exists in $App
+					If ([System.IO.File]::Exists("$App\neoSource\unins000.exe")) {
+						Remove-File -Path "$InstallLocation\unins*.*"
+						Copy-File -Path "$App\neoSource\unins000.*" -Destination "$InstallLocation\"
+						[string]$innoSetupPath = "$InstallLocation\unins000.exe"
+					}	
+				}
+
+				# If any "$InstallLocation\unins[0-9][0-9][1-9].exe" exists, use the one with the highest number
+				If ($False -ne (Get-Item "$InstallLocation\unins[0-9][0-9][1-9].exe")) {
+					[string]$innoSetupPath = Get-Item "$InstallLocation\unins[0-9][0-9][1-9].exe" | Select-Object -last 1 -ExpandProperty FullName
+				}
+
+				#If innoSetupPath jetzt immer noch leer, dann großes Problem!!!
+            }
+        }
+    
+        [string]$argsInnoSetup = $InnoSetupDefaultParams
+    
+        ## Replace default parameters if specified.
+        If ($Parameters) {
+            $argsInnoSetup = $Parameters
+        }
+        ## Append parameters to default parameters if specified.
+        If ($AddParameters) {
+            $argsInnoSetup = "$argsInnoSetup $AddParameters"
+        }
+
+        ## MergeTasks if parameters were not replaced
+        if ((-not($Parameters)) -and (-not([string]::IsNullOrWhiteSpace($MergeTasks)))) {
+            $argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
+        }
+    
+        [string]$fullLogPath = $null
+
+        ## Logging
+        if ([string]::IsNullOrWhiteSpace($Log)) {
+            ## create Log file name if non is specified
+            if ($Action -eq 'Install') {
+				[string]$Log = "$Action_$($Path -replace ' ',[string]::Empty)_$timestamp"
+            }
+            else {
+                [string]$Log = "$Action_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$timestamp"
+            }
+        }
+
+        [string]$LogFileExtension = [System.IO.Path]::GetExtension($Log)
+
+        ## Append file extension if necessary
+        if (($LogFileExtension -ine '.txt') -or ($LogFileExtension -ine '.log')) {
+            $Log = $Log + '.log'
+        }
+
+        ## Check, if $Log is a full path
+        if (-not($Log.Contains('\'))) {
+            $fullLogPath = Join-Path -Path $configInnoSetupLogPath -ChildPath $($Log -replace ' ',[string]::Empty)
+        }
+        else {
+            $fullLogPath = $Log
+        }
+
+        $argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
+    
+        [hashtable]$ExecuteProcessSplat = @{
+            Path             = $innoSetupPath
+            Parameters       = $argsInnoSetup
+            WindowStyle      = 'Normal'
+        }
+        
+        If ($ContinueOnError) {
+            $ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+        }
+        If ($PassThru) {
+            $ExecuteProcessSplat.Add('PassThru', $PassThru)
+        }
+    
+        If ($PassThru) {
+            [psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+        }
+        Else {
+            Execute-Process @ExecuteProcessSplat
+        }
+    
+        ## Update the desktop (in case of changed or added enviroment variables)
+        Update-Desktop
+
+		## Copy uninstallation file from $InstallLocation to $App after a successful installation
+		if ($Action -eq 'Install') {
+			Copy-File -Path "$InstallLocation\unins000.*" -Destination "$App\neoSource\"
+		}
+    }
+    End {
+		If ($PassThru) {
+            Write-Output -InputObject $ExecuteResults
+        }
+
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================

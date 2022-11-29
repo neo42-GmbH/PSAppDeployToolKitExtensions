@@ -58,18 +58,33 @@
 		<!-- Logging level used for MSI logging. -->
 		<MSI_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</MSI_LogPath>
 		<!-- Log path used for MSI logging. -->
-		<MSI_LogPathNoAdminRights>$envProgramData\Logs\Software</MSI_LogPathNoAdminRights>
+		<MSI_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</MSI_LogPathNoAdminRights>
 		<!-- Log path used for MSI logging when RequireAdmin is False. -->
-		<MSI_InstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_InstallParams>
+		<MSI_InstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qb-!</MSI_InstallParams>
 		<!-- Installation parameters used for non-silent MSI actions. -->
 		<MSI_SilentParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_SilentParams>
 		<!-- Installation parameters used for silent MSI actions. -->
-		<MSI_UninstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qn</MSI_UninstallParams>
+		<MSI_UninstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qb-!</MSI_UninstallParams>
 		<!-- Installation parameters used for MSI uninstall actions. -->
 		<MSI_MutexWaitTime>600</MSI_MutexWaitTime>
 		<!-- The length of time in seconds to wait for the MSI installer service to become available. Default is 600 seconds (10 minutes) -->
 	</MSI_Options>
 	<!--MSI Options-->
+
+	<!--NxtInnoSetup Options-->
+	<NxtInnoSetup_Options>
+		<NxtInnoSetup_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</NxtInnoSetup_LogPath>
+		<!-- Log path used for InnoSetup logging. -->
+		<NxtInnoSetup_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
+		<!-- Log path used for InnoSetup logging when RequireAdmin is False. -->
+		<NxtInnoSetup_InstallParams>/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_InstallParams>
+		<!-- Installation parameters used for non-silent InnoSetup actions. -->
+		<NxtInnoSetup_SilentParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_SilentParams>
+		<!-- Installation parameters used for silent InnoSetup actions. -->
+		<NxtInnoSetup_UninstallParams>/SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_UninstallParams>
+		<!-- Installation parameters used for InnoSetup uninstall actions. -->
+	</NxtInnoSetup_Options>
+	<!--NxtInnoSetup Options-->
 
 	<!--UI Options-->
 	<UI_Options>
