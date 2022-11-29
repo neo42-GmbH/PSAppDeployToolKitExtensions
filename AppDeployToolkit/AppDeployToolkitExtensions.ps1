@@ -38,10 +38,9 @@ Param (
 #region Function Initialize-NxtEnvironment
 Function Initialize-NxtEnvironment {
 	<#
-	.SYNOPSIS
-		Initializes all neo42 functions and variables
 	.DESCRIPTION
-		Should be called on top of at any 'Deploy-Application.ps1' 
+		Initializes all neo42 functions and variables.
+		Should be called on top of any 'Deploy-Application.ps1'.
 	.EXAMPLE
 		Initialize-NxtEnvironment
 	.LINK
@@ -59,7 +58,7 @@ Function Initialize-NxtEnvironment {
 	Process {
 		If (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
 			[string]$extensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs"
-			if(Test-Path -Path $extensionCsPath) {
+			if (Test-Path -Path $extensionCsPath) {
 				Add-Type -Path $extensionCsPath -IgnoreWarnings -ErrorAction 'Stop'
 			}
 			else {
@@ -78,12 +77,12 @@ Function Initialize-NxtEnvironment {
 #region Function Get-NxtPackageConfig
 Function Get-NxtPackageConfig {
 	<#
-	.SYNOPSIS
-		Initializes all neo42 functions and variables
 	.DESCRIPTION
-		Should be called on top of any 'Deploy-Application.ps1' 
+		Parses the neo42PackageConfig.json into the variable $global:PackageConfig.
 	.EXAMPLE
 		Get-NxtPackageConfig
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -116,6 +115,8 @@ Function Set-NxtPackageArchitecture {
 		Set-NxtPackageArchitecture
 	.NOTES
 		Should be executed during package Initialization only.
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -236,11 +237,13 @@ Function Uninstall-NxtOld {
 	.SYNOPSIS
 		Uninstalls old package versions if "UninstallOld": true.
 	.DESCRIPTION
-		If UninstallOld is set to true, the function checks for old versions of the same package (same $UninstallKeyName) and uninstalls them.
+		If $UninstallOld is set to true, the function checks for old versions of the same package / $UninstallKeyName and uninstalls them.
 	.EXAMPLE
 		Uninstall-NxtOld
 	.NOTES
 		Should be executed during package Initialization only.
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -411,11 +414,13 @@ Function Register-NxtPackage {
 	.SYNOPSIS
 		Copies package files and registers the package in the registry.
 	.DESCRIPTION
-		Copies the package files to "$APP\neoInstall\" and writes the package's registry keys under "HKLM\Software[\Wow6432Node]\$regPackagesKey\$UninstallKeyName" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName".
+		Copies the package files to the local store and writes the package's registry keys under "HKLM\Software[\Wow6432Node]\$regPackagesKey\$UninstallKeyName" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName".
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
 		Should be executed at the end of each neo42-package installation and when using Soft Migration only.
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -496,6 +501,8 @@ Function Unregister-NxtPackage {
 		Unregister-NxtPackage
 	.NOTES
 		Should be executed at the end of each neo42-package uninstallation only.
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -613,20 +620,22 @@ Function Copy-NxtDesktopShortcuts {
 Function Stop-NxtProcess {
 	<#
 	.SYNOPSIS
-		Stops a process by name
+		Stops a process by name.
 	.DESCRIPTION
-		Wrapper of the native Stop-Process cmdlet
+		Wrapper of the native Stop-Process cmdlet.
 	.PARAMETER Name
-		Name of the process
+		Name of the process.
 	.EXAMPLE
 		Stop-NxtProcess -Name Notepad
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$Name
 	)
 		
@@ -652,16 +661,17 @@ Function Stop-NxtProcess {
 #endregion
 
 #region Get-NxtComputerManufacturer
-
-<#
-.DESCRIPTION
-    gets manufacturer of computersystem
-.EXAMPLE
-    Get-NxtComputerManufacturer
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
 function Get-NxtComputerManufacturer {
+	<#
+	.DESCRIPTION
+		Gets the manufacturer of the computer system.
+	.EXAMPLE
+		Get-NxtComputerManufacturer
+	.OUTPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -673,28 +683,28 @@ function Get-NxtComputerManufacturer {
 			$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Manufacturer).Manufacturer
 		}
 		catch {
-			Write-Log -Message "Failed to get Computermanufacturer. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to get computer manufacturer. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return $result
+		Write-Output $result
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtComputerModel
-
-<#
-.DESCRIPTION
-    gets model of computersystem
-.EXAMPLE
-    Get-NxtComputerModel
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
 function Get-NxtComputerModel {
+	<#
+	.DESCRIPTION
+		Gets the model of the computer system.
+	.EXAMPLE
+		Get-NxtComputerModel
+	.OUTPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -706,31 +716,31 @@ function Get-NxtComputerModel {
 			$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Model).Model
 		}
 		catch {
-			Write-Log -Message "Failed to get Computermodel. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to get computer model. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return $result
+		Write-Output $result
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtFileVersion
-
-<#
-.DESCRIPTION
-    Gets version of file.
-    The return value is a version object.
-.PARAMETER FilePath
-    Full path to the file.
-.EXAMPLE
-    Get-NxtFileVersion "D:\setup.exe"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
 function Get-NxtFileVersion([string]$FilePath) {
+	<#
+	.DESCRIPTION
+		Gets version of file.
+		The return value is a version object.
+	.PARAMETER FilePath
+		Full path to the file.
+	.EXAMPLE
+		Get-NxtFileVersion "D:\setup.exe"
+	.OUTPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -744,28 +754,28 @@ function Get-NxtFileVersion([string]$FilePath) {
 		catch {
 			Write-Log -Message "Failed to get version from file '$FilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return $result
+		Write-Output $result
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtFolderSize
-
-<#
-.DESCRIPTION
-    Gets size of folder recursive in bytes
-.PARAMETER FolderPath
-    Path to the folder.
-.EXAMPLE
-    Get-NxtFolderSize "D:\setup\"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
 function Get-NxtFolderSize([string]$FolderPath) {
+	<#
+	.DESCRIPTION
+		Gets the size of the folder recursive in bytes.
+	.PARAMETER FolderPath
+		Path to the folder.
+	.EXAMPLE
+		Get-NxtFolderSize "D:\setup\"
+	.OUTPUTS
+		System.Long
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -780,34 +790,32 @@ function Get-NxtFolderSize([string]$FolderPath) {
 		catch {
 			Write-Log -Message "Failed to get size from folder '$FolderPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return $result
+		Write-Output $result
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtDriveType 
-
 function Get-NxtDriveType {
 	<#
 	.DESCRIPTION
-		Gets drivetype.
+		Gets the drive type.
+	.PARAMETER FolderPath
+		Name of the drive.
+	.OUTPUTS
+		PSADTNXT.DriveType
 
-		Return values:
+		Values:
 		Unknown = 0
 		NoRootDirectory = 1
-		Removeable = 2
+		Removable = 2
 		Local = 3
 		Network = 4
 		Compact = 5
 		Ram = 6
-	.PARAMETER FolderPath
-		Name of the drive
-	.OUTPUTS
-		PSADTNXT.DriveType
 	.EXAMPLE
 		Get-NxtDriveType "c:"
 	.LINK
@@ -815,7 +823,7 @@ function Get-NxtDriveType {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$DriveName
@@ -839,22 +847,22 @@ function Get-NxtDriveType {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtDriveFreeSpace
-
-<#
-.DESCRIPTION
-    Gets free space of drive in bytes.
-.PARAMETER FolderPath
-    Name of the drive
-.EXAMPLE
-    Get-NxtDriveFreeSpace "c:"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
 function Get-NxtDriveFreeSpace([string]$DriveName) {
+	<#
+	.DESCRIPTION
+		Gets free space of drive in bytes.
+	.PARAMETER FolderPath
+		Name of the drive.
+	.EXAMPLE
+		Get-NxtDriveFreeSpace "c:"
+	.OUTPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -863,10 +871,10 @@ function Get-NxtDriveFreeSpace([string]$DriveName) {
 	Process {
 		try {
 			$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
-			return $disk.FreeSpace
+			Write-Output $disk.FreeSpace
 		}
 		catch {
-			Write-Log -Message "Failed to get freespace for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to get free space for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 		return 0
 	}
@@ -874,25 +882,23 @@ function Get-NxtDriveFreeSpace([string]$DriveName) {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtProcessName
-
-<#
-.DESCRIPTION
-    Gets name of process.
-    Returns:
-        The name of process or empty string.
-.PARAMETER FolderPath
-    Process Id
-.EXAMPLE
-    Get-NxtProcessName 1004
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Get-NxtProcessName([int]$ProcessId)
-{
+function Get-NxtProcessName([int]$ProcessId) {
+	<#
+	.DESCRIPTION
+		Gets name of process.
+		Returns an empty string if process was not found.
+	.PARAMETER FolderPath
+		Id of the process.
+	.EXAMPLE
+		Get-NxtProcessName 1004
+	.OUTPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -913,19 +919,15 @@ function Get-NxtProcessName([int]$ProcessId)
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtIsSystemProcess
-
 function Get-NxtIsSystemProcess {
 	<#
 	.DESCRIPTION
-		Gets process is running with System-Account or not.
-		Returns:
-			$True or $False
+		Detects if process is running with system account or not.
 	.PARAMETER FolderPath
-		Process Id
+		Id of the process.
 	.OUTPUTS
 		System.Boolean
 	.EXAMPLE
@@ -935,7 +937,7 @@ function Get-NxtIsSystemProcess {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[int]
 		$ProcessId
@@ -960,22 +962,20 @@ function Get-NxtIsSystemProcess {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtWindowsVersion
-
-<#
-.DESCRIPTION
-    Gets the Windows Version (CurrentVersion) from the Registry
-.EXAMPLE
-    Get-NxtWindowsVersion
-.OUTPUTS
-	System.String
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
 function Get-NxtWindowsVersion {
+	<#
+	.DESCRIPTION
+		Gets the Windows Version (CurrentVersion) from the Registry.
+	.EXAMPLE
+		Get-NxtWindowsVersion
+	.OUTPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -993,22 +993,20 @@ function Get-NxtWindowsVersion {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtOsLanguage
-
 function Get-NxtOsLanguage {
 	<#
-.DESCRIPTION
-    Gets OsLanguage as LCID Code from Get-Culture 
-.EXAMPLE
-    Get-NxtOsLanguage
-.OUTPUTS
-	System.Int
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
+	.DESCRIPTION
+		Gets OsLanguage as LCID Code from the Get-Culture cmdlet.
+	.EXAMPLE
+		Get-NxtOsLanguage
+	.OUTPUTS
+		System.Int
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1026,22 +1024,20 @@ function Get-NxtOsLanguage {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtUILanguage
-
 function Get-NxtUILanguage {
 	<#
-.DESCRIPTION
-    Gets UiLanguage as LCID Code from Get-UICulture 
-.EXAMPLE
-    Get-NxtUILanguage
-.OUTPUTS
-	System.Int
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
+	.DESCRIPTION
+		Gets UiLanguage as LCID Code from Get-UICulture.
+	.EXAMPLE
+		Get-NxtUILanguage
+	.OUTPUTS
+		System.Int
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1059,22 +1055,20 @@ function Get-NxtUILanguage {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtProcessorArchiteW6432
-
 function Get-NxtProcessorArchiteW6432 {
 	<#
-.DESCRIPTION
-    Gets the Environment Variable $env:PROCESSOR_ARCHITEW6432 which is only set in a x86_32 process, returns empty string if run under 64-Bit Process
-.EXAMPLE
-    Get-NxtProcessorArchiteW6432
-.OUTPUTS
-	System.String
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
+	.DESCRIPTION
+		Gets the environment variable $env:PROCESSOR_ARCHITEW6432 which is only set in a x86_32 process, returns empty string if run under 64-Bit Process.
+	.EXAMPLE
+		Get-NxtProcessorArchiteW6432
+	.OUTPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1092,22 +1086,20 @@ function Get-NxtProcessorArchiteW6432 {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtWindowsBits
-
 function Get-NxtWindowsBits {
 	<#
-.DESCRIPTION
-    Translates the  Environment Variable $env:PROCESSOR_ARCHITECTURE from x86 and amd64 to 32 / 64
-.EXAMPLE
-    Get-NxtWindowsBits
-.OUTPUTS
-	System.Int
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
+	.DESCRIPTION
+		Translates the environment variable $env:PROCESSOR_ARCHITECTURE from x86 and amd64 to 32 / 64.
+	.EXAMPLE
+		Get-NxtWindowsBits
+	.OUTPUTS
+		System.Int
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1135,27 +1127,24 @@ function Get-NxtWindowsBits {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Move-NxtItem
-
-
 function Move-NxtItem {
 	<#
-.DESCRIPTION
-    Renames or moves a File or Directory to the DestinationPath
-.EXAMPLE
-    Move-NxtItem -SourcePath C:\Temp\Sources\Installer.exe -DestinationPath C:\Temp\Sources\Installer_bak.exe
-.PARAMETER Path
-	Source Path of the File or Directory 
-.PARAMETER DestinationPath
-	Destination Path for the File or Directory
-.OUTPUTS
-	none
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
+	.DESCRIPTION
+		Renames or moves a file or directory.
+	.EXAMPLE
+		Move-NxtItem -SourcePath C:\Temp\Sources\Installer.exe -DestinationPath C:\Temp\Sources\Installer_bak.exe
+	.PARAMETER Path
+		Source Path of the File or Directory.
+	.PARAMETER DestinationPath
+		Destination Path for the File or Directory.
+	.OUTPUTS
+		none
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory = $true)]
@@ -1182,27 +1171,24 @@ function Move-NxtItem {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Test-NxtProcessExists
-
-<#
-.DESCRIPTION
-    Tests if a process exists by name or custom WQL query.
-.PARAMETER ProcessName
-    Name of the process or WQL search string
-.PARAMETER IsWql
-    Defines if the given ProcessName is a WQL search string
-.OUTPUTS
-	System.Boolean
-.EXAMPLE
-    Test-NxtProcessExists "Notepad"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false)
-{
+function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false) {
+	<#
+	.DESCRIPTION
+		Tests if a process exists by name or custom WQL query.
+	.PARAMETER ProcessName
+		Name of the process or WQL search string.
+	.PARAMETER IsWql
+		Defines if the given ProcessName is a WQL search string.
+	.OUTPUTS
+		System.Boolean
+	.EXAMPLE
+		Test-NxtProcessExists "Notepad"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1211,14 +1197,14 @@ function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false)
 	Process {
 		try {
 			[string]$wqlString = ""
-			if($IsWql){
+			if ($IsWql) {
 				$wqlString = $ProcessName
 			}
 			else {
 				$wqlString = "Name LIKE '$($ProcessName)'"
 			}
 			$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
-			if($processes){
+			if ($processes) {
 				Write-Output $true
 			}
 			else {
@@ -1233,27 +1219,24 @@ function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false)
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Watch-NxtRegistryKey
-
-<#
-.DESCRIPTION
-    Tests if a registry key exists in a given time
-.PARAMETER RegistryKey
-    Name of the registry key to watch
-.PARAMETER Timeout
-    Timeout in seconds the function waits for the key
-.OUTPUTS
-	System.Boolean
-.EXAMPLE
-    Watch-NxtRegistryKey -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60)
-{
+function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60) {
+	<#
+	.DESCRIPTION
+		Tests if a registry key exists in a given time.
+	.PARAMETER RegistryKey
+		Name of the registry key to watch.
+	.PARAMETER Timeout
+		Timeout in seconds that the function waits for the key.
+	.OUTPUTS
+		System.Boolean
+	.EXAMPLE
+		Watch-NxtRegistryKey -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1262,9 +1245,9 @@ function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60)
 	Process {
 		try {
 			$waited = 0
-			while($waited -lt $Timeout) {
+			while ($waited -lt $Timeout) {
 				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
-				if($key){
+				if ($key) {
 					Write-Output $true
 					return
 				}
@@ -1281,27 +1264,24 @@ function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60)
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Watch-NxtRegistryKeyIsRemoved
-
-<#
-.DESCRIPTION
-    Tests if a registry key disappears in a given time
-.PARAMETER RegistryKey
-    Name of the registry key to watch
-.PARAMETER Timeout
-    Timeout in seconds the function waits for the key the disappear
-.OUTPUTS
-	System.Boolean
-.EXAMPLE
-    Watch-NxtRegistryKeyIsRemoved -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60)
-{
+function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60) {
+	<#
+	.DESCRIPTION
+		Tests if a registry key disappears in a given time.
+	.PARAMETER RegistryKey
+		Name of the registry key to watch.
+	.PARAMETER Timeout
+		Timeout in seconds the function waits for the key the disappear.
+	.OUTPUTS
+		System.Boolean
+	.EXAMPLE
+		Watch-NxtRegistryKeyIsRemoved -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1310,9 +1290,9 @@ function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60)
 	Process {
 		try {
 			$waited = 0
-			while($waited -lt $Timeout) {
+			while ($waited -lt $Timeout) {
 				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
-				if($null -eq $key){
+				if ($null -eq $key) {
 					Write-Output $true
 					return
 				}
@@ -1333,24 +1313,22 @@ function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60)
 #endregion
 
 #region Watch-NxtFile
-
-<#
-.DESCRIPTION
-    Tests if a file exists in a given time.
-	Automatically resolves cmd environment variables.
-.PARAMETER FileName
-    Name of the file to watch
-.PARAMETER Timeout
-    Timeout in seconds the function waits for the file to appear
-.OUTPUTS
-	System.Boolean
-.EXAMPLE
-    Watch-NxtFile -FileName "C:\Temp\Sources\Installer.exe"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Watch-NxtFile([string]$FileName, [int]$Timeout = 60)
-{
+function Watch-NxtFile([string]$FileName, [int]$Timeout = 60) {
+	<#
+	.DESCRIPTION
+		Tests if a file exists in a given time.
+		Automatically resolves cmd environment variables.
+	.PARAMETER FileName
+		Name of the file to watch
+	.PARAMETER Timeout
+		Timeout in seconds the function waits for the file to appear
+	.OUTPUTS
+		System.Boolean
+	.EXAMPLE
+		Watch-NxtFile -FileName "C:\Temp\Sources\Installer.exe"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1359,9 +1337,9 @@ function Watch-NxtFile([string]$FileName, [int]$Timeout = 60)
 	Process {
 		try {
 			$waited = 0
-			while($waited -lt $Timeout) {
+			while ($waited -lt $Timeout) {
 				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
-				if($result){
+				if ($result) {
 					Write-Output $true
 					return
 				}
@@ -1382,24 +1360,22 @@ function Watch-NxtFile([string]$FileName, [int]$Timeout = 60)
 #endregion
 
 #region Watch-NxtFileIsRemoved
-
-<#
-.DESCRIPTION
-    Tests if a file disappears in a given time.
-	Automatically resolves cmd environment variables.
-.PARAMETER FileName
-    Name of the file to watch
-.PARAMETER Timeout
-    Timeout in seconds the function waits for the file the disappear
-.OUTPUTS
-	System.Boolean
-.EXAMPLE
-    Watch-NxtFileIsRemoved -FileName "C:\Temp\Sources\Installer.exe"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60)
-{
+function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60) {
+	<#
+	.DESCRIPTION
+		Tests if a file disappears in a given time.
+		Automatically resolves cmd environment variables.
+	.PARAMETER FileName
+		Name of the file to watch.
+	.PARAMETER Timeout
+		Timeout in seconds the function waits for the file the disappear.
+	.OUTPUTS
+		System.Boolean
+	.EXAMPLE
+		Watch-NxtFileIsRemoved -FileName "C:\Temp\Sources\Installer.exe"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1408,9 +1384,9 @@ function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60)
 	Process {
 		try {
 			$waited = 0
-			while($waited -lt $Timeout) {
+			while ($waited -lt $Timeout) {
 				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
-				if($false -eq $result){
+				if ($false -eq $result) {
 					Write-Output $true
 					return
 				}
@@ -1427,29 +1403,26 @@ function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60)
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Watch-NxtProcess
-
-<#
-.DESCRIPTION
-    Tests if a process exists by name or custom WQL query in a given time.
-.PARAMETER ProcessName
-    Name of the process or WQL search string
-.PARAMETER Timeout
-    Timeout in seconds the function waits for the process to start
-.PARAMETER IsWql
-    Defines if the given ProcessName is a WQL search string
-.OUTPUTS
-	System.Boolean
-.EXAMPLE
-    Watch-NxtProcess -ProcessName "Notepad.exe"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false)
-{
+function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false) {
+	<#
+	.DESCRIPTION
+		Checks whether a process exists within a given time based on the name or a custom WQL query.
+	.PARAMETER ProcessName
+		Name of the process or WQL search string.
+	.PARAMETER Timeout
+		Timeout in seconds the function waits for the process to start.
+	.PARAMETER IsWql
+		Defines if the given ProcessName is a WQL search string.
+	.OUTPUTS
+		System.Boolean
+	.EXAMPLE
+		Watch-NxtProcess -ProcessName "Notepad.exe"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1458,15 +1431,15 @@ function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsW
 	Process {
 		try {
 			$waited = 0
-			while($waited -lt $Timeout) {
-				if($IsWql){
+			while ($waited -lt $Timeout) {
+				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
-				else{
+				else {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName
 				}
 				
-				if($result){
+				if ($result) {
 					Write-Output $true
 					return
 				}
@@ -1483,29 +1456,26 @@ function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsW
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Watch-NxtProcessIsStopped
-
-<#
-.DESCRIPTION
-    Tests if a process stops by name or custom WQL query in a given time.
-.PARAMETER ProcessName
-    Name of the process or WQL search string
-.PARAMETER Timeout
-    Timeout in seconds the function waits for the process the stop
-.PARAMETER IsWql
-    Defines if the given ProcessName is a WQL search string
-.OUTPUTS
-	System.Boolean
-.EXAMPLE
-    Watch-NxtProcessIsStopped -ProcessName "Notepad.exe"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false)
-{
+function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false) {
+	<#
+	.DESCRIPTION
+		Checks whether a process ends within a given time based on the name or a custom WQL query.
+	.PARAMETER ProcessName
+		Name of the process or WQL search string.
+	.PARAMETER Timeout
+		Timeout in seconds the function waits for the process the stop.
+	.PARAMETER IsWql
+		Defines if the given ProcessName is a WQL search string.
+	.OUTPUTS
+		System.Boolean
+	.EXAMPLE
+		Watch-NxtProcessIsStopped -ProcessName "Notepad.exe"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1514,15 +1484,15 @@ function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [sw
 	Process {
 		try {
 			$waited = 0
-			while($waited -lt $Timeout) {
-				if($IsWql){
+			while ($waited -lt $Timeout) {
+				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
-				else{
+				else {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName
 				}
 				
-				if($false -eq $result){
+				if ($false -eq $result) {
 					Write-Output $true
 					return
 				}
@@ -1539,26 +1509,23 @@ function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [sw
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtServiceState
-
-<#
-.DESCRIPTION
-    Gets the state of the given service name.
-	Returns $null if service was not found.
-.PARAMETER ServiceName
-    Name of the service
-.OUTPUTS
-	System.String
-.EXAMPLE
-    Get-NxtServiceState "BITS"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Get-NxtServiceState([string]$ServiceName)
-{
+function Get-NxtServiceState([string]$ServiceName) {
+	<#
+	.DESCRIPTION
+		Gets the state of the given service name.
+		Returns $null if service was not found.
+	.PARAMETER ServiceName
+		Name of the service.
+	.OUTPUTS
+		System.String
+	.EXAMPLE
+		Get-NxtServiceState "BITS"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1567,7 +1534,7 @@ function Get-NxtServiceState([string]$ServiceName)
 	Process {
 		try {
 			$service = Get-WmiObject -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
-			if($service){
+			if ($service) {
 				Write-Output $service.State
 			}
 			else {
@@ -1583,26 +1550,23 @@ function Get-NxtServiceState([string]$ServiceName)
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtNameBySid
-
-<#
-.DESCRIPTION
-    Gets the netbios user name for a SID.
-	Returns $null if SID was not found.
-.PARAMETER Sid
-    SID to search
-.OUTPUTS
-	System.String
-.EXAMPLE
-    Get-NxtNameBySid -Sid "S-1-5-21-3072877179-2344900292-1557472252-500"
-.LINK
-    https://neo42.de/psappdeploytoolkit
-#>
-function Get-NxtNameBySid([string]$Sid)
-{
+function Get-NxtNameBySid([string]$Sid) {
+	<#
+	.DESCRIPTION
+		Gets the netbios user name for a SID.
+		Returns $null if SID was not found.
+	.PARAMETER Sid
+		SID to search.
+	.OUTPUTS
+		System.String
+	.EXAMPLE
+		Get-NxtNameBySid -Sid "S-1-5-21-3072877179-2344900292-1557472252-500"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1612,7 +1576,7 @@ function Get-NxtNameBySid([string]$Sid)
 		try {
 			[System.Management.ManagementObject]$wmiAccount = ([wmi]"win32_SID.SID='$Sid'")
 			[string]$result = "$($wmiAccount.ReferencedDomainName)\$($wmiAccount.AccountName)"
-			if($result -eq "\"){
+			if ($result -eq "\") {
 				Write-Output $null
 				return
 			}
@@ -1628,16 +1592,13 @@ function Get-NxtNameBySid([string]$Sid)
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Compare-NxtVersion
-
-function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackageVersion)
-{
+function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackageVersion) {
 	<#
 	.DESCRIPTION
-		Compares two versions.
+		Compares two package versions.
 
 	    Return values:
 			Equal = 1
@@ -1662,38 +1623,35 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 	Process {
 		try {
 			$parseVersion = { param($version) 	
-				[int[]]$result = 0,0,0,0
-				$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string,PSADTNXT.VersionKeyValuePair]]{ param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x,([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char,PSADTNXT.VersionPartInfo]]{ param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
-				for ($i=0; $i -lt $versionParts.count; $i++){
+				[int[]]$result = 0, 0, 0, 0
+				$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
+				for ($i = 0; $i -lt $versionParts.count; $i++) {
 					[int]$versionPartValue = 0
 					$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
-					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo,bool]]{ param($x) [System.Char]::IsDigit($x.Value) })) {
+					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo, bool]] { param($x) [System.Char]::IsDigit($x.Value) })) {
 						$versionPartValue = [int]::Parse($pair.Key)
 					}
 					else {
 						$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
-						if ($value -ne $null -and [System.Char]::IsLetter($value.Value)) {
-							#Importent for compare (An upper 'A'==65 char must have the value 10) 
+						if ($null -ne $value -and [System.Char]::IsLetter($value.Value)) {
+							#Important for compare (An upper 'A'==65 char must have the value 10) 
 							$versionPartValue = $value.AsciiValue - 55
 						}
 					}
 					$result[$i] = $versionPartValue
 				}
-				Write-Output (New-Object System.Version -ArgumentList $result[0],$result[1],$result[2],$result[3])
+				Write-Output (New-Object System.Version -ArgumentList $result[0], $result[1], $result[2], $result[3])
 				return }.GetNewClosure()
 
 			[System.Version]$instVersion = &$parseVersion -Version $InstalledPackageVersion
 			[System.Version]$newVersion = &$parseVersion -Version $NewPackageVersion
-			if ($instVersion -eq $newVersion)
-			{
+			if ($instVersion -eq $newVersion) {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
 			}
-			elseif ($newVersion -gt $instVersion)
-			{
+			elseif ($newVersion -gt $instVersion) {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Update)
 			}
-			else
-			{
+			else {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade)
 			}
 		}
@@ -1706,21 +1664,18 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Function Get-NxtFileEncoding
 function Get-NxtFileEncoding {
 	<#
-  	.SYNOPSIS
-		Returns the estimated Encoding based on Bom Detection, Defaults to ASCII
   	.DESCRIPTION
-		Returns the estimated Encoding based on Bom Detection, Defaults to ASCII,
-		Used to get the default encoding for Add-NxtContent
+		Returns the estimated encoding based on BOM detection, defaults to ASCII.
+		Used to get the default encoding for Add-NxtContent.
   	.PARAMETER Path
-		The Path to the File
+		The path to the file.
 	.PARAMETER DefaultEncoding
-	  	Encoding to be returned in case the encoding could not be detected
+	  	Encoding to be returned in case the encoding could not be detected.
   	.OUTPUTS
 		System.String
   	.EXAMPLE
@@ -1763,24 +1718,25 @@ function Get-NxtFileEncoding {
 #endregion
   
 #region Add-NxtContent
-  
 function Add-NxtContent {
 	<#
 	.DESCRIPTION
-		Appends Files
-  .PARAMETER Path
-	  Path to the File to be appended
-  .PARAMETER Value
-		String to be appended to the File
-  .PARAMETER Encoding
-	  Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding
-  .PARAMETER DefaultEncoding
-	  Encoding to be used in case the encoding could not be detected
-  .EXAMPLE
-	  Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
-  .LINK
-	  https://neo42.de/psappdeploytoolkit
-  #>
+		Appends strings to text files.
+	.PARAMETER Path
+		Path to the file.
+	.PARAMETER Value
+		String to be appended.
+	.PARAMETER Encoding
+		Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding.
+	.PARAMETER DefaultEncoding
+		Encoding to be used in case the encoding could not be detected.
+	.EXAMPLE
+		Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
+  	.OUTPUTS
+		none
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	[CmdletBinding()]
 	param(
 		[Parameter()]
@@ -1817,9 +1773,10 @@ function Add-NxtContent {
 					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
 				$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
-				if($intEncoding -eq "UTF8"){
+				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
-				}ElseIf($intEncoding -eq "UTF8withBom"){
+				}
+				ElseIf ($intEncoding -eq "UTF8withBom") {
 					[bool]$noBOMDetected = $false
 					$intEncoding = "UTF8"
 				}
@@ -1836,9 +1793,10 @@ function Add-NxtContent {
 			if (![string]::IsNullOrEmpty($intEncoding)) {
 				$contentParams['Encoding'] = $intEncoding 
 			}
-			if($noBOMDetected -and ($intEncoding -eq "UTF8")){
+			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
 				[System.IO.File]::AppendAllLines($Path, $Content)
-			}else{
+			}
+			else {
 				Add-Content @contentParams
 			}
 			
@@ -1852,31 +1810,31 @@ function Add-NxtContent {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-  
 #endregion
 
 #region Update-NxtTextInFile
-  
 function Update-NxtTextInFile {
 	<#
   	.DESCRIPTION
-	  Replaces the text in a file by searchstring
+		Replaces text in a file by search string.
   	.PARAMETER Path
-	  Path to the File to be updated
+		Path to the File to be updated.
   	.PARAMETER SearchString
-	  String to be updated in the File
+		String to be replaced in the File.
   	.PARAMETER ReplaceString
-	  The String to be inserted to the found occurences
+		The string to be inserted to the found occurrences.
   	.PARAMETER Count
-	  Number of occurences to be replaced
+		Number of occurrences to be replaced.
   	.PARAMETER Encoding
-	  Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding
+		Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding.
 	.PARAMETER DefaultEncoding
-	  Encoding to be used in case the encoding could not be detected
+		Encoding to be used in case the encoding could not be detected.
   	.EXAMPLE
-	  Update-NxtTextInFile -Path C:\Temp\testfile.txt -SearchString "Hello" 
+		Update-NxtTextInFile -Path C:\Temp\testfile.txt -SearchString "Hello" 
+	.OUTPUTS
+		none
   	.LINK
-	  https://neo42.de/psappdeploytoolkit
+		https://neo42.de/psappdeploytoolkit
   #>
 	[CmdletBinding()]
 	param(
@@ -1923,9 +1881,10 @@ function Update-NxtTextInFile {
 					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
 				$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
-				if($intEncoding -eq "UTF8"){
+				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
-				}ElseIf($intEncoding -eq "UTF8withBom"){
+				}
+				ElseIf ($intEncoding -eq "UTF8withBom") {
 					[bool]$noBOMDetected = $false
 					$intEncoding = "UTF8"
 				}
@@ -1944,22 +1903,23 @@ function Update-NxtTextInFile {
 			$Content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
 			[Array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
-			if ($regexMatches.count -eq 0){
+			if ($regexMatches.count -eq 0) {
 				Write-Log -Message "Did not find anything to replace in file '$Path'."
 				return
 			}
-			[ARRAY]::Reverse($regexMatches)
+			[Array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
 				$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
 			}
-			if($noBOMDetected -and ($intEncoding -eq "UTF8")){
+			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
 				[System.IO.File]::WriteAllLines($Path, $Content)
-			}else{
+			}
+			else {
 				$Content | Set-Content @contentParams -NoNewline
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to Add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 		return
 	}
@@ -1967,11 +1927,9 @@ function Update-NxtTextInFile {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-  
 #endregion
 
 #region Get-NxtSidByName
-
 function Get-NxtSidByName {
 	<#
 	.DESCRIPTION
@@ -1981,13 +1939,15 @@ function Get-NxtSidByName {
 		Name of the user to search.
 	.EXAMPLE
 		Get-NxtSidByName -UserName "Workgroup\Administrator"
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$UserName
@@ -1999,8 +1959,8 @@ function Get-NxtSidByName {
 	}
 	Process {
 		try {
-            [string]$sid = (Get-WmiObject -Query "Select SID from Win32_UserAccount Where Caption LIKE '$($UserName.Replace("\","\\").Replace("\\\\","\\"))'").Sid
-			if([string]::IsNullOrEmpty($sid)) {
+			[string]$sid = (Get-WmiObject -Query "Select SID from Win32_UserAccount Where Caption LIKE '$($UserName.Replace("\","\\").Replace("\\\\","\\"))'").Sid
+			if ([string]::IsNullOrEmpty($sid)) {
 				Write-Output $null
 			}
 			else {
@@ -2010,25 +1970,23 @@ function Get-NxtSidByName {
 		catch {
 			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-        return
+		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Get-NxtProcessEnvironmentVariable
-
-function Get-NxtProcessEnvironmentVariable([string]$Key)  {
+function Get-NxtProcessEnvironmentVariable([string]$Key) {
 	<#
 	.DESCRIPTION
-		Gets the value of the process enviroment variable.
+		Gets the value of the process environment variable.
 	.PARAMETER Key
-		Key of the variable
+		Key of the variable.
 	.OUTPUTS
-		string
+		System.String
 	.EXAMPLE
 		Get-NxtProcessEnvironmentVariable "Test"
 	.LINK
@@ -2040,35 +1998,35 @@ function Get-NxtProcessEnvironmentVariable([string]$Key)  {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-        [string]$result = $null
+		[string]$result = $null
 		try {
-            $result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Process)
+			$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Process)
 		}
 		catch {
-			Write-Log -Message "Failed to get the process enviroment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to get the process environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-        Write-Output $result
-        return
+		Write-Output $result
+		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Set-NxtProcessEnvironmentVariable
-
-function Set-NxtProcessEnvironmentVariable([string]$Key, [string]$Value)  {
+function Set-NxtProcessEnvironmentVariable([string]$Key, [string]$Value) {
 	<#
 	.DESCRIPTION
-		Sets a process enviroment variable.
+		Sets a process environment variable.
 	.PARAMETER Key
-		Key of the variable
+		Key of the variable.
 	.PARAMETER Value
-		Value of the variable
+		Value of the variable.
 	.EXAMPLE
 		Set-NxtProcessEnvironmentVariable -Key "Test" -Value "Hello world"
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2079,29 +2037,29 @@ function Set-NxtProcessEnvironmentVariable([string]$Key, [string]$Value)  {
 	}
 	Process {
 		try {
-            [System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Process)
+			[System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Process)
 		}
 		catch {
-			Write-Log -Message "Failed to set the process enviroment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to set the process environment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Remove-NxtProcessEnvironmentVariable
-
-function Remove-NxtProcessEnvironmentVariable([string]$Key)  {
+function Remove-NxtProcessEnvironmentVariable([string]$Key) {
 	<#
 	.DESCRIPTION
-		Deletes a process enviroment variable.
+		Deletes a process environment variable.
 	.PARAMETER Key
-		Key of the variable
+		Key of the variable.
 	.EXAMPLE
 		Remove-NxtProcessEnvironmentVariable "Test"
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2112,10 +2070,10 @@ function Remove-NxtProcessEnvironmentVariable([string]$Key)  {
 	}
 	Process {
 		try {
-            [System.Environment]::SetEnvironmentVariable($Key, $null, [System.EnvironmentVariableTarget]::Process)
+			[System.Environment]::SetEnvironmentVariable($Key, $null, [System.EnvironmentVariableTarget]::Process)
 		}
 		catch {
-			Write-Log -Message "Failed to remove the process enviroment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to remove the process environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -2126,15 +2084,14 @@ function Remove-NxtProcessEnvironmentVariable([string]$Key)  {
 #endregion
 
 #region Get-NxtSystemEnvironmentVariable
-
-function Get-NxtSystemEnvironmentVariable([string]$Key)  {
+function Get-NxtSystemEnvironmentVariable([string]$Key) {
 	<#
 	.DESCRIPTION
-		Gets the value of the system enviroment variable.
+		Gets the value of the system environment variable.
 	.PARAMETER Key
 		Key of the variable
 	.OUTPUTS
-		string
+		System.String
 	.EXAMPLE
 		Get-NxtSystemEnvironmentVariable "windir"
 	.LINK
@@ -2146,35 +2103,35 @@ function Get-NxtSystemEnvironmentVariable([string]$Key)  {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-        [string]$result = $null
+		[string]$result = $null
 		try {
-            $result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Machine)
+			$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Machine)
 		}
 		catch {
-			Write-Log -Message "Failed to get the system enviroment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to get the system environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-        Write-Output $result
-        return
+		Write-Output $result
+		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Set-NxtSystemEnvironmentVariable
-
-function Set-NxtSystemEnvironmentVariable([string]$Key, [string]$Value)  {
+function Set-NxtSystemEnvironmentVariable([string]$Key, [string]$Value) {
 	<#
 	.DESCRIPTION
-		Sets a system enviroment variable.
+		Sets a system environment variable.
 	.PARAMETER Key
 		Key of the variable
 	.PARAMETER Value
 		Value of the variable
 	.EXAMPLE
 		Set-NxtSystemEnvironmentVariable "Test" "Hello world"
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2185,29 +2142,29 @@ function Set-NxtSystemEnvironmentVariable([string]$Key, [string]$Value)  {
 	}
 	Process {
 		try {
-            [System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Machine)
+			[System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Machine)
 		}
 		catch {
-			Write-Log -Message "Failed to set the system enviroment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to set the system environment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Remove-NxtSystemEnvironmentVariable
-
-function Remove-NxtSystemEnvironmentVariable([string]$Key)  {
+function Remove-NxtSystemEnvironmentVariable([string]$Key) {
 	<#
 	.DESCRIPTION
-		Deletes a system enviroment variable.
+		Deletes a system environment variable.
 	.PARAMETER Key
-		Key of the variable
+		Key of the variable.
 	.EXAMPLE
 		Remove-NxtSystemEnvironmentVariable "Test"
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2218,59 +2175,58 @@ function Remove-NxtSystemEnvironmentVariable([string]$Key)  {
 	}
 	Process {
 		try {
-            [System.Environment]::SetEnvironmentVariable($Key, $null, [System.EnvironmentVariableTarget]::Machine)
+			[System.Environment]::SetEnvironmentVariable($Key, $null, [System.EnvironmentVariableTarget]::Machine)
 		}
 		catch {
-			Write-Log -Message "Failed to remove the system enviroment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to remove the system environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Test-NxtLocalUserExists
 function Test-NxtLocalUserExists {
 	<#
 	.DESCRIPTION
-		Checks if a local user exists by name
-	.EXAMPLE
-		Test-NxtLocalUserExists -UserName "Administrator"
+		Checks if a local user exists by name.
 	.PARAMETER UserName
 		Name of the user
+	.EXAMPLE
+		Test-NxtLocalUserExists -UserName "Administrator"
 	.OUTPUTS
 		System.Boolean
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$UserName
-		)
-		Begin {
-			## Get the name of this function and write header
-			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$UserName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[bool]$userExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$UserName,user"))
+			Write-Output $userExists
 		}
-		Process {
-			try {
-				[bool]$userExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$UserName,user"))
-				Write-Output $userExists
-			}
-			catch {
-				## Skip log output since [ADSI]::Exists throws if user is not found
-				#Write-Log -Message "Failed to search for user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				Write-Output $false
-			}
+		catch {
+			## Skip log output since [ADSI]::Exists throws if user is not found
+			#Write-Log -Message "Failed to search for user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
 		}
-		End {
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 
@@ -2280,8 +2236,6 @@ function Add-NxtLocalUser {
 	.DESCRIPTION
 		Creates a local user with the given parameter.
 		If the user already exists only FullName, Description, SetPwdExpired and SetPwdNeverExpires are processed.
-	.EXAMPLE
-		Add-NxtLocalUser -UserName "ServiceUser" -Password "123!abc" -Description "User to run service" -SetPwdNeverExpires
 	.PARAMETER UserName
 		Name of the user
 	.PARAMETER Password
@@ -2294,89 +2248,91 @@ function Add-NxtLocalUser {
 		If set the user has to change the password at first logon.
 	.PARAMETER SetPwdNeverExpires
 		If set the password is set to not expire.
+	.EXAMPLE
+		Add-NxtLocalUser -UserName "ServiceUser" -Password "123!abc" -Description "User to run service" -SetPwdNeverExpires
 	.OUTPUTS
 		System.Boolean
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding(DefaultParameterSetName = 'Default')]
-		param (
-			[Parameter(ParameterSetName='Default', Mandatory=$true)]
-			[Parameter(ParameterSetName='SetPwdNeverExpires', Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$UserName,
-			[Parameter(ParameterSetName='Default', Mandatory=$true)]
-			[Parameter(ParameterSetName='SetPwdNeverExpires', Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$Password,
-			[Parameter(Mandatory=$false)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$FullName,
-			[Parameter(Mandatory=$false)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$Description,
-            [Parameter(ParameterSetName='Default', Mandatory=$false)]
-			[ValidateNotNullorEmpty()]
-			[switch]
-			$SetPwdExpired,
-            [Parameter(ParameterSetName='SetPwdNeverExpires', Mandatory=$false)]
-			[ValidateNotNullorEmpty()]
-			[switch]
-			$SetPwdNeverExpires
-		)
-		Begin {
-			## Get the name of this function and write header
-			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	[CmdletBinding(DefaultParameterSetName = 'Default')]
+	param (
+		[Parameter(ParameterSetName = 'Default', Mandatory = $true)]
+		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$UserName,
+		[Parameter(ParameterSetName = 'Default', Mandatory = $true)]
+		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$Password,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$FullName,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$Description,
+		[Parameter(ParameterSetName = 'Default', Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]
+		$SetPwdExpired,
+		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]
+		$SetPwdNeverExpires
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+			if ($false -eq $userExists) {
+				[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
+				$objUser.setpassword($Password)
+				$objUser.SetInfo()
+			}
+			else {
+				[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$UserName,user"
+			}
+			if (-NOT [string]::IsNullOrEmpty($FullName)) {
+				$objUser.Put("FullName", $FullName)
+				$objUser.SetInfo()
+			}
+			if (-NOT [string]::IsNullOrEmpty($Description)) {
+				$objUser.Put("Description", $Description)
+				$objUser.SetInfo()
+			}
+			if ($SetPwdExpired) {
+				## Reset to normal account flag ADS_UF_NORMAL_ACCOUNT
+				$objUser.UserFlags = 512
+				$objUser.SetInfo()
+				## Set password expired
+				$objUser.Put("PasswordExpired", 1)
+				$objUser.SetInfo()
+			}
+			if ($SetPwdNeverExpires) {
+				## Set flag ADS_UF_DONT_EXPIRE_PASSWD 
+				$objUser.UserFlags = 65536
+				$objUser.SetInfo()
+			}
+			return $true
 		}
-		Process {
-			try {
-				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
-				[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
-				if($false -eq $userExists){
-					[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
-					$objUser.setpassword($Password)
-					$objUser.SetInfo()
-				}
-				else {
-					[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$UserName,user"
-				}
-				if(-NOT [string]::IsNullOrEmpty($FullName)){
-					$objUser.Put("FullName",$FullName)
-					$objUser.SetInfo()
-				}
-				if(-NOT [string]::IsNullOrEmpty($Description)){
-					$objUser.Put("Description",$Description)
-					$objUser.SetInfo()
-				}
-				if($SetPwdExpired){
-					## Reset to normal account flag ADS_UF_NORMAL_ACCOUNT
-					$objUser.UserFlags = 512
-					$objUser.SetInfo()
-					## Set password expired
-					$objUser.Put("PasswordExpired",1)
-					$objUser.SetInfo()
-				}
-				if($SetPwdNeverExpires){
-					## Set flag ADS_UF_DONT_EXPIRE_PASSWD 
-					$objUser.UserFlags = 65536
-					$objUser.SetInfo()
-				}
-				return $true
-			}
-			catch {
-				Write-Log -Message "Failed to create user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				Write-Output $false
-			}
+		catch {
+			Write-Log -Message "Failed to create user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
+		}
 			
-		}
-		End {
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 
@@ -2384,49 +2340,49 @@ function Add-NxtLocalUser {
 function Remove-NxtLocalUser {
 	<#
 	.DESCRIPTION
-		Deletes a local group with the given name.
-	.EXAMPLE
-		Remove-NxtLocalUser -UserName "Test"
+		Deletes a local group by name.
 	.PARAMETER UserName
 		Name of the user
+	.EXAMPLE
+		Remove-NxtLocalUser -UserName "Test"
 	.OUTPUTS
 		System.Boolean
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$UserName
-		)
-		Begin {
-			## Get the name of this function and write header
-			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		}
-		Process {
-			try {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$UserName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
 				
-				[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
-				if($userExists){
-					[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
-					$adsiObj.Delete("User", $UserName)
-					Write-Output $true
-					return
-				}
-				Write-Output $false
+			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+			if ($userExists) {
+				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+				$adsiObj.Delete("User", $UserName)
+				Write-Output $true
+				return
 			}
-			catch {
-				Write-Log -Message "Failed to delete user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				Write-Output $false
-			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to delete user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
+		}
 			
-		}
-		End {
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 
@@ -2434,41 +2390,41 @@ function Remove-NxtLocalUser {
 function Test-NxtLocalGroupExists {
 	<#
 	.DESCRIPTION
-		Checks if a local group exists by name
+		Checks if a local group exists by name.
+	.PARAMETER GroupName
+		Name of the group.
 	.EXAMPLE
 		Test-NxtLocalGroupExists -GroupName "Administrators"
-	.PARAMETER GroupName
-		Name of the group
 	.OUTPUTS
 		System.Boolean
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$GroupName
-		)
-		Begin {
-			## Get the name of this function and write header
-			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$GroupName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
+			Write-Output $groupExists
 		}
-		Process {
-			try {
-				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
-				Write-Output $groupExists
-			}
-			catch {
-				Write-Log -Message "Failed to search for group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				Write-Output $false
-			}
+		catch {
+			Write-Log -Message "Failed to search for group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
 		}
-		End {
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 
@@ -2478,59 +2434,59 @@ function Add-NxtLocalGroup {
 	.DESCRIPTION
 		Creates a local group with the given parameter.
 		If group already exists only the description parameter is processed.
+	.PARAMETER GroupName
+		Name of the group.
+	.PARAMETER Description
+		Description for the new group.
 	.EXAMPLE
 		Add-NxtLocalGroup -GroupName "TestGroup"
-	.PARAMETER GroupName
-		Name of the group
-	.PARAMETER Description
-		Description for the new group
 	.OUTPUTS
 		System.Boolean
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$GroupName,
-			[Parameter(Mandatory=$false)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$Description
-		)
-		Begin {
-			## Get the name of this function and write header
-			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$GroupName,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$Description
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+			if ($false -eq $groupExists) {
+				[System.DirectoryServices.DirectoryEntry]$objGroup = $adsiObj.Create("Group", $GroupName)
+				$objGroup.SetInfo()
+			}
+			else {
+				[System.DirectoryServices.DirectoryEntry]$objGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+			}
+			if (-NOT [string]::IsNullOrEmpty($Description)) {
+				$objGroup.Put("Description", $Description)
+				$objGroup.SetInfo()
+			}
+			return $true
 		}
-		Process {
-			try {
-				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
-				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
-				if($false -eq $groupExists){
-					[System.DirectoryServices.DirectoryEntry]$objGroup = $adsiObj.Create("Group", $GroupName)
-					$objGroup.SetInfo()
-				}
-				else {
-					[System.DirectoryServices.DirectoryEntry]$objGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
-				}
-				if(-NOT [string]::IsNullOrEmpty($Description)){
-					$objGroup.Put("Description",$Description)
-					$objGroup.SetInfo()
-				}
-				return $true
-			}
-			catch {
-				Write-Log -Message "Failed to create group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				Write-Output $false
-			}
+		catch {
+			Write-Log -Message "Failed to create group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
+		}
 			
-		}
-		End {
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 
@@ -2539,48 +2495,48 @@ function Remove-NxtLocalGroup {
 	<#
 	.DESCRIPTION
 		Deletes a local group with the given name.
-	.EXAMPLE
-		Remove-NxtLocalGroup -GroupName "TestGroup"
 	.PARAMETER GroupName
 		Name of the group
+	.EXAMPLE
+		Remove-NxtLocalGroup -GroupName "TestGroup"
 	.OUTPUTS
 		System.Boolean
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$GroupName
-		)
-		Begin {
-			## Get the name of this function and write header
-			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		}
-		Process {
-			try {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$GroupName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
 				
-				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
-				if($groupExists){
-					[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
-					$adsiObj.Delete("Group", $GroupName)
-					Write-Output $true
-					return
-				}
-				Write-Output $false
+			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+			if ($groupExists) {
+				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+				$adsiObj.Delete("Group", $GroupName)
+				Write-Output $true
+				return
 			}
-			catch {
-				Write-Log -Message "Failed to delete group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				Write-Output $false
-			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to delete group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
+		}
 			
-		}
-		End {
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 
@@ -2591,10 +2547,6 @@ function Remove-NxtLocalGroupMember {
 		Removes a single member or a type of member from the given group by name.
 		Returns the amount of members removed.
 		Returns $null if the groups was not found.
-	.EXAMPLE
-		Remove-NxtLocalGroupMember -GroupName "Users" -All
-	.EXAMPLE
-		Remove-NxtLocalGroupMember -GroupName "Administrators" -MemberName "Dummy"
 	.PARAMETER MemberName
 		Name of the member to remove
 	.PARAMETER Users
@@ -2603,91 +2555,91 @@ function Remove-NxtLocalGroupMember {
 		If defined all groups are removed
 	.PARAMETER All
 		If defined all members are removed
+	.EXAMPLE
+		Remove-NxtLocalGroupMember -GroupName "Users" -All
+	.EXAMPLE
+		Remove-NxtLocalGroupMember -GroupName "Administrators" -MemberName "Dummy"
 	.OUTPUTS
 		System.Int32
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$GroupName,
-			[Parameter(ParameterSetName='SingleMember')]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$MemberName,
-			[Parameter(ParameterSetName='Users')]
-			[Switch]
-			$AllUsers,
-			[Parameter(ParameterSetName='Groups')]
-			[Switch]
-			$AllGroups,
-			[Parameter(ParameterSetName='All')]
-			[Switch]
-			$AllMember
-		)
-		Begin {
-			## Get the name of this function and write header
-			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		}
-		Process {
-			try {
-				[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
-				if($groupExists){
-                    [System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
-                    if([string]::IsNullOrEmpty($MemberName))
-                    {
-                        [int]$count = 0
-					    foreach($member in $group.psbase.Invoke("Members"))
-					    {
-						    $class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
-						    if($AllMember){
-							    $group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
-							    $count++
-						    }
-						    elseif($AllUsers){
-							    if($class -eq "user"){
-								    $group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
-								    $count++
-							    }
-						    }
-						    elseif($AllGroups){
-							    if($class -eq "group"){
-								    $group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
-								    $count++
-							    }
-						    }
-					    }
-					    Write-Output $count
-                    }
-					else{
-                        foreach($member in $group.psbase.Invoke("Members"))
-					    {
-						    [string]$name = $member.GetType().InvokeMember("Name", 'GetProperty', $Null, $member, $Null)
-						    if($name -eq $MemberName)
-						    {
-							    $group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
-							    Write-Output 1
-							    return
-						    }
-					    }
-                    }
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$GroupName,
+		[Parameter(ParameterSetName = 'SingleMember')]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$MemberName,
+		[Parameter(ParameterSetName = 'Users')]
+		[Switch]
+		$AllUsers,
+		[Parameter(ParameterSetName = 'Groups')]
+		[Switch]
+		$AllGroups,
+		[Parameter(ParameterSetName = 'All')]
+		[Switch]
+		$AllMember
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
+			if ($groupExists) {
+				[System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+				if ([string]::IsNullOrEmpty($MemberName)) {
+					[int]$count = 0
+					foreach ($member in $group.psbase.Invoke("Members")) {
+						$class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
+						if ($AllMember) {
+							$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+							$count++
+						}
+						elseif ($AllUsers) {
+							if ($class -eq "user") {
+								$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+								$count++
+							}
+						}
+						elseif ($AllGroups) {
+							if ($class -eq "group") {
+								$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+								$count++
+							}
+						}
+					}
+					Write-Output $count
 				}
-				else{
-					Write-Output $null
+				else {
+					foreach ($member in $group.psbase.Invoke("Members")) {
+						[string]$name = $member.GetType().InvokeMember("Name", 'GetProperty', $Null, $member, $Null)
+						if ($name -eq $MemberName) {
+							$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+							Write-Output 1
+							return
+						}
+					}
 				}
 			}
-			catch {
-				Write-Log -Message "Failed to remove members from $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			else {
 				Write-Output $null
 			}
 		}
-		End {
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+		catch {
+			Write-Log -Message "Failed to remove members from $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $null
 		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 
@@ -2696,175 +2648,168 @@ function Remove-NxtLocalGroupMember {
 function Add-NxtLocalGroupMember {
 	<#
 	.DESCRIPTION
-		Adds local member to a local group
+		Adds local member to a local group.
+	.PARAMETER GroupName
+		Name of the target group.
+	.PARAMETER MemberName
+		Name of the member to add.
+	.PARAMETER MemberType
+		Defines the type of member.
 	.EXAMPLE
 		Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestUser" -MemberType "User"
-	.PARAMETER GroupName
-		Name of the target group
-	.PARAMETER MemberName
-		Name of the member to add
-	.PARAMETER MemberType
-		Defines the type of member
 	.OUTPUTS
 		System.Boolean
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-		[CmdletBinding()]
-		param (
-			[Parameter(Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$GroupName,
-			[Parameter(Mandatory=$true)]
-			[ValidateNotNullorEmpty()]
-			[string]
-			$MemberName,
-			[Parameter(Mandatory=$true)]
-			[ValidateSet('Group','User')]
-			[string]
-			$MemberType
-		)
-		Begin {
-			## Get the name of this function and write header
-			[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		}
-		Process {
-			try {
-				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
-				if($false -eq $groupExists){
-					Write-Output $false
-					return
-				}
-				[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
-				if($MemberType -eq "Group"){
-					[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $MemberName
-					if($false -eq $groupExists){
-						Write-Output $false
-						return
-					}
-					[System.DirectoryServices.DirectoryEntry]$memberGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,group"
-					#$targetGroup.psbase.Invoke("Add", "WinNT://$($env:COMPUTERNAME)/$MemberName,")
-					$targetGroup.psbase.Invoke("Add", $memberGroup.path)
-					Write-Output $true
-					return
-				}
-				elseif($MemberType -eq "User"){
-					[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName
-					if($false -eq $userExists ){
-						Write-Output $false
-						return
-					}
-					[System.DirectoryServices.DirectoryEntry]$memberUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,user"
-					$targetGroup.psbase.Invoke("Add", $memberUser.path)
-					Write-Output $true
-					return
-				}
-				Write-Output $false
-			}
-			catch {
-				Write-Log -Message "Failed to add $MemberName of type $MemberType to $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				Write-Output $false
-			}
-			
-		}
-		End {
-			Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-		}
-}
-#endregion
-
-#region Read-NxtSingleXmlNode
-
-function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName) 
-{
-	<#
-	.DESCRIPTION
-		Reads single node of xml-file.
-	.PARAMETER XmlFilePath
-		Path to the Xml-File.
-	.PARAMETER SingleNodeName
-		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
-	.OUTPUTS
-		string
-	.EXAMPLE
-		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-    Begin {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$GroupName,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$MemberName,
+		[Parameter(Mandatory = $true)]
+		[ValidateSet('Group', 'User')]
+		[string]
+		$MemberType
+	)
+	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
 		try {
-            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-            $xmlDoc.Load($XmlFilePath)
-            Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText)
+			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+			if ($false -eq $groupExists) {
+				Write-Output $false
+				return
+			}
+			[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+			if ($MemberType -eq "Group") {
+				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $MemberName
+				if ($false -eq $groupExists) {
+					Write-Output $false
+					return
+				}
+				[System.DirectoryServices.DirectoryEntry]$memberGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,group"
+				$targetGroup.psbase.Invoke("Add", $memberGroup.path)
+				Write-Output $true
+				return
+			}
+			elseif ($MemberType -eq "User") {
+				[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName
+				if ($false -eq $userExists ) {
+					Write-Output $false
+					return
+				}
+				[System.DirectoryServices.DirectoryEntry]$memberUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,user"
+				$targetGroup.psbase.Invoke("Add", $memberUser.path)
+				Write-Output $true
+				return
+			}
+			Write-Output $false
+		}
+		catch {
+			Write-Log -Message "Failed to add $MemberName of type $MemberType to $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
+		}
+			
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
+#region Read-NxtSingleXmlNode
+function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName) {
+	<#
+	.DESCRIPTION
+		Reads single node of xml file.
+	.PARAMETER XmlFilePath
+		Path to the xml file.
+	.PARAMETER SingleNodeName
+		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
+	.EXAMPLE
+		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
+	.OUTPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
+			$xmlDoc.Load($XmlFilePath)
+			Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText)
 		}
 		finally {
-			Write-Log -Message "Failed to read single node '$SingleNodeName' from Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to read single node '$SingleNodeName' from xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Write-NxtSingleXmlNode
-
-function Write-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName, [string]$Value) 
-{
+function Write-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName, [string]$Value) {
 	<#
 	.DESCRIPTION
-		Writes single node to xml-file.
+		Writes single node to xml file.
 	.PARAMETER XmlFilePath
-		Path to the Xml-File.
+		Path to the xml file.
 	.PARAMETER SingleNodeName
 		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
 	.PARAMETER Value
 		Node value.
 	.EXAMPLE
 		Write-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -Value "müller"
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-    Begin {
+	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
 		try {
-            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-            $xmlDoc.Load($XmlFilePath)
-            $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
-            $xmlDoc.Save($XmlFilePath)
+			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
+			$xmlDoc.Load($XmlFilePath)
+			$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
+			$xmlDoc.Save($XmlFilePath)
 		}
 		catch {
-			Write-Log -Message "Failed to write value '$Value' to single node '$SingleNodeName' in Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to write value '$Value' to single node '$SingleNodeName' in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Write-NxtXmlNode
-
-function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model) 
-{
+function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model) {
 	<#
 	.DESCRIPTION
-		Adds a node with attributes and values to an existing xml-file.
+		Adds a node with attributes and values to an existing xml file.
 	.PARAMETER XmlFilePath
-		Path to the Xml-File.
+		Path to the xml file.
 	.PARAMETER Model
 		Xml Node model.
 	.EXAMPLE
@@ -2887,23 +2832,25 @@ function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model)
 				<value>Impress MS PowerPoint 2007 XML</value>
  			</prop>
 		</item>
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-    Begin {
+	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
 		try {
-            [System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-            $xmlDoc.Load($XmlFilePath)
+			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
+			$xmlDoc.Load($XmlFilePath)
 
 			$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
 				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, "")
 
-				for ($i=0; $i -lt $child.Attributes.count; $i++) {
+				for ($i = 0; $i -lt $child.Attributes.count; $i++) {
 					$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
 					[System.Xml.XmlAttribute]$xmlAttribute = $doc.CreateAttribute($attribute.Key, "http://www.w3.org/1999/XSL/Transform")
 					$xmlAttribute.Value = $attribute.Value
@@ -2923,17 +2870,16 @@ function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model)
 			
 			$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
 			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
-            [void]$xmlDoc.Save($XmlFilePath)
+			[void]$xmlDoc.Save($XmlFilePath)
 		}
 		catch {
-			Write-Log -Message "Failed to write node in Xml-File '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to write node in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
 #endregion
 
 #region Function Remove-NxtEmptyFolder
@@ -2947,12 +2893,14 @@ Function Remove-NxtEmptyFolder {
 		Path to the empty folder to remove
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
+	.OUTPUTS
+		none
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]$Path
 	)
@@ -2966,15 +2914,17 @@ Function Remove-NxtEmptyFolder {
 		Write-Log -Message "Check if [$path] exists and is empty..." -Source ${CmdletName}
 		If (Test-Path -LiteralPath $Path -PathType 'Container') {
 			Try {
-				If( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
+				If ( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
 					Write-Log -Message "Delete empty folder [$path]..." -Source ${CmdletName}
 					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveFolder'
 					If ($ErrorRemoveFolder) {
 						Write-Log -Message "The following error(s) took place while deleting the empty folder [$path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${CmdletName}
-					} else {
+					}
+					else {
 						Write-Log -Message "Empty folder [$Path] was deleted successfully..." -Source ${CmdletName}
 					}
-				} else {
+				}
+				else {
 					Write-Log -Message "Folder [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
 				}
 			}
