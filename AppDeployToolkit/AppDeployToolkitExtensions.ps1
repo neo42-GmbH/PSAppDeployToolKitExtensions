@@ -2997,7 +2997,6 @@ function Execute-NxtInnoSetup {
 
         [Parameter(Mandatory = $false)]
         [Alias('Arguments')]
-        [ValidateNotNullorEmpty()]
         [string]$Parameters,
         
         [Parameter(Mandatory = $false)]
@@ -3022,27 +3021,33 @@ function Execute-NxtInnoSetup {
     )
     Begin {
         ## read config data
-        [Xml.XmlElement]$xmlConfigInnoSetup = $xmlConfig.InnoSetup_Options
-        [string]$configInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.InnoSetup_InstallParams)
-        [string]$configInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.InnoSetup_UninstallParams)
-        [string]$configInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.InnoSetup_LogPath)
+        [Xml.XmlElement]$xmlConfigInnoSetup = $xmlConfig.NxtInnoSetup_Options
+        [string]$configInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.NxtInnoSetup_InstallParams)
+        [string]$configInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.NxtInnoSetup_UninstallParams)
+        [string]$configInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigInnoSetup.NxtInnoSetup_LogPath)
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
         Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
     Process {
-        ## Test for installation file in case of "Install" action
-        if (($Action -eq 'Install') -and -not(Test-Path -LiteralPath $Path -PathType 'Leaf' -ErrorAction 'SilentlyContinue')) {
-            Write-Log -Message "Specified path for setup file not found: `"$Path`"." -Severity 3 -Source ${CmdletName}
-            if ($ContinueOnError) {
-                return
-            }
-            else {
-                throw "Specified path for setup file not found: `"$Path`"."
-            }
+        ## If the Setup File is in the Files directory, set the full path during an installation
+        if ($Action -eq 'Install') {
+			If (Test-Path -LiteralPath (Join-Path -Path $dirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
+				[string]$innoSetupPath = Join-Path -Path $dirFiles -ChildPath $path
+			}
+			ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
+				[string]$innoSetupPath = (Get-Item -LiteralPath $Path).FullName
+			}
+			Else {
+				Write-Log -Message "Failed to find installation file [$path]." -Severity 3 -Source ${CmdletName}
+				If (-not $ContinueOnError) {
+					Throw "Failed to find installation file [$path]."
+				}
+				Continue
+			}
         }
-    
+
         [string]$innoSetupPath = $Path
    
         switch ($Action) {
@@ -3054,14 +3059,8 @@ function Execute-NxtInnoSetup {
                 $InstalledAppResults = Get-InstalledApplication -ProductCode $innoSetupPath -Exact -ErrorAction 'SilentlyContinue'
     
                 if (!$InstalledAppResults) {
-                    Write-Log -Message "No Application with UninstallKey `"$innoSetupPath`" found." -Severity 3 -Source ${CmdletName}
-
-                    if ($ContinueOnError) {
-                        return
-                    }
-                    else {
-                        throw "No Application with UninstallKey `"$innoSetupPath`" found on the system."
-                    }
+                    Write-Log -Message "No Application with UninstallKey `"$innoSetupPath`" found. Skipping action [$Action]..." -Source ${CmdletName}
+					return
                 }
     
                 [string]$innoSetupPath = $InstalledAppResults.UninstallString
@@ -3074,22 +3073,32 @@ function Execute-NxtInnoSetup {
                     [string]$innoSetupPath = $innoSetupPath.Substring(0, $innoSetupPath.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
                 }
 
-				## Check, if UninstallString is not Null or empty and/or uninstall file exists
-				if (![string]::IsNullOrEmpty($innoSetupPath) -or [System.IO.File]::Exists($innoSetupPath)) {
-					## Check if uninstall file exists in $App
-					If ([System.IO.File]::Exists("$App\neoSource\unins000.exe")) {
-						Remove-File -Path "$InstallLocation\unins*.*"
-						Copy-File -Path "$App\neoSource\unins000.*" -Destination "$InstallLocation\"
-						[string]$innoSetupPath = "$InstallLocation\unins000.exe"
-					}	
+				## If the uninstall file does not exist, restore it from $App, if it exists there
+				if (![System.IO.File]::Exists($innoSetupPath) -and [System.IO.File]::Exists("$App\neoSource\unins000.exe")) {
+					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
+					Remove-File -Path "$InstallLocation\unins*.*"
+					Copy-File -Path "$App\neoSource\unins000.*" -Destination "$InstallLocation\"
+					[string]$innoSetupPath = "$InstallLocation\unins000.exe"	
 				}
 
-				# If any "$InstallLocation\unins[0-9][0-9][1-9].exe" exists, use the one with the highest number
-				If ($False -ne (Get-Item "$InstallLocation\unins[0-9][0-9][1-9].exe")) {
-					[string]$innoSetupPath = Get-Item "$InstallLocation\unins[0-9][0-9][1-9].exe" | Select-Object -last 1 -ExpandProperty FullName
+				# If any "$InstallLocation\unins[0-9][0-9][0-9].exe" exists, use the one with the highest number
+				If ($true -eq (Get-Item "$InstallLocation\unins[0-9][0-9][0-9].exe")) {
+					[string]$innoSetupPath = Get-Item "$InstallLocation\unins[0-9][0-9][0-9].exe" | Select-Object -last 1 -ExpandProperty FullName
+					Write-Log -Message "Uninstall file set to: `"$innoSetupPath`"." -Source ${CmdletName}
 				}
 
-				#If innoSetupPath jetzt immer noch leer, dann großes Problem!!!
+				#If $innoSetupPath is still unexistend, write Error to log and abort
+				if (![System.IO.File]::Exists($innoSetupPath)) {
+                    Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
+
+                    if ($ContinueOnError) {
+                        return
+                    }
+                    else {
+                        throw "Uninstallation file could not be found nor restored."
+                    }
+                }
+
             }
         }
     
@@ -3115,17 +3124,17 @@ function Execute-NxtInnoSetup {
         if ([string]::IsNullOrWhiteSpace($Log)) {
             ## create Log file name if non is specified
             if ($Action -eq 'Install') {
-				[string]$Log = "$Action_$($Path -replace ' ',[string]::Empty)_$timestamp"
+				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$timestamp"
             }
             else {
-                [string]$Log = "$Action_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$timestamp"
+                [string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$timestamp"
             }
         }
 
         [string]$LogFileExtension = [System.IO.Path]::GetExtension($Log)
 
         ## Append file extension if necessary
-        if (($LogFileExtension -ine '.txt') -or ($LogFileExtension -ine '.log')) {
+        if (($LogFileExtension -ne '.txt') -and ($LogFileExtension -ne '.log')) {
             $Log = $Log + '.log'
         }
 

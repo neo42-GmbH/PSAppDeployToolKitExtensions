@@ -286,8 +286,14 @@ function Install-NxtApplication {
 	[string]$global:installPhase = 'Installation'
 
 	## <Perform Installation tasks here>
+	
+	If ($method -like "Inno*") {
+		Execute-NxtInnoSetup -Action "Install" -Path "$instFile" -Parameters "$instPara" -Log "$InstLogFile"
+	}
+	Else {
+		Execute-Process -Path "$instFile" -Parameters "$instPara"
+	}
 
-	Execute-Process -Path "$instFile" -Parameters "$instPara"
 	Start-Sleep 5
 
 	return $true
@@ -325,7 +331,7 @@ function Complete-NxtPackageInstallation {
 	
 
 	If ($true -eq $userPartOnInstallation) {
-		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomInstallUserPart-function below.>
+		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$uninstallKeyName.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$app\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$app\neo42-Userpart\SupportFiles"
@@ -336,34 +342,35 @@ function Complete-NxtPackageInstallation {
 }
 
 function Uninstall-NxtApplication {
-	<#
-.SYNOPSIS
-	Defines the required steps to uninstall the application based on the target installer type
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.EXAMPLE
-	Uninstall-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
-	##*===============================================
-	##* PRE-UNINSTALLATION
-	##*===============================================
+		<#
+	.SYNOPSIS
+		Defines the required steps to uninstall the application based on the target installer type
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.EXAMPLE
+		Uninstall-NxtApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
 	## <Perform Pre-Uninstallation tasks here>
 	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent'
 
-	##*===============================================
-	##* UNINSTALLATION
-	##*===============================================
 	[string]$global:installPhase = 'Uninstallation'
 	
 	If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
 	
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
-		Execute-Process -Path "$uninstFile" -Parameters "$uninstPara"
+		If ($method -like "Inno*") {
+			Execute-NxtInnoSetup -Action "Uninstall" -Path "$UninstallKey" -Parameters "$uninstPara" -Log "$UninstLogFile"
+		}
+		Else {
+			Execute-Process -Path "$uninstFile" -Parameters "$uninstPara"
+		}
+
 		Start-Sleep 5
 	}
 	## <Perform Uninstallation tasks here, which should always be executed, even if the software is not installed anymore.>
