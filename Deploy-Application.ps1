@@ -288,13 +288,15 @@ function Install-NxtApplication {
 	## <Perform Installation tasks here>
 	
 	If ($method -like "Inno*") {
-		Execute-NxtInnoSetup -Action "Install" -Path "$instFile" -Parameters "$instPara" -Log "$InstLogFile"
+		Execute-NxtInnoSetup -Action "Install" -UninstallKey "$UninstallKey" -Path "$instFile" -Parameters "$instPara" -Log "$InstLogFile"
 	}
 	Else {
 		Execute-Process -Path "$instFile" -Parameters "$instPara"
 	}
 
 	Start-Sleep 5
+
+	# If RegUninstallKey gesetzt, prüfe Installationserfolg anhand des RegUninstallKey
 
 	return $true
 }
@@ -365,13 +367,16 @@ function Uninstall-NxtApplication {
 	
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
 		If ($method -like "Inno*") {
-			Execute-NxtInnoSetup -Action "Uninstall" -Path "$UninstallKey" -Parameters "$uninstPara" -Log "$UninstLogFile"
+			Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$uninstPara" -Log "$UninstLogFile"
 		}
 		Else {
 			Execute-Process -Path "$uninstFile" -Parameters "$uninstPara"
 		}
 
 		Start-Sleep 5
+
+		# If RegUninstallKey gesetzt, prüfe Deinstallationserfolg anhand des RegUninstallKey
+		
 	}
 	## <Perform Uninstallation tasks here, which should always be executed, even if the software is not installed anymore.>
 		
