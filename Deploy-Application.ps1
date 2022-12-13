@@ -287,8 +287,14 @@ function Install-NxtApplication {
 
 	## <Perform Installation tasks here>
 	
-	If ($method -like "Inno*") {
+	If ($method -eq "MSI") {
+		Execute-MSI -Action 'Install' -Path "$instFile" -Parameters "$instPara" -LogName "$InstLogFile"
+	}
+	ElseIf ($method -like "Inno*") {
 		Execute-NxtInnoSetup -Action "Install" -UninstallKey "$UninstallKey" -Path "$instFile" -Parameters "$instPara" -Log "$InstLogFile"
+	}
+	ElseIf ($method -eq "Nullsoft") {
+		Execute-NxtNullsoft -Action "Install" -UninstallKey "$UninstallKey" -Path "$instFile" -Parameters "$instPara"
 	}
 	Else {
 		Execute-Process -Path "$instFile" -Parameters "$instPara"
@@ -300,7 +306,7 @@ function Install-NxtApplication {
 	# Test successfull installation
 	If (-not (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString')) {
 		Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
-		# Exit ...Which ExitCode? $InstallExitCode?
+		# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
 	}
 
 	return $true
@@ -371,8 +377,15 @@ function Uninstall-NxtApplication {
 	If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
 	
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
-		If ($method -like "Inno*") {
+		
+		If ($method -eq "MSI") {
+			Execute-MSI -Action 'Uninstall' -Path "$UninstallKey" -Parameters "$uninstPara" -LogName "$UninstLogFile"
+		}
+		ElseIf ($method -like "Inno*") {
 			Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$uninstPara" -Log "$UninstLogFile"
+		}
+		ElseIf ($method -eq "Nullsoft") {
+			Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$uninstPara"
 		}
 		Else {
 			Execute-Process -Path "$uninstFile" -Parameters "$uninstPara"
@@ -384,7 +397,7 @@ function Uninstall-NxtApplication {
 		# Test successfull uninstallation
 		If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
 			Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
-			# Exit ...Which ExitCode? $UninstallExitCode?
+			# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
 		}
 	}
 	## <Perform Uninstallation tasks here, which should always be executed, even if the software is not installed anymore.>

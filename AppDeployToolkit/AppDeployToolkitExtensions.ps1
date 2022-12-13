@@ -3370,7 +3370,7 @@ function Execute-NxtNullsoft {
             }
             'Uninstall' {
                 [string]$nullsoftDefaultParams = $configNxtNullsoftUninstallParams
-                $[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey -Exact -ErrorAction 'SilentlyContinue'
+                [PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey -Exact -ErrorAction 'SilentlyContinue'
     
                 if (!$installedAppResults) {
                     Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
@@ -3443,6 +3443,14 @@ function Execute-NxtNullsoft {
         Else {
             Execute-Process @ExecuteProcessSplat
         }
+
+		if ($Action -eq 'Uninstall') {
+			## Wait until uninstallation processes terminated
+			Write-Log -Message "Wait while one of the possible uninstallation processes is still running..." -Source ${CmdletName}
+			Watch-NxtProcessIsStopped -ProcessName "AU_.exe" -Timeout "500"
+			Watch-NxtProcessIsStopped -ProcessName "Un_A.exe" -Timeout "500"
+			Write-Log -Message "All uninstallation processes finished." -Source ${CmdletName}
+		}
     
         ## Update the desktop (in case of changed or added enviroment variables)
         Update-Desktop
