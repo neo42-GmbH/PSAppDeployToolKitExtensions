@@ -41,6 +41,7 @@ Function Initialize-NxtEnvironment {
 	.DESCRIPTION
 		Initializes all neo42 functions and variables.
 		Should be called on top of any 'Deploy-Application.ps1'.
+		parses the neo42PackageConfig.json
 	.EXAMPLE
 		Initialize-NxtEnvironment
 	.LINK
@@ -66,7 +67,9 @@ Function Initialize-NxtEnvironment {
 			}
 		}
 		Get-NxtPackageConfig
-		Set-NxtPackageArchitecture
+		Set-NxtPackageArchitecture -AppArch $global:PackageConfig.AppArch
+		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
+		Expand-NxtPackageConfig
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -104,6 +107,46 @@ Function Get-NxtPackageConfig {
 }
 #endregion
 
+#region Function Expand-NxtPackageConfig
+Function Expand-NxtPackageConfig {
+	<#
+	.DESCRIPTION
+		Parses the neo42PackageConfig.json into the variable $global:PackageConfig.
+	.EXAMPLE
+		Expand-NxtPackageConfig
+	.OUTPUTS
+		none
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+	)
+		
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		$global:PackageConfig = Get-Content "$scriptDirectory\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
+		$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
+		$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstallDisplayName)
+		$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstallLocation)
+		$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstLogFile)
+		$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstLogFile)
+		$global:PackageConfig.RegUninstallKey = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.RegUninstallKey)
+		$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstFile)
+		$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstPara)
+		$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstFile)
+		$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstPara)
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
 #region Function Set-NxtPackageArchitecture
 Function Set-NxtPackageArchitecture {
 	<#
@@ -112,9 +155,11 @@ Function Set-NxtPackageArchitecture {
 	.DESCRIPTION
 		Sets variables (e.g. $ProgramFilesDir[x86], $CommonFilesDir[x86], $System, $Wow6432Node) that are depending on the $appArch (x86, x64 or *) value and the system architecture (AMD64 or x86).
 	.EXAMPLE
-		Set-NxtPackageArchitecture
+		Set-NxtPackageArchitecture -AppArch "x64"
 	.NOTES
 		Should be executed during package Initialization only.
+	.PARAMETER AppArch
+		Provide the AppArchitecture.
 	.OUTPUTS
 		none
 	.LINK
@@ -122,6 +167,9 @@ Function Set-NxtPackageArchitecture {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory=$true)]
+		[string]
+		$AppArch
 	)
 	
 	Begin {
@@ -2974,8 +3022,8 @@ function Execute-NxtInnoSetup {
 		Use "!" before a task name for deselecting a specific task, otherwise it is selected.
 		For specific information see: https://jrsoftware.org/ishelp/topic_setupcmdline.htm
 	.PARAMETER Log
-		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$timestamp.log"')
-		If only a name ist specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
+		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$($global:deploymentTimestamp).log"')
+		If only a name is specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
@@ -2984,7 +3032,7 @@ function Execute-NxtInnoSetup {
 	.EXAMPLE
 		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "InstallThisApp.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
 	.EXAMPLE
-		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$app\Uninstall.$timestamp.log"
+		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$app\Uninstall.$($global:deploymentTimestamp).log"
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -3133,10 +3181,10 @@ function Execute-NxtInnoSetup {
         if ([string]::IsNullOrWhiteSpace($Log)) {
             ## create Log file name if non is specified
             if ($Action -eq 'Install') {
-				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$timestamp"
+				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$($global:deploymentTimestamp)"
             }
             else {
-                [string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$timestamp"
+                [string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$($global:deploymentTimestamp)"
             }
         }
 

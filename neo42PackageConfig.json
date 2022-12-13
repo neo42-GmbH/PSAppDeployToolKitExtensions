@@ -16,8 +16,8 @@
     "AppLang": "DEU",
     "UninstallKeyName": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
     "RegPackagesKey": "neoPackages",
-    "UninstallDisplayName": "neoPackage $appVendor $appName $appVersion",
-    "App": "$($env:ProgramData)\\neoPackages\\$appVendor\\$appName\\$appVersion",
+    "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
+    "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
     "UninstallOld": true,
     "Reboot": 0,
     "DeferDays": 3,
@@ -30,9 +30,9 @@
     "HidePackageUninstallEntry": false,
     "DisplayVersion": "2.10.2",
     "UninstallKey": "Scribble Papers_is1",
-    "InstallLocation": "$programFilesDir\\Scribble Papers",
-    "InstLogFile": "$app\\Install.$timestamp.log",
-    "UninstLogFile": "$app\\Uninstall.$timestamp.log",
+    "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
+    "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
+    "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
     "RegUninstallKey": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$uninstallKey",
 	  "InstFile": "SPSetup.exe",
     "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$instLogFile\"",
@@ -56,7 +56,7 @@
       {}
     ],
     "UninstallKeysToHide":[
-      {"Is64Bit":false,"KeyName":"$uninstallKey"},
+      {"Is64Bit":false,"KeyName":"$($global:PackageConfig.UninstallKey)"},
       {"Is64Bit":true,"KeyName":"<CustomKeyName>"}
     ]
   }

@@ -98,7 +98,7 @@ try {
 
 	## Variables not from neo42PackageConfig.json
 	[string]$setupCfgPath = "$dirSupportFiles\Setup.cfg"
-	[string]$timestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
+	
 
 	## Variables: Application
 	[string]$method = $global:PackageConfig.Method
