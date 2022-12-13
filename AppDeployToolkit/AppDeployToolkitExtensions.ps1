@@ -41,6 +41,7 @@ Function Initialize-NxtEnvironment {
 	.DESCRIPTION
 		Initializes all neo42 functions and variables.
 		Should be called on top of any 'Deploy-Application.ps1'.
+		parses the neo42PackageConfig.json
 	.EXAMPLE
 		Initialize-NxtEnvironment
 	.LINK
@@ -66,7 +67,6 @@ Function Initialize-NxtEnvironment {
 			}
 		}
 		Get-NxtPackageConfig
-		Set-NxtPackageArchitecture
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -97,6 +97,17 @@ Function Get-NxtPackageConfig {
 	}
 	Process {
 		$global:PackageConfig = Get-Content "$scriptDirectory\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
+		Set-NxtPackageArchitecture
+		$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
+		$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstallDisplayName)
+		$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstallLocation)
+		$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstLogFile)
+		$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstLogFile)
+		$global:PackageConfig.RegUninstallKey = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.RegUninstallKey)
+		$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstFile)
+		$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstPara)
+		$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstFile)
+		$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstPara)
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -2975,7 +2986,7 @@ function Execute-NxtInnoSetup {
 		For specific information see: https://jrsoftware.org/ishelp/topic_setupcmdline.htm
 	.PARAMETER Log
 		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$timestamp.log"')
-		If only a name ist specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
+		If only a name is specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
