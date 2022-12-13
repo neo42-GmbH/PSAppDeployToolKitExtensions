@@ -3026,7 +3026,7 @@ function Execute-NxtInnoSetup {
         [boolean]$ContinueOnError = $false
     )
     Begin {
-        ## read config data
+        ## read config data from AppDeployToolkitConfig.xml
         [Xml.XmlElement]$xmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options
         [string]$configNxtInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_InstallParams)
         [string]$configNxtInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_UninstallParams)
@@ -3287,11 +3287,10 @@ function Execute-NxtNullsoft {
         [boolean]$ContinueOnError = $false
     )
     Begin {
-        ## read config data
+        ## read config data from AppDeployToolkitConfig.xml
         [Xml.XmlElement]$xmlConfigNxtNullsoft = $xmlConfig.NxtNullsoft_Options
         [string]$configNxtNullsoftInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_InstallParams)
         [string]$configNxtNullsoftUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_UninstallParams)
-        [string]$configNxtNullsoftLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_LogPath)
         [string]$configNxtNullsoftUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_UninsBackupPath)
 
 		## Get the name of this function and write header
@@ -3300,18 +3299,18 @@ function Execute-NxtNullsoft {
 	}
     Process {
 
-        [string]$innoUninstallKey = $UninstallKey
+        [string]$nullsoftUninstallKey = $UninstallKey
    
         switch ($Action) {
             'Install' {
-                [string]$innoSetupDefaultParams = $configNxtNullsoftInstallParams
+                [string]$nullsoftDefaultParams = $configNxtNullsoftInstallParams
 
         		## If the Setup File is in the Files directory, set the full path during an installation
 				If (Test-Path -LiteralPath (Join-Path -Path $dirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
-					[string]$innoSetupPath = Join-Path -Path $dirFiles -ChildPath $path
+					[string]$nullsoftSetupPath = Join-Path -Path $dirFiles -ChildPath $path
 				}
 				ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
-					[string]$innoSetupPath = (Get-Item -LiteralPath $Path).FullName
+					[string]$nullsoftSetupPath = (Get-Item -LiteralPath $Path).FullName
 				}
 				Else {
 					Write-Log -Message "Failed to find installation file [$path]." -Severity 3 -Source ${CmdletName}
@@ -3322,42 +3321,36 @@ function Execute-NxtNullsoft {
 				}
             }
             'Uninstall' {
-                [string]$innoSetupDefaultParams = $configNxtNullsoftUninstallParams
-                $[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $innoUninstallKey -Exact -ErrorAction 'SilentlyContinue'
+                [string]$nullsoftDefaultParams = $configNxtNullsoftUninstallParams
+                $[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey -Exact -ErrorAction 'SilentlyContinue'
     
                 if (!$installedAppResults) {
-                    Write-Log -Message "No Application with UninstallKey `"$innoUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
+                    Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
 					return
                 }
     
-                [string]$innoUninstallString = $installedAppResults.UninstallString
+                [string]$nullsoftUninstallString = $installedAppResults.UninstallString
     
                 ## check for and remove quotation marks around the uninstall string
-                if ($innoUninstallString.StartsWith('"')) {
-                    [string]$innoSetupPath = $innoUninstallString.Substring(1, $innoUninstallString.IndexOf('"', 1) - 1)
+                if ($nullsoftUninstallString.StartsWith('"')) {
+                    [string]$nullsoftSetupPath = $nullsoftUninstallString.Substring(1, $nullsoftUninstallString.IndexOf('"', 1) - 1)
                 }
                 else {
-                    [string]$innoSetupPath = $innoUninstallString.Substring(0, $innoUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+                    [string]$nullsoftSetupPath = $nullsoftUninstallString.Substring(0, $nullsoftUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
                 }
 				
-				## Get the parent folder of the uninstallation file
-				[string]$uninsFolder = split-path $innoSetupPath -Parent
+				## Get parent folder and filename of the uninstallation file
+				[string]$uninsFolder = split-path $nullsoftSetupPath -Parent
+				[string]$uninsFileName = split-path $nullsoftSetupPath -Leaf
 
 				## If the uninstall file does not exist, restore it from $configNxtNullsoftUninsBackupPath, if it exists there
-				if (![System.IO.File]::Exists($innoSetupPath) -and ($true -eq (Get-Item "$configNxtNullsoftUninsBackupPath\$innoUninstallKey\unins[0-9][0-9][0-9].exe"))) {
+				if (![System.IO.File]::Exists($nullsoftSetupPath) -and ($true -eq (Get-Item "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\$uninsFileName"))) {
 					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
-					Remove-File -Path "$uninsFolder\unins*.*"
-					Copy-File -Path "$configNxtNullsoftUninsBackupPath\$innoUninstallKey\unins[0-9][0-9][0-9].*" -Destination "$uninsFolder\"	
+					Copy-File -Path "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\$uninsFileName" -Destination "$uninsFolder\"	
 				}
 
-				## If any "$uninsFolder\unins[0-9][0-9][0-9].exe" exists, use the one with the highest number
-				If ($true -eq (Get-Item "$uninsFolder\unins[0-9][0-9][0-9].exe")) {
-					[string]$innoSetupPath = Get-Item "$uninsFolder\unins[0-9][0-9][0-9].exe" | Select-Object -last 1 -ExpandProperty FullName
-					Write-Log -Message "Uninstall file set to: `"$innoSetupPath`"." -Source ${CmdletName}
-				}
-
-				## If $innoSetupPath is still unexistend, write Error to log and abort
-				if (![System.IO.File]::Exists($innoSetupPath)) {
+				## If $nullsoftSetupPath is still unexistend, write Error to log and abort
+				if (![System.IO.File]::Exists($nullsoftSetupPath)) {
                     Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
 
                     if ($ContinueOnError) {
@@ -3372,55 +3365,20 @@ function Execute-NxtNullsoft {
             }
         }
     
-        [string]$argsInnoSetup = $innoSetupDefaultParams
+        [string]$argsnullsoft = $nullsoftDefaultParams
     
         ## Replace default parameters if specified.
         If ($Parameters) {
-            $argsInnoSetup = $Parameters
+            $argsnullsoft = $Parameters
         }
         ## Append parameters to default parameters if specified.
         If ($AddParameters) {
-            $argsInnoSetup = "$argsInnoSetup $AddParameters"
+            $argsnullsoft = "$argsnullsoft $AddParameters"
         }
-
-        ## MergeTasks if parameters were not replaced
-        if ((-not($Parameters)) -and (-not([string]::IsNullOrWhiteSpace($MergeTasks)))) {
-            $argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
-        }
-    
-        [string]$fullLogPath = $null
-
-        ## Logging
-        if ([string]::IsNullOrWhiteSpace($Log)) {
-            ## create Log file name if non is specified
-            if ($Action -eq 'Install') {
-				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$timestamp"
-            }
-            else {
-                [string]$Log = "Uninstall_$($installedAppResults.DisplayName -replace ' ',[string]::Empty)_$timestamp"
-            }
-        }
-
-        [string]$LogFileExtension = [System.IO.Path]::GetExtension($Log)
-
-        ## Append file extension if necessary
-        if (($LogFileExtension -ne '.txt') -and ($LogFileExtension -ne '.log')) {
-            $Log = $Log + '.log'
-        }
-
-        ## Check, if $Log is a full path
-        if (-not($Log.Contains('\'))) {
-            $fullLogPath = Join-Path -Path $configNxtNullsoftLogPath -ChildPath $($Log -replace ' ',[string]::Empty)
-        }
-        else {
-            $fullLogPath = $Log
-        }
-
-        $argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
-    
+ 
         [hashtable]$ExecuteProcessSplat = @{
-            Path             = $innoSetupPath
-            Parameters       = $argsInnoSetup
+            Path             = $nullsoftSetupPath
+            Parameters       = $argsnullsoft
             WindowStyle      = 'Normal'
         }
         
@@ -3443,32 +3401,29 @@ function Execute-NxtNullsoft {
 
 		## Copy uninstallation file from $uninsFolder to $configNxtNullsoftUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			$installedAppResults = Get-InstalledApplication -ProductCode $innoUninstallKey -Exact -ErrorAction 'SilentlyContinue'
+			$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey -Exact -ErrorAction 'SilentlyContinue'
     
 			if (!$installedAppResults) {
-				Write-Log -Message "No Application with UninstallKey `"$innoUninstallKey`" found. Skipping [copy uninstallation files to backup]..." -Source ${CmdletName}
+				Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
 			}
 			Else {
-				[string]$innoUninstallString = $installedAppResults.UninstallString
+				[string]$nullsoftUninstallString = $installedAppResults.UninstallString
 
 				## check for and remove quotation marks around the uninstall string
-				if ($innoUninstallString.StartsWith('"')) {
-					[string]$innoUninstallPath = $innoUninstallString.Substring(1, $innoUninstallString.IndexOf('"', 1) - 1)
+				if ($nullsoftUninstallString.StartsWith('"')) {
+					[string]$nullsoftUninstallPath = $nullsoftUninstallString.Substring(1, $nullsoftUninstallString.IndexOf('"', 1) - 1)
 				}
 				else {
-					[string]$innoUninstallPath = $innoUninstallString.Substring(0, $innoUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+					[string]$nullsoftUninstallPath = $nullsoftUninstallString.Substring(0, $nullsoftUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
 				}
-				
-				## Get the parent folder of the uninstallation file
-				[string]$uninsFolder = split-path $innoUninstallPath -Parent
 
 				## Actually copy the uninstallation file, if it exists
-				If ($true -eq (Get-Item "$uninsFolder\unins[0-9][0-9][0-9].exe")) {
-					Write-Log -Message "Copy uninstallation files to backup..." -Source ${CmdletName}
-					Copy-File -Path "$uninsFolder\unins[0-9][0-9][0-9].*" -Destination "$configNxtNullsoftUninsBackupPath\$innoUninstallKey\"	
+				If ($true -eq (Get-Item "$nullsoftUninstallPath")) {
+					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
+					Copy-File -Path "$nullsoftUninstallPath" -Destination "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\"	
 				}
 				Else {
-					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation files to backup]..." -Source ${CmdletName}
+					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation file to backup]..." -Source ${CmdletName}
 				}
 			}
 		}
