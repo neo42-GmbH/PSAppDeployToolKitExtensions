@@ -293,10 +293,15 @@ function Install-NxtApplication {
 	Else {
 		Execute-Process -Path "$instFile" -Parameters "$instPara"
 	}
+	$InstallExitCode = $LastExitCode
 
 	Start-Sleep 5
 
-	# If RegUninstallKey gesetzt, prüfe Installationserfolg anhand des RegUninstallKey
+	# Test successfull installation
+	If (-not (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString')) {
+		Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
+		# Exit ...Which ExitCode? $InstallExitCode?
+	}
 
 	return $true
 }
@@ -372,11 +377,15 @@ function Uninstall-NxtApplication {
 		Else {
 			Execute-Process -Path "$uninstFile" -Parameters "$uninstPara"
 		}
+		$UninstallExitCode = $LastExitCode
 
 		Start-Sleep 5
 
-		# If RegUninstallKey gesetzt, prüfe Deinstallationserfolg anhand des RegUninstallKey
-		
+		# Test successfull uninstallation
+		If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
+			Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
+			# Exit ...Which ExitCode? $UninstallExitCode?
+		}
 	}
 	## <Perform Uninstallation tasks here, which should always be executed, even if the software is not installed anymore.>
 		

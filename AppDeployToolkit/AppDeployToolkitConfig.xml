@@ -86,6 +86,17 @@
 	</NxtInnoSetup_Options>
 	<!--NxtInnoSetup Options-->
 
+	<!--NxtNullsoft Options-->
+	<NxtNullsoft_Options>
+		<NxtNullsoft_InstallParams>/AllUsers /S</NxtNullsoft_InstallParams>
+		<!-- Installation parameters used for non-silent InnoSetup actions. -->
+		<NxtNullsoft_SilentParams>/AllUsers /S</NxtNullsoft_SilentParams>
+		<!-- Installation parameters used for silent InnoSetup actions. -->
+		<NxtNullsoft_UninstallParams>/AllUsers /S</NxtNullsoft_UninstallParams>
+		<!-- Installation parameters used for InnoSetup uninstall actions. -->
+	</NxtNullsoft_Options>
+	<!--NxtNullsoft Options-->
+
 	<!--UI Options-->
 	<UI_Options>
 		<InstallationUI_LanguageOverride></InstallationUI_LanguageOverride>
