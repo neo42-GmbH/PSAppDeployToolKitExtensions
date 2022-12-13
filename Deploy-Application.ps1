@@ -143,7 +143,7 @@ try {
 
 	Get-NxtVariablesFromDeploymentSystem
 
-	# return
+	return
 
 	##*===============================================
 	##* END VARIABLE DECLARATION

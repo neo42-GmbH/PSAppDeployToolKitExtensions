@@ -75,6 +75,8 @@
 	<NxtInnoSetup_Options>
 		<NxtInnoSetup_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</NxtInnoSetup_LogPath>
 		<!-- Log path used for InnoSetup logging. -->
+		<NxtInnoSetup_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtInnoSetup_UninsBackupPath>
+		<!-- Path used to backup the uninstallation file. -->
 		<NxtInnoSetup_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
 		<!-- Log path used for InnoSetup logging when RequireAdmin is False. -->
 		<NxtInnoSetup_InstallParams>/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_InstallParams>
@@ -88,12 +90,14 @@
 
 	<!--NxtNullsoft Options-->
 	<NxtNullsoft_Options>
+		<NxtNullsoft_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtNullsoft_UninsBackupPath>
+		<!-- Path used to backup the uninstallation file. -->
 		<NxtNullsoft_InstallParams>/AllUsers /S</NxtNullsoft_InstallParams>
-		<!-- Installation parameters used for non-silent InnoSetup actions. -->
+		<!-- Installation parameters used for non-silent Nullsoft actions. -->
 		<NxtNullsoft_SilentParams>/AllUsers /S</NxtNullsoft_SilentParams>
-		<!-- Installation parameters used for silent InnoSetup actions. -->
+		<!-- Installation parameters used for silent Nullsoft actions. -->
 		<NxtNullsoft_UninstallParams>/AllUsers /S</NxtNullsoft_UninstallParams>
-		<!-- Installation parameters used for InnoSetup uninstall actions. -->
+		<!-- Installation parameters used for Nullsoft uninstall actions. -->
 	</NxtNullsoft_Options>
 	<!--NxtNullsoft Options-->
 
