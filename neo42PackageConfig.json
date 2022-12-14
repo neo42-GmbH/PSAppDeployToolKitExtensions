@@ -33,7 +33,7 @@
     "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
     "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
     "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
-    "RegUninstallKey": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$uninstallKey",
+    "RegUninstallKey": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
 	  "InstFile": "SPSetup.exe",
     "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$instLogFile\"",
     "UninstFile": "$installLocation\\unins000.exe",
