@@ -567,7 +567,7 @@ Function Unregister-NxtPackage {
 		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
 		Try {
 			Copy-File -Path "$scriptRoot\CleanUp.cmd" -Destination "$app\"
-			Start-Sleep 1
+			Start-Sleep -Seconds 1
 			Execute-Process -Path "$APP\CleanUp.cmd" -NoWait
 			Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$uninstallKeyName
 			Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\$regPackagesKey\$uninstallKeyName
@@ -3012,11 +3012,11 @@ function Execute-NxtInnoSetup {
 	.PARAMETER Parameters
 		Overrides the default parameters specified in the XML configuration file.
 		Install default is: "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
-		Uninstall default is: "/SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
+		Uninstall default is: "/VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
 	.PARAMETER AddParameters
 		Adds to the default parameters specified in the XML configuration file.
 		Install default is: "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
-		Uninstall default is: "/SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
+		Uninstall default is: "/VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010".
 	.PARAMETER MergeTasks
 		Specifies the tasks which should be done WITHOUT(!) overriding the default tasks (preselected default tasks from the setup).
 		Use "!" before a task name for deselecting a specific task, otherwise it is selected.
@@ -3030,7 +3030,7 @@ function Execute-NxtInnoSetup {
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.EXAMPLE
-		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "InstallThisApp.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
+		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "ThisAppSetup.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
 	.EXAMPLE
 		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$app\Uninstall.$($global:deploymentTimestamp).log"
 	.NOTES
@@ -3298,7 +3298,7 @@ function Execute-NxtNullsoft {
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.EXAMPLE
-		Execute-NxtNullsoft -UninstallKey "ThisApplication" -Path "InstallThisApp.exe" -Parameters "SILENT=1"
+		Execute-NxtNullsoft -UninstallKey "ThisApplication" -Path "ThisApp.1.0.Installer.exe" -Parameters "SILENT=1"
 	.EXAMPLE
 		Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "ThisApplication"
 	.NOTES
@@ -3445,7 +3445,7 @@ function Execute-NxtNullsoft {
         }
 
 		if ($Action -eq 'Uninstall') {
-			## Wait until uninstallation processes terminated
+			## Wait until all uninstallation processes terminated
 			Write-Log -Message "Wait while one of the possible uninstallation processes is still running..." -Source ${CmdletName}
 			Watch-NxtProcessIsStopped -ProcessName "AU_.exe" -Timeout "500"
 			Watch-NxtProcessIsStopped -ProcessName "Un_A.exe" -Timeout "500"
@@ -3477,6 +3477,239 @@ function Execute-NxtNullsoft {
 				If ($true -eq (Get-Item "$nullsoftUninstallPath")) {
 					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
 					Copy-File -Path "$nullsoftUninstallPath" -Destination "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\"	
+				}
+				Else {
+					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation file to backup]..." -Source ${CmdletName}
+				}
+			}
+		}
+    }
+    End {
+		If ($PassThru) {
+            Write-Output -InputObject $ExecuteResults
+        }
+
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+
+#region Function Execute-NxtBitRockInstaller
+function Execute-NxtBitRockInstaller {
+    <#
+	.SYNOPSIS
+		Executes the following actions for BitRock Installer installations: install (with UninstallKey AND installation file), uninstall (with UninstallKey).
+	.DESCRIPTION
+		Sets default switches to be passed to un-/installation file based on the preferences in the XML configuration file, if no Parameters are specifed.
+		Can handle installation files by name in the "Files" sub directory or full paths anywhere.
+	.PARAMETER Action
+		The action to perform. Options: Install, Uninstall. Default is: Install.
+	.PARAMETER UninstallKey
+		Name of the uninstall registry key of the application (e.g. "ThisApplication").
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
+	.PARAMETER Path
+		The path to the BitRock Installer installation File in case of an installation. (Not needed for "Uninstall" actions!)
+	.PARAMETER Parameters
+		Overrides the default parameters specified in the XML configuration file.
+		Install default is: "--mode unattended --unattendedmodeui minimal".
+		Uninstall default is: "--mode unattended".
+	.PARAMETER AddParameters
+		Adds to the default parameters specified in the XML configuration file.
+		Install default is: "--mode unattended --unattendedmodeui minimal".
+		Uninstall default is: "--mode unattended".
+	.PARAMETER PassThru
+		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $false.
+	.EXAMPLE
+		Execute-NxtBitRockInstaller -UninstallKey "ThisApplication" -Path "ThisApp-1.0.exe" -Parameters "--mode unattended --installer-language en"
+	.EXAMPLE
+		Execute-NxtBitRockInstaller -Action "Uninstall" -UninstallKey "ThisApplication"
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Install', 'Uninstall')]
+        [string]$Action = 'Install',
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [string]$UninstallKey,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Parameters,
+        
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [string]$AddParameters,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [switch]$PassThru = $false,
+        
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [boolean]$ContinueOnError = $false
+    )
+    Begin {
+        ## read config data from AppDeployToolkitConfig.xml
+        [Xml.XmlElement]$xmlConfigNxtBitRockInstaller = $xmlConfig.NxtBitRockInstaller_Options
+        [string]$configNxtBitRockInstallerInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtBitRockInstaller.NxtBitRockInstaller_InstallParams)
+        [string]$configNxtBitRockInstallerUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninstallParams)
+        [string]$configNxtBitRockInstallerUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninsBackupPath)
+
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+    Process {
+
+        [string]$bitRockInstallerUninstallKey = $UninstallKey
+   
+        switch ($Action) {
+            'Install' {
+                [string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
+
+        		## If the Setup File is in the Files directory, set the full path during an installation
+				If (Test-Path -LiteralPath (Join-Path -Path $dirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
+					[string]$bitRockInstallerSetupPath = Join-Path -Path $dirFiles -ChildPath $path
+				}
+				ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
+					[string]$bitRockInstallerSetupPath = (Get-Item -LiteralPath $Path).FullName
+				}
+				Else {
+					Write-Log -Message "Failed to find installation file [$path]." -Severity 3 -Source ${CmdletName}
+					If (-not $ContinueOnError) {
+						Throw "Failed to find installation file [$path]."
+					}
+					Continue
+				}
+            }
+            'Uninstall' {
+                [string]$bitRockInstallerDefaultParams = $configNxtbitRockInstallerUninstallParams
+                [PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $bitRockInstallerUninstallKey -Exact -ErrorAction 'SilentlyContinue'
+    
+                if (!$installedAppResults) {
+                    Write-Log -Message "No Application with UninstallKey `"$bitRockInstallerUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
+					return
+                }
+    
+                [string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
+    
+                ## check for and remove quotation marks around the uninstall string
+                if ($bitRockInstallerUninstallString.StartsWith('"')) {
+                    [string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(1, $bitRockInstallerUninstallString.IndexOf('"', 1) - 1)
+                }
+                else {
+                    [string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(0, $bitRockInstallerUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+                }
+
+				## Get parent folder and filename of the uninstallation file
+				[string]$uninsFolder = split-path $bitRockInstallerSetupPath -Parent
+				[string]$uninsFileName = split-path $bitRockInstallerSetupPath -Leaf
+
+				## If the uninstall file does not exist, restore it from $configNxtBitRockInstallerUninsBackupPath, if it exists there
+				if (![System.IO.File]::Exists($bitRockInstallerSetupPath) -and ($true -eq (Get-Item "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\$uninsFileName"))) {
+					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
+					Copy-File -Path "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\unins*.*" -Destination "$uninsFolder\"	
+				}
+
+				## If $bitRockInstallerSetupPath is still unexistend, write Error to log and abort
+				if (![System.IO.File]::Exists($bitRockInstallerSetupPath)) {
+                    Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
+
+                    if ($ContinueOnError) {
+						## Uninstallation without uninstallation file is impossible --> Abort the function without error
+                        return
+                    }
+                    else {
+                        throw "Uninstallation file could not be found nor restored."
+                    }
+                }
+
+            }
+        }
+    
+        [string]$argsBitRockInstaller = $bitRockInstallerDefaultParams
+    
+        ## Replace default parameters if specified.
+        If ($Parameters) {
+            $argsBitRockInstaller = $Parameters
+        }
+        ## Append parameters to default parameters if specified.
+        If ($AddParameters) {
+            $argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
+        }
+ 
+        [hashtable]$ExecuteProcessSplat = @{
+            Path             = $bitRockInstallerSetupPath
+            Parameters       = $argsBitRockInstaller
+            WindowStyle      = 'Normal'
+        }
+        
+        If ($ContinueOnError) {
+            $ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+        }
+        If ($PassThru) {
+            $ExecuteProcessSplat.Add('PassThru', $PassThru)
+        }
+    
+        If ($PassThru) {
+            [psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+        }
+        Else {
+            Execute-Process @ExecuteProcessSplat
+        }
+
+		if ($Action -eq 'Uninstall') {
+			## Wait until all uninstallation processes terminated
+			Write-Log -Message "Wait while uninstallation process is still running..." -Source ${CmdletName}
+			Start-Sleep -Seconds 1
+			Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
+			Start-Sleep -Seconds 1
+			Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
+			Start-Sleep -Seconds 1
+			Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
+			Start-Sleep -Seconds 1
+			Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
+			Write-Log -Message "Uninstallation process finished." -Source ${CmdletName}
+		}
+    
+        ## Update the desktop (in case of changed or added enviroment variables)
+        Update-Desktop
+
+		## Copy uninstallation file from $uninsFolder to $configNxtBitRockInstallerUninsBackupPath after a successful installation
+		if ($Action -eq 'Install') {
+			$installedAppResults = Get-InstalledApplication -ProductCode $bitRockInstallerUninstallKey -Exact -ErrorAction 'SilentlyContinue'
+    
+			if (!$installedAppResults) {
+				Write-Log -Message "No Application with UninstallKey `"$bitRockInstallerUninstallKey`" found. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+			}
+			Else {
+				[string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
+
+				## check for and remove quotation marks around the uninstall string
+				if ($bitRockInstallerUninstallString.StartsWith('"')) {
+					[string]$bitRockInstallerUninstallPath = $bitRockInstallerUninstallString.Substring(1, $bitRockInstallerUninstallString.IndexOf('"', 1) - 1)
+				}
+				else {
+					[string]$bitRockInstallerUninstallPath = $bitRockInstallerUninstallString.Substring(0, $bitRockInstallerUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+				}
+				
+				## Get parent folder of the uninstallation file
+				[string]$uninsFolder = split-path $bitRockInstallerUninstallPath -Parent
+
+				## Actually copy the uninstallation file, if it exists
+				If ($true -eq (Get-Item "$bitRockInstallerUninstallPath")) {
+					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
+					Copy-File -Path "$uninsFolder\unins*.*" -Destination "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\"	
 				}
 				Else {
 					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation file to backup]..." -Source ${CmdletName}

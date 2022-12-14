@@ -64,7 +64,7 @@
 		<!-- Installation parameters used for non-silent MSI actions. -->
 		<MSI_SilentParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_SilentParams>
 		<!-- Installation parameters used for silent MSI actions. -->
-		<MSI_UninstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qb-!</MSI_UninstallParams>
+		<MSI_UninstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qn</MSI_UninstallParams>
 		<!-- Installation parameters used for MSI uninstall actions. -->
 		<MSI_MutexWaitTime>600</MSI_MutexWaitTime>
 		<!-- The length of time in seconds to wait for the MSI installer service to become available. Default is 600 seconds (10 minutes) -->
@@ -83,7 +83,7 @@
 		<!-- Installation parameters used for non-silent InnoSetup actions. -->
 		<NxtInnoSetup_SilentParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_SilentParams>
 		<!-- Installation parameters used for silent InnoSetup actions. -->
-		<NxtInnoSetup_UninstallParams>/SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_UninstallParams>
+		<NxtInnoSetup_UninstallParams>/VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_UninstallParams>
 		<!-- Installation parameters used for InnoSetup uninstall actions. -->
 	</NxtInnoSetup_Options>
 	<!--NxtInnoSetup Options-->
@@ -100,6 +100,19 @@
 		<!-- Installation parameters used for Nullsoft uninstall actions. -->
 	</NxtNullsoft_Options>
 	<!--NxtNullsoft Options-->
+
+	<!--NxtBitRockInstaller Options-->
+	<NxtBitRockInstaller_Options>
+		<NxtBitRockInstaller_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtBitRockInstaller_UninsBackupPath>
+		<!-- Path used to backup the uninstallation file. -->
+		<NxtBitRockInstaller_InstallParams>--mode unattended --unattendedmodeui minimal</NxtBitRockInstaller_InstallParams>
+		<!-- Installation parameters used for non-silent BitRockInstaller actions. -->
+		<NxtBitRockInstaller_SilentParams>--mode unattended</NxtBitRockInstaller_SilentParams>
+		<!-- Installation parameters used for silent BitRockInstaller actions. -->
+		<NxtBitRockInstaller_UninstallParams>--mode unattended</NxtBitRockInstaller_UninstallParams>
+		<!-- Installation parameters used for BitRockInstaller uninstall actions. -->
+	</NxtBitRockInstaller_Options>
+	<!--NxtBitRockInstaller Options-->
 
 	<!--UI Options-->
 	<UI_Options>

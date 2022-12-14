@@ -288,22 +288,27 @@ function Install-NxtApplication {
 	## <Perform Installation tasks here>
 	
 	If ($method -eq "MSI") {
-		Execute-MSI -Action 'Install' -Path "$instFile" -Parameters "$instPara" -LogName "$InstLogFile"
+		Execute-MSI -Action 'Install' -Path "$($global:PackageConfig.InstFile)" -Parameters "$($global:PackageConfig.InstPara)" -LogName "$($global:PackageConfig.InstLogFile)"
 	}
 	ElseIf ($method -like "Inno*") {
-		Execute-NxtInnoSetup -Action "Install" -UninstallKey "$UninstallKey" -Path "$instFile" -Parameters "$instPara" -Log "$InstLogFile"
+		Execute-NxtInnoSetup -Action "Install" -UninstallKey "$($global:PackageConfig.UninstallKey)" -Path "$($global:PackageConfig.InstFile)" -Parameters "$($global:PackageConfig.InstPara)" -Log "$($global:PackageConfig.InstLogFile)"
 	}
 	ElseIf ($method -eq "Nullsoft") {
-		Execute-NxtNullsoft -Action "Install" -UninstallKey "$UninstallKey" -Path "$instFile" -Parameters "$instPara"
+		Execute-NxtNullsoft -Action "Install" -UninstallKey "$($global:PackageConfig.UninstallKey)" -Path "$($global:PackageConfig.InstFile)" -Parameters "$($global:PackageConfig.InstPara)"
+	}
+	ElseIf ($method -like "BitRock*") {
+		Execute-NxtBitRockInstaller -Action "Install" -UninstallKey "$($global:PackageConfig.UninstallKey)" -Path "$($global:PackageConfig.InstFile)" -Parameters "$($global:PackageConfig.InstPara)"
+	}
+	ElseIf ($method -eq "none") {
 	}
 	Else {
-		Execute-Process -Path "$instFile" -Parameters "$instPara"
+		Execute-Process -Path "$($global:PackageConfig.InstFile)" -Parameters "$($global:PackageConfig.InstPara)"
 	}
 	$InstallExitCode = $LastExitCode
 
-	Start-Sleep 5
+	Start-Sleep -Seconds 5
 
-	# Test successfull installation
+	## Test successfull installation
 	If (-not (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString')) {
 		Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
 		# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
@@ -337,10 +342,8 @@ function Complete-NxtPackageInstallation {
 		Copy-NxtDesktopShortcuts
 	}
 
-
 	# Hide-NxtAppUninstallEntries
-
-	Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
+	Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($global:PackageConfig.UninstallKey) -Name 'SystemComponent' -Type 'Dword' -Value '1'
 	
 
 	If ($true -eq $userPartOnInstallation) {
@@ -370,7 +373,7 @@ function Uninstall-NxtApplication {
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
 	## <Perform Pre-Uninstallation tasks here>
-	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent'
+	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($global:PackageConfig.UninstallKey) -Name 'SystemComponent'
 
 	[string]$global:installPhase = 'Uninstallation'
 	
@@ -379,22 +382,27 @@ function Uninstall-NxtApplication {
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
 		
 		If ($method -eq "MSI") {
-			Execute-MSI -Action 'Uninstall' -Path "$UninstallKey" -Parameters "$uninstPara" -LogName "$UninstLogFile"
+			Execute-MSI -Action 'Uninstall' -Path "$($global:PackageConfig.UninstallKey)" -Parameters "$($global:PackageConfig.UninstPara)" -LogName "$($global:PackageConfig.UninstLogFile)"
 		}
 		ElseIf ($method -like "Inno*") {
-			Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$uninstPara" -Log "$UninstLogFile"
+			Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "$($global:PackageConfig.UninstallKey)" -Parameters "$($global:PackageConfig.UninstPara)" -Log "$($global:PackageConfig.UninstLogFile)"
 		}
 		ElseIf ($method -eq "Nullsoft") {
-			Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$uninstPara"
+			Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "$($global:PackageConfig.UninstallKey)" -Parameters "$($global:PackageConfig.UninstPara)"
+		}
+		ElseIf ($method -like "BitRock*") {
+			Execute-NxtBitRockInstaller -Action "Uninstall" -UninstallKey "$($global:PackageConfig.UninstallKey)" -Parameters "$($global:PackageConfig.UninstPara)"
+		}
+		ElseIf ($method -eq "none") {
 		}
 		Else {
-			Execute-Process -Path "$uninstFile" -Parameters "$uninstPara"
+			Execute-Process -Path "$($global:PackageConfig.UninstFile)" -Parameters "$($global:PackageConfig.UninstPara)"
 		}
 		$UninstallExitCode = $LastExitCode
 
-		Start-Sleep 5
+		Start-Sleep -Seconds 5
 
-		# Test successfull uninstallation
+		## Test successfull uninstallation
 		If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
 			Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
 			# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
