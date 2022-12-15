@@ -101,49 +101,18 @@ try {
 	
 
 	## Variables: Application
+	## Handled by HJT***
 	[string]$method = $global:PackageConfig.Method
-	[string]$appArch = $global:PackageConfig.AppArch
-	
-	[string]$appName = $global:PackageConfig.AppName
-	[string]$appVendor = $global:PackageConfig.AppVendor
-	[string]$appVersion = $global:PackageConfig.AppVersion
-	[string]$appRevision = $global:PackageConfig.AppRevision
-	
-	[string]$uninstallKeyName = $global:PackageConfig.UninstallKeyName
-	[string]$regPackagesKey = $global:PackageConfig.RegPackagesKey
-	[string]$uninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstallDisplayName)
-	[string]$app = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
-
-	[bool]$uninstallOld = $global:PackageConfig.UninstallOld
-	[int]$reboot = $global:PackageConfig.Reboot
-	[int]$deferDays = $global:PackageConfig.DeferDays
-	[bool]$reinstallModeIsRepair = $global:PackageConfig.ReinstallModeIsRepair
-	[bool]$userPartOnInstallation = $global:PackageConfig.UserPartOnInstallation
-	[bool]$userPartOnUninstallation = $global:PackageConfig.UserPartOnUninstallation
-	[string]$userPartRevision = $global:PackageConfig.UserPartRevision
-	[bool]$softMigration = $global:PackageConfig.SoftMigration
 
 	## Environment
-	[string]$displayVersion = $global:PackageConfig.DisplayVersion
-	[string]$uninstallKey = $global:PackageConfig.UninstallKey
-	[string]$installLocation = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstallLocation)
-	
-	[string]$instLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstLogFile)
-	[string]$uninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstLogFile)
-	[string]$regUninstallKey = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.RegUninstallKey)
-	## ToDo: DetectedDisplayVersion anhand des Anzeigenamens aus der Registry auslesen!
-	[string]$detectedDisplayVersion = Get-RegistryKey -Key $regUninstallKey -Value 'DisplayVersion'
+	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
 
-	[string]$instFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstFile)
-	[string]$instPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstPara)
-	[string]$uninstFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstFile)
-	[string]$uninstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstPara)
+	## App Global Variables
+	[string]$global:detectedDisplayVersion = Get-RegistryKey -Key "$($global:PackageConfig.RegUninstallKey)" -Value 'DisplayVersion'
 
-	[string]$askKillProcessApps = $global:PackageConfig.AppKillProcesses -join ","
 
 	Get-NxtVariablesFromDeploymentSystem
 
-	return
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -164,11 +133,30 @@ function Main {
 .DESCRIPTION
 	Do not modify to ensure correct script flow!
 	To customize the script always use the "CustomXXXX" entry points.
+.PARAMETER Reboot
+		Defines if a reboot exitcode should be returned instead of the main Exitcode.
+		0 = do not override mainexitcode
+		1 = Set Mainexitcode to 3010 (Reboot required)
+		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will
+		be passed through.
+		Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER ReinstallModeIsRepair
+		Defines if an installation should perform a repair.
+		Defaults to the corresponding value from the PackageConfig object.
 .EXAMPLE
 	Main
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
+param (
+	[Parameter(Mandatory=$false)]
+	[int]
+	[ValidateSet(0,1,2)]
+	$Reboot = $global:PackageConfig.reboot,
+	[Parameter(Mandatory=$false)]
+	[bool]
+	$ReinstallModeIsRepair = $global:PackageConfig.ReinstallModeIsRepair
+)
 	try {
 		CustomPreInit
 		switch ($DeploymentType) {
@@ -255,8 +243,8 @@ function Main {
 		}
 
 		## Calculate exit code
-		If ($reboot -eq '1') { [int32]$mainExitCode = 3010 }
-		If ($reboot -eq '2' -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
+		If ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
+		If ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
 		Exit-Script -ExitCode $mainExitCode
 	}
 	catch {
@@ -278,26 +266,59 @@ function Install-NxtApplication {
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER UninstallKey
+		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstLogFile
+		Defines the path to the Logfile that should be used by the installer.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegUninstallKey
+		Defines the path to the Uninstall Key in the Registry.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstFile
+		Defines the path to the Installation File.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstPara
+		Defines the parameters which will be passed in the Installation Commandline.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Install-NxtApplication
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	param (
+	[Parameter(Mandatory=$false)]
+	[String]
+	$UninstallKey = $global:PackageConfig.UninstallKey,
+	[Parameter(Mandatory=$false)]
+	[String]
+	$InstLogFile = $global:PackageConfig.InstLogFile,
+	[Parameter(Mandatory=$false)]
+	[string]
+	$RegUninstallKey = $global:PackageConfig.RegUninstallKey,
+	[Parameter(Mandatory=$false)]
+	[string]
+	$InstFile = $global:PackageConfig.InstFile,
+	[Parameter(Mandatory=$false)]
+	[string]
+	$InstPara = $global:PackageConfig.InstPara
+)
 	[string]$global:installPhase = 'Installation'
 
 	## <Perform Installation tasks here>
 	
 	If ($method -eq "MSI") {
-		Execute-MSI -Action 'Install' -Path "$instFile" -Parameters "$instPara" -LogName "$InstLogFile"
+		Execute-MSI -Action 'Install' -Path "$InstFile" -Parameters "$InstPara" -LogName "$InstLogFile"
 	}
 	ElseIf ($method -like "Inno*") {
-		Execute-NxtInnoSetup -Action "Install" -UninstallKey "$UninstallKey" -Path "$instFile" -Parameters "$instPara" -Log "$InstLogFile"
+		Execute-NxtInnoSetup -Action "Install" -UninstallKey "$UninstallKey" -Path "$InstFile" -Parameters "$InstPara" -Log "$InstLogFile"
 	}
 	ElseIf ($method -eq "Nullsoft") {
-		Execute-NxtNullsoft -Action "Install" -UninstallKey "$UninstallKey" -Path "$instFile" -Parameters "$instPara"
+		Execute-NxtNullsoft -Action "Install" -UninstallKey "$UninstallKey" -Path "$InstFile" -Parameters "$InstPara"
 	}
 	Else {
-		Execute-Process -Path "$instFile" -Parameters "$instPara"
+		Execute-Process -Path "$InstFile" -Parameters "$InstPara"
 	}
 	$InstallExitCode = $LastExitCode
 
@@ -319,12 +340,44 @@ function Complete-NxtPackageInstallation {
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartOnInstallation
+		Defines if the Userpart should be executed for this installation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyName
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartRevision
+		Specifies the UserPartRevision for this installation
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKey
+		Specifies the original UninstallKey set by the Installer in this Package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-
+Param (
+		[Parameter(Mandatory=$false)]
+		[string]
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$UserPartOnInstallation = $global:PackageConfig.UserPartOnInstallation,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$UserPartRevision = $global:PackageConfig.UserPartRevision,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$UninstallKey = $global:PackageConfig.UninstallKey
+		
+	)
 	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
 
 	## <Perform Complete-NxtPackageInstallation tasks here>
@@ -343,14 +396,14 @@ function Complete-NxtPackageInstallation {
 	Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
 	
 
-	If ($true -eq $userPartOnInstallation) {
+	If ($true -eq $UserPartOnInstallation) {
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
-		Set-ActiveSetup -PurgeActiveSetupKey -Key "$uninstallKeyName.uninstall"
-		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$app\neo42-Userpart\SupportFiles"
-		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$app\neo42-Userpart\SupportFiles"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$app\neo42-Userpart\" -Recurse
-		Write-NxtSingleXmlNode -XmlFilePath "$app\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$app\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
+		Set-ActiveSetup -PurgeActiveSetupKey -Key "$UninstallKeyName.uninstall"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
 	}
 }
 
@@ -360,13 +413,44 @@ function Uninstall-NxtApplication {
 		Defines the required steps to uninstall the application based on the target installer type
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
+	.PARAMETER UninstallKey
+		Specifies the original UninstallKey set by the Installer in this Package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstLogFile
+    	Defines the path to the Logfile that should be used by the uninstaller.
+    	Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegUninstallKey
+		Defines the path to the Uninstall Key in the Registry.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstFile
+		Defines the path to the Installation File.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstPara
+		Defines the parameters which will be passed in the UnInstallation Commandline.
+		Defaults to the corresponding value from the PackageConfig object.
 		To customize the script always use the "CustomXXXX" entry points.
 	.EXAMPLE
 		Uninstall-NxtApplication
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-
+Param(
+		[Parameter(Mandatory=$false)]
+		[string]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$UninstLogFile = $global:PackageConfig.UninstLogFile,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$RegUninstallKey = $global:PackageConfig.RegUninstallKey,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$UninstFile = $global:PackageConfig.UninstFile,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$UninstPara = $global:PackageConfig.UninstPara
+)
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
 	## <Perform Pre-Uninstallation tasks here>
@@ -379,16 +463,16 @@ function Uninstall-NxtApplication {
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
 		
 		If ($method -eq "MSI") {
-			Execute-MSI -Action 'Uninstall' -Path "$UninstallKey" -Parameters "$uninstPara" -LogName "$UninstLogFile"
+			Execute-MSI -Action 'Uninstall' -Path "$UninstallKey" -Parameters "$UninstPara" -LogName "$UninstLogFile"
 		}
 		ElseIf ($method -like "Inno*") {
-			Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$uninstPara" -Log "$UninstLogFile"
+			Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara" -Log "$UninstLogFile"
 		}
 		ElseIf ($method -eq "Nullsoft") {
-			Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$uninstPara"
+			Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara"
 		}
 		Else {
-			Execute-Process -Path "$uninstFile" -Parameters "$uninstPara"
+			Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
 		}
 		$UninstallExitCode = $LastExitCode
 
@@ -412,26 +496,45 @@ function Complete-NxtPackageUninstallation {
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartOnUninstallation
+		Specifies if a Userpart should take place during uninstallation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartRevision
+		Specifies the UserPartRevision for this installation.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Complete-NxtPackageUninstallation
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-
+	Param (
+		[Parameter(Mandatory=$false)]
+		[string]
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$UserPartOnUninstallation = $global:PackageConfig.UserPartOnUninstallation,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$UserPartRevision = $global:PackageConfig.UserPartRevision
+	)
 	[string]$global:installPhase = 'Complete-NxtPackageUninstallation'
 
 	## <Perform Complete-NxtPackageUninstallation tasks here>
 
 	Remove-NxtDesktopShortcuts
 	
-	If ($true -eq $userPartOnUninstallation) {
+	If ($true -eq $UserPartOnUninstallation) {
 		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$uninstallKeyName"
-		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$app\neo42-Userpart\SupportFiles"
-		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$app\neo42-Userpart\SupportFiles"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$app\neo42-Userpart\" -Recurse
-		Write-NxtSingleXmlNode -XmlFilePath "$app\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$app\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$UninstallKeyName.uninstall"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$UninstallKeyName.uninstall"
 	}
 }
 
@@ -456,34 +559,75 @@ function Repair-NxtApplication {
 function Get-NxtShouldReinstall {
 	<#
 .SYNOPSIS
-	Detects if the target application is already installed
+	Detects if the target application is already installed.
 .DESCRIPTION
-	Uses the registry Uninstall Key to detect of the application is already present
+	Uses the registry Uninstall Key to detect of the application is already present.
+.PARAMETER RegUninstallKey
+		Defines the path to the Uninstall Key in the Registry.
+		Defaults to the corresponding value from the PackageConfig object.
 .EXAMPLE
 	Get-NxtShouldReinstall
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
-	return (Test-RegistryValue -Key $regUninstallKey -Value 'UninstallString')
+param(
+	[Parameter(Mandatory=$false)]
+		[string]
+		$RegUninstallKey = $global:PackageConfig.RegUninstallKey
+)
+	return (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString')
 }
 
 function Show-NxtInstallationWelcome {
 	<#
 .SYNOPSIS
-	Defines the required steps to uninstall the application based on the target installer type
+	Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
 .DESCRIPTION
 	Is only called in the Main function and should not be modified!
 	To customize the script always use the "CustomXXXX" entry points.
+.Parameter IsInstall
+	Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
+.PARAMETER DeferDays
+	Specifies how long a user may defer an installation (will be ignored on uninstallation)
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER AskKillProcessApps
+	Specifies a list of Processnames which should be stopped for the (un)installation to start.
+	For Example "WINWORD,EXCEL"
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER CloseAppsCountdown
+	Countdown until the Apps will either be forcibly closed or the Installation will abort
+	Defaults to the corresponding value from the Setup.cfg.
+.PARAMETER BlockExecution
+	Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
+	Defaults to the corresponding value from the PackageConfig object.
 .EXAMPLE
 	Show-NxtInstallationWelcome
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
 	param (
-		[bool]$IsInstall
+		[Parameter(Mandatory=$true)]
+		[bool]
+		$IsInstall,
+		[Parameter(Mandatory=$false)]
+		[String]
+		$DeferDays = $global:PackageConfig.DeferDays,
+		[Parameter(Mandatory=$false)]
+		[String]
+		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
+		[Parameter(Mandatory=$false)]
+		[String]
+		$CloseAppsCountdown,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$BlockExecution = $($global:PackageConfig.BlockExecution)
 	)
-	#ifelse install uninstall
-	Show-InstallationWelcome -CloseApps $askKillProcessApps -CloseAppsCountdown $closeAppsCountdown -PersistPrompt -BlockExecution -AllowDeferCloseApps -DeferDays $deferDays -CheckDiskSpace	
+	## override $DeferDays with 0 in Case of Uninstall
+	if (!$isInstall){
+		$DeferDays = 0
+	}
+	## ##TOBECONTINUED## $CloseAppsCountdown has to be Defaulted from the Setup.cfg, which is not yet automatically imported
+	Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 }
 
 #endregion
