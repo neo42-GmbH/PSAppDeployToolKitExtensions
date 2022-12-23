@@ -49,6 +49,9 @@ Function Initialize-NxtEnvironment {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ExtensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs"
 	)
 		
 	Begin {
@@ -58,12 +61,11 @@ Function Initialize-NxtEnvironment {
 	}
 	Process {
 		If (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
-			[string]$extensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs"
-			if (Test-Path -Path $extensionCsPath) {
-				Add-Type -Path $extensionCsPath -IgnoreWarnings -ErrorAction 'Stop'
+			if (Test-Path -Path $ExtensionCsPath) {
+				Add-Type -Path $ExtensionCsPath -IgnoreWarnings -ErrorAction 'Stop'
 			}
 			else {
-				throw "File not found: $extensionCsPath"
+				throw "File not found: $ExtensionCsPath"
 			}
 		}
 		Get-NxtPackageConfig
@@ -81,7 +83,9 @@ Function Initialize-NxtEnvironment {
 Function Get-NxtPackageConfig {
 	<#
 	.DESCRIPTION
-		Parses the neo42PackageConfig.json into the variable $global:PackageConfig.
+		Parses a neo42PackageConfig.json into the variable $global:PackageConfig.
+	.PARAMETER Path
+		Path to the Packageconfig.json
 	.EXAMPLE
 		Get-NxtPackageConfig
 	.OUTPUTS
@@ -91,6 +95,9 @@ Function Get-NxtPackageConfig {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Path = "$scriptDirectory\neo42PackageConfig.json"
 	)
 		
 	Begin {
@@ -99,7 +106,7 @@ Function Get-NxtPackageConfig {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		$global:PackageConfig = Get-Content "$scriptDirectory\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
+		$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -111,7 +118,9 @@ Function Get-NxtPackageConfig {
 Function Expand-NxtPackageConfig {
 	<#
 	.DESCRIPTION
-		Parses the neo42PackageConfig.json into the variable $global:PackageConfig.
+		Expands a set of Subkeys in the $global:PackageConfig back into the variable $global:PackageConfig.
+	.PARAMETER PackageConfig
+		Expects an Object containing the Packageconfig, defaults to $global:PackageConfig
 	.EXAMPLE
 		Expand-NxtPackageConfig
 	.OUTPUTS
@@ -121,6 +130,8 @@ Function Expand-NxtPackageConfig {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		$PackageConfig = $global:PackageConfig
 	)
 		
 	Begin {
@@ -129,17 +140,16 @@ Function Expand-NxtPackageConfig {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		$global:PackageConfig = Get-Content "$scriptDirectory\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
-		$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
-		$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstallDisplayName)
-		$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstallLocation)
-		$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstLogFile)
-		$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstLogFile)
-		$global:PackageConfig.RegUninstallKey = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.RegUninstallKey)
-		$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstFile)
-		$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.InstPara)
-		$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstFile)
-		$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.UninstPara)
+		$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
+		$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
+		$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
+		$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstLogFile)
+		$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstLogFile)
+		$global:PackageConfig.RegUninstallKey = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.RegUninstallKey)
+		$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstFile)
+		$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstPara)
+		$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstFile)
+		$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstPara)
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -170,9 +180,27 @@ Function Set-NxtPackageArchitecture {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
-		$AppArch = $global:PackageConfig.AppArch
+		$AppArch = $global:PackageConfig.AppArch,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PROCESSOR_ARCHITECTURE = $env:PROCESSOR_ARCHITECTURE,
+		[Parameter(Mandatory = $false)]
+		[string]
+		${ProgramFiles(x86)} = ${env:ProgramFiles(x86)},
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProgramFiles = $env:ProgramFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		${CommonProgramFiles(x86)} = ${env:CommonProgramFiles(x86)},
+		[Parameter(Mandatory = $false)]
+		[string]
+		$CommonProgramFiles = $env:CommonProgramFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SystemRoot = $env:SystemRoot
 	)
 	
 	Begin {
@@ -183,49 +211,48 @@ Function Set-NxtPackageArchitecture {
 	Process {
 		Write-Log -Message "Setting package architecture variables..." -Source ${CmdletName}
 		Try {
-			[string]$currentArch = $global:PackageConfig.AppArch
-			If ($currentArch -ne 'x86' -and $currentArch -ne 'x64' -and $currentArch -ne '*') {
+			If ($AppArch -ne 'x86' -and $AppArch -ne 'x64' -and $AppArch -ne '*') {
 				[int32]$mainExitCode = 70001
 				[string]$mainErrorMessage = 'ERROR: The value of $appArch must be set to "x86", "x64" or "*". Abort!'
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 				Exit-Script -ExitCode $mainExitCode
 			}
-			ElseIf ($currentArch -eq 'x64' -and $env:PROCESSOR_ARCHITECTURE -eq 'x86') {
+			ElseIf ($AppArch -eq 'x64' -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[int32]$mainExitCode = 70001
 				[string]$mainErrorMessage = 'ERROR: This software package can only be installed on 64 bit Windows systems. Abort!'
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 				Exit-Script -ExitCode $mainExitCode
 			}
-			ElseIf ($currentArch -eq 'x86' -and $env:PROCESSOR_ARCHITECTURE -eq 'AMD64') {
-				[string]$global:ProgramFilesDir = ${env:ProgramFiles(x86)}
-				[string]$global:ProgramFilesDirx86 = ${env:ProgramFiles(x86)}
-				[string]$global:ProgramW6432 = ${env:ProgramFiles}
-				[string]$global:CommonFilesDir = ${env:CommonProgramFiles(x86)}
-				[string]$global:CommonFilesDirx86 = ${env:CommonProgramFiles(x86)}
-				[string]$global:CommonProgramW6432 = ${env:CommonProgramFiles}
-				[string]$global:System = "${env:SystemRoot}\SysWOW64"
+			ElseIf ($AppArch -eq 'x86' -and $PROCESSOR_ARCHITECTURE -eq 'AMD64') {
+				[string]$global:ProgramFilesDir = ${ProgramFiles(x86)}
+				[string]$global:ProgramFilesDirx86 = ${ProgramFiles(x86)}
+				[string]$global:ProgramW6432 = $ProgramFiles
+				[string]$global:CommonFilesDir = ${CommonProgramFiles(x86)}
+				[string]$global:CommonFilesDirx86 = ${CommonProgramFiles(x86)}
+				[string]$global:CommonProgramW6432 = $CommonProgramFiles
+				[string]$global:System = "$SystemRoot\SysWOW64"
 				[string]$global:Wow6432Node = '\Wow6432Node'
 			}
-			ElseIf (($currentArch -eq 'x86' -or $currentArch -eq '*') -and $env:PROCESSOR_ARCHITECTURE -eq 'x86') {
-				[string]$global:ProgramFilesDir = ${env:ProgramFiles}
-				[string]$global:ProgramFilesDirx86 = ${env:ProgramFiles}
+			ElseIf (($AppArch -eq 'x86' -or $AppArch -eq '*') -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
+				[string]$global:ProgramFilesDir = $ProgramFiles
+				[string]$global:ProgramFilesDirx86 = $ProgramFiles
 				[string]$global:ProgramW6432 = ''
-				[string]$global:CommonFilesDir = ${env:CommonProgramFiles}
-				[string]$global:CommonFilesDirx86 = ${env:CommonProgramFiles}
+				[string]$global:CommonFilesDir = $CommonProgramFiles
+				[string]$global:CommonFilesDirx86 = $CommonProgramFiles
 				[string]$global:CommonProgramW6432 = ''
-				[string]$global:System = "${env:SystemRoot}\System32"
+				[string]$global:System = "$SystemRoot\System32"
 				[string]$global:Wow6432Node = ''
 			}
 			Else {
-				[string]$global:ProgramFilesDir = ${env:ProgramFiles}
-				[string]$global:ProgramFilesDirx86 = ${env:ProgramFiles(x86)}
-				[string]$global:ProgramW6432 = ${env:ProgramFiles}
-				[string]$global:CommonFilesDir = ${env:CommonProgramFiles}
-				[string]$global:CommonFilesDirx86 = ${env:CommonProgramFiles(x86)}
-				[string]$global:CommonProgramW6432 = ${env:CommonProgramFiles}
-				[string]$global:System = "${env:SystemRoot}\System32"
+				[string]$global:ProgramFilesDir = $ProgramFiles
+				[string]$global:ProgramFilesDirx86 = ${ProgramFiles(x86)}
+				[string]$global:ProgramW6432 = $ProgramFiles
+				[string]$global:CommonFilesDir = $CommonProgramFiles
+				[string]$global:CommonFilesDirx86 = ${CommonProgramFiles(x86)}
+				[string]$global:CommonProgramW6432 = $CommonProgramFiles
+				[string]$global:System = "$SystemRoot\System32"
 				[string]$global:Wow6432Node = ''
 			}
 
@@ -257,6 +284,15 @@ Function Get-NxtVariablesFromDeploymentSystem {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$registerPackage = $env:registerPackage,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$uninstallOld = $env:uninstallOld,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Reboot = $env:Reboot
 	)
 		
 	Begin {
@@ -267,9 +303,9 @@ Function Get-NxtVariablesFromDeploymentSystem {
 	Process {
 		Write-Log -Message "Getting enviroment variables set by the deployment system..." -Source ${cmdletName}
 		Try {
-			If ("false" -eq $env:registerPackage) {[bool]$global:registerPackage = $false} Else {[bool]$global:registerPackage = $true}
-			If ("false" -eq $env:uninstallOld) {[bool]$global:uninstallOld = $false}
-			If ($null -ne $env:Reboot) {[int]$global:reboot = $env:Reboot}
+			If ("false" -eq $registerPackage) { [bool]$global:registerPackage = $false } Else { [bool]$global:registerPackage = $true }
+			If ("false" -eq $uninstallOld) { [bool]$global:uninstallOld = $false }
+			If ($null -ne $Reboot) { [int]$global:reboot = $Reboot }
 			Write-Log -Message "Enviroment variables successfully read." -Source ${cmdletName}
 		}
 		Catch {
@@ -318,22 +354,22 @@ Function Uninstall-NxtOld {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$AppName = $global:PackageConfig.AppName,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$AppVendor = $global:PackageConfig.AppVendor,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$AppVersion = $global:PackageConfig.AppVersion,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld
 	)
@@ -350,7 +386,7 @@ Function Uninstall-NxtOld {
 				## Check for Empirum packages under "HKLM:SOFTWARE\WOW6432Node\"
 				If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor") {
 					If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") {
-						$appEmpirumPackageVersions=Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
+						$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 						If (($appEmpirumPackageVersions).Count -eq 0) {
 							Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
@@ -393,7 +429,7 @@ Function Uninstall-NxtOld {
 				## Check for Empirum packages under "HKLM:SOFTWARE\"
 				If (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor") {
 					If (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName") {
-						$appEmpirumPackageVersions=Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
+						$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 						If (($appEmpirumPackageVersions).Count -eq 0) {
 							Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
@@ -500,34 +536,34 @@ function Get-NxtRegisterOnly {
 	https://neo42.de/psappdeploytoolkit
 #>
 
-param (
-		[Parameter(Mandatory=$false)]
+	param (
+		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$SoftMigration = $global:PackageConfig.SoftMigration,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
-		$wow6432Node = $global:Wow6432Node,
-		[Parameter(Mandatory=$false)]
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory = $false)]
 		[string]
 		$DetectedDisplayVersion = $global:detectedDisplayVersion
 	
-)
+	)
 	If ($true -eq $SoftMigration) {
 		## Perform soft migration 
 
 		[string]$installPhase = 'Soft-Migration'
 
-		If ($DetectedDisplayVersion -ge $DisplayVersion -and -not (Test-RegistryValue -Key HKLM\Software$global:Wow6432Node\neoPackages\$UninstallKeyName -Value 'ProductName') ) {
-			Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		If ($DetectedDisplayVersion -ge $DisplayVersion -and -not (Test-RegistryValue -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Value 'ProductName') ) {
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
 			Write-Log -Message 'Application was already present. Installation was not executed. Only package files were copied and package was registered. Exit!'
 			return $true
 		}
@@ -590,47 +626,51 @@ Function Register-NxtPackage {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$AppName = $global:PackageConfig.AppName,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$AppVendor = $global:PackageConfig.AppVendor,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$AppVersion = $global:PackageConfig.AppVersion,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$AppRevision = $global:PackageConfig.AppRevision,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallDisplayName = $global:PackageConfig.UninstallDisplayName,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$App = $global:PackageConfig.App,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$UserPartOnInstallation = $global:PackageConfig.UserPartOnInstallation,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
-		$userPartRevision = $global:PackageConfig.UserPartRevision
+		$userPartRevision = $global:PackageConfig.UserPartRevision,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$hidePackageUninstallButton = $global:PackageConfig.HidePackageUninstallButton,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$hidePackageUninstallEntry = $global:PackageConfig.HidePackageUninstallEntry
 	)
 	
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		[bool]$hidePackageUninstallButton = $global:PackageConfig.HidePackageUninstallButton
-		[bool]$hidePackageUninstallEntry = $global:PackageConfig.HidePackageUninstallEntry
 	}
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
@@ -711,15 +751,18 @@ Function Unregister-NxtPackage {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[string]
-		$App = $global:PackageConfig.App
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node
 	)
 	
 	Begin {
@@ -733,8 +776,8 @@ Function Unregister-NxtPackage {
 			Copy-File -Path "$scriptRoot\CleanUp.cmd" -Destination "$App\"
 			Start-Sleep 1
 			Execute-Process -Path "$APP\CleanUp.cmd" -NoWait
-			Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName
-			Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\$RegPackagesKey\$UninstallKeyName
+			Remove-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName
+			Remove-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName
 			Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
 		}
 		Catch {
@@ -762,6 +805,12 @@ Function Remove-NxtDesktopShortcuts {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string[]]
+		$CommonDesktopSortcutsToDelete = $global:PackageConfig.CommonDesktopSortcutsToDelete,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$CommonDesktop = $envCommonDesktop
 	)
 		
 	Begin {
@@ -771,9 +820,9 @@ Function Remove-NxtDesktopShortcuts {
 	}
 	Process {
 		Try {
-			foreach($value in $global:PackageConfig.CommonDesktopSortcutsToDelete) {
-				Write-Log -Message "Removing desktop shortcut '$envCommonDesktop\$value'..." -Source ${cmdletName}
-				Remove-File -Path "$envCommonDesktop\$value"
+			foreach ($value in $CommonDesktopSortcutsToDelete) {
+				Write-Log -Message "Removing desktop shortcut '$CommonDesktop\$value'..." -Source ${cmdletName}
+				Remove-File -Path "$CommonDesktop\$value"
 				Write-Log -Message "Desktop shortcut succesfully removed." -Source ${cmdletName}
 			}
 		}
@@ -802,6 +851,15 @@ Function Copy-NxtDesktopShortcuts {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string[]]
+		$CommonStartmenuSortcutsToCopyToCommonDesktop = $global:PackageConfig.CommonStartmenuSortcutsToCopyToCommonDesktop,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$CommonDesktop = $envCommonDesktop,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$CommonStartMenu = $envCommonStartMenu
 	)
 		
 	Begin {
@@ -811,9 +869,9 @@ Function Copy-NxtDesktopShortcuts {
 	}
 	Process {
 		Try {
-			foreach($value in $global:PackageConfig.CommonStartmenuSortcutsToCopyToCommonDesktop) {
-				Write-Log -Message "Copying start menu shortcut'$envCommonStartMenu\$($value.Source)' to the common desktop..." -Source ${cmdletName}
-				Copy-File -Path "$envCommonStartMenu\$($value.Source)" -Destination "$envCommonDesktop\$($value.TargetName)"
+			foreach ($value in $CommonStartmenuSortcutsToCopyToCommonDesktop) {
+				Write-Log -Message "Copying start menu shortcut'$CommonStartMenu\$($value.Source)' to the common desktop..." -Source ${cmdletName}
+				Copy-File -Path "$CommonStartMenu\$($value.Source)" -Destination "$CommonDesktop\$($value.TargetName)"
 				Write-Log -Message "Shortcut succesfully copied." -Source ${cmdletName}
 			}
 		}
@@ -1281,6 +1339,11 @@ function Get-NxtProcessorArchiteW6432 {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	param (
+		[Parameter()]
+		[string]
+		$PROCESSOR_ARCHITEW6432 = $env:PROCESSOR_ARCHITEW6432
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1288,7 +1351,7 @@ function Get-NxtProcessorArchiteW6432 {
 	}
 	Process {
 		try {
-			Write-Output $env:PROCESSOR_ARCHITEW6432
+			Write-Output $PROCESSOR_ARCHITEW6432
 		}
 		catch {
 			Write-Log -Message "Failed to get the PROCESSOR_ARCHITEW6432 variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -1312,6 +1375,11 @@ function Get-NxtWindowsBits {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	param (
+		[Parameter()]
+		[string]
+		$PROCESSOR_ARCHITECTURE = $env:PROCESSOR_ARCHITECTURE
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1319,7 +1387,7 @@ function Get-NxtWindowsBits {
 	}
 	Process {
 		try {
-			switch ($env:PROCESSOR_ARCHITECTURE) {
+			switch ($PROCESSOR_ARCHITECTURE) {
 				"AMD64" { 
 					Write-Output 64
 				}
@@ -1327,12 +1395,12 @@ function Get-NxtWindowsBits {
 					Write-Output 32
 				}
 				Default {
-					Write-Error "$($env:PROCESSOR_ARCHITECTURE) could not be translated to CPU bitness 'WindowsBits'"
+					Write-Error "$($PROCESSOR_ARCHITECTURE) could not be translated to CPU bitness 'WindowsBits'"
 				}
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to translate $($env:PROCESSOR_ARCHITECTURE) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to translate $($PROCESSOR_ARCHITECTURE) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -1572,7 +1640,7 @@ function Watch-NxtFile([string]$FileName, [int]$Timeout = 60) {
 #endregion
 
 #region Watch-NxtFileIsRemoved
-function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60) {
+function Watch-NxtFileIsRemoved {
 	<#
 	.DESCRIPTION
 		Tests if a file disappears in a given time.
@@ -1588,6 +1656,15 @@ function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$FileName,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$Timeout = 60
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1595,7 +1672,7 @@ function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60) {
 	}
 	Process {
 		try {
-			$waited = 0
+			[int]$waited = 0
 			while ($waited -lt $Timeout) {
 				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
 				if ($false -eq $result) {
@@ -1618,7 +1695,7 @@ function Watch-NxtFileIsRemoved([string]$FileName, [int]$Timeout = 60) {
 #endregion
 
 #region Watch-NxtProcess
-function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false) {
+function Watch-NxtProcess {
 	<#
 	.DESCRIPTION
 		Checks whether a process exists within a given time based on the name or a custom WQL query.
@@ -1635,6 +1712,17 @@ function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsW
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$ProcessName,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$Timeout = 60,
+		[switch]
+		$IsWql = $false
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1671,7 +1759,7 @@ function Watch-NxtProcess([string]$ProcessName, [int]$Timeout = 60, [switch]$IsW
 #endregion
 
 #region Watch-NxtProcessIsStopped
-function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [switch]$IsWql = $false) {
+function Watch-NxtProcessIsStopped {
 	<#
 	.DESCRIPTION
 		Checks whether a process ends within a given time based on the name or a custom WQL query.
@@ -1688,6 +1776,17 @@ function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [sw
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$ProcessName,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$Timeout = 60,
+		[switch]
+		$IsWql = $false
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1724,7 +1823,7 @@ function Watch-NxtProcessIsStopped([string]$ProcessName, [int]$Timeout = 60, [sw
 #endregion
 
 #region Get-NxtServiceState
-function Get-NxtServiceState([string]$ServiceName) {
+function Get-NxtServiceState {
 	<#
 	.DESCRIPTION
 		Gets the state of the given service name.
@@ -1738,6 +1837,12 @@ function Get-NxtServiceState([string]$ServiceName) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$ServiceName
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1765,7 +1870,7 @@ function Get-NxtServiceState([string]$ServiceName) {
 #endregion
 
 #region Get-NxtNameBySid
-function Get-NxtNameBySid([string]$Sid) {
+function Get-NxtNameBySid {
 	<#
 	.DESCRIPTION
 		Gets the netbios user name for a SID.
@@ -1779,6 +1884,12 @@ function Get-NxtNameBySid([string]$Sid) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$Sid
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1807,7 +1918,7 @@ function Get-NxtNameBySid([string]$Sid) {
 #endregion
 
 #region Compare-NxtVersion
-function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackageVersion) {
+function Compare-NxtVersion {
 	<#
 	.DESCRIPTION
 		Compares two package versions.
@@ -1827,6 +1938,16 @@ function Compare-NxtVersion([string]$InstalledPackageVersion, [string]$NewPackag
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$InstalledPackageVersion,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$NewPackageVersion
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2191,7 +2312,7 @@ function Get-NxtSidByName {
 #endregion
 
 #region Get-NxtProcessEnvironmentVariable
-function Get-NxtProcessEnvironmentVariable([string]$Key) {
+function Get-NxtProcessEnvironmentVariable {
 	<#
 	.DESCRIPTION
 		Gets the value of the process environment variable.
@@ -2204,6 +2325,11 @@ function Get-NxtProcessEnvironmentVariable([string]$Key) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Key
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2227,7 +2353,7 @@ function Get-NxtProcessEnvironmentVariable([string]$Key) {
 #endregion
 
 #region Set-NxtProcessEnvironmentVariable
-function Set-NxtProcessEnvironmentVariable([string]$Key, [string]$Value) {
+function Set-NxtProcessEnvironmentVariable {
 	<#
 	.DESCRIPTION
 		Sets a process environment variable.
@@ -2242,6 +2368,14 @@ function Set-NxtProcessEnvironmentVariable([string]$Key, [string]$Value) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Key,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Value
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2262,7 +2396,7 @@ function Set-NxtProcessEnvironmentVariable([string]$Key, [string]$Value) {
 #endregion
 
 #region Remove-NxtProcessEnvironmentVariable
-function Remove-NxtProcessEnvironmentVariable([string]$Key) {
+function Remove-NxtProcessEnvironmentVariable {
 	<#
 	.DESCRIPTION
 		Deletes a process environment variable.
@@ -2275,6 +2409,11 @@ function Remove-NxtProcessEnvironmentVariable([string]$Key) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Key
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2296,7 +2435,7 @@ function Remove-NxtProcessEnvironmentVariable([string]$Key) {
 #endregion
 
 #region Get-NxtSystemEnvironmentVariable
-function Get-NxtSystemEnvironmentVariable([string]$Key) {
+function Get-NxtSystemEnvironmentVariable {
 	<#
 	.DESCRIPTION
 		Gets the value of the system environment variable.
@@ -2309,6 +2448,11 @@ function Get-NxtSystemEnvironmentVariable([string]$Key) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Key
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2332,7 +2476,7 @@ function Get-NxtSystemEnvironmentVariable([string]$Key) {
 #endregion
 
 #region Set-NxtSystemEnvironmentVariable
-function Set-NxtSystemEnvironmentVariable([string]$Key, [string]$Value) {
+function Set-NxtSystemEnvironmentVariable {
 	<#
 	.DESCRIPTION
 		Sets a system environment variable.
@@ -2347,6 +2491,14 @@ function Set-NxtSystemEnvironmentVariable([string]$Key, [string]$Value) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Key,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Value
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2367,7 +2519,7 @@ function Set-NxtSystemEnvironmentVariable([string]$Key, [string]$Value) {
 #endregion
 
 #region Remove-NxtSystemEnvironmentVariable
-function Remove-NxtSystemEnvironmentVariable([string]$Key) {
+function Remove-NxtSystemEnvironmentVariable {
 	<#
 	.DESCRIPTION
 		Deletes a system environment variable.
@@ -2380,6 +2532,11 @@ function Remove-NxtSystemEnvironmentVariable([string]$Key) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Key
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2418,7 +2575,10 @@ function Test-NxtLocalUserExists {
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]
-		$UserName
+		$UserName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$COMPUTERNAME = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2427,7 +2587,7 @@ function Test-NxtLocalUserExists {
 	}
 	Process {
 		try {
-			[bool]$userExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$UserName,user"))
+			[bool]$userExists = ([ADSI]::Exists("WinNT://$COMPUTERNAME/$UserName,user"))
 			Write-Output $userExists
 		}
 		catch {
@@ -2494,7 +2654,10 @@ function Add-NxtLocalUser {
 		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[switch]
-		$SetPwdNeverExpires
+		$SetPwdNeverExpires,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$COMPUTERNAME = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2503,7 +2666,7 @@ function Add-NxtLocalUser {
 	}
 	Process {
 		try {
-			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
 			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
 			if ($false -eq $userExists) {
 				[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
@@ -2511,7 +2674,7 @@ function Add-NxtLocalUser {
 				$objUser.SetInfo()
 			}
 			else {
-				[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$UserName,user"
+				[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$COMPUTERNAME/$UserName,user"
 			}
 			if (-NOT [string]::IsNullOrEmpty($FullName)) {
 				$objUser.Put("FullName", $FullName)
@@ -2567,7 +2730,10 @@ function Remove-NxtLocalUser {
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$UserName
+		$UserName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$COMPUTERNAME = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2579,7 +2745,7 @@ function Remove-NxtLocalUser {
 				
 			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
 			if ($userExists) {
-				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
 				$adsiObj.Delete("User", $UserName)
 				Write-Output $true
 				return
@@ -2617,7 +2783,10 @@ function Test-NxtLocalGroupExists {
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$GroupName
+		$GroupName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$COMPUTERNAME = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2626,7 +2795,7 @@ function Test-NxtLocalGroupExists {
 	}
 	Process {
 		try {
-			[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
+			[bool]$groupExists = ([ADSI]::Exists("WinNT://$COMPUTERNAME/$GroupName,group"))
 			Write-Output $groupExists
 		}
 		catch {
@@ -2666,7 +2835,10 @@ function Add-NxtLocalGroup {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$Description
+		$Description,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$COMPUTERNAME = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2675,14 +2847,14 @@ function Add-NxtLocalGroup {
 	}
 	Process {
 		try {
-			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
 			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
 			if ($false -eq $groupExists) {
 				[System.DirectoryServices.DirectoryEntry]$objGroup = $adsiObj.Create("Group", $GroupName)
 				$objGroup.SetInfo()
 			}
 			else {
-				[System.DirectoryServices.DirectoryEntry]$objGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+				[System.DirectoryServices.DirectoryEntry]$objGroup = [ADSI]"WinNT://$COMPUTERNAME/$GroupName,group"
 			}
 			if (-NOT [string]::IsNullOrEmpty($Description)) {
 				$objGroup.Put("Description", $Description)
@@ -2721,7 +2893,10 @@ function Remove-NxtLocalGroup {
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$GroupName
+		$GroupName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$COMPUTERNAME = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2733,7 +2908,7 @@ function Remove-NxtLocalGroup {
 				
 			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
 			if ($groupExists) {
-				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$($env:COMPUTERNAME)"
+				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
 				$adsiObj.Delete("Group", $GroupName)
 				Write-Output $true
 				return
@@ -2794,7 +2969,10 @@ function Remove-NxtLocalGroupMember {
 		$AllGroups,
 		[Parameter(ParameterSetName = 'All')]
 		[Switch]
-		$AllMember
+		$AllMember,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$COMPUTERNAME = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2803,9 +2981,9 @@ function Remove-NxtLocalGroupMember {
 	}
 	Process {
 		try {
-			[bool]$groupExists = ([ADSI]::Exists("WinNT://$($env:COMPUTERNAME)/$GroupName,group"))
+			[bool]$groupExists = ([ADSI]::Exists("WinNT://$COMPUTERNAME/$GroupName,group"))
 			if ($groupExists) {
-				[System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+				[System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$COMPUTERNAME/$GroupName,group"
 				if ([string]::IsNullOrEmpty($MemberName)) {
 					[int]$count = 0
 					foreach ($member in $group.psbase.Invoke("Members")) {
@@ -2887,7 +3065,10 @@ function Add-NxtLocalGroupMember {
 		[Parameter(Mandatory = $true)]
 		[ValidateSet('Group', 'User')]
 		[string]
-		$MemberType
+		$MemberType,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$COMPUTERNAME = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2901,14 +3082,14 @@ function Add-NxtLocalGroupMember {
 				Write-Output $false
 				return
 			}
-			[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$GroupName,group"
+			[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$COMPUTERNAME/$GroupName,group"
 			if ($MemberType -eq "Group") {
 				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $MemberName
 				if ($false -eq $groupExists) {
 					Write-Output $false
 					return
 				}
-				[System.DirectoryServices.DirectoryEntry]$memberGroup = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,group"
+				[System.DirectoryServices.DirectoryEntry]$memberGroup = [ADSI]"WinNT://$COMPUTERNAME/$MemberName,group"
 				$targetGroup.psbase.Invoke("Add", $memberGroup.path)
 				Write-Output $true
 				return
@@ -2919,7 +3100,7 @@ function Add-NxtLocalGroupMember {
 					Write-Output $false
 					return
 				}
-				[System.DirectoryServices.DirectoryEntry]$memberUser = [ADSI]"WinNT://$($env:COMPUTERNAME)/$MemberName,user"
+				[System.DirectoryServices.DirectoryEntry]$memberUser = [ADSI]"WinNT://$COMPUTERNAME/$MemberName,user"
 				$targetGroup.psbase.Invoke("Add", $memberUser.path)
 				Write-Output $true
 				return
@@ -2939,7 +3120,7 @@ function Add-NxtLocalGroupMember {
 #endregion
 
 #region Read-NxtSingleXmlNode
-function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName) {
+function Read-NxtSingleXmlNode {
 	<#
 	.DESCRIPTION
 		Reads single node of xml file.
@@ -2954,6 +3135,14 @@ function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$XmlFilePath,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SingleNodeName
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2976,7 +3165,7 @@ function Read-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName) {
 #endregion
 
 #region Write-NxtSingleXmlNode
-function Write-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName, [string]$Value) {
+function Write-NxtSingleXmlNode {
 	<#
 	.DESCRIPTION
 		Writes single node to xml file.
@@ -2993,6 +3182,17 @@ function Write-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName, [
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$XmlFilePath,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SingleNodeName,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Value
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -3016,7 +3216,7 @@ function Write-NxtSingleXmlNode([string]$XmlFilePath, [string]$SingleNodeName, [
 #endregion
 
 #region Write-NxtXmlNode
-function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model) {
+function Write-NxtXmlNode {
 	<#
 	.DESCRIPTION
 		Adds a node with attributes and values to an existing xml file.
@@ -3049,6 +3249,14 @@ function Write-NxtXmlNode([string]$XmlFilePath, [PSADTNXT.XmlNodeModel]$Model) {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]
+		$XmlFilePath,
+		[Parameter(Mandatory = $true)]
+		[PSADTNXT.XmlNodeModel]
+		$Model
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -3159,7 +3367,7 @@ Function Remove-NxtEmptyFolder {
 
 #region Function Execute-NxtInnoSetup
 function Execute-NxtInnoSetup {
-    <#
+	<#
 	.SYNOPSIS
 		Executes the following actions for InnoSetup installations: install (with UninstallKey AND installation file), uninstall (with UninstallKey).
 	.DESCRIPTION
@@ -3202,62 +3410,65 @@ function Execute-NxtInnoSetup {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Install', 'Uninstall')]
-        [string]$Action = 'Install',
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Install', 'Uninstall')]
+		[string]$Action = 'Install',
 
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullorEmpty()]
-        [string]$UninstallKey,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]$UninstallKey,
 
-        [Parameter(Mandatory = $false)]
-        [string]$Path,
+		[Parameter(Mandatory = $false)]
+		[string]$Path,
 
-        [Parameter(Mandatory = $false)]
-        [string]$Parameters,
+		[Parameter(Mandatory = $false)]
+		[string]$Parameters,
         
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [string]$AddParameters,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$AddParameters,
 
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
-        [string]$MergeTasks,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[string]$MergeTasks,
 
-        [Parameter(Mandatory = $false)]
-        [string]$Log,
+		[Parameter(Mandatory = $false)]
+		[string]$Log,
 
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [switch]$PassThru = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$PassThru = $false,
         
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [boolean]$ContinueOnError = $false
-    )
-    Begin {
-        ## read config data from AppDeployToolkitConfig.xml
-        [Xml.XmlElement]$xmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options
-        [string]$configNxtInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_InstallParams)
-        [string]$configNxtInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_UninstallParams)
-        [string]$configNxtInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_LogPath)
-        [string]$configNxtInnoSetupUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_UninsBackupPath)
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$ContinueOnError = $false,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$deploymentTimestamp = $global:deploymentTimestamp
+	)
+	Begin {
+		## read config data from AppDeployToolkitConfig.xml
+		[Xml.XmlElement]$xmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options
+		[string]$configNxtInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_InstallParams)
+		[string]$configNxtInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_UninstallParams)
+		[string]$configNxtInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_LogPath)
+		[string]$configNxtInnoSetupUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_UninsBackupPath)
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
-    Process {
+	Process {
 
-        [string]$innoUninstallKey = $UninstallKey
+		[string]$innoUninstallKey = $UninstallKey
    
-        switch ($Action) {
-            'Install' {
-                [string]$innoSetupDefaultParams = $configNxtInnoSetupInstallParams
+		switch ($Action) {
+			'Install' {
+				[string]$innoSetupDefaultParams = $configNxtInnoSetupInstallParams
 
-        		## If the Setup File is in the Files directory, set the full path during an installation
+				## If the Setup File is in the Files directory, set the full path during an installation
 				If (Test-Path -LiteralPath (Join-Path -Path $dirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
 					[string]$innoSetupPath = Join-Path -Path $dirFiles -ChildPath $path
 				}
@@ -3271,25 +3482,25 @@ function Execute-NxtInnoSetup {
 					}
 					Continue
 				}
-            }
-            'Uninstall' {
-                [string]$innoSetupDefaultParams = $configNxtInnoSetupUninstallParams
-                [PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $innoUninstallKey -Exact -ErrorAction 'SilentlyContinue'
+			}
+			'Uninstall' {
+				[string]$innoSetupDefaultParams = $configNxtInnoSetupUninstallParams
+				[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $innoUninstallKey -Exact -ErrorAction 'SilentlyContinue'
     
-                if (!$installedAppResults) {
-                    Write-Log -Message "No Application with UninstallKey `"$innoUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
+				if (!$installedAppResults) {
+					Write-Log -Message "No Application with UninstallKey `"$innoUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
 					return
-                }
+				}
     
-                [string]$innoUninstallString = $installedAppResults.UninstallString
+				[string]$innoUninstallString = $installedAppResults.UninstallString
     
-                ## check for and remove quotation marks around the uninstall string
-                if ($innoUninstallString.StartsWith('"')) {
-                    [string]$innoSetupPath = $innoUninstallString.Substring(1, $innoUninstallString.IndexOf('"', 1) - 1)
-                }
-                else {
-                    [string]$innoSetupPath = $innoUninstallString.Substring(0, $innoUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
-                }
+				## check for and remove quotation marks around the uninstall string
+				if ($innoUninstallString.StartsWith('"')) {
+					[string]$innoSetupPath = $innoUninstallString.Substring(1, $innoUninstallString.IndexOf('"', 1) - 1)
+				}
+				else {
+					[string]$innoSetupPath = $innoUninstallString.Substring(0, $innoUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+				}
 				
 				## Get the parent folder of the uninstallation file
 				[string]$uninsFolder = split-path $innoSetupPath -Parent
@@ -3309,88 +3520,88 @@ function Execute-NxtInnoSetup {
 
 				## If $innoSetupPath is still unexistend, write Error to log and abort
 				if (![System.IO.File]::Exists($innoSetupPath)) {
-                    Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
+					Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
 
-                    if ($ContinueOnError) {
+					if ($ContinueOnError) {
 						## Uninstallation without uninstallation file is impossible --> Abort the function without error
-                        return
-                    }
-                    else {
-                        throw "Uninstallation file could not be found nor restored."
-                    }
-                }
+						return
+					}
+					else {
+						throw "Uninstallation file could not be found nor restored."
+					}
+				}
 
-            }
-        }
+			}
+		}
     
-        [string]$argsInnoSetup = $innoSetupDefaultParams
+		[string]$argsInnoSetup = $innoSetupDefaultParams
     
-        ## Replace default parameters if specified.
-        If ($Parameters) {
-            $argsInnoSetup = $Parameters
-        }
-        ## Append parameters to default parameters if specified.
-        If ($AddParameters) {
-            $argsInnoSetup = "$argsInnoSetup $AddParameters"
-        }
+		## Replace default parameters if specified.
+		If ($Parameters) {
+			$argsInnoSetup = $Parameters
+		}
+		## Append parameters to default parameters if specified.
+		If ($AddParameters) {
+			$argsInnoSetup = "$argsInnoSetup $AddParameters"
+		}
 
-        ## MergeTasks if parameters were not replaced
-        if ((-not($Parameters)) -and (-not([string]::IsNullOrWhiteSpace($MergeTasks)))) {
-            $argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
-        }
+		## MergeTasks if parameters were not replaced
+		if ((-not($Parameters)) -and (-not([string]::IsNullOrWhiteSpace($MergeTasks)))) {
+			$argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
+		}
     
-        [string]$fullLogPath = $null
+		[string]$fullLogPath = $null
 
-        ## Logging
-        if ([string]::IsNullOrWhiteSpace($Log)) {
-            ## create Log file name if non is specified
-            if ($Action -eq 'Install') {
-				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$($global:deploymentTimestamp)"
-            }
-            else {
-                [string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$($global:deploymentTimestamp)"
-            }
-        }
+		## Logging
+		if ([string]::IsNullOrWhiteSpace($Log)) {
+			## create Log file name if non is specified
+			if ($Action -eq 'Install') {
+				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$deploymentTimestamp"
+			}
+			else {
+				[string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$deploymentTimestamp"
+			}
+		}
 
-        [string]$LogFileExtension = [System.IO.Path]::GetExtension($Log)
+		[string]$LogFileExtension = [System.IO.Path]::GetExtension($Log)
 
-        ## Append file extension if necessary
-        if (($LogFileExtension -ne '.txt') -and ($LogFileExtension -ne '.log')) {
-            $Log = $Log + '.log'
-        }
+		## Append file extension if necessary
+		if (($LogFileExtension -ne '.txt') -and ($LogFileExtension -ne '.log')) {
+			$Log = $Log + '.log'
+		}
 
-        ## Check, if $Log is a full path
-        if (-not($Log.Contains('\'))) {
-            $fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ',[string]::Empty)
-        }
-        else {
-            $fullLogPath = $Log
-        }
+		## Check, if $Log is a full path
+		if (-not($Log.Contains('\'))) {
+			$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
+		}
+		else {
+			$fullLogPath = $Log
+		}
 
-        $argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
+		$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
     
-        [hashtable]$ExecuteProcessSplat = @{
-            Path             = $innoSetupPath
-            Parameters       = $argsInnoSetup
-            WindowStyle      = 'Normal'
-        }
+		[hashtable]$ExecuteProcessSplat = @{
+			Path        = $innoSetupPath
+			Parameters  = $argsInnoSetup
+			WindowStyle = 'Normal'
+		}
         
-        If ($ContinueOnError) {
-            $ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
-        }
-        If ($PassThru) {
-            $ExecuteProcessSplat.Add('PassThru', $PassThru)
-        }
+		If ($ContinueOnError) {
+			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+		}
+		If ($PassThru) {
+			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+		}
     
-        If ($PassThru) {
-            [psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
-        }
-        Else {
-            Execute-Process @ExecuteProcessSplat
-        }
+		If ($PassThru) {
+			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+		}
+		Else {
+			Execute-Process @ExecuteProcessSplat
+		}
     
-        ## Update the desktop (in case of changed or added enviroment variables)
-        Update-Desktop
+		## Update the desktop (in case of changed or added enviroment variables)
+		Update-Desktop
 
 		## Copy uninstallation file from $uninsfolder to $configNxtInnoSetupUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
@@ -3423,11 +3634,11 @@ function Execute-NxtInnoSetup {
 				}
 			}
 		}
-    }
-    End {
+	}
+	End {
 		If ($PassThru) {
-            Write-Output -InputObject $ExecuteResults
-        }
+			Write-Output -InputObject $ExecuteResults
+		}
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
@@ -3436,7 +3647,7 @@ function Execute-NxtInnoSetup {
 
 #region Function Execute-NxtNullsoft
 function Execute-NxtNullsoft {
-    <#
+	<#
 	.SYNOPSIS
 		Executes the following actions for Nullsoft installations: install (with UninstallKey AND installation file), uninstall (with UninstallKey).
 	.DESCRIPTION
@@ -3470,54 +3681,54 @@ function Execute-NxtNullsoft {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Install', 'Uninstall')]
-        [string]$Action = 'Install',
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Install', 'Uninstall')]
+		[string]$Action = 'Install',
 
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullorEmpty()]
-        [string]$UninstallKey,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]$UninstallKey,
 
-        [Parameter(Mandatory = $false)]
-        [string]$Path,
+		[Parameter(Mandatory = $false)]
+		[string]$Path,
 
-        [Parameter(Mandatory = $false)]
-        [string]$Parameters,
+		[Parameter(Mandatory = $false)]
+		[string]$Parameters,
         
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [string]$AddParameters,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$AddParameters,
 
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [switch]$PassThru = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$PassThru = $false,
         
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [boolean]$ContinueOnError = $false
-    )
-    Begin {
-        ## read config data from AppDeployToolkitConfig.xml
-        [Xml.XmlElement]$xmlConfigNxtNullsoft = $xmlConfig.NxtNullsoft_Options
-        [string]$configNxtNullsoftInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_InstallParams)
-        [string]$configNxtNullsoftUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_UninstallParams)
-        [string]$configNxtNullsoftUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_UninsBackupPath)
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$ContinueOnError = $false
+	)
+	Begin {
+		## read config data from AppDeployToolkitConfig.xml
+		[Xml.XmlElement]$xmlConfigNxtNullsoft = $xmlConfig.NxtNullsoft_Options
+		[string]$configNxtNullsoftInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_InstallParams)
+		[string]$configNxtNullsoftUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_UninstallParams)
+		[string]$configNxtNullsoftUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_UninsBackupPath)
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
-    Process {
+	Process {
 
-        [string]$nullsoftUninstallKey = $UninstallKey
+		[string]$nullsoftUninstallKey = $UninstallKey
    
-        switch ($Action) {
-            'Install' {
-                [string]$nullsoftDefaultParams = $configNxtNullsoftInstallParams
+		switch ($Action) {
+			'Install' {
+				[string]$nullsoftDefaultParams = $configNxtNullsoftInstallParams
 
-        		## If the Setup File is in the Files directory, set the full path during an installation
+				## If the Setup File is in the Files directory, set the full path during an installation
 				If (Test-Path -LiteralPath (Join-Path -Path $dirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
 					[string]$nullsoftSetupPath = Join-Path -Path $dirFiles -ChildPath $path
 				}
@@ -3531,25 +3742,25 @@ function Execute-NxtNullsoft {
 					}
 					Continue
 				}
-            }
-            'Uninstall' {
-                [string]$nullsoftDefaultParams = $configNxtNullsoftUninstallParams
-                [PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey -Exact -ErrorAction 'SilentlyContinue'
+			}
+			'Uninstall' {
+				[string]$nullsoftDefaultParams = $configNxtNullsoftUninstallParams
+				[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey -Exact -ErrorAction 'SilentlyContinue'
     
-                if (!$installedAppResults) {
-                    Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
+				if (!$installedAppResults) {
+					Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
 					return
-                }
+				}
     
-                [string]$nullsoftUninstallString = $installedAppResults.UninstallString
+				[string]$nullsoftUninstallString = $installedAppResults.UninstallString
     
-                ## check for and remove quotation marks around the uninstall string
-                if ($nullsoftUninstallString.StartsWith('"')) {
-                    [string]$nullsoftSetupPath = $nullsoftUninstallString.Substring(1, $nullsoftUninstallString.IndexOf('"', 1) - 1)
-                }
-                else {
-                    [string]$nullsoftSetupPath = $nullsoftUninstallString.Substring(0, $nullsoftUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
-                }
+				## check for and remove quotation marks around the uninstall string
+				if ($nullsoftUninstallString.StartsWith('"')) {
+					[string]$nullsoftSetupPath = $nullsoftUninstallString.Substring(1, $nullsoftUninstallString.IndexOf('"', 1) - 1)
+				}
+				else {
+					[string]$nullsoftSetupPath = $nullsoftUninstallString.Substring(0, $nullsoftUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+				}
 				
 				## Get parent folder and filename of the uninstallation file
 				[string]$uninsFolder = split-path $nullsoftSetupPath -Parent
@@ -3563,50 +3774,50 @@ function Execute-NxtNullsoft {
 
 				## If $nullsoftSetupPath is still unexistend, write Error to log and abort
 				if (![System.IO.File]::Exists($nullsoftSetupPath)) {
-                    Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
+					Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
 
-                    if ($ContinueOnError) {
+					if ($ContinueOnError) {
 						## Uninstallation without uninstallation file is impossible --> Abort the function without error
-                        return
-                    }
-                    else {
-                        throw "Uninstallation file could not be found nor restored."
-                    }
-                }
+						return
+					}
+					else {
+						throw "Uninstallation file could not be found nor restored."
+					}
+				}
 
-            }
-        }
+			}
+		}
     
-        [string]$argsnullsoft = $nullsoftDefaultParams
+		[string]$argsnullsoft = $nullsoftDefaultParams
     
-        ## Replace default parameters if specified.
-        If ($Parameters) {
-            $argsnullsoft = $Parameters
-        }
-        ## Append parameters to default parameters if specified.
-        If ($AddParameters) {
-            $argsnullsoft = "$argsnullsoft $AddParameters"
-        }
+		## Replace default parameters if specified.
+		If ($Parameters) {
+			$argsnullsoft = $Parameters
+		}
+		## Append parameters to default parameters if specified.
+		If ($AddParameters) {
+			$argsnullsoft = "$argsnullsoft $AddParameters"
+		}
  
-        [hashtable]$ExecuteProcessSplat = @{
-            Path             = $nullsoftSetupPath
-            Parameters       = $argsnullsoft
-            WindowStyle      = 'Normal'
-        }
+		[hashtable]$ExecuteProcessSplat = @{
+			Path        = $nullsoftSetupPath
+			Parameters  = $argsnullsoft
+			WindowStyle = 'Normal'
+		}
         
-        If ($ContinueOnError) {
-            $ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
-        }
-        If ($PassThru) {
-            $ExecuteProcessSplat.Add('PassThru', $PassThru)
-        }
+		If ($ContinueOnError) {
+			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+		}
+		If ($PassThru) {
+			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+		}
     
-        If ($PassThru) {
-            [psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
-        }
-        Else {
-            Execute-Process @ExecuteProcessSplat
-        }
+		If ($PassThru) {
+			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+		}
+		Else {
+			Execute-Process @ExecuteProcessSplat
+		}
 
 		if ($Action -eq 'Uninstall') {
 			## Wait until uninstallation processes terminated
@@ -3616,8 +3827,8 @@ function Execute-NxtNullsoft {
 			Write-Log -Message "All uninstallation processes finished." -Source ${CmdletName}
 		}
     
-        ## Update the desktop (in case of changed or added enviroment variables)
-        Update-Desktop
+		## Update the desktop (in case of changed or added enviroment variables)
+		Update-Desktop
 
 		## Copy uninstallation file from $uninsFolder to $configNxtNullsoftUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
@@ -3647,12 +3858,108 @@ function Execute-NxtNullsoft {
 				}
 			}
 		}
-    }
-    End {
+	}
+	End {
 		If ($PassThru) {
-            Write-Output -InputObject $ExecuteResults
-        }
+			Write-Output -InputObject $ExecuteResults
+		}
 
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#region Function Import-NxtIniFile
+function Import-NxtIniFile {
+	<#
+	.SYNOPSIS
+		Imports an Ini file into Powershell Object.
+	.DESCRIPTION
+		Imports an Ini file into Powershell Object.
+	.PARAMETER Path
+		The path to the INI file.
+	.EXAMPLE
+		Import-NxtIniFile -Path C:\path\to\ini\file.ini
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+		[String]$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContinueOnError = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[hashtable]$ini = @{}
+		$section = 'default'
+		switch -Regex -File $Path {
+			'^\[(.+)\]$' {
+				$section = $matches[1]
+				if (!$ini.ContainsKey($section)) {
+					$ini[$section] = @{}
+				}
+			}
+			'^([^\s]+)\s*=\s*(.+)$' {
+				$ini[$section][$matches[1]] = $matches[2]
+			}
+		}
+		write-output $ini
+		}
+		catch {
+			Write-Log -Message "Failed to read ini file [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+				If (-not $ContinueOnError) {
+					Throw "Failed to read ini file [$path]: $($_.Exception.Message)"
+				}
+		}
+		
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+
+#region Function Import-NxtSetupCfg
+function Import-NxtSetupCfg {
+	<#
+	.SYNOPSIS
+		Imports a Setup.cfg file in Ini format.
+	.DESCRIPTION
+		Imports a Setup.cfg file in Ini format.
+	.PARAMETER Path
+		The path to the Setup.cfg file.
+	.EXAMPLE
+		Import-NxtSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+		[String]$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContinueOnError = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+	}
+	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
