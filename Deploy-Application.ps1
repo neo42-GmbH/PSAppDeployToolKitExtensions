@@ -322,9 +322,9 @@ function Install-NxtApplication {
 	}
 	$InstallExitCode = $LastExitCode
 
-	Start-Sleep 5
+	Start-Sleep -Seconds 5
 
-	# Test successfull installation
+	## Test successfull installation
 	If (-not (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString')) {
 		Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
 		# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
@@ -390,12 +390,10 @@ Param (
 		Copy-NxtDesktopShortcuts
 	}
 
-
 	# Hide-NxtAppUninstallEntries
 
 	Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
 	
-
 	If ($true -eq $UserPartOnInstallation) {
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$UninstallKeyName.uninstall"
@@ -454,7 +452,7 @@ Param(
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
 	## <Perform Pre-Uninstallation tasks here>
-	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent'
+	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($global:PackageConfig.UninstallKey) -Name 'SystemComponent'
 
 	[string]$global:installPhase = 'Uninstallation'
 	
@@ -471,14 +469,19 @@ Param(
 		ElseIf ($method -eq "Nullsoft") {
 			Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara"
 		}
+		ElseIf ($method -like "BitRock*") {
+			Execute-NxtBitRockInstaller -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara"
+		}
+		ElseIf ($method -eq "none") {
+		}
 		Else {
 			Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
 		}
 		$UninstallExitCode = $LastExitCode
 
-		Start-Sleep 5
+		Start-Sleep -Seconds 5
 
-		# Test successfull uninstallation
+		## Test successfull uninstallation
 		If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
 			Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
 			# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
