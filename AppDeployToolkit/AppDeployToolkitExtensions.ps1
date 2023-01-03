@@ -614,6 +614,9 @@ Function Register-NxtPackage {
 	.PARAMETER Wow6432Node
 		Switches between 32/64 Bit Registry Keys.
 		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.PARAMETER MainExitCode
+		The Exitcode that should be written to Registry
+		Defaults to the variable $mainExitCode
 	
 	.EXAMPLE
 		Register-NxtPackage
@@ -658,13 +661,40 @@ Function Register-NxtPackage {
 		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$userPartRevision = $global:PackageConfig.UserPartRevision,
+		$UserPartRevision = $global:PackageConfig.UserPartRevision,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$hidePackageUninstallButton = $global:PackageConfig.HidePackageUninstallButton,
+		$HidePackageUninstallButton = $global:PackageConfig.HidePackageUninstallButton,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$hidePackageUninstallEntry = $global:PackageConfig.HidePackageUninstallEntry
+		$HidePackageUninstallEntry = $global:PackageConfig.HidePackageUninstallEntry,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptParentPath = $scriptParentPath,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DirSupportFiles = $dirSupportFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ConfigToolkitLogDir = $configToolkitLogDir,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$LogName = $logName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$MainExitCode = $mainExitCode,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvArchitecture = $envArchitecture,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvUserDomain = $envUserDomain,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallOld = $global:PackageConfig.UninstallOld,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node
 	)
 	
 	Begin {
@@ -675,20 +705,20 @@ Function Register-NxtPackage {
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
 		Try {
-			Copy-File -Path "$scriptParentPath\AppDeployToolkit" -Destination "$App\neoInstall\" -Recurse
-			Copy-File -Path "$scriptParentPath\Deploy-Application.ps1" -Destination "$App\neoInstall\"
-			Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$App\neoInstall\"
+			Copy-File -Path "$ScriptParentPath\AppDeployToolkit" -Destination "$App\neoInstall\" -Recurse
+			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neoInstall\"
+			Copy-File -Path "$DirSupportFiles\Setup.ico" -Destination "$App\neoInstall\"
 
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'AppPath' -Value $App
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'DebugLogFile' -Value $configToolkitLogDir\$logName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'DebugLogFile' -Value $ConfigToolkitLogDir\$LogName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'DeveloperName' -Value $AppVendor
 			# Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'PackageStatus' -Value '$PackageStatus'
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'ProductName' -Value $AppName
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'ReturnCode (%ERRORLEVEL%)' -Value $mainExitCode
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'ReturnCode (%ERRORLEVEL%)' -Value $MainExitCode
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'Revision' -Value $AppVersion
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'SrcPath' -Value $scriptParentPath
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'StartupProcessor_Architecture' -Value $envArchitecture
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'SrcPath' -Value $ScriptParentPath
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'StartupProcessor_Architecture' -Value $EnvArchitecture
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'StartupProcessOwner' -Value $envUserDomain\$envUserName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
@@ -697,7 +727,7 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
 			If ($true -eq $UserPartOnInstallation) {
 				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'UserPartPath' -Value ('"' + $App + '\neo42-Userpart"')
-				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'UserPartUninstPath' -Value ('"%AppData%\neoPackages\' + $uninstallKeyName + '"')
+				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'UserPartUninstPath' -Value ('"%AppData%\neoPackages\' + $UninstallKeyName + '"')
 				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'UserPartRevision' -Value $UserPartRevision
 			}
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'Version' -Value $AppVersion
@@ -705,15 +735,15 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayIcon' -Value $App\neoInstall\Setup.ico
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayName' -Value $UninstallDisplayName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayVersion' -Value $AppVersion
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'MachineKeyName' -Value $RegPackagesKey\$uninstallKeyName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'MachineKeyName' -Value $RegPackagesKey\$UninstallKeyName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoModify' -Type 'Dword' -Value 1
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRemove' -Type 'Dword' -Value $hidePackageUninstallButton
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRemove' -Type 'Dword' -Value $HidePackageUninstallButton
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRepair' -Type 'Dword' -Value 1
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageApplicationDir' -Value $App
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageProductName' -Value $AppName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageRevision' -Value $AppVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'Publisher' -Value $AppVendor
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'SystemComponent' -Type 'Dword' -Value $hidePackageUninstallEntry
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'UninstallString' -Type 'ExpandString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
@@ -762,7 +792,10 @@ Function Unregister-NxtPackage {
 		$App = $global:PackageConfig.App,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Wow6432Node = $global:Wow6432Node
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptRoot = $scriptRoot
 	)
 	
 	Begin {
@@ -773,7 +806,7 @@ Function Unregister-NxtPackage {
 	Process {
 		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
 		Try {
-			Copy-File -Path "$scriptRoot\CleanUp.cmd" -Destination "$App\"
+			Copy-File -Path "$ScriptRoot\CleanUp.cmd" -Destination "$App\"
 			Start-Sleep -Seconds 1
 			Execute-Process -Path "$APP\CleanUp.cmd" -NoWait
 			Remove-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName
@@ -3445,16 +3478,19 @@ function Execute-NxtInnoSetup {
 		[ValidateNotNullorEmpty()]
 		[boolean]$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
-		[string]
-		$deploymentTimestamp = $global:deploymentTimestamp
+		[string]$DeploymentTimestamp = $global:deploymentTimestamp,
+		[Parameter(Mandatory = $false)]
+		[Xml.XmlElement]$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
+		[Parameter(Mandatory = $false)]
+		[string]$DirFiles = $dirFiles
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
-		[Xml.XmlElement]$xmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options
-		[string]$configNxtInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_InstallParams)
-		[string]$configNxtInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_UninstallParams)
-		[string]$configNxtInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_LogPath)
-		[string]$configNxtInnoSetupUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtInnoSetup.NxtInnoSetup_UninsBackupPath)
+		
+		[string]$configNxtInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_InstallParams)
+		[string]$configNxtInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_UninstallParams)
+		[string]$configNxtInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_LogPath)
+		[string]$configNxtInnoSetupUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_UninsBackupPath)
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -3469,8 +3505,8 @@ function Execute-NxtInnoSetup {
 				[string]$innoSetupDefaultParams = $configNxtInnoSetupInstallParams
 
 				## If the Setup File is in the Files directory, set the full path during an installation
-				If (Test-Path -LiteralPath (Join-Path -Path $dirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
-					[string]$innoSetupPath = Join-Path -Path $dirFiles -ChildPath $path
+				If (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
+					[string]$innoSetupPath = Join-Path -Path $DirFiles -ChildPath $path
 				}
 				ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
 					[string]$innoSetupPath = (Get-Item -LiteralPath $Path).FullName
@@ -3556,10 +3592,10 @@ function Execute-NxtInnoSetup {
 		if ([string]::IsNullOrWhiteSpace($Log)) {
 			## create Log file name if non is specified
 			if ($Action -eq 'Install') {
-				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$deploymentTimestamp"
+				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$DeploymentTimestamp"
 			}
 			else {
-				[string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$deploymentTimestamp"
+				[string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$DeploymentTimestamp"
 			}
 		}
 
@@ -3706,15 +3742,19 @@ function Execute-NxtNullsoft {
 		[switch]$PassThru = $false,
         
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[boolean]$ContinueOnError = $false
+		[boolean]$ContinueOnError = $false,
+        
+		[Parameter(Mandatory = $false)]
+		[Xml.XmlElement]$XmlConfigNxtNullsoft = $xmlConfig.NxtNullsoft_Options,
+
+		[Parameter(Mandatory = $false)]
+		[string]$DirFiles = $dirFiles
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
-		[Xml.XmlElement]$xmlConfigNxtNullsoft = $xmlConfig.NxtNullsoft_Options
-		[string]$configNxtNullsoftInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_InstallParams)
-		[string]$configNxtNullsoftUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_UninstallParams)
-		[string]$configNxtNullsoftUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtNullsoft.NxtNullsoft_UninsBackupPath)
+		[string]$configNxtNullsoftInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtNullsoft.NxtNullsoft_InstallParams)
+		[string]$configNxtNullsoftUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtNullsoft.NxtNullsoft_UninstallParams)
+		[string]$configNxtNullsoftUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtNullsoft.NxtNullsoft_UninsBackupPath)
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -3729,8 +3769,8 @@ function Execute-NxtNullsoft {
 				[string]$nullsoftDefaultParams = $configNxtNullsoftInstallParams
 
 				## If the Setup File is in the Files directory, set the full path during an installation
-				If (Test-Path -LiteralPath (Join-Path -Path $dirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
-					[string]$nullsoftSetupPath = Join-Path -Path $dirFiles -ChildPath $path
+				If (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
+					[string]$nullsoftSetupPath = Join-Path -Path $DirFiles -ChildPath $path
 				}
 				ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
 					[string]$nullsoftSetupPath = (Get-Item -LiteralPath $Path).FullName
@@ -4024,17 +4064,23 @@ function Execute-NxtBitRockInstaller {
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [switch]$PassThru = $false,
-        
+
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
-        [boolean]$ContinueOnError = $false
+        [boolean]$ContinueOnError = $false,
+
+        [Parameter(Mandatory = $false)]
+        [Xml.XmlElement]$XmlConfigNxtBitRockInstaller = $xmlConfig.NxtBitRockInstaller_Options,
+
+		[Parameter(Mandatory = $false)]
+		[string]$DirFiles = $dirFiles
     )
     Begin {
         ## read config data from AppDeployToolkitConfig.xml
-        [Xml.XmlElement]$xmlConfigNxtBitRockInstaller = $xmlConfig.NxtBitRockInstaller_Options
-        [string]$configNxtBitRockInstallerInstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtBitRockInstaller.NxtBitRockInstaller_InstallParams)
-        [string]$configNxtBitRockInstallerUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninstallParams)
-        [string]$configNxtBitRockInstallerUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninsBackupPath)
+        
+        [string]$configNxtBitRockInstallerInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_InstallParams)
+        [string]$configNxtBitRockInstallerUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninstallParams)
+        [string]$configNxtBitRockInstallerUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninsBackupPath)
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -4049,16 +4095,16 @@ function Execute-NxtBitRockInstaller {
                 [string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
 
         		## If the Setup File is in the Files directory, set the full path during an installation
-				If (Test-Path -LiteralPath (Join-Path -Path $dirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
-					[string]$bitRockInstallerSetupPath = Join-Path -Path $dirFiles -ChildPath $path
+				If (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $Path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
+					[string]$bitRockInstallerSetupPath = Join-Path -Path $DirFiles -ChildPath $Path
 				}
 				ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
 					[string]$bitRockInstallerSetupPath = (Get-Item -LiteralPath $Path).FullName
 				}
 				Else {
-					Write-Log -Message "Failed to find installation file [$path]." -Severity 3 -Source ${CmdletName}
+					Write-Log -Message "Failed to find installation file [$Path]." -Severity 3 -Source ${CmdletName}
 					If (-not $ContinueOnError) {
-						Throw "Failed to find installation file [$path]."
+						Throw "Failed to find installation file [$Path]."
 					}
 					Continue
 				}
