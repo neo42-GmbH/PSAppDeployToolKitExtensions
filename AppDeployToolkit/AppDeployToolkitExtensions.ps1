@@ -42,6 +42,12 @@ Function Initialize-NxtEnvironment {
 		Initializes all neo42 functions and variables.
 		Should be called on top of any 'Deploy-Application.ps1'.
 		parses the neo42PackageConfig.json
+	.PARAMETER ExtensionCsPath
+		Provides the Path to the AppDeployToolkitExtensions.cs containing c# to be used in the extension functions
+		Defaults to "$scriptRoot\AppDeployToolkitExtensions.cs"
+	.PARAMETER SetupCFGPath
+		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
+		Defaults to the "$scriptRoot\Setup.cfg".
 	.EXAMPLE
 		Initialize-NxtEnvironment
 	.LINK
@@ -51,7 +57,10 @@ Function Initialize-NxtEnvironment {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ExtensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs"
+		$ExtensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$setupCfgPath = "$scriptRoot\Setup.cfg"
 	)
 		
 	Begin {
@@ -69,6 +78,7 @@ Function Initialize-NxtEnvironment {
 			}
 		}
 		Get-NxtPackageConfig
+		$global:SetupCfg = Import-NxtSetupCfg -Path "$ScriptRoot\Setup.cfg"
 		Set-NxtPackageArchitecture
 		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
@@ -86,10 +96,11 @@ Function Get-NxtPackageConfig {
 		Parses a neo42PackageConfig.json into the variable $global:PackageConfig.
 	.PARAMETER Path
 		Path to the Packageconfig.json
+		Defaults to "$scriptDirectory\neo42PackageConfig.json"
 	.EXAMPLE
 		Get-NxtPackageConfig
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -121,10 +132,11 @@ Function Expand-NxtPackageConfig {
 		Expands a set of Subkeys in the $global:PackageConfig back into the variable $global:PackageConfig.
 	.PARAMETER PackageConfig
 		Expects an Object containing the Packageconfig, defaults to $global:PackageConfig
+		Defaults to $global:PackageConfig
 	.EXAMPLE
 		Expand-NxtPackageConfig
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -165,8 +177,29 @@ Function Set-NxtPackageArchitecture {
 	.DESCRIPTION
 		Sets variables (e.g. $ProgramFilesDir[x86], $CommonFilesDir[x86], $System, $Wow6432Node) that are depending on the $appArch (x86, x64 or *) value and the system architecture (AMD64 or x86).
 	.PARAMETER AppArch
-    Defines the Application Architecture (x86/x64/*)
-    Defaults to the corresponding value from the PackageConfig object.
+		Defines the Application Architecture (x86/x64/*)
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PROCESSOR_ARCHITECTURE
+		The processor architecture of the system.
+		Defaults to $env:PROCESSOR_ARCHITECTURE.
+	.PARAMETER ProgramFiles
+		The environment variable for the Program Files directory on the system.
+		Defaults to $env:ProgramFiles.
+	.PARAMETER ProgramFiles(x86)
+		The environment variable for the Program Files (x86) directory on the system.
+		Defaults to $env:ProgramFiles(x86).
+	.PARAMETER CommonProgramFiles
+		The environment variable for the Common Program Files directory on the system.
+		Defaults to $env:CommonProgramFiles.
+	.PARAMETER CommonProgramFiles(x86)
+		The environment variable for the Common Program Files (x86) directory on the system.
+		Defaults to $env:CommonProgramFiles(x86).
+	.PARAMETER SystemRoot
+		The environment variable for the root directory of the system.
+		Defaults to $env:SystemRoot.
+	.PARAMETER deployAppScriptFriendlyName
+		The friendly name of the script used for deploying applications.
+		Defaults to $deployAppScriptFriendlyName definded in the DeployApplication.ps1.
 	.EXAMPLE
 		Set-NxtPackageArchitecture -AppArch "x64"
 	.NOTES
@@ -174,7 +207,7 @@ Function Set-NxtPackageArchitecture {
 	.PARAMETER AppArch
 		Provide the AppArchitecture.
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -200,7 +233,10 @@ Function Set-NxtPackageArchitecture {
 		$CommonProgramFiles = $env:CommonProgramFiles,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SystemRoot = $env:SystemRoot
+		$SystemRoot = $env:SystemRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeployAppScriptFriendlyName = $deployAppScriptFriendlyName
 	)
 	
 	Begin {
@@ -214,14 +250,14 @@ Function Set-NxtPackageArchitecture {
 			If ($AppArch -ne 'x86' -and $AppArch -ne 'x64' -and $AppArch -ne '*') {
 				[int32]$mainExitCode = 70001
 				[string]$mainErrorMessage = 'ERROR: The value of $appArch must be set to "x86", "x64" or "*". Abort!'
-				Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 				Exit-Script -ExitCode $mainExitCode
 			}
 			ElseIf ($AppArch -eq 'x64' -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[int32]$mainExitCode = 70001
 				[string]$mainErrorMessage = 'ERROR: This software package can only be installed on 64 bit Windows systems. Abort!'
-				Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 				Exit-Script -ExitCode $mainExitCode
 			}
@@ -343,12 +379,15 @@ Function Uninstall-NxtOld {
 	.PARAMETER UninstallOld
 		Will uninstall previous Versions before Installation if set to $true.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER deployAppScriptFriendlyName
+		The friendly name of the script used for deploying applications.
+		Defaults to $deployAppScriptFriendlyName definded in the DeployApplication.ps1.
 	.EXAMPLE
 		Uninstall-NxtOld
 	.NOTES
 		Should be executed during package Initialization only.
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -371,7 +410,10 @@ Function Uninstall-NxtOld {
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$UninstallOld = $global:PackageConfig.UninstallOld
+		$UninstallOld = $global:PackageConfig.UninstallOld,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeployAppScriptFriendlyName = $deployAppScriptFriendlyName
 	)
 	
 	Begin {
@@ -386,7 +428,7 @@ Function Uninstall-NxtOld {
 				## Check for Empirum packages under "HKLM:SOFTWARE\WOW6432Node\"
 				If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor") {
 					If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") {
-						$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
+						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 						If (($appEmpirumPackageVersions).Count -eq 0) {
 							Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
@@ -429,7 +471,7 @@ Function Uninstall-NxtOld {
 				## Check for Empirum packages under "HKLM:SOFTWARE\"
 				If (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor") {
 					If (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName") {
-						$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
+						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 						If (($appEmpirumPackageVersions).Count -eq 0) {
 							Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
@@ -483,7 +525,7 @@ Function Uninstall-NxtOld {
 					If (Test-RegistryValue -Key $regUninstallKeyName -Value 'UninstallString') {
 						[int32]$mainExitCode = 70001
 						[string]$mainErrorMessage = 'ERROR: Uninstallation of old package failed. Abort!'
-						Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+						Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 						Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 						Exit-Script -ExitCode $mainExitCode
 					}
@@ -536,12 +578,13 @@ function Get-NxtRegisterOnly {
 	https://neo42.de/psappdeploytoolkit
 #>
 
-	param (
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
 		[Parameter(Mandatory = $false)]
-		[string]
+		[bool]
 		$SoftMigration = $global:PackageConfig.SoftMigration,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -611,19 +654,46 @@ Function Register-NxtPackage {
 	.PARAMETER UserPartRevision
 		Specifies the UserPartRevision for this installation.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER HidePackageUninstallButton
+		Specifies if the Uninstallbutton for this installation should be hidden.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER HidePackageUninstallEntry
+		Specifies if the PackageUninstallEntry for this installation should be hidden.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ScriptParentPath
+		Specifies the ScriptParentPath.
+		Defaults to $scriptParentPath defined in the AppDeployToolkitMain.
+	.PARAMETER ConfigToolkitLogDir
+		Specifies the ConfigToolkitLogDir.
+		Defaults to $configToolkitLogDir defined in the AppDeployToolkitMain.
+	.PARAMETER Logname
+		Specifies the Logname.
+		Defaults to $logname defined in the AppDeployToolkitMain.
+	.PARAMETER DirSupportFiles
+		Specifies the DirSupportFiles.
+		Defaults to $dirSupportFiles defined in the AppDeployToolkitMain.
 	.PARAMETER Wow6432Node
 		Switches between 32/64 Bit Registry Keys.
 		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
 	.PARAMETER MainExitCode
-		The Exitcode that should be written to Registry
-		Defaults to the variable $mainExitCode
+		The Exitcode that should be written to Registry.
+		Defaults to the variable $mainExitCode.
+	.PARAMETER UninstallOld
+		Defines if the Setting "Uninstallold" is set.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER EnvUserDomain
+		Defines the EnvUserDomain.
+		Defaults to $envUserDomain derived from [Environment]::UserDomainName.
+	.PARAMETER EnvArchitecture
+		Defines the EnvArchitecture.
+		Defaults to $envArchitecture derived from $env:PROCESSOR_ARCHITECTURE.
 	
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
 		Should be executed at the end of each neo42-package installation and when using Soft Migration only.
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -770,12 +840,21 @@ Function Unregister-NxtPackage {
 	.PARAMETER RegPackagesKey
 		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.PARAMETER ScriptRoot
+		Defines the parent directory of the script.
+		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
 	.EXAMPLE
 		Unregister-NxtPackage
 	.NOTES
 		Should be executed at the end of each neo42-package uninstallation only.
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -831,6 +910,12 @@ Function Remove-NxtDesktopShortcuts {
 	.DESCRIPTION
 		Is called after an installation/reinstallation if DESKTOPSHORTCUT=0 is defined in the Setup.cfg.
 		Is always called before the uninstallation.
+	.PARAMETER CommonDesktopSortcutsToDelete
+		A list of Desktopshortcuts that should be deleted.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER CommonDesktop
+		Specifies the path to the CommonDesktop.
+		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
 	.EXAMPLE
 		Remove-NxtDesktopShortcuts
 	.LINK
@@ -877,6 +962,15 @@ Function Copy-NxtDesktopShortcuts {
 		Copys the Shortcots defined under "CommonStartmenuSortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop
 	.DESCRIPTION
 		Is called after an installation/reinstallation if DESKTOPSHORTCUT=1 is defined in the Setup.cfg.
+	.PARAMETER CommonStartmenuSortcutsToCopyToCommonDesktop
+		Specifies the links from CommonStartmenu which should be copied to CommonDesktop.
+		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
+	.PARAMETER CommonDesktop
+		Specifies the path to the CommonDesktop.
+		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
+	.PARAMETER CommonStartMenu
+		Specifies the path to the CommonStartMenu.
+		Defaults to $envCommonStartMenu defined in AppDeploymentToolkitMain.ps1.
 	.EXAMPLE
 		Copy-NxtDesktopShortcuts
 	.LINK
@@ -931,7 +1025,7 @@ Function Stop-NxtProcess {
 	.EXAMPLE
 		Stop-NxtProcess -Name Notepad
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -971,10 +1065,12 @@ function Get-NxtComputerManufacturer {
 	.EXAMPLE
 		Get-NxtComputerManufacturer
 	.OUTPUTS
-		System.String
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param()
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1004,10 +1100,12 @@ function Get-NxtComputerModel {
 	.EXAMPLE
 		Get-NxtComputerModel
 	.OUTPUTS
-		System.String
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param()
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1030,7 +1128,7 @@ function Get-NxtComputerModel {
 #endregion
 
 #region Get-NxtFileVersion
-function Get-NxtFileVersion([string]$FilePath) {
+function Get-NxtFileVersion {
 	<#
 	.DESCRIPTION
 		Gets version of file.
@@ -1040,10 +1138,16 @@ function Get-NxtFileVersion([string]$FilePath) {
 	.EXAMPLE
 		Get-NxtFileVersion "D:\setup.exe"
 	.OUTPUTS
-		System.String
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param(
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]$FilePath
+		)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1066,7 +1170,7 @@ function Get-NxtFileVersion([string]$FilePath) {
 #endregion
 
 #region Get-NxtFolderSize
-function Get-NxtFolderSize([string]$FolderPath) {
+function Get-NxtFolderSize {
 	<#
 	.DESCRIPTION
 		Gets the size of the folder recursive in bytes.
@@ -1075,10 +1179,16 @@ function Get-NxtFolderSize([string]$FolderPath) {
 	.EXAMPLE
 		Get-NxtFolderSize "D:\setup\"
 	.OUTPUTS
-		System.Long
+		System.Long.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param(
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]$FolderPath
+		)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1106,7 +1216,7 @@ function Get-NxtDriveType {
 	<#
 	.DESCRIPTION
 		Gets the drive type.
-	.PARAMETER FolderPath
+	.PARAMETER DriveName
 		Name of the drive.
 	.OUTPUTS
 		PSADTNXT.DriveType
@@ -1118,7 +1228,7 @@ function Get-NxtDriveType {
 		Local = 3
 		Network = 4
 		Compact = 5
-		Ram = 6
+		Ram = 6.
 	.EXAMPLE
 		Get-NxtDriveType "c:"
 	.LINK
@@ -1138,7 +1248,7 @@ function Get-NxtDriveType {
 	}
 	Process {
 		try {
-			$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
+			[System.Management.ManagementObject]$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
 			Write-Output ([PSADTNXT.DriveType]$disk.DriveType) 
 		}
 		catch {
@@ -1153,19 +1263,26 @@ function Get-NxtDriveType {
 #endregion
 
 #region Get-NxtDriveFreeSpace
-function Get-NxtDriveFreeSpace([string]$DriveName) {
+function Get-NxtDriveFreeSpace {
 	<#
 	.DESCRIPTION
 		Gets free space of drive in bytes.
-	.PARAMETER FolderPath
+	.PARAMETER DriveName
 		Name of the drive.
 	.EXAMPLE
 		Get-NxtDriveFreeSpace "c:"
 	.OUTPUTS
-		System.String
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$DriveName
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1173,13 +1290,12 @@ function Get-NxtDriveFreeSpace([string]$DriveName) {
 	}
 	Process {
 		try {
-			$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
-			Write-Output $disk.FreeSpace
+			[System.Management.ManagementObject]$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
 		}
 		catch {
 			Write-Log -Message "Failed to get free space for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return 0
+			Write-Output $disk.FreeSpace
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -1188,20 +1304,27 @@ function Get-NxtDriveFreeSpace([string]$DriveName) {
 #endregion
 
 #region Get-NxtProcessName
-function Get-NxtProcessName([int]$ProcessId) {
+function Get-NxtProcessName {
 	<#
 	.DESCRIPTION
 		Gets name of process.
 		Returns an empty string if process was not found.
-	.PARAMETER FolderPath
+	.PARAMETER ProcessId
 		Id of the process.
 	.EXAMPLE
 		Get-NxtProcessName 1004
 	.OUTPUTS
-		System.String
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[int]
+		$ProcessId
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1216,7 +1339,6 @@ function Get-NxtProcessName([int]$ProcessId) {
 			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 		Write-Output $result
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -1229,10 +1351,10 @@ function Get-NxtIsSystemProcess {
 	<#
 	.DESCRIPTION
 		Detects if process is running with system account or not.
-	.PARAMETER FolderPath
+	.PARAMETER ProcessId
 		Id of the process.
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.EXAMPLE
 		Get-NxtIsSystemProcess 1004
 	.LINK
@@ -1259,7 +1381,6 @@ function Get-NxtIsSystemProcess {
 			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Write-Output $false
 		}
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -1275,10 +1396,12 @@ function Get-NxtWindowsVersion {
 	.EXAMPLE
 		Get-NxtWindowsVersion
 	.OUTPUTS
-		System.String
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param (	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1306,10 +1429,12 @@ function Get-NxtOsLanguage {
 	.EXAMPLE
 		Get-NxtOsLanguage
 	.OUTPUTS
-		System.Int
+		System.Int.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param (	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1337,10 +1462,12 @@ function Get-NxtUILanguage {
 	.EXAMPLE
 		Get-NxtUILanguage
 	.OUTPUTS
-		System.Int
+		System.Int.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
+	Param (	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1365,15 +1492,20 @@ function Get-NxtProcessorArchiteW6432 {
 	<#
 	.DESCRIPTION
 		Gets the environment variable $env:PROCESSOR_ARCHITEW6432 which is only set in a x86_32 process, returns empty string if run under 64-Bit Process.
+	.PARAMETER PROCESSOR_ARCHITEW6432
+		Defines the String to be returned.
+		Defaults to $env:PROCESSOR_ARCHITEW6432.
 	.EXAMPLE
 		Get-NxtProcessorArchiteW6432
 	.OUTPUTS
-		System.String
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdLetBinding()]
 	param (
 		[Parameter()]
+		[ValidateSet($null,"AMD64")]
 		[string]
 		$PROCESSOR_ARCHITEW6432 = $env:PROCESSOR_ARCHITEW6432
 	)
@@ -1401,13 +1533,17 @@ function Get-NxtWindowsBits {
 	<#
 	.DESCRIPTION
 		Translates the environment variable $env:PROCESSOR_ARCHITECTURE from x86 and amd64 to 32 / 64.
+	.PARAMETER PROCESSOR_ARCHITEW6432
+		Accepts the string "x86" or "x64".
+		Defaults to $env:PROCESSOR_ARCHITECTURE.
 	.EXAMPLE
 		Get-NxtWindowsBits
 	.OUTPUTS
-		System.Int
+		System.Int.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdLetBinding()]
 	param (
 		[Parameter()]
 		[string]
@@ -1454,7 +1590,7 @@ function Move-NxtItem {
 	.PARAMETER DestinationPath
 		Destination Path for the File or Directory.
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -1487,7 +1623,7 @@ function Move-NxtItem {
 #endregion
 
 #region Test-NxtProcessExists
-function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false) {
+function Test-NxtProcessExists {
 	<#
 	.DESCRIPTION
 		Tests if a process exists by name or custom WQL query.
@@ -1495,13 +1631,23 @@ function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false) {
 		Name of the process or WQL search string.
 	.PARAMETER IsWql
 		Defines if the given ProcessName is a WQL search string.
+		Defaults to $false.
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.EXAMPLE
 		Test-NxtProcessExists "Notepad"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdLetBinding()]
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]
+		$ProcessName,
+		[Parameter()]
+		[switch]
+		$IsWql = $false
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1535,7 +1681,7 @@ function Test-NxtProcessExists([string]$ProcessName, [switch]$IsWql = $false) {
 #endregion
 
 #region Watch-NxtRegistryKey
-function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60) {
+function Watch-NxtRegistryKey {
 	<#
 	.DESCRIPTION
 		Tests if a registry key exists in a given time.
@@ -1543,13 +1689,22 @@ function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60) {
 		Name of the registry key to watch.
 	.PARAMETER Timeout
 		Timeout in seconds that the function waits for the key.
+		Defaults to 60.
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.EXAMPLE
 		Watch-NxtRegistryKey -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdLetBinding()]
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$RegistryKey,
+		[Parameter()]
+		[int]
+		$Timeout = 60
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1580,7 +1735,7 @@ function Watch-NxtRegistryKey([string]$RegistryKey, [int]$Timeout = 60) {
 #endregion
 
 #region Watch-NxtRegistryKeyIsRemoved
-function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60) {
+function Watch-NxtRegistryKeyIsRemoved {
 	<#
 	.DESCRIPTION
 		Tests if a registry key disappears in a given time.
@@ -1589,12 +1744,20 @@ function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60)
 	.PARAMETER Timeout
 		Timeout in seconds the function waits for the key the disappear.
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.EXAMPLE
 		Watch-NxtRegistryKeyIsRemoved -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdLetBinding()]
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$RegistryKey,
+		[Parameter()]
+		[int]
+		$Timeout = 60
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1626,7 +1789,7 @@ function Watch-NxtRegistryKeyIsRemoved([string]$RegistryKey, [int]$Timeout = 60)
 #endregion
 
 #region Watch-NxtFile
-function Watch-NxtFile([string]$FileName, [int]$Timeout = 60) {
+function Watch-NxtFile {
 	<#
 	.DESCRIPTION
 		Tests if a file exists in a given time.
@@ -1636,12 +1799,20 @@ function Watch-NxtFile([string]$FileName, [int]$Timeout = 60) {
 	.PARAMETER Timeout
 		Timeout in seconds the function waits for the file to appear
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.EXAMPLE
 		Watch-NxtFile -FileName "C:\Temp\Sources\Installer.exe"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdLetBinding()]
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$FileName,
+		[Parameter()]
+		[int]
+		$Timeout = 60
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1649,9 +1820,9 @@ function Watch-NxtFile([string]$FileName, [int]$Timeout = 60) {
 	}
 	Process {
 		try {
-			$waited = 0
+			[int]$waited = 0
 			while ($waited -lt $Timeout) {
-				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
+				[bool]$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
 				if ($result) {
 					Write-Output $true
 					return
@@ -1683,12 +1854,13 @@ function Watch-NxtFileIsRemoved {
 	.PARAMETER Timeout
 		Timeout in seconds the function waits for the file the disappear.
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.EXAMPLE
 		Watch-NxtFileIsRemoved -FileName "C:\Temp\Sources\Installer.exe"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -1707,7 +1879,7 @@ function Watch-NxtFileIsRemoved {
 		try {
 			[int]$waited = 0
 			while ($waited -lt $Timeout) {
-				$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
+				[bool]$result = Test-Path -Path "$([System.Environment]::ExpandEnvironmentVariables($FileName))"
 				if ($false -eq $result) {
 					Write-Output $true
 					return
@@ -1739,12 +1911,13 @@ function Watch-NxtProcess {
 	.PARAMETER IsWql
 		Defines if the given ProcessName is a WQL search string.
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.EXAMPLE
 		Watch-NxtProcess -ProcessName "Notepad.exe"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -1763,7 +1936,8 @@ function Watch-NxtProcess {
 	}
 	Process {
 		try {
-			$waited = 0
+			[int]$waited = 0
+			[bool]$result = $null
 			while ($waited -lt $Timeout) {
 				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
@@ -1803,12 +1977,13 @@ function Watch-NxtProcessIsStopped {
 	.PARAMETER IsWql
 		Defines if the given ProcessName is a WQL search string.
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.EXAMPLE
 		Watch-NxtProcessIsStopped -ProcessName "Notepad.exe"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -1827,7 +2002,8 @@ function Watch-NxtProcessIsStopped {
 	}
 	Process {
 		try {
-			$waited = 0
+			[int]$waited = 0
+			[bool]$result = $null
 			while ($waited -lt $Timeout) {
 				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
@@ -1864,12 +2040,13 @@ function Get-NxtServiceState {
 	.PARAMETER ServiceName
 		Name of the service.
 	.OUTPUTS
-		System.String
+		System.String.
 	.EXAMPLE
 		Get-NxtServiceState "BITS"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -1911,12 +2088,13 @@ function Get-NxtNameBySid {
 	.PARAMETER Sid
 		SID to search.
 	.OUTPUTS
-		System.String
+		System.String.
 	.EXAMPLE
 		Get-NxtNameBySid -Sid "S-1-5-21-3072877179-2344900292-1557472252-500"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -1959,18 +2137,19 @@ function Compare-NxtVersion {
 	    Return values:
 			Equal = 1
    			Update = 2
-   			Downgrade = 3
+   			Downgrade = 3.
 	.PARAMETER InstalledPackageVersion
 		Version of the installed package.
 	.PARAMETER NewPackageVersion
 		Version of the new package.
 	.OUTPUTS
-		PSADTNXT.VersionCompareResult
+		PSADTNXT.VersionCompareResult.
 	.EXAMPLE
 		Compare-NxtVersion "1.7" "1.7.2"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -1988,7 +2167,7 @@ function Compare-NxtVersion {
 	}
 	Process {
 		try {
-			$parseVersion = { param($version) 	
+			[scriptblock]$parseVersion = { param($version) 	
 				[int[]]$result = 0, 0, 0, 0
 				$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
 				for ($i = 0; $i -lt $versionParts.count; $i++) {
@@ -2043,7 +2222,7 @@ function Get-NxtFileEncoding {
 	.PARAMETER DefaultEncoding
 	  	Encoding to be returned in case the encoding could not be detected.
   	.OUTPUTS
-		System.String
+		System.String.
   	.EXAMPLE
 		Get-NxtFileEncoding -Path C:\Temp\testfile.txt
   	.LINK
@@ -2099,7 +2278,7 @@ function Add-NxtContent {
 	.EXAMPLE
 		Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
   	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2198,7 +2377,7 @@ function Update-NxtTextInFile {
   	.EXAMPLE
 		Update-NxtTextInFile -Path C:\Temp\testfile.txt -SearchString "Hello" 
 	.OUTPUTS
-		none
+		none.
   	.LINK
 		https://neo42.de/psappdeploytoolkit
   #>
@@ -2299,14 +2478,14 @@ function Update-NxtTextInFile {
 function Get-NxtSidByName {
 	<#
 	.DESCRIPTION
-		Gets the SID for a given user name.
+		Gets the SID for a given user name,
 		Returns $null if user is not found.
 	.PARAMETER UserName
 		Name of the user to search.
 	.EXAMPLE
 		Get-NxtSidByName -UserName "Workgroup\Administrator"
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2334,7 +2513,7 @@ function Get-NxtSidByName {
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to get the sid for the user '$UserName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 		return
 	}
@@ -2352,7 +2531,7 @@ function Get-NxtProcessEnvironmentVariable {
 	.PARAMETER Key
 		Key of the variable.
 	.OUTPUTS
-		System.String
+		System.String.
 	.EXAMPLE
 		Get-NxtProcessEnvironmentVariable "Test"
 	.LINK
@@ -2397,7 +2576,7 @@ function Set-NxtProcessEnvironmentVariable {
 	.EXAMPLE
 		Set-NxtProcessEnvironmentVariable -Key "Test" -Value "Hello world"
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2438,7 +2617,7 @@ function Remove-NxtProcessEnvironmentVariable {
 	.EXAMPLE
 		Remove-NxtProcessEnvironmentVariable "Test"
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2473,9 +2652,9 @@ function Get-NxtSystemEnvironmentVariable {
 	.DESCRIPTION
 		Gets the value of the system environment variable.
 	.PARAMETER Key
-		Key of the variable
+		Key of the variable.
 	.OUTPUTS
-		System.String
+		System.String.
 	.EXAMPLE
 		Get-NxtSystemEnvironmentVariable "windir"
 	.LINK
@@ -2514,13 +2693,13 @@ function Set-NxtSystemEnvironmentVariable {
 	.DESCRIPTION
 		Sets a system environment variable.
 	.PARAMETER Key
-		Key of the variable
+		Key of the variable.
 	.PARAMETER Value
-		Value of the variable
+		Value of the variable.
 	.EXAMPLE
 		Set-NxtSystemEnvironmentVariable "Test" "Hello world"
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2561,7 +2740,7 @@ function Remove-NxtSystemEnvironmentVariable {
 	.EXAMPLE
 		Remove-NxtSystemEnvironmentVariable "Test"
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2595,11 +2774,14 @@ function Test-NxtLocalUserExists {
 	.DESCRIPTION
 		Checks if a local user exists by name.
 	.PARAMETER UserName
-		Name of the user
+		Name of the user.
+	.PARAMETER Computername
+		Name of the Computer,
+		Defaults to $env:COMPUTERNAME.
 	.EXAMPLE
-		Test-NxtLocalUserExists -UserName "Administrator"
+		Test-NxtLocalUserExists -UserName "Administrator".
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2653,10 +2835,13 @@ function Add-NxtLocalUser {
 		If set the user has to change the password at first logon.
 	.PARAMETER SetPwdNeverExpires
 		If set the password is set to not expire.
+	.PARAMETER Computername
+		Name of the Computer,
+		Defaults to $env:COMPUTERNAME.
 	.EXAMPLE
 		Add-NxtLocalUser -UserName "ServiceUser" -Password "123!abc" -Description "User to run service" -SetPwdNeverExpires
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2750,11 +2935,14 @@ function Remove-NxtLocalUser {
 	.DESCRIPTION
 		Deletes a local group by name.
 	.PARAMETER UserName
-		Name of the user
+		Name of the user.
+	.PARAMETER Computername
+		Name of the Computer,
+		Defaults to $env:COMPUTERNAME.
 	.EXAMPLE
 		Remove-NxtLocalUser -UserName "Test"
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2804,10 +2992,13 @@ function Test-NxtLocalGroupExists {
 		Checks if a local group exists by name.
 	.PARAMETER GroupName
 		Name of the group.
+	.PARAMETER Computername
+		Name of the Computer,
+		Defaults to $env:COMPUTERNAME.
 	.EXAMPLE
 		Test-NxtLocalGroupExists -GroupName "Administrators"
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2850,12 +3041,15 @@ function Add-NxtLocalGroup {
 		If group already exists only the description parameter is processed.
 	.PARAMETER GroupName
 		Name of the group.
+	.PARAMETER Computername
+		Name of the Computer,
+		Defaults to $env:COMPUTERNAME.
 	.PARAMETER Description
 		Description for the new group.
 	.EXAMPLE
 		Add-NxtLocalGroup -GroupName "TestGroup"
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2913,11 +3107,14 @@ function Remove-NxtLocalGroup {
 	.DESCRIPTION
 		Deletes a local group with the given name.
 	.PARAMETER GroupName
-		Name of the group
+		Name of the group.
+	.PARAMETER Computername
+		Name of the Computer,
+		Defaults to $env:COMPUTERNAME.
 	.EXAMPLE
 		Remove-NxtLocalGroup -GroupName "TestGroup"
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2966,21 +3163,26 @@ function Remove-NxtLocalGroupMember {
 	.DESCRIPTION
 		Removes a single member or a type of member from the given group by name.
 		Returns the amount of members removed.
-		Returns $null if the groups was not found.
+		Returns $null if the group(s) could not be found.
+	.PARAMETER GroupName
+		Name of the Group to remove Members from.
 	.PARAMETER MemberName
-		Name of the member to remove
+		Name of the member to remove.
 	.PARAMETER Users
-		If defined all users are removed
+		If defined all users are removed.
 	.PARAMETER Groups
-		If defined all groups are removed
-	.PARAMETER All
-		If defined all members are removed
+		If defined all groups are removed.
+	.PARAMETER AllMember
+		If defined all members are removed.
+	.PARAMETER Computername
+		Name of the Computer,
+		Defaults to $env:COMPUTERNAME.
 	.EXAMPLE
 		Remove-NxtLocalGroupMember -GroupName "Users" -All
 	.EXAMPLE
 		Remove-NxtLocalGroupMember -GroupName "Administrators" -MemberName "Dummy"
 	.OUTPUTS
-		System.Int32
+		System.Int32.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3078,10 +3280,13 @@ function Add-NxtLocalGroupMember {
 		Name of the member to add.
 	.PARAMETER MemberType
 		Defines the type of member.
+	.PARAMETER Computername
+		Name of the Computer,
+		Defaults to $env:COMPUTERNAME.
 	.EXAMPLE
 		Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestUser" -MemberType "User"
 	.OUTPUTS
-		System.Boolean
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3164,7 +3369,7 @@ function Read-NxtSingleXmlNode {
 	.EXAMPLE
 		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
 	.OUTPUTS
-		System.String
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3211,7 +3416,7 @@ function Write-NxtSingleXmlNode {
 	.EXAMPLE
 		Write-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -Value "müller"
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3278,7 +3483,7 @@ function Write-NxtXmlNode {
  			</prop>
 		</item>
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3300,7 +3505,7 @@ function Write-NxtXmlNode {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
 
-			$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
+			[scriptblock]$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
 				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, "")
 
 				for ($i = 0; $i -lt $child.Attributes.count; $i++) {
@@ -3314,7 +3519,7 @@ function Write-NxtXmlNode {
 					$xmlNode.InnerText = $child.Value
 				}
 				elseif ($null -ne $child.Child) {
-					$node = &$createXmlNode -Doc $doc -Child ($child.Child)
+					[System.Xml.XmlLinkedNode]$node = &$createXmlNode -Doc $doc -Child ($child.Child)
 					[void]$xmlNode.AppendChild($node)
 				}
 
@@ -3347,7 +3552,7 @@ Function Remove-NxtEmptyFolder {
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3447,42 +3652,46 @@ function Execute-NxtInnoSetup {
 	param (
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
-		[string]$Action = 'Install',
-
+		[string]
+		$Action = 'Install',
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
-		[string]$UninstallKey,
-
+		[string]
+		$UninstallKey,
 		[Parameter(Mandatory = $false)]
-		[string]$Path,
-
+		[string]
+		$Path,
 		[Parameter(Mandatory = $false)]
-		[string]$Parameters,
-        
+		[string]
+		$Parameters,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[string]$AddParameters,
-
+		[string]
+		$AddParameters,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[string]$MergeTasks,
-
+		[string]
+		$MergeTasks,
 		[Parameter(Mandatory = $false)]
-		[string]$Log,
-
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[switch]$PassThru = $false,
-        
+		[string]
+		$Log,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[boolean]$ContinueOnError = $false,
+		[switch]
+		$PassThru = $false,
 		[Parameter(Mandatory = $false)]
-		[string]$DeploymentTimestamp = $global:deploymentTimestamp,
+		[ValidateNotNullorEmpty()]
+		[boolean]
+		$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
-		[Xml.XmlElement]$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
+		[string]
+		$DeploymentTimestamp = $global:deploymentTimestamp,
 		[Parameter(Mandatory = $false)]
-		[string]$DirFiles = $dirFiles
+		[Xml.XmlElement]
+		$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DirFiles = $dirFiles
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
