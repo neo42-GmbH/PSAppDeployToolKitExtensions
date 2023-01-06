@@ -78,7 +78,7 @@ Function Initialize-NxtEnvironment {
 			}
 		}
 		Get-NxtPackageConfig
-		$global:SetupCfg = Import-NxtSetupCfg -Path $setupCfgPath
+		Set-NxtSetupCfg -Path $setupCfgPath
 		Set-NxtPackageArchitecture
 		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
@@ -2843,13 +2843,13 @@ function Add-NxtLocalUser {
 		Creates a local user with the given parameter.
 		If the user already exists only FullName, Description, SetPwdExpired and SetPwdNeverExpires are processed.
 	.PARAMETER UserName
-		Name of the user
+		Name of the user.
 	.PARAMETER Password
 		Password for the new user.
 	.PARAMETER FullName
-		Full name of the user
+		Full name of the user.
 	.PARAMETER Description
-		Description for the new user
+		Description for the new user.
 	.PARAMETER SetPwdExpired
 		If set the user has to change the password at first logon.
 	.PARAMETER SetPwdNeverExpires
@@ -3384,7 +3384,7 @@ function Read-NxtSingleXmlNode {
 	.PARAMETER XmlFilePath
 		Path to the xml file.
 	.PARAMETER SingleNodeName
-		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
+		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp).
 	.EXAMPLE
 		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
 	.OUTPUTS
@@ -3429,7 +3429,7 @@ function Write-NxtSingleXmlNode {
 	.PARAMETER XmlFilePath
 		Path to the xml file.
 	.PARAMETER SingleNodeName
-		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp)
+		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp).
 	.PARAMETER Value
 		Node value.
 	.EXAMPLE
@@ -3588,14 +3588,14 @@ Function Remove-NxtEmptyFolder {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Write-Log -Message "Check if [$path] exists and is empty..." -Source ${CmdletName}
+		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
 		If (Test-Path -LiteralPath $Path -PathType 'Container') {
 			Try {
 				If ( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
-					Write-Log -Message "Delete empty folder [$path]..." -Source ${CmdletName}
+					Write-Log -Message "Delete empty folder [$Path]..." -Source ${CmdletName}
 					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveFolder'
 					If ($ErrorRemoveFolder) {
-						Write-Log -Message "The following error(s) took place while deleting the empty folder [$path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${CmdletName}
+						Write-Log -Message "The following error(s) took place while deleting the empty folder [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${CmdletName}
 					}
 					else {
 						Write-Log -Message "Empty folder [$Path] was deleted successfully..." -Source ${CmdletName}
@@ -3606,9 +3606,9 @@ Function Remove-NxtEmptyFolder {
 				}
 			}
 			Catch {
-				Write-Log -Message "Failed to delete empty folder [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+				Write-Log -Message "Failed to delete empty folder [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				If (-not $ContinueOnError) {
-					Throw "Failed to delete empty folder [$path]: $($_.Exception.Message)"
+					Throw "Failed to delete empty folder [$Path]: $($_.Exception.Message)"
 				}
 			}
 		}
@@ -3658,6 +3658,12 @@ function Execute-NxtInnoSetup {
 		Returns ExitCode, STDOut, and STDErr output from the process.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
+	.PARAMETER DeploymentTimestamp
+		Timestamp used for logs (in this case if $Log is empty).
+		Defaults to $global:deploymentTimestamp.
+	.PARAMETER XmlConfigNxtInnoSetup
+		Contains the Default Settings for Innosetup.
+		Defaults to $xmlConfig.NxtInnoSetup_Options.
 	.EXAMPLE
 		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "ThisAppSetup.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
 	.EXAMPLE
@@ -3936,6 +3942,11 @@ function Execute-NxtNullsoft {
 		Returns ExitCode, STDOut, and STDErr output from the process.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
+	.PARAMETER XmlConfigNxtNullsoft
+		The Default Settings for Nullsoftsetup.
+		Defaults to $xmlConfig.NxtNullsoft_Options.
+	.PARAMETER DirFiles
+		The Files directory specified in AppDeployToolkitMain.ps1, Defaults to $dirfiles.
 	.EXAMPLE
 		Execute-NxtNullsoft -UninstallKey "ThisApplication" -Path "ThisApp.1.0.Installer.exe" -Parameters "SILENT=1"
 	.EXAMPLE
@@ -4100,7 +4111,7 @@ function Execute-NxtNullsoft {
 
 		## Copy uninstallation file from $uninsFolder to $configNxtNullsoftUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey -Exact -ErrorAction 'SilentlyContinue'
+			[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey -Exact -ErrorAction 'SilentlyContinue'
     
 			if (!$installedAppResults) {
 				Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
@@ -4195,17 +4206,17 @@ function Import-NxtIniFile {
 }
 #endregion
 
-#region Function Import-NxtSetupCfg
-function Import-NxtSetupCfg {
+#region Function Set-NxtSetupCfg
+function Set-NxtSetupCfg {
 	<#
 	.SYNOPSIS
-		Imports a Setup.cfg file in Ini format.
+		Set the contents from Setup.cfg to $global:setupCfg.
 	.DESCRIPTION
 		Imports a Setup.cfg file in Ini format.
 	.PARAMETER Path
 		The path to the Setup.cfg file.
 	.EXAMPLE
-		Import-NxtSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
+		Set-NxtSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -4225,7 +4236,7 @@ function Import-NxtSetupCfg {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+		[hashtable]$global:setupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -4260,6 +4271,11 @@ function Execute-NxtBitRockInstaller {
 		Returns ExitCode, STDOut, and STDErr output from the process.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
+	.PARAMETER XmlConfigNxtBitRockInstaller
+		The Default Settings for BitRockInstaller.
+		Defaults to $xmlConfig.NxtBitRockInstaller_Options.
+	.PARAMETER DirFiles
+		The Files directory specified in AppDeployToolkitMain.ps1, Defaults to $dirfiles.
 	.EXAMPLE
 		Execute-NxtBitRockInstaller -UninstallKey "ThisApplication" -Path "ThisApp-1.0.exe" -Parameters "--mode unattended --installer-language en"
 	.EXAMPLE
