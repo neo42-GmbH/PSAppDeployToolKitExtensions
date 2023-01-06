@@ -47,7 +47,7 @@ Function Initialize-NxtEnvironment {
 		Defaults to "$scriptRoot\AppDeployToolkitExtensions.cs"
 	.PARAMETER SetupCFGPath
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
-		Defaults to the "$scriptRoot\Setup.cfg".
+		Defaults to the "$scriptParentPath\Setup.cfg".
 	.EXAMPLE
 		Initialize-NxtEnvironment
 	.LINK
@@ -60,7 +60,7 @@ Function Initialize-NxtEnvironment {
 		$ExtensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$setupCfgPath = "$scriptRoot\Setup.cfg"
+		$setupCfgPath = "$scriptParentPath\Setup.cfg"
 	)
 		
 	Begin {
@@ -78,7 +78,7 @@ Function Initialize-NxtEnvironment {
 			}
 		}
 		Get-NxtPackageConfig
-		$global:SetupCfg = Import-NxtSetupCfg -Path "$ScriptRoot\Setup.cfg"
+		$global:SetupCfg = Import-NxtSetupCfg -Path $setupCfgPath
 		Set-NxtPackageArchitecture
 		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
@@ -604,10 +604,19 @@ function Get-NxtRegisterOnly {
 		## Perform soft migration 
 
 		[string]$installPhase = 'Soft-Migration'
-
-		If ($DetectedDisplayVersion -ge $DisplayVersion -and -not (Test-RegistryValue -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Value 'ProductName') ) {
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
-			Write-Log -Message 'Application was already present. Installation was not executed. Only package files were copied and package was registered. Exit!'
+		if ([string]::IsNullOrEmpty($DisplayVersion)){
+			Write-Log -Message 'DisplayVersion is $null or empty, set Softmigration to $false.'
+			return $false
+		}
+		if ([string]::IsNullOrEmpty($DetectedDisplayVersion)){
+			Write-Log -Message 'DetectedDisplayVersion is $null or empty, set Softmigration to $false.'
+			return $false
+		}
+		If (
+			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Upgrade" -and -not (Test-RegistryValue -Key HKLM\Software$Wow6432Node\neoPackages\$UninstallKeyName -Value 'ProductName')
+			) {
+			#Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
+			Write-Log -Message 'Application is already present. set Softmigration to $true.'
 			return $true
 		}
 	}
@@ -635,6 +644,9 @@ Function Register-NxtPackage {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AppRevision
 		Specifies the Application Revision used in the registry etc.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DisplayVersion
+		Specifies the DisplayVersion used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyName
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
@@ -711,6 +723,9 @@ Function Register-NxtPackage {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AppRevision = $global:PackageConfig.AppRevision,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DisplayVersion = $global:PackageConfig.DisplayVersion,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
@@ -811,7 +826,8 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'NoRepair' -Type 'Dword' -Value 1
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageApplicationDir' -Value $App
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageProductName' -Value $AppName
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageRevision' -Value $AppVersion
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'PackageRevision' -Value $appRevision
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayVersion' -Value $DisplayVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'Publisher' -Value $AppVendor
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'UninstallString' -Type 'ExpandString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
@@ -2132,16 +2148,16 @@ function Get-NxtNameBySid {
 function Compare-NxtVersion {
 	<#
 	.DESCRIPTION
-		Compares two package versions.
+		Compares two versions.
 
 	    Return values:
 			Equal = 1
    			Update = 2
    			Downgrade = 3.
-	.PARAMETER InstalledPackageVersion
-		Version of the installed package.
-	.PARAMETER NewPackageVersion
-		Version of the new package.
+	.PARAMETER DetectedVersion
+		Currently installed Version.
+	.PARAMETER TargetVersion
+		The new Version.
 	.OUTPUTS
 		PSADTNXT.VersionCompareResult.
 	.EXAMPLE
@@ -2152,13 +2168,13 @@ function Compare-NxtVersion {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
+		[AllowEmptyString()]
 		[string]
-		$InstalledPackageVersion,
+		$DetectedVersion,
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]
-		$NewPackageVersion
+		$TargetVersion
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2166,6 +2182,9 @@ function Compare-NxtVersion {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
+		if ([string]::IsNullOrEmpty($DetectedVersion)){
+			$DetectedVersion = "0"
+		}
 		try {
 			[scriptblock]$parseVersion = { param($version) 	
 				[int[]]$result = 0, 0, 0, 0
@@ -2188,8 +2207,8 @@ function Compare-NxtVersion {
 				Write-Output (New-Object System.Version -ArgumentList $result[0], $result[1], $result[2], $result[3])
 				return }.GetNewClosure()
 
-			[System.Version]$instVersion = &$parseVersion -Version $InstalledPackageVersion
-			[System.Version]$newVersion = &$parseVersion -Version $NewPackageVersion
+			[System.Version]$instVersion = &$parseVersion -Version $DetectedVersion
+			[System.Version]$newVersion = &$parseVersion -Version $TargetVersion
 			if ($instVersion -eq $newVersion) {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
 			}
@@ -3544,11 +3563,11 @@ function Write-NxtXmlNode {
 Function Remove-NxtEmptyFolder {
 	<#
 	.SYNOPSIS
-		Removes only empty folders
+		Removes only empty folders.
 	.DESCRIPTION
 		Removes folders only if they are empty and continues otherwise without any action.
 	.PARAMETER Path
-		Path to the empty folder to remove
+		Path to the empty folder to remove.
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
 	.OUTPUTS
