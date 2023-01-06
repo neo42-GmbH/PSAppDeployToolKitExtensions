@@ -26,7 +26,7 @@
 		<!-- Same as TempPath but used when RequireAdmin is False. -->
 		<Toolkit_RegPathNoAdminRights>HKCU:\SOFTWARE</Toolkit_RegPathNoAdminRights>
 		<!-- Same as RegPath but used when RequireAdmin is False. Bear in mind that since this Registry Key should be writable without admin permission, regular users can modify it also. -->
-		<Toolkit_LogPathNoAdminRights>$envProgramData\Logs\Software</Toolkit_LogPathNoAdminRights>
+		<Toolkit_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</Toolkit_LogPathNoAdminRights>
 		<!-- Same as LogPath but used when RequireAdmin is False. -->
 		<Toolkit_CompressLogs>False</Toolkit_CompressLogs>
 		<!-- Specify if the log files should be bundled together in a compressed zip file -->
@@ -58,9 +58,9 @@
 		<!-- Logging level used for MSI logging. -->
 		<MSI_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</MSI_LogPath>
 		<!-- Log path used for MSI logging. -->
-		<MSI_LogPathNoAdminRights>$envProgramData\Logs\Software</MSI_LogPathNoAdminRights>
+		<MSI_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</MSI_LogPathNoAdminRights>
 		<!-- Log path used for MSI logging when RequireAdmin is False. -->
-		<MSI_InstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_InstallParams>
+		<MSI_InstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qb-!</MSI_InstallParams>
 		<!-- Installation parameters used for non-silent MSI actions. -->
 		<MSI_SilentParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_SilentParams>
 		<!-- Installation parameters used for silent MSI actions. -->
@@ -70,6 +70,49 @@
 		<!-- The length of time in seconds to wait for the MSI installer service to become available. Default is 600 seconds (10 minutes) -->
 	</MSI_Options>
 	<!--MSI Options-->
+
+	<!--NxtInnoSetup Options-->
+	<NxtInnoSetup_Options>
+		<NxtInnoSetup_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</NxtInnoSetup_LogPath>
+		<!-- Log path used for InnoSetup logging. -->
+		<NxtInnoSetup_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtInnoSetup_UninsBackupPath>
+		<!-- Path used to backup the uninstallation file. -->
+		<NxtInnoSetup_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
+		<!-- Log path used for InnoSetup logging when RequireAdmin is False. -->
+		<NxtInnoSetup_InstallParams>/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_InstallParams>
+		<!-- Installation parameters used for non-silent InnoSetup actions. -->
+		<NxtInnoSetup_SilentParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_SilentParams>
+		<!-- Installation parameters used for silent InnoSetup actions. -->
+		<NxtInnoSetup_UninstallParams>/VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_UninstallParams>
+		<!-- Installation parameters used for InnoSetup uninstall actions. -->
+	</NxtInnoSetup_Options>
+	<!--NxtInnoSetup Options-->
+
+	<!--NxtNullsoft Options-->
+	<NxtNullsoft_Options>
+		<NxtNullsoft_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtNullsoft_UninsBackupPath>
+		<!-- Path used to backup the uninstallation file. -->
+		<NxtNullsoft_InstallParams>/AllUsers /S</NxtNullsoft_InstallParams>
+		<!-- Installation parameters used for non-silent Nullsoft actions. -->
+		<NxtNullsoft_SilentParams>/AllUsers /S</NxtNullsoft_SilentParams>
+		<!-- Installation parameters used for silent Nullsoft actions. -->
+		<NxtNullsoft_UninstallParams>/AllUsers /S</NxtNullsoft_UninstallParams>
+		<!-- Installation parameters used for Nullsoft uninstall actions. -->
+	</NxtNullsoft_Options>
+	<!--NxtNullsoft Options-->
+
+	<!--NxtBitRockInstaller Options-->
+	<NxtBitRockInstaller_Options>
+		<NxtBitRockInstaller_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtBitRockInstaller_UninsBackupPath>
+		<!-- Path used to backup the uninstallation file. -->
+		<NxtBitRockInstaller_InstallParams>--mode unattended --unattendedmodeui minimal</NxtBitRockInstaller_InstallParams>
+		<!-- Installation parameters used for non-silent BitRockInstaller actions. -->
+		<NxtBitRockInstaller_SilentParams>--mode unattended</NxtBitRockInstaller_SilentParams>
+		<!-- Installation parameters used for silent BitRockInstaller actions. -->
+		<NxtBitRockInstaller_UninstallParams>--mode unattended</NxtBitRockInstaller_UninstallParams>
+		<!-- Installation parameters used for BitRockInstaller uninstall actions. -->
+	</NxtBitRockInstaller_Options>
+	<!--NxtBitRockInstaller Options-->
 
 	<!--UI Options-->
 	<UI_Options>
