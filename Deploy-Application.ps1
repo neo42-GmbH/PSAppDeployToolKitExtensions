@@ -306,19 +306,30 @@ function Install-NxtApplication {
 )
 	[string]$global:installPhase = 'Installation'
 
+	[hashtable]$executeNxtParams = @{
+		Action	= 'Install'
+		Path	= "$InstFile"
+		LogName	= "$InstLogFile"
+	}
+	if ($AddParameters){
+		[hashtable]$executeNxtParams["AddParameters"] = "$InstPara"
+	}else{
+		[hashtable]$executeNxtParams["Parameters"] = "$InstPara"
+	}
 	## <Perform Installation tasks here>
-	
-	If ($method -eq "MSI") {
-		Execute-MSI -Action 'Install' -Path "$InstFile" -Parameters "$InstPara" -LogName "$InstLogFile"
-	}
-	ElseIf ($method -like "Inno*") {
-		Execute-NxtInnoSetup -Action "Install" -UninstallKey "$UninstallKey" -Path "$InstFile" -Parameters "$InstPara" -Log "$InstLogFile"
-	}
-	ElseIf ($method -eq "Nullsoft") {
-		Execute-NxtNullsoft -Action "Install" -UninstallKey "$UninstallKey" -Path "$InstFile" -Parameters "$InstPara"
-	}
-	Else {
-		Execute-Process -Path "$InstFile" -Parameters "$InstPara"
+	switch -Wildcard ($method) {
+		MSI {
+			Execute-MSI @executeNxtParams
+		}
+		"Inno*" {
+			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
+		}
+		Nullsoft {
+			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+		}
+		Default {
+			Execute-Process -Path "$InstFile" -Parameters "$InstPara"
+		}
 	}
 	$InstallExitCode = $LastExitCode
 
