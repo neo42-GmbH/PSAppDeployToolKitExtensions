@@ -158,6 +158,8 @@ param (
 	$ReinstallModeIsRepair = $global:PackageConfig.ReinstallModeIsRepair
 )
 	try {
+		Show-NxtInstallationWelcome -IsInstall $true
+		Exit
 		CustomPreInit
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
@@ -610,7 +612,13 @@ function Show-NxtInstallationWelcome {
 	Defaults to the corresponding value from the PackageConfig object.
 .PARAMETER CloseAppsCountdown
 	Countdown until the Apps will either be forcibly closed or the Installation will abort
-	Defaults to the corresponding value from the Setup.cfg.
+	Defaults to the timeout value from the Setup.cfg.
+.PARAMETER ContinueType
+	If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
+	this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
+		ABORT:       After the timeout has expired, the installation will be abort 
+		CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
+	Defaults to the timeout value from the Setup.cfg.
 .PARAMETER BlockExecution
 	Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
 	Defaults to the corresponding value from the PackageConfig object.
@@ -631,7 +639,11 @@ function Show-NxtInstallationWelcome {
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
 		[Parameter(Mandatory=$false)]
 		[String]
-		$CloseAppsCountdown,
+		$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
+		[Parameter(Mandatory=$false)]
+		[ValidateSet("ABORT","CONTINUE")]
+		[String]
+		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		[Parameter(Mandatory=$false)]
 		[bool]
 		$BlockExecution = $($global:PackageConfig.BlockExecution)
@@ -640,8 +652,16 @@ function Show-NxtInstallationWelcome {
 	if (!$isInstall){
 		$DeferDays = 0
 	}
-	## ##TOBECONTINUED## $CloseAppsCountdown has to be Defaulted from the Setup.cfg, which is not yet automatically imported
-	Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+
+	switch ($ContinueType){
+		"ABORT" {
+			Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+		}
+		"CONTINUE" {
+			Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+		}		
+	}
+	
 }
 
 #endregion
