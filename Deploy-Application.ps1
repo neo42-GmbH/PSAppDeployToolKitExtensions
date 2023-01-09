@@ -158,8 +158,6 @@ param (
 	$ReinstallModeIsRepair = $global:PackageConfig.ReinstallModeIsRepair
 )
 	try {
-		Show-NxtInstallationWelcome -IsInstall $true
-		Exit
 		CustomPreInit
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
