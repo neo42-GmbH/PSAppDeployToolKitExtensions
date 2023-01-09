@@ -603,7 +603,7 @@ function Show-NxtInstallationWelcome {
 	Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
 .PARAMETER DeferDays
 	Specifies how long a user may defer an installation (will be ignored on uninstallation)
-	Defaults to the corresponding value from the PackageConfig object.
+	Defaults to the corresponding value from the Setup.cfg object.
 .PARAMETER AskKillProcessApps
 	Specifies a list of Processnames which should be stopped for the (un)installation to start.
 	For Example "WINWORD,EXCEL"
@@ -625,7 +625,7 @@ function Show-NxtInstallationWelcome {
 		$IsInstall,
 		[Parameter(Mandatory=$false)]
 		[String]
-		$DeferDays = $global:PackageConfig.DeferDays,
+		$DeferDays = $global:SetupCfg.DeferDays,
 		[Parameter(Mandatory=$false)]
 		[String]
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),

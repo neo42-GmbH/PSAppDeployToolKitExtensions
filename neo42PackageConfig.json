@@ -21,7 +21,6 @@
     "UninstallOld": true,
     "Reboot": 0,
     "BlockExecution": true,
-    "DeferDays": 1,
     "ReinstallModeIsRepair": false,
     "UserPartOnInstallation": false,
     "UserPartOnUninstallation": false,
