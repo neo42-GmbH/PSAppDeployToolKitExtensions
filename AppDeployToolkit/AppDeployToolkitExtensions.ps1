@@ -308,7 +308,7 @@ Function Set-NxtPackageArchitecture {
 Function Get-NxtVariablesFromDeploymentSystem {
 	<#
 	.SYNOPSIS
-		Gets enviroment variables set by the deployment system
+		Gets environment variables set by the deployment system
 	.DESCRIPTION
 		Should be called at the end of the variable definition section of any 'Deploy-Application.ps1' 
 		Variables not set by the deployment system (or set to an unsuitable value) get a default value (e.g. [bool]$global:$registerPackage = $true)
@@ -337,15 +337,15 @@ Function Get-NxtVariablesFromDeploymentSystem {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Write-Log -Message "Getting enviroment variables set by the deployment system..." -Source ${cmdletName}
+		Write-Log -Message "Getting environment variables set by the deployment system..." -Source ${cmdletName}
 		Try {
 			If ("false" -eq $registerPackage) { [bool]$global:registerPackage = $false } Else { [bool]$global:registerPackage = $true }
 			If ("false" -eq $uninstallOld) { [bool]$global:uninstallOld = $false }
 			If ($null -ne $Reboot) { [int]$global:reboot = $Reboot }
-			Write-Log -Message "Enviroment variables successfully read." -Source ${cmdletName}
+			Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
 		}
 		Catch {
-			Write-Log -Message "Failed to get enviroment variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to get environment variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -4477,6 +4477,83 @@ function Execute-NxtBitRockInstaller {
             Write-Output -InputObject $ExecuteResults
         }
 
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+
+#region Function Set-NxtIniValue
+Function Set-NxtIniValue {
+	<#
+	.SYNOPSIS
+		Opens or creates an INI file and sets the value of the specified section and key.
+	.DESCRIPTION
+		Opens or creates an INI file and sets the value of the specified section and key.
+	.PARAMETER FilePath
+		Path to the INI file.
+	.PARAMETER Section
+		Section within the INI file.
+	.PARAMETER Key
+		Key within the section of the INI file.
+	.PARAMETER Value
+		Value for the key within the section of the INI file. To remove a value, set this variable to $null.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
+	.PARAMETER Create
+		Creates the file if it does not exist. Default is: $true.
+	.EXAMPLE
+		Set-NxtIniValue -FilePath "$envProgramFilesX86\IBM\Notes\notes.ini" -Section 'Notes' -Key 'KeyFileName' -Value 'MyFile.ID'
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		http://psappdeploytoolkit.com
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullorEmpty()]
+		[string]$FilePath,
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullorEmpty()]
+		[string]$Section,
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullorEmpty()]
+		[string]$Key,
+		# Don't strongly type this variable as [string] b/c PowerShell replaces [string]$Value = $null with an empty string
+		[Parameter(Mandatory=$true)]
+		[AllowNull()]
+		$Value,
+		[Parameter(Mandatory=$false)]
+		[ValidateNotNullorEmpty()]
+		[bool]$ContinueOnError = $true,
+		[Parameter(Mandatory=$false)]
+		[ValidateNotNullorEmpty()]
+		[bool]$Create = $true
+	)
+	
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Try {
+			if(!(Test-Path -Path $FilePath) -and $Create) {
+				New-Item -ItemType File -Path $FilePath -Force
+			}
+
+			if(Test-Path -Path $FilePath) {
+				Set-IniValue -FilePath $FilePath -Section $Section -Key $Key -Value $Value -ContinueOnError $ContinueOnError
+			}
+			else {
+				Write-Log -Message "INI file $FilePath does not exist!" -Source ${CmdletName}
+			}
+		}
+		Catch {
+			Write-Log -Message "Failed to create INI file or write INI file key value. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+		}
+	}
+	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
