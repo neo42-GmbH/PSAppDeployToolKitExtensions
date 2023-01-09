@@ -169,6 +169,8 @@ param (
 					## Application is present. Only register the package
 					[string]$global:installPhase = 'Package-Registration'
 					Register-NxtPackage
+					CustomPostInstallAndReinstall
+					Complete-NxtPackageInstallation
 					Exit-Script -ExitCode $mainExitCode
 				}
 				Show-NxtInstallationWelcome -IsInstall $true
