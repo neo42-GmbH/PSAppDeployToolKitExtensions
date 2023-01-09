@@ -399,7 +399,7 @@ Param (
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$UninstallKeyName.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$App\neo42-Userpart\SupportFiles"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
 	}
@@ -531,11 +531,11 @@ function Complete-NxtPackageUninstallation {
 	Remove-NxtDesktopShortcuts
 	
 	If ($true -eq $UserPartOnUninstallation) {
-		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
+		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$uninstallKeyName"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$App\neo42-Userpart\SupportFiles"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$UninstallKeyName.uninstall"
 	}
