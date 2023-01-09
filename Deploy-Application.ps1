@@ -97,7 +97,7 @@ try {
 	##*===============================================
 
 	## Variables not from neo42PackageConfig.json
-	[string]$setupCfgPath = "$dirSupportFiles\Setup.cfg"
+	[string]$setupCfgPath = "$scriptParentPath\Setup.cfg"
 	
 
 	## Variables: Application
@@ -306,19 +306,30 @@ function Install-NxtApplication {
 )
 	[string]$global:installPhase = 'Installation'
 
+	[hashtable]$executeNxtParams = @{
+		Action	= 'Install'
+		Path	= "$InstFile"
+		LogName	= "$InstLogFile"
+	}
+	if ($AddParameters){
+		[hashtable]$executeNxtParams["AddParameters"] = "$InstPara"
+	}else{
+		[hashtable]$executeNxtParams["Parameters"] = "$InstPara"
+	}
 	## <Perform Installation tasks here>
-	
-	If ($method -eq "MSI") {
-		Execute-MSI -Action 'Install' -Path "$InstFile" -Parameters "$InstPara" -LogName "$InstLogFile"
-	}
-	ElseIf ($method -like "Inno*") {
-		Execute-NxtInnoSetup -Action "Install" -UninstallKey "$UninstallKey" -Path "$InstFile" -Parameters "$InstPara" -Log "$InstLogFile"
-	}
-	ElseIf ($method -eq "Nullsoft") {
-		Execute-NxtNullsoft -Action "Install" -UninstallKey "$UninstallKey" -Path "$InstFile" -Parameters "$InstPara"
-	}
-	Else {
-		Execute-Process -Path "$InstFile" -Parameters "$InstPara"
+	switch -Wildcard ($method) {
+		MSI {
+			Execute-MSI @executeNxtParams
+		}
+		"Inno*" {
+			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
+		}
+		Nullsoft {
+			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+		}
+		Default {
+			Execute-Process -Path "$InstFile" -Parameters "$InstPara"
+		}
 	}
 	$InstallExitCode = $LastExitCode
 
@@ -398,7 +409,7 @@ Param (
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
-		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
@@ -540,7 +551,7 @@ function Complete-NxtPackageUninstallation {
 		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
-		Copy-File -Path "$dirSupportFiles\Setup.ico" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
