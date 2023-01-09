@@ -75,7 +75,7 @@
 	<NxtInnoSetup_Options>
 		<NxtInnoSetup_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</NxtInnoSetup_LogPath>
 		<!-- Log path used for InnoSetup logging. -->
-		<NxtInnoSetup_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtInnoSetup_UninsBackupPath>
+		<NxtInnoSetup_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neo42-Source</NxtInnoSetup_UninsBackupPath>
 		<!-- Path used to backup the uninstallation file. -->
 		<NxtInnoSetup_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
 		<!-- Log path used for InnoSetup logging when RequireAdmin is False. -->
@@ -90,7 +90,7 @@
 
 	<!--NxtNullsoft Options-->
 	<NxtNullsoft_Options>
-		<NxtNullsoft_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtNullsoft_UninsBackupPath>
+		<NxtNullsoft_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neo42-Source</NxtNullsoft_UninsBackupPath>
 		<!-- Path used to backup the uninstallation file. -->
 		<NxtNullsoft_InstallParams>/AllUsers /S</NxtNullsoft_InstallParams>
 		<!-- Installation parameters used for non-silent Nullsoft actions. -->
@@ -103,7 +103,7 @@
 
 	<!--NxtBitRockInstaller Options-->
 	<NxtBitRockInstaller_Options>
-		<NxtBitRockInstaller_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neoSource</NxtBitRockInstaller_UninsBackupPath>
+		<NxtBitRockInstaller_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neo42-Source</NxtBitRockInstaller_UninsBackupPath>
 		<!-- Path used to backup the uninstallation file. -->
 		<NxtBitRockInstaller_InstallParams>--mode unattended --unattendedmodeui minimal</NxtBitRockInstaller_InstallParams>
 		<!-- Installation parameters used for non-silent BitRockInstaller actions. -->
