@@ -4508,7 +4508,7 @@ Function Set-NxtIniValue {
 	.PARAMETER Create
 		Creates the file if it does not exist. Default is: $true.
 	.EXAMPLE
-		Set-IniValue -FilePath "$envProgramFilesX86\IBM\Notes\notes.ini" -Section 'Notes' -Key 'KeyFileName' -Value 'MyFile.ID'
+		Set-NxtIniValue -FilePath "$envProgramFilesX86\IBM\Notes\notes.ini" -Section 'Notes' -Key 'KeyFileName' -Value 'MyFile.ID'
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -4545,7 +4545,6 @@ Function Set-NxtIniValue {
 	Process {
 		Try {
 			if(!(Test-Path -Path $FilePath) -and $Create) {
-				# Create a new INI file
 				New-Item -ItemType File -Path $FilePath -Force
 			}
 
