@@ -302,7 +302,10 @@ function Install-NxtApplication {
 	$InstFile = $global:PackageConfig.InstFile,
 	[Parameter(Mandatory=$false)]
 	[string]
-	$InstPara = $global:PackageConfig.InstPara
+	$InstPara = $global:PackageConfig.InstPara,
+	[Parameter(Mandatory=$false)]
+	[bool]
+	$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
 )
 	[string]$global:installPhase = 'Installation'
 
@@ -311,10 +314,10 @@ function Install-NxtApplication {
 		Path	= "$InstFile"
 		LogName	= "$InstLogFile"
 	}
-	if ($AddParameters){
-		[hashtable]$executeNxtParams["AddParameters"] = "$InstPara"
+	if ($AppendInstParaToDefaultParameters){
+		$executeNxtParams["AddParameters"] = "$InstPara"
 	}else{
-		[hashtable]$executeNxtParams["Parameters"] = "$InstPara"
+		$executeNxtParams["Parameters"] = "$InstPara"
 	}
 	## <Perform Installation tasks here>
 	switch -Wildcard ($method) {
@@ -458,7 +461,10 @@ Param(
 		$UninstFile = $global:PackageConfig.UninstFile,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$UninstPara = $global:PackageConfig.UninstPara
+		$UninstPara = $global:PackageConfig.UninstPara,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters
 )
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
@@ -470,23 +476,47 @@ Param(
 	If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
 	
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
-		
+
+		[hashtable]$executeNxtParams = @{
+			Action	= 'Uninstall'
+		}
+		if ($AppendUninstParaToDefaultParameters){
+			$executeNxtParams["AddParameters"] = "$UninstPara"
+		}else{
+			$executeNxtParams["Parameters"] = "$UninstPara"
+		}
+		switch -Wildcard ($method) {
+			MSI {
+				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
+			}
+			"Inno*" {
+				Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+			}
+			Nullsoft {
+				Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+			}
+			"BitRock*" {
+				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+			}
+			none {
+
+			}
+			Default {
+
+			}
+		}
 		If ($method -eq "MSI") {
-			Execute-MSI -Action 'Uninstall' -Path "$UninstallKey" -Parameters "$UninstPara" -LogName "$UninstLogFile"
+			
 		}
 		ElseIf ($method -like "Inno*") {
-			Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara" -Log "$UninstLogFile"
 		}
 		ElseIf ($method -eq "Nullsoft") {
-			Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara"
 		}
 		ElseIf ($method -like "BitRock*") {
-			Execute-NxtBitRockInstaller -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara"
 		}
 		ElseIf ($method -eq "none") {
 		}
 		Else {
-			Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
 		}
 		$UninstallExitCode = $LastExitCode
 
