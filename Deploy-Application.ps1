@@ -359,7 +359,7 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UserPartOnInstallation
 		Defines if the Userpart should be executed for this installation.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER UninstallKeyName
+	.PARAMETER PackageFamilyGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UserPartRevision
@@ -382,7 +382,7 @@ Param (
 		$UserPartOnInstallation = $global:PackageConfig.UserPartOnInstallation,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
 		[Parameter(Mandatory=$false)]
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision,
@@ -409,12 +409,12 @@ Param (
 	
 	If ($true -eq $UserPartOnInstallation) {
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
-		Set-ActiveSetup -PurgeActiveSetupKey -Key "$UninstallKeyName.uninstall"
+		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
 	}
 }
 
@@ -529,6 +529,9 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER App
 		Defines the path to a local persistent cache for installation files.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageFamilyGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UserPartOnUninstallation
 		Specifies if a Userpart should take place during uninstallation.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -545,6 +548,9 @@ function Complete-NxtPackageUninstallation {
 		[string]
 		$App = $global:PackageConfig.App,
 		[Parameter(Mandatory=$false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory=$false)]
 		[bool]
 		$UserPartOnUninstallation = $global:PackageConfig.UserPartOnUninstallation,
 		[Parameter(Mandatory=$false)]
@@ -559,12 +565,12 @@ function Complete-NxtPackageUninstallation {
 	
 	If ($true -eq $UserPartOnUninstallation) {
 		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
-		Set-ActiveSetup -PurgeActiveSetupKey -Key "$uninstallKeyName"
+		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$UninstallKeyName.uninstall"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
 	}
 }
 
