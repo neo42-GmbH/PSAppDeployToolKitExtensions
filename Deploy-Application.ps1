@@ -312,7 +312,6 @@ function Install-NxtApplication {
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Install'
 		Path	= "$InstFile"
-		LogName	= "$InstLogFile"
 	}
 	if ($AppendInstParaToDefaultParameters){
 		$executeNxtParams["AddParameters"] = "$InstPara"
@@ -322,7 +321,7 @@ function Install-NxtApplication {
 	## <Perform Installation tasks here>
 	switch -Wildcard ($method) {
 		MSI {
-			Execute-MSI @executeNxtParams
+			Execute-MSI @executeNxtParams -LogName	= "$InstLogFile"
 		}
 		"Inno*" {
 			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
@@ -504,19 +503,6 @@ Param(
 			Default {
 
 			}
-		}
-		If ($method -eq "MSI") {
-			
-		}
-		ElseIf ($method -like "Inno*") {
-		}
-		ElseIf ($method -eq "Nullsoft") {
-		}
-		ElseIf ($method -like "BitRock*") {
-		}
-		ElseIf ($method -eq "none") {
-		}
-		Else {
 		}
 		$UninstallExitCode = $LastExitCode
 
