@@ -31,6 +31,7 @@
     "HidePackageUninstallEntry": false,
     "DisplayVersion": "2.10.2",
     "UninstallKey": "Scribble Papers_is1",
+    "UninstallKeyIsDisplayName": false,
     "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
     "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
     "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",

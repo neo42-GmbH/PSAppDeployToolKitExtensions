@@ -108,7 +108,7 @@ try {
 	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
 
 	## App Global Variables
-	[string]$global:detectedDisplayVersion = Get-RegistryKey -Key "$($global:PackageConfig.RegUninstallKey)" -Value 'DisplayVersion'
+	[string]$global:detectedDisplayVersion = Get-NxtDetectedDisplayVersion
 
 
 	Get-NxtVariablesFromDeploymentSystem
@@ -168,16 +168,16 @@ param (
 				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
 					## Application is present. Only register the package
 					[string]$global:installPhase = 'Package-Registration'
-					Register-NxtPackage
 					CustomPostInstallAndReinstall
 					Complete-NxtPackageInstallation
+					Register-NxtPackage
 					Exit-Script -ExitCode $mainExitCode
 				}
 				Show-NxtInstallationWelcome -IsInstall $true
 				CustomPreInstallAndReinstall
 				[bool]$isInstalled = $false
 				[string]$global:installPhase = 'Check-ReinstallMethod'
-				if ($true -eq $(Get-NxtShouldReinstall)) {
+				if ($true -eq $(Get-NxtAppIsInstalled)) {
 					if ($false -eq $ReinstallModeIsRepair) {
 						## Reinstall mode is set to default
 						CustomPreUninstallReinstall
@@ -272,6 +272,10 @@ function Install-NxtApplication {
 		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
 		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstLogFile
 		Defines the path to the Logfile that should be used by the installer.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -290,25 +294,28 @@ function Install-NxtApplication {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
-	[Parameter(Mandatory=$false)]
-	[String]
-	$UninstallKey = $global:PackageConfig.UninstallKey,
-	[Parameter(Mandatory=$false)]
-	[String]
-	$InstLogFile = $global:PackageConfig.InstLogFile,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$RegUninstallKey = $global:PackageConfig.RegUninstallKey,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$InstFile = $global:PackageConfig.InstFile,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$InstPara = $global:PackageConfig.InstPara,
-	[Parameter(Mandatory=$false)]
-	[bool]
-	$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
-)
+		[Parameter(Mandatory=$false)]
+		[String]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory=$false)]
+		[String]
+		$InstLogFile = $global:PackageConfig.InstLogFile,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$RegUninstallKey = $global:PackageConfig.RegUninstallKey,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$InstFile = $global:PackageConfig.InstFile,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$InstPara = $global:PackageConfig.InstPara,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
+	)
 	[string]$global:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
@@ -326,10 +333,16 @@ function Install-NxtApplication {
 			Execute-MSI @executeNxtParams -LogName	= "$InstLogFile"
 		}
 		"Inno*" {
-			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
+			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$InstLogFile"
 		}
 		Nullsoft {
-			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+		}
+		"BitRock*" {
+			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+		}
+		none {
+
 		}
 		Default {
 			Execute-Process -Path "$InstFile" -Parameters "$InstPara"
@@ -340,7 +353,7 @@ function Install-NxtApplication {
 	Start-Sleep -Seconds 5
 
 	## Test successfull installation
-	If (-not (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString')) {
+	if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 		Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
 		# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
 	}
@@ -414,7 +427,7 @@ Param (
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
 	}
@@ -428,6 +441,10 @@ function Uninstall-NxtApplication {
 		Is only called in the Main function and should not be modified!
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstLogFile
     	Defines the path to the Logfile that should be used by the uninstaller.
@@ -447,10 +464,13 @@ function Uninstall-NxtApplication {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-Param(
+	Param(
 		[Parameter(Mandatory=$false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
 		[Parameter(Mandatory=$false)]
 		[string]
 		$UninstLogFile = $global:PackageConfig.UninstLogFile,
@@ -466,7 +486,7 @@ Param(
 		[Parameter(Mandatory=$false)]
 		[bool]
 		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters
-)
+	)
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
 	## <Perform Pre-Uninstallation tasks here>
@@ -474,7 +494,7 @@ Param(
 
 	[string]$global:installPhase = 'Uninstallation'
 	
-	If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
+	if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 	
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
 
@@ -491,19 +511,19 @@ Param(
 				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
 			}
 			"Inno*" {
-				Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+				Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$UninstLogFile"
 			}
 			Nullsoft {
-				Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+				Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
 			}
 			"BitRock*" {
-				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
 			}
 			none {
 
 			}
 			Default {
-
+				Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
 			}
 		}
 		$UninstallExitCode = $LastExitCode
@@ -511,7 +531,7 @@ Param(
 		Start-Sleep -Seconds 5
 
 		## Test successfull uninstallation
-		If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
+		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 			Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
 			# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
 		}
@@ -570,7 +590,7 @@ function Complete-NxtPackageUninstallation {
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
 	}
@@ -594,26 +614,50 @@ function Repair-NxtApplication {
 	## <Perform repair tasks here>
 }
 
-function Get-NxtShouldReinstall {
+function Get-NxtAppIsInstalled {
 	<#
-.SYNOPSIS
-	Detects if the target application is already installed.
-.DESCRIPTION
-	Uses the registry Uninstall Key to detect of the application is already present.
-.PARAMETER RegUninstallKey
-		Defines the path to the Uninstall Key in the Registry.
+	.SYNOPSIS
+		Detects if the target application is installed.
+	.DESCRIPTION
+		Uses the registry Uninstall Key to detect of the application is present.
+	.PARAMETER UninstallKey
+		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
 		Defaults to the corresponding value from the PackageConfig object.
-.EXAMPLE
-	Get-NxtShouldReinstall
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
-param(
-	[Parameter(Mandatory=$false)]
-		[string]
-		$RegUninstallKey = $global:PackageConfig.RegUninstallKey
-)
-	return (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString')
+	.PARAMETER UninstallKeyIsDisplayName
+		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Get-NxtAppIsInstalled
+	.EXAMPLE
+		Get-NxtAppIsInstalled -UninstallKey "This Application_is1"
+	.EXAMPLE
+		Get-NxtAppIsInstalled -UninstallKey "This Application" -UninstallKeyIsDisplayName $true
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[String]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName
+	)
+	If ($true -eq $UninstallKeyIsDisplayName) {
+		[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -Exact
+	}
+	Else {
+		[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $UninstallKey | Where-Object UninstallSubkey -eq $UninstallKey
+	}
+	If (!$installedAppResults) {
+		return $false
+	}
+	Else {
+		return $true
+	}
 }
 
 function Show-NxtInstallationWelcome {
