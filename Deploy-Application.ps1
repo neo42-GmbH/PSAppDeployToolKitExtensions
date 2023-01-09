@@ -625,7 +625,7 @@ function Show-NxtInstallationWelcome {
 		$IsInstall,
 		[Parameter(Mandatory=$false)]
 		[String]
-		$DeferDays = $global:SetupCfg.DeferDays,
+		$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
 		[Parameter(Mandatory=$false)]
 		[String]
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
