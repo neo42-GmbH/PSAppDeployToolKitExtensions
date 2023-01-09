@@ -681,9 +681,6 @@ Function Register-NxtPackage {
 	.PARAMETER Logname
 		Specifies the Logname.
 		Defaults to $logname defined in the AppDeployToolkitMain.
-	.PARAMETER DirSupportFiles
-		Specifies the DirSupportFiles.
-		Defaults to $dirSupportFiles defined in the AppDeployToolkitMain.
 	.PARAMETER Wow6432Node
 		Switches between 32/64 Bit Registry Keys.
 		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
@@ -758,9 +755,6 @@ Function Register-NxtPackage {
 		$ScriptParentPath = $scriptParentPath,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DirSupportFiles = $dirSupportFiles,
-		[Parameter(Mandatory = $false)]
-		[string]
 		$ConfigToolkitLogDir = $configToolkitLogDir,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -792,7 +786,7 @@ Function Register-NxtPackage {
 		Try {
 			Copy-File -Path "$ScriptParentPath\AppDeployToolkit" -Destination "$App\neo42-Install\" -Recurse
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$DirSupportFiles\Setup.ico" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$ScriptParentPath\Setup.ico" -Destination "$App\"
 
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'AppPath' -Value $App
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
@@ -817,7 +811,7 @@ Function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$UninstallKeyName -Name 'Version' -Value $AppVersion
 
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayIcon' -Value $App\neo42-Install\Setup.ico
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayIcon' -Value $App\Setup.ico
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayName' -Value $UninstallDisplayName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'DisplayVersion' -Value $AppVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKeyName -Name 'MachineKeyName' -Value $RegPackagesKey\$UninstallKeyName

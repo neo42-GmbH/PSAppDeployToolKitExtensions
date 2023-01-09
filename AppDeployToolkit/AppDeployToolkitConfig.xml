@@ -43,7 +43,7 @@
 
 	<!--Banner & Icon Options-->
 	<BannerIcon_Options>
-		<Icon_Filename>..\SupportFiles\Setup.ico</Icon_Filename>
+		<Icon_Filename>..\Setup.ico</Icon_Filename>
 		<!-- Specify filename of icon. -->
 		<Banner_Filename>logo.png</Banner_Filename>
 		<!-- Specify filename of the banner. -->
