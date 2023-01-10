@@ -14,7 +14,7 @@
     "AppVersion": "2.10.2",
     "AppRevision": "0",
     "AppLang": "DEU",
-    "UninstallKeyName": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
+    "PackageFamilyGUID": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
     "RegPackagesKey": "neoPackages",
     "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
     "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
@@ -37,8 +37,10 @@
     "RegUninstallKey": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
 	  "InstFile": "SPSetup.exe",
     "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"($global:PackageConfig.instLogFile)\"",
+    "AppendInstParaToDefaultParameters": false,
     "UninstFile": "($global:PackageConfig.installLocation)\\unins000.exe",
     "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"($global:PackageConfig.uninstLogFile)\"",
+    "AppendUninstParaToDefaultParameters": false,
     "AppKillProcesses": [
       "ScPapers"
     ],
