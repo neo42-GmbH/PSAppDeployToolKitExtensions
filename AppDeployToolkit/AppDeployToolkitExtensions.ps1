@@ -600,7 +600,7 @@ function Get-NxtRegisterOnly {
 		$Wow6432Node = $global:Wow6432Node,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DetectedDisplayVersion = $global:detectedDisplayVersion
+		$DetectedDisplayVersion = $global:DetectedDisplayVersion
 	
 	)
 	If ($true -eq $SoftMigration) {
@@ -4592,7 +4592,7 @@ Function Set-NxtIniValue {
 function Set-NxtDetectedDisplayVersion {
 	<#
 	.SYNOPSIS
-		Sets the value of $global:detectedDisplayVersion from the display version of an application.
+		Sets the value of $global:DetectedDisplayVersion from the display version of an application.
 	.DESCRIPTION
 		Sets the display version of an application from the registry depending on the name of its uninstallkey or its display name.
 	.PARAMETER UninstallKey
@@ -4639,7 +4639,7 @@ function Set-NxtDetectedDisplayVersion {
 				Else {
 					Write-Log -Message "Detected the following display version [$detectedDisplayVersion] for [$UninstallKey]." -Source ${CmdletName}
 				}
-				[string]$global:detectedDisplayVersion =  $detectedDisplayVersion
+				[string]$global:DetectedDisplayVersion =  $detectedDisplayVersion
 			}
 			catch {
 				Write-Log -Message "Failed to detect display version for [$UninstallKey]. `n$(Resolve-Error)" -Severity 2 -Source ${CmdletName}
