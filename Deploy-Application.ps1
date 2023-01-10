@@ -408,9 +408,13 @@ Param (
 	foreach($uninstallKeyToHide in $UninstallKeys) {
 		[string]$wowEntry = ""
 		if($false -eq $uninstallKeyToHide.Is64Bit) {
-			$wowEntry = "WOW6432Node"
+			$wowEntry = "\WOW6432Node"
 		}
-		Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName)){
+			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		}else{
+			Write-Log -Message "Did not find a registry key $($uninstallKeyToHide.KeyName), skipped setting systemcomponent entry for this key" -Source ${CmdletName}
+		}
 	}
 	
 	If ($true -eq $UserPartOnInstallation) {
