@@ -376,9 +376,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UserPartRevision
 		Specifies the UserPartRevision for this installation
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER UninstallKey
-		Specifies the original UninstallKey set by the Installer in this Package.
-		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeys
+		Specifies a list of UninstallKeys set by the Installer in this Package.
+		Defaults to the corresponding values from the PackageConfig object.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.LINK
@@ -398,8 +398,8 @@ Param (
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision,
 		[Parameter(Mandatory=$false)]
-		[string]
-		$UninstallKey = $global:PackageConfig.UninstallKey
+		[PSCustomObject]
+		$UninstallKeys = $global:PackageConfig.UninstallKeysToHide
 		
 	)
 	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
@@ -414,9 +414,17 @@ Param (
 		Copy-NxtDesktopShortcuts
 	}
 
-	# Hide-NxtAppUninstallEntries
-
-	Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
+	foreach($uninstallKeyToHide in $UninstallKeys) {
+		[string]$wowEntry = ""
+		if($false -eq $uninstallKeyToHide.Is64Bit) {
+			$wowEntry = "\WOW6432Node"
+		}
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName)){
+			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		}else{
+			Write-Log -Message "Did not find a registry key $($uninstallKeyToHide.KeyName), skipped setting systemcomponent entry for this key" -Source ${CmdletName}
+		}
+	}
 	
 	If ($true -eq $UserPartOnInstallation) {
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
