@@ -108,11 +108,9 @@ try {
 	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
 
 	## App Global Variables
-	[string]$global:detectedDisplayVersion = Get-NxtDetectedDisplayVersion
-
+	Set-NxtDetectedDisplayVersion
 
 	Get-NxtVariablesFromDeploymentSystem
-
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -612,52 +610,6 @@ function Repair-NxtApplication {
 	[string]$global:installPhase = 'Repair-NxtApplication'
 
 	## <Perform repair tasks here>
-}
-
-function Get-NxtAppIsInstalled {
-	<#
-	.SYNOPSIS
-		Detects if the target application is installed.
-	.DESCRIPTION
-		Uses the registry Uninstall Key to detect of the application is present.
-	.PARAMETER UninstallKey
-		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
-		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER UninstallKeyIsDisplayName
-		Determins if the value given as UninstallKey should be interpreted as a displayname.
-		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
-		Defaults to the corresponding value from the PackageConfig object.
-	.EXAMPLE
-		Get-NxtAppIsInstalled
-	.EXAMPLE
-		Get-NxtAppIsInstalled -UninstallKey "This Application_is1"
-	.EXAMPLE
-		Get-NxtAppIsInstalled -UninstallKey "This Application" -UninstallKeyIsDisplayName $true
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	param(
-		[Parameter(Mandatory=$false)]
-		[String]
-		$UninstallKey = $global:PackageConfig.UninstallKey,
-		
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName
-	)
-	If ($true -eq $UninstallKeyIsDisplayName) {
-		[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -Exact
-	}
-	Else {
-		[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $UninstallKey | Where-Object UninstallSubkey -eq $UninstallKey
-	}
-	If (!$installedAppResults) {
-		return $false
-	}
-	Else {
-		return $true
-	}
 }
 
 function Show-NxtInstallationWelcome {

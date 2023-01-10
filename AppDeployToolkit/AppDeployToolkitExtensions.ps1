@@ -3631,7 +3631,7 @@ function Execute-NxtInnoSetup {
 		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
 		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
 	.PARAMETER UninstallKeyIsDisplayName
-		Determins if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
+		Determines if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
 	.PARAMETER Path
 		The path to the Inno Setup installation File in case of an installation. (Not needed for "Uninstall" actions!)
 	.PARAMETER Parameters
@@ -3732,6 +3732,7 @@ function Execute-NxtInnoSetup {
 	Process {
 
 		[string]$innoUninstallKey = $UninstallKey
+		[bool]$innoUninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
    
 		switch ($Action) {
 			'Install' {
@@ -3754,13 +3755,7 @@ function Execute-NxtInnoSetup {
 			}
 			'Uninstall' {
 				[string]$innoSetupDefaultParams = $configNxtInnoSetupUninstallParams
-
-				If ($true -eq $UninstallKeyIsDisplayName) {
-					[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $innoUninstallKey -Exact
-				}
-				Else {
-					[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $innoUninstallKey | Where-Object UninstallSubkey -eq $innoUninstallKey
-				}
+				[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName
     
 				if (!$installedAppResults) {
 					Write-Log -Message "No Application with UninstallKey `"$innoUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
@@ -3880,12 +3875,7 @@ function Execute-NxtInnoSetup {
 
 		## Copy uninstallation file from $uninsfolder to $configNxtInnoSetupUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			If ($true -eq $UninstallKeyIsDisplayName) {
-				[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $innoUninstallKey -Exact
-			}
-			Else {
-				[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $innoUninstallKey | Where-Object UninstallSubkey -eq $innoUninstallKey
-			}
+			[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName
     
 			if (!$InstalledAppResults) {
 				Write-Log -Message "No Application with UninstallKey `"$innoUninstallKey`" found. Skipping [copy uninstallation files to backup]..." -Source ${CmdletName}
@@ -3939,7 +3929,7 @@ function Execute-NxtNullsoft {
 		Name of the uninstall registry key of the application (e.g. "ThisApplication").
 		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
 	.PARAMETER UninstallKeyIsDisplayName
-		Determins if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
+		Determines if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
 	.PARAMETER Path
 		The path to the Nullsoft installation File in case of an installation. (Not needed for "Uninstall" actions!)
 	.PARAMETER Parameters
@@ -4017,6 +4007,7 @@ function Execute-NxtNullsoft {
 	Process {
 
 		[string]$nullsoftUninstallKey = $UninstallKey
+		[bool]$nullsoftUninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
    
 		switch ($Action) {
 			'Install' {
@@ -4039,13 +4030,7 @@ function Execute-NxtNullsoft {
 			}
 			'Uninstall' {
 				[string]$nullsoftDefaultParams = $configNxtNullsoftUninstallParams
-
-				If ($true -eq $UninstallKeyIsDisplayName) {
-					[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $nullsoftUninstallKey -Exact
-				}
-				Else {
-					[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey | Where-Object UninstallSubkey -eq $nullsoftUninstallKey
-				}
+				[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $nullsoftUninstallKey -UninstallKeyIsDisplayName $nullsoftUninstallKeyIsDisplayName
     
 				if (!$installedAppResults) {
 					Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
@@ -4132,12 +4117,7 @@ function Execute-NxtNullsoft {
 
 		## Copy uninstallation file from $uninsFolder to $configNxtNullsoftUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			If ($true -eq $UninstallKeyIsDisplayName) {
-				[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $nullsoftUninstallKey -Exact
-			}
-			Else {
-				[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $nullsoftUninstallKey | Where-Object UninstallSubkey -eq $nullsoftUninstallKey
-			}
+			[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $nullsoftUninstallKey -UninstallKeyIsDisplayName $nullsoftUninstallKeyIsDisplayName
     
 			if (!$installedAppResults) {
 				Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
@@ -4284,7 +4264,7 @@ function Execute-NxtBitRockInstaller {
 		Name of the uninstall registry key of the application (e.g. "ThisApplication").
 		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
 	.PARAMETER UninstallKeyIsDisplayName
-		Determins if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
+		Determines if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
 	.PARAMETER Path
 		The path to the BitRock Installer installation File in case of an installation. (Not needed for "Uninstall" actions!)
 	.PARAMETER Parameters
@@ -4364,6 +4344,7 @@ function Execute-NxtBitRockInstaller {
     Process {
 
         [string]$bitRockInstallerUninstallKey = $UninstallKey
+		[bool]$bitRockInstallerUninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
    
         switch ($Action) {
             'Install' {
@@ -4386,14 +4367,8 @@ function Execute-NxtBitRockInstaller {
             }
             'Uninstall' {
                 [string]$bitRockInstallerDefaultParams = $configNxtbitRockInstallerUninstallParams
+				[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName
 
-				If ($true -eq $UninstallKeyIsDisplayName) {
-					[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $bitRockInstallerUninstallKey -Exact
-				}
-				Else {
-					[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $bitRockInstallerUninstallKey | Where-Object UninstallSubkey -eq $bitRockInstallerUninstallKey
-				}
-    
                 if (!$installedAppResults) {
                     Write-Log -Message "No Application with UninstallKey `"$bitRockInstallerUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
 					return
@@ -4485,12 +4460,7 @@ function Execute-NxtBitRockInstaller {
 
 		## Copy uninstallation file from $uninsFolder to $configNxtBitRockInstallerUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			If ($true -eq $UninstallKeyIsDisplayName) {
-				[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $bitRockInstallerUninstallKey -Exact
-			}
-			Else {
-				[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $bitRockInstallerUninstallKey | Where-Object UninstallSubkey -eq $bitRockInstallerUninstallKey
-			}
+			[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName
     
 			if (!$installedAppResults) {
 				Write-Log -Message "No Application with UninstallKey `"$bitRockInstallerUninstallKey`" found. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
@@ -4607,24 +4577,24 @@ Function Set-NxtIniValue {
 }
 #endregion
 
-#region Function Get-NxtDetectedDisplayVersion
-function Get-NxtDetectedDisplayVersion {
+#region Function Set-NxtDetectedDisplayVersion
+function Set-NxtDetectedDisplayVersion {
 	<#
 	.SYNOPSIS
-		Gets the display version of an application.
+		Sets the value of $global:detectedDisplayVersion from the display version of an application.
 	.DESCRIPTION
-		Gets the display version of an application from the regitry depending on the name of its uninstallkey or its display name.
+		Sets the display version of an application from the registry depending on the name of its uninstallkey or its display name.
 	.PARAMETER UninstallKey
 		Name of the uninstall registry key of the application (e.g. "ThisApplication").
 		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
-		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Determines if the value given as UninstallKey should be interpreted as a displayname.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
-		Get-NxtDetectedDisplayVersion -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
+		Set-NxtDetectedDisplayVersion -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
 	.EXAMPLE
-		Get-NxtDetectedDisplayVersion -UninstallKey "MyNewApp" -UninstallKeyIsDisplayName $true
+		Set-NxtDetectedDisplayVersion -UninstallKey "MyNewApp" -UninstallKeyIsDisplayName $true
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -4650,19 +4620,15 @@ function Get-NxtDetectedDisplayVersion {
 		}
 		Else {
 			try {
-				If ($true -eq $UninstallKeyIsDisplayName) {
-					[string]$detectedDisplayVersion = (Get-InstalledApplication -Name $UninstallKey -Exact).DisplayVersion
-				}
-				Else {
-					[string]$detectedDisplayVersion = (Get-InstalledApplication -ProductCode $UninstallKey | Where-Object UninstallSubkey -eq $UninstallKey).DisplayVersion
-				}
+				[string]$detectedDisplayVersion = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).DisplayVersion
+
 				If (!$detectedDisplayVersion) {
 					Write-Log -Message "Detected NO display version for [$UninstallKey]." -Source ${CmdletName}
 				}
 				Else {
 					Write-Log -Message "Detected the following display version [$detectedDisplayVersion] for [$UninstallKey]." -Source ${CmdletName}
 				}
-				Write-Output $detectedDisplayVersion
+				[string]$global:detectedDisplayVersion =  $detectedDisplayVersion
 			}
 			catch {
 				Write-Log -Message "Failed to detect display version for [$UninstallKey]. `n$(Resolve-Error)" -Severity 2 -Source ${CmdletName}
@@ -4672,6 +4638,115 @@ function Get-NxtDetectedDisplayVersion {
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+
+#region Function Get-NxtInstalledApplication
+function Get-NxtInstalledApplication {
+	<#
+	.SYNOPSIS
+		Retrieves information about installed applications based on exact values only.
+	.DESCRIPTION
+		Retrieves information about installed applications by querying the registry depending on the name of its uninstallkey or its display name.
+		Returns information about application publisher, name & version, product code, uninstall string, install source, location, date, and application architecture.
+	.PARAMETER UninstallKey
+		Name of the uninstall registry key of the application (e.g. "ThisApplication").
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determines if the value given as UninstallKey should be interpreted as a displayname.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Get-NxtInstalledApplication -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
+	.EXAMPLE
+		Get-NxtInstalledApplication -UninstallKey "MyNewApp" -UninstallKeyIsDisplayName $true
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		If (!$UninstallKey) {
+			Write-Log -Message "Cannot retrieve information about installed applications: No uninstallkey or display name defined." -Source ${CmdletName}
+		}
+		Else {
+			try {
+				If ($true -eq $UninstallKeyIsDisplayName) {
+					[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -Exact
+				}
+				Else {
+					[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $UninstallKey | Where-Object UninstallSubkey -eq $UninstallKey
+				}
+				Write-Output $installedAppResults
+			}
+			catch {
+				Write-Log -Message "Failed to retrieve information about installed applications based on [$UninstallKey]. `n$(Resolve-Error)" -Severity 2 -Source ${CmdletName}
+			}
+		}
+		
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+
+#region Function Get-NxtAppIsInstalled
+function Get-NxtAppIsInstalled {
+	<#
+	.SYNOPSIS
+		Detects if the target application is installed.
+	.DESCRIPTION
+		Uses the registry Uninstall Key to detect of the application is present.
+	.PARAMETER UninstallKey
+		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determines if the value given as UninstallKey should be interpreted as a displayname.
+		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Get-NxtAppIsInstalled
+	.EXAMPLE
+		Get-NxtAppIsInstalled -UninstallKey "This Application_is1"
+	.EXAMPLE
+		Get-NxtAppIsInstalled -UninstallKey "This Application" -UninstallKeyIsDisplayName $true
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[String]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName
+	)
+
+	[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+
+	If (!$installedAppResults) {
+		return $false
+	}
+	Else {
+		return $true
 	}
 }
 #endregion
