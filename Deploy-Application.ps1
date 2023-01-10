@@ -156,7 +156,7 @@ param (
 	[bool]
 	$MSIReinstallModeIsRepair = $global:PackageConfig.MSIReinstallModeIsRepair,
 	[Parameter(Mandatory=$false)]
-	[bool]
+	[string]
 	$Method = $global:PackageConfig.Method
 )
 	try {
@@ -291,6 +291,10 @@ function Install-NxtApplication {
 	.PARAMETER InstPara
 		Defines the parameters which will be passed in the Installation Commandline.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppendInstParaToDefaultParameters
+		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER Method
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -300,43 +304,45 @@ function Install-NxtApplication {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
-	[Parameter(Mandatory=$false)]
-	[String]
-	$UninstallKey = $global:PackageConfig.UninstallKey,
-	[Parameter(Mandatory=$false)]
-	[String]
-	$InstLogFile = $global:PackageConfig.InstLogFile,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$RegUninstallKey = $global:PackageConfig.RegUninstallKey,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$InstFile = $global:PackageConfig.InstFile,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$InstPara = $global:PackageConfig.InstPara,
-	[Parameter(Mandatory=$false)]
-	[bool]
-	$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
-	[Parameter(Mandatory=$false)]
-	[bool]
-	$Method = $global:PackageConfig.Method
-)
+		[Parameter(Mandatory=$false)]
+		[String]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory=$false)]
+		[String]
+		$InstLogFile = $global:PackageConfig.InstLogFile,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$RegUninstallKey = $global:PackageConfig.RegUninstallKey,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$InstFile = $global:PackageConfig.InstFile,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$InstPara = $global:PackageConfig.InstPara,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$Method = $global:PackageConfig.Method
+	)
 	[string]$global:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Install'
 		Path	= "$InstFile"
 	}
-	if ($AppendInstParaToDefaultParameters){
-		$executeNxtParams["AddParameters"] = "$InstPara"
-	}else{
-		$executeNxtParams["Parameters"] = "$InstPara"
+	if ($InstPara) {
+		if ($AppendInstParaToDefaultParameters){
+			$executeNxtParams["AddParameters"] = "$InstPara"
+		}else{
+			$executeNxtParams["Parameters"] = "$InstPara"
+		}
 	}
 	## <Perform Installation tasks here>
 	switch -Wildcard ($Method) {
 		MSI {
-			Execute-MSI @executeNxtParams -LogName	= "$InstLogFile"
+			Execute-MSI @executeNxtParams -LogName "$InstLogFile"
 		}
 		"Inno*" {
 			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
@@ -462,7 +468,10 @@ function Uninstall-NxtApplication {
 	.PARAMETER UninstPara
 		Defines the parameters which will be passed in the UnInstallation Commandline.
 		Defaults to the corresponding value from the PackageConfig object.
-		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER AppendUninstParaToDefaultParameters
+		If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER Method
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -491,7 +500,7 @@ Param(
 		[bool]
 		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
 		[Parameter(Mandatory=$false)]
-		[bool]
+		[string]
 		$Method = $global:PackageConfig.Method
 )
 	[string]$global:installPhase = 'Pre-Uninstallation'
@@ -508,10 +517,12 @@ Param(
 		[hashtable]$executeNxtParams = @{
 			Action	= 'Uninstall'
 		}
-		if ($AppendUninstParaToDefaultParameters){
-			$executeNxtParams["AddParameters"] = "$UninstPara"
-		}else{
-			$executeNxtParams["Parameters"] = "$UninstPara"
+		if ($UninstPara) {
+			if ($AppendUninstParaToDefaultParameters){
+				$executeNxtParams["AddParameters"] = "$UninstPara"
+			}else{
+				$executeNxtParams["Parameters"] = "$UninstPara"
+			}
 		}
 		switch -Wildcard ($Method) {
 			MSI {
@@ -606,19 +617,50 @@ function Complete-NxtPackageUninstallation {
 function Repair-NxtApplication {
 	<#
 	.SYNOPSIS
-		Defines the required steps to repair the application based on the target installer type
+		Defines the required steps to repair an MSI based application.
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER InstFile
+		Defines the path to the Installation File.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstPara
+		Defines the parameters which will be passed in the Installation Commandline.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppendInstParaToDefaultParameters
+		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Repair-NxtApplication
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-
+	param (
+		[Parameter(Mandatory=$false)]
+		[string]
+		$InstFile = $global:PackageConfig.InstFile,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$InstPara = $global:PackageConfig.InstPara,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
+	)
 	[string]$global:installPhase = 'Repair-NxtApplication'
-
+	[hashtable]$executeNxtParams = @{
+		Action	= 'Repair'
+		Path	= "$InstFile"
+	}
+	if ($AppendInstParaToDefaultParameters){
+		$executeNxtParams["AddParameters"] = "$InstPara"
+	}else{
+		$executeNxtParams["Parameters"] = "$InstPara"
+	}
 	## <Perform repair tasks here>
+	Execute-MSI @executeNxtParams -LogName "Repair.$($global:DeploymentTimestamp).log"
+
+	$RepairExitCode = $LastExitCode
 }
 
 function Get-NxtShouldReinstall {
