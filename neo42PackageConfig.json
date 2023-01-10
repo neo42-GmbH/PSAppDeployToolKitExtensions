@@ -22,7 +22,7 @@
     "Reboot": 0,
     "BlockExecution": true,
     "DeferDays": 1,
-    "ReinstallModeIsRepair": false,
+    "MSIReinstallModeIsRepair": false,
     "UserPartOnInstallation": false,
     "UserPartOnUninstallation": false,
     "UserPartRevision": "2022,09,22,01",

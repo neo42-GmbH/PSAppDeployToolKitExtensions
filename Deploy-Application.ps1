@@ -100,10 +100,6 @@ try {
 	[string]$setupCfgPath = "$scriptParentPath\Setup.cfg"
 	
 
-	## Variables: Application
-	## Handled by HJT***
-	[string]$method = $global:PackageConfig.Method
-
 	## Environment
 	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
 
@@ -140,9 +136,12 @@ function Main {
 		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will
 		be passed through.
 		Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER ReinstallModeIsRepair
+.PARAMETER MSIReinstallModeIsRepair
 		Defines if an installation should perform a repair.
 		Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER Method
+		Defines the type of the installer used in this package.
+		Defaults to the corresponding value from the PackageConfig object
 .EXAMPLE
 	Main
 .LINK
@@ -155,7 +154,10 @@ param (
 	$Reboot = $global:PackageConfig.reboot,
 	[Parameter(Mandatory=$false)]
 	[bool]
-	$ReinstallModeIsRepair = $global:PackageConfig.ReinstallModeIsRepair
+	$MSIReinstallModeIsRepair = $global:PackageConfig.MSIReinstallModeIsRepair,
+	[Parameter(Mandatory=$false)]
+	[bool]
+	$Method = $global:PackageConfig.Method
 )
 	try {
 		CustomPreInit
@@ -178,7 +180,7 @@ param (
 				[bool]$isInstalled = $false
 				[string]$global:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtShouldReinstall)) {
-					if ($false -eq $ReinstallModeIsRepair) {
+					if ($false -eq $MSIReinstallModeIsRepair) {
 						## Reinstall mode is set to default
 						CustomPreUninstallReinstall
 						Uninstall-NxtApplication
@@ -188,10 +190,15 @@ param (
 						CustomPostInstallReinstall
 					}
 					else {
-						## Reinstall mode is set to repair
-						CustomPreInstallReinstall
-						$isInstalled = Repair-NxtApplication
-						CustomPostInstallReinstall
+						if("MSI" -eq $Method) {
+							## Reinstall mode is set to repair
+							CustomPreInstallReinstall
+							$isInstalled = Repair-NxtApplication
+							CustomPostInstallReinstall
+						}
+						else {
+							Throw "Unsupported combination of 'MSIReinstallModeIsRepair' and 'Method' property. 'MSIReinstallModeIsRepair' is only supported for 'MSI'"
+						}
 					}
 				}
 				else {
@@ -284,6 +291,9 @@ function Install-NxtApplication {
 	.PARAMETER InstPara
 		Defines the parameters which will be passed in the Installation Commandline.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER Method
+		Defines the type of the installer used in this package.
+		Defaults to the corresponding value from the PackageConfig object
 	.EXAMPLE
 		Install-NxtApplication
 	.LINK
@@ -307,7 +317,10 @@ function Install-NxtApplication {
 	$InstPara = $global:PackageConfig.InstPara,
 	[Parameter(Mandatory=$false)]
 	[bool]
-	$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
+	$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
+	[Parameter(Mandatory=$false)]
+	[bool]
+	$Method = $global:PackageConfig.Method
 )
 	[string]$global:installPhase = 'Installation'
 
@@ -321,7 +334,7 @@ function Install-NxtApplication {
 		$executeNxtParams["Parameters"] = "$InstPara"
 	}
 	## <Perform Installation tasks here>
-	switch -Wildcard ($method) {
+	switch -Wildcard ($Method) {
 		MSI {
 			Execute-MSI @executeNxtParams -LogName	= "$InstLogFile"
 		}
@@ -442,6 +455,9 @@ function Uninstall-NxtApplication {
 		Defines the parameters which will be passed in the UnInstallation Commandline.
 		Defaults to the corresponding value from the PackageConfig object.
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER Method
+		Defines the type of the installer used in this package.
+		Defaults to the corresponding value from the PackageConfig object
 	.EXAMPLE
 		Uninstall-NxtApplication
 	.LINK
@@ -465,7 +481,10 @@ Param(
 		$UninstPara = $global:PackageConfig.UninstPara,
 		[Parameter(Mandatory=$false)]
 		[bool]
-		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters
+		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$Method = $global:PackageConfig.Method
 )
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
@@ -486,7 +505,7 @@ Param(
 		}else{
 			$executeNxtParams["Parameters"] = "$UninstPara"
 		}
-		switch -Wildcard ($method) {
+		switch -Wildcard ($Method) {
 			MSI {
 				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
 			}
