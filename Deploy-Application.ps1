@@ -370,6 +370,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DesktopShortcut
+		Specifies, if desktop shortcuts should be copied (1) or deleted (0).
+		Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.LINK
@@ -390,15 +393,16 @@ Param (
 		$UserPartRevision = $global:PackageConfig.UserPartRevision,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$UninstallKey = $global:PackageConfig.UninstallKey
-		
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$DesktopShortcut = $global:SetupCfg.Options.DesktopShortcut
 	)
 	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
 
 	## <Perform Complete-NxtPackageInstallation tasks here>
 
-	[string]$desktopShortcut = Get-IniValue -FilePath $setupCfgPath -Section 'Options' -Key 'DESKTOPSHORTCUT'
-	If ($desktopShortcut -ne '1') {
+	If ($DesktopShortcut -ne '1') {
 		Remove-NxtDesktopShortcuts
 	}
 	Else {
