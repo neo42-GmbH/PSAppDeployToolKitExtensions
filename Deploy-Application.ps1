@@ -169,6 +169,8 @@ param (
 					## Application is present. Only register the package
 					[string]$global:installPhase = 'Package-Registration'
 					Register-NxtPackage
+					CustomPostInstallAndReinstall
+					Complete-NxtPackageInstallation
 					Exit-Script -ExitCode $mainExitCode
 				}
 				Show-NxtInstallationWelcome -IsInstall $true
@@ -302,24 +304,26 @@ function Install-NxtApplication {
 	$InstFile = $global:PackageConfig.InstFile,
 	[Parameter(Mandatory=$false)]
 	[string]
-	$InstPara = $global:PackageConfig.InstPara
+	$InstPara = $global:PackageConfig.InstPara,
+	[Parameter(Mandatory=$false)]
+	[bool]
+	$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
 )
 	[string]$global:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Install'
 		Path	= "$InstFile"
-		LogName	= "$InstLogFile"
 	}
-	if ($AddParameters){
-		[hashtable]$executeNxtParams["AddParameters"] = "$InstPara"
+	if ($AppendInstParaToDefaultParameters){
+		$executeNxtParams["AddParameters"] = "$InstPara"
 	}else{
-		[hashtable]$executeNxtParams["Parameters"] = "$InstPara"
+		$executeNxtParams["Parameters"] = "$InstPara"
 	}
 	## <Perform Installation tasks here>
 	switch -Wildcard ($method) {
 		MSI {
-			Execute-MSI @executeNxtParams
+			Execute-MSI @executeNxtParams -LogName	= "$InstLogFile"
 		}
 		"Inno*" {
 			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
@@ -357,7 +361,7 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UserPartOnInstallation
 		Defines if the Userpart should be executed for this installation.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER UninstallKeyName
+	.PARAMETER PackageFamilyGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UserPartRevision
@@ -380,7 +384,7 @@ Param (
 		$UserPartOnInstallation = $global:PackageConfig.UserPartOnInstallation,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$UninstallKeyName = $global:PackageConfig.UninstallKeyName,
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
 		[Parameter(Mandatory=$false)]
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision,
@@ -407,12 +411,12 @@ Param (
 	
 	If ($true -eq $UserPartOnInstallation) {
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
-		Set-ActiveSetup -PurgeActiveSetupKey -Key "$UninstallKeyName.uninstall"
+		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$UninstallKeyName"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
 	}
 }
 
@@ -458,7 +462,10 @@ Param(
 		$UninstFile = $global:PackageConfig.UninstFile,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$UninstPara = $global:PackageConfig.UninstPara
+		$UninstPara = $global:PackageConfig.UninstPara,
+		[Parameter(Mandatory=$false)]
+		[bool]
+		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters
 )
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
@@ -470,23 +477,34 @@ Param(
 	If (Test-RegistryValue -Key $RegUninstallKey -Value 'UninstallString') {
 	
 		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
-		
-		If ($method -eq "MSI") {
-			Execute-MSI -Action 'Uninstall' -Path "$UninstallKey" -Parameters "$UninstPara" -LogName "$UninstLogFile"
+
+		[hashtable]$executeNxtParams = @{
+			Action	= 'Uninstall'
 		}
-		ElseIf ($method -like "Inno*") {
-			Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara" -Log "$UninstLogFile"
+		if ($AppendUninstParaToDefaultParameters){
+			$executeNxtParams["AddParameters"] = "$UninstPara"
+		}else{
+			$executeNxtParams["Parameters"] = "$UninstPara"
 		}
-		ElseIf ($method -eq "Nullsoft") {
-			Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara"
-		}
-		ElseIf ($method -like "BitRock*") {
-			Execute-NxtBitRockInstaller -Action "Uninstall" -UninstallKey "$UninstallKey" -Parameters "$UninstPara"
-		}
-		ElseIf ($method -eq "none") {
-		}
-		Else {
-			Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
+		switch -Wildcard ($method) {
+			MSI {
+				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
+			}
+			"Inno*" {
+				Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+			}
+			Nullsoft {
+				Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+			}
+			"BitRock*" {
+				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+			}
+			none {
+
+			}
+			Default {
+
+			}
 		}
 		$UninstallExitCode = $LastExitCode
 
@@ -513,6 +531,9 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER App
 		Defines the path to a local persistent cache for installation files.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageFamilyGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UserPartOnUninstallation
 		Specifies if a Userpart should take place during uninstallation.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -529,6 +550,9 @@ function Complete-NxtPackageUninstallation {
 		[string]
 		$App = $global:PackageConfig.App,
 		[Parameter(Mandatory=$false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory=$false)]
 		[bool]
 		$UserPartOnUninstallation = $global:PackageConfig.UserPartOnUninstallation,
 		[Parameter(Mandatory=$false)]
@@ -543,12 +567,12 @@ function Complete-NxtPackageUninstallation {
 	
 	If ($true -eq $UserPartOnUninstallation) {
 		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
-		Set-ActiveSetup -PurgeActiveSetupKey -Key "$uninstallKeyName"
+		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$UninstallKeyName.uninstall"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
 	}
 }
 
@@ -610,7 +634,13 @@ function Show-NxtInstallationWelcome {
 	Defaults to the corresponding value from the PackageConfig object.
 .PARAMETER CloseAppsCountdown
 	Countdown until the Apps will either be forcibly closed or the Installation will abort
-	Defaults to the corresponding value from the Setup.cfg.
+	Defaults to the timeout value from the Setup.cfg.
+.PARAMETER ContinueType
+	If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
+	this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
+		ABORT:       After the timeout has expired, the installation will be abort 
+		CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
+	Defaults to the timeout value from the Setup.cfg.
 .PARAMETER BlockExecution
 	Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
 	Defaults to the corresponding value from the PackageConfig object.
@@ -631,7 +661,11 @@ function Show-NxtInstallationWelcome {
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
 		[Parameter(Mandatory=$false)]
 		[String]
-		$CloseAppsCountdown,
+		$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
+		[Parameter(Mandatory=$false)]
+		[ValidateSet("ABORT","CONTINUE")]
+		[String]
+		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		[Parameter(Mandatory=$false)]
 		[bool]
 		$BlockExecution = $($global:PackageConfig.BlockExecution)
@@ -640,8 +674,16 @@ function Show-NxtInstallationWelcome {
 	if (!$isInstall){
 		$DeferDays = 0
 	}
-	## ##TOBECONTINUED## $CloseAppsCountdown has to be Defaulted from the Setup.cfg, which is not yet automatically imported
-	Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+
+	switch ($ContinueType){
+		"ABORT" {
+			Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+		}
+		"CONTINUE" {
+			Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+		}		
+	}
+	
 }
 
 #endregion
