@@ -380,9 +380,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UserPartRevision
 		Specifies the UserPartRevision for this installation
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER UninstallKey
-		Specifies the original UninstallKey set by the Installer in this Package.
-		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeys
+		Specifies a list of UninstallKeys set by the Installer in this Package.
+		Defaults to the corresponding values from the PackageConfig object.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.LINK
@@ -402,8 +402,8 @@ Param (
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision,
 		[Parameter(Mandatory=$false)]
-		[string]
-		$UninstallKey = $global:PackageConfig.UninstallKey
+		[PSCustomObject]
+		$UninstallKeys = $global:PackageConfig.UninstallKeysToHide
 		
 	)
 	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
@@ -418,16 +418,24 @@ Param (
 		Copy-NxtDesktopShortcuts
 	}
 
-	# Hide-NxtAppUninstallEntries
-
-	Set-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
+	foreach($uninstallKeyToHide in $UninstallKeys) {
+		[string]$wowEntry = ""
+		if($false -eq $uninstallKeyToHide.Is64Bit) {
+			$wowEntry = "\WOW6432Node"
+		}
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName)){
+			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		}else{
+			Write-Log -Message "Did not find a registry key $($uninstallKeyToHide.KeyName), skipped setting systemcomponent entry for this key" -Source ${CmdletName}
+		}
+	}
 	
 	If ($true -eq $UserPartOnInstallation) {
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
 	}
@@ -589,7 +597,7 @@ function Complete-NxtPackageUninstallation {
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" uninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
 	}
@@ -646,7 +654,7 @@ function Show-NxtInstallationWelcome {
 	Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
 .PARAMETER DeferDays
 	Specifies how long a user may defer an installation (will be ignored on uninstallation)
-	Defaults to the corresponding value from the PackageConfig object.
+	Defaults to the corresponding value from the Setup.cfg object.
 .PARAMETER AskKillProcessApps
 	Specifies a list of Processnames which should be stopped for the (un)installation to start.
 	For Example "WINWORD,EXCEL"
@@ -674,7 +682,7 @@ function Show-NxtInstallationWelcome {
 		$IsInstall,
 		[Parameter(Mandatory=$false)]
 		[String]
-		$DeferDays = $global:PackageConfig.DeferDays,
+		$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
 		[Parameter(Mandatory=$false)]
 		[String]
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
