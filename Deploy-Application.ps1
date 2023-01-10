@@ -255,7 +255,7 @@ param (
 		[string]$mainErrorMessage = "$(Resolve-Error)"
 		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 		Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
-		Exit-Script -ExitCode $mainExitCode
+		Exit-NxtScriptWithError -ErrorMessage $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	}
 }
 

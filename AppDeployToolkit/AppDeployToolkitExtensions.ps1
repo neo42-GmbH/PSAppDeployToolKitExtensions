@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 	This script is a template that allows you to extend the toolkit with your own custom functions.
     # LICENSE #
@@ -699,6 +699,9 @@ Function Register-NxtPackage {
 	.PARAMETER EnvArchitecture
 		Defines the EnvArchitecture.
 		Defaults to $envArchitecture derived from $env:PROCESSOR_ARCHITECTURE.
+	.PARAMETER ProcessNTAccountSID
+		Defines the NT Account SID the current Process is run as.
+		Defaults to $ProcessNTAccountSID defined in the PSADT Main script.
 	
 	.EXAMPLE
 		Register-NxtPackage
@@ -772,6 +775,12 @@ Function Register-NxtPackage {
 		[string]
 		$EnvUserDomain = $envUserDomain,
 		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvUserName = $envUserName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProcessNTAccountSID = $ProcessNTAccountSID,
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
@@ -797,11 +806,11 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'DeveloperName' -Value $AppVendor
 			# Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'PackageStatus' -Value '$PackageStatus'
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductName' -Value $AppName
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'ReturnCode (%ERRORLEVEL%)' -Value $MainExitCode
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'LastExitCode' -Value $MainExitCode
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Revision' -Value $AppVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'SrcPath' -Value $ScriptParentPath
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessor_Architecture' -Value $EnvArchitecture
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwner' -Value $envUserDomain\$envUserName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
@@ -828,6 +837,7 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'Publisher' -Value $AppVendor
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'UninstallString' -Type 'ExpandString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
+			Remove-RegistryKey HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error")
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
 		Catch {
@@ -4562,6 +4572,170 @@ Function Set-NxtIniValue {
 }
 #endregion
 
+#region Function Exit-NxtScriptWithError
+Function Exit-NxtScriptWithError {
+	<#
+	.SYNOPSIS
+		Exits the Script writing an error to the registry.
+	.DESCRIPTION
+		Exits the Script writing information about the installation attempt to the registry below the RegPackagesKey
+		defined in the neo42PackageConfig.json.
+	.PARAMETER ErrorMessage
+		The Message that should be written to the Registry Key to leave a hint of what went wrong with the installation.
+	.PARAMETER RegPackagesKey
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.PARAMETER PackageFamilyGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentTimestamp
+		Defines the Deployment Starttime which should be added as information to the error registry key.
+		Defaults to the $global:deploymentTimeStamp.
+	.PARAMETER DebugLogFile
+		Path to the Debuglogfile which should be added as information to the error registry key.
+		Defaults to "$ConfigToolkitLogDir\$LogName".
+	.PARAMETER AppVendor
+		Specifies the Application Vendor used in the registry etc.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER MainExitCode
+		The Exitcode that should be written to Registry.
+		Defaults to the variable $mainExitCode.
+	.PARAMETER AppRevision
+		Specifies the Application Revision used in the registry etc.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ScriptParentPath
+		Specifies the ScriptParentPath.
+		Defaults to $scriptParentPath defined in the AppDeployToolkitMain.
+	.PARAMETER EnvArchitecture
+		Defines the EnvArchitecture.
+		Defaults to $envArchitecture derived from $env:PROCESSOR_ARCHITECTURE.
+	.PARAMETER EnvUserDomain
+		Defines ... which should be added as information to the error registry key.
+		Defaults to the corresponding value from $global:Packageconfig.
+	.PARAMETER EnvUserName
+		Defines the EnvUserDomain.
+		Defaults to $envUserDomain derived from [Environment]::UserDomainName.
+	.PARAMETER ProcessNTAccountSID
+		Defines the NT Account SID the current Process is run as.
+		Defaults to $ProcessNTAccountSID defined in the PSADT Main script.
+	.PARAMETER UninstallOld
+		Defines if the Setting "Uninstallold" is set.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartOnInstallation
+		Specifies if a Userpart should take place during installation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartOnUnInstallation
+		Specifies if a Userpart should take place during uninstallation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
+	.EXAMPLE
+		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!"
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		http://psappdeploytoolkit.com
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$ErrorMessage,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentTimestamp = $global:deploymentTimestamp,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DebugLogFile = "$ConfigToolkitLogDir\$LogName",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVendor = $global:PackageConfig.AppVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$MainExitCode = $mainExitCode,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppRevision = $global:PackageConfig.AppVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptParentPath = $scriptParentPath,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvArchitecture = $envArchitecture,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvUserDomain = $envUserDomain,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvUserName = $envUserName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProcessNTAccountSID = $ProcessNTAccountSID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallOld = $global:PackageConfig.UninstallOld,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UserPartOnInstallation = $global:PackageConfig.UserPartOnInstallation,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation
+	)
+	
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Try {
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'DeveloperName' -Value $AppVendor
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ProductName' -Value $AppName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'Version' -Value $AppVersion
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'Revision' -Value $AppRevision
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'AppPath' -Value $App
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'DeploymentStartTime' -Value $DeploymentTimestamp
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorTimeStamp' -Value $(Get-Date -format "yyyy-MM-dd_HH-mm-ss")
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorMessage' -Value $ErrorMessage
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'DebugLogFile' -Value $DebugLogFile
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'LastReturnCode' -Value $MainExitCode
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'SrcPath' -Value $ScriptParentPath
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'StartupProcessor_Architecture' -Value $EnvArchitecture
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
+		}
+		Catch {
+			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+		}
+		Exit-Script -ExitCode $mainExitCode
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
