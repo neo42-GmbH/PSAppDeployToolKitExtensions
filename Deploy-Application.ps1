@@ -284,6 +284,9 @@ function Install-NxtApplication {
 	.PARAMETER InstPara
 		Defines the parameters which will be passed in the Installation Commandline.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppendInstParaToDefaultParameters
+		Decides if the Parameters should be appended or replaced, where $true is append.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Install-NxtApplication
 	.LINK
@@ -320,8 +323,14 @@ function Install-NxtApplication {
 	}else{
 		$executeNxtParams["Parameters"] = "$InstPara"
 	}
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		[string]$internalInstallerMethod = ""
+	}
+	else {
+		[string]$internalInstallerMethod = $Method
+	}
 	## <Perform Installation tasks here>
-	switch -Wildcard ($method) {
+	switch -Wildcard ($internalInstallerMethod) {
 		MSI {
 			Execute-MSI @executeNxtParams -LogName	= "$InstLogFile"
 		}
@@ -442,6 +451,12 @@ function Uninstall-NxtApplication {
 		Defines the parameters which will be passed in the UnInstallation Commandline.
 		Defaults to the corresponding value from the PackageConfig object.
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER Method
+		Defines the Installer which shold be used.
+		Defaults to $method from PSADT main.
+	.PARAMETER AppendInstParaToDefaultParameters
+		Decides if the Parameters should be appended or replaced, where $true is append.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Uninstall-NxtApplication
 	.LINK
@@ -486,26 +501,32 @@ Param(
 		}else{
 			$executeNxtParams["Parameters"] = "$UninstPara"
 		}
-		switch -Wildcard ($method) {
-			MSI {
-				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
-			}
-			"Inno*" {
-				Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
-			}
-			Nullsoft {
-				Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
-			}
-			"BitRock*" {
-				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
-			}
-			none {
-
-			}
-			Default {
-
-			}
+		if ([string]::IsNullOrEmpty($UninstallKey)) {
+			[string]$internalInstallerMethod = ""
 		}
+		else {
+			[string]$internalInstallerMethod = $Method
+		}
+			switch -Wildcard ($internalInstallerMethod) {
+				MSI {
+					Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
+				}
+				"Inno*" {
+					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+				}
+				Nullsoft {
+					Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+				}
+				"BitRock*" {
+					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+				}
+				none {
+
+				}
+				Default {
+					
+				}
+			}
 		$UninstallExitCode = $LastExitCode
 
 		Start-Sleep -Seconds 5
