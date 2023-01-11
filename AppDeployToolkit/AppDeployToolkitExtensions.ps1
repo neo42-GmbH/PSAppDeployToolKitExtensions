@@ -648,6 +648,9 @@ Function Register-NxtPackage {
 	.PARAMETER AppRevision
 		Specifies the Application Revision used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppArch
+		Specifies the package architecture ("x86", "x64" or "*").
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayVersion
 		Specifies the DisplayVersion used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -699,6 +702,9 @@ Function Register-NxtPackage {
 	.PARAMETER EnvArchitecture
 		Defines the EnvArchitecture.
 		Defaults to $envArchitecture derived from $env:PROCESSOR_ARCHITECTURE.
+	.PARAMETER ProcessNTAccountSID
+		Defines the NT Account SID the current Process is run as.
+		Defaults to $ProcessNTAccountSID defined in the PSADT Main script.
 	.PARAMETER LastErrorMessage
 		If set the message is written to the registry.
 		Defaults to the $global:LastErrorMessage.
@@ -725,6 +731,9 @@ Function Register-NxtPackage {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AppRevision = $global:PackageConfig.AppRevision,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppArch = $global:PackageConfig.AppArch,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
@@ -774,6 +783,12 @@ Function Register-NxtPackage {
 		[string]
 		$EnvUserDomain = $envUserDomain,
 		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvUserName = $envUserName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProcessNTAccountSID = $ProcessNTAccountSID,
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
@@ -800,13 +815,16 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'DebugLogFile' -Value $ConfigToolkitLogDir\$LogName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'DeveloperName' -Value $AppVendor
-			# Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'PackageStatus' -Value '$PackageStatus'
+			if (![string]::IsNullOrEmpty($LastErrorMessage)) {
+				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'LastErrorMessage' -Value $LastErrorMessage
+			}
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'LastExitCode' -Value $MainExitCode
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'PackageArchitecture' -Value $AppArch
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductName' -Value $AppName
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'ReturnCode (%ERRORLEVEL%)' -Value $MainExitCode
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Revision' -Value $AppRevision
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'SrcPath' -Value $ScriptParentPath
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessor_Architecture' -Value $EnvArchitecture
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwner' -Value $envUserDomain\$envUserName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
@@ -818,9 +836,6 @@ Function Register-NxtPackage {
 				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartRevision' -Value $UserPartRevision
 			}
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
-			if (![string]::IsNullOrEmpty($LastErrorMessage)) {
-				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'LastErrorMessage' -Value $LastErrorMessage
-			}
 
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neoInstall\Setup.ico
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
@@ -836,6 +851,7 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'Publisher' -Value $AppVendor
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'UninstallString' -Type 'ExpandString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
+			Remove-RegistryKey HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error")
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
 		Catch {
@@ -927,18 +943,20 @@ Function Unregister-NxtPackage {
 Function Remove-NxtDesktopShortcuts {
 	<#
 	.SYNOPSIS
-		Removes the Shortcots defined under "CommonDesktopSortcutsToDelete" in the neo42PackageConfig.json from the common desktop
+		By default: Removes the Shortcots defined under "CommonDesktopShortcutsToDelete" in the neo42PackageConfig.json from the common desktop.
 	.DESCRIPTION
 		Is called after an installation/reinstallation if DESKTOPSHORTCUT=0 is defined in the Setup.cfg.
 		Is always called before the uninstallation.
-	.PARAMETER CommonDesktopSortcutsToDelete
+	.PARAMETER DesktopShortcutsToDelete
 		A list of Desktopshortcuts that should be deleted.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER CommonDesktop
-		Specifies the path to the CommonDesktop.
+		Defaults to the CommonDesktopShortcutsToDelete value from the PackageConfig object.
+	.PARAMETER Desktop
+		Specifies the path to the Desktop (eg. $envCommonDesktop or $envUserDesktop).
 		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
 	.EXAMPLE
 		Remove-NxtDesktopShortcuts
+	.EXAMPLE
+		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete "SomeUserShortcut.lnk" -Desktop "$envUserDesktop"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -946,10 +964,10 @@ Function Remove-NxtDesktopShortcuts {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string[]]
-		$CommonDesktopSortcutsToDelete = $global:PackageConfig.CommonDesktopSortcutsToDelete,
+		$DesktopShortcutsToDelete = $global:PackageConfig.CommonDesktopShortcutsToDelete,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$CommonDesktop = $envCommonDesktop
+		$Desktop = $envCommonDesktop
 	)
 		
 	Begin {
@@ -959,14 +977,14 @@ Function Remove-NxtDesktopShortcuts {
 	}
 	Process {
 		Try {
-			foreach ($value in $CommonDesktopSortcutsToDelete) {
-				Write-Log -Message "Removing desktop shortcut '$CommonDesktop\$value'..." -Source ${cmdletName}
-				Remove-File -Path "$CommonDesktop\$value"
+			foreach ($value in $DesktopShortcutsToDelete) {
+				Write-Log -Message "Removing desktop shortcut '$Desktop\$value'..." -Source ${cmdletName}
+				Remove-File -Path "$Desktop\$value"
 				Write-Log -Message "Desktop shortcut succesfully removed." -Source ${cmdletName}
 			}
 		}
 		Catch {
-			Write-Log -Message "Failed to remove desktopshortcuts. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to remove desktopshortcuts from [$Desktop]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -975,22 +993,21 @@ Function Remove-NxtDesktopShortcuts {
 }
 #endregion
 
-
 #region Function Copy-NxtDesktopShortcuts
 Function Copy-NxtDesktopShortcuts {
 	<#
 	.SYNOPSIS
-		Copys the Shortcots defined under "CommonStartmenuSortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop
+		By default: Copys the shortcuts defined under "CommonStartMenuShortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop.
 	.DESCRIPTION
 		Is called after an installation/reinstallation if DESKTOPSHORTCUT=1 is defined in the Setup.cfg.
-	.PARAMETER CommonStartmenuSortcutsToCopyToCommonDesktop
-		Specifies the links from CommonStartmenu which should be copied to CommonDesktop.
+	.PARAMETER StartMenuShortcutsToCopyToDesktop
+		Specifies the links from the start menu which should be copied to the desktop.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the Setup.cfg.
+	.PARAMETER Desktop
+		Specifies the path to the Desktop (eg. $envCommonDesktop or $envUserDesktop).
 		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
-	.PARAMETER CommonDesktop
-		Specifies the path to the CommonDesktop.
-		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
-	.PARAMETER CommonStartMenu
-		Specifies the path to the CommonStartMenu.
+	.PARAMETER StartMenu
+		Specifies the path to the StartMenu (e.g. $envCommonStartMenu or $envUserStartMenu).
 		Defaults to $envCommonStartMenu defined in AppDeploymentToolkitMain.ps1.
 	.EXAMPLE
 		Copy-NxtDesktopShortcuts
@@ -1000,14 +1017,14 @@ Function Copy-NxtDesktopShortcuts {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
-		[string[]]
-		$CommonStartmenuSortcutsToCopyToCommonDesktop = $global:PackageConfig.CommonStartmenuSortcutsToCopyToCommonDesktop,
+		[array]
+		$StartMenuShortcutsToCopyToDesktop = $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$CommonDesktop = $envCommonDesktop,
+		$Desktop = $envCommonDesktop,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$CommonStartMenu = $envCommonStartMenu
+		$StartMenu = $envCommonStartMenu
 	)
 		
 	Begin {
@@ -1017,14 +1034,14 @@ Function Copy-NxtDesktopShortcuts {
 	}
 	Process {
 		Try {
-			foreach ($value in $CommonStartmenuSortcutsToCopyToCommonDesktop) {
-				Write-Log -Message "Copying start menu shortcut'$CommonStartMenu\$($value.Source)' to the common desktop..." -Source ${cmdletName}
-				Copy-File -Path "$CommonStartMenu\$($value.Source)" -Destination "$CommonDesktop\$($value.TargetName)"
+			foreach ($value in $StartMenuShortcutsToCopyToDesktop) {
+				Write-Log -Message "Copying start menu shortcut'$StartMenu\$($value.Source)' to [$Desktop]..." -Source ${cmdletName}
+				Copy-File -Path "$StartMenu\$($value.Source)" -Destination "$Desktop\$($value.TargetName)"
 				Write-Log -Message "Shortcut succesfully copied." -Source ${cmdletName}
 			}
 		}
 		Catch {
-			Write-Log -Message "Failed to copy shortcuts to the common desktop. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to copy shortcuts to [$Desktop]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -4762,6 +4779,178 @@ function Get-NxtAppIsInstalled {
 }
 #endregion
 
+#region Function Exit-NxtScriptWithError
+Function Exit-NxtScriptWithError {
+	<#
+	.SYNOPSIS
+		Exits the Script writing an error to the registry.
+	.DESCRIPTION
+		Exits the Script writing information about the installation attempt to the registry below the RegPackagesKey
+		defined in the neo42PackageConfig.json.
+	.PARAMETER ErrorMessage
+		The Message that should be written to the Registry Key to leave a hint of what went wrong with the installation.
+	.PARAMETER RegPackagesKey
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.PARAMETER PackageFamilyGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentTimestamp
+		Defines the Deployment Starttime which should be added as information to the error registry key.
+		Defaults to the $global:deploymentTimeStamp.
+	.PARAMETER DebugLogFile
+		Path to the Debuglogfile which should be added as information to the error registry key.
+		Defaults to "$ConfigToolkitLogDir\$LogName".
+	.PARAMETER AppVendor
+		Specifies the Application Vendor used in the registry etc.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppArch
+		Specifies the package architecture ("x86", "x64" or "*").
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER MainExitCode
+		The Exitcode that should be written to Registry.
+		Defaults to the variable $mainExitCode.
+	.PARAMETER AppRevision
+		Specifies the Application Revision used in the registry etc.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ScriptParentPath
+		Specifies the ScriptParentPath.
+		Defaults to $scriptParentPath defined in the AppDeployToolkitMain.
+	.PARAMETER EnvArchitecture
+		Defines the EnvArchitecture.
+		Defaults to $envArchitecture derived from $env:PROCESSOR_ARCHITECTURE.
+	.PARAMETER EnvUserDomain
+		Defines ... which should be added as information to the error registry key.
+		Defaults to the corresponding value from $global:Packageconfig.
+	.PARAMETER EnvUserName
+		Defines the EnvUserDomain.
+		Defaults to $envUserDomain derived from [Environment]::UserDomainName.
+	.PARAMETER ProcessNTAccountSID
+		Defines the NT Account SID the current Process is run as.
+		Defaults to $ProcessNTAccountSID defined in the PSADT Main script.
+	.PARAMETER UninstallOld
+		Defines if the Setting "Uninstallold" is set.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartOnInstallation
+		Specifies if a Userpart should take place during installation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartOnUnInstallation
+		Specifies if a Userpart should take place during uninstallation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
+	.EXAMPLE
+		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!"
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		http://psappdeploytoolkit.com
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$ErrorMessage,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentTimestamp = $global:deploymentTimestamp,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DebugLogFile = "$ConfigToolkitLogDir\$LogName",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVendor = $global:PackageConfig.AppVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppArch = $global:PackageConfig.AppArch,
+		[Parameter(Mandatory = $false)]
+		[int32]
+		$MainExitCode = $mainExitCode,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppRevision = $global:PackageConfig.AppRevision,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptParentPath = $scriptParentPath,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvArchitecture = $envArchitecture,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvUserDomain = $envUserDomain,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvUserName = $envUserName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProcessNTAccountSID = $ProcessNTAccountSID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallOld = $global:PackageConfig.UninstallOld,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UserPartOnInstallation = $global:PackageConfig.UserPartOnInstallation,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation
+	)
+	
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Try {
+			Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'AppPath' -Value $App
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'DebugLogFile' -Value $DebugLogFile
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'DeploymentStartTime' -Value $DeploymentTimestamp
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'DeveloperName' -Value $AppVendor
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorTimeStamp' -Value $(Get-Date -format "yyyy-MM-dd_HH-mm-ss")
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorMessage' -Value $ErrorMessage
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'LastReturnCode' -Value $MainExitCode
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'PackageArchitecture' -Value $AppArch
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ProductName' -Value $AppName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'Revision' -Value $AppRevision
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'SrcPath' -Value $ScriptParentPath
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'StartupProcessor_Architecture' -Value $EnvArchitecture
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'Version' -Value $AppVersion
+		}
+		Catch {
+			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+		}
+		Exit-Script -ExitCode $mainExitCode
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
