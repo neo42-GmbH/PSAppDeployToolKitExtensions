@@ -331,15 +331,21 @@ function Install-NxtApplication {
 		Action	= 'Install'
 		Path	= "$InstFile"
 	}
-	if ([string]::IsNullOrEmpty($InstPara)) {
+	if (![string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendInstParaToDefaultParameters){
 			$executeNxtParams["AddParameters"] = "$InstPara"
 		}else{
 			$executeNxtParams["Parameters"] = "$InstPara"
 		}
 	}
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		[string]$internalInstallerMethod = ""
+	}
+	else {
+		[string]$internalInstallerMethod = $Method
+	}
 	## <Perform Installation tasks here>
-	switch -Wildcard ($Method) {
+	switch -Wildcard ($internalInstallerMethod) {
 		MSI {
 			Execute-MSI @executeNxtParams -LogName "$InstLogFile"
 		}
@@ -520,14 +526,20 @@ Param(
 		[hashtable]$executeNxtParams = @{
 			Action	= 'Uninstall'
 		}
-		if ([string]::IsNullOrEmpty($UninstPara)) {
+		if (![string]::IsNullOrEmpty($UninstPara)) {
 			if ($AppendUninstParaToDefaultParameters){
 				$executeNxtParams["AddParameters"] = "$UninstPara"
 			}else{
 				$executeNxtParams["Parameters"] = "$UninstPara"
 			}
 		}
-		switch -Wildcard ($Method) {
+		if ([string]::IsNullOrEmpty($UninstallKey)) {
+			[string]$internalInstallerMethod = ""
+		}
+		else {
+			[string]$internalInstallerMethod = $Method
+		}
+		switch -Wildcard ($internalInstallerMethod) {
 			MSI {
 				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
 			}
@@ -542,11 +554,11 @@ Param(
 			}
 			none {
 
+				}
+				Default {
+					
+				}
 			}
-			Default {
-
-			}
-		}
 		$UninstallExitCode = $LastExitCode
 
 		Start-Sleep -Seconds 5
