@@ -370,7 +370,7 @@ function Complete-NxtPackageInstallation {
 		Specifies a list of UninstallKeys set by the Installer in this Package.
 		Defaults to the corresponding values from the PackageConfig object.
 	.PARAMETER DesktopShortcut
-		Specifies, if desktop shortcuts should be copied (1) or deleted (0).
+		Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
 		Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
@@ -394,18 +394,18 @@ Param (
 		[PSCustomObject]
 		$UninstallKeys = $global:PackageConfig.UninstallKeysToHide,
 		[Parameter(Mandatory=$false)]
-		[string]
-		$DesktopShortcut = $global:SetupCfg.Options.DesktopShortcut
+		[bool]
+		$DesktopShortcut = [bool]([int]$global:SetupCfg.Options.DesktopShortcut)
 	)
 	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
 
 	## <Perform Complete-NxtPackageInstallation tasks here>
 
-	If ($DesktopShortcut -ne '1') {
-		Remove-NxtDesktopShortcuts
+	If ($DesktopShortcut) {
+		Copy-NxtDesktopShortcuts
 	}
 	Else {
-		Copy-NxtDesktopShortcuts
+		Remove-NxtDesktopShortcuts
 	}
 
 	foreach($uninstallKeyToHide in $UninstallKeys) {
