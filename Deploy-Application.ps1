@@ -331,7 +331,7 @@ function Install-NxtApplication {
 		Action	= 'Install'
 		Path	= "$InstFile"
 	}
-	if ($InstPara) {
+	if ([string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendInstParaToDefaultParameters){
 			$executeNxtParams["AddParameters"] = "$InstPara"
 		}else{
@@ -520,7 +520,7 @@ Param(
 		[hashtable]$executeNxtParams = @{
 			Action	= 'Uninstall'
 		}
-		if ($UninstPara) {
+		if ([string]::IsNullOrEmpty($UninstPara)) {
 			if ($AppendUninstParaToDefaultParameters){
 				$executeNxtParams["AddParameters"] = "$UninstPara"
 			}else{
