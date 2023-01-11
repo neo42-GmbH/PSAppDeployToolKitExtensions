@@ -533,7 +533,13 @@ Param(
 				$executeNxtParams["Parameters"] = "$UninstPara"
 			}
 		}
-		switch -Wildcard ($Method) {
+		if ([string]::IsNullOrEmpty($UninstallKey)) {
+			[string]$internalInstallerMethod = ""
+		}
+		else {
+			[string]$internalInstallerMethod = $Method
+		}
+		switch -Wildcard ($internalInstallerMethod) {
 			MSI {
 				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
 			}
