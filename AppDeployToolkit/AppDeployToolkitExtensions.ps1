@@ -699,7 +699,9 @@ Function Register-NxtPackage {
 	.PARAMETER EnvArchitecture
 		Defines the EnvArchitecture.
 		Defaults to $envArchitecture derived from $env:PROCESSOR_ARCHITECTURE.
-	
+	.PARAMETER LastErrorMessage
+		If set the message is written to the registry.
+		Defaults to the $global:LastErrorMessage.
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -776,7 +778,10 @@ Function Register-NxtPackage {
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Wow6432Node = $global:Wow6432Node
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$LastErrorMessage = $global:LastErrorMessage
 	)
 	
 	Begin {
@@ -798,7 +803,7 @@ Function Register-NxtPackage {
 			# Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'PackageStatus' -Value '$PackageStatus'
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductName' -Value $AppName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'ReturnCode (%ERRORLEVEL%)' -Value $MainExitCode
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Revision' -Value $AppVersion
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Revision' -Value $AppRevision
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'SrcPath' -Value $ScriptParentPath
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessor_Architecture' -Value $EnvArchitecture
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwner' -Value $envUserDomain\$envUserName
@@ -813,6 +818,9 @@ Function Register-NxtPackage {
 				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartRevision' -Value $UserPartRevision
 			}
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
+			if (![string]::IsNullOrEmpty($LastErrorMessage)) {
+				Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'LastErrorMessage' -Value $LastErrorMessage
+			}
 
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neoInstall\Setup.ico
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
@@ -823,7 +831,7 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'NoRepair' -Type 'Dword' -Value 1
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'PackageApplicationDir' -Value $App
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'PackageProductName' -Value $AppName
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'PackageRevision' -Value $appRevision
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'PackageRevision' -Value $AppRevision
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayVersion' -Value $DisplayVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'Publisher' -Value $AppVendor
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
@@ -919,18 +927,20 @@ Function Unregister-NxtPackage {
 Function Remove-NxtDesktopShortcuts {
 	<#
 	.SYNOPSIS
-		Removes the Shortcots defined under "CommonDesktopSortcutsToDelete" in the neo42PackageConfig.json from the common desktop
+		By default: Removes the Shortcots defined under "CommonDesktopShortcutsToDelete" in the neo42PackageConfig.json from the common desktop.
 	.DESCRIPTION
 		Is called after an installation/reinstallation if DESKTOPSHORTCUT=0 is defined in the Setup.cfg.
 		Is always called before the uninstallation.
-	.PARAMETER CommonDesktopSortcutsToDelete
+	.PARAMETER DesktopShortcutsToDelete
 		A list of Desktopshortcuts that should be deleted.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER CommonDesktop
-		Specifies the path to the CommonDesktop.
+		Defaults to the CommonDesktopShortcutsToDelete value from the PackageConfig object.
+	.PARAMETER Desktop
+		Specifies the path to the Desktop (eg. $envCommonDesktop or $envUserDesktop).
 		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
 	.EXAMPLE
 		Remove-NxtDesktopShortcuts
+	.EXAMPLE
+		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete "SomeUserShortcut.lnk" -Desktop "$envUserDesktop"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -938,10 +948,10 @@ Function Remove-NxtDesktopShortcuts {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string[]]
-		$CommonDesktopSortcutsToDelete = $global:PackageConfig.CommonDesktopSortcutsToDelete,
+		$DesktopShortcutsToDelete = $global:PackageConfig.CommonDesktopShortcutsToDelete,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$CommonDesktop = $envCommonDesktop
+		$Desktop = $envCommonDesktop
 	)
 		
 	Begin {
@@ -951,14 +961,14 @@ Function Remove-NxtDesktopShortcuts {
 	}
 	Process {
 		Try {
-			foreach ($value in $CommonDesktopSortcutsToDelete) {
-				Write-Log -Message "Removing desktop shortcut '$CommonDesktop\$value'..." -Source ${cmdletName}
-				Remove-File -Path "$CommonDesktop\$value"
+			foreach ($value in $DesktopShortcutsToDelete) {
+				Write-Log -Message "Removing desktop shortcut '$Desktop\$value'..." -Source ${cmdletName}
+				Remove-File -Path "$Desktop\$value"
 				Write-Log -Message "Desktop shortcut succesfully removed." -Source ${cmdletName}
 			}
 		}
 		Catch {
-			Write-Log -Message "Failed to remove desktopshortcuts. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to remove desktopshortcuts from [$Desktop]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -967,22 +977,21 @@ Function Remove-NxtDesktopShortcuts {
 }
 #endregion
 
-
 #region Function Copy-NxtDesktopShortcuts
 Function Copy-NxtDesktopShortcuts {
 	<#
 	.SYNOPSIS
-		Copys the Shortcots defined under "CommonStartmenuSortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop
+		By default: Copys the shortcuts defined under "CommonStartMenuShortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop.
 	.DESCRIPTION
 		Is called after an installation/reinstallation if DESKTOPSHORTCUT=1 is defined in the Setup.cfg.
-	.PARAMETER CommonStartmenuSortcutsToCopyToCommonDesktop
-		Specifies the links from CommonStartmenu which should be copied to CommonDesktop.
+	.PARAMETER StartMenuShortcutsToCopyToDesktop
+		Specifies the links from the start menu which should be copied to the desktop.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the Setup.cfg.
+	.PARAMETER Desktop
+		Specifies the path to the Desktop (eg. $envCommonDesktop or $envUserDesktop).
 		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
-	.PARAMETER CommonDesktop
-		Specifies the path to the CommonDesktop.
-		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
-	.PARAMETER CommonStartMenu
-		Specifies the path to the CommonStartMenu.
+	.PARAMETER StartMenu
+		Specifies the path to the StartMenu (e.g. $envCommonStartMenu or $envUserStartMenu).
 		Defaults to $envCommonStartMenu defined in AppDeploymentToolkitMain.ps1.
 	.EXAMPLE
 		Copy-NxtDesktopShortcuts
@@ -992,14 +1001,14 @@ Function Copy-NxtDesktopShortcuts {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
-		[string[]]
-		$CommonStartmenuSortcutsToCopyToCommonDesktop = $global:PackageConfig.CommonStartmenuSortcutsToCopyToCommonDesktop,
+		[array]
+		$StartMenuShortcutsToCopyToDesktop = $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$CommonDesktop = $envCommonDesktop,
+		$Desktop = $envCommonDesktop,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$CommonStartMenu = $envCommonStartMenu
+		$StartMenu = $envCommonStartMenu
 	)
 		
 	Begin {
@@ -1009,14 +1018,14 @@ Function Copy-NxtDesktopShortcuts {
 	}
 	Process {
 		Try {
-			foreach ($value in $CommonStartmenuSortcutsToCopyToCommonDesktop) {
-				Write-Log -Message "Copying start menu shortcut'$CommonStartMenu\$($value.Source)' to the common desktop..." -Source ${cmdletName}
-				Copy-File -Path "$CommonStartMenu\$($value.Source)" -Destination "$CommonDesktop\$($value.TargetName)"
+			foreach ($value in $StartMenuShortcutsToCopyToDesktop) {
+				Write-Log -Message "Copying start menu shortcut'$StartMenu\$($value.Source)' to [$Desktop]..." -Source ${cmdletName}
+				Copy-File -Path "$StartMenu\$($value.Source)" -Destination "$Desktop\$($value.TargetName)"
 				Write-Log -Message "Shortcut succesfully copied." -Source ${cmdletName}
 			}
 		}
 		Catch {
-			Write-Log -Message "Failed to copy shortcuts to the common desktop. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to copy shortcuts to [$Desktop]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
