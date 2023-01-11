@@ -21,7 +21,7 @@
     "UninstallOld": true,
     "Reboot": 0,
     "BlockExecution": true,
-    "ReinstallModeIsRepair": false,
+    "MSIReinstallModeIsRepair": false,
     "UserPartOnInstallation": false,
     "UserPartOnUninstallation": false,
     "UserPartRevision": "2022,09,22,01",
@@ -43,19 +43,13 @@
     "AppKillProcesses": [
       "ScPapers"
     ],
-    "CommonDesktopSortcutsToDelete": [
+    "CommonDesktopShortcutsToDelete": [
 	  "Scribble Papers Programmdokumentation.lnk",
 	  "Scribble Papers 2022.lnk"
     ],
-    "CommonStartmenuSortcutsToCopyToCommonDesktop": [
+    "CommonStartMenuShortcutsToCopyToCommonDesktop": [
       {"Source":"Programs\\Scribble Papers\\Scribble Papers.lnk","TargetName":"Scribble Papers 2022.lnk"},
       {"Source":"Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"}
-    ],
-    "UserDesktopSortcutsToDelete": [
-      ""
-    ],
-    "UserDesktopSortcutsToCreate": [
-      {}
     ],
     "UninstallKeysToHide":[
       {"Is64Bit":false,"KeyName":"$($global:PackageConfig.UninstallKey)"},
