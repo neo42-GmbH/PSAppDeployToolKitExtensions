@@ -55,5 +55,31 @@
     "UninstallKeysToHide":[
       {"Is64Bit":false,"KeyName":"$($global:PackageConfig.UninstallKey)"},
       {"Is64Bit":true,"KeyName":"<CustomKeyName>"}
+    ],
+    "PackageSpecificVariables": [
+      {
+        "Name": "vcredist2016Installer",
+        "Value": "vcredist2017.exe",
+        "ExpandVariables": true
+      },
+      {
+        "Name": "usage",
+        "Value": "somecomment"
+      },
+      {
+        "Name": "expandme",
+        "Value": "$(ls ~)",
+        "ExpandVariables" :true
+      },
+      {
+        "Name": "expandmenot",
+        "Value": "$(ls ~)",
+        "ExpandVariables" :false
+      },
+      {
+        "Name": "prefilled vars",
+        "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
+        "ExpandVariables" :true
+      }
     ]
   }

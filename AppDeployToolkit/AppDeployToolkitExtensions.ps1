@@ -118,6 +118,15 @@ Function Get-NxtPackageConfig {
 	}
 	Process {
 		$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
+		[System.Collections.Generic.Dictionary[[String],[psobject]]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[String],[psobject]]"
+		foreach($PackageSpecificVariable in $global:PackageConfig.PackageSpecificVariables){
+			[psobject]$obj = New-Object -TypeName psobject
+			$obj | Add-Member -NotePropertyName Value -NotePropertyValue $PackageSpecificVariable.Value
+			$obj | Add-Member -NotePropertyName ExpandString -NotePropertyValue $PackageSpecificVariable.ExpandVariables
+			$PackageSpecificVariableDictionary.Add($PackageSpecificVariable.Name,$obj)
+			Remove-Variable obj
+			}
+		$global:PackageConfig.PackageSpecificVariables = $PackageSpecificVariableDictionary
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -165,6 +174,15 @@ Function Expand-NxtPackageConfig {
 		foreach($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
 			$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
 		}
+		## Get String from object and Expand String if requested
+		[System.Collections.Generic.Dictionary[[string],[string]]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[string],[string]]"
+		foreach($PackageSpecificVariable in $global:PackageConfig.PackageSpecificVariables.keys){
+			$PackageSpecificVariableDictionary.Add($PackageSpecificVariable,$global:PackageConfig.PackageSpecificVariables[$PackageSpecificVariable].Value)
+			if ($global:PackageConfig.PackageSpecificVariables[$PackageSpecificVariable].ExpandString) {
+				$PackageSpecificVariableDictionary[$PackageSpecificVariable] = $ExecutionContext.InvokeCommand.ExpandString($PackageSpecificVariableDictionary[$PackageSpecificVariable])
+			}	
+		}
+		$global:PackageConfig.PackageSpecificVariables = $PackageSpecificVariableDictionary
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
