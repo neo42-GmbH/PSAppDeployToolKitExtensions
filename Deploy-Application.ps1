@@ -374,10 +374,15 @@ function Install-NxtApplication {
 
 	Start-Sleep -Seconds 5
 
-	## Test successfull installation
-	if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-		Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
-		# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
+	## Test for successfull installation (if UninstallKey value is set)
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
+	}
+	else {
+		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+			Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
+			# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
+		}
 	}
 
 	return $true
