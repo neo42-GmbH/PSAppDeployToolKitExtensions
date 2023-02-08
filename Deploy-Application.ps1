@@ -536,59 +536,74 @@ function Uninstall-NxtApplication {
 	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($global:PackageConfig.UninstallKey) -Name 'SystemComponent'
 
 	[string]$global:installPhase = 'Uninstallation'
-	
-	if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-	
-		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
 
-		[hashtable]$executeNxtParams = @{
-			Action	= 'Uninstall'
-		}
-		if (![string]::IsNullOrEmpty($UninstPara)) {
-			if ($AppendUninstParaToDefaultParameters){
-				$executeNxtParams["AddParameters"] = "$UninstPara"
-			}else{
-				$executeNxtParams["Parameters"] = "$UninstPara"
-			}
-		}
-		if ([string]::IsNullOrEmpty($UninstallKey)) {
-			[string]$internalInstallerMethod = ""
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
+		if ([string]::IsNullOrEmpty($UninstFile)) {
+			Write-Log -Message "UninstFile value NOT set. Uninstallation NOT executed."  -Severity 2 -Source ${CmdletName}
 		}
 		else {
-			[string]$internalInstallerMethod = $Method
-		}
-		switch -Wildcard ($internalInstallerMethod) {
-			MSI {
-				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
-			}
-			"Inno*" {
-				Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$UninstLogFile"
-			}
-			Nullsoft {
-				Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
-			}
-			"BitRock*" {
-				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
-			}
-			none {
-
-			}
-			Default {
+			if ([System.IO.File]::Exists($UninstFile)) {
+				Write-Log -Message "UninstFile found: '$UninstFile' Executing the uninstallation..." -Source ${CmdletName}
 				Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
+				$UninstallExitCode = $LastExitCode
 			}
-		}
-		$UninstallExitCode = $LastExitCode
-
-		Start-Sleep -Seconds 5
-
-		## Test successfull uninstallation
-		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-			Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
-			# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
+			else {
+				Write-Log -Message "UninstFile NOT found: '$UninstFile' Uninstallation NOT executed."  -Severity 2 -Source ${CmdletName}
+			}
 		}
 	}
-	## <Perform Uninstallation tasks here, which should always be executed, even if the software is not installed anymore.>
-		
+	else {
+		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+	
+			[hashtable]$executeNxtParams = @{
+				Action	= 'Uninstall'
+			}
+			if (![string]::IsNullOrEmpty($UninstPara)) {
+				if ($AppendUninstParaToDefaultParameters){
+					$executeNxtParams["AddParameters"] = "$UninstPara"
+				}else{
+					$executeNxtParams["Parameters"] = "$UninstPara"
+				}
+			}
+			if ([string]::IsNullOrEmpty($UninstallKey)) {
+				[string]$internalInstallerMethod = ""
+			}
+			else {
+				[string]$internalInstallerMethod = $Method
+			}
+			switch -Wildcard ($internalInstallerMethod) {
+				MSI {
+					Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
+				}
+				"Inno*" {
+					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$UninstLogFile"
+				}
+				Nullsoft {
+					Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+				}
+				"BitRock*" {
+					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+				}
+				none {
+	
+				}
+				Default {
+					Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
+				}
+			}
+			$UninstallExitCode = $LastExitCode
+	
+			Start-Sleep -Seconds 5
+	
+			## Test successfull uninstallation
+			if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+				Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
+				# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
+			}
+		}
+	}
+	
 	return $true
 }
 
@@ -850,4 +865,4 @@ function CustomUninstallUserPart {
 #endregion
 
 ## Execute the main function to start the process
-Main
+#Main
