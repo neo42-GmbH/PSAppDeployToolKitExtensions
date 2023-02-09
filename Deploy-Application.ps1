@@ -367,7 +367,13 @@ function Install-NxtApplication {
 
 		}
 		Default {
-			Execute-Process -Path "$InstFile" -Parameters "$InstPara"
+			[hashtable]$executeParams = @{
+				Path	= "$InstFile"
+			}
+			if (![string]::IsNullOrEmpty($InstPara)) {
+				$executeParams["Parameters"] = "$InstPara"
+			}
+			Execute-Process @executeParams
 		}
 	}
 	$InstallExitCode = $LastExitCode
@@ -594,7 +600,13 @@ function Uninstall-NxtApplication {
 	
 				}
 				Default {
-					Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
+					[hashtable]$executeParams = @{
+						Path	= "$UninstFile"
+					}
+					if (![string]::IsNullOrEmpty($UninstPara)) {
+						$executeParams["Parameters"] = "$UninstPara"
+					}
+					Execute-Process @executeParams
 				}
 			}
 			$UninstallExitCode = $LastExitCode
