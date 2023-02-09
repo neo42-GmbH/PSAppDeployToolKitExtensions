@@ -704,13 +704,15 @@ function Repair-NxtApplication {
 		Action	= 'Repair'
 		Path	= "$InstFile"
 	}
-	if ($AppendInstParaToDefaultParameters){
-		$executeNxtParams["AddParameters"] = "$InstPara"
-	}else{
-		$executeNxtParams["Parameters"] = "$InstPara"
+	if (![string]::IsNullOrEmpty($InstPara)) {
+		if ($AppendInstParaToDefaultParameters){
+			$executeNxtParams["AddParameters"] = "$InstPara"
+		}else{
+			$executeNxtParams["Parameters"] = "$InstPara"
+		}
 	}
 	## <Perform repair tasks here>
-	Execute-MSI @executeNxtParams -LogName "Repair.$($global:DeploymentTimestamp).log"
+	Execute-MSI @executeNxtParams -LogName "Repair.$InstFile.$($global:DeploymentTimestamp).log" -RepairFromSource $true
 
 	$RepairExitCode = $LastExitCode
 }
