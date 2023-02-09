@@ -616,7 +616,7 @@ function Get-NxtRegisterOnly {
 			return $false
 		}
 		If (
-			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Upgrade" -and -not (Test-RegistryValue -Key HKLM\Software$Wow6432Node\neoPackages\$PackageFamilyGUID -Value 'ProductName')
+			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and -not (Test-RegistryValue -Key HKLM\Software$Wow6432Node\neoPackages\$PackageFamilyGUID -Value 'ProductName')
 			) {
 			#Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
 			Write-Log -Message 'Application is already present. set Softmigration to $true.'
