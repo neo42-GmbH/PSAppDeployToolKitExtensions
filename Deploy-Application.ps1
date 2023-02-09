@@ -413,8 +413,8 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UserPartRevision
 		Specifies the UserPartRevision for this installation
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER UninstallKeys
-		Specifies a list of UninstallKeys set by the Installer in this Package.
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
 		Defaults to the corresponding values from the PackageConfig object.
 	.PARAMETER DesktopShortcut
 		Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
@@ -439,10 +439,13 @@ Param (
 		$UserPartRevision = $global:PackageConfig.UserPartRevision,
 		[Parameter(Mandatory=$false)]
 		[PSCustomObject]
-		$UninstallKeys = $global:PackageConfig.UninstallKeysToHide,
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
 		[Parameter(Mandatory=$false)]
 		[bool]
-		$DesktopShortcut = [bool]([int]$global:SetupCfg.Options.DesktopShortcut)
+		$DesktopShortcut = [bool]([int]$global:SetupCfg.Options.DesktopShortcut),
+		[Parameter(Mandatory=$false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node
 	)
 	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
 
@@ -455,15 +458,22 @@ Param (
 		Remove-NxtDesktopShortcuts
 	}
 
-	foreach($uninstallKeyToHide in $UninstallKeys) {
+	foreach($uninstallKeyToHide in $UninstallKeysToHide) {
 		[string]$wowEntry = ""
 		if($false -eq $uninstallKeyToHide.Is64Bit) {
-			$wowEntry = "\WOW6432Node"
+			$wowEntry = $Wow6432Node
 		}
-		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName)){
-			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Name 'SystemComponent' -Type 'Dword' -Value '1'
-		}else{
-			Write-Log -Message "Did not find a registry key $($uninstallKeyToHide.KeyName), skipped setting systemcomponent entry for this key" -Source ${CmdletName}
+		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+		}
+		else {
+			$CurrentKeyName = $uninstallKeyToHide.KeyName
+		}
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName){
+			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		}
+		else{
+			Write-Log -Message "Did not find a registry key $CurrentKeyName, skipped setting systemcomponent entry for this key" -Source ${CmdletName}
 		}
 	}
 	
@@ -510,6 +520,12 @@ function Uninstall-NxtApplication {
 	.PARAMETER Method
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+		Defaults to the corresponding values from the PackageConfig object.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
 	.EXAMPLE
 		Uninstall-NxtApplication
 	.LINK
@@ -539,12 +555,35 @@ function Uninstall-NxtApplication {
 		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$Method = $global:PackageConfig.Method
+		$Method = $global:PackageConfig.Method,
+		[Parameter(Mandatory=$false)]
+		[PSCustomObject]
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node
 )
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
 	## <Perform Pre-Uninstallation tasks here>
-	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($global:PackageConfig.UninstallKey) -Name 'SystemComponent'
+	foreach($uninstallKeyToHide in $UninstallKeysToHide) {
+		[string]$wowEntry = ""
+		if($false -eq $uninstallKeyToHide.Is64Bit) {
+			$wowEntry = $Wow6432Node
+		}
+		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+		}
+		else {
+			$CurrentKeyName = $uninstallKeyToHide.KeyName
+		}
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Value SystemComponent){
+			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent'
+		}
+		else{
+			Write-Log -Message "Did not find a SystemComponent entry under registry key $CurrentKeyName, skipped deleting the entry for this key" -Source ${CmdletName}
+		}
+	}
 
 	[string]$global:installPhase = 'Uninstallation'
 
