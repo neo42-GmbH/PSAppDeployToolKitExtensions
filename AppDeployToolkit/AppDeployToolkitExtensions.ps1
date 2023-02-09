@@ -1080,21 +1080,10 @@ Function Stop-NxtProcess {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Write-Log -Message "Stopping process with name '$Name'..." -Source ${cmdletName}
+		Write-Log -Message "Stop process with name '$Name'" -Source ${cmdletName}
 		Try {
-			If (Get-Process -Name $Name -ErrorAction SilentlyContinue) {
-				Stop-Process -Name $Name -Force
-				Start-Sleep 1
-				If (Get-Process -Name $Name -ErrorAction SilentlyContinue) {
-					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				}
-				else {
-					Write-Log -Message "The process was successfully stopped." -Source ${cmdletName}
-				}
-			}
-			else {
-				Write-Log -Message "The process does not exist. Skipped stopping the process." -Source ${cmdletName}
-			}
+			Stop-Process -Name $Name -Force
+			Write-Log -Message "Startup type set successful." -Source ${cmdletName}
 		}
 		Catch {
 			Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
