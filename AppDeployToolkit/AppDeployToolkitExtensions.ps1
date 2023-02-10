@@ -82,6 +82,7 @@ Function Initialize-NxtEnvironment {
 		Set-NxtPackageArchitecture
 		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
+		Format-NxtPackageSpecificVariables
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -118,15 +119,6 @@ Function Get-NxtPackageConfig {
 	}
 	Process {
 		$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
-		[System.Collections.Generic.Dictionary[[String],[psobject]]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[String],[psobject]]"
-		foreach($PackageSpecificVariable in $global:PackageConfig.PackageSpecificVariables){
-			[psobject]$obj = New-Object -TypeName psobject
-			$obj | Add-Member -NotePropertyName Value -NotePropertyValue $PackageSpecificVariable.Value
-			$obj | Add-Member -NotePropertyName ExpandString -NotePropertyValue $PackageSpecificVariable.ExpandVariables
-			$PackageSpecificVariableDictionary.Add($PackageSpecificVariable.Name,$obj)
-			Remove-Variable obj
-			}
-		$global:PackageConfig.PackageSpecificVariables = $PackageSpecificVariableDictionary
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -174,15 +166,54 @@ Function Expand-NxtPackageConfig {
 		foreach($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
 			$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
 		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
+#region Function Format-NxtPackageSpecificVariables
+Function Format-NxtPackageSpecificVariables{
+	<#
+	.DESCRIPTION
+		Formats the PackageSpecificVariables from PackageSpecificVariablesRaw in the $global:PackageConfig.
+		The Variables can then be acquired like this:
+		$Global:PackageConfig.PackageSpecificVariablesRaw.CustomVariablename
+		Expands Variables if "ExpandVariables" is set to true
+	.PARAMETER PackageConfig
+		Expects an Object containing the Packageconfig, defaults to $global:PackageConfig
+		Defaults to $global:PackageConfig
+	.EXAMPLE
+		Format-NxtPackageSpecificVariables
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		$PackageConfig = $global:PackageConfig
+	)
+		
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		
 		## Get String from object and Expand String if requested
-		[System.Collections.Generic.Dictionary[[string],[string]]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[string],[string]]"
-		foreach($PackageSpecificVariable in $global:PackageConfig.PackageSpecificVariables.keys){
-			$PackageSpecificVariableDictionary.Add($PackageSpecificVariable,$global:PackageConfig.PackageSpecificVariables[$PackageSpecificVariable].Value)
-			if ($global:PackageConfig.PackageSpecificVariables[$PackageSpecificVariable].ExpandString) {
-				$PackageSpecificVariableDictionary[$PackageSpecificVariable] = $ExecutionContext.InvokeCommand.ExpandString($PackageSpecificVariableDictionary[$PackageSpecificVariable])
-			}	
+		$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[string],[string]]"
+		foreach($packageSpecificVariable in $global:PackageConfig.PackageSpecificVariablesRaw){
+			if ($packageSpecificVariable.ExpandVariables) {
+				$packageSpecificVariableDictionary.Add($packageSpecificVariable.name,$ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
+			}else{
+				$packageSpecificVariableDictionary.Add($packageSpecificVariable.name,$packageSpecificVariable.Value)
+			}
 		}
-		$global:PackageConfig.PackageSpecificVariables = $PackageSpecificVariableDictionary
+		$global:PackageConfig | Add-Member -MemberType NoteProperty -Name "PackageSpecificVariables" -Value $packageSpecificVariableDictionary
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer

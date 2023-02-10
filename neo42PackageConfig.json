@@ -56,7 +56,7 @@
       {"Is64Bit":false,"KeyName":"$($global:PackageConfig.UninstallKey)"},
       {"Is64Bit":true,"KeyName":"<CustomKeyName>"}
     ],
-    "PackageSpecificVariables": [
+    "PackageSpecificVariablesRaw": [
       {
         "Name": "vcredist2016Installer",
         "Value": "vcredist2017.exe",
