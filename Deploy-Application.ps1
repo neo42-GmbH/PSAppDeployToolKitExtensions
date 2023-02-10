@@ -352,7 +352,7 @@ function Install-NxtApplication {
 	## <Perform Installation tasks here>
 	switch -Wildcard ($internalInstallerMethod) {
 		MSI {
-			Execute-MSI @executeNxtParams -LogName "$InstLogFile"
+			Execute-NxtMSI @executeNxtParams -LogName "$InstLogFile"
 		}
 		"Inno*" {
 			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$InstLogFile"
@@ -579,7 +579,7 @@ function Uninstall-NxtApplication {
 			}
 			switch -Wildcard ($internalInstallerMethod) {
 				MSI {
-					Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
+					Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
 				}
 				"Inno*" {
 					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$UninstLogFile"
@@ -870,4 +870,4 @@ function CustomUninstallUserPart {
 #endregion
 
 ## Execute the main function to start the process
-Main
+#Main
