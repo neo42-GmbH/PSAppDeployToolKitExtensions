@@ -158,7 +158,7 @@ param (
 	$Method = $global:PackageConfig.Method
 )
 	try {
-		CustomPreInit
+		Custom_Pre_Init
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
 				## START OF INSTALL
@@ -168,31 +168,31 @@ param (
 				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
 					## Application is present. Only register the package
 					[string]$global:installPhase = 'Package-Registration'
-					CustomPostInstallAndReinstall
+					Custom_Post_Install_AND_Reinstall_AND_SoftMigration
 					Complete-NxtPackageInstallation
 					Register-NxtPackage
 					Exit-Script -ExitCode $mainExitCode
 				}
 				Show-NxtInstallationWelcome -IsInstall $true
-				CustomPreInstallAndReinstall
+				Custom_Pre_Install_AND_Reinstall
 				[bool]$isInstalled = $false
 				[string]$global:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtAppIsInstalled)) {
 					if ($false -eq $MSIReinstallModeIsRepair) {
 						## Reinstall mode is set to default
-						CustomPreUninstallReinstall
+						Custom_Pre_Uninstall_DURING_Reinstall
 						Uninstall-NxtApplication
-						CustomPostUninstallReinstall
-						CustomPreInstallReinstall
+						Custom_Post_Uninstall_DURING_Reinstall
+						Custom_Pre_Install_DURING_Reinstall
 						$isInstalled = Install-NxtApplication
-						CustomPostInstallReinstall
+						Custom_Post_Install_DURING_Reinstall
 					}
 					else {
 						if("MSI" -eq $Method) {
 							## Reinstall mode is set to repair
-							CustomPreInstallReinstall
+							Custom_Pre_Install_DURING_Reinstall
 							$isInstalled = Repair-NxtApplication
-							CustomPostInstallReinstall
+							Custom_Post_Install_DURING_Reinstall
 						}
 						else {
 							Throw "Unsupported combination of 'MSIReinstallModeIsRepair' and 'Method' property. 'MSIReinstallModeIsRepair' is only supported for 'MSI'"
@@ -201,11 +201,12 @@ param (
 				}
 				else {
 					## Default installation
-					CustomPreInstall
+					Custom_Pre_Install
 					$isInstalled = Install-NxtApplication
-					CustomPostInstall
+					Custom_Post_Install
 				}
-				CustomPostInstallAndReinstall
+				Custom_Post_Install_AND_Reinstall_NOT_SoftMigration
+				Custom_Post_Install_AND_Reinstall_AND_SoftMigration
 				If ($true -eq $isInstalled) {
 					Complete-NxtPackageInstallation
 				}
@@ -221,9 +222,9 @@ param (
 				## START OF UNINSTALL
 				
 				Show-NxtInstallationWelcome -IsInstall $false
-				CustomPreUninstall
+				Custom_Pre_Uninstall
 				[bool]$isUninstalled = Uninstall-NxtApplication
-				CustomPostUninstall
+				Custom_Post_Uninstall
 				if ($true -eq $isUninstalled) {
 					Complete-NxtPackageUninstallation
 					[string]$global:installPhase = 'Package-Unregistration'
@@ -234,14 +235,14 @@ param (
 			"InstallUserPart" {
 				## START OF USERPARTINSTALL
 
-				CustomInstallUserPart
+				Custom_InstallUserPart
 
 				## END OF USERPARTINSTALL
 			}
 			"UninstallUserPart" {
 				## START OF USERPARTUNINSTALL
 
-				CustomUninstallUserPart
+				Custom_UninstallUserPart
 
 				## END OF USERPARTUNINSTALL
 			}
@@ -468,7 +469,7 @@ Param (
 	}
 	
 	If ($true -eq $UserPartOnInstallation) {
-		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
+		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the Custom_InstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
@@ -669,7 +670,7 @@ function Complete-NxtPackageUninstallation {
 	Remove-NxtDesktopShortcuts
 	Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 	If ($true -eq $UserPartOnUninstallation) {
-		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
+		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the Custom_UninstallUserPart-function below.>
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
@@ -803,82 +804,88 @@ function Show-NxtInstallationWelcome {
 
 #region Entry point funtions to perform custom tasks during script run
 
-function CustomPreInit {
-	[string]$global:installPhase = 'CustomPreInit'
+function Custom_Pre_Init {
+	[string]$global:installPhase = 'Custom_Pre_Init'
 
-	## Executes at the start of the Main function
+	## Always executes at the start of the Main function ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart': This function will execute.)
 }
 
-function CustomPreInstallAndReinstall {
-	[string]$global:installPhase = 'CustomPreInstallAndReinstall'
+function Custom_Pre_Install_AND_Reinstall {
+	[string]$global:installPhase = 'Custom_Pre_Install_AND_Reinstall'
 
-	## Executes before any installation or reinstallation tasks are performed
+	## Executes before the installation or reinstallation tasks are performed
 }
 
-function CustomPreUninstallReinstall {
-	[string]$global:installPhase = 'CustomPreUninstallReinstall'
+function Custom_Pre_Uninstall_DURING_Reinstall {
+	[string]$global:installPhase = 'Custom_Pre_Uninstall_DURING_Reinstall'
 
-	## Executes before the uninstallation in the reinstall process
+	## Executes before the uninstallation during the reinstall process (NOT executed if MSIReinstallModeIsRepair)
 }
 
-function CustomPostUninstallReinstall {
-	[string]$global:installPhase = 'CustomPostUninstallReinstall'
+function Custom_Post_Uninstall_DURING_Reinstall {
+	[string]$global:installPhase = 'Custom_Post_Uninstall_DURING_Reinstall'
 
-	## Executes at after the uninstallation in the reinstall process
+	## Executes at after the uninstallation during the reinstall process (NOT executed if MSIReinstallModeIsRepair)
 }
 
-function CustomPreInstallReinstall {
-	[string]$global:installPhase = 'CustomPreInstallReinstall'
+function Custom_Pre_Install_DURING_Reinstall {
+	[string]$global:installPhase = 'Custom_Pre_Install_DURING_Reinstall'
 
-	## Executes before the installation in the reinstall process
+	## Executes before the installation during the reinstall process (also executed if MSIReinstallModeIsRepair)
 }
 
-function CustomPostInstallReinstall {
-	[string]$global:installPhase = 'CustomPostInstallReinstall'
+function Custom_Post_Install_DURING_Reinstall {
+	[string]$global:installPhase = 'Custom_Post_Install_DURING_Reinstall'
 
-	## Executes after the installation in the reinstall process
+	## Executes after the installation during the reinstall process (also executed if MSIReinstallModeIsRepair)
 }
 
-function CustomPreInstall {
-	[string]$global:installPhase = 'CustomPreInstall'
+function Custom_Pre_Install {
+	[string]$global:installPhase = 'Custom_Pre_Install'
 
 	## Executes before the installation in the install process
 }
 
-function CustomPostInstall {
-	[string]$global:installPhase = 'CustomPostInstall'
+function Custom_Post_Install {
+	[string]$global:installPhase = 'Custom_Post_Install'
 
 	## Executes after the installation in the install process
 }
 
-function CustomPostInstallAndReinstall {
-	[string]$global:installPhase = 'CustomPostInstallAndReinstall'
+function Custom_Post_Install_AND_Reinstall_NOT_SoftMigration {
+	[string]$global:installPhase = 'Custom_Post_Install_AND_Reinstall_NOT_SoftMigration'
 
-	## Executes after the completed install or repair process
+	## Executes after the completed install or reinstallation process but NOT during soft migration
 }
 
-function CustomPreUninstall {
-	[string]$global:installPhase = 'CustomPreUninstall'
+function Custom_Post_Install_AND_Reinstall_AND_SoftMigration {
+	[string]$global:installPhase = 'Custom_Post_Install_AND_Reinstall_AND_SoftMigration'
+
+	## Executes after the completed install or reinstallation process AND during soft migration
+}
+
+function Custom_Pre_Uninstall {
+	[string]$global:installPhase = 'Custom_Pre_Uninstall'
 
 	## Executes before the uninstallation in the uninstall process
 }
 
-function CustomPostUninstall {
-	[string]$global:installPhase = 'CustomPostUninstall'
+function Custom_Post_Uninstall {
+	[string]$global:installPhase = 'Custom_Post_Uninstall'
 
 	## Executes after the uninstallation in the uninstall process
 }
 
-function CustomInstallUserPart {
-	[string]$global:installPhase = 'CustomInstallUserPart'
+function Custom_InstallUserPart {
+	[string]$global:installPhase = 'Custom_InstallUserPart'
 
-	## Executes if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	## Executes if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
 }
 
-function CustomUninstallUserPart {
-	[string]$global:installPhase = 'CustomUninstallUserPart'
+function Custom_UninstallUserPart {
+	[string]$global:installPhase = 'Custom_UninstallUserPart'
 
-	## Executes if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
+	## Executes if the script is started with the value 'UninstallUserPart' for parameter 'DeploymentType'
 }
 
 #endregion
