@@ -4184,7 +4184,7 @@ function Execute-NxtNullsoft {
 function Execute-NxtMSI {
 	<#
 .SYNOPSIS
-	Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
+	Wraps around the Execute-MSI Function. Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
 .DESCRIPTION
 	Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
 	If the -Action parameter is set to "Install" and the MSI is already installed, the function will exit.
@@ -4207,9 +4207,8 @@ function Execute-NxtMSI {
 	Hides all parameters passed to the MSI or MSP file from the toolkit Log file.
 .PARAMETER LoggingOptions
 	Overrides the default logging options specified in the XML configuration file. Default options are: "/L*v".
-.PARAMETER LogName
-	Overrides the default log file name. The default log file name is generated from the MSI file name. If LogName does not end in .log, it will be automatically appended.
-	For uninstallations, by default the product code is resolved to the DisplayName and version of the application.
+.PARAMETER Log
+	Sets the Log Path either as Full Path or as logname
 .PARAMETER WorkingDirectory
 	Overrides the working directory. The working directory is set to the location of the MSI file.
 .PARAMETER SkipMSIAlreadyInstalledCheck
@@ -4230,20 +4229,23 @@ function Execute-NxtMSI {
 	Specifies whether we should repair from source. Also rewrites local cache. Default: $false
 .PARAMETER ContinueOnError
 	Continue if an error occurred while trying to start the process. Default: $false.
+.PARAMETER ConfigMSILogDir
+    Contains the FolderPath to the centrally configured Logdirectory from psadt main.
+    Defaults to $configMSILogDirc
 .EXAMPLE
-	Execute-MSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi'
+	Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi'
 	Installs an MSI
 .EXAMPLE
-	Execute-MSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -Transform 'Adobe_FlashPlayer_11.2.202.233_x64_EN_01.mst' -Parameters '/QN'
+	Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -Transform 'Adobe_FlashPlayer_11.2.202.233_x64_EN_01.mst' -Parameters '/QN'
 	Installs an MSI, applying a transform and overriding the default MSI toolkit parameters
 .EXAMPLE
-	[psobject]$ExecuteMSIResult = Execute-MSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -PassThru
+	[psobject]$ExecuteMSIResult = Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -PassThru
 	Installs an MSI and stores the result of the execution into a variable by using the -PassThru option
 .EXAMPLE
-	Execute-MSI -Action 'Uninstall' -Path '{26923b43-4d38-484f-9b9e-de460746276c}'
+	Execute-NxtMSI -Action 'Uninstall' -Path '{26923b43-4d38-484f-9b9e-de460746276c}'
 	Uninstalls an MSI using a product code
 .EXAMPLE
-	Execute-MSI -Action 'Patch' -Path 'Adobe_Reader_11.0.3_EN.msp'
+	Execute-NxtMSI -Action 'Patch' -Path 'Adobe_Reader_11.0.3_EN.msp'
 	Installs an MSP
 .NOTES
 		AppDeployToolkit is required in order to run this function.
@@ -4261,9 +4263,11 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[bool]
 	$UninstallKeyIsDisplayName = $false,
-	[Parameter(Mandatory=$false)]
-	[String]
-	$InstLogFile = $global:PackageConfig.InstLogFile,
+	[Parameter(Mandatory = $false)]
+	[AllowEmptyString()]
+	[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+	[string]
+	$Log,
 	[Parameter(Mandatory=$false)]
 	[ValidateNotNullorEmpty()]
 	[string]$Transform,
@@ -4318,25 +4322,53 @@ Param (
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 		[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
+		## Add all parameters with defaults to the PSBoundParameters:
+		[array]$functionParametersWithDefaults = (
+			"Action",
+			"SecureParameters",
+			"SkipMSIAlreadyInstalledCheck",
+			"IncludeUpdatesAndHotfixes",
+			"NoWait",
+			"PassThru",
+			"PriorityClass",
+			"ExitOnProcessFailure",
+			"RepairFromSource",
+			"ContinueOnError",
+			"ConfigMSILogDir"
+		)
+		foreach ($functionParametersWithDefault in $functionParametersWithDefaults){
+			$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
+		}
+		[array]$functionParametersToBeRemoved = (
+			"Log",
+			"UninstallKeyIsDisplayName",
+			"ConfigMSILogDir"
+		)
+		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved){
+			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
+		}
 	}
 	Process {
-		if ($UninstallKeyIsDisplayName -and $Action -eq $Uninstall){
-			$Path = Get-NxtInstalledApplication -UninstallKey $Uninstallkey | Select-Object -First 1 -ExpandProperty ProductCode
+		if ($UninstallKeyIsDisplayName -and $Action -eq "Uninstall") {
+			$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey | Select-Object -First 1 -ExpandProperty ProductCode
 		}
-			[String]$logName = $Log | Split-Path -Leaf
-			if ([string]::IsNullOrEmpty($Parameters)) {
-				$null = $PSBoundParameters.Remove('Parameters')
-			}
-			if ([string]::IsNullOrEmpty($Parameters)) {
-				$null = $PSBoundParameters.Remove('AddParameters')
-			}
-			$null = $PSBoundParameters.Remove('Path')
-			#$psbound2=$PSBoundParameters
-			Execute-MSI @PSBoundParameters -LogName $logName -Path $Path
-			[String]$logPath = Join-Path -Path $ConfigMSILogDir -ChildPath $logName
-			Move-NxtItem $logPath -Destination $xmlConfigMSIOptionsLogPath\$logName
-
-		#Move Log to destinatian
+		if ([string]::IsNullOrEmpty($Parameters)) {
+			$null = $PSBoundParameters.Remove('Parameters')
+		}
+		if ([string]::IsNullOrEmpty($AddParameters)) {
+			$null = $PSBoundParameters.Remove('AddParameters')
+		}
+		if (![string]::IsNullOrEmpty($Log)) {
+			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
+			$PSBoundParameters.add("LogName", $msiLogName )
+		}
+		Execute-MSI @PSBoundParameters
+		## Move Logs to correct destination
+		if ([System.IO.Path]::IsPathRooted($Log)) {
+			$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
+			[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
+			Move-NxtItem $logPath -Destination $Log
+		}
 	}
 	End {
 		If ($PassThru) {

@@ -335,6 +335,7 @@ function Install-NxtApplication {
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Install'
 		Path	= "$InstFile"
+		UninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendInstParaToDefaultParameters){
@@ -352,16 +353,16 @@ function Install-NxtApplication {
 	## <Perform Installation tasks here>
 	switch -Wildcard ($internalInstallerMethod) {
 		MSI {
-			Execute-NxtMSI @executeNxtParams -LogName "$InstLogFile"
+			Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
 		}
 		"Inno*" {
-			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$InstLogFile"
+			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
 		}
 		Nullsoft {
-			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
 		}
 		"BitRock*" {
-			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 		}
 		none {
 
@@ -563,6 +564,7 @@ function Uninstall-NxtApplication {
 	
 			[hashtable]$executeNxtParams = @{
 				Action	= 'Uninstall'
+				UninstallKeyIsDisplayName	= $UninstallKeyIsDisplayName
 			}
 			if (![string]::IsNullOrEmpty($UninstPara)) {
 				if ($AppendUninstParaToDefaultParameters){
@@ -579,16 +581,16 @@ function Uninstall-NxtApplication {
 			}
 			switch -Wildcard ($internalInstallerMethod) {
 				MSI {
-					Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+					Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
 				}
 				"Inno*" {
-					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$UninstLogFile"
+					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
 				}
 				Nullsoft {
-					Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+					Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
 				}
 				"BitRock*" {
-					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 				}
 				none {
 	
@@ -870,4 +872,4 @@ function CustomUninstallUserPart {
 #endregion
 
 ## Execute the main function to start the process
-#Main
+Main
