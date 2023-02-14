@@ -419,6 +419,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER DesktopShortcut
 		Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
 		Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.LINK
