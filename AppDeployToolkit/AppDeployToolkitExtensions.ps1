@@ -4980,7 +4980,7 @@ function Exit-NxtAbortReboot {
 		Defaults to "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion".
 	.PARAMETER EmpirumUninstallKey
 		Name of the the Empirum package uninstallkey under "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\".
-		Defaults to "$($global:PackageConfig.RegPackagesKey) $AppVendor $AppName $appVersion".
+		Defaults to "$global:PackageConfig.UninstallDisplayName".
 	.EXAMPLE
 		Exit-NxtAbortReboot
 	.EXAMPLE
@@ -4988,7 +4988,7 @@ function Exit-NxtAbortReboot {
 	.EXAMPLE
 		Exit-NxtAbortReboot -RebootMessage "This package requires a system reboot..." -RebootExitCode "3010"
 	.EXAMPLE
-		Exit-NxtAbortReboot -EmpirumMachineKey "OurPackages\Microsoft\Office365\16.0" -EmpirumUninstallKey "OurPackages Microsoft Office365 16.0"
+		Exit-NxtAbortReboot -EmpirumMachineKey "OurPackages\Microsoft\Office365\16.0" -EmpirumUninstallKey "OurPackage Microsoft Office365 16.0"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -5014,7 +5014,7 @@ function Exit-NxtAbortReboot {
 		
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[String]$EmpirumUninstallKey = "$($global:PackageConfig.RegPackagesKey) $AppVendor $AppName $appVersion"
+		[String]$EmpirumUninstallKey = $global:PackageConfig.UninstallDisplayName
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5026,8 +5026,12 @@ function Exit-NxtAbortReboot {
 		Try {
 			Remove-RegistryKey -Key "HKLM\Software\$PackageMachineKey" -Recurse
 			Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageUninstallKey" -Recurse
-			Remove-RegistryKey -Key "HKLM\Software\$EmpirumMachineKey" -Recurse
-			Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
+			If (Test-Path -Path "HKLM:Software\$EmpirumMachineKey") {
+				Remove-RegistryKey -Key "HKLM\Software\$EmpirumMachineKey" -Recurse
+			}
+			If (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") {
+				Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
+			}
 			Exit-NxtScriptWithError -ErrorMessage $RebootMessage -MainExitCode $RebootExitCode
 		}
 		Catch {
