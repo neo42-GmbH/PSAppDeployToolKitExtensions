@@ -466,10 +466,17 @@ Param (
 		if($false -eq $uninstallKeyToHide.Is64Bit) {
 			$wowEntry = $Wow6432Node
 		}
-		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName)){
-			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Name 'SystemComponent' -Type 'Dword' -Value '1'
-		}else{
-			Write-Log -Message "Did not find a registry key $($uninstallKeyToHide.KeyName), skipped setting systemcomponent entry for this key" -Source ${CmdletName}
+		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+		}
+		else {
+			$CurrentKeyName = $uninstallKeyToHide.KeyName
+		}
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName){
+			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		}
+		else{
+			Write-Log -Message "Did not find a registry key $CurrentKeyName, skipped setting systemcomponent entry for this key" -Source ${CmdletName}
 		}
 	}
 	
@@ -567,10 +574,17 @@ function Uninstall-NxtApplication {
 		if($false -eq $uninstallKeyToHide.Is64Bit) {
 			$wowEntry = $Wow6432Node
 		}
-		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Value SystemComponent){
-			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Name 'SystemComponent'
-		}else{
-			Write-Log -Message "Did not find a SystemComponent entry under registry key $($uninstallKeyToHide.KeyName), skipped deleting the entry for this key" -Source ${CmdletName}
+		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+		}
+		else {
+			$CurrentKeyName = $uninstallKeyToHide.KeyName
+		}
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Value SystemComponent){
+			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent'
+		}
+		else{
+			Write-Log -Message "Did not find a SystemComponent entry under registry key $CurrentKeyName, skipped deleting the entry for this key" -Source ${CmdletName}
 		}
 	}
 
