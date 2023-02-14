@@ -1242,9 +1242,10 @@ function Get-NxtFolderSize {
 		[ValidateNotNullOrEmpty()]
 		[string]$FolderPath,
 		[Parameter(Mandatory = $false)]
-		[ValidateSet(1d,1kb,1mb,1gb,1tb,1pb)]
-		[long]
-		$Unit = 1d
+		[ValidateSet("kb","mb","gb","tb","pb")]
+		[string]
+		## "d" for "decimal", used as multiply by 1 
+		$Unit = "d"
 		)
 	Begin {
 		## Get the name of this function and write header
@@ -1256,7 +1257,7 @@ function Get-NxtFolderSize {
 		try {
 			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
 			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
-			[long]$folderSize = [math]::round(($result/$Unit))
+			[long]$folderSize = [math]::round(($result/"1$Unit"))
 		}
 		catch {
 			Write-Log -Message "Failed to get size from folder '$FolderPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -1343,9 +1344,10 @@ function Get-NxtDriveFreeSpace {
 		[string]
 		$DriveName,
 		[Parameter(Mandatory = $false)]
-		[ValidateSet(1d,1kb,1mb,1gb,1tb,1pb)]
-		[long]
-		$Unit = 1d
+		[ValidateSet("kb","mb","gb","tb","pb")]
+		[string]
+		## "d" for "decimal", used as multiply by 1 
+		$Unit = "d"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1355,7 +1357,7 @@ function Get-NxtDriveFreeSpace {
 	Process {
 		try {
 			[System.Management.ManagementObject]$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
-			[long]$disFreekSize = [math]::Floor(($disk.FreeSpace/$Unit))
+			[long]$disFreekSize = [math]::Floor(($disk.FreeSpace/"1$Unit"))
 		}
 		catch {
 			Write-Log -Message "Failed to get free space for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
