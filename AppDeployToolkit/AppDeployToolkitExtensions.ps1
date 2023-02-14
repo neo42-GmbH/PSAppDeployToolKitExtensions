@@ -4283,7 +4283,14 @@ function Set-NxtSetupCfg {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[hashtable]$global:setupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+		Write-Log -Message "Checking for setup.cfg under [$path]..." -Source ${CmdletName}
+		If ([System.IO.File]::Exists($Path)) {
+			[hashtable]$global:setupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+			Write-Log -Message "Setup.cfg found and successfully parsed into global:setupCfg object." -Source ${CmdletName}
+		}
+		else {
+			Write-Log -Message "No Setup.cfg found. Skipped parsing of setup.cfg." -Severity 2 -Source ${CmdletName}
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
