@@ -809,7 +809,9 @@ Function Register-NxtPackage {
 		Try {
 			Copy-File -Path "$ScriptParentPath\AppDeployToolkit" -Destination "$App\neo42-Install\" -Recurse
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$ScriptParentPath\Setup.ico" -Destination "$App\"
+			Copy-File -Path "$ScriptParentPath\neo42PackageConfig.json" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$ScriptParentPath\Setup.ico" -Destination "$App\neo42-Install\"
 
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'AppPath' -Value $App
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
@@ -827,7 +829,7 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallString' -Value ("""$global:System\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
 			If ($true -eq $UserPartOnInstallation) {
@@ -837,7 +839,7 @@ Function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
 
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neoInstall\Setup.ico
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neo42-Install\Setup.ico
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayVersion' -Value $AppVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'MachineKeyName' -Value $RegPackagesKey\$PackageFamilyGUID
@@ -850,7 +852,7 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayVersion' -Value $DisplayVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'Publisher' -Value $AppVendor
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'UninstallString' -Type 'ExpandString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'UninstallString' -Type 'ExpandString' -Value ("""$global:System\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			Remove-RegistryKey HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error")
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
@@ -870,7 +872,7 @@ Function Unregister-NxtPackage {
 	.SYNOPSIS
 		Removes package files and unregisters the package in the registry.
 	.DESCRIPTION
-		Removes the package files from "$APP\neoInstall\" and deletes the package's registry keys under "HKLM\Software[\Wow6432Node]\$regPackagesKey\$PackageFamilyGUID" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID".
+		Removes the package files from "$APP\" and deletes the package's registry keys under "HKLM\Software[\Wow6432Node]\$regPackagesKey\$PackageFamilyGUID" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID".
 	.PARAMETER PackageFamilyGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
 		Defaults to the corresponding value from the PackageConfig object.
