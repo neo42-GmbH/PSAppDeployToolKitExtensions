@@ -1242,10 +1242,9 @@ function Get-NxtFolderSize {
 		[ValidateNotNullOrEmpty()]
 		[string]$FolderPath,
 		[Parameter(Mandatory = $false)]
-		[ValidateSet("kb","mb","gb","tb","pb")]
+		[ValidateSet("B","KB","MB","GB","TB","PB")]
 		[string]
-		## "d" for "decimal", used as multiply by 1 
-		$Unit = "d"
+		$Unit = "B"
 		)
 	Begin {
 		## Get the name of this function and write header
@@ -1257,7 +1256,7 @@ function Get-NxtFolderSize {
 		try {
 			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
 			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
-			[long]$folderSize = [math]::round(($result/"1$Unit"))
+			[long]$folderSize = [math]::round(($result/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get size from folder '$FolderPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -1343,11 +1342,10 @@ function Get-NxtDriveFreeSpace {
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$DriveName,
-		[Parameter(Mandatory = $false)]
-		[ValidateSet("kb","mb","gb","tb","pb")]
-		[string]
-		## "d" for "decimal", used as multiply by 1 
-		$Unit = "d"
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("B","KB","MB","GB","TB","PB")]
+        [string]
+        $Unit = "B"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1357,7 +1355,7 @@ function Get-NxtDriveFreeSpace {
 	Process {
 		try {
 			[System.Management.ManagementObject]$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
-			[long]$disFreekSize = [math]::Floor(($disk.FreeSpace/"1$Unit"))
+			[long]$disFreekSize = [math]::Floor(($disk.FreeSpace/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get free space for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
