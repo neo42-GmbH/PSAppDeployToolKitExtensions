@@ -1276,6 +1276,8 @@ function Get-NxtFolderSize {
 		Gets the size of the folder recursive in bytes.
 	.PARAMETER FolderPath
 		Path to the folder.
+	.PARAMETER Unit
+		Unit the foldersize should be returned in.
 	.EXAMPLE
 		Get-NxtFolderSize "D:\setup\"
 	.OUTPUTS
@@ -1287,7 +1289,11 @@ function Get-NxtFolderSize {
 	Param(
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$FolderPath
+		[string]$FolderPath,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("B","KB","MB","GB","TB","PB")]
+		[string]
+		$Unit = "B"
 		)
 	Begin {
 		## Get the name of this function and write header
@@ -1299,11 +1305,12 @@ function Get-NxtFolderSize {
 		try {
 			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
 			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
+			[long]$folderSize = [math]::round(($result/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get size from folder '$FolderPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		Write-Output $result
+		Write-Output $folderSize
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -1369,6 +1376,8 @@ function Get-NxtDriveFreeSpace {
 		Gets free space of drive in bytes.
 	.PARAMETER DriveName
 		Name of the drive.
+	.PARAMETER Unit
+		Unit the disksize should be returned in.
 	.EXAMPLE
 		Get-NxtDriveFreeSpace "c:"
 	.OUTPUTS
@@ -1381,7 +1390,11 @@ function Get-NxtDriveFreeSpace {
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]
-		$DriveName
+		$DriveName,
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("B","KB","MB","GB","TB","PB")]
+        [string]
+        $Unit = "B"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1391,11 +1404,12 @@ function Get-NxtDriveFreeSpace {
 	Process {
 		try {
 			[System.Management.ManagementObject]$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
+			[long]$diskFreekSize = [math]::Floor(($disk.FreeSpace/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get free space for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-			Write-Output $disk.FreeSpace
+			Write-Output $diskFreekSize
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
