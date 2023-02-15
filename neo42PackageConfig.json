@@ -21,21 +21,19 @@
     "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
     "UninstallOld": true,
     "Reboot": 0,
-    "BlockExecution": true,
     "MSIReinstallModeIsRepair": false,
     "UserPartOnInstallation": false,
     "UserPartOnUninstallation": false,
     "UserPartRevision": "2022,09,22,01",
-    "SoftMigration": true,
     "HidePackageUninstallButton": false,
     "HidePackageUninstallEntry": false,
     "DisplayVersion": "2.10.2",
+    "InstallerVersion": "2.10.2",
     "UninstallKey": "Scribble Papers_is1",
     "UninstallKeyIsDisplayName": false,
     "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
     "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
     "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
-    "RegUninstallKey": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
 	  "InstFile": "SPSetup.exe",
     "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
     "AppendInstParaToDefaultParameters": false,
@@ -45,6 +43,7 @@
     "AppKillProcesses": [
       "ScPapers"
     ],
+    "BlockExecution": true,
     "CommonDesktopShortcutsToDelete": [
 	  "Scribble Papers Programmdokumentation.lnk",
 	  "Scribble Papers 2022.lnk"
@@ -56,5 +55,31 @@
     "UninstallKeysToHide":[
       {"KeyName":"$($global:PackageConfig.UninstallKey)","Is64Bit":false,"KeyNameIsDisplayName":false},
       {"KeyName":"<SomeDisplayName>","Is64Bit":true,"KeyNameIsDisplayName":true}
+    ],
+    "PackageSpecificVariablesRaw": [
+      {
+        "Name": "vcredist2016Installer",
+        "Value": "vcredist2017.exe",
+        "ExpandVariables": true
+      },
+      {
+        "Name": "usage",
+        "Value": "somecomment"
+      },
+      {
+        "Name": "expandme",
+        "Value": "$(ls ~)",
+        "ExpandVariables" :true
+      },
+      {
+        "Name": "expandmenot",
+        "Value": "$(ls ~)",
+        "ExpandVariables" :false
+      },
+      {
+        "Name": "prefilled vars",
+        "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
+        "ExpandVariables" :true
+      }
     ]
   }

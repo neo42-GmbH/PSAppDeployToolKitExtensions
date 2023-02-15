@@ -283,9 +283,6 @@ function Install-NxtApplication {
 	.PARAMETER InstLogFile
 		Defines the path to the Logfile that should be used by the installer.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RegUninstallKey
-		Defines the path to the Uninstall Key in the Registry.
-		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstFile
 		Defines the path to the Installation File.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -314,9 +311,6 @@ function Install-NxtApplication {
 		[Parameter(Mandatory=$false)]
 		[String]
 		$InstLogFile = $global:PackageConfig.InstLogFile,
-		[Parameter(Mandatory=$false)]
-		[string]
-		$RegUninstallKey = $global:PackageConfig.RegUninstallKey,
 		[Parameter(Mandatory=$false)]
 		[string]
 		$InstFile = $global:PackageConfig.InstFile,
@@ -508,9 +502,6 @@ function Uninstall-NxtApplication {
 	.PARAMETER UninstLogFile
     	Defines the path to the Logfile that should be used by the uninstaller.
     	Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RegUninstallKey
-		Defines the path to the Uninstall Key in the Registry.
-		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstFile
 		Defines the path to the Installation File.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -545,9 +536,6 @@ function Uninstall-NxtApplication {
 		[Parameter(Mandatory=$false)]
 		[string]
 		$UninstLogFile = $global:PackageConfig.UninstLogFile,
-		[Parameter(Mandatory=$false)]
-		[string]
-		$RegUninstallKey = $global:PackageConfig.RegUninstallKey,
 		[Parameter(Mandatory=$false)]
 		[string]
 		$UninstFile = $global:PackageConfig.UninstFile,
@@ -784,7 +772,7 @@ function Show-NxtInstallationWelcome {
 	Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
 .PARAMETER DeferDays
 	Specifies how long a user may defer an installation (will be ignored on uninstallation)
-	Defaults to the corresponding value from the Setup.cfg object.
+	Defaults to the corresponding value from the Setup.cfg.
 .PARAMETER AskKillProcessApps
 	Specifies a list of Processnames which should be stopped for the (un)installation to start.
 	For Example "WINWORD,EXCEL"
