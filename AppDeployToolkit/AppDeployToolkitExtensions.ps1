@@ -5007,7 +5007,7 @@ function Get-NxtAppIsInstalled {
 	.SYNOPSIS
 		Detects if the target application is installed.
 	.DESCRIPTION
-		Uses the registry Uninstall Key to detect of the application is present.
+		Uses the registry Uninstall Key to detect if the application is present.
 	.PARAMETER UninstallKey
 		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
 		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
@@ -5050,7 +5050,7 @@ function Get-NxtAppIsInstalled {
 Function Exit-NxtScriptWithError {
 	<#
 	.SYNOPSIS
-		Exits the Script writing an error to the registry.
+		Exits the Script writing an error entry to the registry.
 	.DESCRIPTION
 		Exits the Script writing information about the installation attempt to the registry below the RegPackagesKey
 		defined in the neo42PackageConfig.json.
@@ -5218,6 +5218,100 @@ Function Exit-NxtScriptWithError {
 	}
 }
 #endregion
+
+#region Function Exit-NxtAbortReboot
+function Exit-NxtAbortReboot {
+	<#
+	.SYNOPSIS
+		Exits the script after deleting all package registry keys and requests a reboot from the deployment system.
+	.DESCRIPTION
+		Deletes the package machine key under "HKLM\Software\", which defaults to the PackageFamilyGUID under the RegPackagesKey value from the neo42PackageConfig.json.
+		Deletes the package uninstallkey under "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\", which defaults to the PackageFamilyGUID value from the neo42PackageConfig.json.
+		Writes an "error" message to the package log and an error entry to the registry, which defaults to "Uninstall of $installTitle requires a reboot before proceeding with the installation. AbortReboot!"
+		Exits the script with a return code to trigger a system reboot, which defaults to "3010".
+		Also deletes corresponding Empirum registry keys, if the pacakge was deployed with Matrix42 Empirum.
+	.PARAMETER PackageMachineKey
+		Path to the the package machine key under "HKLM\Software\".
+		Defaults to "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)".
+	.PARAMETER PackageUninstallKey
+		Name of the the package uninstallkey under "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to the PackageFamilyGUID value from the PackageConfig object.
+	.PARAMETER RebootMessage
+		The Message, that will apear in the package log and the error entry in the the registry.
+		Defaults to "Uninstall of $installTitle requires a reboot before proceeding with the installation. AbortReboot!"
+	.PARAMETER RebootExitCode
+		The exit code to trigger a system reboot.
+		Defaults to "3010".
+	.PARAMETER EmpirumMachineKey
+		Path to the Empirum package machine key under "HKLM\Software\".
+		Defaults to "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion".
+	.PARAMETER EmpirumUninstallKey
+		Name of the the Empirum package uninstallkey under "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to "$global:PackageConfig.UninstallDisplayName".
+	.EXAMPLE
+		Exit-NxtAbortReboot
+	.EXAMPLE
+		Exit-NxtAbortReboot -PackageMachineKey "OurPackages\{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -PackageUninstallKey "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
+	.EXAMPLE
+		Exit-NxtAbortReboot -RebootMessage "This package requires a system reboot..." -RebootExitCode "3010"
+	.EXAMPLE
+		Exit-NxtAbortReboot -EmpirumMachineKey "OurPackages\Microsoft\Office365\16.0" -EmpirumUninstallKey "OurPackage Microsoft Office365 16.0"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[ValidateNotNullorEmpty()]
+		[String]$PackageMachineKey = "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)",
+		
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[String]$PackageUninstallKey = $global:PackageConfig.PackageFamilyGUID,
+		
+		[Parameter(Mandatory = $false)]
+		[String]$RebootMessage = "Uninstall of '$installTitle' requires a reboot before proceeding with the installation. AbortReboot!",
+		
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[int32]$RebootExitCode = 3010,
+		
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[String]$EmpirumMachineKey = "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion",
+		
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[String]$EmpirumUninstallKey = $global:PackageConfig.UninstallDisplayName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Write-Log -Message "Initiating AbortReboot..." -Source ${CmdletName}
+		Try {
+			Remove-RegistryKey -Key "HKLM\Software\$PackageMachineKey" -Recurse
+			Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageUninstallKey" -Recurse
+			If (Test-Path -Path "HKLM:Software\$EmpirumMachineKey") {
+				Remove-RegistryKey -Key "HKLM\Software\$EmpirumMachineKey" -Recurse
+			}
+			If (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") {
+				Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
+			}
+			Exit-NxtScriptWithError -ErrorMessage $RebootMessage -MainExitCode $RebootExitCode
+		}
+		Catch {
+			Write-Log -Message "Failed to execute AbortReboot. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+			Throw "Failed to execute AbortReboot: $($_.Exception.Message)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
