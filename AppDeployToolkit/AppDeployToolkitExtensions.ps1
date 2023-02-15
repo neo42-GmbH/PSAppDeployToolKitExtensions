@@ -1228,7 +1228,7 @@ function Get-NxtFolderSize {
 	.PARAMETER FolderPath
 		Path to the folder.
 	.PARAMETER Unit
-		Unit the foldersize should be rturned in.
+		Unit the foldersize should be returned in.
 	.EXAMPLE
 		Get-NxtFolderSize "D:\setup\"
 	.OUTPUTS
@@ -1328,7 +1328,7 @@ function Get-NxtDriveFreeSpace {
 	.PARAMETER DriveName
 		Name of the drive.
 	.PARAMETER Unit
-		Unit the disksize should be rturned in.
+		Unit the disksize should be returned in.
 	.EXAMPLE
 		Get-NxtDriveFreeSpace "c:"
 	.OUTPUTS
@@ -1355,12 +1355,12 @@ function Get-NxtDriveFreeSpace {
 	Process {
 		try {
 			[System.Management.ManagementObject]$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
-			[long]$disFreekSize = [math]::Floor(($disk.FreeSpace/"$("1$Unit" -replace "1B","1D")"))
+			[long]$diskFreekSize = [math]::Floor(($disk.FreeSpace/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get free space for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-			Write-Output $disFreekSize
+			Write-Output $diskFreekSize
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
