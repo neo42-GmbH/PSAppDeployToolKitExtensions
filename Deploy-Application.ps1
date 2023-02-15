@@ -259,7 +259,7 @@ param (
 		[string]$mainErrorMessage = "$(Resolve-Error)"
 		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 		Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
-		Exit-NxtScriptWithError -ErrorMessage $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	}
 }
 
@@ -387,8 +387,7 @@ function Install-NxtApplication {
 	}
 	else {
 		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-			Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
-			# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
+			Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 		}
 	}
 
@@ -658,9 +657,13 @@ function Uninstall-NxtApplication {
 			Start-Sleep -Seconds 5
 	
 			## Test successfull uninstallation
-			if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-				Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
-				# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
+			if ([string]::IsNullOrEmpty($UninstallKey)) {
+				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
+			}
+			else {
+				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+				}
 			}
 		}
 	}
