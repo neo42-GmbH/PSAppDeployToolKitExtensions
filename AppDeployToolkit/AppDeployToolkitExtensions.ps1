@@ -562,7 +562,7 @@ function Get-NxtRegisterOnly {
 	Defaults to the corresponding value from the PackageConfig object.
 .PARAMETER SoftMigration
 	Specifies if a Software should be registered only if it already exists through a different installation.
-	Defaults to the corresponding value from the PackageConfig object.
+	Defaults to the corresponding value from the Setup.cfg.
 .PARAMETER DisplayVersion
 	Specifies the DisplayVersion of the Software Package.
 	Defaults to the corresponding value from the PackageConfig object.
@@ -588,7 +588,7 @@ function Get-NxtRegisterOnly {
 		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$SoftMigration = $global:PackageConfig.SoftMigration,
+		$SoftMigration = [bool]([int]$global:SetupCfg.Options.SoftMigration),
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
@@ -608,18 +608,18 @@ function Get-NxtRegisterOnly {
 
 		[string]$installPhase = 'Soft-Migration'
 		if ([string]::IsNullOrEmpty($DisplayVersion)){
-			Write-Log -Message 'DisplayVersion is $null or empty, set Softmigration to $false.'
+			Write-Log -Message 'DisplayVersion is $null or empty. Set SoftMigration to $false.'
 			return $false
 		}
 		if ([string]::IsNullOrEmpty($DetectedDisplayVersion)){
-			Write-Log -Message 'DetectedDisplayVersion is $null or empty, set Softmigration to $false.'
+			Write-Log -Message 'DetectedDisplayVersion is $null or empty. Set SoftMigration to $false.'
 			return $false
 		}
 		If (
 			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and -not (Test-RegistryValue -Key HKLM\Software$Wow6432Node\neoPackages\$PackageFamilyGUID -Value 'ProductName')
 			) {
 			#Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
-			Write-Log -Message 'Application is already present. set Softmigration to $true.'
+			Write-Log -Message 'Application is already present. Set SoftMigration to $true.'
 			return $true
 		}
 	}

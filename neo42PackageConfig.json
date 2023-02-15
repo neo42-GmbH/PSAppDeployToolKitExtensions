@@ -3,7 +3,7 @@
     "ScriptDate": "22/09/2022",
     "InventoryID": "hjt632C168F",
     "Description": "Jens Hoetger Scribble Papers 2.10.2",
-    "Method": "MSI",
+    "Method": "Inno Setup",
     "TestedOn": "Win10 x64",
     "Dependencies": "",
     "LastChange": "22/09/2022",
@@ -20,12 +20,10 @@
     "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
     "UninstallOld": true,
     "Reboot": 0,
-    "BlockExecution": true,
     "MSIReinstallModeIsRepair": false,
     "UserPartOnInstallation": false,
     "UserPartOnUninstallation": false,
     "UserPartRevision": "2022,09,22,01",
-    "SoftMigration": true,
     "HidePackageUninstallButton": false,
     "HidePackageUninstallEntry": false,
     "DisplayVersion": "2.10.2",
@@ -44,6 +42,7 @@
     "AppKillProcesses": [
       "ScPapers"
     ],
+    "BlockExecution": true,
     "CommonDesktopShortcutsToDelete": [
 	  "Scribble Papers Programmdokumentation.lnk",
 	  "Scribble Papers 2022.lnk"
