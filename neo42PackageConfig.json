@@ -3,7 +3,7 @@
     "ScriptDate": "22/09/2022",
     "InventoryID": "hjt632C168F",
     "Description": "Jens Hoetger Scribble Papers 2.10.2",
-    "Method": "Inno Setup",
+    "Method": "MSI",
     "TestedOn": "Win10 x64",
     "Dependencies": "",
     "LastChange": "22/09/2022",
@@ -30,16 +30,16 @@
     "HidePackageUninstallEntry": false,
     "DisplayVersion": "2.10.2",
     "UninstallKey": "Scribble Papers_is1",
-    "UninstallKeyIsDisplayName": false,
+    "UninstallKeyIsDisplayName": true,
     "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
     "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
     "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
     "RegUninstallKey": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
 	  "InstFile": "SPSetup.exe",
-    "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"($global:PackageConfig.instLogFile)\"",
+    "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
     "AppendInstParaToDefaultParameters": false,
-    "UninstFile": "($global:PackageConfig.installLocation)\\unins000.exe",
-    "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"($global:PackageConfig.uninstLogFile)\"",
+    "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
+    "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
     "AppendUninstParaToDefaultParameters": false,
     "AppKillProcesses": [
       "ScPapers"
@@ -53,8 +53,8 @@
       {"Source":"Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"}
     ],
     "UninstallKeysToHide":[
-      {"Is64Bit":false,"KeyName":"$($global:PackageConfig.UninstallKey)"},
-      {"Is64Bit":true,"KeyName":"<CustomKeyName>"}
+      {"KeyName":"$($global:PackageConfig.UninstallKey)","Is64Bit":false,"KeyNameIsDisplayName":false},
+      {"KeyName":"<SomeDisplayName>","Is64Bit":true,"KeyNameIsDisplayName":true}
     ],
     "PackageSpecificVariablesRaw": [
       {

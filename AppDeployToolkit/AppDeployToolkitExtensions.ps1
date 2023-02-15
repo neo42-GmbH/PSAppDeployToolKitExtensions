@@ -665,7 +665,7 @@ function Get-NxtRegisterOnly {
 			return $false
 		}
 		If (
-			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Upgrade" -and -not (Test-RegistryValue -Key HKLM\Software$Wow6432Node\neoPackages\$PackageFamilyGUID -Value 'ProductName')
+			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and -not (Test-RegistryValue -Key HKLM\Software$Wow6432Node\neoPackages\$PackageFamilyGUID -Value 'ProductName')
 			) {
 			#Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$UninstallKey -Name 'SystemComponent' -Type 'Dword' -Value '1'
 			Write-Log -Message 'Application is already present. set Softmigration to $true.'
@@ -858,7 +858,9 @@ Function Register-NxtPackage {
 		Try {
 			Copy-File -Path "$ScriptParentPath\AppDeployToolkit" -Destination "$App\neo42-Install\" -Recurse
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$ScriptParentPath\Setup.ico" -Destination "$App\"
+			Copy-File -Path "$ScriptParentPath\neo42PackageConfig.json" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$ScriptParentPath\Setup.ico" -Destination "$App\neo42-Install\"
 
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'AppPath' -Value $App
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
@@ -876,7 +878,7 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallString' -Value ("""$global:System\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
 			If ($true -eq $UserPartOnInstallation) {
@@ -886,7 +888,7 @@ Function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
 
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neoInstall\Setup.ico
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neo42-Install\Setup.ico
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayVersion' -Value $AppVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'MachineKeyName' -Value $RegPackagesKey\$PackageFamilyGUID
@@ -899,7 +901,7 @@ Function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayVersion' -Value $DisplayVersion
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'Publisher' -Value $AppVendor
 			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
-			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'UninstallString' -Type 'ExpandString' -Value ('"' + $App + '\neoInstall\Deploy-Application.exe"', 'uninstall')
+			Set-RegistryKey -Key HKLM\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'UninstallString' -Type 'ExpandString' -Value ("""$global:System\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			Remove-RegistryKey HKLM\Software$Wow6432Node\$RegPackagesKey\$PackageFamilyGUID$("_Error")
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
@@ -919,7 +921,7 @@ Function Unregister-NxtPackage {
 	.SYNOPSIS
 		Removes package files and unregisters the package in the registry.
 	.DESCRIPTION
-		Removes the package files from "$APP\neoInstall\" and deletes the package's registry keys under "HKLM\Software[\Wow6432Node]\$regPackagesKey\$PackageFamilyGUID" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID".
+		Removes the package files from "$APP\" and deletes the package's registry keys under "HKLM\Software[\Wow6432Node]\$regPackagesKey\$PackageFamilyGUID" and "HKLM\Software[\Wow6432Node]\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID".
 	.PARAMETER PackageFamilyGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -1129,10 +1131,21 @@ Function Stop-NxtProcess {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Write-Log -Message "Stop process with name '$Name'" -Source ${cmdletName}
+		Write-Log -Message "Stopping process with name '$Name'..." -Source ${cmdletName}
 		Try {
-			Stop-Process -Name $Name -Force
-			Write-Log -Message "Startup type set successful." -Source ${cmdletName}
+			If (Get-Process -Name $Name -ErrorAction SilentlyContinue) {
+				Stop-Process -Name $Name -Force
+				Start-Sleep 1
+				If (Get-Process -Name $Name -ErrorAction SilentlyContinue) {
+					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				}
+				else {
+					Write-Log -Message "The process was successfully stopped." -Source ${cmdletName}
+				}
+			}
+			else {
+				Write-Log -Message "The process does not exist. Skipped stopping the process." -Source ${cmdletName}
+			}
 		}
 		Catch {
 			Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -4229,6 +4242,204 @@ function Execute-NxtNullsoft {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
+#region Function Execute-NxtMSI
+function Execute-NxtMSI {
+	<#
+.SYNOPSIS
+	Wraps around the Execute-MSI Function. Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
+.DESCRIPTION
+	Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
+	If the -Action parameter is set to "Install" and the MSI is already installed, the function will exit.
+	Sets default switches to be passed to msiexec based on the preferences in the XML configuration file.
+	Automatically generates a log file name and creates a verbose log file for all msiexec operations.
+	Expects the MSI or MSP file to be located in the "Files" sub directory of the App Deploy Toolkit. Expects transform files to be in the same directory as the MSI file.
+.PARAMETER Action
+	The action to perform. Options: Install, Uninstall, Patch, Repair, ActiveSetup.
+.PARAMETER Path
+	The path to the MSI/MSP file or the product code of the installed MSI.
+.PARAMETER Transform
+	The name of the transform file(s) to be applied to the MSI. The transform file is expected to be in the same directory as the MSI file. Multiple transforms have to be separated by a semi-colon.
+.PARAMETER Patch
+	The name of the patch (msp) file(s) to be applied to the MSI for use with the "Install" action. The patch file is expected to be in the same directory as the MSI file. Multiple patches have to be separated by a semi-colon.
+.PARAMETER Parameters
+	Overrides the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
+.PARAMETER AddParameters
+	Adds to the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
+.PARAMETER SecureParameters
+	Hides all parameters passed to the MSI or MSP file from the toolkit Log file.
+.PARAMETER LoggingOptions
+	Overrides the default logging options specified in the XML configuration file. Default options are: "/L*v".
+.PARAMETER Log
+	Sets the Log Path either as Full Path or as logname
+.PARAMETER WorkingDirectory
+	Overrides the working directory. The working directory is set to the location of the MSI file.
+.PARAMETER SkipMSIAlreadyInstalledCheck
+	Skips the check to determine if the MSI is already installed on the system. Default is: $false.
+.PARAMETER IncludeUpdatesAndHotfixes
+	Include matches against updates and hotfixes in results.
+.PARAMETER NoWait
+	Immediately continue after executing the process.
+.PARAMETER PassThru
+	Returns ExitCode, STDOut, and STDErr output from the process.
+.PARAMETER IgnoreExitCodes
+	List the exit codes to ignore or * to ignore all exit codes.
+.PARAMETER PriorityClass	
+	Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
+.PARAMETER ExitOnProcessFailure
+	Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $true
+.PARAMETER RepairFromSource
+	Specifies whether we should repair from source. Also rewrites local cache. Default: $false
+.PARAMETER ContinueOnError
+	Continue if an error occurred while trying to start the process. Default: $false.
+.PARAMETER ConfigMSILogDir
+    Contains the FolderPath to the centrally configured Logdirectory from psadt main.
+    Defaults to $configMSILogDirc
+.EXAMPLE
+	Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi'
+	Installs an MSI
+.EXAMPLE
+	Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -Transform 'Adobe_FlashPlayer_11.2.202.233_x64_EN_01.mst' -Parameters '/QN'
+	Installs an MSI, applying a transform and overriding the default MSI toolkit parameters
+.EXAMPLE
+	[psobject]$ExecuteMSIResult = Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -PassThru
+	Installs an MSI and stores the result of the execution into a variable by using the -PassThru option
+.EXAMPLE
+	Execute-NxtMSI -Action 'Uninstall' -Path '{26923b43-4d38-484f-9b9e-de460746276c}'
+	Uninstalls an MSI using a product code
+.EXAMPLE
+	Execute-NxtMSI -Action 'Patch' -Path 'Adobe_Reader_11.0.3_EN.msp'
+	Installs an MSP
+.NOTES
+		AppDeployToolkit is required in order to run this function.
+.LINK
+	http://psappdeploytoolkit.com
+#>
+[CmdletBinding()]
+Param (
+	[Parameter(Mandatory=$false)]
+	[ValidateSet('Install','Uninstall','Patch','Repair','ActiveSetup')]
+	[string]$Action = 'Install',
+	[Parameter(Mandatory=$true,HelpMessage='Please enter either the path to the MSI/MSP file or the ProductCode')]
+	[Alias('FilePath')]
+	[string]$Path,
+	[Parameter(Mandatory = $false)]
+	[bool]
+	$UninstallKeyIsDisplayName = $false,
+	[Parameter(Mandatory = $false)]
+	[AllowEmptyString()]
+	[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+	[string]
+	$Log,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[string]$Transform,
+	[Parameter(Mandatory=$false)]
+	[Alias('Arguments')]
+	[string]$Parameters,
+	[Parameter(Mandatory=$false)]
+	[string]$AddParameters,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[switch]$SecureParameters = $false,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[string]$Patch,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[string]$LoggingOptions,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[string]$WorkingDirectory,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[switch]$SkipMSIAlreadyInstalledCheck = $false,
+	[Parameter(Mandatory=$false)]
+	[switch]$IncludeUpdatesAndHotfixes = $false,
+	[Parameter(Mandatory=$false)]
+	[switch]$NoWait = $false,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[switch]$PassThru = $false,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[string]$IgnoreExitCodes,
+	[Parameter(Mandatory=$false)]
+	[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
+	[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[boolean]$ExitOnProcessFailure = $true,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[boolean]$RepairFromSource = $false,
+	[Parameter(Mandatory=$false)]
+	[ValidateNotNullorEmpty()]
+	[boolean]$ContinueOnError = $false,
+	[Parameter(Mandatory=$false)]
+	[string]
+	$ConfigMSILogDir = $configMSILogDir
+)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
+		## Add all parameters with defaults to the PSBoundParameters:
+		[array]$functionParametersWithDefaults = (
+			"Action",
+			"SecureParameters",
+			"SkipMSIAlreadyInstalledCheck",
+			"IncludeUpdatesAndHotfixes",
+			"NoWait",
+			"PassThru",
+			"PriorityClass",
+			"ExitOnProcessFailure",
+			"RepairFromSource",
+			"ContinueOnError",
+			"ConfigMSILogDir"
+		)
+		foreach ($functionParametersWithDefault in $functionParametersWithDefaults){
+			$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
+		}
+		[array]$functionParametersToBeRemoved = (
+			"Log",
+			"UninstallKeyIsDisplayName",
+			"ConfigMSILogDir"
+		)
+		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved){
+			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
+		}
+	}
+	Process {
+		if ($UninstallKeyIsDisplayName -and $Action -eq "Uninstall") {
+			$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey | Select-Object -First 1 -ExpandProperty ProductCode
+		}
+		if ([string]::IsNullOrEmpty($Parameters)) {
+			$null = $PSBoundParameters.Remove('Parameters')
+		}
+		if ([string]::IsNullOrEmpty($AddParameters)) {
+			$null = $PSBoundParameters.Remove('AddParameters')
+		}
+		if (![string]::IsNullOrEmpty($Log)) {
+			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
+			$PSBoundParameters.add("LogName", $msiLogName )
+		}
+		Execute-MSI @PSBoundParameters
+		## Move Logs to correct destination
+		if ([System.IO.Path]::IsPathRooted($Log)) {
+			$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
+			[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
+			Move-NxtItem $logPath -Destination $Log
+		}
+	}
+	End {
+		If ($PassThru) {
+			Write-Output -InputObject $ExecuteResults
+		}
+
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
 #region Function Import-NxtIniFile
 function Import-NxtIniFile {
 	<#
@@ -4319,7 +4530,14 @@ function Set-NxtSetupCfg {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[hashtable]$global:setupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+		Write-Log -Message "Checking for setup.cfg under [$path]..." -Source ${CmdletName}
+		If ([System.IO.File]::Exists($Path)) {
+			[hashtable]$global:setupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+			Write-Log -Message "Setup.cfg found and successfully parsed into global:setupCfg object." -Source ${CmdletName}
+		}
+		else {
+			Write-Log -Message "No Setup.cfg found. Skipped parsing of setup.cfg." -Severity 2 -Source ${CmdletName}
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer

@@ -335,6 +335,7 @@ function Install-NxtApplication {
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Install'
 		Path	= "$InstFile"
+		UninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendInstParaToDefaultParameters){
@@ -352,32 +353,43 @@ function Install-NxtApplication {
 	## <Perform Installation tasks here>
 	switch -Wildcard ($internalInstallerMethod) {
 		MSI {
-			Execute-MSI @executeNxtParams -LogName "$InstLogFile"
+			Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
 		}
 		"Inno*" {
-			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$InstLogFile"
+			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
 		}
 		Nullsoft {
-			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
 		}
 		"BitRock*" {
-			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 		}
 		none {
 
 		}
 		Default {
-			Execute-Process -Path "$InstFile" -Parameters "$InstPara"
+			[hashtable]$executeParams = @{
+				Path	= "$InstFile"
+			}
+			if (![string]::IsNullOrEmpty($InstPara)) {
+				$executeParams["Parameters"] = "$InstPara"
+			}
+			Execute-Process @executeParams
 		}
 	}
 	$InstallExitCode = $LastExitCode
 
 	Start-Sleep -Seconds 5
 
-	## Test successfull installation
-	if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-		Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
-		# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
+	## Test for successfull installation (if UninstallKey value is set)
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
+	}
+	else {
+		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+			Write-Log -Message "Installation of $appName failed. ErrorLevel: $InstallExitCode" -Severity 3 -Source ${CmdletName}
+			# Exit-Script -ExitCode ...Which ExitCode? $InstallExitCode?
+		}
 	}
 
 	return $true
@@ -402,12 +414,15 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UserPartRevision
 		Specifies the UserPartRevision for this installation
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER UninstallKeys
-		Specifies a list of UninstallKeys set by the Installer in this Package.
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
 		Defaults to the corresponding values from the PackageConfig object.
 	.PARAMETER DesktopShortcut
 		Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
 		Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.LINK
@@ -428,10 +443,13 @@ Param (
 		$UserPartRevision = $global:PackageConfig.UserPartRevision,
 		[Parameter(Mandatory=$false)]
 		[PSCustomObject]
-		$UninstallKeys = $global:PackageConfig.UninstallKeysToHide,
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
 		[Parameter(Mandatory=$false)]
 		[bool]
-		$DesktopShortcut = [bool]([int]$global:SetupCfg.Options.DesktopShortcut)
+		$DesktopShortcut = [bool]([int]$global:SetupCfg.Options.DesktopShortcut),
+		[Parameter(Mandatory=$false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node
 	)
 	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
 
@@ -444,15 +462,22 @@ Param (
 		Remove-NxtDesktopShortcuts
 	}
 
-	foreach($uninstallKeyToHide in $UninstallKeys) {
+	foreach($uninstallKeyToHide in $UninstallKeysToHide) {
 		[string]$wowEntry = ""
 		if($false -eq $uninstallKeyToHide.Is64Bit) {
-			$wowEntry = "\WOW6432Node"
+			$wowEntry = $Wow6432Node
 		}
-		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName)){
-			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($uninstallKeyToHide.KeyName) -Name 'SystemComponent' -Type 'Dword' -Value '1'
-		}else{
-			Write-Log -Message "Did not find a registry key $($uninstallKeyToHide.KeyName), skipped setting systemcomponent entry for this key" -Source ${CmdletName}
+		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+		}
+		else {
+			$CurrentKeyName = $uninstallKeyToHide.KeyName
+		}
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName){
+			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		}
+		else{
+			Write-Log -Message "Did not find a registry key $CurrentKeyName, skipped setting systemcomponent entry for this key" -Source ${CmdletName}
 		}
 	}
 	
@@ -499,6 +524,12 @@ function Uninstall-NxtApplication {
 	.PARAMETER Method
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+		Defaults to the corresponding values from the PackageConfig object.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
 	.EXAMPLE
 		Uninstall-NxtApplication
 	.LINK
@@ -528,67 +559,112 @@ function Uninstall-NxtApplication {
 		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$Method = $global:PackageConfig.Method
+		$Method = $global:PackageConfig.Method,
+		[Parameter(Mandatory=$false)]
+		[PSCustomObject]
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+		[Parameter(Mandatory=$false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node
 )
 	[string]$global:installPhase = 'Pre-Uninstallation'
 	
 	## <Perform Pre-Uninstallation tasks here>
-	Remove-RegistryKey -Key HKLM\Software$global:Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($global:PackageConfig.UninstallKey) -Name 'SystemComponent'
-
-	[string]$global:installPhase = 'Uninstallation'
-	
-	if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-	
-		## <Perform Uninstallation tasks here, which should only be executed, if the software is actually installed.>
-
-		[hashtable]$executeNxtParams = @{
-			Action	= 'Uninstall'
+	foreach($uninstallKeyToHide in $UninstallKeysToHide) {
+		[string]$wowEntry = ""
+		if($false -eq $uninstallKeyToHide.Is64Bit) {
+			$wowEntry = $Wow6432Node
 		}
-		if (![string]::IsNullOrEmpty($UninstPara)) {
-			if ($AppendUninstParaToDefaultParameters){
-				$executeNxtParams["AddParameters"] = "$UninstPara"
-			}else{
-				$executeNxtParams["Parameters"] = "$UninstPara"
-			}
-		}
-		if ([string]::IsNullOrEmpty($UninstallKey)) {
-			[string]$internalInstallerMethod = ""
+		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
 		}
 		else {
-			[string]$internalInstallerMethod = $Method
+			$CurrentKeyName = $uninstallKeyToHide.KeyName
 		}
-		switch -Wildcard ($internalInstallerMethod) {
-			MSI {
-				Execute-MSI @executeNxtParams -Path "$UninstallKey" -LogName "$UninstLogFile"
-			}
-			"Inno*" {
-				Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -Log "$UninstLogFile"
-			}
-			Nullsoft {
-				Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
-			}
-			"BitRock*" {
-				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
-			}
-			none {
-
-			}
-			Default {
-				Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
-			}
+		if(Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Value SystemComponent){
+			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent'
 		}
-		$UninstallExitCode = $LastExitCode
-
-		Start-Sleep -Seconds 5
-
-		## Test successfull uninstallation
-		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-			Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
-			# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
+		else{
+			Write-Log -Message "Did not find a SystemComponent entry under registry key $CurrentKeyName, skipped deleting the entry for this key" -Source ${CmdletName}
 		}
 	}
-	## <Perform Uninstallation tasks here, which should always be executed, even if the software is not installed anymore.>
-		
+
+	[string]$global:installPhase = 'Uninstallation'
+
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
+		if ([string]::IsNullOrEmpty($UninstFile)) {
+			Write-Log -Message "UninstFile value NOT set. Uninstallation NOT executed."  -Severity 2 -Source ${CmdletName}
+		}
+		else {
+			if ([System.IO.File]::Exists($UninstFile)) {
+				Write-Log -Message "UninstFile found: '$UninstFile' Executing the uninstallation..." -Source ${CmdletName}
+				Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
+				$UninstallExitCode = $LastExitCode
+			}
+			else {
+				Write-Log -Message "UninstFile NOT found: '$UninstFile' Uninstallation NOT executed."  -Severity 2 -Source ${CmdletName}
+			}
+		}
+	}
+	else {
+		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+	
+			[hashtable]$executeNxtParams = @{
+				Action	= 'Uninstall'
+				UninstallKeyIsDisplayName	= $UninstallKeyIsDisplayName
+			}
+			if (![string]::IsNullOrEmpty($UninstPara)) {
+				if ($AppendUninstParaToDefaultParameters){
+					$executeNxtParams["AddParameters"] = "$UninstPara"
+				}else{
+					$executeNxtParams["Parameters"] = "$UninstPara"
+				}
+			}
+			if ([string]::IsNullOrEmpty($UninstallKey)) {
+				[string]$internalInstallerMethod = ""
+			}
+			else {
+				[string]$internalInstallerMethod = $Method
+			}
+			switch -Wildcard ($internalInstallerMethod) {
+				MSI {
+					Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
+				}
+				"Inno*" {
+					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+				}
+				Nullsoft {
+					Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+				}
+				"BitRock*" {
+					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+				}
+				none {
+	
+				}
+				Default {
+					[hashtable]$executeParams = @{
+						Path	= "$UninstFile"
+					}
+					if (![string]::IsNullOrEmpty($UninstPara)) {
+						$executeParams["Parameters"] = "$UninstPara"
+					}
+					Execute-Process @executeParams
+				}
+			}
+			$UninstallExitCode = $LastExitCode
+	
+			Start-Sleep -Seconds 5
+	
+			## Test successfull uninstallation
+			if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+				Write-Log -Message "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -Severity 3 -Source ${CmdletName}
+				# Exit-Script -ExitCode ...Which ExitCode? $UninstallExitCode?
+			}
+		}
+	}
+	
 	return $true
 }
 
@@ -684,13 +760,15 @@ function Repair-NxtApplication {
 		Action	= 'Repair'
 		Path	= "$InstFile"
 	}
-	if ($AppendInstParaToDefaultParameters){
-		$executeNxtParams["AddParameters"] = "$InstPara"
-	}else{
-		$executeNxtParams["Parameters"] = "$InstPara"
+	if (![string]::IsNullOrEmpty($InstPara)) {
+		if ($AppendInstParaToDefaultParameters){
+			$executeNxtParams["AddParameters"] = "$InstPara"
+		}else{
+			$executeNxtParams["Parameters"] = "$InstPara"
+		}
 	}
 	## <Perform repair tasks here>
-	Execute-MSI @executeNxtParams -LogName "Repair.$($global:DeploymentTimestamp).log"
+	Execute-MSI @executeNxtParams -LogName "Repair.$InstFile.$($global:DeploymentTimestamp).log" -RepairFromSource $true
 
 	$RepairExitCode = $LastExitCode
 }
