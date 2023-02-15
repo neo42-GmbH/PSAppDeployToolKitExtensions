@@ -179,7 +179,7 @@ Function Format-NxtPackageSpecificVariables{
 	.DESCRIPTION
 		Formats the PackageSpecificVariables from PackageSpecificVariablesRaw in the $global:PackageConfig.
 		The variables can then be acquired like this:
-		$global:PackageConfig.PackageSpecificVariables.CustomVariablename
+		$global:PackageConfig.PackageSpecificVariables.CustomVariableName
 		Expands variables if "ExpandVariables" is set to true
 	.PARAMETER PackageConfig
 		Expects an Object containing the Packageconfig, defaults to $global:PackageConfig
