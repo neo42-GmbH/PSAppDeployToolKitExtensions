@@ -168,7 +168,7 @@ param (
 				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
 					## Application is present. Only register the package
 					[string]$global:installPhase = 'Package-Registration'
-					CustomPostInstallAndReinstall
+					CustomPostInstallAndReinstallAndSoftMigration
 					Complete-NxtPackageInstallation
 					Register-NxtPackage
 					Exit-Script -ExitCode $mainExitCode
@@ -206,6 +206,7 @@ param (
 					CustomPostInstall
 				}
 				CustomPostInstallAndReinstall
+				CustomPostInstallAndReinstallAndSoftMigration
 				If ($true -eq $isInstalled) {
 					Complete-NxtPackageInstallation
 				}
@@ -886,7 +887,13 @@ function CustomPostInstall {
 function CustomPostInstallAndReinstall {
 	[string]$global:installPhase = 'CustomPostInstallAndReinstall'
 
-	## Executes after the completed install or repair process
+	## Executes after the completed install or reinstall process but NOT on SoftMigration
+}
+
+function CustomPostInstallAndReinstallAndSoftMigration {
+	[string]$global:installPhase = 'CustomPostInstallAndReinstallAndSoftMigration'
+
+	## Executes after the completed install or reinstall process and on SoftMigration
 }
 
 function CustomPreUninstall {
