@@ -182,7 +182,7 @@ Function Format-NxtPackageSpecificVariables{
 		$global:PackageConfig.PackageSpecificVariables.CustomVariableName
 		Expands variables if "ExpandVariables" is set to true
 	.PARAMETER PackageConfig
-		Expects an Object containing the Packageconfig, defaults to $global:PackageConfig
+		Expects an object containing the Packageconfig, defaults to $global:PackageConfig
 		Defaults to $global:PackageConfig
 	.EXAMPLE
 		Format-NxtPackageSpecificVariables
