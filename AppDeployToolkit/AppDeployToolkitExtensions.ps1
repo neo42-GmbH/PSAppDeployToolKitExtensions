@@ -82,6 +82,7 @@ Function Initialize-NxtEnvironment {
 		Set-NxtPackageArchitecture
 		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
+		Format-NxtPackageSpecificVariables
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -157,7 +158,6 @@ Function Expand-NxtPackageConfig {
 		$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
 		$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstLogFile)
 		$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstLogFile)
-		$global:PackageConfig.RegUninstallKey = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.RegUninstallKey)
 		$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstFile)
 		$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstPara)
 		$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstFile)
@@ -165,6 +165,54 @@ Function Expand-NxtPackageConfig {
 		foreach($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
 			$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
 		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+
+#region Function Format-NxtPackageSpecificVariables
+Function Format-NxtPackageSpecificVariables{
+	<#
+	.DESCRIPTION
+		Formats the PackageSpecificVariables from PackageSpecificVariablesRaw in the $global:PackageConfig.
+		The variables can then be acquired like this:
+		$global:PackageConfig.PackageSpecificVariables.CustomVariableName
+		Expands variables if "ExpandVariables" is set to true
+	.PARAMETER PackageConfig
+		Expects an object containing the Packageconfig, defaults to $global:PackageConfig
+		Defaults to $global:PackageConfig
+	.EXAMPLE
+		Format-NxtPackageSpecificVariables
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		$PackageConfig = $global:PackageConfig
+	)
+		
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		
+		## Get String from object and Expand String if requested
+		$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[string],[string]]"
+		foreach($packageSpecificVariable in $global:PackageConfig.PackageSpecificVariablesRaw){
+			if ($packageSpecificVariable.ExpandVariables) {
+				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name,$ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
+			}else{
+				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name,$packageSpecificVariable.Value)
+			}
+		}
+		$global:PackageConfig | Add-Member -MemberType NoteProperty -Name "PackageSpecificVariables" -Value $packageSpecificVariableDictionary
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -562,7 +610,7 @@ function Get-NxtRegisterOnly {
 	Defaults to the corresponding value from the PackageConfig object.
 .PARAMETER SoftMigration
 	Specifies if a Software should be registered only if it already exists through a different installation.
-	Defaults to the corresponding value from the PackageConfig object.
+	Defaults to the corresponding value from the Setup.cfg.
 .PARAMETER DisplayVersion
 	Specifies the DisplayVersion of the Software Package.
 	Defaults to the corresponding value from the PackageConfig object.
@@ -585,7 +633,7 @@ function Get-NxtRegisterOnly {
 		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$SoftMigration = $global:PackageConfig.SoftMigration,
+		$SoftMigration = [bool]([int]$global:SetupCfg.Options.SoftMigration),
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
@@ -602,17 +650,17 @@ function Get-NxtRegisterOnly {
 
 		[string]$installPhase = 'Soft-Migration'
 		if ([string]::IsNullOrEmpty($DisplayVersion)){
-			Write-Log -Message 'DisplayVersion is $null or empty, set Softmigration to $false.'
+			Write-Log -Message 'DisplayVersion is $null or empty. Set SoftMigration to $false.'
 			return $false
 		}
 		if ([string]::IsNullOrEmpty($DetectedDisplayVersion)){
-			Write-Log -Message 'DetectedDisplayVersion is $null or empty, set Softmigration to $false.'
+			Write-Log -Message 'DetectedDisplayVersion is $null or empty. Set SoftMigration to $false.'
 			return $false
 		}
 		If (
 			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
 			) {
-			Write-Log -Message 'Application is already present. set Softmigration to $true.'
+			Write-Log -Message 'Application is already present. Set SoftMigration to $true.'
 			return $true
 		}
 	}
@@ -1208,6 +1256,8 @@ function Get-NxtFolderSize {
 		Gets the size of the folder recursive in bytes.
 	.PARAMETER FolderPath
 		Path to the folder.
+	.PARAMETER Unit
+		Unit the foldersize should be returned in.
 	.EXAMPLE
 		Get-NxtFolderSize "D:\setup\"
 	.OUTPUTS
@@ -1219,7 +1269,11 @@ function Get-NxtFolderSize {
 	Param(
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$FolderPath
+		[string]$FolderPath,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("B","KB","MB","GB","TB","PB")]
+		[string]
+		$Unit = "B"
 		)
 	Begin {
 		## Get the name of this function and write header
@@ -1231,11 +1285,12 @@ function Get-NxtFolderSize {
 		try {
 			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
 			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
+			[long]$folderSize = [math]::round(($result/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get size from folder '$FolderPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		Write-Output $result
+		Write-Output $folderSize
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -1301,6 +1356,8 @@ function Get-NxtDriveFreeSpace {
 		Gets free space of drive in bytes.
 	.PARAMETER DriveName
 		Name of the drive.
+	.PARAMETER Unit
+		Unit the disksize should be returned in.
 	.EXAMPLE
 		Get-NxtDriveFreeSpace "c:"
 	.OUTPUTS
@@ -1313,7 +1370,11 @@ function Get-NxtDriveFreeSpace {
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]
-		$DriveName
+		$DriveName,
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("B","KB","MB","GB","TB","PB")]
+        [string]
+        $Unit = "B"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1323,11 +1384,12 @@ function Get-NxtDriveFreeSpace {
 	Process {
 		try {
 			[System.Management.ManagementObject]$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
+			[long]$diskFreekSize = [math]::Floor(($disk.FreeSpace/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get free space for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-			Write-Output $disk.FreeSpace
+			Write-Output $diskFreekSize
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -4939,7 +5001,7 @@ function Get-NxtAppIsInstalled {
 	.SYNOPSIS
 		Detects if the target application is installed.
 	.DESCRIPTION
-		Uses the registry Uninstall Key to detect of the application is present.
+		Uses the registry Uninstall Key to detect if the application is present.
 	.PARAMETER UninstallKey
 		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
 		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
@@ -4982,7 +5044,7 @@ function Get-NxtAppIsInstalled {
 Function Exit-NxtScriptWithError {
 	<#
 	.SYNOPSIS
-		Exits the Script writing an error to the registry.
+		Exits the Script writing an error entry to the registry.
 	.DESCRIPTION
 		Exits the Script writing information about the installation attempt to the registry below the RegPackagesKey
 		defined in the neo42PackageConfig.json.
@@ -5144,6 +5206,100 @@ Function Exit-NxtScriptWithError {
 	}
 }
 #endregion
+
+#region Function Exit-NxtAbortReboot
+function Exit-NxtAbortReboot {
+	<#
+	.SYNOPSIS
+		Exits the script after deleting all package registry keys and requests a reboot from the deployment system.
+	.DESCRIPTION
+		Deletes the package machine key under "HKLM\Software\", which defaults to the PackageFamilyGUID under the RegPackagesKey value from the neo42PackageConfig.json.
+		Deletes the package uninstallkey under "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\", which defaults to the PackageFamilyGUID value from the neo42PackageConfig.json.
+		Writes an "error" message to the package log and an error entry to the registry, which defaults to "Uninstall of $installTitle requires a reboot before proceeding with the installation. AbortReboot!"
+		Exits the script with a return code to trigger a system reboot, which defaults to "3010".
+		Also deletes corresponding Empirum registry keys, if the pacakge was deployed with Matrix42 Empirum.
+	.PARAMETER PackageMachineKey
+		Path to the the package machine key under "HKLM\Software\".
+		Defaults to "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)".
+	.PARAMETER PackageUninstallKey
+		Name of the the package uninstallkey under "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to the PackageFamilyGUID value from the PackageConfig object.
+	.PARAMETER RebootMessage
+		The Message, that will apear in the package log and the error entry in the the registry.
+		Defaults to "Uninstall of $installTitle requires a reboot before proceeding with the installation. AbortReboot!"
+	.PARAMETER RebootExitCode
+		The exit code to trigger a system reboot.
+		Defaults to "3010".
+	.PARAMETER EmpirumMachineKey
+		Path to the Empirum package machine key under "HKLM\Software\".
+		Defaults to "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion".
+	.PARAMETER EmpirumUninstallKey
+		Name of the the Empirum package uninstallkey under "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to "$global:PackageConfig.UninstallDisplayName".
+	.EXAMPLE
+		Exit-NxtAbortReboot
+	.EXAMPLE
+		Exit-NxtAbortReboot -PackageMachineKey "OurPackages\{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -PackageUninstallKey "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
+	.EXAMPLE
+		Exit-NxtAbortReboot -RebootMessage "This package requires a system reboot..." -RebootExitCode "3010"
+	.EXAMPLE
+		Exit-NxtAbortReboot -EmpirumMachineKey "OurPackages\Microsoft\Office365\16.0" -EmpirumUninstallKey "OurPackage Microsoft Office365 16.0"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	param(
+		[Parameter(Mandatory=$false)]
+		[ValidateNotNullorEmpty()]
+		[String]$PackageMachineKey = "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)",
+		
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[String]$PackageUninstallKey = $global:PackageConfig.PackageFamilyGUID,
+		
+		[Parameter(Mandatory = $false)]
+		[String]$RebootMessage = "Uninstall of '$installTitle' requires a reboot before proceeding with the installation. AbortReboot!",
+		
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[int32]$RebootExitCode = 3010,
+		
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[String]$EmpirumMachineKey = "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion",
+		
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[String]$EmpirumUninstallKey = $global:PackageConfig.UninstallDisplayName
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		Write-Log -Message "Initiating AbortReboot..." -Source ${CmdletName}
+		Try {
+			Remove-RegistryKey -Key "HKLM\Software\$PackageMachineKey" -Recurse
+			Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageUninstallKey" -Recurse
+			If (Test-Path -Path "HKLM:Software\$EmpirumMachineKey") {
+				Remove-RegistryKey -Key "HKLM\Software\$EmpirumMachineKey" -Recurse
+			}
+			If (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") {
+				Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
+			}
+			Exit-NxtScriptWithError -ErrorMessage $RebootMessage -MainExitCode $RebootExitCode
+		}
+		Catch {
+			Write-Log -Message "Failed to execute AbortReboot. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+			Throw "Failed to execute AbortReboot: $($_.Exception.Message)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
