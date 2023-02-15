@@ -137,7 +137,7 @@ function Main {
 .PARAMETER MSIReinstallModeIsRepair
 		Defines if an installation should perform a repair.
 		Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER Method
+.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
 .EXAMPLE
@@ -155,7 +155,7 @@ param (
 	$MSIReinstallModeIsRepair = $global:PackageConfig.MSIReinstallModeIsRepair,
 	[Parameter(Mandatory=$false)]
 	[string]
-	$Method = $global:PackageConfig.Method
+	$InstallMethod = $global:PackageConfig.InstallMethod
 )
 	try {
 		CustomPreInit
@@ -188,14 +188,14 @@ param (
 						CustomPostInstallReinstall
 					}
 					else {
-						if("MSI" -eq $Method) {
+						if("MSI" -eq $InstallMethod) {
 							## Reinstall mode is set to repair
 							CustomPreInstallReinstall
 							$isInstalled = Repair-NxtApplication
 							CustomPostInstallReinstall
 						}
 						else {
-							Throw "Unsupported combination of 'MSIReinstallModeIsRepair' and 'Method' property. 'MSIReinstallModeIsRepair' is only supported for 'MSI'"
+							Throw "Unsupported combination of 'MSIReinstallModeIsRepair' and 'InstallMethod' property. 'MSIReinstallModeIsRepair' is only supported for 'MSI'"
 						}
 					}
 				}
@@ -293,7 +293,7 @@ function Install-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER Method
+	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
 	.EXAMPLE
@@ -322,7 +322,7 @@ function Install-NxtApplication {
 		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$Method = $global:PackageConfig.Method
+		$InstallMethod = $global:PackageConfig.InstallMethod
 	)
 	[string]$global:installPhase = 'Installation'
 
@@ -342,7 +342,7 @@ function Install-NxtApplication {
 		[string]$internalInstallerMethod = ""
 	}
 	else {
-		[string]$internalInstallerMethod = $Method
+		[string]$internalInstallerMethod = $InstallMethod
 	}
 	## <Perform Installation tasks here>
 	switch -Wildcard ($internalInstallerMethod) {
@@ -512,8 +512,8 @@ function Uninstall-NxtApplication {
 		If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER Method
-		Defines the type of the installer used in this package.
+	.PARAMETER UninstallMethod
+		Defines the type of the uninstaller used in this package.
 		Defaults to the corresponding value from the PackageConfig object
 	.PARAMETER UninstallKeysToHide
 		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
@@ -547,7 +547,7 @@ function Uninstall-NxtApplication {
 		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
 		[Parameter(Mandatory=$false)]
 		[string]
-		$Method = $global:PackageConfig.Method,
+		$UninstallMethod = $global:PackageConfig.UninstallMethod,
 		[Parameter(Mandatory=$false)]
 		[PSCustomObject]
 		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
@@ -613,7 +613,7 @@ function Uninstall-NxtApplication {
 				[string]$internalInstallerMethod = ""
 			}
 			else {
-				[string]$internalInstallerMethod = $Method
+				[string]$internalInstallerMethod = $UninstallMethod
 			}
 			switch -Wildcard ($internalInstallerMethod) {
 				MSI {
