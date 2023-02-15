@@ -178,9 +178,9 @@ Function Format-NxtPackageSpecificVariables{
 	<#
 	.DESCRIPTION
 		Formats the PackageSpecificVariables from PackageSpecificVariablesRaw in the $global:PackageConfig.
-		The Variables can then be acquired like this:
-		$Global:PackageConfig.PackageSpecificVariablesRaw.CustomVariablename
-		Expands Variables if "ExpandVariables" is set to true
+		The variables can then be acquired like this:
+		$global:PackageConfig.PackageSpecificVariables.CustomVariablename
+		Expands variables if "ExpandVariables" is set to true
 	.PARAMETER PackageConfig
 		Expects an Object containing the Packageconfig, defaults to $global:PackageConfig
 		Defaults to $global:PackageConfig
@@ -208,9 +208,9 @@ Function Format-NxtPackageSpecificVariables{
 		$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[string],[string]]"
 		foreach($packageSpecificVariable in $global:PackageConfig.PackageSpecificVariablesRaw){
 			if ($packageSpecificVariable.ExpandVariables) {
-				$packageSpecificVariableDictionary.Add($packageSpecificVariable.name,$ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
+				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name,$ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
 			}else{
-				$packageSpecificVariableDictionary.Add($packageSpecificVariable.name,$packageSpecificVariable.Value)
+				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name,$packageSpecificVariable.Value)
 			}
 		}
 		$global:PackageConfig | Add-Member -MemberType NoteProperty -Name "PackageSpecificVariables" -Value $packageSpecificVariableDictionary
