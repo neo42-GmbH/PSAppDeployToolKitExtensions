@@ -21,7 +21,7 @@
     "UninstallOld": true,
     "Reboot": 0,
     "MSIReinstallModeIsRepair": false,
-    "UserPartOnInstallation": false,
+    "UserPartOnInstallation": true,
     "UserPartOnUninstallation": false,
     "UserPartRevision": "2022,09,22,01",
     "HidePackageUninstallButton": false,

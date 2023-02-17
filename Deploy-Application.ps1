@@ -482,7 +482,9 @@ Param (
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ex bypass -file ""$App\neo42-Userpart\Deploy-Application.ps1"" installUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
+		[string]$commandToEncode = "Start-Process -FilePath `"$env:windir\system32\WindowsPowershell\v1.0\powershell.exe`" -ArgumentList `"-Command ```"&'$App\neo42-Userpart\Deploy-Application.ps1' -DeploymentType InstallUserpart```"`""
+		$encodedCommand = [System.Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($commandToEncode))
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy bypass -EncodedCommand `"$encodedCommand`"" -Version $UserPartRevision -Key "$PackageFamilyGUID"
 	}
 }
 
