@@ -89,7 +89,6 @@ Function Initialize-NxtEnvironment {
 	}
 }
 #endregion
-
 #region Function Get-NxtPackageConfig
 Function Get-NxtPackageConfig {
 	<#
@@ -125,7 +124,6 @@ Function Get-NxtPackageConfig {
 	}
 }
 #endregion
-
 #region Function Expand-NxtPackageConfig
 Function Expand-NxtPackageConfig {
 	<#
@@ -171,7 +169,6 @@ Function Expand-NxtPackageConfig {
 	}
 }
 #endregion
-
 #region Function Format-NxtPackageSpecificVariables
 Function Format-NxtPackageSpecificVariables{
 	<#
@@ -219,7 +216,6 @@ Function Format-NxtPackageSpecificVariables{
 	}
 }
 #endregion
-
 #region Function Set-NxtPackageArchitecture
 Function Set-NxtPackageArchitecture {
 	<#
@@ -354,7 +350,6 @@ Function Set-NxtPackageArchitecture {
 	}
 }
 #endregion
-
 #region Function Get-NxtVariablesFromDeploymentSystem
 Function Get-NxtVariablesFromDeploymentSystem {
 	<#
@@ -404,7 +399,585 @@ Function Get-NxtVariablesFromDeploymentSystem {
 	}
 }
 #endregion
+#region Function Install-NxtApplication
 
+function Install-NxtApplication {
+	<#
+.SYNOPSIS
+	Defines the required steps to install the application based on the target installer type
+.DESCRIPTION
+	Is only called in the Main function and should not be modified!
+	To customize the script always use the "CustomXXXX" entry points.
+.PARAMETER UninstallKey
+	Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
+	Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstallKeyIsDisplayName
+	Determins if the value given as UninstallKey should be interpreted as a displayname.
+	Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER InstLogFile
+	Defines the path to the Logfile that should be used by the installer.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER InstFile
+	Defines the path to the Installation File.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER InstPara
+	Defines the parameters which will be passed in the Installation Commandline.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER AppendInstParaToDefaultParameters
+	If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+	If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER InstallMethod
+	Defines the type of the installer used in this package.
+	Defaults to the corresponding value from the PackageConfig object
+.EXAMPLE
+	Install-NxtApplication
+.LINK
+	https://neo42.de/psappdeploytoolkit
+#>
+	param (
+		[Parameter(Mandatory = $false)]
+		[String]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[String]
+		$InstLogFile = $global:PackageConfig.InstLogFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstFile = $global:PackageConfig.InstFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstPara = $global:PackageConfig.InstPara,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallMethod = $global:PackageConfig.InstallMethod
+	)
+	[string]$global:installPhase = 'Installation'
+
+	[hashtable]$executeNxtParams = @{
+		Action                    = 'Install'
+		Path                      = "$InstFile"
+		UninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
+	}
+	if (![string]::IsNullOrEmpty($InstPara)) {
+		if ($AppendInstParaToDefaultParameters) {
+			$executeNxtParams["AddParameters"] = "$InstPara"
+		}
+		else {
+			$executeNxtParams["Parameters"] = "$InstPara"
+		}
+	}
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		[string]$internalInstallerMethod = ""
+	}
+	else {
+		[string]$internalInstallerMethod = $InstallMethod
+	}
+	## <Perform Installation tasks here>
+	switch -Wildcard ($internalInstallerMethod) {
+		MSI {
+			Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
+		}
+		"Inno*" {
+			Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
+		}
+		Nullsoft {
+			Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+		}
+		"BitRock*" {
+			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+		}
+		none {
+
+		}
+		Default {
+			[hashtable]$executeParams = @{
+				Path	= "$InstFile"
+			}
+			if (![string]::IsNullOrEmpty($InstPara)) {
+				$executeParams["Parameters"] = "$InstPara"
+			}
+			Execute-Process @executeParams
+		}
+	}
+	$InstallExitCode = $LastExitCode
+
+	Start-Sleep -Seconds 5
+
+	## Test for successfull installation (if UninstallKey value is set)
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
+	}
+	else {
+		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+			Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+		}
+	}
+
+	return $true
+}
+#endregion
+#region Function Complete-NxtPackageInstallation
+function Complete-NxtPackageInstallation {
+	<#
+.SYNOPSIS
+	Defines the required steps to finalize the installation of the package
+.DESCRIPTION
+	Is only called in the Main function and should not be modified!
+	To customize the script always use the "CustomXXXX" entry points.
+.PARAMETER App
+	Defines the path to a local persistent cache for installation files.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UserPartOnInstallation
+	Defines if the Userpart should be executed for this installation.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER PackageFamilyGUID
+	Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UserPartRevision
+	Specifies the UserPartRevision for this installation
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstallKeysToHide
+	Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+	Defaults to the corresponding values from the PackageConfig object.
+.PARAMETER DesktopShortcut
+	Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
+	Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
+.PARAMETER Wow6432Node
+	Switches between 32/64 Bit Registry Keys.
+	Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+.EXAMPLE
+	Complete-NxtPackageInstallation
+.LINK
+	https://neo42.de/psappdeploytoolkit
+#>
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UserPartOnInstallation = $global:PackageConfig.UserPartOnInstallation,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UserPartRevision = $global:PackageConfig.UserPartRevision,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$DesktopShortcut = [bool]([int]$global:SetupCfg.Options.DesktopShortcut),
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node
+	)
+	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
+
+	## <Perform Complete-NxtPackageInstallation tasks here>
+
+	If ($DesktopShortcut) {
+		Copy-NxtDesktopShortcuts
+	}
+	Else {
+		Remove-NxtDesktopShortcuts
+	}
+
+	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
+		[string]$wowEntry = ""
+		if ($false -eq $uninstallKeyToHide.Is64Bit) {
+			$wowEntry = $Wow6432Node
+		}
+		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+		}
+		else {
+			$CurrentKeyName = $uninstallKeyToHide.KeyName
+		}
+		if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName) {
+			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		}
+		else {
+			Write-Log -Message "Did not find a registry key $CurrentKeyName, skipped setting systemcomponent entry for this key" -Source ${CmdletName}
+		}
+	}
+
+	If ($true -eq $UserPartOnInstallation) {
+		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
+		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\neo42-Userpart\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
+	}
+}
+#endregion
+#region Function Uninstall-NxtApplication
+function Uninstall-NxtApplication {
+	<#
+.SYNOPSIS
+	Defines the required steps to uninstall the application based on the target installer type
+.DESCRIPTION
+	Is only called in the Main function and should not be modified!
+.PARAMETER UninstallKey
+	Specifies the original UninstallKey set by the Installer in this Package.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstallKeyIsDisplayName
+	Determins if the value given as UninstallKey should be interpreted as a displayname.
+	Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstLogFile
+	Defines the path to the Logfile that should be used by the uninstaller.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstFile
+	Defines the path to the Installation File.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstPara
+	Defines the parameters which will be passed in the UnInstallation Commandline.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER AppendUninstParaToDefaultParameters
+	If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
+	If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstallMethod
+	Defines the type of the uninstaller used in this package.
+	Defaults to the corresponding value from the PackageConfig object
+.PARAMETER UninstallKeysToHide
+	Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+	Defaults to the corresponding values from the PackageConfig object.
+.PARAMETER Wow6432Node
+	Switches between 32/64 Bit Registry Keys.
+	Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+.EXAMPLE
+	Uninstall-NxtApplication
+.LINK
+	https://neo42.de/psappdeploytoolkit
+#>
+	Param(
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstLogFile = $global:PackageConfig.UninstLogFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstFile = $global:PackageConfig.UninstFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstPara = $global:PackageConfig.UninstPara,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstallMethod = $global:PackageConfig.UninstallMethod,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node
+	)
+	[string]$global:installPhase = 'Pre-Uninstallation'
+
+	## <Perform Pre-Uninstallation tasks here>
+	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
+		[string]$wowEntry = ""
+		if ($false -eq $uninstallKeyToHide.Is64Bit) {
+			$wowEntry = $Wow6432Node
+		}
+		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+		}
+		else {
+			$CurrentKeyName = $uninstallKeyToHide.KeyName
+		}
+		if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Value SystemComponent) {
+			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent'
+		}
+		else {
+			Write-Log -Message "Did not find a SystemComponent entry under registry key $CurrentKeyName, skipped deleting the entry for this key" -Source ${CmdletName}
+		}
+	}
+
+	[string]$global:installPhase = 'Uninstallation'
+
+	if ([string]::IsNullOrEmpty($UninstallKey)) {
+		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
+		if ([string]::IsNullOrEmpty($UninstFile)) {
+			Write-Log -Message "UninstFile value NOT set. Uninstallation NOT executed."  -Severity 2 -Source ${CmdletName}
+		}
+		else {
+			if ([System.IO.File]::Exists($UninstFile)) {
+				Write-Log -Message "UninstFile found: '$UninstFile' Executing the uninstallation..." -Source ${CmdletName}
+				Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
+				$UninstallExitCode = $LastExitCode
+			}
+			else {
+				Write-Log -Message "UninstFile NOT found: '$UninstFile' Uninstallation NOT executed."  -Severity 2 -Source ${CmdletName}
+			}
+		}
+	}
+	else {
+		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+
+			[hashtable]$executeNxtParams = @{
+				Action                    = 'Uninstall'
+				UninstallKeyIsDisplayName	= $UninstallKeyIsDisplayName
+			}
+			if (![string]::IsNullOrEmpty($UninstPara)) {
+				if ($AppendUninstParaToDefaultParameters) {
+					$executeNxtParams["AddParameters"] = "$UninstPara"
+				}
+				else {
+					$executeNxtParams["Parameters"] = "$UninstPara"
+				}
+			}
+			if ([string]::IsNullOrEmpty($UninstallKey)) {
+				[string]$internalInstallerMethod = ""
+			}
+			else {
+				[string]$internalInstallerMethod = $UninstallMethod
+			}
+			switch -Wildcard ($internalInstallerMethod) {
+				MSI {
+					Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
+				}
+				"Inno*" {
+					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+				}
+				Nullsoft {
+					Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+				}
+				"BitRock*" {
+					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+				}
+				none {
+
+				}
+				Default {
+					[hashtable]$executeParams = @{
+						Path	= "$UninstFile"
+					}
+					if (![string]::IsNullOrEmpty($UninstPara)) {
+						$executeParams["Parameters"] = "$UninstPara"
+					}
+					Execute-Process @executeParams
+				}
+			}
+			$UninstallExitCode = $LastExitCode
+
+			Start-Sleep -Seconds 5
+
+			## Test successfull uninstallation
+			if ([string]::IsNullOrEmpty($UninstallKey)) {
+				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
+			}
+			else {
+				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+				}
+			}
+		}
+	}
+
+	return $true
+}
+#endregion
+#region Function Complete-NxtPackageUninstallation
+function Complete-NxtPackageUninstallation {
+	<#
+.SYNOPSIS
+	Defines the required steps to finalize the uninstallation of the package
+.DESCRIPTION
+	Is only called in the Main function and should not be modified!
+	To customize the script always use the "CustomXXXX" entry points.
+.PARAMETER App
+	Defines the path to a local persistent cache for installation files.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER PackageFamilyGUID
+	Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UserPartOnUninstallation
+	Specifies if a Userpart should take place during uninstallation.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UserPartRevision
+	Specifies the UserPartRevision for this installation.
+	Defaults to the corresponding value from the PackageConfig object.
+.EXAMPLE
+	Complete-NxtPackageUninstallation
+.LINK
+	https://neo42.de/psappdeploytoolkit
+#>
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UserPartOnUninstallation = $global:PackageConfig.UserPartOnUninstallation,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UserPartRevision = $global:PackageConfig.UserPartRevision
+	)
+	[string]$global:installPhase = 'Complete-NxtPackageUninstallation'
+
+	## <Perform Complete-NxtPackageUninstallation tasks here>
+
+	Remove-NxtDesktopShortcuts
+	Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
+	If ($true -eq $UserPartOnUninstallation) {
+		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
+		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\neo42-Userpart\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
+	}
+}
+#endregion
+#region Function Repair-NxtApplication
+function Repair-NxtApplication {
+	<#
+.SYNOPSIS
+	Defines the required steps to repair an MSI based application.
+.DESCRIPTION
+	Is only called in the Main function and should not be modified!
+	To customize the script always use the "CustomXXXX" entry points.
+.PARAMETER InstFile
+	Defines the path to the Installation File.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER InstPara
+	Defines the parameters which will be passed in the Installation Commandline.
+	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER AppendInstParaToDefaultParameters
+	If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+	If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+	Defaults to the corresponding value from the PackageConfig object.
+.EXAMPLE
+	Repair-NxtApplication
+.LINK
+	https://neo42.de/psappdeploytoolkit
+#>
+	param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstFile = $global:PackageConfig.InstFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstPara = $global:PackageConfig.InstPara,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
+	)
+	[string]$global:installPhase = 'Repair-NxtApplication'
+	[hashtable]$executeNxtParams = @{
+		Action	= 'Repair'
+		Path   = "$InstFile"
+	}
+	if (![string]::IsNullOrEmpty($InstPara)) {
+		if ($AppendInstParaToDefaultParameters) {
+			$executeNxtParams["AddParameters"] = "$InstPara"
+		}
+		else {
+			$executeNxtParams["Parameters"] = "$InstPara"
+		}
+	}
+	## <Perform repair tasks here>
+	Execute-MSI @executeNxtParams -LogName "Repair.$InstFile.$($global:DeploymentTimestamp).log" -RepairFromSource $true
+
+	$RepairExitCode = $LastExitCode
+}
+#endregion
+#region Function Show-NxtInstallationWelcome
+function Show-NxtInstallationWelcome {
+	<#
+.SYNOPSIS
+Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
+.DESCRIPTION
+Is only called in the Main function and should not be modified!
+To customize the script always use the "CustomXXXX" entry points.
+.Parameter IsInstall
+Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
+.PARAMETER DeferDays
+Specifies how long a user may defer an installation (will be ignored on uninstallation)
+Defaults to the corresponding value from the Setup.cfg.
+.PARAMETER AskKillProcessApps
+Specifies a list of Processnames which should be stopped for the (un)installation to start.
+For Example "WINWORD,EXCEL"
+Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER CloseAppsCountdown
+Countdown until the Apps will either be forcibly closed or the Installation will abort
+Defaults to the timeout value from the Setup.cfg.
+.PARAMETER ContinueType
+If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
+this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
+	ABORT:       After the timeout has expired, the installation will be abort 
+	CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
+Defaults to the timeout value from the Setup.cfg.
+.PARAMETER BlockExecution
+Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
+Defaults to the corresponding value from the PackageConfig object.
+.EXAMPLE
+Show-NxtInstallationWelcome
+.LINK
+https://neo42.de/psappdeploytoolkit
+#>
+	param (
+		[Parameter(Mandatory = $true)]
+		[bool]
+		$IsInstall,
+		[Parameter(Mandatory = $false)]
+		[String]
+		$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
+		[Parameter(Mandatory = $false)]
+		[String]
+		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
+		[Parameter(Mandatory = $false)]
+		[String]
+		$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("ABORT", "CONTINUE")]
+		[String]
+		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$BlockExecution = $($global:PackageConfig.BlockExecution)
+	)
+	## override $DeferDays with 0 in Case of Uninstall
+	if (!$isInstall) {
+		$DeferDays = 0
+	}
+
+	switch ($ContinueType) {
+		"ABORT" {
+			Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+		}
+		"CONTINUE" {
+			Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+		}		
+	}
+
+}
+#endregion
 #region Function Uninstall-NxtOld
 Function Uninstall-NxtOld {
 	<#
@@ -598,7 +1171,7 @@ Function Uninstall-NxtOld {
 	}
 }
 #endregion
-
+#region Function Get-NxtRegisterOnly
 function Get-NxtRegisterOnly {
 	<#
 .SYNOPSIS
@@ -666,7 +1239,7 @@ function Get-NxtRegisterOnly {
 	}
 	return $false
 }
-
+#endregion
 #region Function Register-NxtPackage
 Function Register-NxtPackage {
 	<#
@@ -900,7 +1473,6 @@ Function Register-NxtPackage {
 	}
 }
 #endregion
-
 #region Function Unregister-NxtPackage
 Function Unregister-NxtPackage {
 	<#
@@ -969,7 +1541,6 @@ Function Unregister-NxtPackage {
 	}
 }
 #endregion
-
 #region Function Remove-NxtDesktopShortcuts
 Function Remove-NxtDesktopShortcuts {
 	<#
@@ -1023,7 +1594,6 @@ Function Remove-NxtDesktopShortcuts {
 	}
 }
 #endregion
-
 #region Function Copy-NxtDesktopShortcuts
 Function Copy-NxtDesktopShortcuts {
 	<#
@@ -1080,8 +1650,6 @@ Function Copy-NxtDesktopShortcuts {
 	}
 }
 #endregion
-
-
 #region Function Stop-NxtProcess
 Function Stop-NxtProcess {
 	<#
@@ -1136,7 +1704,6 @@ Function Stop-NxtProcess {
 	}
 }
 #endregion
-
 #region Get-NxtComputerManufacturer
 function Get-NxtComputerManufacturer {
 	<#
@@ -1171,7 +1738,6 @@ function Get-NxtComputerManufacturer {
 	}
 }
 #endregion
-
 #region Get-NxtComputerModel
 function Get-NxtComputerModel {
 	<#
@@ -1206,7 +1772,6 @@ function Get-NxtComputerModel {
 	}
 }
 #endregion
-
 #region Get-NxtFileVersion
 function Get-NxtFileVersion {
 	<#
@@ -1248,7 +1813,6 @@ function Get-NxtFileVersion {
 	}
 }
 #endregion
-
 #region Get-NxtFolderSize
 function Get-NxtFolderSize {
 	<#
@@ -1297,7 +1861,6 @@ function Get-NxtFolderSize {
 	}
 }
 #endregion
-
 #region Get-NxtDriveType 
 function Get-NxtDriveType {
 	<#
@@ -1348,7 +1911,6 @@ function Get-NxtDriveType {
 	}
 }
 #endregion
-
 #region Get-NxtDriveFreeSpace
 function Get-NxtDriveFreeSpace {
 	<#
@@ -1396,7 +1958,6 @@ function Get-NxtDriveFreeSpace {
 	}
 }
 #endregion
-
 #region Get-NxtProcessName
 function Get-NxtProcessName {
 	<#
@@ -1439,7 +2000,6 @@ function Get-NxtProcessName {
 	}
 }
 #endregion
-
 #region Get-NxtIsSystemProcess
 function Get-NxtIsSystemProcess {
 	<#
@@ -1481,7 +2041,6 @@ function Get-NxtIsSystemProcess {
 	}
 }
 #endregion
-
 #region Get-NxtWindowsVersion
 function Get-NxtWindowsVersion {
 	<#
@@ -1514,7 +2073,6 @@ function Get-NxtWindowsVersion {
 	}
 }
 #endregion
-
 #region Get-NxtOsLanguage
 function Get-NxtOsLanguage {
 	<#
@@ -1547,7 +2105,6 @@ function Get-NxtOsLanguage {
 	}
 }
 #endregion
-
 #region Get-NxtUILanguage
 function Get-NxtUILanguage {
 	<#
@@ -1580,7 +2137,6 @@ function Get-NxtUILanguage {
 	}
 }
 #endregion
-
 #region Get-NxtProcessorArchiteW6432
 function Get-NxtProcessorArchiteW6432 {
 	<#
@@ -1621,7 +2177,6 @@ function Get-NxtProcessorArchiteW6432 {
 	}
 }
 #endregion
-
 #region Get-NxtWindowsBits
 function Get-NxtWindowsBits {
 	<#
@@ -1671,7 +2226,6 @@ function Get-NxtWindowsBits {
 	}
 }
 #endregion
-
 #region Move-NxtItem
 function Move-NxtItem {
 	<#
@@ -1715,7 +2269,6 @@ function Move-NxtItem {
 	}
 }
 #endregion
-
 #region Test-NxtProcessExists
 function Test-NxtProcessExists {
 	<#
@@ -1773,7 +2326,6 @@ function Test-NxtProcessExists {
 	}
 }
 #endregion
-
 #region Watch-NxtRegistryKey
 function Watch-NxtRegistryKey {
 	<#
@@ -1827,7 +2379,6 @@ function Watch-NxtRegistryKey {
 	}
 }
 #endregion
-
 #region Watch-NxtRegistryKeyIsRemoved
 function Watch-NxtRegistryKeyIsRemoved {
 	<#
@@ -1881,7 +2432,6 @@ function Watch-NxtRegistryKeyIsRemoved {
 }
 
 #endregion
-
 #region Watch-NxtFile
 function Watch-NxtFile {
 	<#
@@ -1936,7 +2486,6 @@ function Watch-NxtFile {
 }
 
 #endregion
-
 #region Watch-NxtFileIsRemoved
 function Watch-NxtFileIsRemoved {
 	<#
@@ -1992,7 +2541,6 @@ function Watch-NxtFileIsRemoved {
 	}
 }
 #endregion
-
 #region Watch-NxtProcess
 function Watch-NxtProcess {
 	<#
@@ -2058,7 +2606,6 @@ function Watch-NxtProcess {
 	}
 }
 #endregion
-
 #region Watch-NxtProcessIsStopped
 function Watch-NxtProcessIsStopped {
 	<#
@@ -2124,7 +2671,6 @@ function Watch-NxtProcessIsStopped {
 	}
 }
 #endregion
-
 #region Get-NxtServiceState
 function Get-NxtServiceState {
 	<#
@@ -2172,7 +2718,6 @@ function Get-NxtServiceState {
 	}
 }
 #endregion
-
 #region Get-NxtNameBySid
 function Get-NxtNameBySid {
 	<#
@@ -2221,7 +2766,6 @@ function Get-NxtNameBySid {
 	}
 }
 #endregion
-
 #region Compare-NxtVersion
 function Compare-NxtVersion {
 	<#
@@ -2307,7 +2851,6 @@ function Compare-NxtVersion {
 	}
 }
 #endregion
-
 #region Function Get-NxtFileEncoding
 function Get-NxtFileEncoding {
 	<#
@@ -2358,7 +2901,6 @@ function Get-NxtFileEncoding {
 	}
 }
 #endregion
-  
 #region Add-NxtContent
 function Add-NxtContent {
 	<#
@@ -2453,7 +2995,6 @@ function Add-NxtContent {
 	}
 }
 #endregion
-
 #region Update-NxtTextInFile
 function Update-NxtTextInFile {
 	<#
@@ -2570,7 +3111,6 @@ function Update-NxtTextInFile {
 	}
 }
 #endregion
-
 #region Get-NxtSidByName
 function Get-NxtSidByName {
 	<#
@@ -2619,7 +3159,6 @@ function Get-NxtSidByName {
 	}
 }
 #endregion
-
 #region Get-NxtProcessEnvironmentVariable
 function Get-NxtProcessEnvironmentVariable {
 	<#
@@ -2660,7 +3199,6 @@ function Get-NxtProcessEnvironmentVariable {
 	}
 }
 #endregion
-
 #region Set-NxtProcessEnvironmentVariable
 function Set-NxtProcessEnvironmentVariable {
 	<#
@@ -2703,7 +3241,6 @@ function Set-NxtProcessEnvironmentVariable {
 	}
 }
 #endregion
-
 #region Remove-NxtProcessEnvironmentVariable
 function Remove-NxtProcessEnvironmentVariable {
 	<#
@@ -2742,7 +3279,6 @@ function Remove-NxtProcessEnvironmentVariable {
 }
 
 #endregion
-
 #region Get-NxtSystemEnvironmentVariable
 function Get-NxtSystemEnvironmentVariable {
 	<#
@@ -2783,7 +3319,6 @@ function Get-NxtSystemEnvironmentVariable {
 	}
 }
 #endregion
-
 #region Set-NxtSystemEnvironmentVariable
 function Set-NxtSystemEnvironmentVariable {
 	<#
@@ -2826,7 +3361,6 @@ function Set-NxtSystemEnvironmentVariable {
 	}
 }
 #endregion
-
 #region Remove-NxtSystemEnvironmentVariable
 function Remove-NxtSystemEnvironmentVariable {
 	<#
@@ -2864,7 +3398,6 @@ function Remove-NxtSystemEnvironmentVariable {
 	}
 }
 #endregion
-
 #region Test-NxtLocalUserExists
 function Test-NxtLocalUserExists {
 	<#
@@ -2913,7 +3446,6 @@ function Test-NxtLocalUserExists {
 	}
 }
 #endregion
-
 #region Add-NxtLocalUser
 function Add-NxtLocalUser {
 	<#
@@ -3025,7 +3557,6 @@ function Add-NxtLocalUser {
 	}
 }
 #endregion
-
 #region Remove-NxtLocalUser
 function Remove-NxtLocalUser {
 	<#
@@ -3081,7 +3612,6 @@ function Remove-NxtLocalUser {
 	}
 }
 #endregion
-
 #region Test-NxtLocalGroupExists
 function Test-NxtLocalGroupExists {
 	<#
@@ -3129,7 +3659,6 @@ function Test-NxtLocalGroupExists {
 	}
 }
 #endregion
-
 #region Add-NxtLocalGroup
 function Add-NxtLocalGroup {
 	<#
@@ -3197,7 +3726,6 @@ function Add-NxtLocalGroup {
 	}
 }
 #endregion
-
 #region Remove-NxtLocalGroup
 function Remove-NxtLocalGroup {
 	<#
@@ -3253,7 +3781,6 @@ function Remove-NxtLocalGroup {
 	}
 }
 #endregion
-
 #region Remove-NxtLocalGroupMember
 function Remove-NxtLocalGroupMember {
 	<#
@@ -3364,8 +3891,6 @@ function Remove-NxtLocalGroupMember {
 	}
 }
 #endregion
-
-
 #region Add-NxtLocalGroupMember
 function Add-NxtLocalGroupMember {
 	<#
@@ -3453,7 +3978,6 @@ function Add-NxtLocalGroupMember {
 	}
 }
 #endregion
-
 #region Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
@@ -3498,7 +4022,6 @@ function Read-NxtSingleXmlNode {
 	}
 }
 #endregion
-
 #region Write-NxtSingleXmlNode
 function Write-NxtSingleXmlNode {
 	<#
@@ -3549,7 +4072,6 @@ function Write-NxtSingleXmlNode {
 	}
 }
 #endregion
-
 #region Write-NxtXmlNode
 function Write-NxtXmlNode {
 	<#
@@ -3636,7 +4158,6 @@ function Write-NxtXmlNode {
 	}
 }
 #endregion
-
 #region Function Remove-NxtEmptyFolder
 Function Remove-NxtEmptyFolder {
 	<#
@@ -3699,7 +4220,6 @@ Function Remove-NxtEmptyFolder {
 	}
 }
 #endregion
-
 #region Function Execute-NxtInnoSetup
 function Execute-NxtInnoSetup {
 	<#
@@ -3998,7 +4518,6 @@ function Execute-NxtInnoSetup {
 	}
 }
 #endregion
-
 #region Function Execute-NxtNullsoft
 function Execute-NxtNullsoft {
 	<#
@@ -4236,6 +4755,7 @@ function Execute-NxtNullsoft {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
+#endregion
 #region Function Execute-NxtMSI
 function Execute-NxtMSI {
 	<#
@@ -4434,6 +4954,7 @@ Param (
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
+#endregion
 #region Function Import-NxtIniFile
 function Import-NxtIniFile {
 	<#
@@ -4493,7 +5014,6 @@ function Import-NxtIniFile {
 	}
 }
 #endregion
-
 #region Function Set-NxtSetupCfg
 function Set-NxtSetupCfg {
 	<#
@@ -4538,7 +5058,6 @@ function Set-NxtSetupCfg {
 	}
 }
 #endregion
-
 #region Function Execute-NxtBitRockInstaller
 function Execute-NxtBitRockInstaller {
     <#
@@ -4788,7 +5307,6 @@ function Execute-NxtBitRockInstaller {
 	}
 }
 #endregion
-
 #region Function Set-NxtIniValue
 Function Set-NxtIniValue {
 	<#
@@ -4865,7 +5383,6 @@ Function Set-NxtIniValue {
 	}
 }
 #endregion
-
 #region Function Set-NxtDetectedDisplayVersion
 function Set-NxtDetectedDisplayVersion {
 	<#
@@ -4930,7 +5447,6 @@ function Set-NxtDetectedDisplayVersion {
 	}
 }
 #endregion
-
 #region Function Get-NxtInstalledApplication
 function Get-NxtInstalledApplication {
 	<#
@@ -4994,7 +5510,6 @@ function Get-NxtInstalledApplication {
 	}
 }
 #endregion
-
 #region Function Get-NxtAppIsInstalled
 function Get-NxtAppIsInstalled {
 	<#
@@ -5039,7 +5554,6 @@ function Get-NxtAppIsInstalled {
 	}
 }
 #endregion
-
 #region Function Exit-NxtScriptWithError
 Function Exit-NxtScriptWithError {
 	<#
@@ -5214,7 +5728,6 @@ Function Exit-NxtScriptWithError {
 	}
 }
 #endregion
-
 #region Function Exit-NxtAbortReboot
 function Exit-NxtAbortReboot {
 	<#
@@ -5307,7 +5820,6 @@ function Exit-NxtAbortReboot {
 	}
 }
 #endregion
-
 ##*===============================================
 ##* END FUNCTION LISTINGS
 ##*===============================================
