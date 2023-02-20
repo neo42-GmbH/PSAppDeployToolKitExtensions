@@ -1982,6 +1982,127 @@ function Expand-NxtPackageConfig {
 	}
 }
 #endregion
+#region Function Expand-NxtVariablesInFile
+function Expand-NxtVariablesInFile {
+	<#
+  	.DESCRIPTION
+		Expands different variables types in a text file.
+		Supports local, script, $env:, $global: and common Windows environment variables.
+  	.PARAMETER Path
+		The path to the file.
+  	.OUTPUTS
+		none
+  	.EXAMPLE
+		Expand-NxtVariablesInFile -Path C:\Temp\testfile.txt
+  	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            $content = Get-Content -Path $Path
+            $fileEncoding = Get-NxtFileEncoding -Path $Path -DefaultEncoding Default
+
+            for ($i = 0; $i -lt $content.Length; $i++) {
+                $line = $content[$i]
+
+                ## Replace PowerShell global variables in brackets
+                $globalVariableMatchesInBracket = [regex]::Matches($line, '\$\(\$global:(\w.+)\)')
+                foreach ($globalVariableMatch in $globalVariableMatchesInBracket) {
+                    $globalVariableName = $globalVariableMatch.Groups[1].Value
+                    $globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+                    ## Variables with properties and/or subproperties won't be found
+                    if([string]::IsNullOrEmpty($globalVariableValue))
+                    {
+                        $globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
+                    }
+                    $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
+                }
+				$globalVariableMatchesInBracket = $null
+
+                ## Replace PowerShell global variables
+                $globalVariableMatches = [regex]::Matches($line, '\$global:(\w.+)')
+                foreach ($globalVariableMatch in $globalVariableMatches) {
+                    $globalVariableName = $globalVariableMatch.Groups[1].Value
+                    $globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+                    ## Variables with properties and/or subproperties won't be found
+                    if([string]::IsNullOrEmpty($globalVariableValue))
+                    {
+                        $globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
+                    }
+                    $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
+                }
+				$globalVariableMatches = $null
+
+                ## Replace PowerShell environment variables in brackets
+                $environmentMatchesInBracket = [regex]::Matches($line, '\$\(\$env:(\w+)\)')
+                foreach ($expressionMatch in $environmentMatchesInBracket) {
+                    $envVariableName = $expressionMatch.Groups[1].Value.TrimStart('$(').TrimEnd('")')
+                    $envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
+
+                    $line = $line.Replace($expressionMatch.Value, $envVariableValue)
+                }
+				$environmentMatchesInBracket = $null
+
+                ## Replace PowerShell environment variables
+                $environmentMatches = [regex]::Matches($line, '\$env:(\w+)')
+                foreach ($expressionMatch in $environmentMatches) {
+                    $envVariableName = $expressionMatch.Groups[1].Value
+                    $envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
+
+                    $line = $line.Replace($expressionMatch.Value, $envVariableValue)
+                }
+				$environmentMatches = $null
+
+                ## Replace PowerShell variable in brackets with its value
+                $variableMatchesInBrackets = [regex]::Matches($line, '\$\((.*?)\)')
+                foreach ($expressionMatch in $variableMatchesInBrackets) {
+                    $expression = $expressionMatch.Groups[1].Value
+                    $cleanedExpression = $expression.TrimStart('$(').TrimEnd('")')
+                    $variableValue = (Get-Variable -Name $cleanedExpression -ValueOnly)
+
+                    $line = $line.Replace($expressionMatch.Value, $variableValue)
+                }
+				$variableMatchesInBrackets = $null
+
+                ## Replace PowerShell variable with its value
+                $variableMatches = [regex]::Matches($line, '\$\w+')
+                foreach ($match in $variableMatches) {
+                    $variableName = $match.Value.Substring(1)
+                    $variableValue = (Get-Variable -Name $variableName -ValueOnly)
+
+                    $line = $line.Replace($match.Value, $variableValue)
+                }
+				$variableMatches = $null
+
+                ## Replace common Windows environment variables
+                $line = [System.Environment]::ExpandEnvironmentVariables($line)
+
+                $content[$i] = $line
+            }
+
+            Set-Content -Path $Path -Value $content -Encoding $fileEncoding
+
+		}
+		catch {
+			Write-Log -Message "Failed to expand variables in '$($Path)' `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Format-NxtPackageSpecificVariables
 function Format-NxtPackageSpecificVariables {
 	<#
