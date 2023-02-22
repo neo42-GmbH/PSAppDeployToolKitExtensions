@@ -2596,6 +2596,49 @@ function Get-NxtPackageConfig {
 	}
 }
 #endregion
+#region Function Get-NxtParentProcess
+function Get-NxtParentProcess {
+	<#
+	.DESCRIPTION
+		Gets the Parent Process of a given Process ID.
+	.PARAMETER Id
+		The Id of the child process.
+	.OUTPUTS
+		System.Management.ManagementBaseObject.
+	.EXAMPLE
+		Get-NxtParentProcess -Id 1234 -Recurse
+	.EXAMPLE
+		Get-NxtParentProcess
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[int]
+		$Id = $global:PID,
+		[Parameter()]
+		[switch]
+		$Recurse = $false
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[System.Management.ManagementBaseObject]$process = Get-WmiObject Win32_Process -filter "ProcessID ='$ID'"
+		$parentProcess = Get-WmiObject Win32_Process -filter "ProcessID ='$($process.ParentProcessId)'"
+		Write-Output $parentProcess
+		if ($Recurse -and ![string]::IsNullOrEmpty($parentProcess)) {
+			Get-NxtParentProcess -Id ($process.ParentProcessId) -Recurse
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Get-NxtProcessEnvironmentVariable
 function Get-NxtProcessEnvironmentVariable {
 	<#
