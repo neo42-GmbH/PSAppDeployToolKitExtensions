@@ -2020,12 +2020,19 @@ function Expand-NxtVariablesInFile {
                 $globalVariableMatchesInBracket = [regex]::Matches($line, '\$\(\$global:(\w.+)\)')
                 foreach ($globalVariableMatch in $globalVariableMatchesInBracket) {
                     $globalVariableName = $globalVariableMatch.Groups[1].Value
-                    $globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
-                    ## Variables with properties and/or subproperties won't be found
-                    if([string]::IsNullOrEmpty($globalVariableValue))
-                    {
-                        $globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
-                    }
+					if($globalVariableName.Contains('.')) {
+						$tempVariableName = $globalVariableName.Split('.')[0]
+						$tempVariableValue = (Get-Variable -Name $tempVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+						## Variables with properties and/or subproperties won't be found
+						if(![string]::IsNullOrEmpty($tempVariableValue))
+						{
+							$globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
+						}
+					}
+					else {
+						$globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+					}
+
                     $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
                 }
 				$globalVariableMatchesInBracket = $null
@@ -2045,9 +2052,15 @@ function Expand-NxtVariablesInFile {
 				$globalVariableMatches = $null
 
                 ## Replace PowerShell environment variables in brackets
-                $environmentMatchesInBracket = [regex]::Matches($line, '\$\(\$env:(\w+)\)')
+                $environmentMatchesInBracket = [regex]::Matches($line, '\$\(\$env:(\w+)(\([^)]*\))?\)')
                 foreach ($expressionMatch in $environmentMatchesInBracket) {
-                    $envVariableName = $expressionMatch.Groups[1].Value.TrimStart('$(').TrimEnd('")')
+					if($expressionMatch.Groups.Count -gt 2){
+						$envVariableName = "$($expressionMatch.Groups[1].Value)$($expressionMatch.Groups[2].Value)" 
+					}
+					else {
+						$envVariableName = $expressionMatch.Groups[1].Value.TrimStart('$(').TrimEnd('")')
+					}
+                    
                     $envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
 
                     $line = $line.Replace($expressionMatch.Value, $envVariableValue)
@@ -2055,9 +2068,14 @@ function Expand-NxtVariablesInFile {
 				$environmentMatchesInBracket = $null
 
                 ## Replace PowerShell environment variables
-                $environmentMatches = [regex]::Matches($line, '\$env:(\w+)')
+                $environmentMatches = [regex]::Matches($line, '\$env:(\w+)(\([^)]*\))?')
                 foreach ($expressionMatch in $environmentMatches) {
-                    $envVariableName = $expressionMatch.Groups[1].Value
+					if($expressionMatch.Groups.Count -gt 2){
+						$envVariableName = "$($expressionMatch.Groups[1].Value)$($expressionMatch.Groups[2].Value)" 
+					}
+					else {
+						$envVariableName = $expressionMatch.Groups[1].Value.TrimStart('$(').TrimEnd('")')
+					}
                     $envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
 
                     $line = $line.Replace($expressionMatch.Value, $envVariableValue)
@@ -2065,22 +2083,44 @@ function Expand-NxtVariablesInFile {
 				$environmentMatches = $null
 
                 ## Replace PowerShell variable in brackets with its value
-                $variableMatchesInBrackets = [regex]::Matches($line, '\$\((.*?)\)')
+                $variableMatchesInBrackets = [regex]::Matches($line, '\$\(\$(\w.+)\)')
                 foreach ($expressionMatch in $variableMatchesInBrackets) {
                     $expression = $expressionMatch.Groups[1].Value
                     $cleanedExpression = $expression.TrimStart('$(').TrimEnd('")')
-                    $variableValue = (Get-Variable -Name $cleanedExpression -ValueOnly)
+					if($cleanedExpression.Contains('.')) {
+						$tempVariableName = $cleanedExpression.Split('.')[0]
+						$tempVariableValue = (Get-Variable -Name $tempVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+						## Variables with properties and/or subproperties won't be found
+						if(![string]::IsNullOrEmpty($tempVariableValue))
+						{
+							$variableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($expressionMatch.Value))
+						}
+					}
+					else {
+						$variableValue = (Get-Variable -Name $cleanedExpression -ValueOnly)
+					}
 
                     $line = $line.Replace($expressionMatch.Value, $variableValue)
                 }
 				$variableMatchesInBrackets = $null
 
                 ## Replace PowerShell variable with its value
-                $variableMatches = [regex]::Matches($line, '\$\w+')
+                $variableMatches = [regex]::Matches($line, '\$\w.+')
                 foreach ($match in $variableMatches) {
                     $variableName = $match.Value.Substring(1)
-                    $variableValue = (Get-Variable -Name $variableName -ValueOnly)
-
+					if($variableName.Contains('.')) {
+						$tempVariableName = $variableName.Split('.')[0]
+						$tempVariableValue = (Get-Variable -Name $tempVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+						## Variables with properties and/or subproperties won't be found
+						if(![string]::IsNullOrEmpty($tempVariableValue))
+						{
+							$variableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($match.Value))
+						}
+					}
+					else {
+						$variableValue = (Get-Variable -Name $variableName -ValueOnly)
+					}
+                    
                     $line = $line.Replace($match.Value, $variableValue)
                 }
 				$variableMatches = $null
