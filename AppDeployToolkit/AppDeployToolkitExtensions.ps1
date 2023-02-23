@@ -2017,7 +2017,7 @@ function Expand-NxtVariablesInFile {
                 [string]$line = $content[$i]
 
                 ## Replace PowerShell global variables in brackets
-                [PSObject]$globalVariableMatchesInBracket = [regex]::Matches($line, '\$\(\$global:(\w.+)\)')
+                [PSObject]$globalVariableMatchesInBracket = [regex]::Matches($line, '\$\(\$global:([A-Za-z_.][A-Za-z0-9_.\[\]]+)\)')
                 foreach ($globalVariableMatch in $globalVariableMatchesInBracket) {
                     [string]$globalVariableName = $globalVariableMatch.Groups[1].Value
 					if($globalVariableName.Contains('.')) {
@@ -2038,7 +2038,7 @@ function Expand-NxtVariablesInFile {
 				$globalVariableMatchesInBracket = $null
 
                 ## Replace PowerShell global variables
-                [PSObject]$globalVariableMatches = [regex]::Matches($line, '\$global:(\w.+)')
+                [PSObject]$globalVariableMatches = [regex]::Matches($line, '\$global:([A-Za-z_.][A-Za-z0-9_.\[\]]+)')
                 foreach ($globalVariableMatch in $globalVariableMatches) {
                     [string]$globalVariableName = $globalVariableMatch.Groups[1].Value
                     [PSObject]$globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
@@ -2052,7 +2052,7 @@ function Expand-NxtVariablesInFile {
 				$globalVariableMatches = $null
 
                 ## Replace PowerShell environment variables in brackets
-                [PSObject]$environmentMatchesInBracket = [regex]::Matches($line, '\$\(\$env:(\w+)(\([^)]*\))?\)')
+                [PSObject]$environmentMatchesInBracket = [regex]::Matches($line, '\$\(\$env:([A-Za-z_.][A-Za-z0-9_.]+)(\([^)]*\))?\)')
                 foreach ($expressionMatch in $environmentMatchesInBracket) {
 					if($expressionMatch.Groups.Count -gt 2){
 						[string]$envVariableName = "$($expressionMatch.Groups[1].Value)$($expressionMatch.Groups[2].Value)" 
@@ -2068,7 +2068,7 @@ function Expand-NxtVariablesInFile {
 				$environmentMatchesInBracket = $null
 
                 ## Replace PowerShell environment variables
-                [PSObject]$environmentMatches = [regex]::Matches($line, '\$env:(\w+)(\([^)]*\))?')
+                [PSObject]$environmentMatches = [regex]::Matches($line, '\$env:([A-Za-z_.][A-Za-z0-9_.]+)(\([^)]*\))?')
                 foreach ($expressionMatch in $environmentMatches) {
 					if($expressionMatch.Groups.Count -gt 2){
 						[string]$envVariableName = "$($expressionMatch.Groups[1].Value)$($expressionMatch.Groups[2].Value)" 
@@ -2083,9 +2083,9 @@ function Expand-NxtVariablesInFile {
 				$environmentMatches = $null
 
                 ## Replace PowerShell variable in brackets with its value
-                [PSObject]$variableMatchesInBrackets = [regex]::Matches($line, '\$\(\$(\w.+)\)')
+                [PSObject]$variableMatchesInBrackets = [regex]::Matches($line, '\$\(\$[A-Za-z_.][A-Za-z0-9_.\[\]]+\)')
                 foreach ($expressionMatch in $variableMatchesInBrackets) {
-                    [string]$expression = $expressionMatch.Groups[1].Value
+                    [string]$expression = $expressionMatch.Groups[0].Value
                     [string]$cleanedExpression = $expression.TrimStart('$(').TrimEnd('")')
 					if($cleanedExpression.Contains('.')) {
 						[string]$tempVariableName = $cleanedExpression.Split('.')[0]
@@ -2105,7 +2105,7 @@ function Expand-NxtVariablesInFile {
 				$variableMatchesInBrackets = $null
 
                 ## Replace PowerShell variable with its value
-                [PSObject]$variableMatches = [regex]::Matches($line, '\$\w.+')
+                [PSObject]$variableMatches = [regex]::Matches($line, '\$[A-Za-z_.][A-Za-z0-9_.\[\]]+')
                 foreach ($match in $variableMatches) {
                     [string]$variableName = $match.Value.Substring(1)
 					if($variableName.Contains('.')) {
