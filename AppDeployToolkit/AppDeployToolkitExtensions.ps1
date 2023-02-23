@@ -1421,7 +1421,7 @@ Param (
 		if ([System.IO.Path]::IsPathRooted($Log)) {
 			$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
 			[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
-			Move-NxtItem $logPath -Destination $Log
+			Move-NxtItem $logPath -Destination $Log -Force
 		}
 	}
 	End {
