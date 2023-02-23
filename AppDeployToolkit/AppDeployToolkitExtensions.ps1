@@ -3532,11 +3532,15 @@ function Move-NxtItem {
 	.DESCRIPTION
 		Renames or moves a file or directory.
 	.EXAMPLE
-		Move-NxtItem -SourcePath C:\Temp\Sources\Installer.exe -DestinationPath C:\Temp\Sources\Installer_bak.exe
+		Move-NxtItem -Path C:\Temp\Sources\Installer.exe -Destination C:\Temp\Sources\Installer_bak.exe
 	.PARAMETER Path
 		Source Path of the File or Directory.
-	.PARAMETER DestinationPath
+	.PARAMETER Destination
 		Destination Path for the File or Directory.
+	.PARAMETER Force
+		Overwrite existing file.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
 	.OUTPUTS
 		none.
 	.LINK
@@ -3549,7 +3553,13 @@ function Move-NxtItem {
 		$Path,
 		[Parameter(Mandatory = $true)]
 		[String]
-		$DestinationPath
+		$Destination,
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$Force,
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [boolean]$ContinueOnError = $true
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3558,10 +3568,20 @@ function Move-NxtItem {
 	}
 	Process {
 		try {
-			Move-Item -Path $Path -Destination $DestinationPath
+			[array]$functionParametersToBeRemoved = (
+			"ContinueOnError"
+		)
+		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved){
+			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
+		}
+			Write-Log -Message "Move $path to $Destination." -Source ${cmdletName}
+			Move-Item @PSBoundParameters -ErrorAction Stop
 		}
 		catch {
-			Write-Log -Message "Failed to move $path to $DestinationPath. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to move $Path to $Destination. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			If (-not $ContinueOnError) {
+				Throw "Failed to move $Path to $Destination`: $($_.Exception.Message)"
+			}
 		}
 	}
 	End {
