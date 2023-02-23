@@ -548,10 +548,10 @@ function Complete-NxtPackageInstallation {
 
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 		[string]$wowEntry = ""
-		if ($false -eq $uninstallKeyToHide.Is64Bit) {
-			$wowEntry = $Wow6432Node
+		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
+			$wowEntry = "\Wow6432Node"
 		}
-		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+		if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
 			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
 		}
 		else {
@@ -561,7 +561,12 @@ function Complete-NxtPackageInstallation {
 			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent' -Type 'Dword' -Value '1'
 		}
 		else {
-			Write-Log -Message "Did not find a registry key $CurrentKeyName, skipped setting systemcomponent entry for this key" -Source ${CmdletName}
+			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+				Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped setting SystemComponent entry." -Source ${CmdletName}
+			}
+			else {
+				Write-Log -Message "Did not find an uninstall registry key [$CurrentKeyName]. Skipped setting SystemComponent entry." -Source ${CmdletName}
+			}
 		}
 	}
 
@@ -5062,10 +5067,10 @@ function Uninstall-NxtApplication {
 	## <Perform Pre-Uninstallation tasks here>
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 		[string]$wowEntry = ""
-		if ($false -eq $uninstallKeyToHide.Is64Bit) {
-			$wowEntry = $Wow6432Node
+		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
+			$wowEntry = "\Wow6432Node"
 		}
-		If ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+		if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
 			$CurrentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
 		}
 		else {
@@ -5075,7 +5080,12 @@ function Uninstall-NxtApplication {
 			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$CurrentKeyName -Name 'SystemComponent'
 		}
 		else {
-			Write-Log -Message "Did not find a SystemComponent entry under registry key $CurrentKeyName, skipped deleting the entry for this key" -Source ${CmdletName}
+			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+				Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped deleting SystemComponent entry." -Source ${CmdletName}
+			}
+			else {
+				Write-Log -Message "Did not find a SystemComponent entry under registry key [$CurrentKeyName]. Skipped deleting the entry for this key." -Source ${CmdletName}
+			}
 		}
 	}
 
