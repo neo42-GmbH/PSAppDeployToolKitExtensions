@@ -1982,6 +1982,167 @@ function Expand-NxtPackageConfig {
 	}
 }
 #endregion
+#region Function Expand-NxtVariablesInFile
+function Expand-NxtVariablesInFile {
+	<#
+  	.DESCRIPTION
+		Expands different variables types in a text file.
+		Supports local, script, $env:, $global: and common Windows environment variables.
+  	.PARAMETER Path
+		The path to the file.
+  	.OUTPUTS
+		none
+  	.EXAMPLE
+		Expand-NxtVariablesInFile -Path C:\Temp\testfile.txt
+  	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+            [string[]]$content = Get-Content -Path $Path
+            [string]$fileEncoding = Get-NxtFileEncoding -Path $Path -DefaultEncoding Default
+
+            for ($i = 0; $i -lt $content.Length; $i++) {
+                [string]$line = $content[$i]
+
+                ## Replace PowerShell global variables in brackets
+                [PSObject]$globalVariableMatchesInBracket = [regex]::Matches($line, '\$\(\$global:([A-Za-z_.][A-Za-z0-9_.\[\]]+)\)')
+                foreach ($globalVariableMatch in $globalVariableMatchesInBracket) {
+                    [string]$globalVariableName = $globalVariableMatch.Groups[1].Value
+					if($globalVariableName.Contains('.')) {
+						[string]$tempVariableName = $globalVariableName.Split('.')[0]
+						[PSObject]$tempVariableValue = (Get-Variable -Name $tempVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+						## Variables with properties and/or subproperties won't be found
+						if(![string]::IsNullOrEmpty($tempVariableValue))
+						{
+							[string]$globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
+						}
+					}
+					else {
+						[string]$globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+					}
+
+                    $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
+                }
+				$globalVariableMatchesInBracket = $null
+
+                ## Replace PowerShell global variables
+                [PSObject]$globalVariableMatches = [regex]::Matches($line, '\$global:([A-Za-z_.][A-Za-z0-9_.\[\]]+)')
+                foreach ($globalVariableMatch in $globalVariableMatches) {
+                    [string]$globalVariableName = $globalVariableMatch.Groups[1].Value
+                    [PSObject]$globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+                    ## Variables with properties and/or subproperties won't be found
+                    if([string]::IsNullOrEmpty($globalVariableValue))
+                    {
+                        $globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
+                    }
+                    $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
+                }
+				$globalVariableMatches = $null
+
+                ## Replace PowerShell environment variables in brackets
+                [PSObject]$environmentMatchesInBracket = [regex]::Matches($line, '\$\(\$env:([A-Za-z_.][A-Za-z0-9_.]+)(\([^)]*\))?\)')
+                foreach ($expressionMatch in $environmentMatchesInBracket) {
+					if($expressionMatch.Groups.Count -gt 2){
+						[string]$envVariableName = "$($expressionMatch.Groups[1].Value)$($expressionMatch.Groups[2].Value)" 
+					}
+					else {
+						[string]$envVariableName = $expressionMatch.Groups[1].Value.TrimStart('$(').TrimEnd('")')
+					}
+                    
+                    [string]$envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
+
+                    $line = $line.Replace($expressionMatch.Value, $envVariableValue)
+                }
+				$environmentMatchesInBracket = $null
+
+                ## Replace PowerShell environment variables
+                [PSObject]$environmentMatches = [regex]::Matches($line, '\$env:([A-Za-z_.][A-Za-z0-9_.]+)(\([^)]*\))?')
+                foreach ($expressionMatch in $environmentMatches) {
+					if($expressionMatch.Groups.Count -gt 2){
+						[string]$envVariableName = "$($expressionMatch.Groups[1].Value)$($expressionMatch.Groups[2].Value)" 
+					}
+					else {
+						[string]$envVariableName = $expressionMatch.Groups[1].Value.TrimStart('$(').TrimEnd('")')
+					}
+                    [string]$envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
+
+                    $line = $line.Replace($expressionMatch.Value, $envVariableValue)
+                }
+				$environmentMatches = $null
+
+                ## Replace PowerShell variable in brackets with its value
+                [PSObject]$variableMatchesInBrackets = [regex]::Matches($line, '\$\(\$[A-Za-z_.][A-Za-z0-9_.\[\]]+\)')
+                foreach ($expressionMatch in $variableMatchesInBrackets) {
+                    [string]$expression = $expressionMatch.Groups[0].Value
+                    [string]$cleanedExpression = $expression.TrimStart('$(').TrimEnd('")')
+					if($cleanedExpression.Contains('.')) {
+						[string]$tempVariableName = $cleanedExpression.Split('.')[0]
+						[PSObject]$tempVariableValue = (Get-Variable -Name $tempVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+						## Variables with properties and/or subproperties won't be found
+						if(![string]::IsNullOrEmpty($tempVariableValue))
+						{
+							[string]$variableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($expressionMatch.Value))
+						}
+					}
+					else {
+						[string]$variableValue = (Get-Variable -Name $cleanedExpression -ValueOnly)
+					}
+
+                    $line = $line.Replace($expressionMatch.Value, $variableValue)
+                }
+				$variableMatchesInBrackets = $null
+
+                ## Replace PowerShell variable with its value
+                [PSObject]$variableMatches = [regex]::Matches($line, '\$[A-Za-z_.][A-Za-z0-9_.\[\]]+')
+                foreach ($match in $variableMatches) {
+                    [string]$variableName = $match.Value.Substring(1)
+					if($variableName.Contains('.')) {
+						[string]$tempVariableName = $variableName.Split('.')[0]
+						[PSObject]$tempVariableValue = (Get-Variable -Name $tempVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
+						## Variables with properties and/or subproperties won't be found
+						if(![string]::IsNullOrEmpty($tempVariableValue))
+						{
+							[string]$variableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($match.Value))
+						}
+					}
+					else {
+						[string]$variableValue = (Get-Variable -Name $variableName -ValueOnly)
+					}
+                    
+                    $line = $line.Replace($match.Value, $variableValue)
+                }
+				$variableMatches = $null
+
+                ## Replace common Windows environment variables
+                $line = [System.Environment]::ExpandEnvironmentVariables($line)
+
+                $content[$i] = $line
+            }
+
+            Set-Content -Path $Path -Value $content -Encoding $fileEncoding
+
+		}
+		catch {
+			Write-Log -Message "Failed to expand variables in '$($Path)' `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Format-NxtPackageSpecificVariables
 function Format-NxtPackageSpecificVariables {
 	<#
