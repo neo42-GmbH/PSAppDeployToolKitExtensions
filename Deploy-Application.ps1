@@ -189,41 +189,42 @@ param (
 	$InstallMethod = $global:PackageConfig.InstallMethod
 )
 	try {
-		CustomPreInit
+		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
+				CustomInstallAndReinstallBegin
 				## START OF INSTALL
 				[string]$global:installPhase = 'Pre-InstallationChecks'
 
 				Uninstall-NxtOld 
 				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
-					## Application is present. Only register the package
+					## Application is present. Register package only.
 					[string]$global:installPhase = 'Package-Registration'
-					CustomPostInstallAndReinstallAndSoftMigration
+					CustomInstallAndReinstallAndSoftMigrationEnd
 					Complete-NxtPackageInstallation
 					Register-NxtPackage
 					Exit-Script -ExitCode $mainExitCode
 				}
 				Show-NxtInstallationWelcome -IsInstall $true
-				CustomPreInstallAndReinstall
+				CustomInstallAndReinstallBegin
 				[bool]$isInstalled = $false
 				[string]$global:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtAppIsInstalled)) {
 					if ($false -eq $MSIReinstallModeIsRepair) {
 						## Reinstall mode is set to default
-						CustomPreUninstallReinstall
+						CustomReinstallPreUninstall
 						Uninstall-NxtApplication
-						CustomPostUninstallReinstall
-						CustomPreInstallReinstall
+						CustomReinstallPostUninstall
+						CustomReinstallPreInstall
 						$isInstalled = Install-NxtApplication
-						CustomPostInstallReinstall
+						CustomReinstallPostInstall
 					}
 					else {
-						if("MSI" -eq $InstallMethod) {
+						if ("MSI" -eq $InstallMethod) {
 							## Reinstall mode is set to repair
-							CustomPreInstallReinstall
+							CustomReinstallPreInstall
 							$isInstalled = Repair-NxtApplication
-							CustomPostInstallReinstall
+							CustomReinstallPostInstall
 						}
 						else {
 							Throw "Unsupported combination of 'MSIReinstallModeIsRepair' and 'InstallMethod' property. 'MSIReinstallModeIsRepair' is only supported for 'MSI'"
@@ -232,30 +233,28 @@ param (
 				}
 				else {
 					## Default installation
-					CustomPreInstall
+					CustomInstallBegin
 					$isInstalled = Install-NxtApplication
-					CustomPostInstall
+					CustomInstallEnd
 				}
-				CustomPostInstallAndReinstall
-				CustomPostInstallAndReinstallAndSoftMigration
+				CustomInstallAndReinstallEnd
+				CustomInstallAndReinstallAndSoftMigrationEnd
 				If ($true -eq $isInstalled) {
 					Complete-NxtPackageInstallation
+					if ($true -eq $global:registerPackage) {
+						## Register package for uninstall
+						[string]$global:installPhase = 'Package-Registration'
+						Register-NxtPackage
+					}
 				}
-				if (($true -eq $isInstalled) -and ($true -eq $global:registerPackage)) {
-					## Register package for uninstall
-					[string]$global:installPhase = 'Package-Registration'
-					Register-NxtPackage
-				}
-				
 				## END OF INSTALL
 			}
 			"Uninstall" {
 				## START OF UNINSTALL
-				
 				Show-NxtInstallationWelcome -IsInstall $false
-				CustomPreUninstall
+				CustomUninstallBegin
 				[bool]$isUninstalled = Uninstall-NxtApplication
-				CustomPostUninstall
+				CustomUninstallEnd
 				if ($true -eq $isUninstalled) {
 					Complete-NxtPackageUninstallation
 					[string]$global:installPhase = 'Package-Unregistration'
@@ -265,16 +264,14 @@ param (
 			}
 			"InstallUserPart" {
 				## START OF USERPARTINSTALL
-
-				CustomInstallUserPart
-
+				CustomInstallUserPartBegin
+				CustomInstallUserPartEnd
 				## END OF USERPARTINSTALL
 			}
 			"UninstallUserPart" {
 				## START OF USERPARTUNINSTALL
-
-				CustomUninstallUserPart
-
+				CustomUninstallUserPartBegin
+				CustomUninstallUserPartEnd
 				## END OF USERPARTUNINSTALL
 			}
 			Default {}
@@ -296,89 +293,103 @@ param (
 }
 
 #region Entry point funtions to perform custom tasks during script run
-
-function CustomPreInit {
-	[string]$global:installPhase = 'CustomPreInit'
+## Custom functions are sorted by occurence order in the main function.
+## Naming pattern: 
+## {functionType}{Phase}{PrePosition}{SubPhase}
+function CustomBegin {
+	[string]$global:installPhase = 'CustomBegin'
 
 	## Executes at the start of the Main function
 }
 
-function CustomPreInstallAndReinstall {
-	[string]$global:installPhase = 'CustomPreInstallAndReinstall'
+function CustomInstallAndReinstallBegin {
+	[string]$global:installPhase = 'CustomInstallAndReinstallBegin'
 
 	## Executes before any installation or reinstallation tasks are performed
 }
 
-function CustomPreUninstallReinstall {
-	[string]$global:installPhase = 'CustomPreUninstallReinstall'
-
-	## Executes before the uninstallation in the reinstall process
-}
-
-function CustomPostUninstallReinstall {
-	[string]$global:installPhase = 'CustomPostUninstallReinstall'
-
-	## Executes at after the uninstallation in the reinstall process
-}
-
-function CustomPreInstallReinstall {
-	[string]$global:installPhase = 'CustomPreInstallReinstall'
-
-	## Executes before the installation in the reinstall process
-}
-
-function CustomPostInstallReinstall {
-	[string]$global:installPhase = 'CustomPostInstallReinstall'
-
-	## Executes after the installation in the reinstall process
-}
-
-function CustomPreInstall {
-	[string]$global:installPhase = 'CustomPreInstall'
-
-	## Executes before the installation in the install process
-}
-
-function CustomPostInstall {
-	[string]$global:installPhase = 'CustomPostInstall'
-
-	## Executes after the installation in the install process
-}
-
-function CustomPostInstallAndReinstall {
-	[string]$global:installPhase = 'CustomPostInstallAndReinstall'
-
-	## Executes after the completed install or reinstall process but NOT on SoftMigration
-}
-
-function CustomPostInstallAndReinstallAndSoftMigration {
-	[string]$global:installPhase = 'CustomPostInstallAndReinstallAndSoftMigration'
+function CustomInstallAndReinstallAndSoftMigrationEnd {
+	[string]$global:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
 
 	## Executes after the completed install or reinstall process and on SoftMigration
 }
 
-function CustomPreUninstall {
-	[string]$global:installPhase = 'CustomPreUninstall'
+function CustomReinstallPreUninstall {
+	[string]$global:installPhase = 'CustomReinstallPreUninstall'
+
+	## Executes before the uninstallation in the reinstall process
+}
+
+function CustomReinstallPostUninstall {
+	[string]$global:installPhase = 'CustomReinstallPostUninstall'
+
+	## Executes at after the uninstallation in the reinstall process
+}
+
+function CustomReinstallPreInstall {
+	[string]$global:installPhase = 'CustomReinstallPreInstall'
+
+	## Executes before the installation in the reinstall process
+}
+
+function CustomReinstallPostInstall {
+	[string]$global:installPhase = 'CustomReinstallPostInstall'
+
+	## Executes after the installation in the reinstall process
+}
+
+function CustomInstallBegin {
+	[string]$global:installPhase = 'CustomInstallBegin'
+
+	## Executes before the installation in the install process
+}
+
+function CustomInstallEnd {
+	[string]$global:installPhase = 'CustomInstallEnd'
+
+	## Executes after the installation in the install process
+}
+
+function CustomInstallAndReinstallEnd {
+	[string]$global:installPhase = 'CustomPostInstallAndReinstall'
+
+	## Executes after the completed install or reinstall process
+}
+
+function CustomUninstallBegin {
+	[string]$global:installPhase = 'CustomUninstallBegin'
 
 	## Executes before the uninstallation in the uninstall process
 }
 
-function CustomPostUninstall {
-	[string]$global:installPhase = 'CustomPostUninstall'
+function CustomUninstallEnd {
+	[string]$global:installPhase = 'CustomUninstallEnd'
 
 	## Executes after the uninstallation in the uninstall process
 }
 
-function CustomInstallUserPart {
-	[string]$global:installPhase = 'CustomInstallUserPart'
+function CustomInstallUserPartBegin {
+	[string]$global:installPhase = 'CustomInstallUserPartBegin'
 
-	## Executes if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	## Executes at the Beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
 }
 
-function CustomUninstallUserPart {
-	[string]$global:installPhase = 'CustomUninstallUserPart'
+function CustomInstallUserPartEnd {
+	[string]$global:installPhase = 'CustomInstallUserPartEnd'
 
-	## Executes if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
+	## Executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
+}
+
+function CustomUninstallUserPartBegin {
+	[string]$global:installPhase = 'CustomUninstallUserPartBegin'
+
+	## Executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
+}
+
+function CustomUninstallUserPartEnd {
+	[string]$global:installPhase = 'CustomUninstallUserPartEnd'
+
+	## Executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
 }
 
 #endregion
