@@ -31,6 +31,7 @@
     "InstallerVersion": "2.10.2",
     "UninstallKey": "Scribble Papers_is1",
     "UninstallKeyIsDisplayName": false,
+    "UninstallKeyContainsWildCards": false,
     "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
     "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
     "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
@@ -53,8 +54,8 @@
       {"Source":"Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"}
     ],
     "UninstallKeysToHide":[
-      {"KeyName":"$($global:PackageConfig.UninstallKey)","Is64Bit":false,"KeyNameIsDisplayName":false},
-      {"KeyName":"<SomeDisplayName>","Is64Bit":true,"KeyNameIsDisplayName":true}
+      {"KeyName":"$($global:PackageConfig.UninstallKey)","Is64Bit":false,"KeyNameIsDisplayName":false,"KeyNameContainsWildCards":false},
+      {"KeyName":"<SomeAppName> - *","Is64Bit":true,"KeyNameIsDisplayName":true,"KeyNameContainsWildCards":true}
     ],
     "PackageSpecificVariablesRaw": [
       {
