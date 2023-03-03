@@ -102,27 +102,6 @@ Catch {
 try {
 	[string]$global:installPhase = 'Initialize-Environment'
 	Initialize-NxtEnvironment
-	if ($global:SetupCfg.Call.HIDEWINDOWS -eq 1) {
-		Write-Log -Message "Checking if $PID is a childprocess of neo42HideWindows.exe" -Severity 1 -Source $deployAppScriptFriendlyName
-		if ((Get-NxtParentProcess -Recurse).name -notcontains "neo42HideWindows.exe") {
-			$argumentList = New-Object System.Collections.Generic.List[System.Object]
-			$argumentList.Add("`"$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe`"")
-			$argumentList.Add("-ExecutionPolicy")
-			$argumentList.Add("Bypass")
-			$argumentList.Add("-NoProfile")
-			$argumentList.Add("-File")
-			$argumentList.Add("`"$($script:MyInvocation.MyCommand.Path)`"")
-			foreach ($key in $PSBoundParameters.keys) {
-				$argumentList.Add("-$key")
-				$argumentList.Add($PSBoundParameters[$key])
-			}
-			[string]$filepath = "$scriptDirectory\AppDeployToolkit\neo42HideWindows.exe" 
-			[string]$arguments = $argumentList -join " "
-			Write-Log -Message "Calling $filepath with $arguments" -Severity 1 -Source $deployAppScriptFriendlyName
-			$hiddenProcess = Start-Process -wait -PassThru -FilePath "$scriptDirectory\AppDeployToolkit\neo42HideWindows.exe" -ArgumentList $arguments
-			Exit-Script -ExitCode $hiddenProcess.ExitCode
-		}
-	}
 	##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
