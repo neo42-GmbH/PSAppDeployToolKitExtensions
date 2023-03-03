@@ -299,7 +299,7 @@ param (
 function CustomBegin {
 	[string]$global:installPhase = 'CustomBegin'
 
-	## Executes at the start of the Main function
+	## Always executes at the beginning of the script regardless of the DeploymentType ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart')
 }
 
 function CustomInstallAndReinstallBegin {
