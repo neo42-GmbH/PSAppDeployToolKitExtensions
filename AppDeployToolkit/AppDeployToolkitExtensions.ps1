@@ -4775,15 +4775,16 @@ https://neo42.de/psappdeploytoolkit
 		$DeferDays = 0
 	}
 
-	switch ($ContinueType) {
-		"ABORT" {
-			Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+	if (![string]::IsNullOrEmpty($AskKillProcessApps)) {
+		switch ($ContinueType) {
+			"ABORT" {
+				Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+			}
+			"CONTINUE" {
+				Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+			}		
 		}
-		"CONTINUE" {
-			Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
-		}		
 	}
-
 }
 #endregion
 #region Function Stop-NxtProcess
