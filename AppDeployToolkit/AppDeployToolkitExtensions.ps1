@@ -535,7 +535,7 @@ function Complete-NxtPackageInstallation {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
+	[string]$script:installPhase = 'Complete-NxtPackageInstallation'
 
 	## <Perform Complete-NxtPackageInstallation tasks here>
 
@@ -620,7 +620,7 @@ function Complete-NxtPackageUninstallation {
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision
 	)
-	[string]$global:installPhase = 'Complete-NxtPackageUninstallation'
+	[string]$script:installPhase = 'Complete-NxtPackageUninstallation'
 
 	## <Perform Complete-NxtPackageUninstallation tasks here>
 
@@ -2977,7 +2977,7 @@ function Get-NxtRegisterOnly {
 	If ($true -eq $SoftMigration) {
 		## Perform soft migration 
 
-		[string]$installPhase = 'Soft-Migration'
+		[string]$script:installPhase = 'Soft-Migration'
 		if ([string]::IsNullOrEmpty($DisplayVersion)){
 			Write-Log -Message 'DisplayVersion is $null or empty. Set SoftMigration to $false.'
 			return $false
@@ -3466,7 +3466,7 @@ function Install-NxtApplication {
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod
 	)
-	[string]$global:installPhase = 'Installation'
+	[string]$script:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
 		Action                    = 'Install'
@@ -4294,7 +4294,7 @@ function Repair-NxtApplication {
 		[bool]
 		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
 	)
-	[string]$global:installPhase = 'Repair-NxtApplication'
+	[string]$script:installPhase = 'Repair-NxtApplication'
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
 		Path   = "$InstFile"
@@ -5063,7 +5063,7 @@ function Uninstall-NxtApplication {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-	[string]$global:installPhase = 'Pre-Uninstallation'
+	[string]$script:installPhase = 'Pre-Uninstallation'
 
 	## <Perform Pre-Uninstallation tasks here>
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
@@ -5090,7 +5090,7 @@ function Uninstall-NxtApplication {
 		}
 	}
 
-	[string]$global:installPhase = 'Uninstallation'
+	[string]$script:installPhase = 'Uninstallation'
 
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
