@@ -936,7 +936,7 @@ function Execute-NxtBitRockInstaller {
 				## Actually copy the uninstallation file, if it exists
 				If ($true -eq (Get-Item "$bitRockInstallerUninstallPath")) {
 					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
-					Copy-File -Path "$uninsFolder\unins*.*" -Destination "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\"	
+					Copy-File -Path "$uninsFolder\unins*.*" -Destination "$configNxtBitRockInstallerUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
 				Else {
 					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation file to backup]..." -Source ${CmdletName}
@@ -1258,7 +1258,7 @@ function Execute-NxtInnoSetup {
 				## Actually copy the uninstallation file, if it exists
 				If ($true -eq (Get-Item "$uninsfolder\unins[0-9][0-9][0-9].exe")) {
 					Write-Log -Message "Copy uninstallation files to backup..." -Source ${CmdletName}
-					Copy-File -Path "$uninsfolder\unins[0-9][0-9][0-9].*" -Destination "$configNxtInnoSetupUninsBackupPath\$innoUninstallKey\"	
+					Copy-File -Path "$uninsfolder\unins[0-9][0-9][0-9].*" -Destination "$configNxtInnoSetupUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
 				Else {
 					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation files to backup]..." -Source ${CmdletName}
@@ -1707,7 +1707,7 @@ function Execute-NxtNullsoft {
 				## Actually copy the uninstallation file, if it exists
 				If ($true -eq (Get-Item "$nullsoftUninstallPath")) {
 					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
-					Copy-File -Path "$nullsoftUninstallPath" -Destination "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\"	
+					Copy-File -Path "$nullsoftUninstallPath" -Destination "$configNxtNullsoftUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
 				Else {
 					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation file to backup]..." -Source ${CmdletName}
@@ -2656,7 +2656,7 @@ function Get-NxtInstalledApplication {
 	}
 	Process {
 		If ([string]::IsNullOrEmpty($UninstallKey)) {
-			Write-Log -Message "Cannot retrieve information about installed applications: No uninstallkey or display name defined." -Source ${CmdletName}
+			Write-Log -Message "Cannot retrieve information about installed applications: No uninstallkey or display name defined." -Severity 2 -Source ${CmdletName}
 		}
 		Else {
 			try {
@@ -2665,7 +2665,10 @@ function Get-NxtInstalledApplication {
 						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -WildCard
 					}
 					Else {
-						[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $UninstallKey | Where-Object UninstallSubkey -Like $UninstallKey
+						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name "*" -WildCard | Where-Object UninstallSubkey -Like $UninstallKey
+						ForEach ($installedAppResult in $installedAppResults) {
+							Write-Log -Message "Selected [$($installedAppResult.DisplayName)] version [$($installedAppResult.DisplayVersion)] using wildcard matching UninstallKey [$UninstallKey] from the results above." -Source ${CmdletName}
+						}
 					}
 				}
 				Else {
@@ -3505,6 +3508,11 @@ function Install-NxtApplication {
 	Determins if the value given as UninstallKey should be interpreted as a displayname.
 	Only applies for Inno Setup, Nullsoft and BitRockInstaller.
 	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstallKeyContainsWildCards
+	Determines if the value given as UninstallKey contains WildCards.
+	If set to $true "*" are interpreted as WildCards.
+	If set to $false "*" are interpreted as part of the actual string.
+	Defaults to the corresponding value from the PackageConfig object.
 .PARAMETER InstLogFile
 	Defines the path to the Logfile that should be used by the installer.
 	Defaults to the corresponding value from the PackageConfig object.
@@ -3534,6 +3542,9 @@ function Install-NxtApplication {
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
 		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
+		[Parameter(Mandatory = $false)]
 		[String]
 		$InstLogFile = $global:PackageConfig.InstLogFile,
 		[Parameter(Mandatory = $false)]
@@ -3552,9 +3563,10 @@ function Install-NxtApplication {
 	[string]$global:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
-		Action                    = 'Install'
-		Path                      = "$InstFile"
-		UninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
+		Action							= 'Install'
+		Path							= "$InstFile"
+		UninstallKeyIsDisplayName		= $UninstallKeyIsDisplayName
+		UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendInstParaToDefaultParameters) {
@@ -3606,7 +3618,7 @@ function Install-NxtApplication {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
 	}
 	else {
-		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards)) {
 			Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 		}
 	}
@@ -5102,6 +5114,11 @@ function Uninstall-NxtApplication {
 	Determins if the value given as UninstallKey should be interpreted as a displayname.
 	Only applies for Inno Setup, Nullsoft and BitRockInstaller.
 	Defaults to the corresponding value from the PackageConfig object.
+.PARAMETER UninstallKeyContainsWildCards
+	Determines if the value given as UninstallKey contains WildCards.
+	If set to $true "*" are interpreted as WildCards.
+	If set to $false "*" are interpreted as part of the actual string.
+	Defaults to the corresponding value from the PackageConfig object.
 .PARAMETER UninstLogFile
 	Defines the path to the Logfile that should be used by the uninstaller.
 	Defaults to the corresponding value from the PackageConfig object.
@@ -5136,6 +5153,9 @@ function Uninstall-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstLogFile = $global:PackageConfig.UninstLogFile,
@@ -5207,8 +5227,9 @@ function Uninstall-NxtApplication {
 		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 
 			[hashtable]$executeNxtParams = @{
-				Action                    = 'Uninstall'
-				UninstallKeyIsDisplayName	= $UninstallKeyIsDisplayName
+				Action							= 'Uninstall'
+				UninstallKeyIsDisplayName		= $UninstallKeyIsDisplayName
+				UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
 			}
 			if (![string]::IsNullOrEmpty($UninstPara)) {
 				if ($AppendUninstParaToDefaultParameters) {
@@ -5259,7 +5280,7 @@ function Uninstall-NxtApplication {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
 			}
 			else {
-				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards)) {
 					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 				}
 			}
