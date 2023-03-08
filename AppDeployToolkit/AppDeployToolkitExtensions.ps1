@@ -4263,34 +4263,35 @@ function Remove-NxtSystemEnvironmentVariable {
 #region Function Repair-NxtApplication
 function Repair-NxtApplication {
 	<#
-.SYNOPSIS
-	Defines the required steps to repair an MSI based application.
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER UninstallKey
-	Name of the uninstall registry key of the application or a displayname entry value inside it's uninstall key (using a displayname value requires to set the parameter -UninstallKeyIsDisplayName $true)
-	(e.g. "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" or "an application display name").
-	Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\" (basically this matches with the entry 'ProductCode' in property table inside of source msi file, therefore the InstFile is not provided as parameter for this function).
-.PARAMETER UninstallKeyIsDisplayName
-	Determines if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
-.PARAMETER RepairLogFile
-	Defines the path to the Logfile that should be used by the installer.
-	Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
-	Note: <ProductCode> will be retrieved from installed msi by registry with provided Uninstallkey automatically
-.PARAMETER RepairPara
-	Defines the parameters which will be passed in the Repair Commandline.
-	Defaults to the SAME corresponding value from the PackageConfig object like for installation.
-.PARAMETER AppendRepairParaToDefaultParameters
-	If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
-	If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
-	Defaults to the SAME corresponding value from the PackageConfig object like for installation.
-.EXAMPLE
-	Repair-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
-param (
+	.SYNOPSIS
+		Defines the required steps to repair an MSI based application.
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER UninstallKey
+		Either the applications uninstallregistrykey or the applications displayname, searched for in the regvalue "Displayname" below all uninstallkeys (e.g. "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" or "an application display name").
+		Using a displayname value requires to set the parameter -UninstallKeyIsDisplayName to $true.
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\" (basically this matches with the entry 'ProductCode' in property table inside of source msi file, therefore the InstFile is not provided as parameter for this function).
+	.PARAMETER UninstallKeyIsDisplayName
+		Determines if the value given as UninstallKey should be interpreted as a displayname.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RepairLogFile
+		Defines the path to the Logfile that should be used by the installer.
+		Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
+		Note: <ProductCode> will be retrieved from installed msi by registry with provided Uninstallkey automatically
+	.PARAMETER RepairPara
+		Defines the parameters which will be passed in the Repair Commandline.
+		Defaults to the value "InstPara" from the PackageConfig object.
+	.PARAMETER AppendRepairParaToDefaultParameters
+		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
+	.EXAMPLE
+		Repair-NxtApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	param (
 	[Parameter(Mandatory = $false)]
 	[string]
 	$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -4298,7 +4299,7 @@ param (
 	[bool]
 	$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
 	[Parameter(Mandatory = $false)]
-	 [AllowEmptyString()]
+	[AllowEmptyString()]
 	[ValidatePattern("\.log$|^$|^[^\\/]+$")]
 	[string]
 	$RepairLogFile,
@@ -4320,7 +4321,7 @@ if (![string]::IsNullOrEmpty($UninstallKey)) {
 else {
 	Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
 }
-If (!(${executeNxtParams}.Path)) {
+If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
 	Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
 	## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
 	return $true
@@ -4335,7 +4336,7 @@ if (![string]::IsNullOrEmpty($InstPara)) {
 }
 if ([string]::IsNullOrEmpty($RepairLogFile)) {
 	## now set default path and name including retrieved ProductCode
-	$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$(${executeNxtParams}.Path).$global:DeploymentTimestamp.log")
+	$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
 }
 [String]$msiLogName = ($RepairLogFile | Split-Path -Leaf).TrimEnd(".log")
 $executeNxtParams["LogName"] = $msiLogName
