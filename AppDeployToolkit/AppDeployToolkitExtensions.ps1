@@ -3522,7 +3522,7 @@ function Install-NxtApplication {
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
 	}
-	else {
+	elseif ( $false -eq $(Test-NxtSetupPreResultState -CheckState "Install") ) {
 		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 			Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 		}
@@ -4263,103 +4263,133 @@ function Remove-NxtSystemEnvironmentVariable {
 #region Function Repair-NxtApplication
 function Repair-NxtApplication {
 	<#
-.SYNOPSIS
-	Defines the required steps to repair an MSI based application.
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER UninstallKey
-	Name of the uninstall registry key of the application or a displayname entry value inside it's uninstall key (using a displayname value requires to set the parameter -UninstallKeyIsDisplayName $true)
-	(e.g. "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" or "an application display name").
-	Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\" (basically this matches with the entry 'ProductCode' in property table inside of source msi file, therefore the InstFile is not provided as parameter for this function).
-.PARAMETER UninstallKeyIsDisplayName
-	Determines if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
-.PARAMETER RepairLogFile
-	Defines the path to the Logfile that should be used by the installer.
-	Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
-	Note: <ProductCode> will be retrieved from installed msi by registry with provided Uninstallkey automatically
-.PARAMETER RepairPara
-	Defines the parameters which will be passed in the Repair Commandline.
-	Defaults to the SAME corresponding value from the PackageConfig object like for installation.
-.PARAMETER AppendRepairParaToDefaultParameters
-	If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
-	If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
-	Defaults to the SAME corresponding value from the PackageConfig object like for installation.
-.EXAMPLE
-	Repair-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
-param (
-	[Parameter(Mandatory = $false)]
-	[string]
-	$UninstallKey = $global:PackageConfig.UninstallKey,
-	[Parameter(Mandatory = $false)]
-	[bool]
-	$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
-	[Parameter(Mandatory = $false)]
-	 [AllowEmptyString()]
-	[ValidatePattern("\.log$|^$|^[^\\/]+$")]
-	[string]
-	$RepairLogFile,
-	[Parameter(Mandatory = $false)]
-	[string]
-	$RepairPara = $global:PackageConfig.InstPara,
-	[Parameter(Mandatory = $false)]
-	[bool]
-	$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
-)
-[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
-[string]$script:installPhase = 'Repair-NxtApplication'
-[hashtable]$executeNxtParams = @{
-	Action	= 'Repair'
-}
-if (![string]::IsNullOrEmpty($UninstallKey)) {
-	$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
-}
-else {
-	Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
-}
-If (!(${executeNxtParams}.Path)) {
-	Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
-	## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
-	return $true
-}
-if (![string]::IsNullOrEmpty($InstPara)) {
-	if ($AppendRepairParaToDefaultParameters) {
-		$executeNxtParams["AddParameters"] = "$RepairPara"
+    .SYNOPSIS
+        Defines the required steps to repair an MSI based application.
+    .DESCRIPTION
+        Is only called in the Main function and should not be modified!
+        To customize the script always use the "CustomXXXX" entry points.
+    .PARAMETER UninstallKey
+        Name of the uninstall registry key of the application or a displayname entry value inside it's uninstall key (using a displayname value requires to set the parameter -UninstallKeyIsDisplayName $true)
+        (e.g. "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" or "an application display name").
+        Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\" (basically this matches with the entry 'ProductCode' in property table inside of source msi file, therefore the InstFile is not provided as parameter for this function).
+    .PARAMETER UninstallKeyIsDisplayName
+        Determines if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
+    .PARAMETER RepairLogFile
+        Defines the path to the Logfile that should be used by the installer.
+        Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
+        Note: <ProductCode> will be retrieved from installed msi by registry with provided Uninstallkey automatically
+    .PARAMETER RepairPara
+        Defines the parameters which will be passed in the Repair Commandline.
+        Defaults to the SAME corresponding value from the PackageConfig object like for installation.
+    .PARAMETER AppendRepairParaToDefaultParameters
+        If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+        If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+        Defaults to the SAME corresponding value from the PackageConfig object like for installation.
+    .EXAMPLE
+        Repair-NxtApplication
+    .LINK
+        https://neo42.de/psappdeploytoolkit
+    #>
+    param (
+        [Parameter(Mandatory = $false)]
+        [string]
+        $UninstallKey = $global:PackageConfig.UninstallKey,
+        [Parameter(Mandatory = $false)]
+        [bool]
+        $UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+        [Parameter(Mandatory = $false)]
+         [AllowEmptyString()]
+        [ValidatePattern("\.log$|^$|^[^\\/]+$")]
+        [string]
+        $RepairLogFile,
+        [Parameter(Mandatory = $false)]
+        [string]
+        $RepairPara = $global:PackageConfig.InstPara,
+        [Parameter(Mandatory = $false)]
+        [bool]
+		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SecondsToWaitForTogetherTimeout = $global:PackageConfig.SecondsToWaitForTogetherTimeout,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$ProcessesDuringInstToWaitFor = $global:PackageConfig.ProcessesDuringInstToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$RegkeysDuringInstToWaitFor = $global:PackageConfig.RegkeysDuringInstToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProcessToWaitFor = $global:PackageConfig.ProcessToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProcessToWaitTimeout = $global:PackageConfig.ProcessToWaitTimeout,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegkeyToWaitFor = $global:PackageConfig.RegkeyToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegkeyToWaitTimeout = $global:PackageConfig.RegkeyToWaitTimeout
+
+    )
+
+    [string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
+    [string]$script:installPhase = 'Repair-NxtApplication'
+    [hashtable]$executeNxtParams = @{
+        Action	= 'Repair'
+    }
+    if (![string]::IsNullOrEmpty($UninstallKey)) {
+        $executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
+    }
+    else {
+        Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
+    }
+    If (!(${executeNxtParams}.Path)) {
+        Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
+        ## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
+        return $true
+    }
+    if (![string]::IsNullOrEmpty($InstPara)) {
+        if ($AppendRepairParaToDefaultParameters) {
+            $executeNxtParams["AddParameters"] = "$RepairPara"
+        }
+        else {
+            $executeNxtParams["Parameters"] = "$RepairPara"
+        }
+    }
+    if ([string]::IsNullOrEmpty($RepairLogFile)) {
+        ## now set default path and name including retrieved ProductCode
+        $RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$(${executeNxtParams}.Path).$global:DeploymentTimestamp.log")
+    }
+    [String]$msiLogName = ($RepairLogFile | Split-Path -Leaf).TrimEnd(".log")
+    $executeNxtParams["LogName"] = $msiLogName
+
+    ## <Perform repair tasks here>
+    ## running with parameter -PassThru to get always a valid return code (needed here for validation later) from Execute-MSI
+    $RepairExitCode = (Execute-MSI @executeNxtParams -RepairFromSource $true -PassThru).ExitCode
+
+    ## Move Logs to correct destination
+    if ([System.IO.Path]::IsPathRooted($RepairLogFile)) {
+        $msiLogName = "$($msiLogName.TrimEnd(".log"))_$($executeNxtParams["Action"]).log"
+        [String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
+        If (Test-Path ($logPath)) {
+            Move-NxtItem $logPath -Destination $RepairLogFile
+        }
+    }
+
+    Start-Sleep -Seconds 5
+
+	if ( ($false -eq $(Test-NxtSetupPreResultState -CheckState "Install")) -or (0 -ne $RepairExitCode) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+		if (0 -ne $RepairExitCode) {
+			Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $RepairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+		} else {
+			Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. Check for running process(es)/existing registry key(s) was unexpected!" -MainExitCode $mainExitCode
+		}
 	}
-	else {
-		$executeNxtParams["Parameters"] = "$RepairPara"
-	}
-}
-if ([string]::IsNullOrEmpty($RepairLogFile)) {
-	## now set default path and name including retrieved ProductCode
-	$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$(${executeNxtParams}.Path).$global:DeploymentTimestamp.log")
-}
-[String]$msiLogName = ($RepairLogFile | Split-Path -Leaf).TrimEnd(".log")
-$executeNxtParams["LogName"] = $msiLogName
 
-## <Perform repair tasks here>
-## running with parameter -PassThru to get always a valid return code (needed here for validation later) from Execute-MSI
-$RepairExitCode = (Execute-MSI @executeNxtParams -RepairFromSource $true -PassThru).ExitCode
-
-## Move Logs to correct destination
-if ([System.IO.Path]::IsPathRooted($RepairLogFile)) {
-	$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($executeNxtParams["Action"]).log"
-	[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
-	If (Test-Path ($logPath)) {
-		Move-NxtItem $logPath -Destination $RepairLogFile
-	}
-}
-
-Start-Sleep -Seconds 5
-
-if ( ($RepairExitCode -ne 0) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
-	Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $RepairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
-}
-
-return $true
+    return $true
 }
 #endregion
 #region Function Set-NxtDetectedDisplayVersion
@@ -5041,6 +5071,236 @@ function Test-NxtProcessExists {
 	}
 }
 #endregion
+#region Function Test-NxtSetupPreResultStatus
+function Test-NxtSetupPreResultState {
+	<#
+	.SYNOPSIS
+		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
+		By default integrated in functions Install-NxtApplication, Uninstall-Nxtapplication and Repair-NxtApplication.
+	.DESCRIPTION
+		Checks the state of setup installation or setup uninstallation before success tasks will be called using a process and registry key list.
+		All check list entries in both lists are processed in logical AND-relation.
+		Returns $true if all lists are empty, but returns $false if all check lists are disabled by parameter.
+	.PARAMETER CheckState
+		Setup action state to check.
+		Valid states are 'Install' or 'Uninstall'.
+	.PARAMETER IgnoreProcessesList
+		Determines if the existing list of processes to check should be ignored.
+	.PARAMETER IgnoreRegkeysList
+		Determines if the existing list of registry paths/keys/values/value data to check should be ignored.
+	.PARAMETER SecondsToWaitForTogetherTimeout
+		Defines a timeout for all checks (processes and registry together) to run at all.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProcessesDuringInstToWaitFor
+		List of processes to check for during setup install action.
+		Wildcards are allowed for process names.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegkeysDuringInstToWaitFor
+		List of registry paths/keys/values/value data to check for during setup install action.
+		Wildcards are allowed for checking registry paths and keys, but not for registry values names, when checking registry value data.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProcessesDuringUninstToWaitFor
+		List of processes to check for during setup uninstall action.
+		Wildcards are allowed for process names.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegkeysDuringUninstToWaitFor
+		List of registry paths/keys/values/value data to check for during setup uninstall action.
+		Wildcards are allowed for checking registry paths and keys, but not for registry values names, when checking registry value data.
+		Defaults to the corresponding value from the PackageConfig object.
+	.OUTPUTS
+		System.Boolean.
+	.EXAMPLE
+		Test-NxtSetupPreResultStatus -CheckState 'Uninstall'
+		Test-NxtSetupPreResultStatus -CheckState 'Install' -
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateSet("Install", "Uninstall")]
+		[string]
+		$CheckState,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IgnoreProcessesList = $false,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IgnoreRegkeysList = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$SecondsToWaitForTogetherTimeout = $global:PackageConfig.SecondsToWaitForTogetherTimeout,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$ProcessesDuringInstToWaitFor = $global:PackageConfig.ProcessesDuringInstToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$RegkeysDuringInstToWaitFor = $global:PackageConfig.RegkeysDuringInstToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$ProcessesDuringUninstToWaitFor = $global:PackageConfig.ProcessesDuringUninstToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$RegkeysDuringUninstToWaitFor = $global:PackageConfig.RegkeysDuringuninstToWaitFor
+	)
+
+    Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+    Process {
+		if ( ($true -eq $IgnoreProcessesList) -and ($true -eq $IgnoreRegkeysList) ) {
+			Write-Log "All check lists are disabled by call parameters - no setup result pre-checks were executed!" -severity 3 -Source ${cmdletName}
+			return $false
+		}
+
+		switch ($CheckState) {
+			'Install' {
+				[PSCustomObject]$ProcessesToWaitFor = $ProcessesDuringInstToWaitFor
+				[PSCustomObject]$RegkeysToWaitFor = $RegkeysDuringInstToWaitFor
+			}
+			'Uninstall' {
+				[PSCustomObject]$ProcessesToWaitFor = $ProcessesDuringUninstToWaitFor
+				[PSCustomObject]$RegkeysToWaitFor = $RegkeysDuringUninstToWaitFor
+			}
+			
+		}
+
+		Try {
+			if ( (0 -lt $ProcessesToWaitFor.count) -or (0 -lt $RegkeysToWaitFor.count) ) {
+				$loopTimer = New-Object -TypeName System.Diagnostics.Stopwatch
+				Write-Log "Checking for expected processes to be terminated/running and/or expected registry entries to be generated/removed like specified in package config file ..." -severity 2 -Source ${cmdletName}
+				$loopTimer.Restart()
+				if ( [math]::Round($loopTimer.Elapsed.TotalSeconds,0) -lt $SecondsToWaitForTogetherTimeout ) {
+					[int]$processentryCount = 0
+					foreach ($processentryToWaitFor in $ProcessesToWaitFor) {
+						[bool]$processesOK = $false
+						$processentryCount += 1
+						if ( $true -eq $($processentryToWaitFor.ShouldExist) ) {
+							Write-Log "Is process '$($processentryToWaitFor.Name)' running?" -Source ${cmdletName}
+							$processesOK = (Watch-NxtProcess -ProcessName $($processentryToWaitFor.Name) -Timeout ($SecondsToWaitForTogetherTimeout - [math]::Round($loopTimer.Elapsed.TotalSeconds,0)))
+						} else {
+							Write-Log "Is process '$($processentryToWaitFor.Name)' stopped?" -Source ${cmdletName}
+							$processesOK = (Watch-NxtProcessIsStopped -ProcessName $($processentryToWaitFor.Name) -Timeout ($SecondsToWaitForTogetherTimeout - [math]::Round($loopTimer.Elapsed.TotalSeconds,0)))
+						}
+						Write-Log "$processesOK" -Source ${cmdletName}
+						if ( [math]::Round($loopTimer.Elapsed.TotalSeconds,0) -ge $SecondsToWaitForTogetherTimeout ) {
+							break
+						}
+					}
+					[int]$regkeyentryentryCount = 0
+					foreach ( $regkeyentryToWaitFor in $RegkeysToWaitFor ) {
+						$regkeyentryentryCount += 1
+						If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.ValueName)) -or ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) -and ![string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueData)) ) ) {
+							If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.ValueName)) ) {
+								$msginfo = "for registry value name string"
+							} else {
+								$msginfo = "when to check for registry value data"
+							}
+							Write-Log -Message "Wildcards are not supported yet $($msginfo) -> ignored entry: '$($regkeyentryToWaitFor.KeyPath)\$($regkeyentryToWaitFor.ValueName)'" -Severity 3 -Source ${cmdletName}
+						} else {
+							[bool]$regkeysOK = $false
+							[string]$msginfo = ""
+							if ( $true -eq $($regkeyentryToWaitFor.ShouldExist) ) {
+								if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
+									$msginfo = " and contains it the expected data"
+								}
+								Write-Log "Does this registry entry exist$($msginfo)?" -Source ${cmdletName}
+								if ( [string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueName)) ) {
+										$regkeysOK = (Watch-NxtRegistryKey -RegistryKey $($regkeyentryToWaitFor.KeyPath) -Timeout ($SecondsToWaitForTogetherTimeout - [math]::Round($loopTimer.Elapsed.TotalSeconds,0)))
+								} else {
+									## check for registry value name and/or data
+									while ([math]::Round($loopTimer.Elapsed.TotalSeconds,0) -lt $SecondsToWaitForTogetherTimeout) {
+										If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) ) {
+											Write-Log "Checking for a registry path [$($regkeyentryToWaitFor.KeyPath)] with value [$($regkeyentryToWaitFor.ValueName)]." -Source ${cmdletName}
+											## be sure path(s) still exists before check for value (when in loop)
+											if ( !($false -eq (Test-Path -Path "$($regkeyentryToWaitFor.KeyPath)")) ) {
+												if ( !($null -eq (Get-ChildItem -Path "$($regkeyentryToWaitFor.KeyPath)").GetValue("$($regkeyentryToWaitFor.ValueName)") ) ) {
+													$regkeysOK = $true
+													break
+												}
+											}
+										} else {
+											[PSCustomObject]$retrievedValueData = (Get-Registrykey -Key "$($regkeyentryToWaitFor.KeyPath)" -Value "$($regkeyentryToWaitFor.ValueName)")
+											if ( !($null -eq $retrievedValueData) ) {
+												if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
+													if ( "$retrievedValueData" -eq "$($regkeyentryToWaitFor.ValueData)" ) {
+														break
+													}
+												} else {
+													break
+												}
+											}
+										}
+										start-sleep 1
+									}
+								}
+							} else {
+								if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
+									$msginfo = " and contains it not the expected data"
+								}
+								Write-Log "Does this registry entry not exist$($msginfo)?" -Source ${cmdletName}
+								if ( [string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueName)) ) {
+										$regkeysOK = (Watch-NxtRegistryKeyIsRemoved -RegistryKey $($regkeyentryToWaitFor.KeyPath) -Timeout ($SecondsToWaitForTogetherTimeout - [math]::Round($loopTimer.Elapsed.TotalSeconds,0)))
+								} else {
+									## check for registry value name and/or data
+									while ( [math]::Round($loopTimer.Elapsed.TotalSeconds,0) -lt $SecondsToWaitForTogetherTimeout ) {
+										If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) ) {
+											Write-Log "Checking for a registry path [$($regkeyentryToWaitFor.KeyPath)] with value [$($regkeyentryToWaitFor.ValueName)]." -Source ${cmdletName}
+											## be sure path(s) still exists before check for value (when in loop)
+											if ( !($false -eq (Test-Path -Path "$($regkeyentryToWaitFor.KeyPath)")) ) {
+												if ( !($null -eq (Get-ChildItem -Path "$($regkeyentryToWaitFor.KeyPath)").GetValue("$($regkeyentryToWaitFor.ValueName)") ) ) {
+													$regkeysOK = $true
+													start-sleep 1
+												}
+											}
+										} else {
+											[PSCustomObject]$retrievedValueData = (Get-Registrykey -Key "$($regkeyentryToWaitFor.KeyPath)" -Value "$($regkeyentryToWaitFor.ValueName)")
+											if ( !($null -eq $retrievedValueData) ) {
+												if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
+													if ( "$retrievedValueData" -ne "$($regkeyentryToWaitFor.ValueData)" ) {
+														start-sleep 1
+													}
+												} else {
+													start-sleep 1
+												}
+											}
+										}
+										break
+									}
+								}
+							}
+							if ( [math]::Round($loopTimer.Elapsed.TotalSeconds,0) -ge $SecondsToWaitForTogetherTimeout ) {
+								break
+							}
+						}
+					}
+				}
+				$loopTimer.Stop()
+				if ( ($processentryCount -lt $ProcessesToWaitFor.count) -or ($regkeyentryentryCount -lt $RegkeysToWaitFor.count) ) {
+					Write-Log "Note: Not all of expected processes and/or expected registry entries could be checked until defined timeout limit!" -Severity 3 -Source ${cmdletName}
+				} elseif ( $false -eq $processesOK -or $false -eq $regkeysOK ) {
+					Write-Log "Setup action pre-result checks failed!" -Severity 3 -Source ${cmdletName}
+				}
+
+				if ( ($false -eq $processesOK) -or ($false -eq $regkeysOK) ) {
+					return $false
+				} else {
+					Write-Log "All valid setup result pre-checks were successful." -severity 2 -Source ${cmdletName}
+					return $true
+				}
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to run setup pre-result checks for mode: '$CheckStatus'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+	Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Uninstall-NxtApplication
 function Uninstall-NxtApplication {
 	<#
@@ -5211,7 +5471,7 @@ function Uninstall-NxtApplication {
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
 			}
-			else {
+			elseif ( $false -eq $(Test-NxtSetupPreResultState -CheckState "Uninstall") ) {
 				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 				}
@@ -5751,7 +6011,7 @@ function Watch-NxtProcess {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
 				else {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName
+					$result = Test-NxtProcessExists -ProcessName $ProcessName.replace("*","%")
 				}
 				
 				if ($result) {
@@ -5816,7 +6076,7 @@ function Watch-NxtProcessIsStopped {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
 				else {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName
+					$result = Test-NxtProcessExists -ProcessName $ProcessName.replace("*","%")
 				}
 				
 				if ($false -eq $result) {
@@ -5871,7 +6131,11 @@ function Watch-NxtRegistryKey {
 		try {
 			$waited = 0
 			while ($waited -lt $Timeout) {
-				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($RegistryKey) ) {
+					$key = Test-Path -Path "$RegistryKey"
+				} else {
+					$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				}
 				if ($key) {
 					Write-Output $true
 					return
@@ -5923,7 +6187,13 @@ function Watch-NxtRegistryKeyIsRemoved {
 		try {
 			$waited = 0
 			while ($waited -lt $Timeout) {
-				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($RegistryKey) ) {
+					if ( !(Test-Path -Path "$RegistryKey")) {
+						$key = $null
+					}
+				} else {
+					$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				}
 				if ($null -eq $key) {
 					Write-Output $true
 					return

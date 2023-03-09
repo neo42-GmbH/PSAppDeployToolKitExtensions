@@ -40,6 +40,47 @@
     "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
     "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
     "AppendUninstParaToDefaultParameters": false,
+    "SecondsToWaitForTogetherTimeout": 30,
+    "ProcessesDuringInstToWaitFor": [
+      {
+        "Name": "explorer.exe",
+        "ShouldExist": true
+      }
+    ],
+    "ProcessesDuringUninstToWaitFor": [
+      {
+        "Name": "Au*.exe",
+        "ShouldExist": false
+      }
+    ],
+    "RegkeysDuringInstToWaitFor": [
+      {
+        "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID*}",
+        "ValueName": "DisplayVersion",
+        "ValueData": null,
+        "ShouldExist": false
+      },
+      {
+        "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+        "ValueName": null,
+        "ValueData": null,
+        "ShouldExist": true
+      }
+    ],
+    "RegkeysDuringUninstToWaitFor": [
+      {
+        "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID}",
+        "ValueName": "DisplayVersion",
+        "ValueData": "1.0",
+        "ShouldExist": false
+      },
+      {
+        "KeyPath": "HKLM:\\SOFTWARE\\Manufacturer*Name\\AnyKey",
+        "ValueName": null,
+        "ValueData": null,
+        "ShouldExist": false
+      }
+    ],
     "AppKillProcesses": [
       "ScPapers"
     ],
