@@ -4292,75 +4292,79 @@ function Repair-NxtApplication {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
-	[Parameter(Mandatory = $false)]
-	[string]
-	$UninstallKey = $global:PackageConfig.UninstallKey,
-	[Parameter(Mandatory = $false)]
-	[bool]
-	$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
-	[Parameter(Mandatory = $false)]
-	[AllowEmptyString()]
-	[ValidatePattern("\.log$|^$|^[^\\/]+$")]
-	[string]
-	$RepairLogFile,
-	[Parameter(Mandatory = $false)]
-	[string]
-	$RepairPara = $global:PackageConfig.InstPara,
-	[Parameter(Mandatory = $false)]
-	[bool]
-	$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
-)
-[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
-[string]$script:installPhase = 'Repair-NxtApplication'
-[hashtable]$executeNxtParams = @{
-	Action	= 'Repair'
-}
-if (![string]::IsNullOrEmpty($UninstallKey)) {
-	$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
-}
-else {
-	Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
-}
-If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
-	Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
-	## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
-	return $true
-}
-if (![string]::IsNullOrEmpty($InstPara)) {
-	if ($AppendRepairParaToDefaultParameters) {
-		$executeNxtParams["AddParameters"] = "$RepairPara"
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[AllowEmptyString()]
+		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+		[string]
+		$RepairLogFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RepairPara = $global:PackageConfig.InstPara,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
+	)
+	[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
+	[string]$script:installPhase = 'Repair-NxtApplication'
+	[hashtable]$executeNxtParams = @{
+		Action	= 'Repair'
+	}
+	if (![string]::IsNullOrEmpty($UninstallKey)) {
+		$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
 	}
 	else {
-		$executeNxtParams["Parameters"] = "$RepairPara"
+		Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
 	}
-}
-if ([string]::IsNullOrEmpty($RepairLogFile)) {
-	## now set default path and name including retrieved ProductCode
-	$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
-}
-[String]$msiLogName = ($RepairLogFile | Split-Path -Leaf).TrimEnd(".log")
-$executeNxtParams["LogName"] = $msiLogName
-
-## <Perform repair tasks here>
-## running with parameter -PassThru to get always a valid return code (needed here for validation later) from Execute-MSI
-$RepairExitCode = (Execute-MSI @executeNxtParams -RepairFromSource $true -PassThru).ExitCode
-
-## Move Logs to correct destination
-if ([System.IO.Path]::IsPathRooted($RepairLogFile)) {
-	$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($executeNxtParams["Action"]).log"
-	[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
-	If (Test-Path ($logPath)) {
-		Move-NxtItem $logPath -Destination $RepairLogFile
+	If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
+		Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
+		## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
+		return $true
 	}
-}
+	if (![string]::IsNullOrEmpty($InstPara)) {
+		if ($AppendRepairParaToDefaultParameters) {
+			$executeNxtParams["AddParameters"] = "$RepairPara"
+		}
+		else {
+			$executeNxtParams["Parameters"] = "$RepairPara"
+		}
+	}
+	if ([string]::IsNullOrEmpty($RepairLogFile)) {
+		## now set default path and name including retrieved ProductCode
+		$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
+	}
+	[String]$msiLogName = ($RepairLogFile | Split-Path -Leaf).TrimEnd(".log")
+	$executeNxtParams["LogName"] = $msiLogName
 
-Start-Sleep -Seconds 5
+	## <Perform repair tasks here>
+	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from Execute-MSI
+	[int]$RepairExitCode = (Execute-MSI @executeNxtParams -RepairFromSource $true -PassThru).ExitCode
 
-if ( ($RepairExitCode -ne 0) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
-	Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $RepairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
-}
+	## transfered error codes (reboot request) must accept inside this function for success (because of using parameter -PassThru with CMDlet 'Execute-MSI')
+	if ( (3010 -eq $RepairExitCode) -or (1641 -eq $RepairExitCode) ) {
+		[int]$RepairExitCode = 0
+	}
+	## Move Logs to correct destination
+	if ([System.IO.Path]::IsPathRooted($RepairLogFile)) {
+		$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($executeNxtParams["Action"]).log"
+		[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
+		If (Test-Path ($logPath)) {
+			Move-NxtItem $logPath -Destination $RepairLogFile
+		}
+	}
 
-return $true
+	Start-Sleep -Seconds 5
+
+	if ( ($RepairExitCode -ne 0) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+		Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $RepairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+	}
+
+	return $true
 }
 #endregion
 #region Function Set-NxtDetectedDisplayVersion
