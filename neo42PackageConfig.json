@@ -37,9 +37,12 @@
 	  "InstFile": "SPSetup.exe",
     "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
     "AppendInstParaToDefaultParameters": false,
+    "AcceptedInstallExitCodes": "",
+    "AcceptedRepairExitCodes": "",
     "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
     "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
     "AppendUninstParaToDefaultParameters": false,
+    "AcceptedUninstallExitCodes": "",
     "AppKillProcesses": [
       "ScPapers"
     ],

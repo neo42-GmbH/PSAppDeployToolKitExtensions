@@ -694,7 +694,7 @@ function Copy-NxtDesktopShortcuts {
 #endregion
 #region Function Execute-NxtBitRockInstaller
 function Execute-NxtBitRockInstaller {
-    <#
+	<#
 	.SYNOPSIS
 		Executes the following actions for BitRock Installer installations: install (with UninstallKey AND installation file), uninstall (with UninstallKey).
 	.DESCRIPTION
@@ -719,6 +719,8 @@ function Execute-NxtBitRockInstaller {
 		Uninstall default is: "--mode unattended".
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER IgnoreExitCodes
+		List the exit codes to ignore or * to ignore all exit codes.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER XmlConfigNxtBitRockInstaller
@@ -735,64 +737,68 @@ function Execute-NxtBitRockInstaller {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Install', 'Uninstall')]
-        [string]$Action = 'Install',
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Install', 'Uninstall')]
+		[string]$Action = 'Install',
 
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullorEmpty()]
-        [string]$UninstallKey,
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[string]$UninstallKey,
 
 		[Parameter(Mandatory = $false)]
 		[bool]$UninstallKeyIsDisplayName = $false,
 
-        [Parameter(Mandatory = $false)]
-        [string]$Path,
+		[Parameter(Mandatory = $false)]
+		[string]$Path,
 
-        [Parameter(Mandatory = $false)]
-        [string]$Parameters,
+		[Parameter(Mandatory = $false)]
+		[string]$Parameters,
         
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [string]$AddParameters,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$AddParameters,
 
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [switch]$PassThru = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$PassThru = $false,
 
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [boolean]$ContinueOnError = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$IgnoreExitCodes,
 
-        [Parameter(Mandatory = $false)]
-        [Xml.XmlElement]$XmlConfigNxtBitRockInstaller = $xmlConfig.NxtBitRockInstaller_Options,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$ContinueOnError = $false,
+
+		[Parameter(Mandatory = $false)]
+		[Xml.XmlElement]$XmlConfigNxtBitRockInstaller = $xmlConfig.NxtBitRockInstaller_Options,
 
 		[Parameter(Mandatory = $false)]
 		[string]$DirFiles = $dirFiles
-    )
-    Begin {
-        ## read config data from AppDeployToolkitConfig.xml
+	)
+	Begin {
+		## read config data from AppDeployToolkitConfig.xml
         
-        [string]$configNxtBitRockInstallerInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_InstallParams)
-        [string]$configNxtBitRockInstallerUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninstallParams)
-        [string]$configNxtBitRockInstallerUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninsBackupPath)
+		[string]$configNxtBitRockInstallerInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_InstallParams)
+		[string]$configNxtBitRockInstallerUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninstallParams)
+		[string]$configNxtBitRockInstallerUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninsBackupPath)
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
-    Process {
+	Process {
 
-        [string]$bitRockInstallerUninstallKey = $UninstallKey
+		[string]$bitRockInstallerUninstallKey = $UninstallKey
 		[bool]$bitRockInstallerUninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
    
-        switch ($Action) {
-            'Install' {
-                [string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
+		switch ($Action) {
+			'Install' {
+				[string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
 
-        		## If the Setup File is in the Files directory, set the full path during an installation
+				## If the Setup File is in the Files directory, set the full path during an installation
 				If (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $Path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
 					[string]$bitRockInstallerSetupPath = Join-Path -Path $DirFiles -ChildPath $Path
 				}
@@ -806,25 +812,25 @@ function Execute-NxtBitRockInstaller {
 					}
 					Continue
 				}
-            }
-            'Uninstall' {
-                [string]$bitRockInstallerDefaultParams = $configNxtbitRockInstallerUninstallParams
+			}
+			'Uninstall' {
+				[string]$bitRockInstallerDefaultParams = $configNxtbitRockInstallerUninstallParams
 				[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName
 
-                if (!$installedAppResults) {
-                    Write-Log -Message "No Application with UninstallKey `"$bitRockInstallerUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
+				if (!$installedAppResults) {
+					Write-Log -Message "No Application with UninstallKey `"$bitRockInstallerUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
 					return
-                }
+				}
     
-                [string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
+				[string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
     
-                ## check for and remove quotation marks around the uninstall string
-                if ($bitRockInstallerUninstallString.StartsWith('"')) {
-                    [string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(1, $bitRockInstallerUninstallString.IndexOf('"', 1) - 1)
-                }
-                else {
-                    [string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(0, $bitRockInstallerUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
-                }
+				## check for and remove quotation marks around the uninstall string
+				if ($bitRockInstallerUninstallString.StartsWith('"')) {
+					[string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(1, $bitRockInstallerUninstallString.IndexOf('"', 1) - 1)
+				}
+				else {
+					[string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(0, $bitRockInstallerUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+				}
 
 				## Get parent folder and filename of the uninstallation file
 				[string]$uninsFolder = split-path $bitRockInstallerSetupPath -Parent
@@ -838,50 +844,53 @@ function Execute-NxtBitRockInstaller {
 
 				## If $bitRockInstallerSetupPath is still unexistend, write Error to log and abort
 				if (![System.IO.File]::Exists($bitRockInstallerSetupPath)) {
-                    Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
+					Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
 
-                    if ($ContinueOnError) {
+					if ($ContinueOnError) {
 						## Uninstallation without uninstallation file is impossible --> Abort the function without error
-                        return
-                    }
-                    else {
-                        throw "Uninstallation file could not be found nor restored."
-                    }
-                }
+						return
+					}
+					else {
+						throw "Uninstallation file could not be found nor restored."
+					}
+				}
 
-            }
-        }
+			}
+		}
     
-        [string]$argsBitRockInstaller = $bitRockInstallerDefaultParams
+		[string]$argsBitRockInstaller = $bitRockInstallerDefaultParams
     
-        ## Replace default parameters if specified.
-        If ($Parameters) {
-            $argsBitRockInstaller = $Parameters
-        }
-        ## Append parameters to default parameters if specified.
-        If ($AddParameters) {
-            $argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
-        }
+		## Replace default parameters if specified.
+		If ($Parameters) {
+			$argsBitRockInstaller = $Parameters
+		}
+		## Append parameters to default parameters if specified.
+		If ($AddParameters) {
+			$argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
+		}
  
-        [hashtable]$ExecuteProcessSplat = @{
-            Path             = $bitRockInstallerSetupPath
-            Parameters       = $argsBitRockInstaller
-            WindowStyle      = 'Normal'
-        }
+		[hashtable]$ExecuteProcessSplat = @{
+			Path        = $bitRockInstallerSetupPath
+			Parameters  = $argsBitRockInstaller
+			WindowStyle = 'Normal'
+		}
         
-        If ($ContinueOnError) {
-            $ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
-        }
-        If ($PassThru) {
-            $ExecuteProcessSplat.Add('PassThru', $PassThru)
-        }
+		If ($ContinueOnError) {
+			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+		}
+		If ($PassThru) {
+			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+		}
+		if (![string]::IsNullOrEmpty($IgnoreExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $IgnoreExitCodes)
+		}
     
-        If ($PassThru) {
-            [psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
-        }
-        Else {
-            Execute-Process @ExecuteProcessSplat
-        }
+		If ($PassThru) {
+			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+		}
+		Else {
+			Execute-Process @ExecuteProcessSplat
+		}
 
 		if ($Action -eq 'Uninstall') {
 			## Wait until all uninstallation processes terminated
@@ -897,8 +906,8 @@ function Execute-NxtBitRockInstaller {
 			Write-Log -Message "Uninstallation process finished." -Source ${CmdletName}
 		}
     
-        ## Update the desktop (in case of changed or added enviroment variables)
-        Update-Desktop
+		## Update the desktop (in case of changed or added enviroment variables)
+		Update-Desktop
 
 		## Copy uninstallation file from $uninsFolder to $configNxtBitRockInstallerUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
@@ -931,11 +940,11 @@ function Execute-NxtBitRockInstaller {
 				}
 			}
 		}
-    }
-    End {
+	}
+	End {
 		If ($PassThru) {
-            Write-Output -InputObject $ExecuteResults
-        }
+			Write-Output -InputObject $ExecuteResults
+		}
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
@@ -977,6 +986,8 @@ function Execute-NxtInnoSetup {
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER IgnoreExitCodes
+		List the exit codes to ignore or * to ignore all exit codes.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER DeploymentTimestamp
@@ -1000,44 +1011,61 @@ function Execute-NxtInnoSetup {
 		[ValidateSet('Install', 'Uninstall')]
 		[string]
 		$Action = 'Install',
+
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
 		$UninstallKey,
+
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $false,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Path,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Parameters,
+
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
 		$AddParameters,
+
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$MergeTasks,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Log,
+
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[switch]
 		$PassThru = $false,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]
+        $IgnoreExitCodes,
+
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[boolean]
 		$ContinueOnError = $false,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentTimestamp = $global:deploymentTimestamp,
+
 		[Parameter(Mandatory = $false)]
 		[Xml.XmlElement]
 		$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DirFiles = $dirFiles
@@ -1187,7 +1215,10 @@ function Execute-NxtInnoSetup {
 		If ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
 		}
-    
+		if (![string]::IsNullOrEmpty($IgnoreExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $IgnoreExitCodes)
+		}
+ 
 		If ($PassThru) {
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
 		}
@@ -1242,140 +1273,161 @@ function Execute-NxtInnoSetup {
 #region Function Execute-NxtMSI
 function Execute-NxtMSI {
 	<#
-.SYNOPSIS
-	Wraps around the Execute-MSI Function. Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
-.DESCRIPTION
-	Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
-	If the -Action parameter is set to "Install" and the MSI is already installed, the function will exit.
-	Sets default switches to be passed to msiexec based on the preferences in the XML configuration file.
-	Automatically generates a log file name and creates a verbose log file for all msiexec operations.
-	Expects the MSI or MSP file to be located in the "Files" sub directory of the App Deploy Toolkit. Expects transform files to be in the same directory as the MSI file.
-.PARAMETER Action
-	The action to perform. Options: Install, Uninstall, Patch, Repair, ActiveSetup.
-.PARAMETER Path
-	The path to the MSI/MSP file or the product code of the installed MSI.
-.PARAMETER Transform
-	The name of the transform file(s) to be applied to the MSI. The transform file is expected to be in the same directory as the MSI file. Multiple transforms have to be separated by a semi-colon.
-.PARAMETER Patch
-	The name of the patch (msp) file(s) to be applied to the MSI for use with the "Install" action. The patch file is expected to be in the same directory as the MSI file. Multiple patches have to be separated by a semi-colon.
-.PARAMETER Parameters
-	Overrides the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
-.PARAMETER AddParameters
-	Adds to the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
-.PARAMETER SecureParameters
-	Hides all parameters passed to the MSI or MSP file from the toolkit Log file.
-.PARAMETER LoggingOptions
-	Overrides the default logging options specified in the XML configuration file. Default options are: "/L*v".
-.PARAMETER Log
-	Sets the Log Path either as Full Path or as logname
-.PARAMETER WorkingDirectory
-	Overrides the working directory. The working directory is set to the location of the MSI file.
-.PARAMETER SkipMSIAlreadyInstalledCheck
-	Skips the check to determine if the MSI is already installed on the system. Default is: $false.
-.PARAMETER IncludeUpdatesAndHotfixes
-	Include matches against updates and hotfixes in results.
-.PARAMETER NoWait
-	Immediately continue after executing the process.
-.PARAMETER PassThru
-	Returns ExitCode, STDOut, and STDErr output from the process.
-.PARAMETER IgnoreExitCodes
-	List the exit codes to ignore or * to ignore all exit codes.
-.PARAMETER PriorityClass	
-	Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
-.PARAMETER ExitOnProcessFailure
-	Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $true
-.PARAMETER RepairFromSource
-	Specifies whether we should repair from source. Also rewrites local cache. Default: $false
-.PARAMETER ContinueOnError
-	Continue if an error occurred while trying to start the process. Default: $false.
-.PARAMETER ConfigMSILogDir
-    Contains the FolderPath to the centrally configured Logdirectory from psadt main.
-    Defaults to $configMSILogDirc
-.EXAMPLE
-	Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi'
-	Installs an MSI
-.EXAMPLE
-	Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -Transform 'Adobe_FlashPlayer_11.2.202.233_x64_EN_01.mst' -Parameters '/QN'
-	Installs an MSI, applying a transform and overriding the default MSI toolkit parameters
-.EXAMPLE
-	[psobject]$ExecuteMSIResult = Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -PassThru
-	Installs an MSI and stores the result of the execution into a variable by using the -PassThru option
-.EXAMPLE
-	Execute-NxtMSI -Action 'Uninstall' -Path '{26923b43-4d38-484f-9b9e-de460746276c}'
-	Uninstalls an MSI using a product code
-.EXAMPLE
-	Execute-NxtMSI -Action 'Patch' -Path 'Adobe_Reader_11.0.3_EN.msp'
-	Installs an MSP
-.NOTES
-		AppDeployToolkit is required in order to run this function.
-.LINK
-	http://psappdeploytoolkit.com
-#>
-[CmdletBinding()]
-Param (
-	[Parameter(Mandatory=$false)]
-	[ValidateSet('Install','Uninstall','Patch','Repair','ActiveSetup')]
-	[string]$Action = 'Install',
-	[Parameter(Mandatory=$true,HelpMessage='Please enter either the path to the MSI/MSP file or the ProductCode')]
-	[Alias('FilePath')]
-	[string]$Path,
-	[Parameter(Mandatory = $false)]
-	[bool]
-	$UninstallKeyIsDisplayName = $false,
-	[Parameter(Mandatory = $false)]
-	[AllowEmptyString()]
-	[ValidatePattern("\.log$|^$|^[^\\/]+$")]
-	[string]
-	$Log,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$Transform,
-	[Parameter(Mandatory=$false)]
-	[Alias('Arguments')]
-	[string]$Parameters,
-	[Parameter(Mandatory=$false)]
-	[string]$AddParameters,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[switch]$SecureParameters = $false,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$Patch,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$LoggingOptions,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$WorkingDirectory,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[switch]$SkipMSIAlreadyInstalledCheck = $false,
-	[Parameter(Mandatory=$false)]
-	[switch]$IncludeUpdatesAndHotfixes = $false,
-	[Parameter(Mandatory=$false)]
-	[switch]$NoWait = $false,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[switch]$PassThru = $false,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$IgnoreExitCodes,
-	[Parameter(Mandatory=$false)]
-	[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
-	[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[boolean]$ExitOnProcessFailure = $true,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[boolean]$RepairFromSource = $false,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[boolean]$ContinueOnError = $false,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$ConfigMSILogDir = $configMSILogDir
-)
+	.SYNOPSIS
+		Wraps around the Execute-MSI Function. Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
+	.DESCRIPTION
+		Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
+		If the -Action parameter is set to "Install" and the MSI is already installed, the function will exit.
+		Sets default switches to be passed to msiexec based on the preferences in the XML configuration file.
+		Automatically generates a log file name and creates a verbose log file for all msiexec operations.
+		Expects the MSI or MSP file to be located in the "Files" sub directory of the App Deploy Toolkit. Expects transform files to be in the same directory as the MSI file.
+	.PARAMETER Action
+		The action to perform. Options: Install, Uninstall, Patch, Repair, ActiveSetup.
+	.PARAMETER Path
+		The path to the MSI/MSP file or the product code of the installed MSI.
+	.PARAMETER Transform
+		The name of the transform file(s) to be applied to the MSI. The transform file is expected to be in the same directory as the MSI file. Multiple transforms have to be separated by a semi-colon.
+	.PARAMETER Patch
+		The name of the patch (msp) file(s) to be applied to the MSI for use with the "Install" action. The patch file is expected to be in the same directory as the MSI file. Multiple patches have to be separated by a semi-colon.
+	.PARAMETER Parameters
+		Overrides the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
+	.PARAMETER AddParameters
+		Adds to the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
+	.PARAMETER SecureParameters
+		Hides all parameters passed to the MSI or MSP file from the toolkit Log file.
+	.PARAMETER LoggingOptions
+		Overrides the default logging options specified in the XML configuration file. Default options are: "/L*v".
+	.PARAMETER Log
+		Sets the Log Path either as Full Path or as logname
+	.PARAMETER WorkingDirectory
+		Overrides the working directory. The working directory is set to the location of the MSI file.
+	.PARAMETER SkipMSIAlreadyInstalledCheck
+		Skips the check to determine if the MSI is already installed on the system. Default is: $false.
+	.PARAMETER IncludeUpdatesAndHotfixes
+		Include matches against updates and hotfixes in results.
+	.PARAMETER NoWait
+		Immediately continue after executing the process.
+	.PARAMETER PassThru
+		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER IgnoreExitCodes
+		List the exit codes to ignore or * to ignore all exit codes.
+	.PARAMETER PriorityClass	
+		Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
+	.PARAMETER ExitOnProcessFailure
+		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $true
+	.PARAMETER RepairFromSource
+		Specifies whether we should repair from source. Also rewrites local cache. Default: $false
+	.PARAMETER ContinueOnError
+		Continue if an error occurred while trying to start the process. Default: $false.
+	.PARAMETER ConfigMSILogDir
+		Contains the FolderPath to the centrally configured Logdirectory from psadt main.
+		Defaults to $configMSILogDirc
+	.EXAMPLE
+		Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi'
+		Installs an MSI
+	.EXAMPLE
+		Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -Transform 'Adobe_FlashPlayer_11.2.202.233_x64_EN_01.mst' -Parameters '/QN'
+		Installs an MSI, applying a transform and overriding the default MSI toolkit parameters
+	.EXAMPLE
+		[psobject]$ExecuteMSIResult = Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -PassThru
+		Installs an MSI and stores the result of the execution into a variable by using the -PassThru option
+	.EXAMPLE
+		Execute-NxtMSI -Action 'Uninstall' -Path '{26923b43-4d38-484f-9b9e-de460746276c}'
+		Uninstalls an MSI using a product code
+	.EXAMPLE
+		Execute-NxtMSI -Action 'Patch' -Path 'Adobe_Reader_11.0.3_EN.msp'
+		Installs an MSP
+	.NOTES
+			AppDeployToolkit is required in order to run this function.
+	.LINK
+		http://psappdeploytoolkit.com
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Install', 'Uninstall', 'Patch', 'Repair', 'ActiveSetup')]
+		[string]$Action = 'Install',
+
+		[Parameter(Mandatory = $true, HelpMessage = 'Please enter either the path to the MSI/MSP file or the ProductCode')]
+		[Alias('FilePath')]
+		[string]$Path,
+
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $false,
+
+		[Parameter(Mandatory = $false)]
+		[AllowEmptyString()]
+		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+		[string]
+		$Log,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$Transform,
+
+		[Parameter(Mandatory = $false)]
+		[Alias('Arguments')]
+		[string]$Parameters,
+
+		[Parameter(Mandatory = $false)]
+		[string]$AddParameters,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$SecureParameters = $false,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$Patch,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$LoggingOptions,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$WorkingDirectory,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$SkipMSIAlreadyInstalledCheck = $false,
+
+		[Parameter(Mandatory = $false)]
+		[switch]$IncludeUpdatesAndHotfixes = $false,
+
+		[Parameter(Mandatory = $false)]
+		[switch]$NoWait = $false,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$PassThru = $false,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$IgnoreExitCodes,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
+		[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$ExitOnProcessFailure = $true,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$RepairFromSource = $false,
+
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$ContinueOnError = $false,
+
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ConfigMSILogDir = $configMSILogDir
+	)
+
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1395,7 +1447,7 @@ Param (
 			"ContinueOnError",
 			"ConfigMSILogDir"
 		)
-		foreach ($functionParametersWithDefault in $functionParametersWithDefaults){
+		foreach ($functionParametersWithDefault in $functionParametersWithDefaults) {
 			$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
 		}
 		[array]$functionParametersToBeRemoved = (
@@ -1403,7 +1455,7 @@ Param (
 			"UninstallKeyIsDisplayName",
 			"ConfigMSILogDir"
 		)
-		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved){
+		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved) {
 			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
 		}
 	}
@@ -1420,6 +1472,9 @@ Param (
 		if (![string]::IsNullOrEmpty($Log)) {
 			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
 			$PSBoundParameters.add("LogName", $msiLogName )
+		}
+		if (![string]::IsNullOrEmpty($IgnoreExitCodes)) {
+			$executeNxtParams["IgnoreExitCodes"] = "$IgnoreExitCodes"
 		}
 		Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
@@ -1465,6 +1520,8 @@ function Execute-NxtNullsoft {
 		Uninstall default is: "/AllUsers /S".
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER IgnoreExitCodes
+		List the exit codes to ignore or * to ignore all exit codes.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER XmlConfigNxtNullsoft
@@ -1508,6 +1565,10 @@ function Execute-NxtNullsoft {
 		[ValidateNotNullorEmpty()]
 		[switch]$PassThru = $false,
         
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$IgnoreExitCodes,
+
 		[Parameter(Mandatory = $false)]
 		[boolean]$ContinueOnError = $false,
         
@@ -1618,6 +1679,9 @@ function Execute-NxtNullsoft {
 		}
 		If ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+		}
+		if (![string]::IsNullOrEmpty($IgnoreExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $IgnoreExitCodes)
 		}
     
 		If ($PassThru) {
@@ -3409,59 +3473,71 @@ function Initialize-NxtEnvironment {
 #region Function Install-NxtApplication
 function Install-NxtApplication {
 	<#
-.SYNOPSIS
-	Defines the required steps to install the application based on the target installer type
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER UninstallKey
-	Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
-	Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallKeyIsDisplayName
-	Determins if the value given as UninstallKey should be interpreted as a displayname.
-	Only applies for Inno Setup, Nullsoft and BitRockInstaller.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstLogFile
-	Defines the path to the Logfile that should be used by the installer.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstFile
-	Defines the path to the Installation File.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstPara
-	Defines the parameters which will be passed in the Installation Commandline.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER AppendInstParaToDefaultParameters
-	If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
-	If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstallMethod
-	Defines the type of the installer used in this package.
-	Defaults to the corresponding value from the PackageConfig object
-.EXAMPLE
-	Install-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Defines the required steps to install the application based on the target installer type
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER UninstallKey
+		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstLogFile
+		Defines the path to the Logfile that should be used by the installer.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstFile
+		Defines the path to the Installation File.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstPara
+		Defines the parameters which will be passed in the Installation Commandline.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppendInstParaToDefaultParameters
+		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedInstallExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
+	.PARAMETER InstallMethod
+		Defines the type of the installer used in this package.
+		Defaults to the corresponding value from the PackageConfig object
+	.EXAMPLE
+		Install-NxtApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	param (
 		[Parameter(Mandatory = $false)]
 		[String]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
+
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+
 		[Parameter(Mandatory = $false)]
 		[String]
 		$InstLogFile = $global:PackageConfig.InstLogFile,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InstFile = $global:PackageConfig.InstFile,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InstPara = $global:PackageConfig.InstPara,
+
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
+
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedInstallExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod
@@ -3480,6 +3556,9 @@ function Install-NxtApplication {
 		else {
 			$executeNxtParams["Parameters"] = "$InstPara"
 		}
+	}
+	if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
+		$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
 	}
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		[string]$internalInstallerMethod = ""
@@ -3510,6 +3589,7 @@ function Install-NxtApplication {
 			}
 			if (![string]::IsNullOrEmpty($InstPara)) {
 				$executeParams["Parameters"] = "$InstPara"
+				$executeParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
 			}
 			Execute-Process @executeParams
 		}
@@ -3522,7 +3602,7 @@ function Install-NxtApplication {
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
 	}
-	else {
+    else {
 		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 			Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 		}
@@ -4286,81 +4366,95 @@ function Repair-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
+	.PARAMETER AcceptedRepairExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.EXAMPLE
 		Repair-NxtApplication
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
-	[Parameter(Mandatory = $false)]
-	[string]
-	$UninstallKey = $global:PackageConfig.UninstallKey,
-	[Parameter(Mandatory = $false)]
-	[bool]
-	$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
-	[Parameter(Mandatory = $false)]
-	[AllowEmptyString()]
-	[ValidatePattern("\.log$|^$|^[^\\/]+$")]
-	[string]
-	$RepairLogFile,
-	[Parameter(Mandatory = $false)]
-	[string]
-	$RepairPara = $global:PackageConfig.InstPara,
-	[Parameter(Mandatory = $false)]
-	[bool]
-	$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
-)
-[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
-[string]$script:installPhase = 'Repair-NxtApplication'
-[hashtable]$executeNxtParams = @{
-	Action	= 'Repair'
-}
-if (![string]::IsNullOrEmpty($UninstallKey)) {
-	$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
-}
-else {
-	Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
-}
-If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
-	Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
-	## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
-	return $true
-}
-if (![string]::IsNullOrEmpty($InstPara)) {
-	if ($AppendRepairParaToDefaultParameters) {
-		$executeNxtParams["AddParameters"] = "$RepairPara"
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+	
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+	
+		[Parameter(Mandatory = $false)]
+		[AllowEmptyString()]
+		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+		[string]
+		$RepairLogFile,
+	
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RepairPara = $global:PackageConfig.InstPara,
+	
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
+	
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes
+	)
+
+	[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
+	[string]$script:installPhase = 'Repair-NxtApplication'
+	[hashtable]$executeNxtParams = @{
+		Action	= 'Repair'
+	}
+	if (![string]::IsNullOrEmpty($UninstallKey)) {
+		$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
 	}
 	else {
-		$executeNxtParams["Parameters"] = "$RepairPara"
+		Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
 	}
-}
-if ([string]::IsNullOrEmpty($RepairLogFile)) {
-	## now set default path and name including retrieved ProductCode
-	$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
-}
-[String]$msiLogName = ($RepairLogFile | Split-Path -Leaf).TrimEnd(".log")
-$executeNxtParams["LogName"] = $msiLogName
-
-## <Perform repair tasks here>
-## running with parameter -PassThru to get always a valid return code (needed here for validation later) from Execute-MSI
-$RepairExitCode = (Execute-MSI @executeNxtParams -RepairFromSource $true -PassThru).ExitCode
-
-## Move Logs to correct destination
-if ([System.IO.Path]::IsPathRooted($RepairLogFile)) {
-	$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($executeNxtParams["Action"]).log"
-	[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
-	If (Test-Path ($logPath)) {
-		Move-NxtItem $logPath -Destination $RepairLogFile
+	If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
+		Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
+		## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
+		return $true
 	}
-}
+	if (![string]::IsNullOrEmpty($InstPara)) {
+		if ($AppendRepairParaToDefaultParameters) {
+			$executeNxtParams["AddParameters"] = "$RepairPara"
+		}
+		else {
+			$executeNxtParams["Parameters"] = "$RepairPara"
+		}
+	}
+	if ([string]::IsNullOrEmpty($RepairLogFile)) {
+		## now set default path and name including retrieved ProductCode
+		$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
+	}
+	[String]$msiLogName = ($RepairLogFile | Split-Path -Leaf).TrimEnd(".log")
+	$executeNxtParams["LogName"] = $msiLogName
+	if (![string]::IsNullOrEmpty($AcceptedRepairExitCodes)) {
+		$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
+	}
 
-Start-Sleep -Seconds 5
+	## <Perform repair tasks here>
+	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from Execute-MSI
+	$RepairExitCode = (Execute-MSI @executeNxtParams -RepairFromSource $true -PassThru).ExitCode
 
-if ( ($RepairExitCode -ne 0) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
-	Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $RepairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
-}
+	## Move Logs to correct destination
+	if ([System.IO.Path]::IsPathRooted($RepairLogFile)) {
+		$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($executeNxtParams["Action"]).log"
+		[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
+		If (Test-Path ($logPath)) {
+			Move-NxtItem $logPath -Destination $RepairLogFile
+		}
+	}
 
-return $true
+	Start-Sleep -Seconds 5
+
+	if ( ($RepairExitCode -ne 0) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+		Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $RepairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+	}
+
+	return $true
 }
 #endregion
 #region Function Set-NxtDetectedDisplayVersion
@@ -5045,69 +5139,83 @@ function Test-NxtProcessExists {
 #region Function Uninstall-NxtApplication
 function Uninstall-NxtApplication {
 	<#
-.SYNOPSIS
-	Defines the required steps to uninstall the application based on the target installer type
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-.PARAMETER UninstallKey
-	Specifies the original UninstallKey set by the Installer in this Package.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallKeyIsDisplayName
-	Determins if the value given as UninstallKey should be interpreted as a displayname.
-	Only applies for Inno Setup, Nullsoft and BitRockInstaller.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstLogFile
-	Defines the path to the Logfile that should be used by the uninstaller.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstFile
-	Defines the path to the Installation File.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstPara
-	Defines the parameters which will be passed in the UnInstallation Commandline.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER AppendUninstParaToDefaultParameters
-	If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
-	If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallMethod
-	Defines the type of the uninstaller used in this package.
-	Defaults to the corresponding value from the PackageConfig object
-.PARAMETER UninstallKeysToHide
-	Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
-	Defaults to the corresponding values from the PackageConfig object.
-.PARAMETER Wow6432Node
-	Switches between 32/64 Bit Registry Keys.
-	Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
-.EXAMPLE
-	Uninstall-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Defines the required steps to uninstall the application based on the target installer type
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+	.PARAMETER UninstallKey
+		Specifies the original UninstallKey set by the Installer in this Package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstLogFile
+		Defines the path to the Logfile that should be used by the uninstaller.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstFile
+		Defines the path to the Installation File.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstPara
+		Defines the parameters which will be passed in the UnInstallation Commandline.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppendUninstParaToDefaultParameters
+		If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedUninstallExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
+	.PARAMETER UninstallMethod
+		Defines the type of the uninstaller used in this package.
+		Defaults to the corresponding value from the PackageConfig object
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+		Defaults to the corresponding values from the PackageConfig object.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.EXAMPLE
+		Uninstall-NxtApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Param(
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
+
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstLogFile = $global:PackageConfig.UninstLogFile,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstFile = $global:PackageConfig.UninstFile,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstPara = $global:PackageConfig.UninstPara,
+
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
+
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedUninstallExitCodes = $global:PackageConfig.AcceptedUninstallExitCodes,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallMethod = $global:PackageConfig.UninstallMethod,
+
 		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
 		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Wow6432Node = $global:Wow6432Node
@@ -5172,6 +5280,9 @@ function Uninstall-NxtApplication {
 					$executeNxtParams["Parameters"] = "$UninstPara"
 				}
 			}
+			if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+				$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+			}
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				[string]$internalInstallerMethod = ""
 			}
@@ -5200,6 +5311,7 @@ function Uninstall-NxtApplication {
 					}
 					if (![string]::IsNullOrEmpty($UninstPara)) {
 						$executeParams["Parameters"] = "$UninstPara"
+						$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 					}
 					Execute-Process @executeParams
 				}
@@ -5212,7 +5324,7 @@ function Uninstall-NxtApplication {
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
 			}
-			else {
+            else {
 				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 				}
