@@ -547,26 +547,25 @@ function Complete-NxtPackageInstallation {
 	}
 
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-		[string]$wowEntry = ""
-		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
-			[string]$wowEntry = "\Wow6432Node"
-		}
-		if (($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) -or ($true -eq $uninstallKeyToHide.KeyNameContainsWildCards)) {
-			[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards).UninstallSubkey
-		}
-		else {
-			[string]$currentKeyName = $uninstallKeyToHide.KeyName
-		}
-		if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName) {
-			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent' -Type 'Dword' -Value '1'
-		}
-		else {
-			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-				Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped setting SystemComponent entry." -Source ${CmdletName}
+		Write-Log -Message "Hiding uninstall registry key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]..." -Source ${CmdletName}
+		If (([Array](Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards | Where-Object Is64BitApplication -eq $uninstallKeyToHide.Is64Bit)).Count -eq 1){
+			[string]$wowEntry = ""
+			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
+				[string]$wowEntry = "\Wow6432Node"
+			}
+			if (($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) -or ($true -eq $uninstallKeyToHide.KeyNameContainsWildCards)) {
+				[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards | Where-Object Is64BitApplication -eq $uninstallKeyToHide.Is64Bit).UninstallSubkey
 			}
 			else {
-				Write-Log -Message "Did not find an uninstall registry key [$currentKeyName]. Skipped setting SystemComponent entry." -Source ${CmdletName}
+				[string]$currentKeyName = $uninstallKeyToHide.KeyName
 			}
+			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent' -Type 'Dword' -Value '1'
+		}
+		elseif (([Array](Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards | Where-Object Is64BitApplication -eq $uninstallKeyToHide.Is64Bit)).Count -eq 0) {
+			Write-Log -Message "Did not find an uninstall registry key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]. Skipped setting SystemComponent entry." -Severity 2 -Source ${CmdletName}
+		}
+		else {
+			Write-Log -Message "Found more then one uninstall registry key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]. Skipped setting SystemComponent entry." -Severity 2 -Source ${CmdletName}
 		}
 	}
 
