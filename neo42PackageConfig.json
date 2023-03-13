@@ -40,19 +40,22 @@
     "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
     "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
     "AppendUninstParaToDefaultParameters": false,
-    "SecondsToWaitForTogetherTimeout": 30,
+    "AltogetherTimeoutToWaitForInSeconds": 10,
+    "ComputeListProcessesDuringInstInORlogic": true,
     "ProcessesDuringInstToWaitFor": [
       {
         "Name": "explorer.exe",
         "ShouldExist": true
       }
     ],
+    "ComputeListProcessesDuringUninstInORlogic": false,
     "ProcessesDuringUninstToWaitFor": [
       {
         "Name": "Au*.exe",
         "ShouldExist": false
       }
     ],
+    "ComputeListRegkeysDuringInstInORlogic": false,
     "RegkeysDuringInstToWaitFor": [
       {
         "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID*}",
@@ -67,6 +70,7 @@
         "ShouldExist": true
       }
     ],
+    "ComputeListRegkeysDuringUninstInORlogic": false,
     "RegkeysDuringUninstToWaitFor": [
       {
         "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID}",

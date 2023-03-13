@@ -4340,7 +4340,7 @@ function Repair-NxtApplication {
 	else {
 		Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
 	}
-	If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
+	if ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
 		Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
 		## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
 		return $true
@@ -5064,7 +5064,7 @@ function Test-NxtSetupPreResultState {
 		By default integrated in functions Install-NxtApplication, Uninstall-Nxtapplication and Repair-NxtApplication.
 	.DESCRIPTION
 		Checks the state of setup installation or setup uninstallation before success tasks will be called using a process and registry key list.
-		All check list entries in both lists are processed in logical AND-relation.
+		Both lists are processed in logical AND-relation to each other.
 		Returns $true if all lists are empty, but returns $false if all check lists are disabled by parameter.
 	.PARAMETER CheckState
 		Setup action state to check.
@@ -5073,21 +5073,32 @@ function Test-NxtSetupPreResultState {
 		Determines if the existing list of processes to check should be ignored.
 	.PARAMETER IgnoreRegkeysList
 		Determines if the existing list of registry paths/keys/values/value data to check should be ignored.
-	.PARAMETER SecondsToWaitForTogetherTimeout
-		Defines a timeout for all checks (processes and registry together) to run at all.
+	.PARAMETER LoopIntervalInSeconds
+		Defines a interval time in seconds to run all defined valid checks in loop again.
+		Default interval time is 5 seconds.
+	.PARAMETER AltogetherTimeoutToWaitForInSeconds
+		Defines a timeout in seconds for all checks (processes and registry together) to run at all in loop every defined value in LoopIntervalInSeconds.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ComputeListProcessesDuringInstInORlogic
+		Determines to compute the provided list of processes during setup install action in logical-OR relation, by default they are processed in logical-AND relation inside the list.
 	.PARAMETER ProcessesDuringInstToWaitFor
 		List of processes to check for during setup install action.
 		Wildcards are allowed for process names.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ComputeListRegkeysDuringInstInORlogic
+		Determines to compute the provided list of registry entries during setup install action in logical-OR relation, by default they are processed in logical-AND relation inside the list.
 	.PARAMETER RegkeysDuringInstToWaitFor
 		List of registry paths/keys/values/value data to check for during setup install action.
 		Wildcards are allowed for checking registry paths and keys, but not for registry values names, when checking registry value data.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ComputeListProcessesDuringUninstInORlogic
+		Determines to compute the provided list of processes during setup uninstall action in logical-OR relation, by default they are processed in logical-AND relation inside the list.
 	.PARAMETER ProcessesDuringUninstToWaitFor
 		List of processes to check for during setup uninstall action.
 		Wildcards are allowed for process names.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ComputeListRegkeysDuringUninstInORlogic
+		Determines to compute the provided list of registry entries during setup uninstall action in logical-OR relation, by default they are processed in logical-AND relation inside the list.
 	.PARAMETER RegkeysDuringUninstToWaitFor
 		List of registry paths/keys/values/value data to check for during setup uninstall action.
 		Wildcards are allowed for checking registry paths and keys, but not for registry values names, when checking registry value data.
@@ -5095,8 +5106,8 @@ function Test-NxtSetupPreResultState {
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
+		Test-NxtSetupPreResultStatus -CheckState 'Install' -IgnoreRegkeysList $true
 		Test-NxtSetupPreResultStatus -CheckState 'Uninstall'
-		Test-NxtSetupPreResultStatus -CheckState 'Install' -
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -5112,185 +5123,329 @@ function Test-NxtSetupPreResultState {
 		[bool]
 		$IgnoreRegkeysList = $false,
 		[Parameter(Mandatory = $false)]
+		[int]
+		$LoopIntervalInSeconds = 5,
+		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[string]
-		$SecondsToWaitForTogetherTimeout = $global:PackageConfig.SecondsToWaitForTogetherTimeout,
+		[int]
+		$AltogetherTimeoutToWaitForInSeconds = $global:PackageConfig.AltogetherTimeoutToWaitForInSeconds,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ComputeListProcessesDuringInstInORlogic = $global:PackageConfig.ComputeListProcessesDuringInstInORlogic,
 		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
 		$ProcessesDuringInstToWaitFor = $global:PackageConfig.ProcessesDuringInstToWaitFor,
 		[Parameter(Mandatory = $false)]
+		[bool]
+		$ComputeListRegkeysDuringInstInORlogic = $global:PackageConfig.ComputeListRegkeysDuringInstInORlogic,
+		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
 		$RegkeysDuringInstToWaitFor = $global:PackageConfig.RegkeysDuringInstToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ComputeListProcessesDuringUninstInORlogic = $global:PackageConfig.ComputeListProcessesDuringUninstInORlogic,
 		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
 		$ProcessesDuringUninstToWaitFor = $global:PackageConfig.ProcessesDuringUninstToWaitFor,
 		[Parameter(Mandatory = $false)]
+		[bool]
+		$ComputeListRegkeysDuringUninstInORlogic = $global:PackageConfig.ComputeListRegkeysDuringUninstInORlogic,
+		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
 		$RegkeysDuringUninstToWaitFor = $global:PackageConfig.RegkeysDuringuninstToWaitFor
 	)
-
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		if ( ($true -eq $IgnoreProcessesList) -and ($true -eq $IgnoreRegkeysList) ) {
-			Write-Log "All check lists are disabled by call parameters - no setup result pre-checks were executed!" -severity 3 -Source ${cmdletName}
-			return $false
+		if ($AltogetherTimeoutToWaitForInSeconds -eq 0) {
+			## AltogetherTimeoutToWaitForInSeconds=0 -> hidden switch to prevent setup pre-result checks for script main run
+			if ( (0 -lt $ProcessesToWaitFor.count) -or (0 -lt $RegkeysToWaitFor.count) ) {
+				Write-Log "Note: skipping setup pre-result checks ..." -Source ${cmdletName}
+				return $true
+			}
+		}
+		else {
+			if ( ($true -eq $IgnoreProcessesList) -and ($true -eq $IgnoreRegkeysList) ) {
+				## In general it should not be necessary to log this -> just a hidden switch for main execution!
+				#Write-Log "All check lists are disabled by call parameters - no configured setup pre-result checks will be executed!" -severity 2 -Source ${cmdletName}
+				return $true
+			}
+			if (0 -gt $AltogetherTimeoutToWaitForInSeconds) {
+				Throw "Value of parameter 'AltogetherTimeoutToWaitForInSeconds' has to be a positive number!"
+			}
 		}
 
 		switch ($CheckState) {
 			'Install' {
+				[bool]$ComputeListProcessesInORlogic = $ComputeListProcessesDuringInstInORlogic
 				[PSCustomObject]$ProcessesToWaitFor = $ProcessesDuringInstToWaitFor
+				[bool]$ComputeListRegkeysInORlogic = $ComputeListRegkeysDuringInstInORlogic
 				[PSCustomObject]$RegkeysToWaitFor = $RegkeysDuringInstToWaitFor
 			}
 			'Uninstall' {
+				[bool]$ComputeListProcessesInORlogic = $ComputeListProcessesDuringUninstInORlogic
 				[PSCustomObject]$ProcessesToWaitFor = $ProcessesDuringUninstToWaitFor
+				[bool]$ComputeListRegkeysInORlogic = $ComputeListRegkeysDuringUninstInORlogic
 				[PSCustomObject]$RegkeysToWaitFor = $RegkeysDuringUninstToWaitFor
 			}
-			
 		}
 
 		Try {
-			if ( (0 -lt $ProcessesToWaitFor.count) -or (0 -lt $RegkeysToWaitFor.count) ) {
+			[bool]$processesOK = $true
+			[bool]$regkeysOK = $true
+			if ( (0 -lt $($ProcessesToWaitFor.count)) -or (0 -lt $($RegkeysToWaitFor.count)) -or (0 -lt $AltogetherTimeoutToWaitForInSeconds) ) {
+				[int]$loopCount = 0
 				$loopTimer = New-Object -TypeName System.Diagnostics.Stopwatch
-				Write-Log "Checking for expected processes to be terminated/running and/or expected registry entries to be generated/removed like specified in package config file ..." -severity 2 -Source ${cmdletName}
+				Write-Log "Checking for expected processes to be terminated/running and/or expected registry entries to be generated/removed like specified in corresponding list ..." -severity 2 -Source ${cmdletName}
 				$loopTimer.Restart()
-				if ( [math]::Round($loopTimer.Elapsed.TotalSeconds, 0) -lt $SecondsToWaitForTogetherTimeout ) {
-					if ( $false -eq $IgnoreProcessesList ) {
-						[int]$processentryCount = 0
+				while ( [math]::Round($loopTimer.Elapsed.TotalSeconds, 0) -lt $AltogetherTimeoutToWaitForInSeconds ) {
+					## running processes list
+					[int]$processesNotOK = 0
+					if ( ($false -eq $IgnoreProcessesList) -and (0 -lt $($ProcessesToWaitFor.count)) ) {
 						foreach ($processentryToWaitFor in $ProcessesToWaitFor) {
-							[bool]$processesOK = $false
-							$processentryCount += 1
 							if ( $true -eq $($processentryToWaitFor.ShouldExist) ) {
 								Write-Log "Is process '$($processentryToWaitFor.Name)' running?" -Source ${cmdletName}
-								$processesOK = (Watch-NxtProcess -ProcessName $($processentryToWaitFor.Name) -Timeout ($SecondsToWaitForTogetherTimeout - [math]::Round($loopTimer.Elapsed.TotalSeconds, 0)))
+								[bool]$processesOK = (Watch-NxtProcess -ProcessName $($processentryToWaitFor.Name) -Timeout 0)
+								if ( $true -eq $processesOK ) {
+									If ( $true -eq $($ComputeListProcessesInORlogic) ) {
+										Write-Log "$processesOK" -Source ${cmdletName}
+										[int]$processesNotOK = 0
+										break
+									}
+								}
+								else {
+									[int]$processesNotOK += 1
+								}
 							}
 							else {
 								Write-Log "Is process '$($processentryToWaitFor.Name)' stopped?" -Source ${cmdletName}
-								$processesOK = (Watch-NxtProcessIsStopped -ProcessName $($processentryToWaitFor.Name) -Timeout ($SecondsToWaitForTogetherTimeout - [math]::Round($loopTimer.Elapsed.TotalSeconds, 0)))
-							}
-							Write-Log "$processesOK" -Source ${cmdletName}
-							if ( [math]::Round($loopTimer.Elapsed.TotalSeconds, 0) -ge $SecondsToWaitForTogetherTimeout ) {
-								break
-							}
-						}
-					}
-					if ( $false -eq $IgnoreRegkeysList ) {
-						[int]$regkeyentryentryCount = 0
-						foreach ( $regkeyentryToWaitFor in $RegkeysToWaitFor ) {
-							$regkeyentryentryCount += 1
-							If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.ValueName)) -or ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) -and ![string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueData)) ) ) {
-								If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.ValueName)) ) {
-									$msginfo = "for registry value name string"
+								[bool]$processesOK = (Watch-NxtProcessIsStopped -ProcessName $($processentryToWaitFor.Name) -Timeout 0)
+								if ( $true -eq $processesOK ) {
+									If ( $true -eq $($ComputeListProcessesInORlogic) ) {
+										Write-Log "$processesOK" -Source ${cmdletName}
+										[int]$processesNotOK = 0
+										break
+									}
 								}
 								else {
-									$msginfo = "when to check for registry value data"
+									[int]$processesNotOK += 1
 								}
-								Write-Log -Message "Wildcards are not supported yet $($msginfo) -> ignored entry: '$($regkeyentryToWaitFor.KeyPath)\$($regkeyentryToWaitFor.ValueName)'" -Severity 3 -Source ${cmdletName}
+							}
+							Write-Log "$processesOK" -Source ${cmdletName}
+						}
+					}
+					else {
+						[bool]$processesOK = $true
+					}
+					## running registry entries list
+					[int]$regkeysNotOK = 0
+					if ( ($false -eq $IgnoreRegkeysList) -and (0 -lt $($RegkeysToWaitFor.count))) {
+						foreach ( $regkeyentryToWaitFor in $($RegkeysToWaitFor) ) {
+							if ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.ValueName)) -or ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) -and ![string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueData)) ) ) {
+								## show this note in initial loop run only!
+								if (0 -eq $loopCount) {
+									If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.ValueName)) ) {
+										[string]$msginfo = "for registry value name string"
+									}
+									else {
+										[string]$msginfo = "when to check for registry value data"
+									}
+									Write-Log -Message "Wildcards are not supported yet $($msginfo) -> ignored entry: '$($regkeyentryToWaitFor.KeyPath)\$($regkeyentryToWaitFor.ValueName)'" -Severity 3 -Source ${cmdletName}
+								}
 							}
 							else {
-								[bool]$regkeysOK = $false
 								[string]$msginfo = ""
+								## registry entry should exist
 								if ( $true -eq $($regkeyentryToWaitFor.ShouldExist) ) {
 									if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
-										$msginfo = " and contains it the expected data"
+										[string]$msginfo = " and contains it the expected data"
 									}
 									Write-Log "Does this registry entry exist$($msginfo)?" -Source ${cmdletName}
 									if ( [string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueName)) ) {
-										$regkeysOK = (Watch-NxtRegistryKey -RegistryKey $($regkeyentryToWaitFor.KeyPath) -Timeout ($SecondsToWaitForTogetherTimeout - [math]::Round($loopTimer.Elapsed.TotalSeconds, 0)))
+										[bool]$regkeysOK = (Watch-NxtRegistryKey -RegistryKey $($regkeyentryToWaitFor.KeyPath) -Timeout 0)
+										if ( $true -eq $regkeysOK ) {
+											If ( $true -eq $ComputeListRegkeysInORlogic ) {
+												[int]$regkeysNotOK = 0
+												break
+											}
+										}
+										else {
+											[int]$regkeysNotOK += 1
+										}
 									}
 									else {
 										## check for registry value name and/or data
-										while ([math]::Round($loopTimer.Elapsed.TotalSeconds, 0) -lt $SecondsToWaitForTogetherTimeout) {
-											If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) ) {
-												Write-Log "Checking for a registry path [$($regkeyentryToWaitFor.KeyPath)] with value [$($regkeyentryToWaitFor.ValueName)]." -Source ${cmdletName}
-												## be sure path(s) still exists before check for value (when in loop)
-												if ( !($false -eq (Test-Path -Path "$($regkeyentryToWaitFor.KeyPath)")) ) {
-													if ( !($null -eq (Get-ChildItem -Path "$($regkeyentryToWaitFor.KeyPath)").GetValue("$($regkeyentryToWaitFor.ValueName)") ) ) {
-														$regkeysOK = $true
+										if ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) ) {
+											Write-Log "Checking for registry paths like [$($regkeyentryToWaitFor.KeyPath)] with value [$($regkeyentryToWaitFor.ValueName)]." -Source ${cmdletName}
+											## be sure path(s) still exists before check for value (when in loop)
+											if ( $true -eq (Test-Path -Path "$($regkeyentryToWaitFor.KeyPath)") ) {
+												if ( $null -eq (Get-ChildItem -Path "$($regkeyentryToWaitFor.KeyPath)").GetValue("$($regkeyentryToWaitFor.ValueName)") ) {
+													[bool]$regkeysOK = $false
+													[int]$regkeysNotOK += 1
+												}
+												else {
+													[bool]$regkeysOK = $true
+													if ( $true -eq $ComputeListRegkeysInORlogic ) {
+														[int]$regkeysNotOK = 0
 														break
 													}
 												}
 											}
-											else {
-												[PSCustomObject]$retrievedValueData = (Get-Registrykey -Key "$($regkeyentryToWaitFor.KeyPath)" -Value "$($regkeyentryToWaitFor.ValueName)")
-												if ( !($null -eq $retrievedValueData) ) {
-													if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
-														if ( "$retrievedValueData" -eq "$($regkeyentryToWaitFor.ValueData)" ) {
+											elseif ( !( [string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueName)) ) ) {
+												## now even the value does not exist
+												[bool]$regkeysOK = $false	
+												[int]$regkeysNotOK += 1											
+											}
+										}
+										else {
+											[PSCustomObject]$retrievedValueData = (Get-Registrykey -Key "$($regkeyentryToWaitFor.KeyPath)" -Value "$($regkeyentryToWaitFor.ValueName)")
+											if ( $null -ne $retrievedValueData ) {
+												if ( [string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueData)) ) {
+													[bool]$regkeysOK = $true
+													if ( $true -eq $ComputeListRegkeysInORlogic ) {
+														[int]$regkeysNotOK = 0
+														break
+													}
+												}
+												else {
+													if ( "$retrievedValueData" -eq "$($regkeyentryToWaitFor.ValueData)" ) {
+														Write-Log "True. Value data like expected."
+														[bool]$regkeysOK = $true
+														if ( $true -eq $ComputeListRegkeysInORlogic ) {
+															[int]$regkeysNotOK = 0
 															break
 														}
 													}
 													else {
-														break
-													}
-												}
-											}
-											start-sleep 1
-										}
-									}
-								}
-								else {
-									if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
-										$msginfo = " and contains it not the expected data"
-									}
-									Write-Log "Does this registry entry not exist$($msginfo)?" -Source ${cmdletName}
-									if ( [string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueName)) ) {
-										$regkeysOK = (Watch-NxtRegistryKeyIsRemoved -RegistryKey $($regkeyentryToWaitFor.KeyPath) -Timeout ($SecondsToWaitForTogetherTimeout - [math]::Round($loopTimer.Elapsed.TotalSeconds, 0)))
-									}
-									else {
-										## check for registry value name and/or data
-										while ( [math]::Round($loopTimer.Elapsed.TotalSeconds, 0) -lt $SecondsToWaitForTogetherTimeout ) {
-											If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) ) {
-												Write-Log "Checking for a registry path [$($regkeyentryToWaitFor.KeyPath)] with value [$($regkeyentryToWaitFor.ValueName)]." -Source ${cmdletName}
-												## be sure path(s) still exists before check for value (when in loop)
-												if ( !($false -eq (Test-Path -Path "$($regkeyentryToWaitFor.KeyPath)")) ) {
-													if ( !($null -eq (Get-ChildItem -Path "$($regkeyentryToWaitFor.KeyPath)").GetValue("$($regkeyentryToWaitFor.ValueName)") ) ) {
-														$regkeysOK = $true
-														start-sleep 1
+														Write-Log "False. Value data not like expected."
+														[bool]$regkeysOK = $false
+														[int]$regkeysNotOK += 1
 													}
 												}
 											}
 											else {
-												[PSCustomObject]$retrievedValueData = (Get-Registrykey -Key "$($regkeyentryToWaitFor.KeyPath)" -Value "$($regkeyentryToWaitFor.ValueName)")
-												if ( !($null -eq $retrievedValueData) ) {
-													if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
-														if ( "$retrievedValueData" -ne "$($regkeyentryToWaitFor.ValueData)" ) {
-															start-sleep 1
-														}
-													}
-													else {
-														start-sleep 1
+												[bool]$regkeysOK = $false
+												[int]$regkeysNotOK += 1
+											}
+										}
+									}
+									## registry entry should not exist
+								}
+								else {
+									if ( !($null -eq $($regkeyentryToWaitFor.ValueData)) ) {
+										[string]$msginfo = " and/or not contains the expected data"
+									}
+									Write-Log "Does this registry entry not exist$($msginfo)?" -Source ${cmdletName}
+									if ( [string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueName)) ) {
+										[bool]$regkeysOK = (Watch-NxtRegistryKeyIsRemoved -RegistryKey $($regkeyentryToWaitFor.KeyPath) -Timeout 0)
+										if ( $true -eq $regkeysOK ) {
+											If ($true -eq $ComputeListRegkeysInORlogic) {
+												[int]$regkeysNotOK = 0
+												break
+											}
+										}
+										else {
+											[int]$regkeysNotOK += 1
+										}
+									}
+									else {
+										## check for registry value name and/or data
+										if ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($($regkeyentryToWaitFor.KeyPath)) ) {
+											Write-Log "Checking for registry paths like [$($regkeyentryToWaitFor.KeyPath)] with value [$($regkeyentryToWaitFor.ValueName)]." -Source ${cmdletName}
+											## be sure path(s) still exists before check for value (when in loop)
+											if ( $true -eq (Test-Path -Path "$($regkeyentryToWaitFor.KeyPath)") ) {
+												if ( $null -ne (Get-ChildItem -Path "$($regkeyentryToWaitFor.KeyPath)").GetValue("$($regkeyentryToWaitFor.ValueName)") ) {
+													[bool]$regkeysOK = $false
+													[int]$regkeysNotOK += 1
+												}
+												else {
+													[bool]$regkeysOK = $true
+													if ( $true -eq $ComputeListRegkeysInORlogic ) {
+														[int]$regkeysNotOK = 0
+														break
 													}
 												}
 											}
-											break
+											elseif ( !( [string]::IsNullOrEmpty($($regkeyentryToWaitFor.ValueName)) ) ) {
+												## now even the value does not exist
+												[bool]$regkeysOK = $true
+												if ( $true -eq $ComputeListRegkeysInORlogic ) {
+													[int]$regkeysNotOK = 0
+													break
+												}
+											}
+										}
+										else {
+											[PSCustomObject]$retrievedValueData = (Get-Registrykey -Key "$($regkeyentryToWaitFor.KeyPath)" -Value "$($regkeyentryToWaitFor.ValueName)")
+											if ( $null -eq $retrievedValueData ) {
+												[bool]$regkeysOK = $true
+												if ( $true -eq $ComputeListRegkeysInORlogic ) {
+													[int]$regkeysNotOK = 0
+													break
+												}
+											}
+											else {
+												if ( $null -ne $($regkeyentryToWaitFor.ValueData) ) {
+													if ( "$retrievedValueData" -ne "$($regkeyentryToWaitFor.ValueData)" ) {
+														Write-Log "True. No value data like expected."
+														[bool]$regkeysOK = $true
+														if ( $true -eq $ComputeListRegkeysInORlogic ) {
+															[int]$regkeysNotOK = 0
+															break
+														}
+													}
+													else {
+														Write-Log "False. Value data still exist."
+														[bool]$regkeysOK = $false
+														[int]$regkeysNotOK += 1
+													}
+												}
+												else {
+													Write-Log "False. Value still exist."
+													[bool]$regkeysOK = $false
+													[int]$regkeysNotOK += 1
+												}
+											}
 										}
 									}
-								}
-								if ( [math]::Round($loopTimer.Elapsed.TotalSeconds, 0) -ge $SecondsToWaitForTogetherTimeout ) {
-									break
 								}
 							}
 						}
 					}
+					else {
+						[bool]$regkeysOK = $true
+					}
+					if ( ($true -eq $processesOK) -and (0 -eq $processesNotOK) -and ($true -eq $regkeysOK) -and (0 -eq $regkeysNotOK) ) {
+						break
+					}
+					if ( [math]::Round($loopTimer.Elapsed.TotalSeconds, 0) -gt $AltogetherTimeoutToWaitForInSeconds ) {
+						Write-Log "Note: Last loop of computing all setup pre-result checks including interval wait time of ($($LoopIntervalInSeconds)s) took longer than defined timeout ($($AltogetherTimeoutToWaitForInSeconds)s) -> needed check time at all: $([math]::Round($loopTimer.Elapsed.TotalSeconds, 0))s" -Severity 2
+					}
+					## be sure next loop run may be started until remaining time is over
+					[int]$loopIntervalInSecondsNew = ($AltogetherTimeoutToWaitForInSeconds - [math]::Round($loopTimer.Elapsed.TotalSeconds, 0))
+					if ( $LoopIntervalInSeconds -gt $loopIntervalInSecondsNew ) {
+						$LoopIntervalInSeconds = $loopIntervalInSecondsNew
+						if (1 -gt $LoopIntervalInSeconds) {
+							break
+						}
+					}
+					[int]$loopCount += 1
+					start-sleep $LoopIntervalInSeconds
 				}
 				$loopTimer.Stop()
-				if ( ($processentryCount -lt $ProcessesToWaitFor.count) -or ($regkeyentryentryCount -lt $RegkeysToWaitFor.count) ) {
-					Write-Log "Note: Not all of expected processes and/or expected registry entries could be checked until defined timeout limit!" -Severity 3 -Source ${cmdletName}
+			}
+			if ( (0 -lt $processesNotOK) -or (0 -lt $regkeysNotOK) ) {
+				Write-Log "Setup pre-result checks failed!" -Severity 3 -Source ${cmdletName}
+				return $false
+			}
+			else {
+				if ( (0 -lt $($ProcessesToWaitFor.count)) -or (0 -lt $($RegkeysToWaitFor.count)) ) {
+					Write-Log "All valid setup pre-result checks were successful." -severity 2 -Source ${cmdletName}
 				}
-				elseif ( $false -eq $processesOK -or $false -eq $regkeysOK ) {
-					Write-Log "Setup action pre-result checks failed!" -Severity 3 -Source ${cmdletName}
-				}
-
-				if ( ($false -eq $processesOK) -or ($false -eq $regkeysOK) ) {
-					return $false
-				}
-				else {
-					Write-Log "All valid setup result pre-checks were successful." -severity 2 -Source ${cmdletName}
-					return $true
-				}
+				return $true
 			}
 		}
 		catch {
@@ -6007,14 +6162,13 @@ function Watch-NxtProcess {
 		try {
 			[int]$waited = 0
 			[bool]$result = $null
-			while ($waited -lt $Timeout) {
+			while ( ($waited -lt $Timeout) -or ((0 -eq $waited) -and (0 -eq $Timeout)) ) {
 				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
 				else {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName.replace("*","%")
 				}
-				
 				if ($result) {
 					Write-Output $true
 					return
@@ -6072,14 +6226,13 @@ function Watch-NxtProcessIsStopped {
 		try {
 			[int]$waited = 0
 			[bool]$result = $null
-			while ($waited -lt $Timeout) {
+			while ( ($waited -lt $Timeout) -or ((0 -eq $waited) -and (0 -eq $Timeout)) ) {
 				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
 				else {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName.replace("*","%")
 				}
-				
 				if ($false -eq $result) {
 					Write-Output $true
 					return
@@ -6131,8 +6284,9 @@ function Watch-NxtRegistryKey {
 	Process {
 		try {
 			$waited = 0
-			while ($waited -lt $Timeout) {
+			while ( ($waited -lt $Timeout) -or ((0 -eq $waited) -and (0 -eq $Timeout)) ) {
 				If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($RegistryKey) ) {
+					Write-Log "Checking for registry paths like [$RegistryKey]." -Source ${cmdletName}
 					$key = Test-Path -Path "$RegistryKey"
 				} else {
 					$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
@@ -6187,9 +6341,11 @@ function Watch-NxtRegistryKeyIsRemoved {
 	Process {
 		try {
 			$waited = 0
-			while ($waited -lt $Timeout) {
+			while ( ($waited -lt $Timeout) -or ((0 -eq $waited) -and (0 -eq $Timeout)) ) {
 				If ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($RegistryKey) ) {
+					Write-Log "Checking for registry paths like [$($regkeyentryToWaitFor.KeyPath)]." -Source ${cmdletName}
 					if ( !(Test-Path -Path "$RegistryKey")) {
+						Write-Log "Registry paths like [$($regkeyentryToWaitFor.KeyPath)] do not exist. Return $true." -Source ${cmdletName}
 						$key = $null
 					}
 				} else {
