@@ -535,7 +535,7 @@ function Complete-NxtPackageInstallation {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
+	[string]$script:installPhase = 'Complete-NxtPackageInstallation'
 
 	## <Perform Complete-NxtPackageInstallation tasks here>
 
@@ -573,7 +573,7 @@ function Complete-NxtPackageInstallation {
 	If ($true -eq $UserPartOnInstallation) {
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
-		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
@@ -620,7 +620,7 @@ function Complete-NxtPackageUninstallation {
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision
 	)
-	[string]$global:installPhase = 'Complete-NxtPackageUninstallation'
+	[string]$script:installPhase = 'Complete-NxtPackageUninstallation'
 
 	## <Perform Complete-NxtPackageUninstallation tasks here>
 
@@ -628,7 +628,7 @@ function Complete-NxtPackageUninstallation {
 	Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 	If ($true -eq $UserPartOnUninstallation) {
 		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
-		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
@@ -1426,7 +1426,7 @@ Param (
 		if ([System.IO.Path]::IsPathRooted($Log)) {
 			$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
 			[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
-			Move-NxtItem $logPath -Destination $Log
+			Move-NxtItem $logPath -Destination $Log -Force
 		}
 	}
 	End {
@@ -2977,7 +2977,7 @@ function Get-NxtRegisterOnly {
 	If ($true -eq $SoftMigration) {
 		## Perform soft migration 
 
-		[string]$installPhase = 'Soft-Migration'
+		[string]$script:installPhase = 'Soft-Migration'
 		if ([string]::IsNullOrEmpty($DisplayVersion)){
 			Write-Log -Message 'DisplayVersion is $null or empty. Set SoftMigration to $false.'
 			return $false
@@ -3466,7 +3466,7 @@ function Install-NxtApplication {
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod
 	)
-	[string]$global:installPhase = 'Installation'
+	[string]$script:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
 		Action                    = 'Install'
@@ -3537,11 +3537,15 @@ function Move-NxtItem {
 	.DESCRIPTION
 		Renames or moves a file or directory.
 	.EXAMPLE
-		Move-NxtItem -SourcePath C:\Temp\Sources\Installer.exe -DestinationPath C:\Temp\Sources\Installer_bak.exe
+		Move-NxtItem -Path C:\Temp\Sources\Installer.exe -Destination C:\Temp\Sources\Installer_bak.exe
 	.PARAMETER Path
 		Source Path of the File or Directory.
-	.PARAMETER DestinationPath
+	.PARAMETER Destination
 		Destination Path for the File or Directory.
+	.PARAMETER Force
+		Overwrite existing file.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
 	.OUTPUTS
 		none.
 	.LINK
@@ -3554,7 +3558,13 @@ function Move-NxtItem {
 		$Path,
 		[Parameter(Mandatory = $true)]
 		[String]
-		$DestinationPath
+		$Destination,
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$Force,
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [boolean]$ContinueOnError = $true
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3563,10 +3573,20 @@ function Move-NxtItem {
 	}
 	Process {
 		try {
-			Move-Item -Path $Path -Destination $DestinationPath
+			[array]$functionParametersToBeRemoved = (
+			"ContinueOnError"
+		)
+		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved){
+			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
+		}
+			Write-Log -Message "Move $path to $Destination." -Source ${cmdletName}
+			Move-Item @PSBoundParameters -ErrorAction Stop
 		}
 		catch {
-			Write-Log -Message "Failed to move $path to $DestinationPath. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to move $Path to $Destination. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			If (-not $ContinueOnError) {
+				Throw "Failed to move $Path to $Destination`: $($_.Exception.Message)"
+			}
 		}
 	}
 	End {
@@ -4310,8 +4330,6 @@ function Repair-NxtApplication {
 		[bool]
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
 	)
-
-	[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
 	[string]$script:installPhase = 'Repair-NxtApplication'
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
@@ -4815,15 +4833,16 @@ https://neo42.de/psappdeploytoolkit
 		$DeferDays = 0
 	}
 
-	switch ($ContinueType) {
-		"ABORT" {
-			Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+	if (![string]::IsNullOrEmpty($AskKillProcessApps)) {
+		switch ($ContinueType) {
+			"ABORT" {
+				Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+			}
+			"CONTINUE" {
+				Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+			}		
 		}
-		"CONTINUE" {
-			Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
-		}		
 	}
-
 }
 #endregion
 #region Function Stop-NxtProcess
@@ -5102,7 +5121,7 @@ function Uninstall-NxtApplication {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-	[string]$global:installPhase = 'Pre-Uninstallation'
+	[string]$script:installPhase = 'Pre-Uninstallation'
 
 	## <Perform Pre-Uninstallation tasks here>
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
@@ -5129,7 +5148,7 @@ function Uninstall-NxtApplication {
 		}
 	}
 
-	[string]$global:installPhase = 'Uninstallation'
+	[string]$script:installPhase = 'Uninstallation'
 
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
