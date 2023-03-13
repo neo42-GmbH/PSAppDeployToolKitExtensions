@@ -719,8 +719,8 @@ function Execute-NxtBitRockInstaller {
 		Uninstall default is: "--mode unattended".
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
-	.PARAMETER IgnoreExitCodes
-		List the exit codes to ignore or * to ignore all exit codes.
+	.PARAMETER AcceptedExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER XmlConfigNxtBitRockInstaller
@@ -759,7 +759,7 @@ function Execute-NxtBitRockInstaller {
 		[switch]$PassThru = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[string]$IgnoreExitCodes,
+		[string]$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[boolean]$ContinueOnError = $false,
@@ -872,8 +872,8 @@ function Execute-NxtBitRockInstaller {
 		If ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
 		}
-		if (![string]::IsNullOrEmpty($IgnoreExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $IgnoreExitCodes)
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
     
 		If ($PassThru) {
@@ -977,8 +977,8 @@ function Execute-NxtInnoSetup {
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
-	.PARAMETER IgnoreExitCodes
-		List the exit codes to ignore or * to ignore all exit codes.
+	.PARAMETER AcceptedExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER DeploymentTimestamp
@@ -1033,7 +1033,7 @@ function Execute-NxtInnoSetup {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-        $IgnoreExitCodes,
+        $AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[boolean]
@@ -1194,8 +1194,8 @@ function Execute-NxtInnoSetup {
 		If ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
 		}
-		if (![string]::IsNullOrEmpty($IgnoreExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $IgnoreExitCodes)
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
  
 		If ($PassThru) {
@@ -1288,8 +1288,8 @@ function Execute-NxtMSI {
 		Immediately continue after executing the process.
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
-	.PARAMETER IgnoreExitCodes
-		List the exit codes to ignore or * to ignore all exit codes.
+	.PARAMETER AcceptedExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER PriorityClass	
 		Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
 	.PARAMETER ExitOnProcessFailure
@@ -1369,7 +1369,7 @@ function Execute-NxtMSI {
 		[switch]$PassThru = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[string]$IgnoreExitCodes,
+		[string]$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
 		[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
@@ -1432,8 +1432,8 @@ function Execute-NxtMSI {
 			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
-		if (![string]::IsNullOrEmpty($IgnoreExitCodes)) {
-			$executeNxtParams["IgnoreExitCodes"] = "$IgnoreExitCodes"
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			$executeNxtParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
 		}
 		Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
@@ -1479,8 +1479,8 @@ function Execute-NxtNullsoft {
 		Uninstall default is: "/AllUsers /S".
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
-	.PARAMETER IgnoreExitCodes
-		List the exit codes to ignore or * to ignore all exit codes.
+	.PARAMETER AcceptedExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER XmlConfigNxtNullsoft
@@ -1519,7 +1519,7 @@ function Execute-NxtNullsoft {
 		[switch]$PassThru = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[string]$IgnoreExitCodes,
+		[string]$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
 		[boolean]$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
@@ -1630,8 +1630,8 @@ function Execute-NxtNullsoft {
 		If ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
 		}
-		if (![string]::IsNullOrEmpty($IgnoreExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $IgnoreExitCodes)
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
     
 		If ($PassThru) {
@@ -3451,6 +3451,7 @@ function Install-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AcceptedInstallExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -3533,7 +3534,9 @@ function Install-NxtApplication {
 			}
 			if (![string]::IsNullOrEmpty($InstPara)) {
 				$executeParams["Parameters"] = "$InstPara"
-				$executeParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+			}
+			if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+				$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 			}
 			Execute-Process @executeParams
 		}
@@ -4332,6 +4335,7 @@ function Repair-NxtApplication {
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
 	.PARAMETER AcceptedRepairExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Repair-NxtApplication
 	.LINK
@@ -5113,6 +5117,7 @@ function Uninstall-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AcceptedUninstallExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallMethod
 		Defines the type of the uninstaller used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -5251,9 +5256,11 @@ function Uninstall-NxtApplication {
 					}
 					if (![string]::IsNullOrEmpty($UninstPara)) {
 						$executeParams["Parameters"] = "$UninstPara"
-						$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 					}
-					Execute-Process @executeParams
+					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+						$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+					}
+				Execute-Process @executeParams
 				}
 			}
 			$UninstallExitCode = $LastExitCode
