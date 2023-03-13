@@ -4363,7 +4363,7 @@ function Repair-NxtApplication {
 	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
 	[int]$repairExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru)
 
-	## transfered error codes (reboot request) must accept inside this function for success (because of using parameter -PassThru with CMDlet 'Execute-MSI')
+	## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
 	if ( (3010 -eq $repairExitCode) -or (1641 -eq $repairExitCode) ) {
 		[int]$RepairExitCode = 0
 	}
