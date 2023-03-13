@@ -4295,21 +4295,17 @@ function Repair-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
-
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
 		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
 		[string]
 		$RepairLogFile,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$RepairPara = $global:PackageConfig.InstPara,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
