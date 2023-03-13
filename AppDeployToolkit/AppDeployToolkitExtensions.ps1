@@ -4362,24 +4362,16 @@ function Repair-NxtApplication {
 	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
 	[int]$repairExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru)
 
-## Move Logs to correct destination
-if ([System.IO.Path]::IsPathRooted($RepairLogFile)) {
-	$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($executeNxtParams["Action"]).log"
-	[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
-	If (Test-Path ($logPath)) {
-		Move-NxtItem $logPath -Destination $RepairLogFile
-	}
-}
+	Start-Sleep -Seconds 5
 
-Start-Sleep -Seconds 5
-
-		if ( ($false -eq $(Test-NxtSetupPreResultState -CheckState "Install")) -or (0 -ne $repairExitCode) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+	if ( ($false -eq $(Test-NxtSetupPreResultState -CheckState "Install")) -or (0 -ne $repairExitCode) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
 		if (0 -ne $repairExitCode) {
-				Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $repairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
-		} else {
+			Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $repairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+		}
+		else {
 			Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. Check for running process(es)/existing registry key(s) was unexpected!" -MainExitCode $mainExitCode
 		}
-		}
+	}
 
 	return $true
 }
