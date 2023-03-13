@@ -742,42 +742,33 @@ function Execute-NxtBitRockInstaller {
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
 		[string]$Action = 'Install',
-
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]$UninstallKey,
-
 		[Parameter(Mandatory = $false)]
 		[bool]$UninstallKeyIsDisplayName = $false,
-
 		[Parameter(Mandatory = $false)]
 		[string]$Path,
-
 		[Parameter(Mandatory = $false)]
 		[string]$Parameters,
-        
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$AddParameters,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[switch]$PassThru = $false,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$IgnoreExitCodes,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[boolean]$ContinueOnError = $false,
-
 		[Parameter(Mandatory = $false)]
 		[Xml.XmlElement]$XmlConfigNxtBitRockInstaller = $xmlConfig.NxtBitRockInstaller_Options,
-
 		[Parameter(Mandatory = $false)]
 		[string]$DirFiles = $dirFiles
 	)
+	
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
         
@@ -1011,65 +1002,53 @@ function Execute-NxtInnoSetup {
 		[ValidateSet('Install', 'Uninstall')]
 		[string]
 		$Action = 'Install',
-
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
 		$UninstallKey,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $false,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Path,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Parameters,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
 		$AddParameters,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$MergeTasks,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Log,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[switch]
 		$PassThru = $false,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
         $IgnoreExitCodes,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[boolean]
 		$ContinueOnError = $false,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentTimestamp = $global:deploymentTimestamp,
-
 		[Parameter(Mandatory = $false)]
 		[Xml.XmlElement]
 		$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DirFiles = $dirFiles
 	)
+
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
 		
@@ -1347,82 +1326,62 @@ function Execute-NxtMSI {
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall', 'Patch', 'Repair', 'ActiveSetup')]
 		[string]$Action = 'Install',
-
 		[Parameter(Mandatory = $true, HelpMessage = 'Please enter either the path to the MSI/MSP file or the ProductCode')]
 		[Alias('FilePath')]
 		[string]$Path,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $false,
-
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
 		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
 		[string]
 		$Log,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$Transform,
-
 		[Parameter(Mandatory = $false)]
 		[Alias('Arguments')]
 		[string]$Parameters,
-
 		[Parameter(Mandatory = $false)]
 		[string]$AddParameters,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[switch]$SecureParameters = $false,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$Patch,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$LoggingOptions,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$WorkingDirectory,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[switch]$SkipMSIAlreadyInstalledCheck = $false,
-
 		[Parameter(Mandatory = $false)]
 		[switch]$IncludeUpdatesAndHotfixes = $false,
-
 		[Parameter(Mandatory = $false)]
 		[switch]$NoWait = $false,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[switch]$PassThru = $false,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$IgnoreExitCodes,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
 		[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[boolean]$ExitOnProcessFailure = $true,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[boolean]$RepairFromSource = $false,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[boolean]$ContinueOnError = $false,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$ConfigMSILogDir = $configMSILogDir
@@ -1543,41 +1502,32 @@ function Execute-NxtNullsoft {
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
 		[string]$Action = 'Install',
-
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]$UninstallKey,
-
 		[Parameter(Mandatory = $false)]
 		[bool]$UninstallKeyIsDisplayName = $false,
-
 		[Parameter(Mandatory = $false)]
 		[string]$Path,
-
 		[Parameter(Mandatory = $false)]
 		[string]$Parameters,
-        
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$AddParameters,
-
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[switch]$PassThru = $false,
-        
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]$IgnoreExitCodes,
-
 		[Parameter(Mandatory = $false)]
 		[boolean]$ContinueOnError = $false,
-        
 		[Parameter(Mandatory = $false)]
 		[Xml.XmlElement]$XmlConfigNxtNullsoft = $xmlConfig.NxtNullsoft_Options,
-
 		[Parameter(Mandatory = $false)]
 		[string]$DirFiles = $dirFiles
 	)
+
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
 		[string]$configNxtNullsoftInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtNullsoft.NxtNullsoft_InstallParams)
@@ -3513,35 +3463,29 @@ function Install-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[String]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
-
 		[Parameter(Mandatory = $false)]
 		[String]
 		$InstLogFile = $global:PackageConfig.InstLogFile,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InstFile = $global:PackageConfig.InstFile,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InstPara = $global:PackageConfig.InstPara,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AcceptedInstallExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod
 	)
+
 	[string]$script:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
@@ -5187,43 +5131,35 @@ function Uninstall-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstLogFile = $global:PackageConfig.UninstLogFile,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstFile = $global:PackageConfig.UninstFile,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstPara = $global:PackageConfig.UninstPara,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AcceptedUninstallExitCodes = $global:PackageConfig.AcceptedUninstallExitCodes,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallMethod = $global:PackageConfig.UninstallMethod,
-
 		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
 		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
-
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
+
 	[string]$script:installPhase = 'Pre-Uninstallation'
 
 	## <Perform Pre-Uninstallation tasks here>
