@@ -356,12 +356,12 @@
             Bitte geben Sie ausreichend Speicherplatz frei, um mit der Installation fortzufahren.</DiskSpace_Message>
         <ClosePrompt_ButtonContinue>Weiter</ClosePrompt_ButtonContinue>
         <ClosePrompt_ButtonContinueTooltip>Klicken Sie erst auf „Weiter“, nachdem Sie die obigen Anwendung(en) geschlossen haben.</ClosePrompt_ButtonContinueTooltip>
-        <ClosePrompt_ButtonClose>Programme Schließen</ClosePrompt_ButtonClose>
+        <ClosePrompt_ButtonClose>Schließe Programme</ClosePrompt_ButtonClose>
         <ClosePrompt_ButtonDefer>Aufschieben</ClosePrompt_ButtonDefer>
         <ClosePrompt_Message>Die folgenden Programme müssen geschlossen werden, bevor die Installation fortgesetzt werden kann.
 
             Bitte speichern Sie Ihre Arbeit, schließen Sie die Programme und fahren Sie dann fort.
-        Alternativ können Sie Ihre Arbeit speichern und dann auf „Programme Schließen“ klicken.</ClosePrompt_Message>
+        Alternativ können Sie Ihre Arbeit speichern und dann auf „Schließe Programme“ klicken.</ClosePrompt_Message>
         <ClosePrompt_CountdownMessage>HINWEIS: Diese Programme werden automatisch geschlossen:</ClosePrompt_CountdownMessage>
         <DeferPrompt_WelcomeMessage>Die folgende Anwendung soll installiert werden:</DeferPrompt_WelcomeMessage>
         <DeferPrompt_ExpiryMessage>Sie können die Installation verzögern, bis die Rückstellung abläuft:</DeferPrompt_ExpiryMessage>
