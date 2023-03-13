@@ -4330,6 +4330,7 @@ function Repair-NxtApplication {
 		[bool]
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
 	)
+
 	[string]$script:installPhase = 'Repair-NxtApplication'
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
@@ -4340,7 +4341,7 @@ function Repair-NxtApplication {
 	else {
 		Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
 	}
-	If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
+	if ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
 		Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
 		## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
 		return $true
