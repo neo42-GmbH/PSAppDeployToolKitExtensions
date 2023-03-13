@@ -4283,54 +4283,92 @@ function Remove-NxtSystemEnvironmentVariable {
 #region Function Repair-NxtApplication
 function Repair-NxtApplication {
 	<#
-.SYNOPSIS
-	Defines the required steps to repair an MSI based application.
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER InstFile
-	Defines the path to the Installation File.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstPara
-	Defines the parameters which will be passed in the Installation Commandline.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER AppendInstParaToDefaultParameters
-	If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
-	If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
-	Defaults to the corresponding value from the PackageConfig object.
-.EXAMPLE
-	Repair-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Defines the required steps to repair an MSI based application.
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER UninstallKey
+		Either the applications uninstallregistrykey or the applications displayname, searched for in the regvalue "Displayname" below all uninstallkeys (e.g. "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" or "an application display name").
+		Using a displayname value requires to set the parameter -UninstallKeyIsDisplayName to $true.
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\" (basically this matches with the entry 'ProductCode' in property table inside of source msi file, therefore the InstFile is not provided as parameter for this function).
+	.PARAMETER UninstallKeyIsDisplayName
+		Determines if the value given as UninstallKey should be interpreted as a displayname.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RepairLogFile
+		Defines the path to the Logfile that should be used by the installer.
+		Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
+		Note: <ProductCode> will be retrieved from installed msi by registry with provided Uninstallkey automatically
+	.PARAMETER RepairPara
+		Defines the parameters which will be passed in the Repair Commandline.
+		Defaults to the value "InstPara" from the PackageConfig object.
+	.PARAMETER AppendRepairParaToDefaultParameters
+		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
+	.EXAMPLE
+		Repair-NxtApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstFile = $global:PackageConfig.InstFile,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$InstPara = $global:PackageConfig.InstPara,
+		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[AllowEmptyString()]
+		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+		[string]
+		$RepairLogFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RepairPara = $global:PackageConfig.InstPara,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
 	)
 	[string]$script:installPhase = 'Repair-NxtApplication'
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
-		Path   = "$InstFile"
+	}
+	if (![string]::IsNullOrEmpty($UninstallKey)) {
+		$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
+	}
+	else {
+		Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
+	}
+	If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
+		Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
+		## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
+		return $true
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
-		if ($AppendInstParaToDefaultParameters) {
-			$executeNxtParams["AddParameters"] = "$InstPara"
+		if ($AppendRepairParaToDefaultParameters) {
+			$executeNxtParams["AddParameters"] = "$RepairPara"
 		}
 		else {
-			$executeNxtParams["Parameters"] = "$InstPara"
+			$executeNxtParams["Parameters"] = "$RepairPara"
 		}
 	}
-	## <Perform repair tasks here>
-	Execute-MSI @executeNxtParams -LogName "Repair.$InstFile.$($global:DeploymentTimestamp).log" -RepairFromSource $true
+	if ([string]::IsNullOrEmpty($RepairLogFile)) {
+		## now set default path and name including retrieved ProductCode
+		$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
+	}
 
-	$RepairExitCode = $LastExitCode
+	## <Perform repair tasks here>
+	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
+	[int]$repairExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru)
+
+	Start-Sleep -Seconds 5
+
+	if ( ($repairExitCode -ne 0) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+		Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $repairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+	}
+
+	return $true
 }
 #endregion
 #region Function Set-NxtDetectedDisplayVersion
