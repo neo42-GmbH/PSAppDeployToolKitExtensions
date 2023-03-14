@@ -4776,37 +4776,37 @@ function Set-NxtSystemEnvironmentVariable {
 #region Function Show-NxtInstallationWelcome
 function Show-NxtInstallationWelcome {
 	<#
-.SYNOPSIS
-Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
-.DESCRIPTION
-Is only called in the Main function and should not be modified!
-To customize the script always use the "CustomXXXX" entry points.
-.Parameter IsInstall
-Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
-.PARAMETER DeferDays
-Specifies how long a user may defer an installation (will be ignored on uninstallation)
-Defaults to the corresponding value from the Setup.cfg.
-.PARAMETER AskKillProcessApps
-Specifies a list of Processnames which should be stopped for the (un)installation to start.
-For Example "WINWORD,EXCEL"
-Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER CloseAppsCountdown
-Countdown until the Apps will either be forcibly closed or the Installation will abort
-Defaults to the timeout value from the Setup.cfg.
-.PARAMETER ContinueType
-If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
-this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
-	ABORT:       After the timeout has expired, the installation will be abort 
-	CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
-Defaults to the timeout value from the Setup.cfg.
-.PARAMETER BlockExecution
-Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
-Defaults to the corresponding value from the PackageConfig object.
-.EXAMPLE
-Show-NxtInstallationWelcome
-.LINK
-https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.Parameter IsInstall
+		Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
+	.PARAMETER DeferDays
+		Specifies how long a user may defer an installation (will be ignored on uninstallation)
+		Defaults to the corresponding value from the Setup.cfg.
+	.PARAMETER AskKillProcessApps
+		Specifies a list of Processnames which should be stopped for the (un)installation to start.
+		For Example "WINWORD,EXCEL"
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER CloseAppsCountdown
+		Countdown until the Apps will either be forcibly closed or the Installation will abort
+		Defaults to the timeout value from the Setup.cfg.
+	.PARAMETER ContinueType
+		If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
+		this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
+			ABORT:       After the timeout has expired, the installation will be abort 
+			CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
+		Defaults to the timeout value from the Setup.cfg.
+	.PARAMETER BlockExecution
+		Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Show-NxtInstallationWelcome
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	param (
 		[Parameter(Mandatory = $true)]
 		[bool]
@@ -4829,18 +4829,42 @@ https://neo42.de/psappdeploytoolkit
 		$BlockExecution = $($global:PackageConfig.BlockExecution)
 	)
 	## override $DeferDays with 0 in Case of Uninstall
-	if (!$isInstall) {
+	if (!$IsInstall) {
 		$DeferDays = 0
 	}
-
-	if (![string]::IsNullOrEmpty($AskKillProcessApps)) {
-		switch ($ContinueType) {
-			"ABORT" {
-				Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+	[string]$closeAppsList = $null
+	[string]$listSeparator = $null
+	[string]$fileExtension = ".exe"
+	if ( !([String]::IsNullOrEmpty($AskKillProcessApps)) ) {
+		foreach ($processAppItem in $AskKillProcessApps) {
+			if ( $fileExtension.length -ne $($($processAppItem.length) - $($processAppItem.ToLower().IndexOf($fileExtension))) ) {
+				## for correct wmi search an file extension is necessary
+				[string]$processAppItem = $processAppItem + $fileExtension
 			}
-			"CONTINUE" {
-				Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
-			}		
+			if ( "*.exe" -eq "$processAppItem" ) {
+				Write-Log "Ignoring not supported list entry '*.exe' for 'CloseApps'-collection!" -severity 3
+			}
+			else {				
+				foreach ($processNameItem in $(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$($processAppItem.replace("*", "%"))'").name ) {
+					## for calling the ADT CMDlet no file extension is allowed
+					$closeAppsList = "$closeAppsList" + "$listSeparator" + "$($processNameItem.replace("$fileExtension",''))"
+					$listSeparator = ","
+				}
+			}
+		}
+		if ( !([String]::IsNullOrEmpty($closeAppsList)) ) {
+			switch ($ContinueType) {
+				"ABORT" {
+					Show-InstallationWelcome -CloseApps $closeAppsList -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+				}
+				"CONTINUE" {
+					Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+				}		
+			}
+		}
+		else {
+			## else necessary for saving the calculated expiration date in registry with this script run (if deferred days are defined) and checking disk space too
+			Show-InstallationWelcome -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 		}
 	}
 }
