@@ -3480,7 +3480,6 @@ function Install-NxtApplication {
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod
 	)
-
 	[string]$script:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
@@ -4357,7 +4356,6 @@ function Repair-NxtApplication {
 		[string]
 		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes
 	)
-
 	[string]$script:installPhase = 'Repair-NxtApplication'
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
