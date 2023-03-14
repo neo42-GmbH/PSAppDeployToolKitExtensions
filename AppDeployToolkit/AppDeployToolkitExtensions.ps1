@@ -768,10 +768,8 @@ function Execute-NxtBitRockInstaller {
 		[Parameter(Mandatory = $false)]
 		[string]$DirFiles = $dirFiles
 	)
-	
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
-        
 		[string]$configNxtBitRockInstallerInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_InstallParams)
 		[string]$configNxtBitRockInstallerUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninstallParams)
 		[string]$configNxtBitRockInstallerUninsBackupPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninsBackupPath)
@@ -1048,10 +1046,8 @@ function Execute-NxtInnoSetup {
 		[string]
 		$DirFiles = $dirFiles
 	)
-
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
-		
 		[string]$configNxtInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_InstallParams)
 		[string]$configNxtInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_UninstallParams)
 		[string]$configNxtInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_LogPath)
@@ -1386,7 +1382,6 @@ function Execute-NxtMSI {
 		[string]
 		$ConfigMSILogDir = $configMSILogDir
 	)
-
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1428,12 +1423,12 @@ function Execute-NxtMSI {
 		if ([string]::IsNullOrEmpty($AddParameters)) {
 			$null = $PSBoundParameters.Remove('AddParameters')
 		}
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			$executeNxtParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
+		}
 		if (![string]::IsNullOrEmpty($Log)) {
 			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
 			$PSBoundParameters.add("LogName", $msiLogName )
-		}
-		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$executeNxtParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
 		}
 		Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
@@ -1527,7 +1522,6 @@ function Execute-NxtNullsoft {
 		[Parameter(Mandatory = $false)]
 		[string]$DirFiles = $dirFiles
 	)
-
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
 		[string]$configNxtNullsoftInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtNullsoft.NxtNullsoft_InstallParams)
@@ -3536,7 +3530,7 @@ function Install-NxtApplication {
 				$executeParams["Parameters"] = "$InstPara"
 			}
 			if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-				$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+				$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
 			}
 			Execute-Process @executeParams
 		}
@@ -4387,12 +4381,12 @@ function Repair-NxtApplication {
 			$executeNxtParams["Parameters"] = "$RepairPara"
 		}
 	}
-	if ([string]::IsNullOrEmpty($RepairLogFile)) {
-		## now set default path and name including retrieved ProductCode
-		$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
-	}
 	if (![string]::IsNullOrEmpty($AcceptedRepairExitCodes)) {
 		$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
+	}
+	if ([string]::IsNullOrEmpty($RepairLogFile)) {
+			## now set default path and name including retrieved ProductCode
+			$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
 	}
 
 	## <Perform repair tasks here>
@@ -5164,7 +5158,6 @@ function Uninstall-NxtApplication {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-
 	[string]$script:installPhase = 'Pre-Uninstallation'
 
 	## <Perform Pre-Uninstallation tasks here>
@@ -5258,7 +5251,7 @@ function Uninstall-NxtApplication {
 						$executeParams["Parameters"] = "$UninstPara"
 					}
 					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-						$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+						$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 					}
 				Execute-Process @executeParams
 				}
