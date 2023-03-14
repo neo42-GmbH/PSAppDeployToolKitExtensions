@@ -4330,7 +4330,6 @@ function Repair-NxtApplication {
 		[bool]
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
 	)
-
 	[string]$script:installPhase = 'Repair-NxtApplication'
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
