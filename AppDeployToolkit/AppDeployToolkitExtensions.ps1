@@ -5106,8 +5106,8 @@ function Test-NxtSetupPreResultState {
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
-		Test-NxtSetupPreResultStatus -CheckState 'Install' -IgnoreRegkeysList $true
-		Test-NxtSetupPreResultStatus -CheckState 'Uninstall'
+		Test-NxtSetupPreResultState -CheckState 'Install' -IgnoreRegkeysList $true
+		Test-NxtSetupPreResultState -CheckState 'Uninstall'
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
