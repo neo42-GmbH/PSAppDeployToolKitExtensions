@@ -4340,7 +4340,7 @@ function Repair-NxtApplication {
 	else {
 		Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
 	}
-	If ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
+	if ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
 		Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
 		## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
 		return $true
@@ -4362,9 +4362,14 @@ function Repair-NxtApplication {
 	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
 	[int]$repairExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru)
 
+	## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
+	if ( (3010 -eq $repairExitCode) -or (1641 -eq $repairExitCode) ) {
+		[int]$RepairExitCode = 0
+	}
+
 	Start-Sleep -Seconds 5
 
-	if ( ($repairExitCode -ne 0) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+	if ( (0 -ne $repairExitCode) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
 		Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $repairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	}
 
