@@ -547,25 +547,20 @@ function Complete-NxtPackageInstallation {
 	}
 
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-		Write-Log -Message "Hiding uninstall registry key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]..." -Source ${CmdletName}
-		If (([Array](Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards | Where-Object Is64BitApplication -eq $uninstallKeyToHide.Is64Bit)).Count -eq 1){
+		Write-Log -Message "Hiding uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]..." -Source ${CmdletName}
+		[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards | Where-Object Is64BitApplication -eq $uninstallKeyToHide.Is64Bit
+		if ($installedAppResults.Count -eq 1){
 			[string]$wowEntry = ""
 			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
 				[string]$wowEntry = "\Wow6432Node"
 			}
-			if (($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) -or ($true -eq $uninstallKeyToHide.KeyNameContainsWildCards)) {
-				[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards | Where-Object Is64BitApplication -eq $uninstallKeyToHide.Is64Bit).UninstallSubkey
-			}
-			else {
-				[string]$currentKeyName = $uninstallKeyToHide.KeyName
-			}
-			Set-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent' -Type 'Dword' -Value '1'
+			Set-RegistryKey -Key "HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent" -Type "Dword" -Value "1"
 		}
-		elseif (([Array](Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards | Where-Object Is64BitApplication -eq $uninstallKeyToHide.Is64Bit)).Count -eq 0) {
-			Write-Log -Message "Did not find an uninstall registry key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]. Skipped setting SystemComponent entry." -Severity 2 -Source ${CmdletName}
+		elseif ($installedAppResults.Count -eq 0) {
+			Write-Log -Message "Found no uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]. Skipped setting SystemComponent entry." -Severity 2 -Source ${CmdletName}
 		}
 		else {
-			Write-Log -Message "Found more then one uninstall registry key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]. Skipped setting SystemComponent entry." -Severity 2 -Source ${CmdletName}
+			Write-Log -Message "Found more than one uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]. Skipped setting SystemComponent entry." -Severity 2 -Source ${CmdletName}
 		}
 	}
 
@@ -820,10 +815,14 @@ function Execute-NxtBitRockInstaller {
             }
             'Uninstall' {
                 [string]$bitRockInstallerDefaultParams = $configNxtbitRockInstallerUninstallParams
-				[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $bitRockInstallerUninstallKeyContainsWildCards
+				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $bitRockInstallerUninstallKeyContainsWildCards
 
-                if (!$installedAppResults) {
-                    Write-Log -Message "No Application with UninstallKey `"$bitRockInstallerUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
+                if ($installedAppResults.Count -eq 0) {
+                    Write-Log -Message "Found no Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+					return
+                }
+				if ($installedAppResults.Count -gt 1) {
+                    Write-Log -Message "Found more than one Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
 					return
                 }
     
@@ -913,12 +912,15 @@ function Execute-NxtBitRockInstaller {
 
 		## Copy uninstallation file from $uninsFolder to $configNxtBitRockInstallerUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $bitRockInstallerUninstallKeyContainsWildCards
-    
-			if (!$installedAppResults) {
-				Write-Log -Message "No Application with UninstallKey `"$bitRockInstallerUninstallKey`" found. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $bitRockInstallerUninstallKeyContainsWildCards
+
+			if ($installedAppResults.Count -eq 0) {
+				Write-Log -Message "Found no Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
 			}
-			Else {
+			elseif ($installedAppResults.Count -gt 1) {
+				Write-Log -Message "Found more than one Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+			}
+			else {
 				[string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
 
 				## check for and remove quotation marks around the uninstall string
@@ -933,11 +935,11 @@ function Execute-NxtBitRockInstaller {
 				[string]$uninsFolder = split-path $bitRockInstallerUninstallPath -Parent
 
 				## Actually copy the uninstallation file, if it exists
-				If ($true -eq (Get-Item "$bitRockInstallerUninstallPath")) {
+				if ($true -eq (Get-Item "$bitRockInstallerUninstallPath")) {
 					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
 					Copy-File -Path "$uninsFolder\unins*.*" -Destination "$configNxtBitRockInstallerUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
-				Else {
+				else {
 					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation file to backup]..." -Source ${CmdletName}
 				}
 			}
@@ -1099,13 +1101,13 @@ function Execute-NxtInnoSetup {
 				[string]$innoSetupDefaultParams = $configNxtInnoSetupInstallParams
 
 				## If the Setup File is in the Files directory, set the full path during an installation
-				If (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
+				if (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
 					[string]$innoSetupPath = Join-Path -Path $DirFiles -ChildPath $path
 				}
-				ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
+				elseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
 					[string]$innoSetupPath = (Get-Item -LiteralPath $Path).FullName
 				}
-				Else {
+				else {
 					Write-Log -Message "Failed to find installation file [$path]." -Severity 3 -Source ${CmdletName}
 					If (-not $ContinueOnError) {
 						Throw "Failed to find installation file [$path]."
@@ -1115,12 +1117,16 @@ function Execute-NxtInnoSetup {
 			}
 			'Uninstall' {
 				[string]$innoSetupDefaultParams = $configNxtInnoSetupUninstallParams
-				[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCard $innoUninstallKeyContainsWildCards
+				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCard $innoUninstallKeyContainsWildCards
     
-				if (!$installedAppResults) {
-					Write-Log -Message "No Application with UninstallKey `"$innoUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
+                if ($installedAppResults.Count -eq 0) {
+                    Write-Log -Message "Found no Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
 					return
-				}
+                }
+				if ($installedAppResults.Count -gt 1) {
+                    Write-Log -Message "Found more than one Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+					return
+                }
     
 				[string]$innoUninstallString = $installedAppResults.UninstallString
     
@@ -1143,7 +1149,7 @@ function Execute-NxtInnoSetup {
 				}
 
 				## If any "$uninsFolder\unins[0-9][0-9][0-9].exe" exists, use the one with the highest number
-				If ($true -eq (Get-Item "$uninsFolder\unins[0-9][0-9][0-9].exe")) {
+				if ($true -eq (Get-Item "$uninsFolder\unins[0-9][0-9][0-9].exe")) {
 					[string]$innoSetupPath = Get-Item "$uninsFolder\unins[0-9][0-9][0-9].exe" | Select-Object -last 1 -ExpandProperty FullName
 					Write-Log -Message "Uninstall file set to: `"$innoSetupPath`"." -Source ${CmdletName}
 				}
@@ -1235,12 +1241,15 @@ function Execute-NxtInnoSetup {
 
 		## Copy uninstallation file from $uninsfolder to $configNxtInnoSetupUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCard $innoUninstallKeyContainsWildCards
+			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCard $innoUninstallKeyContainsWildCards
     
-			if (!$InstalledAppResults) {
-				Write-Log -Message "No Application with UninstallKey `"$innoUninstallKey`" found. Skipping [copy uninstallation files to backup]..." -Source ${CmdletName}
+			if ($installedAppResults.Count -eq 0) {
+				Write-Log -Message "Found no Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
 			}
-			Else {
+			elseif ($installedAppResults.Count -gt 1) {
+				Write-Log -Message "Found more than one Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+			}
+			else {
 				[string]$innoUninstallString = $InstalledAppResults.UninstallString
 
 				## check for and remove quotation marks around the uninstall string
@@ -1259,7 +1268,7 @@ function Execute-NxtInnoSetup {
 					Write-Log -Message "Copy uninstallation files to backup..." -Source ${CmdletName}
 					Copy-File -Path "$uninsfolder\unins[0-9][0-9][0-9].*" -Destination "$configNxtInnoSetupUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
-				Else {
+				else {
 					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation files to backup]..." -Source ${CmdletName}
 				}
 			}
@@ -1277,140 +1286,142 @@ function Execute-NxtInnoSetup {
 #region Function Execute-NxtMSI
 function Execute-NxtMSI {
 	<#
-.SYNOPSIS
-	Wraps around the Execute-MSI Function. Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
-.DESCRIPTION
-	Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
-	If the -Action parameter is set to "Install" and the MSI is already installed, the function will exit.
-	Sets default switches to be passed to msiexec based on the preferences in the XML configuration file.
-	Automatically generates a log file name and creates a verbose log file for all msiexec operations.
-	Expects the MSI or MSP file to be located in the "Files" sub directory of the App Deploy Toolkit. Expects transform files to be in the same directory as the MSI file.
-.PARAMETER Action
-	The action to perform. Options: Install, Uninstall, Patch, Repair, ActiveSetup.
-.PARAMETER Path
-	The path to the MSI/MSP file or the product code of the installed MSI.
-.PARAMETER Transform
-	The name of the transform file(s) to be applied to the MSI. The transform file is expected to be in the same directory as the MSI file. Multiple transforms have to be separated by a semi-colon.
-.PARAMETER Patch
-	The name of the patch (msp) file(s) to be applied to the MSI for use with the "Install" action. The patch file is expected to be in the same directory as the MSI file. Multiple patches have to be separated by a semi-colon.
-.PARAMETER Parameters
-	Overrides the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
-.PARAMETER AddParameters
-	Adds to the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
-.PARAMETER SecureParameters
-	Hides all parameters passed to the MSI or MSP file from the toolkit Log file.
-.PARAMETER LoggingOptions
-	Overrides the default logging options specified in the XML configuration file. Default options are: "/L*v".
-.PARAMETER Log
-	Sets the Log Path either as Full Path or as logname
-.PARAMETER WorkingDirectory
-	Overrides the working directory. The working directory is set to the location of the MSI file.
-.PARAMETER SkipMSIAlreadyInstalledCheck
-	Skips the check to determine if the MSI is already installed on the system. Default is: $false.
-.PARAMETER IncludeUpdatesAndHotfixes
-	Include matches against updates and hotfixes in results.
-.PARAMETER NoWait
-	Immediately continue after executing the process.
-.PARAMETER PassThru
-	Returns ExitCode, STDOut, and STDErr output from the process.
-.PARAMETER IgnoreExitCodes
-	List the exit codes to ignore or * to ignore all exit codes.
-.PARAMETER PriorityClass	
-	Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
-.PARAMETER ExitOnProcessFailure
-	Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $true
-.PARAMETER RepairFromSource
-	Specifies whether we should repair from source. Also rewrites local cache. Default: $false
-.PARAMETER ContinueOnError
-	Continue if an error occurred while trying to start the process. Default: $false.
-.PARAMETER ConfigMSILogDir
-    Contains the FolderPath to the centrally configured Logdirectory from psadt main.
-    Defaults to $configMSILogDirc
-.EXAMPLE
-	Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi'
-	Installs an MSI
-.EXAMPLE
-	Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -Transform 'Adobe_FlashPlayer_11.2.202.233_x64_EN_01.mst' -Parameters '/QN'
-	Installs an MSI, applying a transform and overriding the default MSI toolkit parameters
-.EXAMPLE
-	[psobject]$ExecuteMSIResult = Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -PassThru
-	Installs an MSI and stores the result of the execution into a variable by using the -PassThru option
-.EXAMPLE
-	Execute-NxtMSI -Action 'Uninstall' -Path '{26923b43-4d38-484f-9b9e-de460746276c}'
-	Uninstalls an MSI using a product code
-.EXAMPLE
-	Execute-NxtMSI -Action 'Patch' -Path 'Adobe_Reader_11.0.3_EN.msp'
-	Installs an MSP
-.NOTES
-		AppDeployToolkit is required in order to run this function.
-.LINK
-	http://psappdeploytoolkit.com
-#>
-[CmdletBinding()]
-Param (
-	[Parameter(Mandatory=$false)]
-	[ValidateSet('Install','Uninstall','Patch','Repair','ActiveSetup')]
-	[string]$Action = 'Install',
-	[Parameter(Mandatory=$true,HelpMessage='Please enter either the path to the MSI/MSP file or the ProductCode')]
-	[Alias('FilePath')]
-	[string]$Path,
-	[Parameter(Mandatory = $false)]
-	[bool]
-	$UninstallKeyIsDisplayName = $false,
-	[Parameter(Mandatory = $false)]
-	[AllowEmptyString()]
-	[ValidatePattern("\.log$|^$|^[^\\/]+$")]
-	[string]
-	$Log,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$Transform,
-	[Parameter(Mandatory=$false)]
-	[Alias('Arguments')]
-	[string]$Parameters,
-	[Parameter(Mandatory=$false)]
-	[string]$AddParameters,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[switch]$SecureParameters = $false,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$Patch,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$LoggingOptions,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$WorkingDirectory,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[switch]$SkipMSIAlreadyInstalledCheck = $false,
-	[Parameter(Mandatory=$false)]
-	[switch]$IncludeUpdatesAndHotfixes = $false,
-	[Parameter(Mandatory=$false)]
-	[switch]$NoWait = $false,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[switch]$PassThru = $false,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[string]$IgnoreExitCodes,
-	[Parameter(Mandatory=$false)]
-	[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
-	[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[boolean]$ExitOnProcessFailure = $true,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[boolean]$RepairFromSource = $false,
-	[Parameter(Mandatory=$false)]
-	[ValidateNotNullorEmpty()]
-	[boolean]$ContinueOnError = $false,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$ConfigMSILogDir = $configMSILogDir
-)
+	.SYNOPSIS
+		Wraps around the Execute-MSI Function. Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
+	.DESCRIPTION
+		Executes msiexec.exe to perform the following actions for MSI & MSP files and MSI product codes: install, uninstall, patch, repair, active setup.
+		If the -Action parameter is set to "Install" and the MSI is already installed, the function will exit.
+		Sets default switches to be passed to msiexec based on the preferences in the XML configuration file.
+		Automatically generates a log file name and creates a verbose log file for all msiexec operations.
+		Expects the MSI or MSP file to be located in the "Files" sub directory of the App Deploy Toolkit. Expects transform files to be in the same directory as the MSI file.
+	.PARAMETER Action
+		The action to perform. Options: Install, Uninstall, Patch, Repair, ActiveSetup.
+	.PARAMETER Path
+		The path to the MSI/MSP file or the product code of the installed MSI.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determines if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
+	.PARAMETER Transform
+		The name of the transform file(s) to be applied to the MSI. The transform file is expected to be in the same directory as the MSI file. Multiple transforms have to be separated by a semi-colon.
+	.PARAMETER Patch
+		The name of the patch (msp) file(s) to be applied to the MSI for use with the "Install" action. The patch file is expected to be in the same directory as the MSI file. Multiple patches have to be separated by a semi-colon.
+	.PARAMETER Parameters
+		Overrides the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
+	.PARAMETER AddParameters
+		Adds to the default parameters specified in the XML configuration file. Install default is: "REBOOT=ReallySuppress /QB!". Uninstall default is: "REBOOT=ReallySuppress /QN".
+	.PARAMETER SecureParameters
+		Hides all parameters passed to the MSI or MSP file from the toolkit Log file.
+	.PARAMETER LoggingOptions
+		Overrides the default logging options specified in the XML configuration file. Default options are: "/L*v".
+	.PARAMETER Log
+		Sets the Log Path either as Full Path or as logname
+	.PARAMETER WorkingDirectory
+		Overrides the working directory. The working directory is set to the location of the MSI file.
+	.PARAMETER SkipMSIAlreadyInstalledCheck
+		Skips the check to determine if the MSI is already installed on the system. Default is: $false.
+	.PARAMETER IncludeUpdatesAndHotfixes
+		Include matches against updates and hotfixes in results.
+	.PARAMETER NoWait
+		Immediately continue after executing the process.
+	.PARAMETER PassThru
+		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER IgnoreExitCodes
+		List the exit codes to ignore or * to ignore all exit codes.
+	.PARAMETER PriorityClass	
+		Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
+	.PARAMETER ExitOnProcessFailure
+		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $true
+	.PARAMETER RepairFromSource
+		Specifies whether we should repair from source. Also rewrites local cache. Default: $false
+	.PARAMETER ContinueOnError
+		Continue if an error occurred while trying to start the process. Default: $false.
+	.PARAMETER ConfigMSILogDir
+		Contains the FolderPath to the centrally configured Logdirectory from psadt main.
+		Defaults to $configMSILogDirc
+	.EXAMPLE
+		Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi'
+		Installs an MSI
+	.EXAMPLE
+		Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -Transform 'Adobe_FlashPlayer_11.2.202.233_x64_EN_01.mst' -Parameters '/QN'
+		Installs an MSI, applying a transform and overriding the default MSI toolkit parameters
+	.EXAMPLE
+		[psobject]$ExecuteMSIResult = Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -PassThru
+		Installs an MSI and stores the result of the execution into a variable by using the -PassThru option
+	.EXAMPLE
+		Execute-NxtMSI -Action 'Uninstall' -Path '{26923b43-4d38-484f-9b9e-de460746276c}'
+		Uninstalls an MSI using a product code
+	.EXAMPLE
+		Execute-NxtMSI -Action 'Patch' -Path 'Adobe_Reader_11.0.3_EN.msp'
+		Installs an MSP
+	.NOTES
+			AppDeployToolkit is required in order to run this function.
+	.LINK
+		http://psappdeploytoolkit.com
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Install', 'Uninstall', 'Patch', 'Repair', 'ActiveSetup')]
+		[string]$Action = 'Install',
+		[Parameter(Mandatory = $true, HelpMessage = 'Please enter either the path to the MSI/MSP file or the ProductCode')]
+		[Alias('FilePath')]
+		[string]$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $false,
+		[Parameter(Mandatory = $false)]
+		[AllowEmptyString()]
+		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+		[string]
+		$Log,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$Transform,
+		[Parameter(Mandatory = $false)]
+		[Alias('Arguments')]
+		[string]$Parameters,
+		[Parameter(Mandatory = $false)]
+		[string]$AddParameters,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$SecureParameters = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$Patch,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$LoggingOptions,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$WorkingDirectory,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$SkipMSIAlreadyInstalledCheck = $false,
+		[Parameter(Mandatory = $false)]
+		[switch]$IncludeUpdatesAndHotfixes = $false,
+		[Parameter(Mandatory = $false)]
+		[switch]$NoWait = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]$PassThru = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]$IgnoreExitCodes,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
+		[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$ExitOnProcessFailure = $true,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$RepairFromSource = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[boolean]$ContinueOnError = $false,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ConfigMSILogDir = $configMSILogDir
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1430,7 +1441,7 @@ Param (
 			"ContinueOnError",
 			"ConfigMSILogDir"
 		)
-		foreach ($functionParametersWithDefault in $functionParametersWithDefaults){
+		foreach ($functionParametersWithDefault in $functionParametersWithDefaults) {
 			$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
 		}
 		[array]$functionParametersToBeRemoved = (
@@ -1438,13 +1449,13 @@ Param (
 			"UninstallKeyIsDisplayName",
 			"ConfigMSILogDir"
 		)
-		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved){
+		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved) {
 			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
 		}
 	}
 	Process {
 		if ($UninstallKeyIsDisplayName -and $Action -eq "Uninstall") {
-			$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey | Select-Object -First 1 -ExpandProperty ProductCode
+			$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName | Select-Object -First 1 -ExpandProperty ProductCode
 		}
 		if ([string]::IsNullOrEmpty($Parameters)) {
 			$null = $PSBoundParameters.Remove('Parameters')
@@ -1468,7 +1479,6 @@ Param (
 		If ($PassThru) {
 			Write-Output -InputObject $ExecuteResults
 		}
-
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
@@ -1600,12 +1610,16 @@ function Execute-NxtNullsoft {
 			}
 			'Uninstall' {
 				[string]$nullsoftDefaultParams = $configNxtNullsoftUninstallParams
-				[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $nullsoftUninstallKey -UninstallKeyIsDisplayName $nullsoftUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $nullsoftUninstallKeyContainsWildCards
+				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $nullsoftUninstallKey -UninstallKeyIsDisplayName $nullsoftUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $nullsoftUninstallKeyContainsWildCards
     
-				if (!$installedAppResults) {
-					Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping action [$Action]..." -Source ${CmdletName}
+                if ($installedAppResults.Count -eq 0) {
+                    Write-Log -Message "Found no Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
 					return
-				}
+                }
+				if ($installedAppResults.Count -gt 1) {
+                    Write-Log -Message "Found more than one Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+					return
+                }
     
 				[string]$nullsoftUninstallString = $installedAppResults.UninstallString
     
@@ -1687,10 +1701,13 @@ function Execute-NxtNullsoft {
 
 		## Copy uninstallation file from $uninsFolder to $configNxtNullsoftUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $nullsoftUninstallKey -UninstallKeyIsDisplayName $nullsoftUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $nullsoftUninstallKeyContainsWildCards
+			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $nullsoftUninstallKey -UninstallKeyIsDisplayName $nullsoftUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $nullsoftUninstallKeyContainsWildCards
     
-			if (!$installedAppResults) {
-				Write-Log -Message "No Application with UninstallKey `"$nullsoftUninstallKey`" found. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+			if ($installedAppResults.Count -eq 0) {
+				Write-Log -Message "Found no Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+			}
+			elseif ($installedAppResults.Count -gt 1) {
+				Write-Log -Message "Found more than one Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
 			}
 			Else {
 				[string]$nullsoftUninstallString = $installedAppResults.UninstallString
@@ -2279,23 +2296,36 @@ function Get-NxtAppIsInstalled {
 		[Parameter(Mandatory=$false)]
 		[String]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
-		
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
-
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards
 	)
-
-	[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards
-
-	If (!$installedAppResults) {
-		return $false
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
-	Else {
-		return $true
+	Process {
+		Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
+		[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards
+		if ($installedAppResults.Count -eq 0) {
+			Write-Log -Message "Found no application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Returning [$false]." -Source ${CmdletName}
+			return $false
+		}
+		elseif ($installedAppResults.Count -eq 1) {
+			Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Returning [$true]." -Source ${CmdletName}
+			return $true
+		}
+		else {
+			Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Returning [$true]." -Severity 2 -Source ${CmdletName}
+			return $true
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -4457,23 +4487,30 @@ function Set-NxtDetectedDisplayVersion {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		If (!$UninstallKey) {
+		if ([string]::IsNullOrEmpty($UninstallKey)) {
 			Write-Log -Message "Can't detect display version: No uninstallkey or display name defined." -Source ${CmdletName}
 		}
-		Else {
+		else {
 			try {
-				[string]$detectedDisplayVersion = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards).DisplayVersion
+				Write-Log -Message "Setting DetectedDisplayVersion value..." -Source ${CmdletName}
+				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards
 
-				If (!$detectedDisplayVersion) {
-					Write-Log -Message "Detected NO display version for [$UninstallKey]." -Source ${CmdletName}
+				if ($installedAppResults.Count -eq 0) {
+					Write-Log -Message "Found no uninstall key with UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Skipped setting DetectedDisplayVersion." -Severity 2 -Source ${CmdletName}
 				}
-				Else {
-					Write-Log -Message "Detected the following display version [$detectedDisplayVersion] for [$UninstallKey]." -Source ${CmdletName}
+				elseif ($installedAppResults.Count -gt 1) {
+					Write-Log -Message "Found more than one uninstall key with UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Skipped setting DetectedDisplayVersion." -Severity 2 -Source ${CmdletName}
 				}
-				[string]$global:DetectedDisplayVersion =  $detectedDisplayVersion
+				elseif ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
+					Write-Log -Message "Detected no DisplayVersion for UninstallKey [$UninstallKey] with UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]." -Severity 2 -Source ${CmdletName}
+				}
+				else {
+					[string]$global:DetectedDisplayVersion = $installedAppResults.DisplayVersion
+					Write-Log -Message "Detected display version [$global:DetectedDisplayVersion] for UninstallKey [$UninstallKey] with UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]." -Source ${CmdletName}
+				}
 			}
 			catch {
-				Write-Log -Message "Failed to detect display version for [$UninstallKey]. `n$(Resolve-Error)" -Severity 2 -Source ${CmdletName}
+				Write-Log -Message "Failed to detect DisplayVersion for UninstallKey [$UninstallKey] with UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. `n$(Resolve-Error)" -Severity 2 -Source ${CmdletName}
 			}
 		}
 		
@@ -5181,26 +5218,20 @@ function Uninstall-NxtApplication {
 
 	## <Perform Pre-Uninstallation tasks here>
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-		[string]$wowEntry = ""
-		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
-			[string]$wowEntry = "\Wow6432Node"
+		Write-Log -Message "Unhiding uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]..." -Source ${CmdletName}
+		[Array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards | Where-Object Is64BitApplication -eq $uninstallKeyToHide.Is64Bit
+		if ($installedAppResults.Count -eq 1){
+			[string]$wowEntry = ""
+			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
+				[string]$wowEntry = "\Wow6432Node"
+			}
+			Remove-RegistryKey -Key "HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent"
 		}
-		if (($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) -or ($true -eq $uninstallKeyToHide.KeyNameContainsWildCards)) {
-			[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $uninstallKeyToHide.KeyNameIsDisplayName -UninstallKeyContainsWildCards $uninstallKeyToHide.KeyNameContainsWildCards).UninstallSubkey
+		elseif ($installedAppResults.Count -eq 0) {
+			Write-Log -Message "Found no uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]. Skipped deleting SystemComponent entry." -Severity 2 -Source ${CmdletName}
 		}
 		else {
-			[string]$currentKeyName = $uninstallKeyToHide.KeyName
-		}
-		if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Value SystemComponent) {
-			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent'
-		}
-		else {
-			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-				Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped deleting SystemComponent entry." -Source ${CmdletName}
-			}
-			else {
-				Write-Log -Message "Did not find a SystemComponent entry under registry key [$currentKeyName]. Skipped deleting the entry for this key." -Source ${CmdletName}
-			}
+			Write-Log -Message "Found more than one uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)] and KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)]. Skipped deleting SystemComponent entry." -Severity 2 -Source ${CmdletName}
 		}
 	}
 
