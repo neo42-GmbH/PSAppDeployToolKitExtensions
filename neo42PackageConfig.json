@@ -42,27 +42,55 @@
     "AppendUninstParaToDefaultParameters": false,
     "TestConditionsPreSetupSuccessCheck": {
       "Install": {
-        "TotalSecondsToWaitFor": 10,
+        "TotalSecondsToWaitFor": 150,
         "ProcessOperator": "And",
         "ProcessesToWaitFor": [
           {
-            "Name": "notepad.exe",
+            "Name": "no*ad.exe",
             "ShouldExist": true
+          },
+          {
+            "Name": "Calculator.exe",
+            "ShouldExist": false
           }
         ],
         "RegKeyOperator": "And",
         "RegkeysToWaitFor": [
           {
-            "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID*}",
+            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub1",
+            "ValueName": null,
+            "ValueData": null,
+            "ShouldExist": false
+          },
+          {
+            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub2",
+            "ValueName": "DisplayVersion",
+            "ValueData": null,
+            "ShouldExist": true
+          },
+          {
+            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub3",
+            "ValueName": "DisplayVersion",
+            "ValueData": "hallo",
+            "ShouldExist": true
+          },
+          {
+            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub4",
+            "ValueName": null,
+            "ValueData": null,
+            "ShouldExist": false
+          },
+          {
+            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub5",
             "ValueName": "DisplayVersion",
             "ValueData": null,
             "ShouldExist": false
           },
           {
-            "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
-            "ValueName": null,
-            "ValueData": null,
-            "ShouldExist": true
+            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub6",
+            "ValueName": "DisplayVersion",
+            "ValueData": "hallo",
+            "ShouldExist": false
           }
         ]
       },
