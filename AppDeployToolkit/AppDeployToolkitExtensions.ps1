@@ -1697,8 +1697,11 @@ function Exit-NxtAbortReboot {
 		The Message, that will apear in the package log and the error entry in the the registry.
 		Defaults to "Uninstall of $installTitle requires a reboot before proceeding with the installation. AbortReboot!"
 	.PARAMETER RebootExitCode
-		The exit code to trigger a system reboot.
+		The value, the script returns to the deployment system to trigger a system reboot and that will be written as LastExitCode to the error entry in the the registry.
 		Defaults to "3010".
+	.PARAMETER PackageStatus
+		The value, that will be written as PackageStatus to the error entry in the the registry.
+		Defaults to "AbortReboot".
 	.PARAMETER EmpirumMachineKey
 		Path to the Empirum package machine key under "HKLM\Software\".
 		Defaults to "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion".
@@ -1710,35 +1713,34 @@ function Exit-NxtAbortReboot {
 	.EXAMPLE
 		Exit-NxtAbortReboot -PackageMachineKey "OurPackages\{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -PackageUninstallKey "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
 	.EXAMPLE
-		Exit-NxtAbortReboot -RebootMessage "This package requires a system reboot..." -RebootExitCode "3010"
+		Exit-NxtAbortReboot -RebootMessage "This package requires a system reboot..." -RebootExitCode "1641" -PackageStatus "RebootPending"
 	.EXAMPLE
 		Exit-NxtAbortReboot -EmpirumMachineKey "OurPackages\Microsoft\Office365\16.0" -EmpirumUninstallKey "OurPackage Microsoft Office365 16.0"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param(
-		[Parameter(Mandatory=$false)]
-		[ValidateNotNullorEmpty()]
-		[String]$PackageMachineKey = "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)",
-		
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[String]$PackageUninstallKey = $global:PackageConfig.PackageFamilyGUID,
-		
+		[string]
+		$PackageMachineKey = "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)",
 		[Parameter(Mandatory = $false)]
-		[String]$RebootMessage = "Uninstall of '$installTitle' requires a reboot before proceeding with the installation. AbortReboot!",
-		
+		[string]
+		$PackageUninstallKey = $global:PackageConfig.PackageFamilyGUID,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[int32]$RebootExitCode = 3010,
-		
+		[string]
+		$RebootMessage = "'$installTitle' requires a reboot before proceeding with the installation. AbortReboot!",
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[String]$EmpirumMachineKey = "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion",
-		
+		[int32]
+		$RebootExitCode = 3010,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[String]$EmpirumUninstallKey = $global:PackageConfig.UninstallDisplayName
+		[string]
+		$PackageStatus = "AbortReboot",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EmpirumMachineKey = "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EmpirumUninstallKey = $global:PackageConfig.UninstallDisplayName
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1756,7 +1758,7 @@ function Exit-NxtAbortReboot {
 			If (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") {
 				Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
 			}
-			Exit-NxtScriptWithError -ErrorMessage $RebootMessage -MainExitCode $RebootExitCode
+			Exit-NxtScriptWithError -ErrorMessage $RebootMessage -MainExitCode $RebootExitCode -PackageStatus $PackageStatus
 		}
 		Catch {
 			Write-Log -Message "Failed to execute AbortReboot. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -1802,8 +1804,10 @@ function Exit-NxtScriptWithError {
 		Specifies the package architecture ("x86", "x64" or "*").
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER MainExitCode
-		The Exitcode that should be written to Registry.
-		Defaults to the variable $mainExitCode.
+		The value, the script returns to the deployment system and that will be written as LastExitCode to the error entry in the the registry.
+	.PARAMETER PackageStatus
+		The value, that will be written as PackageStatus to the error entry in the the registry.
+		Defaults to "Failure".
 	.PARAMETER AppRevision
 		Specifies the Application Revision used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -1834,7 +1838,7 @@ function Exit-NxtScriptWithError {
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
-		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001
+		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "Script execution failed!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	.NOTES
@@ -1873,8 +1877,12 @@ function Exit-NxtScriptWithError {
 		[string]
 		$AppArch = $global:PackageConfig.AppArch,
 		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
 		[int32]
 		$MainExitCode,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageStatus = "Failure",
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AppRevision = $global:PackageConfig.AppRevision,
@@ -1919,8 +1927,9 @@ function Exit-NxtScriptWithError {
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorTimeStamp' -Value $(Get-Date -format "yyyy-MM-dd_HH-mm-ss")
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorMessage' -Value $ErrorMessage
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorMessagePSADT' -Value $ErrorMessagePSADT
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'LastReturnCode' -Value $MainExitCode
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'LastExitCode' -Value $MainExitCode
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'PackageArchitecture' -Value $AppArch
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'PackageStatus' -Value $PackageStatus
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ProductName' -Value $AppName
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'Revision' -Value $AppRevision
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'SrcPath' -Value $ScriptParentPath
@@ -1935,7 +1944,10 @@ function Exit-NxtScriptWithError {
 		Catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
-		Exit-Script -ExitCode $mainExitCode
+		if ($MainExitCode -eq 0) {
+			[int32]$MainExitCode = 70000
+		}
+		Exit-Script -ExitCode $MainExitCode
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -3700,8 +3712,11 @@ function Register-NxtPackage {
 		Specifies the Logname.
 		Defaults to $logname defined in the AppDeployToolkitMain.
 	.PARAMETER MainExitCode
-		The Exitcode that should be written to Registry.
+		The value, the script returns to the deployment system and that will be written as LastExitCode to the package entry in the the registry.
 		Defaults to the variable $mainExitCode.
+	.PARAMETER PackageStatus
+		The value, that will be written as PackageStatus to the package entry in the the registry.
+		Defaults to "Success".
 	.PARAMETER UninstallOld
 		Defines if the Setting "Uninstallold" is set.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -3787,6 +3802,9 @@ function Register-NxtPackage {
 		$MainExitCode = $mainExitCode,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$PackageStatus = "Success",
+		[Parameter(Mandatory = $false)]
+		[string]
 		$EnvArchitecture = $envArchitecture,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -3828,6 +3846,7 @@ function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'LastExitCode' -Value $MainExitCode
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'PackageArchitecture' -Value $AppArch
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'PackageStatus' -Value $PackageStatus
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductName' -Value $AppName
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'Revision' -Value $AppRevision
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'SrcPath' -Value $ScriptParentPath
