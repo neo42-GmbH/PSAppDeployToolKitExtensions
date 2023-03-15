@@ -40,6 +40,58 @@
     "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
     "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
     "AppendUninstParaToDefaultParameters": false,
+    "TestConditionsPreSetupSuccessCheck": {
+      "Install": {
+        "TotalSecondsToWaitFor": 10,
+        "ProcessOperator": "And",
+        "ProcessesToWaitFor": [
+          {
+            "Name": "notepad.exe",
+            "ShouldExist": true
+          }
+        ],
+        "RegKeyOperator": "And",
+        "RegkeysToWaitFor": [
+          {
+            "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID*}",
+            "ValueName": "DisplayVersion",
+            "ValueData": null,
+            "ShouldExist": false
+          },
+          {
+            "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+            "ValueName": null,
+            "ValueData": null,
+            "ShouldExist": true
+          }
+        ]
+      },
+      "Uninstall": {
+        "TotalSecondsToWaitFor": 20,
+        "ProcessOperator": "And",
+        "ProcessesToWaitFor": [
+          {
+            "Name": "notepad.exe",
+            "ShouldExist": true
+          }
+        ],
+        "RegKeyOperator": "And",
+        "RegkeysToWaitFor": [
+          {
+            "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID*}",
+            "ValueName": "DisplayVersion",
+            "ValueData": null,
+            "ShouldExist": false
+          },
+          {
+            "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
+            "ValueName": null,
+            "ValueData": null,
+            "ShouldExist": true
+          }
+        ]
+    }
+    },
     "AppKillProcesses": [
       "ScPapers"
     ],
