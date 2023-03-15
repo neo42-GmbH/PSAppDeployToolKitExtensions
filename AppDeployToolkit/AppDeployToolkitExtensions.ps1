@@ -5614,6 +5614,39 @@ function Update-NxtTextInFile {
 	}
 }
 #endregion
+#region Function Wait-NxtRegistryAndProcessCondition
+function Watch-NxtFile {
+	<#
+	.SYNOPSIS
+	.DESCRIPTION
+	.PARAMETER 
+	.PARAMETER Timeout
+		Timeout in seconds the function waits for the condition to occur.
+	.OUTPUTS
+		System.Boolean.
+	.EXAMPLE
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdLetBinding()]
+	param (
+		[Parameter()]
+		[int]
+		$Timeout = 60
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Watch-NxtFile
 function Watch-NxtFile {
 	<#
