@@ -5037,7 +5037,10 @@ function Test-NxtProcessExists {
 				$wqlString = $ProcessName
 			}
 			else {
-				$wqlString = "Name LIKE '$($ProcessName)'"
+				if ( $ProcessName -notmatch '\.exe$'){
+					$ProcessName+=".exe"
+				}
+				$wqlString = "Name LIKE '$($ProcessName.Replace("*","%"))'"
 			}
 			$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
 			if ($processes) {
@@ -5615,13 +5618,26 @@ function Update-NxtTextInFile {
 }
 #endregion
 #region Function Wait-NxtRegistryAndProcessCondition
-function Watch-NxtFile {
+function Wait-NxtRegistryAndProcessCondition {
 	<#
 	.SYNOPSIS
 	.DESCRIPTION
 	.PARAMETER 
-	.PARAMETER Timeout
-		Timeout in seconds the function waits for the condition to occur.
+	.PARAMETER TotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
@@ -5630,17 +5646,168 @@ function Watch-NxtFile {
 	#>
 	[CmdLetBinding()]
 	param (
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[int]
-		$Timeout = 60
+		$TotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$ProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$RegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegkeysToWaitFor
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
+		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *,@{n="success";e={$false}}
+		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *,@{n="success";e={$false}}
 	}
 	Process {
+		# wait for Processes
+		#Watch-NxtProcess
+		$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+		$stopWatch.Start()
+		[bool]$firstRun = $true
+		if ($ProcessesToWaitFor.count -eq 0){
+			[bool]$processesFinished = $true
+		}
+		else{
+			[bool]$processesFinished = $false
+		}
+		if ($RegkeysToWaitFor.count -eq 0){
+			[bool]$regKeysFinished = $true
+		}
+		else{
+			[bool]$regKeysFinished = $false
+		}
 		
+		while (
+			$stopWatch.Elapsed.TotalSeconds -lt $TotalSecondsToWaitFor -and 
+			!($processesFinished -and $regKeysFinished)
+		) {
+			if(!$firstRun){
+				Start-Sleep 5
+			}
+			## Check Process Conditions
+			foreach ($ProcessToWaitFor in $ProcessesToWaitFor) {
+				[int]$index = [array]::indexof($ProcessesToWaitFor, $ProcessToWaitFor)
+				if ($true -eq $ProcessToWaitFor.ShouldExist) {
+					$ProcessesToWaitFor[$index].success = Watch-NxtProcess -ProcessName $ProcessToWaitFor.Name -Timeout 0
+				Write-Warning "ProcessExists $($ProcessToWaitFor)"
+				}
+				else {
+					$ProcessesToWaitFor[$index].success = Watch-NxtProcessIsStopped -ProcessName $ProcessToWaitFor.Name -Timeout 0
+					Write-Warning "ProcessNotExists $($ProcessToWaitFor)"
+				}
+			}
+			if ($ProcessOperator -eq "Or"){
+				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -contains $true
+			}
+			elseif($ProcessOperator -eq "And"){
+				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
+			}
+			## Check Regkey Conditions
+			foreach ($RegkeyToWaitFor in $RegkeysToWaitFor) {
+				[int]$index = [array]::indexof($RegkeysToWaitFor, $RegkeyToWaitFor)
+				if (![string]::IsNullOrEmpty($RegkeyToWaitFor.KeyPath)) {
+					switch ($RegkeyToWaitFor) {
+						{
+							## test pathExists
+							Write-Warning "pathExists $($RegkeyToWaitFor)"
+						([string]::IsNullOrEmpty($_.ValueName)) -and
+						($null -eq $_.ValueData ) -and
+						($true -eq $_.ShouldExist)
+						} {
+							$RegkeysToWaitFor[$index].success = Watch-NxtRegistryKey -RegistryKey $RegkeyToWaitFor.KeyPath -Timeout 1
+						}
+						{
+							## test pathNotExists
+							Write-Warning "pathNotExists $($RegkeyToWaitFor)"
+						([string]::IsNullOrEmpty($_.ValueName)) -and
+						($null -eq $_.ValueData ) -and
+						($false -eq $_.ShouldExist)
+						} {
+							$RegkeysToWaitFor[$index].success = Watch-NxtRegistryKeyIsRemoved -RegistryKey $RegkeyToWaitFor.KeyPath -Timeout 1
+						}
+						{
+							## test valueExists
+						(![string]::IsNullOrEmpty($_.ValueName)) -and
+						($null -eq $_.ValueData ) -and
+						($true -eq $_.ShouldExist)
+						} {
+							## Check if Value exists
+							Write-Warning "valueExists $($RegkeyToWaitFor)"
+							if($null -ne (Get-RegistryKey -Key $RegkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $RegkeyToWaitFor.ValueName)){
+								$RegkeysToWaitFor[$index].success = $true
+							}
+						}
+						{
+							## test valueNotExists
+						(![string]::IsNullOrEmpty($_.ValueName)) -and
+						($null -eq $_.ValueData ) -and
+						($false -eq $_.ShouldExist)
+						} {
+							## Check if Value not exists
+							Write-Warning "valueNotExists $($RegkeyToWaitFor)"
+							if($null -eq (Get-RegistryKey -Key $RegkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $RegkeyToWaitFor.ValueName)){
+								$RegkeysToWaitFor[$index].success = $true
+							}
+						}
+						{
+							## valueEquals
+						(![string]::IsNullOrEmpty($_.ValueName)) -and
+						(![string]::IsNullOrEmpty($_.ValueData) ) -and
+						($true -eq $_.ShouldExist)
+					 } {
+							## Check if Value is equal
+							if( $RegkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $RegkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $RegkeyToWaitFor.ValueName)){
+								$RegkeysToWaitFor[$index].success = $true
+							}
+							Write-Warning "valueEquals $($RegkeyToWaitFor)"
+					 }
+					 {
+							## valueNotEquals
+						(![string]::IsNullOrEmpty($_.ValueName)) -and
+						(![string]::IsNullOrEmpty($_.ValueData) ) -and
+						($false -eq $_.ShouldExist)
+					 } {
+							## Check if Value is not equal
+							if( $RegkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $RegkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $RegkeyToWaitFor.ValueName)){
+								$RegkeysToWaitFor[$index].success = $true
+							}
+							Write-Warning "valueNotEquals $($RegkeyToWaitFor)"
+					 }
+						Default {
+							"Something went wrong"
+						}
+					}
+				}else{
+					"Something went wrong"
+				}
+			}
+			if ($RegkeyOperator -eq "Or"){
+				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -contains $true
+			}
+			elseif($RegkeyOperator -eq "And"){
+				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
+			}
+			[bool]$firstRun = $false
+		}
+		if ($processesFinished -and $regKeysFinished){
+			Write-Output $true
+		}
+		else{
+			Write-Output $false
+		}
+		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -5793,8 +5960,12 @@ function Watch-NxtProcess {
 	Process {
 		try {
 			[int]$waited = 0
-			[bool]$result = $null
-			while ($waited -lt $Timeout) {
+			[bool]$result = $false
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
@@ -5806,8 +5977,6 @@ function Watch-NxtProcess {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -5858,8 +6027,12 @@ function Watch-NxtProcessIsStopped {
 	Process {
 		try {
 			[int]$waited = 0
-			[bool]$result = $null
-			while ($waited -lt $Timeout) {
+			[bool]$result = $false
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
@@ -5871,8 +6044,6 @@ function Watch-NxtProcessIsStopped {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -5969,15 +6140,17 @@ function Watch-NxtRegistryKeyIsRemoved {
 	}
 	Process {
 		try {
-			$waited = 0
-			while ($waited -lt $Timeout) {
+			[int]$waited = 0
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
 				if ($null -eq $key) {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
