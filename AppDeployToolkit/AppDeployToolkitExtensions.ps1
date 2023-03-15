@@ -816,16 +816,14 @@ function Execute-NxtBitRockInstaller {
             'Uninstall' {
                 [string]$bitRockInstallerDefaultParams = $configNxtbitRockInstallerUninstallParams
 				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $bitRockInstallerUninstallKeyContainsWildCards
-
                 if ($installedAppResults.Count -eq 0) {
-                    Write-Log -Message "Found no Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+                    Write-Log -Message "Found no Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 					return
                 }
 				if ($installedAppResults.Count -gt 1) {
-                    Write-Log -Message "Found more than one Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+                    Write-Log -Message "Found more than one Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 					return
                 }
-    
                 [string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
     
                 ## check for and remove quotation marks around the uninstall string
@@ -913,12 +911,11 @@ function Execute-NxtBitRockInstaller {
 		## Copy uninstallation file from $uninsFolder to $configNxtBitRockInstallerUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
 			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $bitRockInstallerUninstallKey -UninstallKeyIsDisplayName $bitRockInstallerUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $bitRockInstallerUninstallKeyContainsWildCards
-
 			if ($installedAppResults.Count -eq 0) {
-				Write-Log -Message "Found no Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+				Write-Log -Message "Found no Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Severity 2 -Source ${CmdletName}
 			}
 			elseif ($installedAppResults.Count -gt 1) {
-				Write-Log -Message "Found more than one Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+				Write-Log -Message "Found more than one Application with UninstallKey [$bitRockInstallerUninstallKey], UninstallKeyIsDisplayName [$bitRockInstallerUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$bitRockInstallerUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Severity 2 -Source ${CmdletName}
 			}
 			else {
 				[string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
@@ -1118,16 +1115,14 @@ function Execute-NxtInnoSetup {
 			'Uninstall' {
 				[string]$innoSetupDefaultParams = $configNxtInnoSetupUninstallParams
 				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCard $innoUninstallKeyContainsWildCards
-    
                 if ($installedAppResults.Count -eq 0) {
-                    Write-Log -Message "Found no Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+                    Write-Log -Message "Found no Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 					return
                 }
 				if ($installedAppResults.Count -gt 1) {
-                    Write-Log -Message "Found more than one Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+                    Write-Log -Message "Found more than one Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 					return
                 }
-    
 				[string]$innoUninstallString = $installedAppResults.UninstallString
     
 				## check for and remove quotation marks around the uninstall string
@@ -1242,12 +1237,11 @@ function Execute-NxtInnoSetup {
 		## Copy uninstallation file from $uninsfolder to $configNxtInnoSetupUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
 			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCard $innoUninstallKeyContainsWildCards
-    
 			if ($installedAppResults.Count -eq 0) {
-				Write-Log -Message "Found no Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+				Write-Log -Message "Found no Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Severity 2 -Source ${CmdletName}
 			}
 			elseif ($installedAppResults.Count -gt 1) {
-				Write-Log -Message "Found more than one Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+				Write-Log -Message "Found more than one Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Severity 2 -Source ${CmdletName}
 			}
 			else {
 				[string]$innoUninstallString = $InstalledAppResults.UninstallString
@@ -1297,9 +1291,14 @@ function Execute-NxtMSI {
 	.PARAMETER Action
 		The action to perform. Options: Install, Uninstall, Patch, Repair, ActiveSetup.
 	.PARAMETER Path
-		The path to the MSI/MSP file or the product code of the installed MSI.
+		The path to the MSI/MSP file, the product code or the DisplayName of the application installed by the MSI file.
 	.PARAMETER UninstallKeyIsDisplayName
-		Determines if the value given as UninstallKey should be interpreted as a displayname. Default is: $false.
+		Determines if the value given as Path should be interpreted as a DisplayName. Default is: $false.
+	.PARAMETER UninstallKeyContainsWildCards
+		Determines if the value given as Path contains WildCards. Default is: $false.
+		Works for product codes and DisplayNames only, but NOT with an ctual path to the MSI/MSP file.
+		If set to $true, "*" are interpreted as WildCards.
+		If set to $false, "*" are interpreted as part of the actual string.
 	.PARAMETER Transform
 		The name of the transform file(s) to be applied to the MSI. The transform file is expected to be in the same directory as the MSI file. Multiple transforms have to be separated by a semi-colon.
 	.PARAMETER Patch
@@ -1368,6 +1367,9 @@ function Execute-NxtMSI {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $false,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyContainsWildCards = $false,
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
 		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
@@ -1447,6 +1449,7 @@ function Execute-NxtMSI {
 		[array]$functionParametersToBeRemoved = (
 			"Log",
 			"UninstallKeyIsDisplayName",
+			"UninstallKeyContainsWildCards",
 			"ConfigMSILogDir"
 		)
 		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved) {
@@ -1454,8 +1457,23 @@ function Execute-NxtMSI {
 		}
 	}
 	Process {
-		if ($UninstallKeyIsDisplayName -and $Action -eq "Uninstall") {
-			$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName | Select-Object -First 1 -ExpandProperty ProductCode
+		if (($UninstallKeyIsDisplayName -or $UninstallKeyContainsWildCards) -and $Action -eq "Uninstall") {
+			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $Path -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards
+			if ($installedAppResults.Count -eq 0) {
+				Write-Log -Message "Found no Application with UninstallKey [$Path], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
+				return
+			}
+			elseif ($installedAppResults.Count -gt 1) {
+				Write-Log -Message "Found more than one Application with UninstallKey [$Path], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
+				return
+			}
+			elseif ([string]::IsNullOrEmpty($installedAppResults.ProductCode)) {
+				Write-Log -Message "Found no MSI product code for the Application with UninstallKey [$Path], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
+				return
+			}
+			else {
+				$PSBoundParameters["Path"] = $installedAppResults.ProductCode
+			}
 		}
 		if ([string]::IsNullOrEmpty($Parameters)) {
 			$null = $PSBoundParameters.Remove('Parameters')
@@ -1611,16 +1629,14 @@ function Execute-NxtNullsoft {
 			'Uninstall' {
 				[string]$nullsoftDefaultParams = $configNxtNullsoftUninstallParams
 				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $nullsoftUninstallKey -UninstallKeyIsDisplayName $nullsoftUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $nullsoftUninstallKeyContainsWildCards
-    
                 if ($installedAppResults.Count -eq 0) {
-                    Write-Log -Message "Found no Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+                    Write-Log -Message "Found no Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 					return
                 }
 				if ($installedAppResults.Count -gt 1) {
-                    Write-Log -Message "Found more than one Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Source ${CmdletName}
+                    Write-Log -Message "Found more than one Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 					return
                 }
-    
 				[string]$nullsoftUninstallString = $installedAppResults.UninstallString
     
 				## check for and remove quotation marks around the uninstall string
@@ -1702,14 +1718,13 @@ function Execute-NxtNullsoft {
 		## Copy uninstallation file from $uninsFolder to $configNxtNullsoftUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
 			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $nullsoftUninstallKey -UninstallKeyIsDisplayName $nullsoftUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $nullsoftUninstallKeyContainsWildCards
-    
 			if ($installedAppResults.Count -eq 0) {
-				Write-Log -Message "Found no Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+				Write-Log -Message "Found no Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Severity 2 -Source ${CmdletName}
 			}
 			elseif ($installedAppResults.Count -gt 1) {
-				Write-Log -Message "Found more than one Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Source ${CmdletName}
+				Write-Log -Message "Found more than one Application with UninstallKey [$nullsoftUninstallKey], UninstallKeyIsDisplayName [$nullsoftUninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$nullsoftUninstallKeyContainsWildCards]. Skipping [copy uninstallation file to backup]..." -Severity 2 -Source ${CmdletName}
 			}
-			Else {
+			else {
 				[string]$nullsoftUninstallString = $installedAppResults.UninstallString
 
 				## check for and remove quotation marks around the uninstall string
@@ -4494,7 +4509,6 @@ function Set-NxtDetectedDisplayVersion {
 			try {
 				Write-Log -Message "Setting DetectedDisplayVersion value..." -Source ${CmdletName}
 				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards
-
 				if ($installedAppResults.Count -eq 0) {
 					Write-Log -Message "Found no uninstall key with UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName] and UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards]. Skipped setting DetectedDisplayVersion." -Severity 2 -Source ${CmdletName}
 				}
