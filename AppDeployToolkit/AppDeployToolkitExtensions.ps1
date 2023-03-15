@@ -2059,6 +2059,8 @@ function Expand-NxtPackageConfig {
 		$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstPara)
 		foreach($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
 			$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
+			[bool]$uninstallKeyToHide.KeyNameIsDisplayName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameIsDisplayName)
+			[bool]$uninstallKeyToHide.KeyNameContainsWildCards = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameContainsWildCards)
 		}
 	}
 	End {
@@ -2706,10 +2708,11 @@ function Get-NxtInstalledApplication {
 			try {
 				If ($true -eq $UninstallKeyContainsWildCards) {
 					If ($true -eq $UninstallKeyIsDisplayName) {
-						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -WildCard
+						## Ecluding "$global:PackageConfig.UninstallDisplayName" is not optional! It should not become a parameter! <-- HJT
+						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -WildCard | Where-Object DisplayName -ne $global:PackageConfig.UninstallDisplayName
 					}
 					Else {
-						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name "*" -WildCard | Where-Object UninstallSubkey -Like $UninstallKey
+						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name "*" -WildCard | Where-Object UninstallSubkey -Like $UninstallKey | Where-Object DisplayName -ne $global:PackageConfig.UninstallDisplayName
 						ForEach ($installedAppResult in $installedAppResults) {
 							Write-Log -Message "Selected [$($installedAppResult.DisplayName)] version [$($installedAppResult.DisplayVersion)] using wildcard matching UninstallKey [$UninstallKey] from the results above." -Source ${CmdletName}
 						}
