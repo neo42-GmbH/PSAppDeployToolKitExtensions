@@ -2708,7 +2708,7 @@ function Get-NxtInstalledApplication {
 			try {
 				If ($true -eq $UninstallKeyContainsWildCards) {
 					If ($true -eq $UninstallKeyIsDisplayName) {
-						## Ecluding "$global:PackageConfig.UninstallDisplayName" is not optional! It should not become a parameter! <-- HJT
+						## Excluding "$global:PackageConfig.UninstallDisplayName" is not optional! It should not become a parameter! <-- HJT
 						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -WildCard | Where-Object DisplayName -ne $global:PackageConfig.UninstallDisplayName
 					}
 					Else {
