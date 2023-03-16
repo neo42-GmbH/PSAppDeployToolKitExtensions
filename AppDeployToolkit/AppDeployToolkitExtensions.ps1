@@ -4847,7 +4847,7 @@ function Show-NxtInstallationWelcome {
 				foreach ( $processNameItem in $(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$($processAppItem.replace("*", "%"))'").name ) {
 					if ( $processNameItem -match "\$fileExtension$" ) {
 						## for later calling of ADT CMDlet no file extension is allowed
-						[string]$processAppItemCollection = "$processAppItemCollection" + "$listSeparator" + "$($processNameItem.substring(0, $processNameItem.length - $fileExtension.length))"
+						[string]$processAppItemCollection = "$processAppItemCollection" + "$listSeparator" + "$($processNameItem.TrimEnd($fileExtension))"
 					}
 					else {
 						[string]$processAppItemCollection = "$closeAppsList" + "$listSeparator" + "$processNameItem"
@@ -4860,7 +4860,7 @@ function Show-NxtInstallationWelcome {
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
 				if ( $processAppItem -match "\$fileExtension$" ) {
-					$AskKillProcessApps.Item($processAppItemIndex) = $processAppItem.substring(0, $processAppItem.length - $fileExtension.length)
+					$AskKillProcessApps.Item($processAppItemIndex) = $processAppItem.TrimEnd($fileExtension)
 				}				
 			}
 		}
