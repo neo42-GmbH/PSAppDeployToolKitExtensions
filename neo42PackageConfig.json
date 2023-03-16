@@ -1,165 +1,105 @@
 {
-    "ScriptAuthor": "neo42",
-    "ScriptDate": "22/09/2022",
-    "InventoryID": "hjt632C168F",
-    "Description": "Jens Hoetger Scribble Papers 2.10.2",
-    "InstallMethod": "Inno Setup",
-    "UninstallMethod": "Inno Setup",
-    "TestedOn": "Win10 x64",
-    "Dependencies": "",
-    "LastChange": "22/09/2022",
-    "Build": "0",
-    "AppArch": "x86",
-    "AppVendor": "Jens Hoetger",
-    "AppName": "Scribble Papers",
-    "AppVersion": "2.10.2",
-    "AppRevision": "0",
-    "AppLang": "DEU",
-    "PackageFamilyGUID": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
-    "RegPackagesKey": "neoPackages",
-    "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
-    "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
-    "UninstallOld": true,
-    "Reboot": 0,
-    "MSIReinstallModeIsRepair": false,
-    "UserPartOnInstallation": false,
-    "UserPartOnUninstallation": false,
-    "UserPartRevision": "2022,09,22,01",
-    "HidePackageUninstallButton": false,
-    "HidePackageUninstallEntry": false,
-    "DisplayVersion": "2.10.2",
-    "InstallerVersion": "2.10.2",
-    "UninstallKey": "Scribble Papers_is1",
-    "UninstallKeyIsDisplayName": false,
-    "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
-    "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
-    "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
-	  "InstFile": "SPSetup.exe",
-    "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
-    "AppendInstParaToDefaultParameters": false,
-    "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
-    "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
-    "AppendUninstParaToDefaultParameters": false,
-    "TestConditionsPreSetupSuccessCheck": {
-      "Install": {
-        "TotalSecondsToWaitFor": 150,
-        "ProcessOperator": "And",
-        "ProcessesToWaitFor": [
-          {
-            "Name": "no*ad.exe",
-            "ShouldExist": true
-          },
-          {
-            "Name": "Calculator.exe",
-            "ShouldExist": false
-          }
-        ],
-        "RegKeyOperator": "And",
-        "RegKeysToWaitFor": [
-          {
-            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub1",
-            "ValueName": null,
-            "ValueData": null,
-            "ShouldExist": false
-          },
-          {
-            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub2",
-            "ValueName": "DisplayVersion",
-            "ValueData": null,
-            "ShouldExist": true
-          },
-          {
-            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub3",
-            "ValueName": "DisplayVersion",
-            "ValueData": "hallo",
-            "ShouldExist": true
-          },
-          {
-            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub4",
-            "ValueName": null,
-            "ValueData": null,
-            "ShouldExist": false
-          },
-          {
-            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub5",
-            "ValueName": "DisplayVersion",
-            "ValueData": null,
-            "ShouldExist": false
-          },
-          {
-            "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub6",
-            "ValueName": "DisplayVersion",
-            "ValueData": "hallo",
-            "ShouldExist": false
-          }
-        ]
-      },
-      "Uninstall": {
-        "TotalSecondsToWaitFor": 20,
-        "ProcessOperator": "And",
-        "ProcessesToWaitFor": [
-          {
-            "Name": "notepad.exe",
-            "ShouldExist": true
-          }
-        ],
-        "RegKeyOperator": "And",
-        "RegKeysToWaitFor": [
-          {
-            "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID*}",
-            "ValueName": "DisplayVersion",
-            "ValueData": null,
-            "ShouldExist": false
-          },
-          {
-            "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall",
-            "ValueName": null,
-            "ValueData": null,
-            "ShouldExist": true
-          }
-        ]
-    }
+  "ScriptAuthor": "neo42",
+  "ScriptDate": "22/09/2022",
+  "InventoryID": "hjt632C168F",
+  "Description": "Jens Hoetger Scribble Papers 2.10.2",
+  "InstallMethod": "Inno Setup",
+  "UninstallMethod": "Inno Setup",
+  "TestedOn": "Win10 x64",
+  "Dependencies": "",
+  "LastChange": "22/09/2022",
+  "Build": "0",
+  "AppArch": "x86",
+  "AppVendor": "Jens Hoetger",
+  "AppName": "Scribble Papers",
+  "AppVersion": "2.10.2",
+  "AppRevision": "0",
+  "AppLang": "DEU",
+  "PackageFamilyGUID": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
+  "RegPackagesKey": "neoPackages",
+  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
+  "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
+  "UninstallOld": true,
+  "Reboot": 0,
+  "MSIReinstallModeIsRepair": false,
+  "UserPartOnInstallation": false,
+  "UserPartOnUninstallation": false,
+  "UserPartRevision": "2022,09,22,01",
+  "HidePackageUninstallButton": false,
+  "HidePackageUninstallEntry": false,
+  "DisplayVersion": "2.10.2",
+  "InstallerVersion": "2.10.2",
+  "UninstallKey": "Scribble Papers_is1",
+  "UninstallKeyIsDisplayName": false,
+  "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
+  "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
+  "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
+  "InstFile": "SPSetup.exe",
+  "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
+  "AppendInstParaToDefaultParameters": false,
+  "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
+  "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
+  "AppendUninstParaToDefaultParameters": false,
+  "TestConditionsPreSetupSuccessCheck": {
+    "Install": {
+      "TotalSecondsToWaitFor": 30,
+      "ProcessOperator": "And",
+      "ProcessesToWaitFor": [
+      ],
+      "RegKeyOperator": "And",
+      "RegKeysToWaitFor": [
+      ]
     },
-    "AppKillProcesses": [
-      "ScPapers"
-    ],
-    "BlockExecution": true,
-    "CommonDesktopShortcutsToDelete": [
-	  "Scribble Papers Programmdokumentation.lnk",
-	  "Scribble Papers 2022.lnk"
-    ],
-    "CommonStartMenuShortcutsToCopyToCommonDesktop": [
-      {"Source":"Programs\\Scribble Papers\\Scribble Papers.lnk","TargetName":"Scribble Papers 2022.lnk"},
-      {"Source":"Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"}
-    ],
-    "UninstallKeysToHide":[
-      {"KeyName":"$($global:PackageConfig.UninstallKey)","Is64Bit":false,"KeyNameIsDisplayName":false},
-      {"KeyName":"<SomeDisplayName>","Is64Bit":true,"KeyNameIsDisplayName":true}
-    ],
-    "PackageSpecificVariablesRaw": [
-      {
-        "Name": "vcredist2016Installer",
-        "Value": "vcredist2017.exe",
-        "ExpandVariables": true
-      },
-      {
-        "Name": "usage",
-        "Value": "somecomment"
-      },
-      {
-        "Name": "expandme",
-        "Value": "$(ls ~)",
-        "ExpandVariables" :true
-      },
-      {
-        "Name": "expandmenot",
-        "Value": "$(ls ~)",
-        "ExpandVariables" :false
-      },
-      {
-        "Name": "prefilled vars",
-        "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
-        "ExpandVariables" :true
-      }
-    ]
+    "Uninstall": {
+      "TotalSecondsToWaitFor": 30,
+      "ProcessOperator": "And",
+      "ProcessesToWaitFor": [
+      ],
+      "RegKeyOperator": "And",
+      "RegKeysToWaitFor": [
+      ]
   }
+  },
+  "AppKillProcesses": [
+    "ScPapers"
+  ],
+  "BlockExecution": true,
+  "CommonDesktopShortcutsToDelete": [
+  "Scribble Papers Programmdokumentation.lnk",
+  "Scribble Papers 2022.lnk"
+  ],
+  "CommonStartMenuShortcutsToCopyToCommonDesktop": [
+    {"Source":"Programs\\Scribble Papers\\Scribble Papers.lnk","TargetName":"Scribble Papers 2022.lnk"},
+    {"Source":"Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"}
+  ],
+  "UninstallKeysToHide":[
+    {"KeyName":"$($global:PackageConfig.UninstallKey)","Is64Bit":false,"KeyNameIsDisplayName":false},
+    {"KeyName":"<SomeDisplayName>","Is64Bit":true,"KeyNameIsDisplayName":true}
+  ],
+  "PackageSpecificVariablesRaw": [
+    {
+      "Name": "vcredist2016Installer",
+      "Value": "vcredist2017.exe",
+      "ExpandVariables": true
+    },
+    {
+      "Name": "usage",
+      "Value": "somecomment"
+    },
+    {
+      "Name": "expandme",
+      "Value": "$(ls ~)",
+      "ExpandVariables" :true
+    },
+    {
+      "Name": "expandmenot",
+      "Value": "$(ls ~)",
+      "ExpandVariables" :false
+    },
+    {
+      "Name": "prefilled vars",
+      "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
+      "ExpandVariables" :true
+    }
+  ]
+}

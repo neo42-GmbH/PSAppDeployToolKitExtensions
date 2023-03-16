@@ -3409,35 +3409,50 @@ function Initialize-NxtEnvironment {
 #region Function Install-NxtApplication
 function Install-NxtApplication {
 	<#
-.SYNOPSIS
-	Defines the required steps to install the application based on the target installer type
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER UninstallKey
-	Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
-	Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallKeyIsDisplayName
-	Determins if the value given as UninstallKey should be interpreted as a displayname.
-	Only applies for Inno Setup, Nullsoft and BitRockInstaller.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstLogFile
-	Defines the path to the Logfile that should be used by the installer.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstFile
-	Defines the path to the Installation File.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstPara
-	Defines the parameters which will be passed in the Installation Commandline.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER AppendInstParaToDefaultParameters
-	If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
-	If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstallMethod
-	Defines the type of the installer used in this package.
-	Defaults to the corresponding value from the PackageConfig object
+	.SYNOPSIS
+		Defines the required steps to install the application based on the target installer type
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER UninstallKey
+		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstLogFile
+		Defines the path to the Logfile that should be used by the installer.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstFile
+		Defines the path to the Installation File.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstPara
+		Defines the parameters which will be passed in the Installation Commandline.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppendInstParaToDefaultParameters
+		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstallMethod
+		Defines the type of the installer used in this package.
+		Defaults to the corresponding value from the PackageConfig object
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
 .EXAMPLE
 	Install-NxtApplication
 .LINK
@@ -3464,7 +3479,22 @@ function Install-NxtApplication {
 		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstallMethod = $global:PackageConfig.InstallMethod
+		$InstallMethod = $global:PackageConfig.InstallMethod,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckRegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor
 	)
 	[string]$script:installPhase = 'Installation'
 
@@ -3515,7 +3545,7 @@ function Install-NxtApplication {
 		}
 	}
 	$InstallExitCode = $LastExitCode
-
+	## Delay for filehandle release etc. to occur.
 	Start-Sleep -Seconds 5
 
 	## Test for successfull installation (if UninstallKey value is set)
@@ -3523,8 +3553,14 @@ function Install-NxtApplication {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
 	}
 	else {
-		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-			Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+		if ( $true -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)
+		) {
+			if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+				Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+			}
+		}
+		else {
+			Exit-NxtScriptWithError -ErrorMessage "Installation RegistryAndProcessCondition of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 		}
 	}
 
@@ -4306,6 +4342,21 @@ function Repair-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Repair-NxtApplication
 	.LINK
@@ -5062,41 +5113,56 @@ function Test-NxtProcessExists {
 #region Function Uninstall-NxtApplication
 function Uninstall-NxtApplication {
 	<#
-.SYNOPSIS
-	Defines the required steps to uninstall the application based on the target installer type
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-.PARAMETER UninstallKey
-	Specifies the original UninstallKey set by the Installer in this Package.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallKeyIsDisplayName
-	Determins if the value given as UninstallKey should be interpreted as a displayname.
-	Only applies for Inno Setup, Nullsoft and BitRockInstaller.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstLogFile
-	Defines the path to the Logfile that should be used by the uninstaller.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstFile
-	Defines the path to the Installation File.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstPara
-	Defines the parameters which will be passed in the UnInstallation Commandline.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER AppendUninstParaToDefaultParameters
-	If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
-	If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallMethod
-	Defines the type of the uninstaller used in this package.
-	Defaults to the corresponding value from the PackageConfig object
-.PARAMETER UninstallKeysToHide
-	Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
-	Defaults to the corresponding values from the PackageConfig object.
-.PARAMETER Wow6432Node
-	Switches between 32/64 Bit Registry Keys.
-	Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
-.EXAMPLE
-	Uninstall-NxtApplication
+	.SYNOPSIS
+		Defines the required steps to uninstall the application based on the target installer type
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+	.PARAMETER UninstallKey
+		Specifies the original UninstallKey set by the Installer in this Package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstLogFile
+		Defines the path to the Logfile that should be used by the uninstaller.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstFile
+		Defines the path to the Installation File.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstPara
+		Defines the parameters which will be passed in the UnInstallation Commandline.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppendUninstParaToDefaultParameters
+		If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallMethod
+		Defines the type of the uninstaller used in this package.
+		Defaults to the corresponding value from the PackageConfig object
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+		Defaults to the corresponding values from the PackageConfig object.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Uninstall-NxtApplication
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
@@ -5127,7 +5193,23 @@ function Uninstall-NxtApplication {
 		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Wow6432Node = $global:Wow6432Node
+		$Wow6432Node = $global:Wow6432Node,
+		$InstallMethod = $global:PackageConfig.InstallMethod,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckRegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor
 	)
 	[string]$script:installPhase = 'Pre-Uninstallation'
 
@@ -5224,14 +5306,20 @@ function Uninstall-NxtApplication {
 			$UninstallExitCode = $LastExitCode
 
 			Start-Sleep -Seconds 5
-
+			Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor 
 			## Test successfull uninstallation
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
 			}
 			else {
-				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+				if ( $true -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)
+				) {
+					if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+						Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+					}
+				}
+				else {
+					Exit-NxtScriptWithError -ErrorMessage "Uninstallation RegistryAndProcessCondition of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 				}
 			}
 		}
