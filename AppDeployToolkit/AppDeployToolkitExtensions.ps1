@@ -4812,17 +4812,17 @@ function Show-NxtInstallationWelcome {
 		[bool]
 		$IsInstall,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[int]
 		$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
 		[Parameter(Mandatory = $false)]
-		[String]
-		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
+		[array]
+		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses),
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet("ABORT", "CONTINUE")]
-		[String]
+		[string]
 		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -4830,28 +4830,41 @@ function Show-NxtInstallationWelcome {
 	)
 	## override $DeferDays with 0 in Case of Uninstall
 	if (!$IsInstall) {
-		$DeferDays = 0
+		[int]$DeferDays = 0
 	}
 	[string]$closeAppsList = $null
 	[string]$listSeparator = $null
 	[string]$fileExtension = ".exe"
-	if ( !([String]::IsNullOrEmpty($AskKillProcessApps)) ) {
-		foreach ($processAppItem in $AskKillProcessApps) {
-			if ( $fileExtension.length -ne $($($processAppItem.length) - $($processAppItem.ToLower().IndexOf($fileExtension))) ) {
-				## for correct wmi search an file extension is necessary
-				[string]$processAppItem = $processAppItem + $fileExtension
+	if ( $AskKillProcessApps.count -ne 0 ) {
+		foreach ( $processAppItem in $AskKillProcessApps ) {
+			[int]$processAppItemIndex = $AskKillProcessApps.IndexOf($processAppItem)
+			if ( "*$fileExtension" -eq "$processAppItem" ) {
+				Throw "Not supported list entry '*.exe' for 'CloseApps'-collection found, please the check parameter for processes ask to kill in config file!"
 			}
-			if ( "*.exe" -eq "$processAppItem" ) {
-				Write-Log "Ignoring not supported list entry '*.exe' for 'CloseApps'-collection!" -severity 3
-			}
-			else {				
-				foreach ($processNameItem in $(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$($processAppItem.replace("*", "%"))'").name ) {
-					## for calling the ADT CMDlet no file extension is allowed
-					$closeAppsList = "$closeAppsList" + "$listSeparator" + "$($processNameItem.replace("$fileExtension",''))"
-					$listSeparator = ","
+			elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppItem) ) {				
+				Write-Log -Message "Wildcard in list entry for 'CloseApps'-collection detected, retrieving all matching running processes for '$processAppItem' ..." -Source ${cmdletName}
+				[string]$processAppItemCollection = $null
+				foreach ( $processNameItem in $(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$($processAppItem.replace("*", "%"))'").name ) {
+					if ( $processNameItem -match "\$fileExtension$" ) {
+						## for later calling of ADT CMDlet no file extension is allowed
+						[string]$processAppItemCollection = "$processAppItemCollection" + "$listSeparator" + "$($processNameItem.substring(0, $processNameItem.length - $fileExtension.length))"
+					}
+					else {
+						[string]$processAppItemCollection = "$closeAppsList" + "$listSeparator" + "$processNameItem"
+					}
+					[string]$listSeparator = ","
 				}
+				$AskKillProcessApps.Item($processAppItemIndex) = $processAppItemCollection
+				Write-Log -Message "... found: $processAppItemCollection" -Source ${cmdletName}
+			}
+			else {
+				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
+				if ( $processAppItem -match "\$fileExtension$" ) {
+					$AskKillProcessApps.Item($processAppItemIndex) = $processAppItem.substring(0, $processAppItem.length - $fileExtension.length)
+				}				
 			}
 		}
+		[string]$closeAppsList = $AskKillProcessApps -join ","
 		if ( !([String]::IsNullOrEmpty($closeAppsList)) ) {
 			switch ($ContinueType) {
 				"ABORT" {
@@ -4861,10 +4874,6 @@ function Show-NxtInstallationWelcome {
 					Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 				}		
 			}
-		}
-		else {
-			## else necessary for saving the calculated expiration date in registry with this script run (if deferred days are defined) and checking disk space too
-			Show-InstallationWelcome -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 		}
 	}
 }
