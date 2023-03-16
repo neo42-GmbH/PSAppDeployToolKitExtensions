@@ -5816,7 +5816,7 @@ function Wait-NxtRegistryAndProcessCondition {
 							($true -eq $_.ShouldExist)
 						} {
 							Write-Log -Message "Check if KeyPath exists: `"$($RegkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
-							$RegkeyToWaitFor.success = Watch-NxtRegistryKey -RegistryKey $RegkeyToWaitFor.KeyPath -Timeout 1
+							$RegkeyToWaitFor.success = Watch-NxtRegistryKey -RegistryKey $RegkeyToWaitFor.KeyPath -Timeout 0
 						}
 						{
 							## test pathNotExists
@@ -5825,7 +5825,7 @@ function Wait-NxtRegistryAndProcessCondition {
 							($false -eq $_.ShouldExist)
 						} {
 							Write-Log -Message "Check if KeyPath not exists: `"$($RegkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
-							$RegkeyToWaitFor.success = Watch-NxtRegistryKeyIsRemoved -RegistryKey $RegkeyToWaitFor.KeyPath -Timeout 1
+							$RegkeyToWaitFor.success = Watch-NxtRegistryKeyIsRemoved -RegistryKey $RegkeyToWaitFor.KeyPath -Timeout 0
 						}
 						{
 							## test valueExists
@@ -6180,15 +6180,17 @@ function Watch-NxtRegistryKey {
 	}
 	Process {
 		try {
-			$waited = 0
-			while ($waited -lt $Timeout) {
+			[int]$waited = 0
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
 				if ($key) {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
