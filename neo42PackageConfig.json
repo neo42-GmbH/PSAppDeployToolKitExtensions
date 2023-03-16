@@ -44,37 +44,46 @@
     "Install": {
       "TotalSecondsToWaitFor": 30,
       "ProcessOperator": "And",
-      "ProcessesToWaitFor": [
-      ],
+      "ProcessesToWaitFor": [],
       "RegKeyOperator": "And",
-      "RegKeysToWaitFor": [
-      ]
+      "RegKeysToWaitFor": []
     },
     "Uninstall": {
       "TotalSecondsToWaitFor": 30,
       "ProcessOperator": "And",
-      "ProcessesToWaitFor": [
-      ],
+      "ProcessesToWaitFor": [],
       "RegKeyOperator": "And",
-      "RegKeysToWaitFor": [
-      ]
-  }
+      "RegKeysToWaitFor": []
+    }
   },
   "AppKillProcesses": [
     "ScPapers"
   ],
   "BlockExecution": true,
   "CommonDesktopShortcutsToDelete": [
-  "Scribble Papers Programmdokumentation.lnk",
-  "Scribble Papers 2022.lnk"
+    "Scribble Papers Programmdokumentation.lnk",
+    "Scribble Papers 2022.lnk"
   ],
   "CommonStartMenuShortcutsToCopyToCommonDesktop": [
-    {"Source":"Programs\\Scribble Papers\\Scribble Papers.lnk","TargetName":"Scribble Papers 2022.lnk"},
-    {"Source":"Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"}
+    {
+      "Source": "Programs\\Scribble Papers\\Scribble Papers.lnk",
+      "TargetName": "Scribble Papers 2022.lnk"
+    },
+    {
+      "Source": "Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"
+    }
   ],
-  "UninstallKeysToHide":[
-    {"KeyName":"$($global:PackageConfig.UninstallKey)","Is64Bit":false,"KeyNameIsDisplayName":false},
-    {"KeyName":"<SomeDisplayName>","Is64Bit":true,"KeyNameIsDisplayName":true}
+  "UninstallKeysToHide": [
+    {
+      "KeyName": "$($global:PackageConfig.UninstallKey)",
+      "Is64Bit": false,
+      "KeyNameIsDisplayName": false
+    },
+    {
+      "KeyName": "<SomeDisplayName>",
+      "Is64Bit": true,
+      "KeyNameIsDisplayName": true
+    }
   ],
   "PackageSpecificVariablesRaw": [
     {
@@ -89,17 +98,17 @@
     {
       "Name": "expandme",
       "Value": "$(ls ~)",
-      "ExpandVariables" :true
+      "ExpandVariables": true
     },
     {
       "Name": "expandmenot",
       "Value": "$(ls ~)",
-      "ExpandVariables" :false
+      "ExpandVariables": false
     },
     {
       "Name": "prefilled vars",
       "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
-      "ExpandVariables" :true
+      "ExpandVariables": true
     }
   ]
 }
