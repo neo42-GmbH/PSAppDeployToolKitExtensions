@@ -5305,7 +5305,6 @@ function Uninstall-NxtApplication {
 			$UninstallExitCode = $LastExitCode
 			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
-			Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor 
 			## Test successfull uninstallation
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
