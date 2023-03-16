@@ -5194,7 +5194,6 @@ function Uninstall-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Wow6432Node = $global:Wow6432Node,
-		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
 		[int]
 		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor,
@@ -5304,7 +5303,7 @@ function Uninstall-NxtApplication {
 				}
 			}
 			$UninstallExitCode = $LastExitCode
-
+			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
 			Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor 
 			## Test successfull uninstallation
