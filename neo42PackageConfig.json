@@ -55,7 +55,7 @@
           }
         ],
         "RegKeyOperator": "And",
-        "RegkeysToWaitFor": [
+        "RegKeysToWaitFor": [
           {
             "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub1",
             "ValueName": null,
@@ -104,7 +104,7 @@
           }
         ],
         "RegKeyOperator": "And",
-        "RegkeysToWaitFor": [
+        "RegKeysToWaitFor": [
           {
             "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID*}",
             "ValueName": "DisplayVersion",
