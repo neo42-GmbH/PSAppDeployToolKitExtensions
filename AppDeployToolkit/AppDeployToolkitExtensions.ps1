@@ -5088,9 +5088,6 @@ function Test-NxtProcessExists {
 				$wqlString = $ProcessName
 			}
 			else {
-				if ( $ProcessName -notmatch '\.exe$'){
-					$ProcessName+=".exe"
-				}
 				$wqlString = "Name LIKE '$($ProcessName.Replace("*","%"))'"
 			}
 			$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
@@ -5707,7 +5704,11 @@ function Update-NxtTextInFile {
 function Wait-NxtRegistryAndProcessCondition {
 	<#
 	.SYNOPSIS
+		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
+		Integrated to Install-NxtApplication and Uninstall-Nxtapplication.
 	.DESCRIPTION
+		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
+		Integrated to Install-NxtApplication, Uninstall-Nxtapplication.
 	.PARAMETER TotalSecondsToWaitFor
 		Timeout in seconds the function waits and checks for the condition to occur.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -5726,6 +5727,7 @@ function Wait-NxtRegistryAndProcessCondition {
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
+		Wait-NxtRegistryAndProcessCondition
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
