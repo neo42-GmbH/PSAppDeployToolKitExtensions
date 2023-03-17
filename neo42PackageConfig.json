@@ -44,7 +44,10 @@
     "AppendUninstParaToDefaultParameters": false,
     "AcceptedUninstallExitCodes": "",
     "AppKillProcesses": [
-      "ScPapers"
+      {
+        "Name": "ScPapers",
+        "Description": ""
+      }
     ],
     "BlockExecution": true,
     "CommonDesktopShortcutsToDelete": [
