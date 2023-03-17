@@ -4834,71 +4834,103 @@ function Set-NxtSystemEnvironmentVariable {
 #region Function Show-NxtInstallationWelcome
 function Show-NxtInstallationWelcome {
 	<#
-.SYNOPSIS
-Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
-.DESCRIPTION
-Is only called in the Main function and should not be modified!
-To customize the script always use the "CustomXXXX" entry points.
-.Parameter IsInstall
-Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
-.PARAMETER DeferDays
-Specifies how long a user may defer an installation (will be ignored on uninstallation)
-Defaults to the corresponding value from the Setup.cfg.
-.PARAMETER AskKillProcessApps
-Specifies a list of Processnames which should be stopped for the (un)installation to start.
-For Example "WINWORD,EXCEL"
-Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER CloseAppsCountdown
-Countdown until the Apps will either be forcibly closed or the Installation will abort
-Defaults to the timeout value from the Setup.cfg.
-.PARAMETER ContinueType
-If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
-this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
-	ABORT:       After the timeout has expired, the installation will be abort 
-	CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
-Defaults to the timeout value from the Setup.cfg.
-.PARAMETER BlockExecution
-Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
-Defaults to the corresponding value from the PackageConfig object.
-.EXAMPLE
-Show-NxtInstallationWelcome
-.LINK
-https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.Parameter IsInstall
+		Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
+	.PARAMETER DeferDays
+		Specifies how long a user may defer an installation (will be ignored on uninstallation)
+		Defaults to the corresponding value from the Setup.cfg.
+	.PARAMETER AskKillProcessApps
+		Specifies a list of Processnames which should be stopped for the (un)installation to start.
+		For Example "WINWORD,EXCEL"
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER CloseAppsCountdown
+		Countdown until the Apps will either be forcibly closed or the Installation will abort
+		Defaults to the timeout value from the Setup.cfg.
+	.PARAMETER ContinueType
+		If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
+		this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
+			ABORT:       After the timeout has expired, the installation will be abort 
+			CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
+		Defaults to the timeout value from the Setup.cfg.
+	.PARAMETER BlockExecution
+		Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Show-NxtInstallationWelcome
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	param (
 		[Parameter(Mandatory = $true)]
 		[bool]
 		$IsInstall,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[int]
 		$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
 		[Parameter(Mandatory = $false)]
-		[String]
-		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
+		[array]
+		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses),
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet("ABORT", "CONTINUE")]
-		[String]
+		[string]
 		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$BlockExecution = $($global:PackageConfig.BlockExecution)
 	)
 	## override $DeferDays with 0 in Case of Uninstall
-	if (!$isInstall) {
-		$DeferDays = 0
+	if (!$IsInstall) {
+		[int]$DeferDays = 0
 	}
-
-	if (![string]::IsNullOrEmpty($AskKillProcessApps)) {
-		switch ($ContinueType) {
-			"ABORT" {
-				Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+	[string]$closeAppsList = $null
+	[string]$listSeparator = $null
+	[string]$fileExtension = ".exe"
+	if ( $AskKillProcessApps.count -ne 0 ) {
+		foreach ( $processAppItem in $AskKillProcessApps ) {
+			[int]$processAppItemIndex = $AskKillProcessApps.IndexOf($processAppItem)
+			if ( "*$fileExtension" -eq "$processAppItem" ) {
+				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
+				Throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!"
 			}
-			"CONTINUE" {
-				Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
-			}		
+			elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppItem) ) {				
+				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$processAppItem' ..." -Source ${cmdletName}
+				[string]$processAppItemCollection = $null
+				foreach ( $processNameItem in $(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$($processAppItem.replace("*", "%"))'").name ) {
+					## for later calling of ADT CMDlet no file extension is allowed
+					[string]$processAppItemCollection = $processAppItemCollection + $listSeparator + $($processNameItem -replace "\$fileExtension$","")
+					[string]$listSeparator = ","
+				}
+				$AskKillProcessApps.Item($processAppItemIndex) = $processAppItemCollection
+				if ([String]::IsNullOrEmpty($processAppItemCollection)) {
+					Write-Log -Message "... no processes found." -Source ${cmdletName}
+				}
+				else {
+					Write-Log -Message "... found processes (file extension removed already): $processAppItemCollection" -Source ${cmdletName}
+				}
+			}
+			else {
+				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
+				$AskKillProcessApps.Item($processAppItemIndex) = $($processAppItem -replace "\$fileExtension$","")
+			}
+		}
+		[string]$closeAppsList = $AskKillProcessApps -join ","
+		if ( !([String]::IsNullOrEmpty($closeAppsList)) ) {
+			switch ($ContinueType) {
+				"ABORT" {
+					Show-InstallationWelcome -CloseApps $closeAppsList -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+				}
+				"CONTINUE" {
+					Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+				}		
+			}
 		}
 	}
 }
