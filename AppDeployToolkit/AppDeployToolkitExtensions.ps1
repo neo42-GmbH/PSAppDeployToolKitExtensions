@@ -4839,6 +4839,7 @@ function Show-NxtInstallationWelcome {
 		foreach ( $processAppItem in $AskKillProcessApps ) {
 			[int]$processAppItemIndex = $AskKillProcessApps.IndexOf($processAppItem)
 			if ( "*$fileExtension" -eq "$processAppItem" ) {
+				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps'-collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
 				Throw "Not supported list entry '*.exe' for 'CloseApps'-collection found, please the check parameter for processes ask to kill in config file!"
 			}
 			elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppItem) ) {				
