@@ -4851,7 +4851,12 @@ function Show-NxtInstallationWelcome {
 					[string]$listSeparator = ","
 				}
 				$AskKillProcessApps.Item($processAppItemIndex) = $processAppItemCollection
-				Write-Log -Message "... found (file extension removed already): $processAppItemCollection" -Source ${cmdletName}
+				if ([String]::IsNullOrEmpty($processAppItemCollection)) {
+					Write-Log -Message "... no processes found." -Source ${cmdletName}
+				}
+				else {
+					Write-Log -Message "... found processes (file extension removed already): $processAppItemCollection" -Source ${cmdletName}
+				}
 			}
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
