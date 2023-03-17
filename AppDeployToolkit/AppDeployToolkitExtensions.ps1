@@ -4839,30 +4839,23 @@ function Show-NxtInstallationWelcome {
 		foreach ( $processAppItem in $AskKillProcessApps ) {
 			[int]$processAppItemIndex = $AskKillProcessApps.IndexOf($processAppItem)
 			if ( "*$fileExtension" -eq "$processAppItem" ) {
-				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps'-collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
-				Throw "Not supported list entry '*.exe' for 'CloseApps'-collection found, please the check parameter for processes ask to kill in config file!"
+				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
+				Throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!"
 			}
 			elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppItem) ) {				
-				Write-Log -Message "Wildcard in list entry for 'CloseApps'-collection detected, retrieving all matching running processes for '$processAppItem' ..." -Source ${cmdletName}
+				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$processAppItem' ..." -Source ${cmdletName}
 				[string]$processAppItemCollection = $null
 				foreach ( $processNameItem in $(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$($processAppItem.replace("*", "%"))'").name ) {
-					if ( $processNameItem -match "\$fileExtension$" ) {
-						## for later calling of ADT CMDlet no file extension is allowed
-						[string]$processAppItemCollection = "$processAppItemCollection" + "$listSeparator" + "$($processNameItem.TrimEnd($fileExtension))"
-					}
-					else {
-						[string]$processAppItemCollection = "$closeAppsList" + "$listSeparator" + "$processNameItem"
-					}
+					## for later calling of ADT CMDlet no file extension is allowed
+					[string]$processAppItemCollection = $processAppItemCollection + $listSeparator + $($processNameItem -replace "\$fileExtension$","")
 					[string]$listSeparator = ","
 				}
 				$AskKillProcessApps.Item($processAppItemIndex) = $processAppItemCollection
-				Write-Log -Message "... found: $processAppItemCollection" -Source ${cmdletName}
+				Write-Log -Message "... found (file extension removed already): $processAppItemCollection" -Source ${cmdletName}
 			}
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
-				if ( $processAppItem -match "\$fileExtension$" ) {
-					$AskKillProcessApps.Item($processAppItemIndex) = $processAppItem.TrimEnd($fileExtension)
-				}				
+				$AskKillProcessApps.Item($processAppItemIndex) = $($processAppItem -replace "\$fileExtension$","")
 			}
 		}
 		[string]$closeAppsList = $AskKillProcessApps -join ","
