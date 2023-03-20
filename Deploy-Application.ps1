@@ -189,24 +189,27 @@ param (
 				[bool]$isInstalled = $false
 				[string]$script:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtAppIsInstalled)) {
-					if ($false -eq $MSIReinstallModeIsRepair) {
-						## Reinstall mode is set to default
-						CustomReinstallPreUninstall
-						Uninstall-NxtApplication
-						CustomReinstallPostUninstall
+					if ("MSIRepair" -eq $ReinstallMode) {
+						## Reinstall mode is set to repair (for MSI only!)
+						if ("MSI" -eq $InstallMethod) {
+						CustomReinstallPreInstall
+						$isInstalled = Repair-NxtApplication
+						CustomReinstallPostInstall
+						}
+					}
+					else {
+						if ("Reinstall" -eq $ReinstallMode) {
+							## Reinstall mode is set to default
+							CustomReinstallPreUninstall
+							Uninstall-NxtApplication
+							CustomReinstallPostUninstall
+						}
+						end if
 						CustomReinstallPreInstall
 						$isInstalled = Install-NxtApplication
 						CustomReinstallPostInstall
-					}
-					else {
-						if ("MSI" -eq $InstallMethod) {
-							## Reinstall mode is set to repair
-							CustomReinstallPreInstall
-							$isInstalled = Repair-NxtApplication
-							CustomReinstallPostInstall
-						}
 						else {
-							Throw "Unsupported combination of 'MSIReinstallModeIsRepair' and 'InstallMethod' property. 'MSIReinstallModeIsRepair' is only supported for 'MSI'"
+							Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' property. The value 'MSIRepair' for 'ReinstallMode' is only supported for 'MSI'"
 						}
 					}
 				}
