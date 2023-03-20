@@ -4930,6 +4930,11 @@ function Show-NxtInstallationWelcome {
 					Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 				}		
 			}
+			if ( ($true -eq $BlockExecution) -and ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\AppDeployToolkitConfig.xml")) ) {
+				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
+				Copy-File -Path "$scriptParentPath\setup.ico" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
+				Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\AppDeployToolkitConfig.xml" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
+			}
 		}
 	}
 }
