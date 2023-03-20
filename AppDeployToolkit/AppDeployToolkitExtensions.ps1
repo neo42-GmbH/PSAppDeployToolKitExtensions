@@ -4893,7 +4893,6 @@ function Show-NxtInstallationWelcome {
 		[int]$DeferDays = 0
 	}
 	[string]$closeAppsList = $null
-	[string]$listSeparator = $null
 	[string]$fileExtension = ".exe"
 	if ( $AskKillProcessApps.count -ne 0 ) {
 		foreach ( $processAppsItem in $AskKillProcessApps ) {
@@ -4921,8 +4920,7 @@ function Show-NxtInstallationWelcome {
 				}
 			}
 		}
-		## hier stimmt noch etwas nicht
-		[string]$closeAppsList = ($AskKillProcessApps | Select-Object * | Select-Object name) -join ","
+		[string]$closeAppsList = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
 		if ( !([String]::IsNullOrEmpty($closeAppsList)) ) {
 			switch ($ContinueType) {
 				"ABORT" {
