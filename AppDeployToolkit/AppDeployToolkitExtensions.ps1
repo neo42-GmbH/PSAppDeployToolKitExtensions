@@ -4886,42 +4886,41 @@ function Show-NxtInstallationWelcome {
 		[bool]
 		$BlockExecution = $($global:PackageConfig.BlockExecution)
 	)
+	## To break the array references to the parent object we have to create new(copied) objects from the provided array.
+	[array]$AskKillProcessApps = $AskKillProcessApps | Select-Object *
 	## override $DeferDays with 0 in Case of Uninstall
 	if (!$IsInstall) {
 		[int]$DeferDays = 0
 	}
 	[string]$closeAppsList = $null
-	[string]$listSeparator = $null
 	[string]$fileExtension = ".exe"
 	if ( $AskKillProcessApps.count -ne 0 ) {
-		foreach ( $processAppItem in $AskKillProcessApps ) {
-			[int]$processAppItemIndex = $AskKillProcessApps.IndexOf($processAppItem)
-			if ( "*$fileExtension" -eq "$processAppItem" ) {
+		foreach ( $processAppsItem in $AskKillProcessApps ) {
+			if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
 				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
 				Throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!"
 			}
-			elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppItem) ) {				
-				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$processAppItem' ..." -Source ${cmdletName}
-				[string]$processAppItemCollection = $null
-				foreach ( $processNameItem in $(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$($processAppItem.replace("*", "%"))'").name ) {
-					## for later calling of ADT CMDlet no file extension is allowed
-					[string]$processAppItemCollection = $processAppItemCollection + $listSeparator + $($processNameItem -replace "\$fileExtension$","")
-					[string]$listSeparator = ","
-				}
-				$AskKillProcessApps.Item($processAppItemIndex) = $processAppItemCollection
-				if ([String]::IsNullOrEmpty($processAppItemCollection)) {
+			elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name) ) {				
+				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
+				$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension","") -join ","
+				if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
 				else {
-					Write-Log -Message "... found processes (file extension removed already): $processAppItemCollection" -Source ${cmdletName}
+					Write-Log -Message "... found processes (with file extensions removed): $($processAppsItem.Name)" -Source ${cmdletName}
 				}
+				## be sure there is no description to add in case of process name with wildcards
+				$processAppsItem.Description = ""
 			}
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
-				$AskKillProcessApps.Item($processAppItemIndex) = $($processAppItem -replace "\$fileExtension$","")
+				$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$",""
+				if ( ![String]::IsNullOrEmpty($processAppsItem.Description) ) {
+					$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
+				}
 			}
 		}
-		[string]$closeAppsList = $AskKillProcessApps -join ","
+		[string]$closeAppsList = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
 		if ( !([String]::IsNullOrEmpty($closeAppsList)) ) {
 			switch ($ContinueType) {
 				"ABORT" {
