@@ -2956,28 +2956,28 @@ function Get-NxtProcessorArchiteW6432 {
 function Get-NxtRegisterOnly {
 	<#
 	.SYNOPSIS
-	Detects if the target application is already installed
+		Detects if the target application is already installed
 	.DESCRIPTION
-	Uses registry values to detect the application in target or higher versions
+		Uses registry values to detect the application in target or higher versions
 	.PARAMETER PackageFamilyGUID
-	Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
-	Defaults to the corresponding value from the PackageConfig object.
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER SoftMigration
-	Specifies if a Software should be registered only if it already exists through a different installation.
-	Defaults to the corresponding value from the Setup.cfg.
+		Specifies if a Software should be registered only if it already exists through a different installation.
+		Defaults to the corresponding value from the Setup.cfg.
 	.PARAMETER DisplayVersion
-	Specifies the DisplayVersion of the Software Package.
-	Defaults to the corresponding value from the PackageConfig object.
+		Specifies the DisplayVersion of the Software Package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
-	Specifies the original UninstallKey set by the Installer in this Package.
-	Defaults to the corresponding value from the PackageConfig object.
+		Specifies the original UninstallKey set by the Installer in this Package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.Parameter DetectedDisplayVersion
-	Specifies the Detected Displayversion of an installed predecessor App Version.
-	Defaults to the corresponding Variable set in the App Global Variables.
+		Specifies the Detected Displayversion of an installed predecessor App Version.
+		Defaults to the corresponding Variable set in the App Global Variables.
 	.EXAMPLE
-	Get-NxtRegisterOnly
+		Get-NxtRegisterOnly
 	.LINK
-	https://neo42.de/psappdeploytoolkit
+		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
 	Param (
