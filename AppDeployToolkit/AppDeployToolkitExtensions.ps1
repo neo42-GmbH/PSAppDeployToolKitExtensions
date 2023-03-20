@@ -3013,7 +3013,7 @@ function Get-NxtRegisterOnly {
 			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and
 			-not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
 		) {
-			Write-Log -Message 'Application is already present. Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Severity 2
+			Write-Log -Message 'Application is already present. Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...'
 			return $true
 		}
 	}
