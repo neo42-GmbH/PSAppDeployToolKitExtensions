@@ -5816,7 +5816,7 @@ function Wait-NxtRegistryAndProcessCondition {
 	.PARAMETER ProcessOperator
 		Operator to define process condition requirements.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER ProcesListToWaitFor
+	.PARAMETER ProcessesToWaitFor
 		An array of process conditions to check for.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegKeyOperator
@@ -5835,15 +5835,18 @@ function Wait-NxtRegistryAndProcessCondition {
 	[CmdLetBinding()]
 	param (
 		[Parameter(Mandatory = $false)]
+		[ValidateRange(1,3600)]
 		[int]
 		$TotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.TotalSecondsToWaitFor,
 		[Parameter(Mandatory = $false)]
+		[ValidateSet("And","Or")]
 		[string]
 		$ProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessOperator,
 		[Parameter(Mandatory = $false)]
 		[array]
 		$ProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessesToWaitFor,
 		[Parameter(Mandatory = $false)]
+		[ValidateSet("And","Or")]
 		[string]
 		$RegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegKeyOperator,
 		[Parameter(Mandatory = $false)]
@@ -5860,8 +5863,7 @@ function Wait-NxtRegistryAndProcessCondition {
 	}
 	Process {
 		# wait for Processes
-		#Watch-NxtProcess
-		$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+		[Stopwatch]$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
 		$stopWatch.Start()
 		[bool]$firstRun = $true
 		if ($ProcessesToWaitFor.count -eq 0){
@@ -5885,14 +5887,14 @@ function Wait-NxtRegistryAndProcessCondition {
 				Start-Sleep 5
 			}
 			## Check Process Conditions
-			foreach ($ProcessToWaitFor in ($ProcessesToWaitFor | Where-Object success -ne $true)) {
-				if ($true -eq $ProcessToWaitFor.ShouldExist) {
-					$ProcessToWaitFor.success = Watch-NxtProcess -ProcessName $ProcessToWaitFor.Name -Timeout 0
-					Write-Log -Message "Check if Process `"$($ProcessToWaitFor.Name)`" exists: $($ProcessToWaitFor.success)" -Severity 1 -Source ${cmdletName}
+			foreach ($processToWaitFor in ($ProcessesToWaitFor | Where-Object success -ne $true)) {
+				if ($true -eq $processToWaitFor.ShouldExist) {
+					$processToWaitFor.success = Watch-NxtProcess -ProcessName $processToWaitFor.Name -Timeout 0
+					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
 				}
 				else {
-					$ProcessToWaitFor.success = Watch-NxtProcessIsStopped -ProcessName $ProcessToWaitFor.Name -Timeout 0
-					Write-Log -Message "Check if Process `"$($ProcessToWaitFor.Name)`" not exists: $($ProcessToWaitFor.success)" -Severity 1 -Source ${cmdletName}
+					$processToWaitFor.success = Watch-NxtProcessIsStopped -ProcessName $processToWaitFor.Name -Timeout 0
+					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" not exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
 				}
 			}
 			if ($ProcessOperator -eq "Or"){
@@ -5902,24 +5904,24 @@ function Wait-NxtRegistryAndProcessCondition {
 				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
 			}
 			## Check Regkey Conditions
-			foreach ($RegkeyToWaitFor in ($RegkeysToWaitFor|Where-Object success -ne $true)) {
+			foreach ($regkeyToWaitFor in ($RegkeysToWaitFor|Where-Object success -ne $true)) {
 				if (
-					[WildcardPattern]::ContainsWildcardCharacters($RegkeyToWaitFor.KeyPath) -or
-					[WildcardPattern]::ContainsWildcardCharacters($RegkeyToWaitFor.ValueName)
+					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.KeyPath) -or
+					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.ValueName)
 					) {
-						Write-Log -Message "KeyPath `"$($RegkeyToWaitFor.KeyPath)`" or ValueName `"$($RegkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file." -Severity 3 -Source ${cmdletName}
-						throw "KeyPath `"$($RegkeyToWaitFor.KeyPath)`" or ValueName `"$($RegkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file."
+						Write-Log -Message "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file." -Severity 3 -Source ${cmdletName}
+						throw "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file."
 				}
-				if (![string]::IsNullOrEmpty($RegkeyToWaitFor.KeyPath)) {
-					switch ($RegkeyToWaitFor) {
+				if (![string]::IsNullOrEmpty($regkeyToWaitFor.KeyPath)) {
+					switch ($regkeyToWaitFor) {
 						{
 							## test pathExists
 							([string]::IsNullOrEmpty($_.ValueName)) -and
 							($null -eq $_.ValueData ) -and
 							($true -eq $_.ShouldExist)
 						} {
-							Write-Log -Message "Check if KeyPath exists: `"$($RegkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
-							$RegkeyToWaitFor.success = Watch-NxtRegistryKey -RegistryKey $RegkeyToWaitFor.KeyPath -Timeout 0
+							Write-Log -Message "Check if KeyPath exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							$regkeyToWaitFor.success = Watch-NxtRegistryKey -RegistryKey $regkeyToWaitFor.KeyPath -Timeout 0
 						}
 						{
 							## test pathNotExists
@@ -5927,8 +5929,8 @@ function Wait-NxtRegistryAndProcessCondition {
 							($null -eq $_.ValueData ) -and
 							($false -eq $_.ShouldExist)
 						} {
-							Write-Log -Message "Check if KeyPath not exists: `"$($RegkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
-							$RegkeyToWaitFor.success = Watch-NxtRegistryKeyIsRemoved -RegistryKey $RegkeyToWaitFor.KeyPath -Timeout 0
+							Write-Log -Message "Check if KeyPath not exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							$regkeyToWaitFor.success = Watch-NxtRegistryKeyIsRemoved -RegistryKey $regkeyToWaitFor.KeyPath -Timeout 0
 						}
 						{
 							## test valueExists
@@ -5936,10 +5938,10 @@ function Wait-NxtRegistryAndProcessCondition {
 							($null -eq $_.ValueData ) -and
 							($true -eq $_.ShouldExist)
 						} {
-							Write-Log -Message "Check if value exists: `"$($RegkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							Write-Log -Message "Check if value exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value exists
-							if($null -ne (Get-RegistryKey -Key $RegkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $RegkeyToWaitFor.ValueName)){
-								$RegkeyToWaitFor.success = $true
+							if($null -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+								$regkeyToWaitFor.success = $true
 							}
 						}
 						{
@@ -5948,10 +5950,10 @@ function Wait-NxtRegistryAndProcessCondition {
 							($null -eq $_.ValueData ) -and
 							($false -eq $_.ShouldExist)
 						} {
-							Write-Log -Message "Check if value `"$($RegkeyToWaitFor.ValueName)`" not exists in: `"$($RegkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" not exists in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value not exists
-							if($null -eq (Get-RegistryKey -Key $RegkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $RegkeyToWaitFor.ValueName)){
-								$RegkeyToWaitFor.success = $true
+							if($null -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+								$regkeyToWaitFor.success = $true
 							}
 						}
 						{
@@ -5960,10 +5962,10 @@ function Wait-NxtRegistryAndProcessCondition {
 						(![string]::IsNullOrEmpty($_.ValueData) ) -and
 						($true -eq $_.ShouldExist)
 					 } {
-						Write-Log -Message "Check if value `"$($RegkeyToWaitFor.ValueName)`" is equal to `"$($RegkeyToWaitFor.ValueData)`" in: `"$($RegkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+						Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value is equal
-							if( $RegkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $RegkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $RegkeyToWaitFor.ValueName)){
-								$RegkeyToWaitFor.success = $true
+							if( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+								$regkeyToWaitFor.success = $true
 							}
 					 }
 					 {
@@ -5972,15 +5974,15 @@ function Wait-NxtRegistryAndProcessCondition {
 						(![string]::IsNullOrEmpty($_.ValueData) ) -and
 						($false -eq $_.ShouldExist)
 					 } {
-						Write-Log -Message "Check if value `"$($RegkeyToWaitFor.ValueName)`" is not equal to `"$($RegkeyToWaitFor.ValueData)`" in: `"$($RegkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+						Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value is not equal
-							if( $RegkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $RegkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $RegkeyToWaitFor.ValueName)){
-								$RegkeyToWaitFor.success = $true
+							if( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+								$regkeyToWaitFor.success = $true
 							}
 					 }
 						Default {
-							Write-Log -Message "Could not check for values in `"$($RegkeyToWaitFor.RegKey)`", please check the config file." -Severity 3 -Source ${cmdletName}
-							throw "Could not check for values in `"$($RegkeyToWaitFor.RegKey)`", please check the config file."
+							Write-Log -Message "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file." -Severity 3 -Source ${cmdletName}
+							throw "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file."
 						}
 					}
 				}else{
