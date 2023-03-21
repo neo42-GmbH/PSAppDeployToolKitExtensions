@@ -185,7 +185,7 @@ param (
 					Exit-Script -ExitCode $mainExitCode
 				}
 				Show-NxtInstallationWelcome -IsInstall $true
-				CustomInstallAndReinstallBegin
+				CustomInstallAndReinstallPreInstallAndReinstall
 				[bool]$isInstalled = $false
 				[string]$script:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtAppIsInstalled)) {
@@ -284,13 +284,19 @@ function CustomBegin {
 function CustomInstallAndReinstallBegin {
 	[string]$script:installPhase = 'CustomInstallAndReinstallBegin'
 
-	## Executes before any installation or reinstallation tasks are performed
+	## Executes before any installation, reinstallation or softmigration tasks are performed
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
 
 	## Executes after the completed install or reinstall process and on SoftMigration
+}
+
+function CustomInstallAndReinstallPreInstallAndReinstall {
+	[string]$script:installPhase = 'CustomInstallAndReinstallPreInstallAndReinstall'
+
+	## Executes before any installation or reinstallation tasks are performed
 }
 
 function CustomReinstallPreUninstall {
