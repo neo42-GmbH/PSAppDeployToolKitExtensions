@@ -5863,7 +5863,7 @@ function Wait-NxtRegistryAndProcessCondition {
 	}
 	Process {
 		# wait for Processes
-		[Stopwatch]$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+		[System.Diagnostics.Stopwatch]$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
 		$stopWatch.Start()
 		[bool]$firstRun = $true
 		if ($ProcessesToWaitFor.count -eq 0){
