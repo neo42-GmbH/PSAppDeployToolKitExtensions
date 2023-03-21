@@ -2955,31 +2955,30 @@ function Get-NxtProcessorArchiteW6432 {
 #region Function Get-NxtRegisterOnly
 function Get-NxtRegisterOnly {
 	<#
-.SYNOPSIS
-	Detects if the target application is already installed
-.DESCRIPTION
-	Uses registry values to detect the application in target or higher versions
-.PARAMETER PackageFamilyGUID
-	Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER SoftMigration
-	Specifies if a Software should be registered only if it already exists through a different installation.
-	Defaults to the corresponding value from the Setup.cfg.
-.PARAMETER DisplayVersion
-	Specifies the DisplayVersion of the Software Package.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallKey
-	Specifies the original UninstallKey set by the Installer in this Package.
-	Defaults to the corresponding value from the PackageConfig object.
-.Parameter DetectedDisplayVersion
-	Specifies the Detected Displayversion of an installed predecessor App Version.
-	Defaults to the corresponding Variable set in the App Global Variables.
-.EXAMPLE
-	Get-NxtRegisterOnly
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
-
+	.SYNOPSIS
+		Detects if the target application is already installed
+	.DESCRIPTION
+		Uses registry values to detect the application in target or higher versions
+	.PARAMETER PackageFamilyGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER SoftMigration
+		Specifies if a Software should be registered only if it already exists through a different installation.
+		Defaults to the corresponding value from the Setup.cfg.
+	.PARAMETER DisplayVersion
+		Specifies the DisplayVersion of the Software Package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKey
+		Specifies the original UninstallKey set by the Installer in this Package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.Parameter DetectedDisplayVersion
+		Specifies the Detected Displayversion of an installed predecessor App Version.
+		Defaults to the corresponding Variable set in the App Global Variables.
+	.EXAMPLE
+		Get-NxtRegisterOnly
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
@@ -3001,20 +3000,20 @@ function Get-NxtRegisterOnly {
 	)
 	If ($true -eq $SoftMigration) {
 		## Perform soft migration 
-
 		[string]$script:installPhase = 'Soft-Migration'
-		if ([string]::IsNullOrEmpty($DisplayVersion)){
-			Write-Log -Message 'DisplayVersion is $null or empty. Set SoftMigration to $false.'
+		if ([string]::IsNullOrEmpty($DisplayVersion)) {
+			Write-Log -Message 'DisplayVersion is $null or empty. SoftMigration not possible.'
 			return $false
 		}
-		if ([string]::IsNullOrEmpty($DetectedDisplayVersion)){
-			Write-Log -Message 'DetectedDisplayVersion is $null or empty. Set SoftMigration to $false.'
+		if ([string]::IsNullOrEmpty($DetectedDisplayVersion)) {
+			Write-Log -Message 'DetectedDisplayVersion is $null or empty. SoftMigration not possible.'
 			return $false
 		}
 		If (
-			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
-			) {
-			Write-Log -Message 'Application is already present. Set SoftMigration to $true.'
+			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and
+			-not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
+		) {
+			Write-Log -Message 'Application is already present. Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...'
 			return $true
 		}
 	}
@@ -4929,6 +4928,11 @@ function Show-NxtInstallationWelcome {
 				"CONTINUE" {
 					Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 				}		
+			}
+			if ( ($true -eq $BlockExecution) -and ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\AppDeployToolkitConfig.xml")) ) {
+				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
+				Copy-File -Path "$scriptParentPath\setup.ico" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
+				Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\AppDeployToolkitConfig.xml" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
 			}
 		}
 	}
