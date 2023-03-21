@@ -189,27 +189,41 @@ param (
 				[bool]$isInstalled = $false
 				[string]$script:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtAppIsInstalled)) {
-					if ("MSIRepair" -eq $ReinstallMode) {
-						## Reinstall mode is set to repair (for MSI only!)
-						if ("MSI" -eq $InstallMethod) {
-						CustomReinstallPreInstall
-						$isInstalled = Repair-NxtApplication
-						CustomReinstallPostInstall
-						}
-					}
-					else {
-						if ("Reinstall" -eq $ReinstallMode) {
-							## Reinstall mode is set to default
+					switch ($global:PackageConfig.ReinstallMode) {
+						"Reinstall" {
+							## Reinstall mode is set to Reinstall (default)
 							CustomReinstallPreUninstall
 							Uninstall-NxtApplication
 							CustomReinstallPostUninstall
+							CustomReinstallPreInstall
+							$isInstalled = Install-NxtApplication
+							CustomReinstallPostInstall
 						}
-						end if
-						CustomReinstallPreInstall
-						$isInstalled = Install-NxtApplication
-						CustomReinstallPostInstall
-						else {
-							Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' property. The value 'MSIRepair' for 'ReinstallMode' is only supported for 'MSI'"
+						"MSIRepair" {
+							## Reinstall mode is set to MSIRepair (for MSI only!)
+							if ("MSI" -eq $global:PackageConfig.InstallMethod) {
+								CustomReinstallPreInstall
+								$isInstalled = Repair-NxtApplication
+								CustomReinstallPostInstall
+							}
+							else {
+								Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
+							}
+						}
+						"Install" {
+							## it may not run in here for MSI (wrong results in case of UninstallkeyIsDisplayName=$true)
+							if ("MSI" -eq $global:PackageConfig.InstallMethod) {
+								Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Select value 'MSIRepair' or 'Reinstall' in 'ReinstallMode' for installation method 'MSI'!"
+							}
+							## Reinstall mode is set to Install a simply re-install (some manufacturer request/support just install again)
+							else {
+								CustomReinstallPreInstall
+								$isInstalled = Install-NxtApplication
+								CustomReinstallPostInstall
+							}
+						}
+						Default {
+							Throw "Unsupported 'ReinstallMode' property: $($global:PackageConfig.ReinstallMode)"
 						}
 					}
 				}
