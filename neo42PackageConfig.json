@@ -50,6 +50,22 @@
       }
     ],
     "BlockExecution": true,
+    "TestConditionsPreSetupSuccessCheck": {
+      "Install": {
+        "TotalSecondsToWaitFor": 30,
+        "ProcessOperator": "And",
+        "ProcessesToWaitFor": [],
+        "RegKeyOperator": "And",
+        "RegKeysToWaitFor": []
+      },
+      "Uninstall": {
+        "TotalSecondsToWaitFor": 30,
+        "ProcessOperator": "And",
+        "ProcessesToWaitFor": [],
+        "RegKeyOperator": "And",
+        "RegKeysToWaitFor": []
+      }
+    },
     "CommonDesktopShortcutsToDelete": [
 	  "Scribble Papers Programmdokumentation.lnk",
 	  "Scribble Papers 2022.lnk"

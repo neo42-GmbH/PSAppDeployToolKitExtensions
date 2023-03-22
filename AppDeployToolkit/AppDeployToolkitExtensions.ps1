@@ -3467,11 +3467,26 @@ function Install-NxtApplication {
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
-	.EXAMPLE
-		Install-NxtApplication
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+.EXAMPLE
+	Install-NxtApplication
+.LINK
+	https://neo42.de/psappdeploytoolkit
+#>
 	param (
 		[Parameter(Mandatory = $false)]
 		[String]
@@ -3496,7 +3511,22 @@ function Install-NxtApplication {
 		$AcceptedInstallExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstallMethod = $global:PackageConfig.InstallMethod
+		$InstallMethod = $global:PackageConfig.InstallMethod,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckRegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor
 	)
 	[string]$script:installPhase = 'Installation'
 
@@ -3553,16 +3583,22 @@ function Install-NxtApplication {
 		}
 	}
 	$InstallExitCode = $LastExitCode
-
+	## Delay for filehandle release etc. to occur.
 	Start-Sleep -Seconds 5
 
 	## Test for successfull installation (if UninstallKey value is set)
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
 	}
-    else {
-		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-			Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+	else {
+		if ( $true -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)
+		) {
+			if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+				Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+			}
+		}
+		else {
+			Exit-NxtScriptWithError -ErrorMessage "Installation RegistryAndProcessCondition of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 		}
 	}
 
@@ -4351,6 +4387,21 @@ function Repair-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AcceptedRepairExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -5127,7 +5178,7 @@ function Test-NxtProcessExists {
 				$wqlString = $ProcessName
 			}
 			else {
-				$wqlString = "Name LIKE '$($ProcessName)'"
+				$wqlString = "Name LIKE '$($ProcessName.Replace("*","%"))'"
 			}
 			$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
 			if ($processes) {
@@ -5185,11 +5236,26 @@ function Uninstall-NxtApplication {
 	.PARAMETER Wow6432Node
 		Switches between 32/64 Bit Registry Keys.
 		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Uninstall-NxtApplication
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
+.LINK
+	https://neo42.de/psappdeploytoolkit
+#>
 	Param(
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -5220,7 +5286,22 @@ function Uninstall-NxtApplication {
 		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Wow6432Node = $global:Wow6432Node
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckRegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor
 	)
 	[string]$script:installPhase = 'Pre-Uninstallation'
 
@@ -5321,16 +5402,21 @@ function Uninstall-NxtApplication {
 				}
 			}
 			$UninstallExitCode = $LastExitCode
-
+			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
-
 			## Test successfull uninstallation
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
 			}
-            else {
-				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+			else {
+				if ( $true -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)
+				) {
+					if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+						Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+					}
+				}
+				else {
+					Exit-NxtScriptWithError -ErrorMessage "Uninstallation RegistryAndProcessCondition of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 				}
 			}
 		}
@@ -5716,6 +5802,216 @@ function Update-NxtTextInFile {
 	}
 }
 #endregion
+#region Function Wait-NxtRegistryAndProcessCondition
+function Wait-NxtRegistryAndProcessCondition {
+	<#
+	.SYNOPSIS
+		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
+		Integrated to Install-NxtApplication and Uninstall-Nxtapplication.
+	.DESCRIPTION
+		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
+		Integrated to Install-NxtApplication, Uninstall-Nxtapplication.
+	.PARAMETER TotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProcessesToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.OUTPUTS
+		System.Boolean.
+	.EXAMPLE
+		Wait-NxtRegistryAndProcessCondition
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdLetBinding()]
+	param (
+		[Parameter(Mandatory = $false)]
+		[ValidateRange(1,3600)]
+		[int]
+		$TotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("And","Or")]
+		[string]
+		$ProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$ProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("And","Or")]
+		[string]
+		$RegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$RegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegkeysToWaitFor
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
+		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *,@{n="success";e={$false}}
+		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *,@{n="success";e={$false}}
+	}
+	Process {
+		# wait for Processes
+		[System.Diagnostics.Stopwatch]$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+		$stopWatch.Start()
+		[bool]$firstRun = $true
+		if ($ProcessesToWaitFor.count -eq 0){
+			[bool]$processesFinished = $true
+		}
+		else{
+			[bool]$processesFinished = $false
+		}
+		if ($RegkeysToWaitFor.count -eq 0){
+			[bool]$regKeysFinished = $true
+		}
+		else{
+			[bool]$regKeysFinished = $false
+		}
+		
+		while (
+			$stopWatch.Elapsed.TotalSeconds -lt $TotalSecondsToWaitFor -and 
+			!($processesFinished -and $regKeysFinished)
+		) {
+			if(!$firstRun){
+				Start-Sleep 5
+			}
+			## Check Process Conditions
+			foreach ($processToWaitFor in ($ProcessesToWaitFor | Where-Object success -ne $true)) {
+				if ($true -eq $processToWaitFor.ShouldExist) {
+					$processToWaitFor.success = Watch-NxtProcess -ProcessName $processToWaitFor.Name -Timeout 0
+					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
+				}
+				else {
+					$processToWaitFor.success = Watch-NxtProcessIsStopped -ProcessName $processToWaitFor.Name -Timeout 0
+					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" not exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
+				}
+			}
+			if ($ProcessOperator -eq "Or"){
+				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -contains $true
+			}
+			elseif($ProcessOperator -eq "And"){
+				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
+			}
+			## Check Regkey Conditions
+			foreach ($regkeyToWaitFor in ($RegkeysToWaitFor|Where-Object success -ne $true)) {
+				if (
+					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.KeyPath) -or
+					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.ValueName)
+					) {
+						Write-Log -Message "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file." -Severity 3 -Source ${cmdletName}
+						throw "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file."
+				}
+				if (![string]::IsNullOrEmpty($regkeyToWaitFor.KeyPath)) {
+					switch ($regkeyToWaitFor) {
+						{
+							## test pathExists
+							([string]::IsNullOrEmpty($_.ValueName)) -and
+							($null -eq $_.ValueData ) -and
+							($true -eq $_.ShouldExist)
+						} {
+							Write-Log -Message "Check if KeyPath exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							$regkeyToWaitFor.success = Watch-NxtRegistryKey -RegistryKey $regkeyToWaitFor.KeyPath -Timeout 0
+						}
+						{
+							## test pathNotExists
+							([string]::IsNullOrEmpty($_.ValueName)) -and
+							($null -eq $_.ValueData ) -and
+							($false -eq $_.ShouldExist)
+						} {
+							Write-Log -Message "Check if KeyPath not exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							$regkeyToWaitFor.success = Watch-NxtRegistryKeyIsRemoved -RegistryKey $regkeyToWaitFor.KeyPath -Timeout 0
+						}
+						{
+							## test valueExists
+							(![string]::IsNullOrEmpty($_.ValueName)) -and
+							($null -eq $_.ValueData ) -and
+							($true -eq $_.ShouldExist)
+						} {
+							Write-Log -Message "Check if value exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value exists
+							if($null -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+								$regkeyToWaitFor.success = $true
+							}
+						}
+						{
+							## test valueNotExists
+							(![string]::IsNullOrEmpty($_.ValueName)) -and
+							($null -eq $_.ValueData ) -and
+							($false -eq $_.ShouldExist)
+						} {
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" not exists in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value not exists
+							if($null -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+								$regkeyToWaitFor.success = $true
+							}
+						}
+						{
+							## valueEquals
+						(![string]::IsNullOrEmpty($_.ValueName)) -and
+						(![string]::IsNullOrEmpty($_.ValueData) ) -and
+						($true -eq $_.ShouldExist)
+					 } {
+						Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value is equal
+							if( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+								$regkeyToWaitFor.success = $true
+							}
+					 }
+					 {
+							## valueNotEquals
+						(![string]::IsNullOrEmpty($_.ValueName)) -and
+						(![string]::IsNullOrEmpty($_.ValueData) ) -and
+						($false -eq $_.ShouldExist)
+					 } {
+						Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value is not equal
+							if( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+								$regkeyToWaitFor.success = $true
+							}
+					 }
+						Default {
+							Write-Log -Message "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file." -Severity 3 -Source ${cmdletName}
+							throw "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file."
+						}
+					}
+				}else{
+					Write-Log -Message "A RegKey is required, please check the config file." -Severity 3 -Source ${cmdletName}
+					throw "A RegKey is required, please check the config file."
+				}
+			}
+			if ($RegkeyOperator -eq "Or"){
+				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -contains $true
+			}
+			elseif($RegkeyOperator -eq "And"){
+				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
+			}
+			[bool]$firstRun = $false
+		}
+		if ($processesFinished -and $regKeysFinished){
+			Write-Output $true
+		}
+		else{
+			Write-Output $false
+		}
+		return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Watch-NxtFile
 function Watch-NxtFile {
 	<#
@@ -5862,8 +6158,12 @@ function Watch-NxtProcess {
 	Process {
 		try {
 			[int]$waited = 0
-			[bool]$result = $null
-			while ($waited -lt $Timeout) {
+			[bool]$result = $false
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
@@ -5875,8 +6175,6 @@ function Watch-NxtProcess {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -5927,8 +6225,12 @@ function Watch-NxtProcessIsStopped {
 	Process {
 		try {
 			[int]$waited = 0
-			[bool]$result = $null
-			while ($waited -lt $Timeout) {
+			[bool]$result = $false
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				if ($IsWql) {
 					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
@@ -5940,8 +6242,6 @@ function Watch-NxtProcessIsStopped {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -5986,15 +6286,17 @@ function Watch-NxtRegistryKey {
 	}
 	Process {
 		try {
-			$waited = 0
-			while ($waited -lt $Timeout) {
+			[int]$waited = 0
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
 				if ($key) {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -6038,15 +6340,17 @@ function Watch-NxtRegistryKeyIsRemoved {
 	}
 	Process {
 		try {
-			$waited = 0
-			while ($waited -lt $Timeout) {
+			[int]$waited = 0
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
 				if ($null -eq $key) {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
