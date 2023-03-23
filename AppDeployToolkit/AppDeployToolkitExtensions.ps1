@@ -437,10 +437,10 @@ function Compare-NxtVersion {
 		try {
 			[scriptblock]$parseVersion = { param($version) 	
 				[int[]]$result = 0, 0, 0, 0
-				$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
+				[System.Array]$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
 				for ([int]$i = 0; $i -lt $versionParts.count; $i++) {
 					[int]$versionPartValue = 0
-					[System.Linq.Enumerable]$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
+					[System.Object]$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
 					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo, bool]] { param($x) [System.Char]::IsDigit($x.Value) })) {
 						[int]$versionPartValue = [int]::Parse($pair.Key)
 					}
@@ -3584,7 +3584,7 @@ function Install-NxtApplication {
 			Execute-Process @executeParams
 		}
 	}
-	$InstallExitCode = $LastExitCode
+	[int]$InstallExitCode = $LastExitCode
 	## Delay for filehandle release etc. to occur.
 	Start-Sleep -Seconds 5
 
@@ -5838,18 +5838,18 @@ function Wait-NxtRegistryAndProcessCondition {
 	[CmdLetBinding()]
 	param (
 		[Parameter(Mandatory = $false)]
-		[ValidateRange(1,3600)]
+		[ValidateRange(1, 3600)]
 		[int]
 		$TotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.TotalSecondsToWaitFor,
 		[Parameter(Mandatory = $false)]
-		[ValidateSet("And","Or")]
+		[ValidateSet("And", "Or")]
 		[string]
 		$ProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessOperator,
 		[Parameter(Mandatory = $false)]
 		[array]
 		$ProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessesToWaitFor,
 		[Parameter(Mandatory = $false)]
-		[ValidateSet("And","Or")]
+		[ValidateSet("And", "Or")]
 		[string]
 		$RegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegKeyOperator,
 		[Parameter(Mandatory = $false)]
@@ -5861,24 +5861,24 @@ function Wait-NxtRegistryAndProcessCondition {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
-		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *,@{n="success";e={$false}}
-		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *,@{n="success";e={$false}}
+		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
+		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
 	}
 	Process {
 		# wait for Processes
 		[System.Diagnostics.Stopwatch]$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
 		$stopWatch.Start()
 		[bool]$firstRun = $true
-		if ($ProcessesToWaitFor.count -eq 0){
+		if ($ProcessesToWaitFor.count -eq 0) {
 			[bool]$processesFinished = $true
 		}
-		else{
+		else {
 			[bool]$processesFinished = $false
 		}
-		if ($RegkeysToWaitFor.count -eq 0){
+		if ($RegkeysToWaitFor.count -eq 0) {
 			[bool]$regKeysFinished = $true
 		}
-		else{
+		else {
 			[bool]$regKeysFinished = $false
 		}
 		
@@ -5886,7 +5886,7 @@ function Wait-NxtRegistryAndProcessCondition {
 			$stopWatch.Elapsed.TotalSeconds -lt $TotalSecondsToWaitFor -and 
 			!($processesFinished -and $regKeysFinished)
 		) {
-			if(!$firstRun){
+			if (!$firstRun) {
 				Start-Sleep 5
 			}
 			## Check Process Conditions
@@ -5900,20 +5900,20 @@ function Wait-NxtRegistryAndProcessCondition {
 					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" not exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
 				}
 			}
-			if ($ProcessOperator -eq "Or"){
+			if ($ProcessOperator -eq "Or") {
 				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -contains $true
 			}
-			elseif($ProcessOperator -eq "And"){
+			elseif ($ProcessOperator -eq "And") {
 				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
 			}
 			## Check Regkey Conditions
-			foreach ($regkeyToWaitFor in ($RegkeysToWaitFor|Where-Object success -ne $true)) {
+			foreach ($regkeyToWaitFor in ($RegkeysToWaitFor | Where-Object success -ne $true)) {
 				if (
 					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.KeyPath) -or
 					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.ValueName)
-					) {
-						Write-Log -Message "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file." -Severity 3 -Source ${cmdletName}
-						throw "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file."
+				) {
+					Write-Log -Message "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file." -Severity 3 -Source ${cmdletName}
+					throw "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file."
 				}
 				if (![string]::IsNullOrEmpty($regkeyToWaitFor.KeyPath)) {
 					switch ($regkeyToWaitFor) {
@@ -5943,7 +5943,7 @@ function Wait-NxtRegistryAndProcessCondition {
 						} {
 							Write-Log -Message "Check if value exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value exists
-							if($null -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+							if ($null -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
 								$regkeyToWaitFor.success = $true
 							}
 						}
@@ -5955,7 +5955,7 @@ function Wait-NxtRegistryAndProcessCondition {
 						} {
 							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" not exists in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value not exists
-							if($null -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+							if ($null -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
 								$regkeyToWaitFor.success = $true
 							}
 						}
@@ -5965,9 +5965,9 @@ function Wait-NxtRegistryAndProcessCondition {
 						(![string]::IsNullOrEmpty($_.ValueData) ) -and
 						($true -eq $_.ShouldExist)
 					 } {
-						Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value is equal
-							if( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+							if ( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
 								$regkeyToWaitFor.success = $true
 							}
 					 }
@@ -5977,9 +5977,9 @@ function Wait-NxtRegistryAndProcessCondition {
 						(![string]::IsNullOrEmpty($_.ValueData) ) -and
 						($false -eq $_.ShouldExist)
 					 } {
-						Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value is not equal
-							if( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+							if ( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
 								$regkeyToWaitFor.success = $true
 							}
 					 }
@@ -5988,23 +5988,24 @@ function Wait-NxtRegistryAndProcessCondition {
 							throw "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file."
 						}
 					}
-				}else{
+				}
+				else {
 					Write-Log -Message "A RegKey is required, please check the config file." -Severity 3 -Source ${cmdletName}
 					throw "A RegKey is required, please check the config file."
 				}
 			}
-			if ($RegkeyOperator -eq "Or"){
+			if ($RegkeyOperator -eq "Or") {
 				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -contains $true
 			}
-			elseif($RegkeyOperator -eq "And"){
+			elseif ($RegkeyOperator -eq "And") {
 				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
 			}
 			[bool]$firstRun = $false
 		}
-		if ($processesFinished -and $regKeysFinished){
+		if ($processesFinished -and $regKeysFinished) {
 			Write-Output $true
 		}
-		else{
+		else {
 			Write-Output $false
 		}
 		return
