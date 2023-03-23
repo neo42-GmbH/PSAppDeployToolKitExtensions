@@ -194,7 +194,7 @@ param (
 					switch ($ReinstallMode) {
 						"Reinstall" {
 							CustomReinstallPreUninstall
-							Uninstall-NxtApplication
+							$isUninstalled = Uninstall-NxtApplication
 							CustomReinstallPostUninstall
 							CustomReinstallPreInstall
 							$isInstalled = Install-NxtApplication
