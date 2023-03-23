@@ -132,37 +132,38 @@ catch {
 
 function Main {
 	<#
-.SYNOPSIS
-	Defines the flow of the installation script
-.DESCRIPTION
-	Do not modify to ensure correct script flow!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER Reboot
+	.SYNOPSIS
+		Defines the flow of the installation script
+	.DESCRIPTION
+		Do not modify to ensure correct script flow!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER Reboot
 		Defines if a reboot exitcode should be returned instead of the main Exitcode.
 		0 = do not override mainexitcode
 		1 = Set Mainexitcode to 3010 (Reboot required)
 		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will
 		be passed through.
 		Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER MSIReinstallModeIsRepair
-		Defines if an installation should perform a repair.
+	.PARAMETER ReinstallMode
+		Defines how a reinstallation should be performed.
 		Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstallMethod
+	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
-.EXAMPLE
-	Main
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.EXAMPLE
+		Main
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 param (
 	[Parameter(Mandatory=$false)]
 	[int]
 	[ValidateSet(0,1,2)]
 	$Reboot = $global:PackageConfig.reboot,
 	[Parameter(Mandatory=$false)]
-	[bool]
-	$MSIReinstallModeIsRepair = $global:PackageConfig.MSIReinstallModeIsRepair,
+	[string]
+	[ValidateSet('Reinstall','MSIRepair','Install')]
+	$ReinstallMode = $global:PackageConfig.ReinstallMode,
 	[Parameter(Mandatory=$false)]
 	[string]
 	$InstallMethod = $global:PackageConfig.InstallMethod
@@ -189,24 +190,38 @@ param (
 				[bool]$isInstalled = $false
 				[string]$script:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtAppIsInstalled)) {
-					if ($false -eq $MSIReinstallModeIsRepair) {
-						## Reinstall mode is set to default
-						CustomReinstallPreUninstall
-						Uninstall-NxtApplication
-						CustomReinstallPostUninstall
-						CustomReinstallPreInstall
-						$isInstalled = Install-NxtApplication
-						CustomReinstallPostInstall
-					}
-					else {
-						if ("MSI" -eq $InstallMethod) {
-							## Reinstall mode is set to repair
+					[string]$script:installPhase = 'Package-Reinstallation'
+					switch ($ReinstallMode) {
+						"Reinstall" {
+							CustomReinstallPreUninstall
+							$isUninstalled = Uninstall-NxtApplication
+							CustomReinstallPostUninstall
 							CustomReinstallPreInstall
-							$isInstalled = Repair-NxtApplication
+							$isInstalled = Install-NxtApplication
 							CustomReinstallPostInstall
 						}
-						else {
-							Throw "Unsupported combination of 'MSIReinstallModeIsRepair' and 'InstallMethod' property. 'MSIReinstallModeIsRepair' is only supported for 'MSI'"
+						"MSIRepair" {
+							if ("MSI" -eq $InstallMethod) {
+								CustomReinstallPreInstall
+								$isInstalled = Repair-NxtApplication
+								CustomReinstallPostInstall
+							}
+							else {
+								Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
+							}
+						}
+						"Install" {
+							if ("MSI" -eq $InstallMethod) {
+								Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Select value 'MSIRepair' or 'Reinstall' in 'ReinstallMode' for installation method 'MSI'!"
+							}
+							else {
+								CustomReinstallPreInstall
+								$isInstalled = Install-NxtApplication
+								CustomReinstallPostInstall
+							}
+						}
+						Default {
+							Throw "Unsupported 'ReinstallMode' property: $ReinstallMode"
 						}
 					}
 				}

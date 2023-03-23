@@ -3567,7 +3567,8 @@ function Install-NxtApplication {
 			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 		}
 		none {
-
+			Write-Log -Message "An installation method was NOT set. Skipping a default process execution." -Source ${CmdletName}
+			return $true
 		}
 		Default {
 			[hashtable]$executeParams = @{
@@ -5386,7 +5387,8 @@ function Uninstall-NxtApplication {
 					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 				}
 				none {
-
+					Write-Log -Message "An uninstallation method was NOT set. Skipping a default process execution." -Source ${CmdletName}
+					return $true
 				}
 				Default {
 					[hashtable]$executeParams = @{
