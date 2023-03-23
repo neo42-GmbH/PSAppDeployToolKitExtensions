@@ -132,36 +132,37 @@ catch {
 
 function Main {
 	<#
-.SYNOPSIS
-	Defines the flow of the installation script
-.DESCRIPTION
-	Do not modify to ensure correct script flow!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER Reboot
+	.SYNOPSIS
+		Defines the flow of the installation script
+	.DESCRIPTION
+		Do not modify to ensure correct script flow!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER Reboot
 		Defines if a reboot exitcode should be returned instead of the main Exitcode.
 		0 = do not override mainexitcode
 		1 = Set Mainexitcode to 3010 (Reboot required)
 		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will
 		be passed through.
 		Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER ReinstallMode
-		Defines the mode of reinstallation should used for the package.
+	.PARAMETER ReinstallMode
+		Defines how a reinstallation should be performed.
 		Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstallMethod
+	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
-.EXAMPLE
-	Main
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.EXAMPLE
+		Main
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 param (
 	[Parameter(Mandatory=$false)]
 	[int]
 	[ValidateSet(0,1,2)]
 	$Reboot = $global:PackageConfig.reboot,
 	[Parameter(Mandatory=$false)]
-	[bool]
+	[string]
+	[ValidateSet('Reinstall','MSIRepair','Install')]
 	$ReinstallMode = $global:PackageConfig.ReinstallMode,
 	[Parameter(Mandatory=$false)]
 	[string]
