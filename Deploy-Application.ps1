@@ -144,8 +144,8 @@ function Main {
 		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will
 		be passed through.
 		Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER MSIReinstallModeIsRepair
-		Defines if an installation should perform a repair.
+.PARAMETER ReinstallMode
+		Defines the mode of reinstallation should used for the package.
 		Defaults to the corresponding value from the PackageConfig object.
 .PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
@@ -162,7 +162,7 @@ param (
 	$Reboot = $global:PackageConfig.reboot,
 	[Parameter(Mandatory=$false)]
 	[bool]
-	$MSIReinstallModeIsRepair = $global:PackageConfig.MSIReinstallModeIsRepair,
+	$ReinstallMode = $global:PackageConfig.ReinstallMode,
 	[Parameter(Mandatory=$false)]
 	[string]
 	$InstallMethod = $global:PackageConfig.InstallMethod
@@ -189,7 +189,7 @@ param (
 				[bool]$isInstalled = $false
 				[string]$script:installPhase = 'Check-ReinstallMethod'
 				if ($true -eq $(Get-NxtAppIsInstalled)) {
-					switch ($global:PackageConfig.ReinstallMode) {
+					switch ($ReinstallMode) {
 						"Reinstall" {
 							## Reinstall mode is set to Reinstall (default)
 							CustomReinstallPreUninstall
@@ -201,7 +201,7 @@ param (
 						}
 						"MSIRepair" {
 							## Reinstall mode is set to MSIRepair (for MSI only!)
-							if ("MSI" -eq $global:PackageConfig.InstallMethod) {
+							if ("MSI" -eq $InstallMethod) {
 								CustomReinstallPreInstall
 								$isInstalled = Repair-NxtApplication
 								CustomReinstallPostInstall
@@ -212,7 +212,7 @@ param (
 						}
 						"Install" {
 							## it may not run in here for MSI (wrong results in case of UninstallkeyIsDisplayName=$true)
-							if ("MSI" -eq $global:PackageConfig.InstallMethod) {
+							if ("MSI" -eq $InstallMethod) {
 								Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Select value 'MSIRepair' or 'Reinstall' in 'ReinstallMode' for installation method 'MSI'!"
 							}
 							## Reinstall mode is set to Install a simply re-install (some manufacturer request/support just install again)
@@ -223,7 +223,7 @@ param (
 							}
 						}
 						Default {
-							Throw "Unsupported 'ReinstallMode' property: $($global:PackageConfig.ReinstallMode)"
+							Throw "Unsupported 'ReinstallMode' property: $ReinstallMode"
 						}
 					}
 				}
