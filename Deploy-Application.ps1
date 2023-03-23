@@ -169,6 +169,7 @@ param (
 	$InstallMethod = $global:PackageConfig.InstallMethod
 )
 	try {
+		[PSADTNXT.InstallResult]$installNxtResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
@@ -194,17 +195,20 @@ param (
 					switch ($ReinstallMode) {
 						"Reinstall" {
 							CustomReinstallPreUninstall
-							$isUninstalled = Uninstall-NxtApplication
-							CustomReinstallPostUninstall
+							[PSADTNXT.NxtApplicationResult]$uninstallNxtResult = Uninstall-NxtApplication
+							CustomReinstallPostUninstall -ResultToCheck $uninstallNxtResult
+							if ($false -eq $uninstallNxtResult) {
+								Exit-NxtScriptWithError -ErrorMessage $uninstallNxtResult.ErrorMessage -ErrorMessagePSADT $uninstallNxtResult.ErrorMessagePSADT -MainExitCode $uninstallNxtResult.MainExitCode
+							}
 							CustomReinstallPreInstall
-							$isInstalled = Install-NxtApplication
-							CustomReinstallPostInstall
+							[PSADTNXT.NxtApplicationResult]$installNxtResult = Install-NxtApplication
+							CustomReinstallPostInstall -ResultToCheck $installNxtResult
 						}
 						"MSIRepair" {
 							if ("MSI" -eq $InstallMethod) {
 								CustomReinstallPreInstall
-								$isInstalled = Repair-NxtApplication
-								CustomReinstallPostInstall
+								[PSADTNXT.NxtApplicationResult]$installNxtResult = Install-NxtApplication
+								CustomReinstallPostInstall -ResultToCheck $installNxtResult
 							}
 							else {
 								Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
@@ -217,7 +221,7 @@ param (
 							else {
 								CustomReinstallPreInstall
 								$isInstalled = Install-NxtApplication
-								CustomReinstallPostInstall
+								CustomReinstallPostInstall -ResultToCheck $installNxtResult
 							}
 						}
 						Default {
@@ -228,12 +232,12 @@ param (
 				else {
 					## Default installation
 					CustomInstallBegin
-					$isInstalled = Install-NxtApplication
-					CustomInstallEnd
+					[PSADTNXT.NxtApplicationResult]$installNxtResult = Install-NxtApplication 
+					CustomInstallEnd -ResultToCheck $installNxtResult
 				}
-				CustomInstallAndReinstallEnd
-				CustomInstallAndReinstallAndSoftMigrationEnd
-				If ($true -eq $isInstalled) {
+				CustomInstallAndReinstallEnd -ResultToCheck $installNxtResult
+				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $installNxtResult
+				If ($false -ne $installNxtResult) {
 					Complete-NxtPackageInstallation
 					if ($true -eq $global:registerPackage) {
 						## Register package for uninstall
@@ -241,18 +245,24 @@ param (
 						Register-NxtPackage
 					}
 				}
+				else {
+					Exit-NxtScriptWithError -ErrorMessage $installNxtResult.ErrorMessage -ErrorMessagePSADT $installNxtResult.ErrorMessagePSADT -MainExitCode $installNxtResult.MainExitCode
+				}
 				## END OF INSTALL
 			}
 			"Uninstall" {
 				## START OF UNINSTALL
 				Show-NxtInstallationWelcome -IsInstall $false
 				CustomUninstallBegin
-				[bool]$isUninstalled = Uninstall-NxtApplication
-				CustomUninstallEnd
-				if ($true -eq $isUninstalled) {
+				[PSADTNXT.NxtApplicationResult]$uninstallNxtResult = Uninstall-NxtApplication
+				CustomUninstallEnd -ResultToCheck $uninstallNxtResult
+				if ($false -ne $uninstallNxtResult) {
 					Complete-NxtPackageUninstallation
 					[string]$script:installPhase = 'Package-Unregistration'
 					Unregister-NxtPackage
+				}
+				else {
+					Exit-NxtScriptWithError -ErrorMessage $uninstallNxtResult.ErrorMessage -ErrorMessagePSADT $uninstallNxtResult.ErrorMessagePSADT -MainExitCode $uninstallNxtResult.MainExitCode
 				}
 				## END OF UNINSTALL
 			}
