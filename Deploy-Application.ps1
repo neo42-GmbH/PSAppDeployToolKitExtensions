@@ -220,7 +220,7 @@ param (
 							}
 							else {
 								CustomReinstallPreInstall
-								$isInstalled = Install-NxtApplication
+								[PSADTNXT.NxtApplicationResult]$installNxtResult = Install-NxtApplication
 								CustomReinstallPostInstall -ResultToCheck $installNxtResult
 							}
 						}

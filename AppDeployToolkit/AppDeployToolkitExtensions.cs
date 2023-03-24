@@ -130,7 +130,7 @@ namespace PSADTNXT
     public class NxtApplicationResult
     {
         public bool? Success { get; set; }
-        public int ApplicationExitCode { get; set }
+        public int ApplicationExitCode { get; set; }
         public int MainExitCode { get; set; }
         public string ErrorMessage { get; set; }
         public string ErrorMessagePsadt { get; set; }

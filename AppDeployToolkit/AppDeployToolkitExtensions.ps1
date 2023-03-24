@@ -5482,8 +5482,8 @@ function Uninstall-NxtApplication {
 					## next line still has to be removed!
 					#Write-Log -Message "An uninstallation method was NOT set. Skipping a default process execution." -Source ${CmdletName}
 					[string]$resultMessageText = "An unnstallation method was NOT set. Skipping a default process execution."
-					$installResult.Success = $null
-					$installResult.ErrorMessage = $resultMessageText
+					$uninstallResult.Success = $null
+					$uninstallResult.ErrorMessage = $resultMessageText
 						}
 				Default {
 					[hashtable]$executeParams = @{
