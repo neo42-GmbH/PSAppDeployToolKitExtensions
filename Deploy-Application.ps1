@@ -101,8 +101,11 @@ Catch {
 
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
-	Initialize-NxtEnvironment
-	##*===============================================
+	[int]$initEnvReturnCode = Initialize-NxtEnvironment
+	if ($initEnvReturnCode -ne 0) {
+		Exit-Script -ExitCode $initEnvReturnCode
+	}
+##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
 
@@ -170,11 +173,11 @@ param (
 )
 	try {
 		[PSADTNXT.NxtApplicationResult]$mainNxtResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		$mainNxtResult.Success = $false
-		$mainNxtResult.ApplicationExitCode = $null
-		$mainNxtResult.MainExitCode = 0
-		$mainNxtResult.ErrorMessage = [string]::Empty
-		$mainNxtResult.ErrorMessagePSADT = [string]::Empty
+		[nullable[bool]]$mainNxtResult.Success = $false
+		[int]$mainNxtResult.ApplicationExitCode = $null
+		[int]$mainNxtResult.MainExitCode = 0
+		[string]$mainNxtResult.ErrorMessage = [string]::Empty
+		[string]$mainNxtResult.ErrorMessagePSADT = [string]::Empty
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
@@ -182,7 +185,10 @@ param (
 				## START OF INSTALL
 				[string]$script:installPhase = 'Pre-InstallationChecks'
 
-				Uninstall-NxtOld 
+				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
+				if ($false -eq $mainNxtResult) {
+					Exit-Script -ExitCode $mainmainNxtResult.MainExitCode
+				}
 				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
 					## Application is present. Register package only.
 					[string]$script:installPhase = 'Package-Registration'
@@ -201,7 +207,7 @@ param (
 							CustomReinstallPreUninstall
 							[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
 							CustomReinstallPostUninstall -ResultToCheck $mainNxtResult
-							if ($false -eq $mainNxtResult) {
+							if ($false -eq $mainNxtResult.Success) {
 								Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
 							}
 							CustomReinstallPreInstall
