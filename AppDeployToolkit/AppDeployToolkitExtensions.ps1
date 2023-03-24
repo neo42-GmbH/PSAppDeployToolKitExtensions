@@ -3532,7 +3532,7 @@ function Install-NxtApplication {
 	[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$installResult.Success = $false
 	$installResult.ApplicationExitCode = $null
-	$installResult.MainExitCode = $null
+	$installResult.MainExitCode = 0
 	$installResult.ErrorMessage = [string]::Empty
 	$installResult.ErrorMessagePSADT = [string]::Empty
 	[string]$resultMessageText = [string]::Empty
@@ -3591,34 +3591,38 @@ function Install-NxtApplication {
 			Execute-Process @executeParams
 		}
 	}
-	$installResult.ApplicationExitCode = $LastExitCode
-	$installResult.MainExitCode = $mainExitCode
-	## Delay for filehandle release etc. to occur.
-	Start-Sleep -Seconds 5
+	## if nothing was to execute herein just finish
+	if ($internalInstallerMethod -ne "none") {
 
-	## Test for successfull installation (if UninstallKey value is set)
-	if ([string]::IsNullOrEmpty($UninstallKey)) {
-		[string]$resultMessageText = "UninstallKey value NOT set. Skipping test for successfull installation via registry."
-		$installResult.Success = $null
-		$installResult.ErrorMessage = $resultMessageText
-	}
-	else {
-		if ( $false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor) ) {
-			[string]$resultMessageText = "Installation RegistryAndProcessCondition of $appName failed. ErrorLevel: $($installResult.ApplicationExitCode)"
-			$installResult.Success = $false
+		$installResult.ApplicationExitCode = $LastExitCode
+		$installResult.MainExitCode = $mainExitCode
+		## Delay for filehandle release etc. to occur.
+		Start-Sleep -Seconds 5
+
+		## Test for successfull installation (if UninstallKey value is set)
+		if ([string]::IsNullOrEmpty($UninstallKey)) {
+			[string]$resultMessageText = "UninstallKey value NOT set. Skipping test for successfull installation via registry."
+			$installResult.Success = $null
 			$installResult.ErrorMessage = $resultMessageText
-			$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 		}
 		else {
-			if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-				[string]$resultMessageText = "Installation of $appName failed. ErrorLevel: $($installResult.ApplicationExitCode)"
+			if ( $false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor) ) {
+				[string]$resultMessageText = "Installation RegistryAndProcessCondition of $appName failed. ErrorLevel: $($installResult.ApplicationExitCode)"
 				$installResult.Success = $false
 				$installResult.ErrorMessage = $resultMessageText
 				$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 			}
 			else {
-				[string]$resultMessageText = "Installation successful."
-				$installResult.Success = $true
+				if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+					[string]$resultMessageText = "Installation of $appName failed. ErrorLevel: $($installResult.ApplicationExitCode)"
+					$installResult.Success = $false
+					$installResult.ErrorMessage = $resultMessageText
+					$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+				}
+				else {
+					[string]$resultMessageText = "Installation successful."
+					$installResult.Success = $true
+				}
 			}
 		}
 	}
@@ -4472,7 +4476,7 @@ function Repair-NxtApplication {
 	[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$repairResult.Success = $false
 	$repairResult.ApplicationExitCode = $null
-	$repairResult.MainExitCode = $null
+	$repairResult.MainExitCode = 0
 	$repairResult.ErrorMessage = [string]::Empty
 	$repairResult.ErrorMessagePSADT = [string]::Empty
 	[string]$resultMessageText = [string]::Empty
@@ -4518,7 +4522,7 @@ function Repair-NxtApplication {
 
 			## <Perform repair tasks here>
 			## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
-			$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru)
+			$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).Exitcode
 
 			## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
 			if ( (3010 -eq $repairResult.ApplicationExitCode) -or (1641 -eq $repairResult.ApplicationExitCode) ) {
@@ -4533,8 +4537,12 @@ function Repair-NxtApplication {
 				[string]$resultMessageText = "Repair of $appName failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 				$repairResult.Success = $false
 				$repairResult.ErrorMessage = $resultMessageText
-				$repairResult.ErrorMessagePSADT = 'expected function parameter "UninstallKey" is empty'
+				$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 				$repairResult.MainExitCode = $mainExitCode
+			}
+			else {
+				[string]$resultMessageText = "Repair successful."
+				$repairResult.Success = $true
 			}
 		}
 	}
@@ -5383,7 +5391,7 @@ function Uninstall-NxtApplication {
 	[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$uninstallResult.Success = $false
 	$uninstallResult.ApplicationExitCode = $null
-	$uninstallResult.MainExitCode = $null
+	$uninstallResult.MainExitCode = 0
 	$uninstallResult.ErrorMessage = [string]::Empty
 	$uninstallResult.ErrorMessagePSADT = [string]::Empty
 	[string]$resultMessageText = [string]::Empty
@@ -5498,34 +5506,38 @@ function Uninstall-NxtApplication {
 				Execute-Process @executeParams
 				}
 			}
-			$uninstallResult.ApplicationExitCode = $LastExitCode
-			$uninstallResult.MainExitCode = $mainExitCode
-			## Delay for filehandle release etc. to occur.
-			Start-Sleep -Seconds 5
+			## if nothing was to execute herein just finish
+			if ($internalInstallerMethod -ne "none") {
 
-			## Test successfull uninstallation
-			if ([string]::IsNullOrEmpty($UninstallKey)) {
-				[string]$resultMessageText = "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry."
-				$uninstallResult.Success = $null
-				$uninstallResult.ErrorMessage = $resultMessageText
-			}
-			else {
-				if ( $false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor) ) {
-					[string]$resultMessageText = "Uninstallation RegistryAndProcessCondition of $appName failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
-					$uninstallResult.Success = $false
+				$uninstallResult.ApplicationExitCode = $LastExitCode
+				$uninstallResult.MainExitCode = $mainExitCode
+				## Delay for filehandle release etc. to occur.
+				Start-Sleep -Seconds 5
+
+				## Test successfull uninstallation
+				if ([string]::IsNullOrEmpty($UninstallKey)) {
+					[string]$resultMessageText = "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry."
+					$uninstallResult.Success = $null
 					$uninstallResult.ErrorMessage = $resultMessageText
-					$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 				}
 				else {
-					if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-						[string]$resultMessageText = "Uninstallation of $appName failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+					if ( $false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor) ) {
+						[string]$resultMessageText = "Uninstallation RegistryAndProcessCondition of $appName failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 						$uninstallResult.Success = $false
 						$uninstallResult.ErrorMessage = $resultMessageText
 						$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					}
 					else {
-						[string]$resultMessageText = "Uninstallation successful."
-						$uninstallResult.Success = $true
+						if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+							[string]$resultMessageText = "Uninstallation of $appName failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+							$uninstallResult.Success = $false
+							$uninstallResult.ErrorMessage = $resultMessageText
+							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+						}
+						else {
+							[string]$resultMessageText = "Uninstallation successful."
+							$uninstallResult.Success = $true
+						}
 					}
 				}
 			}
