@@ -3601,7 +3601,7 @@ function Install-NxtApplication {
 
 		## Test for successfull installation (if UninstallKey value is set)
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
-			[string]$resultMessageText = "UninstallKey value NOT set. Skipping test for successfull installation via registry."
+			[string]$resultMessageText = "UninstallKey value NOT set. Skipping test for successfull installation of $appName via registry."
 			$installResult.Success = $null
 			$installResult.ErrorMessage = $resultMessageText
 		}
@@ -3620,7 +3620,7 @@ function Install-NxtApplication {
 					$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 				}
 				else {
-					[string]$resultMessageText = "Installation successful."
+					[string]$resultMessageText = "Installation of $appName was successful."
 					$installResult.Success = $true
 				}
 			}
@@ -4522,7 +4522,7 @@ function Repair-NxtApplication {
 
 			## <Perform repair tasks here>
 			## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
-			$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).Exitcode
+			$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
 
 			## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
 			if ( (3010 -eq $repairResult.ApplicationExitCode) -or (1641 -eq $repairResult.ApplicationExitCode) ) {
@@ -4541,7 +4541,7 @@ function Repair-NxtApplication {
 				$repairResult.MainExitCode = $mainExitCode
 			}
 			else {
-				[string]$resultMessageText = "Repair successful."
+				[string]$resultMessageText = "Repair of $appName was successful."
 				$repairResult.Success = $true
 			}
 		}
@@ -5516,7 +5516,7 @@ function Uninstall-NxtApplication {
 
 				## Test successfull uninstallation
 				if ([string]::IsNullOrEmpty($UninstallKey)) {
-					[string]$resultMessageText = "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry."
+					[string]$resultMessageText = "UninstallKey value NOT set. Skipping test for successfull uninstallation of $appName via registry."
 					$uninstallResult.Success = $null
 					$uninstallResult.ErrorMessage = $resultMessageText
 				}
@@ -5535,7 +5535,7 @@ function Uninstall-NxtApplication {
 							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 						}
 						else {
-							[string]$resultMessageText = "Uninstallation successful."
+							[string]$resultMessageText = "Uninstallation of $appName was successful."
 							$uninstallResult.Success = $true
 						}
 					}
