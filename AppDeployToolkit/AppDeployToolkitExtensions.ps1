@@ -3391,6 +3391,8 @@ function Initialize-NxtEnvironment {
 	.PARAMETER SetupCFGPath
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
 		Defaults to the "$scriptParentPath\Setup.cfg".
+	.OUTPUTS
+		System.Int32.
 	.EXAMPLE
 		Initialize-NxtEnvironment
 	.LINK
@@ -3420,22 +3422,16 @@ function Initialize-NxtEnvironment {
 				throw "File not found: $ExtensionCsPath"
 			}
 		}
-		[PSADTNXT.NxtApplicationResult]$initEnvNxtResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		[nullable[bool]]$initEnvNxtResult.Success = $false
-		[int]$initEnvNxtResult.ApplicationExitCode = $null
-		[int]$initEnvNxtResult.MainExitCode = 0
-		[string]$initEnvNxtResult.ErrorMessage = [string]::Empty
-		[string]$initEnvNxtResult.ErrorMessagePSADT = [string]::Empty
+		[int32]$pkgsArchReturnCode = 0
 		Get-NxtPackageConfig
 		Set-NxtSetupCfg -Path $setupCfgPath
-		[PSADTNXT.NxtApplicationResult]$initEnvNxtResult = Set-NxtPackageArchitecture
-		if ($false -ne $initEnvNxtResult.Success) {
+		[int32]$pkgsArchReturnCode = Set-NxtPackageArchitecture
+		if ($pkgsArchReturnCode -eq 0) {
 			[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 			Expand-NxtPackageConfig
 			Format-NxtPackageSpecificVariables
 		}
-
-		Write-Output $initEnvNxtResult.MainExitCode
+		Write-Output $pkgsArchReturnCode
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -3540,11 +3536,11 @@ function Install-NxtApplication {
 	)
 	[string]$script:installPhase = 'Installation'
 	[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-	[nullable[bool]]$installResult.Success = $false
-	[int]$installResult.ApplicationExitCode = $null
-	[int]$installResult.MainExitCode = 0
-	[string]$installResult.ErrorMessage = [string]::Empty
-	[string]$installResult.ErrorMessagePSADT = [string]::Empty
+	$installResult.Success = $false
+	$installResult.ApplicationExitCode = $null
+	$installResult.MainExitCode = 0
+	$installResult.ErrorMessage = [string]::Empty
+	$installResult.ErrorMessagePSADT = [string]::Empty
 	[int]$logMessageSeverity = 1
 	[hashtable]$executeNxtParams = @{
 		Action                    = 'Install'
@@ -3583,8 +3579,8 @@ function Install-NxtApplication {
 			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 		}
 		none {
-			[string]$installResult.ErrorMessage = "An installation method was NOT set. Skipping a default process execution."
-			[nullable[bool]]$installResult.Success = $null
+			$installResult.ErrorMessage = "An installation method was NOT set. Skipping a default process execution."
+			$installResult.Success = $null
 			[int]$logMessageSeverity = 2
 		}
 		Default {
@@ -3603,34 +3599,34 @@ function Install-NxtApplication {
 	## if nothing was to execute herein just finish
 	if ($internalInstallerMethod -ne "none") {
 
-		[int]$installResult.ApplicationExitCode = $LastExitCode
-		[int]$installResult.MainExitCode = $mainExitCode
+		$installResult.ApplicationExitCode = $LastExitCode
+		$installResult.MainExitCode = $mainExitCode
 		## Delay for filehandle release etc. to occur.
 		Start-Sleep -Seconds 5
 
 		## Test for successfull installation (if UninstallKey value is set)
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
-			[string]$installResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull installation of '$appName' via registry."
-			[nullable[bool]]$installResult.Success = $null
+			$installResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull installation of '$appName' via registry."
+			$installResult.Success = $null
 			[int]$logMessageSeverity = 2
 		}
 		else {
 			if ( $false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor) ) {
-				[string]$installResult.ErrorMessage =  "Installation RegistryAndProcessCondition of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
-				[string]$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-				[nullable[bool]]$installResult.Success = $false
+				$installResult.ErrorMessage =  "Installation RegistryAndProcessCondition of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
+				$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+				$installResult.Success = $false
 				[int]$logMessageSeverity = 3
 			}
 			else {
 				if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-					[string]$installResult.ErrorMessage = "Installation of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
-					[string]$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-					[nullable[bool]]$installResult.Success = $false
+					$installResult.ErrorMessage = "Installation of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
+					$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+					$installResult.Success = $false
 					[int]$logMessageSeverity = 3
 				}
 				else {
-					[string]$installResult.ErrorMessage = "Installation of '$appName' was successful."
-					[nullable[bool]]$installResult.Success = $true
+					$installResult.ErrorMessage = "Installation of '$appName' was successful."
+					$installResult.Success = $true
 					[int]$logMessageSeverity = 1
 				}
 			}
@@ -4470,28 +4466,28 @@ function Repair-NxtApplication {
 	)
 	[string]$script:installPhase = 'Repair-NxtApplication'
 	[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-	[nullable[bool]]$repairResult.Success = $false
-	[int]$repairResult.ApplicationExitCode = $null
-	[int]$repairResult.MainExitCode = 0
-	[string]$repairResult.ErrorMessage = [string]::Empty
-	[string]$repairResult.ErrorMessagePSADT = [string]::Empty
+	$repairResult.Success = $false
+	$repairResult.ApplicationExitCode = $null
+	$repairResult.MainExitCode = 0
+	$repairResult.ErrorMessage = [string]::Empty
+	$repairResult.ErrorMessagePSADT = [string]::Empty
 	[int]$logMessageSeverity = 1
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
 	}
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
-		[int]$repairResult.MainExitCode = $mainExitCode
-		[string]$repairResult.ErrorMessage = "No repair function executable - missing value for parameter 'UninstallKey'!"
-		[string]$repairResult.ErrorMessagePSADT = "expected function parameter 'UninstallKey' is empty"
-		[nullable[bool]]$repairResult.Success = $false
+		$repairResult.MainExitCode = $mainExitCode
+		$repairResult.ErrorMessage = "No repair function executable - missing value for parameter 'UninstallKey'!"
+		$repairResult.ErrorMessagePSADT = "expected function parameter 'UninstallKey' is empty"
+		$repairResult.Success = $false
 		[int]$logMessageSeverity = 3
 	}
 	else {
 		$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
 		if ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
 			## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
-			[string]$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
-			[nullable[bool]]$repairResult.Success = $null
+			$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
+			$repairResult.Success = $null
 			[int]$logMessageSeverity = 2
 		}
 		else {
@@ -4513,25 +4509,25 @@ function Repair-NxtApplication {
 
 			## <Perform repair tasks here>
 			## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
-			[int]$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
+			$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
 
 			## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
 			if ( (3010 -eq $repairResult.ApplicationExitCode) -or (1641 -eq $repairResult.ApplicationExitCode) ) {
-				[int]$repairResult.ApplicationExitCode = 0
+				$repairResult.ApplicationExitCode = 0
 			}
 			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
 
 			if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
-				[int]$repairResult.MainExitCode = $mainExitCode
-				[string]$repairResult.ErrorMessage = "Repair of '$appName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
-				[string]$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-				[nullable[bool]]$repairResult.Success = $false
+				$repairResult.MainExitCode = $mainExitCode
+				$repairResult.ErrorMessage = "Repair of '$appName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
+				$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+				$repairResult.Success = $false
 				[int]$logMessageSeverity = 3
 			}
 			else {
-				[string]$repairResult.ErrorMessage = "Repair of '$appName' was successful."
-				[nullable[bool]]$repairResult.Success = $true
+				$repairResult.ErrorMessage = "Repair of '$appName' was successful."
+				$repairResult.Success = $true
 				[int]$logMessageSeverity = 1
 			}
 		}
@@ -4719,7 +4715,7 @@ function Set-NxtPackageArchitecture {
 	.PARAMETER AppArch
 		Provide the AppArchitecture.
 	.OUTPUTS
-		none.
+		System.Int32.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -4757,29 +4753,20 @@ function Set-NxtPackageArchitecture {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[PSADTNXT.NxtApplicationResult]$pkgArchResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		[nullable[bool]]$pkgArchResult.Success = $true
-		[int]$pkgArchResult.ApplicationExitCode = $null
-		[int]$pkgArchResult.MainExitCode = 0
-		[string]$pkgArchResult.ErrorMessage = [string]::Empty
-		[string]$pkgArchResult.ErrorMessagePSADT = [string]::Empty
+		[int]$thisFunctionReturnCode = 0
 		Write-Log -Message "Setting package architecture variables..." -Source ${CmdletName}
 		Try {
 			If ($AppArch -ne 'x86' -and $AppArch -ne 'x64' -and $AppArch -ne '*') {
 				[int32]$mainExitCode = 70001
-				[int]$pkgArchResult.MainExitCode = $mainExitCode
-				[string]$pkgArchResult.ErrorMessage = "ERROR: The value of '$appArch' must be set to 'x86', 'x64' or '*'. Abort!"
-				[nullable[bool]]$pkgArchResult.Success = $false
-				Write-Log -Message $($pkgArchResult.ErrorMessage) -Severity 3 -Source $DeployAppScriptFriendlyName
-				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
+				[int32]$thisFunctionReturnCode = $mainExitCode
+				[string]$mainErrorMessage = "ERROR: The value of '$appArch' must be set to 'x86', 'x64' or '*'. Abort!"
+				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 			}
 			ElseIf ($AppArch -eq 'x64' -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[int32]$mainExitCode = 70001
-				[int]$pkgArchResult.MainExitCode = $mainExitCode
-				[string]$pkgArchResult.ErrorMessage = "ERROR: This software package can only be installed on 64 bit Windows systems. Abort!"
-				[nullable[bool]]$pkgArchResult.Success = $false
-				Write-Log -Message $($pkgArchResult.ErrorMessage) -Severity 3 -Source $DeployAppScriptFriendlyName
-				Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
+				[int32]$thisFunctionReturnCode = $mainExitCode
+				[string]$mainErrorMessage = "ERROR: This software package can only be installed on 64 bit Windows systems. Abort!"
+				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 			}
 			ElseIf ($AppArch -eq 'x86' -and $PROCESSOR_ARCHITECTURE -eq 'AMD64') {
 				[string]$global:ProgramFilesDir = ${ProgramFiles(x86)}
@@ -4812,18 +4799,16 @@ function Set-NxtPackageArchitecture {
 				[string]$global:Wow6432Node = ''
 			}
 
-			if ($false -ne $pkgArchResult.Success) {
-				[string]$pkgArchResult.ErrorMessage = "Package architecture variables successfully set."
-				Write-Log -Message $($pkgArchResult.ErrorMessage) -Source ${cmdletName}
+			if (0 -eq $thisFunctionReturnCode) {
+				Write-Log -Message "Package architecture variables successfully set." -Source ${cmdletName}
 			}
-		}
+			}
 		Catch {
-			[string]$pkgArchResult.ErrorMessage = "Package architecture variables successfully set."
-			[nullable[bool]]$pkgArchResult.Success = $false
-			Write-Log -Message "$($pkgArchResult.ErrorMessage)`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to set the package architecture variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			[int32]$thisFunctionReturnCode = $mainExitCode
 		}
-		Write-Output $pkgArchResult
-	}
+		Write-Output $thisFunctionReturnCode
+}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
@@ -5379,11 +5364,11 @@ function Uninstall-NxtApplication {
 	)
 	[string]$script:installPhase = 'Pre-Uninstallation'
 	[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-	[nullable[bool]]$uninstallResult.Success = $false
-	[int]$uninstallResult.ApplicationExitCode = $null
-	[int]$uninstallResult.MainExitCode = 0
-	[string]$uninstallResult.ErrorMessage = [string]::Empty
-	[string]$uninstallResult.ErrorMessagePSADT = [string]::Empty
+	$uninstallResult.Success = $false
+	$uninstallResult.ApplicationExitCode = $null
+	$uninstallResult.MainExitCode = 0
+	$uninstallResult.ErrorMessage = [string]::Empty
+	$uninstallResult.ErrorMessagePSADT = [string]::Empty
 	[int]$logMessageSeverity = 1
 	## <Perform Pre-Uninstallation tasks here>
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
@@ -5413,23 +5398,22 @@ function Uninstall-NxtApplication {
 	[string]$script:installPhase = 'Uninstallation'
 
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
-		[string]$uninstallResult.ErrorMessage = "Value 'UninstallKey' NOT set. Skipping test for an installed application via registry. Checking for value 'UninstFile' instead..."
-		[nullable[bool]]$uninstallResult.Success = $null
-		[int]$logMessageSeverity = 1
+		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
+		$uninstallResult.Success = $null
 		if ([string]::IsNullOrEmpty($UninstFile)) {
-			[string]$uninstallResult.ErrorMessage = "Value 'UninstFile' NOT set. Uninstallation NOT executed."
+			$uninstallResult.ErrorMessage = "Value 'UninstFile' NOT set. Uninstallation NOT executed."
 			[int]$logMessageSeverity = 2
 		}
 		else {
 			if ([System.IO.File]::Exists($UninstFile)) {
 				Write-Log -Message "File for running an uninstallation found: '$UninstFile'. Executing the uninstallation..." -Source ${CmdletName}
 				Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
-				[int]$uninstallResult.ApplicationExitCode = $LastExitCode
-				[string]$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($uninstallResult.ApplicationExitCode)'."
+				$uninstallResult.ApplicationExitCode = $LastExitCode
+				$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($uninstallResult.ApplicationExitCode)'."
 				[int]$logMessageSeverity = 1
 			}
 			else {
-				[string]$uninstallResult.ErrorMessage = "Excpected file for running an uninstallation NOT found: '$UninstFile'. Uninstallation NOT executed. Possibly the expected application is not installed on system anymore!"
+				$uninstallResult.ErrorMessage = "Excpected file for running an uninstallation NOT found: '$UninstFile'. Uninstallation NOT executed. Possibly the expected application is not installed on system anymore!"
 				[int]$logMessageSeverity = 2
 			}
 		}
@@ -5443,7 +5427,7 @@ function Uninstall-NxtApplication {
 			}
 			if (![string]::IsNullOrEmpty($UninstPara)) {
 				if ($AppendUninstParaToDefaultParameters) {
-					$executeNxtParams["AddParameters"] = "$UninstPara"
+					[string]$executeNxtParams["AddParameters"] = "$UninstPara"
 				}
 				else {
 					$executeNxtParams["Parameters"] = "$UninstPara"
@@ -5472,8 +5456,8 @@ function Uninstall-NxtApplication {
 					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 				}
 				none {
-					[string]$uninstallResult.ErrorMessage = "An unnstallation method was NOT set. Skipping a default process execution."
-					[nullable[bool]]$uninstallResult.Success = $null
+					$uninstallResult.ErrorMessage = "An uninstallation method was NOT set. Skipping a default process execution."
+					$uninstallResult.Success = $null
 					[int]$logMessageSeverity = 1
 				}
 				Default {
@@ -5492,34 +5476,34 @@ function Uninstall-NxtApplication {
 			## if nothing was to execute herein just finish
 			if ($internalInstallerMethod -ne "none") {
 
-				[int]$uninstallResult.ApplicationExitCode = $LastExitCode
-				[int]$uninstallResult.MainExitCode = $mainExitCode
+				$uninstallResult.ApplicationExitCode = $LastExitCode
+				$uninstallResult.MainExitCode = $mainExitCode
 				## Delay for filehandle release etc. to occur.
 				Start-Sleep -Seconds 5
 
 				## Test successfull uninstallation
 				if ([string]::IsNullOrEmpty($UninstallKey)) {
-					[string]$uninstallResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull uninstallation of '$appName' via registry."
-					[nullable[bool]]$uninstallResult.Success = $null
+					$uninstallResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull uninstallation of '$appName' via registry."
+					$uninstallResult.Success = $null
 					[int]$logMessageSeverity = 2
 				}
 				else {
 					if ( $false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor) ) {
-						[string]$uninstallResult.ErrorMessage = "Uninstallation RegistryAndProcessCondition of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
-						[string]$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-						[nullable[bool]]$uninstallResult.Success = $false
+						$uninstallResult.ErrorMessage = "Uninstallation RegistryAndProcessCondition of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+						$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+						$uninstallResult.Success = $false
 						[int]$logMessageSeverity = 3
 					}
 					else {
 						if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
-							[string]$uninstallResult.ErrorMessage = "Uninstallation of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
-							[string]$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-							[nullable[bool]]$uninstallResult.Success = $false
+							$uninstallResult.ErrorMessage = "Uninstallation of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+							$uninstallResult.Success = $false
 							[int]$logMessageSeverity = 3
 						}
 						else {
-							[string]$uninstallResult.ErrorMessage = "Uninstallation of '$appName' was successful."
-							[nullable[bool]]$uninstallResult.Success = $true
+							$uninstallResult.ErrorMessage = "Uninstallation of '$appName' was successful."
+							$uninstallResult.Success = $true
 							[int]$logMessageSeverity = 1
 						}
 					}
@@ -5528,8 +5512,8 @@ function Uninstall-NxtApplication {
 		}
 		else {
 			## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end by default)!
-			[string]$uninstallResult.ErrorMessage = "Uninstall function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected application seems not to be installed on system!"
-			[nullable[bool]]$uninstallResult.Success = $null
+			$uninstallResult.ErrorMessage = "Uninstall function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected application seems not to be installed on system!"
+			$uninstallResult.Success = $null
 			[int]$logMessageSeverity = 1
 		}
 	}
@@ -5605,12 +5589,12 @@ function Uninstall-NxtOld {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		[nullable[bool]]$uninstallOldResult.Success = $null
-		[int]$uninstallOldResult.ApplicationExitCode = $null
-		[int]$uninstallOldResult.MainExitCode = 0
-		[string]$uninstallOldResult.ErrorMessage = [string]::Empty
-		[string]$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
+		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
+		$uninstallOldResult.Success = $null
+		$uninstallOldResult.ApplicationExitCode = $null
+		$uninstallOldResult.MainExitCode = 0
+		$uninstallOldResult.ErrorMessage = [string]::Empty
+		$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 		If ($true -eq $UninstallOld) {
 			Write-Log -Message "Checking for old packages..." -Source ${cmdletName}
 			Try {
@@ -5634,44 +5618,44 @@ function Uninstall-NxtOld {
 									}
 									If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 										[int32]$mainExitCode = 70001
-										[int]$uninstallOldResult.MainExitCode = $mainExitCode
-										[string]$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
-										[string]$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-										[nullable[bool]]$uninstallOldResult.Success = $false
+										$uninstallOldResult.MainExitCode = $mainExitCode
+										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
+										$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+										$uninstallOldResult.Success = $false
 										[bool]$ReturnWithError = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
 										break
 									}
 									Else {
-										[string]$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
-										[nullable[bool]]$uninstallOldResult.Success = $true
+										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
+										$uninstallOldResult.Success = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 									}
 								}
 								Else {
 									$appEmpirumPackageVersion | Remove-Item
-									[string]$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
-									[nullable[bool]]$uninstallOldResult.Success = $null
+									$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
+									$uninstallOldResult.Success = $null
 									Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 								}
 							}
-							If (!$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName")) {
+							If ( !$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") ) {
 								Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
-								[string]$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
-								[nullable[bool]]$uninstallOldResult.Success = $null
+								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
+								$uninstallOldResult.Success = $null
 								Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 							}
 						}
 					}
-					If (!$ReturnWithError -and ((Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0)) {
+					If ( !$ReturnWithError -and ((Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
 						Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor"
-						[string]$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor"
-						[nullable[bool]]$uninstallOldResult.Success = $null
+						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor"
+						$uninstallOldResult.Success = $null
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
 				}
 				## Check for Empirum packages under "HKLM:SOFTWARE\"
-				If (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor") {
+				If ( !$ReturnWithError -and (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor") ) {
 					If (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName") {
 						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 						If (($appEmpirumPackageVersions).Count -eq 0) {
@@ -5683,84 +5667,85 @@ function Uninstall-NxtOld {
 								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 								If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 									Try {
-										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
-									}
+										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')									}
 									Catch {
 									}
 									If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 										[int32]$mainExitCode = 70001
-										[int]$uninstallOldResult.MainExitCode = $mainExitCode
-										[string]$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
-										[string]$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-										[nullable[bool]]$uninstallOldResult.Success = $false
+										$uninstallOldResult.MainExitCode = $mainExitCode
+										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
+										$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+										$uninstallOldResult.Success = $false
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
 										[bool]$ReturnWithError = $true
 										break
 									}
 									Else {
-										[string]$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
-										[nullable[bool]]$uninstallOldResult.Success = $true
+										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
+										$uninstallOldResult.Success = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 									}
 								}
 								Else {
 									$appEmpirumPackageVersion | Remove-Item
-									[string]$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
-									[nullable[bool]]$uninstallOldResult.Success = $null
+									$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
+									$uninstallOldResult.Success = $null
 									Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 								}
 							}
 							If (!$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName")) {
 								Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
-								[string]$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
-								[nullable[bool]]$uninstallOldResult.Success = $null
+								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
+								$uninstallOldResult.Success = $null
 								Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 							}
 						}
 					}
 					If (!$ReturnWithError -and ((Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor").Count -eq 0)) {
 						Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor"
-						[string]$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor"
-						[nullable[bool]]$uninstallOldResult.Success = $null
+						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor"
+						$uninstallOldResult.Success = $null
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
 				}
-				## Check for VBS or PSADT packages
-				If (Test-RegistryValue -Key HKLM\Software\Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Value 'UninstallString') {
-					[string]$regPackageFamilyGUID = "HKLM\Software\Wow6432Node\$RegPackagesKey\$PackageFamilyGUID"
-				}
-				Else {
-					[string]$regPackageFamilyGUID = "HKLM\Software\$RegPackagesKey\$PackageFamilyGUID"
-				}
-				## Check if the installed package's version is lower than the current one's and if the UninstallString entry exists
-				If ((Get-RegistryKey -Key $regPackageFamilyGUID -Value 'Version') -lt $AppVersion -and (Test-RegistryValue -Key $regPackageFamilyGUID -Value 'UninstallString')) {
-					Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package..." -Source ${cmdletName}
-					cmd /c (Get-RegistryKey -Key $regPackageFamilyGUID -Value 'UninstallString')
-					If (Test-RegistryValue -Key $regPackageFamilyGUID -Value 'UninstallString') {
-						[int32]$mainExitCode = 70001
-						[int]$uninstallOldResult.MainExitCode = $mainExitCode
-						[string]$uninstallOldResult.ErrorMessage = "ERROR: Uninstallation of old package failed. Abort!"
-						[string]$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-						[nullable[bool]]$uninstallOldResult.Success = $false
-						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source $DeployAppScriptFriendlyName
-						Show-DialogBox -Text $($uninstallOldResult.ErrorMessage) -Icon 'Stop'
+				If (!$ReturnWithError) {
+					## Check for VBS or PSADT packages
+					If (Test-RegistryValue -Key HKLM\Software\Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Value 'UninstallString') {
+						[string]$regPackageFamilyGUID = "HKLM\Software\Wow6432Node\$RegPackagesKey\$PackageFamilyGUID"
 					}
 					Else {
-						Write-Log -Message  -Source ${cmdletName}
-						[string]$uninstallOldResult.ErrorMessage = "Uninstallation of old package successful."
-						[nullable[bool]]$uninstallOldResult.Success = $true
+						[string]$regPackageFamilyGUID = "HKLM\Software\$RegPackagesKey\$PackageFamilyGUID"
+					}
+					## Check if the installed package's version is lower than the current one's and if the UninstallString entry exists
+					If ((Get-RegistryKey -Key $regPackageFamilyGUID -Value 'Version') -lt $AppVersion -and (Test-RegistryValue -Key $regPackageFamilyGUID -Value 'UninstallString')) {
+						Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package..." -Source ${cmdletName}
+						cmd /c (Get-RegistryKey -Key $regPackageFamilyGUID -Value 'UninstallString')
+						If (Test-RegistryValue -Key $regPackageFamilyGUID -Value 'UninstallString') {
+							[int32]$mainExitCode = 70001
+							$uninstallOldResult.MainExitCode = $mainExitCode
+							$uninstallOldResult.ErrorMessage = "ERROR: Uninstallation of old package failed. Abort!"
+							$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+							$uninstallOldResult.Success = $false
+							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source $DeployAppScriptFriendlyName
+							Show-DialogBox -Text $($uninstallOldResult.ErrorMessage) -Icon 'Stop'
+						}
+						Else {
+							Write-Log -Message  -Source ${cmdletName}
+							$uninstallOldResult.ErrorMessage = "Uninstallation of old package successful."
+							$uninstallOldResult.Success = $true
+							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+						}
+					}
+					Else {
+						$uninstallOldResult.ErrorMessage = "No need to uninstall old packages."
+						$uninstallOldResult.Success = $null
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
-				}
-				Else {
-					[string]$uninstallOldResult.ErrorMessage = "No need to uninstall old packages."
-					[nullable[bool]]$uninstallOldResult.Success = $null
-					Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 				}
 			}
 			Catch {
-				[string]$uninstallOldResult.ErrorMessage = "The Uninstall-Old function threw an error."
-				[nullable[bool]]$uninstallOldResult.Success = $false
+				$uninstallOldResult.ErrorMessage = "The Uninstall-Old function threw an error."
+				$uninstallOldResult.Success = $false
 				Write-Log -Message "$($uninstallOldResult.ErrorMessage)`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			}
 		}

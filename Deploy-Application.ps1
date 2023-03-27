@@ -101,9 +101,9 @@ Catch {
 
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
-	[int]$initEnvReturnCode = Initialize-NxtEnvironment
-	if ($initEnvReturnCode -ne 0) {
-		Exit-Script -ExitCode $initEnvReturnCode
+	[int32]$initNxtEnvReturnCode = Initialize-NxtEnvironment
+	if (0 -ne $initNxtEnvReturnCode) {
+		Exit-Script -ExitCode $initNxtEnvReturnCode
 	}
 ##*===============================================
 	##* VARIABLE DECLARATION
@@ -173,11 +173,11 @@ param (
 )
 	try {
 		[PSADTNXT.NxtApplicationResult]$mainNxtResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		[nullable[bool]]$mainNxtResult.Success = $false
-		[int]$mainNxtResult.ApplicationExitCode = $null
-		[int]$mainNxtResult.MainExitCode = 0
-		[string]$mainNxtResult.ErrorMessage = [string]::Empty
-		[string]$mainNxtResult.ErrorMessagePSADT = [string]::Empty
+		$mainNxtResult.Success = $false
+		$mainNxtResult.ApplicationExitCode = $null
+		$mainNxtResult.MainExitCode = 0
+		$mainNxtResult.ErrorMessage = [string]::Empty
+		$mainNxtResult.ErrorMessagePSADT = [string]::Empty
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
@@ -186,8 +186,8 @@ param (
 				[string]$script:installPhase = 'Pre-InstallationChecks'
 
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
-				if ($false -eq $mainNxtResult) {
-					Exit-Script -ExitCode $mainmainNxtResult.MainExitCode
+				if ($false -eq $mainNxtResult.Success) {
+					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
 				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
 					## Application is present. Register package only.
