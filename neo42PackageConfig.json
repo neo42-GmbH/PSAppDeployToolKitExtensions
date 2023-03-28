@@ -33,7 +33,8 @@
     "UninstallKeyIsDisplayName": false,
     "UninstallKeyContainsWildCards": false,
     "DisplayNamesToExcludeFromAppSearches": [
-      "$($global:PackageConfig.UninstallDisplayName)"
+      "$($global:PackageConfig.UninstallDisplayName)",
+      "$($global:PackageConfig.UninstallKey)"
     ],
     "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
     "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
