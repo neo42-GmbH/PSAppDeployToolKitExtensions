@@ -87,7 +87,7 @@ function Add-NxtContent {
 					Path = $Path
 				}
 				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
-					[hashtable]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
 				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
 				if ($intEncoding -eq "UTF8") {
@@ -108,7 +108,7 @@ function Add-NxtContent {
 				Value = $Value
 			}
 			if (![string]::IsNullOrEmpty($intEncoding)) {
-				[hashtable]$contentParams['Encoding'] = $intEncoding 
+				[string]$contentParams['Encoding'] = $intEncoding 
 			}
 			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
 				[System.IO.File]::AppendAllLines($Path, $Content)
@@ -445,7 +445,7 @@ function Compare-NxtVersion {
 						[int]$versionPartValue = [int]::Parse($pair.Key)
 					}
 					else {
-						[System.Linq.Enumerable]$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
+						[PSADTNXT.VersionPartInfo]$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
 						if ($null -ne $value -and [System.Char]::IsLetter($value.Value)) {
 							#Important for compare (An upper 'A'==65 char must have the value 10) 
 							[int]$versionPartValue = $value.AsciiValue - 55
@@ -1404,7 +1404,7 @@ function Execute-NxtMSI {
 			"ConfigMSILogDir"
 		)
 		foreach ($functionParametersWithDefault in $functionParametersWithDefaults) {
-			[hashtable]$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
+			[PSObject]$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
 		}
 		[array]$functionParametersToBeRemoved = (
 			"Log",
@@ -1417,7 +1417,7 @@ function Execute-NxtMSI {
 	}
 	Process {
 		if ($UninstallKeyIsDisplayName -and $Action -eq "Uninstall") {
-			[hashtable]$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey | Select-Object -First 1 -ExpandProperty ProductCode
+			[string]$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey | Select-Object -First 1 -ExpandProperty ProductCode
 		}
 		if ([string]::IsNullOrEmpty($Parameters)) {
 			$null = $PSBoundParameters.Remove('Parameters')
@@ -1426,7 +1426,7 @@ function Execute-NxtMSI {
 			$null = $PSBoundParameters.Remove('AddParameters')
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			[hashtable]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
+			[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
 		}
 		if (![string]::IsNullOrEmpty($Log)) {
 			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
@@ -2510,9 +2510,9 @@ function Get-NxtFileVersion {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[version]$result = $null
+		[string]$result = $null
 		try {
-			[version]$result = (New-Object -TypeName System.IO.FileInfo -ArgumentList $FilePath).VersionInfo.FileVersion
+			[string]$result = (New-Object -TypeName System.IO.FileInfo -ArgumentList $FilePath).VersionInfo.FileVersion
 		}
 		catch {
 			Write-Log -Message "Failed to get version from file '$FilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -3539,14 +3539,14 @@ function Install-NxtApplication {
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendInstParaToDefaultParameters) {
-			[hashtable]$executeNxtParams["AddParameters"] = "$InstPara"
+			[string]$executeNxtParams["AddParameters"] = "$InstPara"
 		}
 		else {
-			[hashtable]$executeNxtParams["Parameters"] = "$InstPara"
+			[string]$executeNxtParams["Parameters"] = "$InstPara"
 		}
 	}
 	if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-		[hashtable]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+		[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
 	}
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		[string]$internalInstallerMethod = [string]::Empty
@@ -3576,10 +3576,10 @@ function Install-NxtApplication {
 				Path	= "$InstFile"
 			}
 			if (![string]::IsNullOrEmpty($InstPara)) {
-				[hashtable]$executeParams["Parameters"] = "$InstPara"
+				[string]$executeParams["Parameters"] = "$InstPara"
 			}
 			if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-				[hashtable]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
+				[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
 			}
 			Execute-Process @executeParams
 		}
@@ -4439,7 +4439,7 @@ function Repair-NxtApplication {
 		Action	= 'Repair'
 	}
 	if (![string]::IsNullOrEmpty($UninstallKey)) {
-		[hashtable]$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
+		[string]$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
 	}
 	else {
 		Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
@@ -4451,14 +4451,14 @@ function Repair-NxtApplication {
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendRepairParaToDefaultParameters) {
-			[hashtable]$executeNxtParams["AddParameters"] = "$RepairPara"
+			[string]$executeNxtParams["AddParameters"] = "$RepairPara"
 		}
 		else {
-			[hashtable]$executeNxtParams["Parameters"] = "$RepairPara"
+			[string]$executeNxtParams["Parameters"] = "$RepairPara"
 		}
 	}
 	if (![string]::IsNullOrEmpty($AcceptedRepairExitCodes)) {
-		[hashtable]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
+		[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
 	}
 	if ([string]::IsNullOrEmpty($RepairLogFile)) {
 			## now set default path and name including retrieved ProductCode
@@ -5359,14 +5359,14 @@ function Uninstall-NxtApplication {
 			}
 			if (![string]::IsNullOrEmpty($UninstPara)) {
 				if ($AppendUninstParaToDefaultParameters) {
-					[hashtable]$executeNxtParams["AddParameters"] = "$UninstPara"
+					[string]$executeNxtParams["AddParameters"] = "$UninstPara"
 				}
 				else {
-					[hashtable]$executeNxtParams["Parameters"] = "$UninstPara"
+					[string]$executeNxtParams["Parameters"] = "$UninstPara"
 				}
 			}
 			if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-				[hashtable]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+				[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 			}
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				[string]$internalInstallerMethod = [string]::Empty
@@ -5395,10 +5395,10 @@ function Uninstall-NxtApplication {
 						Path	= "$UninstFile"
 					}
 					if (![string]::IsNullOrEmpty($UninstPara)) {
-						[hashtable]$executeParams["Parameters"] = "$UninstPara"
+						[string]$executeParams["Parameters"] = "$UninstPara"
 					}
 					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-						[hashtable]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+						[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 					}
 				Execute-Process @executeParams
 				}
@@ -5754,7 +5754,7 @@ function Update-NxtTextInFile {
 					Path = $Path
 				}
 				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
-					[hashtable]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
 				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
 				if ($intEncoding -eq "UTF8") {
@@ -5774,9 +5774,9 @@ function Update-NxtTextInFile {
 				Path = $Path
 			}
 			if (![string]::IsNullOrEmpty($intEncoding)) {
-				[hashtable]$contentParams['Encoding'] = $intEncoding
+				[string]$contentParams['Encoding'] = $intEncoding
 			}
-			[string[]]$Content = Get-Content @contentParams -Raw
+			[string]$Content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
 			[Array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
@@ -5785,7 +5785,7 @@ function Update-NxtTextInFile {
 			}
 			[Array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
-				[string[]]$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
+				[string]$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
 			}
 			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
 				[System.IO.File]::WriteAllLines($Path, $Content)
