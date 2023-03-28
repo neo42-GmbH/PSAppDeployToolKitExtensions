@@ -59,8 +59,8 @@
     ],
     "UninstallKeysToHide":[
       {"KeyName": "$($global:PackageConfig.UninstallKey)","Is64Bit": false,"KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)","KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)","DisplayNamesToExcludeFromHiding": ["$($global:PackageConfig.UninstallDisplayName)"]},
-      {"KeyName": "<SomeAppName> - *","Is64Bit": true,"KeyNameIsDisplayName": true,"KeyNameContainsWildCards": true,"DisplayNamesToExcludeFromHiding": ["<SomeAppName> - 1.0","<SomeAppName> - 1.1","$($global:PackageConfig.UninstallDisplayName)"]},
-      {"KeyName": "<SomeOrdinary[64BitOn64BitOS]UninstallKey>"}
+      {"KeyName": "SomeAppName - *","Is64Bit": true,"KeyNameIsDisplayName": true,"KeyNameContainsWildCards": true,"DisplayNamesToExcludeFromHiding": ["SomeAppName - 1.0","SomeAppName - 1.1","$($global:PackageConfig.UninstallDisplayName)"]},
+      {"KeyName": "SomeOrdinary[64BitOn64BitOS]UninstallKey"}
     ],
     "PackageSpecificVariablesRaw": [
       {
