@@ -254,6 +254,7 @@ param (
 			"Uninstall" {
 				## START OF UNINSTALL
 				Show-NxtInstallationWelcome -IsInstall $false
+				Prepare-NxtUninstallApplication
 				CustomUninstallBegin
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
 				CustomUninstallEnd -ResultToCheck $mainNxtResult
