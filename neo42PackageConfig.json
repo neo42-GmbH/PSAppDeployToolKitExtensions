@@ -5,6 +5,7 @@
     "Description": "Jens Hoetger Scribble Papers 2.10.2",
     "InstallMethod": "Inno Setup",
     "UninstallMethod": "Inno Setup",
+    "ReinstallMode": "Reinstall",
     "TestedOn": "Win10 x64",
     "Dependencies": "",
     "LastChange": "22/09/2022",
@@ -21,7 +22,6 @@
     "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
     "UninstallOld": true,
     "Reboot": 0,
-    "MSIReinstallModeIsRepair": false,
     "UserPartOnInstallation": false,
     "UserPartOnUninstallation": false,
     "UserPartRevision": "2022,09,22,01",
@@ -41,13 +41,35 @@
 	  "InstFile": "SPSetup.exe",
     "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
     "AppendInstParaToDefaultParameters": false,
+    "AcceptedInstallExitCodes": "",
+    "AcceptedRepairExitCodes": "",
     "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
     "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
     "AppendUninstParaToDefaultParameters": false,
+    "AcceptedUninstallExitCodes": "",
     "AppKillProcesses": [
-      "ScPapers"
+      {
+        "Name": "ScPapers",
+        "Description": ""
+      }
     ],
     "BlockExecution": true,
+    "TestConditionsPreSetupSuccessCheck": {
+      "Install": {
+        "TotalSecondsToWaitFor": 30,
+        "ProcessOperator": "And",
+        "ProcessesToWaitFor": [],
+        "RegKeyOperator": "And",
+        "RegKeysToWaitFor": []
+      },
+      "Uninstall": {
+        "TotalSecondsToWaitFor": 30,
+        "ProcessOperator": "And",
+        "ProcessesToWaitFor": [],
+        "RegKeyOperator": "And",
+        "RegKeysToWaitFor": []
+      }
+    },
     "CommonDesktopShortcutsToDelete": [
 	  "Scribble Papers Programmdokumentation.lnk",
 	  "Scribble Papers 2022.lnk"

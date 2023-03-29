@@ -87,19 +87,19 @@ function Add-NxtContent {
 					Path = $Path
 				}
 				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
-					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
 				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
 				}
 				ElseIf ($intEncoding -eq "UTF8withBom") {
 					[bool]$noBOMDetected = $false
-					$intEncoding = "UTF8"
+					[string]$intEncoding = "UTF8"
 				}
 			}
 			catch {
-				$intEncoding = "UTF8"
+				[string]$intEncoding = "UTF8"
 			}
 		}
 		try {
@@ -108,7 +108,7 @@ function Add-NxtContent {
 				Value = $Value
 			}
 			if (![string]::IsNullOrEmpty($intEncoding)) {
-				$contentParams['Encoding'] = $intEncoding 
+				[string]$contentParams['Encoding'] = $intEncoding 
 			}
 			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
 				[System.IO.File]::AppendAllLines($Path, $Content)
@@ -432,26 +432,26 @@ function Compare-NxtVersion {
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($DetectedVersion)){
-			$DetectedVersion = "0"
+			[string]$DetectedVersion = "0"
 		}
 		try {
 			[scriptblock]$parseVersion = { param($version) 	
 				[int[]]$result = 0, 0, 0, 0
-				$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
-				for ($i = 0; $i -lt $versionParts.count; $i++) {
+				[System.Array]$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
+				for ([int]$i = 0; $i -lt $versionParts.count; $i++) {
 					[int]$versionPartValue = 0
-					$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
+					[System.Object]$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
 					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo, bool]] { param($x) [System.Char]::IsDigit($x.Value) })) {
-						$versionPartValue = [int]::Parse($pair.Key)
+						[int]$versionPartValue = [int]::Parse($pair.Key)
 					}
 					else {
-						$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
+						[PSADTNXT.VersionPartInfo]$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
 						if ($null -ne $value -and [System.Char]::IsLetter($value.Value)) {
 							#Important for compare (An upper 'A'==65 char must have the value 10) 
-							$versionPartValue = $value.AsciiValue - 55
+							[int]$versionPartValue = $value.AsciiValue - 55
 						}
 					}
-					$result[$i] = $versionPartValue
+					[int]$result[$i] = $versionPartValue
 				}
 				Write-Output (New-Object System.Version -ArgumentList $result[0], $result[1], $result[2], $result[3])
 				return }.GetNewClosure()
@@ -535,7 +535,7 @@ function Complete-NxtPackageInstallation {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-	[string]$global:installPhase = 'Complete-NxtPackageInstallation'
+	[string]$script:installPhase = 'Complete-NxtPackageInstallation'
 
 	## <Perform Complete-NxtPackageInstallation tasks here>
 
@@ -578,7 +578,7 @@ function Complete-NxtPackageInstallation {
 		Write-Log -Message "Hiding uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$thisUninstallKeyToHideIs64Bit], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
 		[array]$installedAppResults = Get-NxtInstalledApplication @hideNxtParams | Where-Object Is64BitApplication -eq $thisUninstallKeyToHideIs64Bit
 		if ($installedAppResults.Count -eq 1){
-			[string]$wowEntry = ""
+			[string]$wowEntry = [string]::Empty
 			if ($false -eq $thisUninstallKeyToHideIs64Bit -and $true -eq $Is64Bit) {
 				[string]$wowEntry = "\Wow6432Node"
 			}
@@ -595,10 +595,11 @@ function Complete-NxtPackageInstallation {
 	If ($true -eq $UserPartOnInstallation) {
 		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
-		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\neo42-Userpart\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
 	}
 }
@@ -642,7 +643,7 @@ function Complete-NxtPackageUninstallation {
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision
 	)
-	[string]$global:installPhase = 'Complete-NxtPackageUninstallation'
+	[string]$script:installPhase = 'Complete-NxtPackageUninstallation'
 
 	## <Perform Complete-NxtPackageUninstallation tasks here>
 
@@ -650,10 +651,11 @@ function Complete-NxtPackageUninstallation {
 	Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 	If ($true -eq $UserPartOnUninstallation) {
 		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
-		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*.*" -Destination "$App\neo42-Userpart\SupportFiles"
+		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\neo42-Userpart\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
 	}
 }
@@ -716,7 +718,7 @@ function Copy-NxtDesktopShortcuts {
 #endregion
 #region Function Execute-NxtBitRockInstaller
 function Execute-NxtBitRockInstaller {
-    <#
+	<#
 	.SYNOPSIS
 		Executes the following actions for BitRock Installer installations: install (with UninstallKey AND installation file), uninstall (with UninstallKey).
 	.DESCRIPTION
@@ -750,6 +752,8 @@ function Execute-NxtBitRockInstaller {
 		Uninstall default is: "--mode unattended".
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER AcceptedExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER XmlConfigNxtBitRockInstaller
@@ -803,6 +807,10 @@ function Execute-NxtBitRockInstaller {
         [ValidateNotNullorEmpty()]
         [switch]
 		$PassThru = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$AcceptedExitCodes,
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [boolean]
@@ -823,20 +831,20 @@ function Execute-NxtBitRockInstaller {
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
-    Process {
+	Process {
 
-        [string]$bitRockInstallerUninstallKey = $UninstallKey
+		[string]$bitRockInstallerUninstallKey = $UninstallKey
 		[bool]$bitRockInstallerUninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
 		[bool]$bitRockInstallerUninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
 		[array]$bitRockInstallerDisplayNamesToExclude = $DisplayNamesToExclude
    
-        switch ($Action) {
-            'Install' {
-                [string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
+		switch ($Action) {
+			'Install' {
+				[string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
 
-        		## If the Setup File is in the Files directory, set the full path during an installation
+				## If the Setup File is in the Files directory, set the full path during an installation
 				If (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $Path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
 					[string]$bitRockInstallerSetupPath = Join-Path -Path $DirFiles -ChildPath $Path
 				}
@@ -864,13 +872,13 @@ function Execute-NxtBitRockInstaller {
                 }
                 [string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
     
-                ## check for and remove quotation marks around the uninstall string
-                if ($bitRockInstallerUninstallString.StartsWith('"')) {
-                    [string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(1, $bitRockInstallerUninstallString.IndexOf('"', 1) - 1)
-                }
-                else {
-                    [string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(0, $bitRockInstallerUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
-                }
+				## check for and remove quotation marks around the uninstall string
+				if ($bitRockInstallerUninstallString.StartsWith('"')) {
+					[string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(1, $bitRockInstallerUninstallString.IndexOf('"', 1) - 1)
+				}
+				else {
+					[string]$bitRockInstallerSetupPath = $bitRockInstallerUninstallString.Substring(0, $bitRockInstallerUninstallString.IndexOf('.exe', [System.StringComparison]::CurrentCultureIgnoreCase) + 4)
+				}
 
 				## Get parent folder and filename of the uninstallation file
 				[string]$uninsFolder = split-path $bitRockInstallerSetupPath -Parent
@@ -884,50 +892,53 @@ function Execute-NxtBitRockInstaller {
 
 				## If $bitRockInstallerSetupPath is still unexistend, write Error to log and abort
 				if (![System.IO.File]::Exists($bitRockInstallerSetupPath)) {
-                    Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
+					Write-Log -Message "Uninstallation file could not be found nor restored." -Severity 3 -Source ${CmdletName}
 
-                    if ($ContinueOnError) {
+					if ($ContinueOnError) {
 						## Uninstallation without uninstallation file is impossible --> Abort the function without error
-                        return
-                    }
-                    else {
-                        throw "Uninstallation file could not be found nor restored."
-                    }
-                }
+						return
+					}
+					else {
+						throw "Uninstallation file could not be found nor restored."
+					}
+				}
 
-            }
-        }
+			}
+		}
     
-        [string]$argsBitRockInstaller = $bitRockInstallerDefaultParams
+		[string]$argsBitRockInstaller = $bitRockInstallerDefaultParams
     
-        ## Replace default parameters if specified.
-        If ($Parameters) {
-            $argsBitRockInstaller = $Parameters
-        }
-        ## Append parameters to default parameters if specified.
-        If ($AddParameters) {
-            $argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
-        }
+		## Replace default parameters if specified.
+		If ($Parameters) {
+			[string]$argsBitRockInstaller = $Parameters
+		}
+		## Append parameters to default parameters if specified.
+		If ($AddParameters) {
+			[string]$argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
+		}
  
-        [hashtable]$ExecuteProcessSplat = @{
-            Path             = $bitRockInstallerSetupPath
-            Parameters       = $argsBitRockInstaller
-            WindowStyle      = 'Normal'
-        }
+		[hashtable]$ExecuteProcessSplat = @{
+			Path        = $bitRockInstallerSetupPath
+			Parameters  = $argsBitRockInstaller
+			WindowStyle = 'Normal'
+		}
         
-        If ($ContinueOnError) {
-            $ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
-        }
-        If ($PassThru) {
-            $ExecuteProcessSplat.Add('PassThru', $PassThru)
-        }
+		If ($ContinueOnError) {
+			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+		}
+		If ($PassThru) {
+			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+		}
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+		}
     
-        If ($PassThru) {
-            [psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
-        }
-        Else {
-            Execute-Process @ExecuteProcessSplat
-        }
+		If ($PassThru) {
+			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+		}
+		Else {
+			Execute-Process @ExecuteProcessSplat
+		}
 
 		if ($Action -eq 'Uninstall') {
 			## Wait until all uninstallation processes terminated
@@ -943,8 +954,8 @@ function Execute-NxtBitRockInstaller {
 			Write-Log -Message "Uninstallation process finished." -Source ${CmdletName}
 		}
     
-        ## Update the desktop (in case of changed or added enviroment variables)
-        Update-Desktop
+		## Update the desktop (in case of changed or added enviroment variables)
+		Update-Desktop
 
 		## Copy uninstallation file from $uninsFolder to $configNxtBitRockInstallerUninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
@@ -979,11 +990,11 @@ function Execute-NxtBitRockInstaller {
 				}
 			}
 		}
-    }
-    End {
+	}
+	End {
 		If ($PassThru) {
-            Write-Output -InputObject $ExecuteResults
-        }
+			Write-Output -InputObject $ExecuteResults
+		}
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
@@ -1034,6 +1045,8 @@ function Execute-NxtInnoSetup {
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER AcceptedExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER DeploymentTimestamp
@@ -1097,6 +1110,10 @@ function Execute-NxtInnoSetup {
 		$PassThru = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
+		[string]
+        $AcceptedExitCodes,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[boolean]
 		$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
@@ -1111,7 +1128,6 @@ function Execute-NxtInnoSetup {
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
-		
 		[string]$configNxtInnoSetupInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_InstallParams)
 		[string]$configNxtInnoSetupUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_UninstallParams)
 		[string]$configNxtInnoSetupLogPath = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtInnoSetup.NxtInnoSetup_LogPath)
@@ -1204,16 +1220,16 @@ function Execute-NxtInnoSetup {
     
 		## Replace default parameters if specified.
 		If ($Parameters) {
-			$argsInnoSetup = $Parameters
+			[string]$argsInnoSetup = $Parameters
 		}
 		## Append parameters to default parameters if specified.
 		If ($AddParameters) {
-			$argsInnoSetup = "$argsInnoSetup $AddParameters"
+			[string]$argsInnoSetup = "$argsInnoSetup $AddParameters"
 		}
 
 		## MergeTasks if parameters were not replaced
 		if ((-not($Parameters)) -and (-not([string]::IsNullOrWhiteSpace($MergeTasks)))) {
-			$argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
+			[string]$argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
 		}
     
 		[string]$fullLogPath = $null
@@ -1233,18 +1249,18 @@ function Execute-NxtInnoSetup {
 
 		## Append file extension if necessary
 		if (($LogFileExtension -ne '.txt') -and ($LogFileExtension -ne '.log')) {
-			$Log = $Log + '.log'
+			[string]$Log = $Log + '.log'
 		}
 
 		## Check, if $Log is a full path
 		if (-not($Log.Contains('\'))) {
-			$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
+			[string]$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
 		}
 		else {
-			$fullLogPath = $Log
+			[string]$fullLogPath = $Log
 		}
 
-		$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
+		[string]$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
     
 		[hashtable]$ExecuteProcessSplat = @{
 			Path        = $innoSetupPath
@@ -1258,7 +1274,10 @@ function Execute-NxtInnoSetup {
 		If ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
 		}
-    
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+		}
+ 
 		If ($PassThru) {
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
 		}
@@ -1365,6 +1384,8 @@ function Execute-NxtMSI {
 		Returns ExitCode, STDOut, and STDErr output from the process.
 	.PARAMETER IgnoreExitCodes
 		List the exit codes to ignore or * to ignore all exit codes.
+	.PARAMETER AcceptedExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER PriorityClass	
 		Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
 	.PARAMETER ExitOnProcessFailure
@@ -1450,6 +1471,9 @@ function Execute-NxtMSI {
 		[switch]$PassThru = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
+		[string]$AcceptedExitCodes,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[string]$IgnoreExitCodes,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
@@ -1487,7 +1511,7 @@ function Execute-NxtMSI {
 			"ConfigMSILogDir"
 		)
 		foreach ($functionParametersWithDefault in $functionParametersWithDefaults) {
-			$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
+			[PSObject]$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
 		}
 		[array]$functionParametersToBeRemoved = (
 			"Log",
@@ -1528,6 +1552,9 @@ function Execute-NxtMSI {
 		if ([string]::IsNullOrEmpty($AddParameters)) {
 			$null = $PSBoundParameters.Remove('AddParameters')
 		}
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
+		}
 		if (![string]::IsNullOrEmpty($Log)) {
 			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
 			$PSBoundParameters.add("LogName", $msiLogName )
@@ -1535,9 +1562,14 @@ function Execute-NxtMSI {
 		Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
 		if ([System.IO.Path]::IsPathRooted($Log)) {
-			$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
+			[string]$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
 			[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
-			Move-NxtItem $logPath -Destination $Log
+			if (Test-Path -Path $logPath) {
+				Move-NxtItem $logPath -Destination $Log -Force
+			}
+			else {
+				Write-Log -Message "MSI log [$logPath] not found. Skipped moving it to [$Log]." -Severity 2 -Source ${CmdletName}
+			}
 		}
 	}
 	End {
@@ -1584,6 +1616,8 @@ function Execute-NxtNullsoft {
 		Uninstall default is: "/AllUsers /S".
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process.
+	.PARAMETER AcceptedExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER XmlConfigNxtNullsoft
@@ -1637,6 +1671,10 @@ function Execute-NxtNullsoft {
 		[ValidateNotNullorEmpty()]
 		[switch]
 		$PassThru = $false,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
 		[boolean]
 		$ContinueOnError = $false,
@@ -1734,11 +1772,11 @@ function Execute-NxtNullsoft {
     
 		## Replace default parameters if specified.
 		If ($Parameters) {
-			$argsnullsoft = $Parameters
+			[string]$argsnullsoft = $Parameters
 		}
 		## Append parameters to default parameters if specified.
 		If ($AddParameters) {
-			$argsnullsoft = "$argsnullsoft $AddParameters"
+			[string]$argsnullsoft = "$argsnullsoft $AddParameters"
 		}
  
 		[hashtable]$ExecuteProcessSplat = @{
@@ -1752,6 +1790,9 @@ function Execute-NxtNullsoft {
 		}
 		If ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+		}
+		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
     
 		If ($PassThru) {
@@ -1833,8 +1874,11 @@ function Exit-NxtAbortReboot {
 		The Message, that will apear in the package log and the error entry in the the registry.
 		Defaults to "Uninstall of $installTitle requires a reboot before proceeding with the installation. AbortReboot!"
 	.PARAMETER RebootExitCode
-		The exit code to trigger a system reboot.
+		The value, the script returns to the deployment system to trigger a system reboot and that will be written as LastExitCode to the error entry in the the registry.
 		Defaults to "3010".
+	.PARAMETER PackageStatus
+		The value, that will be written as PackageStatus to the error entry in the the registry.
+		Defaults to "AbortReboot".
 	.PARAMETER EmpirumMachineKey
 		Path to the Empirum package machine key under "HKLM\Software\".
 		Defaults to "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion".
@@ -1846,35 +1890,34 @@ function Exit-NxtAbortReboot {
 	.EXAMPLE
 		Exit-NxtAbortReboot -PackageMachineKey "OurPackages\{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -PackageUninstallKey "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
 	.EXAMPLE
-		Exit-NxtAbortReboot -RebootMessage "This package requires a system reboot..." -RebootExitCode "3010"
+		Exit-NxtAbortReboot -RebootMessage "This package requires a system reboot..." -RebootExitCode "1641" -PackageStatus "RebootPending"
 	.EXAMPLE
 		Exit-NxtAbortReboot -EmpirumMachineKey "OurPackages\Microsoft\Office365\16.0" -EmpirumUninstallKey "OurPackage Microsoft Office365 16.0"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param(
-		[Parameter(Mandatory=$false)]
-		[ValidateNotNullorEmpty()]
-		[String]$PackageMachineKey = "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)",
-		
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[String]$PackageUninstallKey = $global:PackageConfig.PackageFamilyGUID,
-		
+		[string]
+		$PackageMachineKey = "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)",
 		[Parameter(Mandatory = $false)]
-		[String]$RebootMessage = "Uninstall of '$installTitle' requires a reboot before proceeding with the installation. AbortReboot!",
-		
+		[string]
+		$PackageUninstallKey = $global:PackageConfig.PackageFamilyGUID,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[int32]$RebootExitCode = 3010,
-		
+		[string]
+		$RebootMessage = "'$installTitle' requires a reboot before proceeding with the installation. AbortReboot!",
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[String]$EmpirumMachineKey = "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion",
-		
+		[int32]
+		$RebootExitCode = 3010,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[String]$EmpirumUninstallKey = $global:PackageConfig.UninstallDisplayName
+		[string]
+		$PackageStatus = "AbortReboot",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EmpirumMachineKey = "$($global:PackageConfig.RegPackagesKey)\$AppVendor\$AppName\$appVersion",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EmpirumUninstallKey = $global:PackageConfig.UninstallDisplayName
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1892,7 +1935,7 @@ function Exit-NxtAbortReboot {
 			If (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") {
 				Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
 			}
-			Exit-NxtScriptWithError -ErrorMessage $RebootMessage -MainExitCode $RebootExitCode
+			Exit-NxtScriptWithError -ErrorMessage $RebootMessage -MainExitCode $RebootExitCode -PackageStatus $PackageStatus
 		}
 		Catch {
 			Write-Log -Message "Failed to execute AbortReboot. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -1938,8 +1981,10 @@ function Exit-NxtScriptWithError {
 		Specifies the package architecture ("x86", "x64" or "*").
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER MainExitCode
-		The Exitcode that should be written to Registry.
-		Defaults to the variable $mainExitCode.
+		The value, the script returns to the deployment system and that will be written as LastExitCode to the error entry in the the registry.
+	.PARAMETER PackageStatus
+		The value, that will be written as PackageStatus to the error entry in the the registry.
+		Defaults to "Failure".
 	.PARAMETER AppRevision
 		Specifies the Application Revision used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -1970,7 +2015,7 @@ function Exit-NxtScriptWithError {
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
-		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001
+		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "Script execution failed!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	.NOTES
@@ -2009,8 +2054,12 @@ function Exit-NxtScriptWithError {
 		[string]
 		$AppArch = $global:PackageConfig.AppArch,
 		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
 		[int32]
 		$MainExitCode,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageStatus = "Failure",
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AppRevision = $global:PackageConfig.AppRevision,
@@ -2055,8 +2104,9 @@ function Exit-NxtScriptWithError {
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorTimeStamp' -Value $(Get-Date -format "yyyy-MM-dd_HH-mm-ss")
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorMessage' -Value $ErrorMessage
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ErrorMessagePSADT' -Value $ErrorMessagePSADT
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'LastReturnCode' -Value $MainExitCode
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'LastExitCode' -Value $MainExitCode
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'PackageArchitecture' -Value $AppArch
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'PackageStatus' -Value $PackageStatus
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'ProductName' -Value $AppName
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'Revision' -Value $AppRevision
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'SrcPath' -Value $ScriptParentPath
@@ -2071,7 +2121,10 @@ function Exit-NxtScriptWithError {
 		Catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
-		Exit-Script -ExitCode $mainExitCode
+		if ($MainExitCode -eq 0) {
+			[int32]$MainExitCode = 70000
+		}
+		Exit-Script -ExitCode $MainExitCode
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -2096,6 +2149,7 @@ function Expand-NxtPackageConfig {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
+		[PSObject]
 		$PackageConfig = $global:PackageConfig
 	)
 		
@@ -2105,28 +2159,28 @@ function Expand-NxtPackageConfig {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
-		$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
-		$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
-		$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstLogFile)
-		$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstLogFile)
-		$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstFile)
-		$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstPara)
-		$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstFile)
-		$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstPara)
-		$global:PackageConfig.DisplayNamesToExcludeFromAppSearches = foreach ($displayNameToExcludeFromAppSearches in $global:PackageConfig.DisplayNamesToExcludeFromAppSearches) {
+		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
+		[string]$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
+		[string]$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
+		[string]$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstLogFile)
+		[string]$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstLogFile)
+		[string]$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstFile)
+		[string]$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstPara)
+		[string]$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstFile)
+		[string]$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstPara)
+		[array]$global:PackageConfig.DisplayNamesToExcludeFromAppSearches = foreach ($displayNameToExcludeFromAppSearches in $global:PackageConfig.DisplayNamesToExcludeFromAppSearches) {
 			$ExecutionContext.InvokeCommand.ExpandString($displayNameToExcludeFromAppSearches)
 		}
 		foreach ($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
-			$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
+			[string]$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
 			if($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
-				$uninstallKeyToHide.KeyNameIsDisplayName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameIsDisplayName)
+				[string]$uninstallKeyToHide.KeyNameIsDisplayName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameIsDisplayName)
 			}
 			if($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
-				$uninstallKeyToHide.KeyNameContainsWildCards = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameContainsWildCards)
+				[string]$uninstallKeyToHide.KeyNameContainsWildCards = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameContainsWildCards)
 			}
 			if($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.DisplayNamesToExcludeFromHiding)) {
-				$uninstallKeyToHide.DisplayNamesToExcludeFromHiding = foreach($displayNameToExcludeFromHiding in $uninstallKeyToHide.DisplayNamesToExcludeFromHiding) {
+				[string]$uninstallKeyToHide.DisplayNamesToExcludeFromHiding = foreach($displayNameToExcludeFromHiding in $uninstallKeyToHide.DisplayNamesToExcludeFromHiding) {
 					$ExecutionContext.InvokeCommand.ExpandString($displayNameToExcludeFromHiding)
 				}
 			}
@@ -2168,7 +2222,7 @@ function Expand-NxtVariablesInFile {
             [string[]]$content = Get-Content -Path $Path
             [string]$fileEncoding = Get-NxtFileEncoding -Path $Path -DefaultEncoding Default
 
-            for ($i = 0; $i -lt $content.Length; $i++) {
+            for ([int]$i = 0; $i -lt $content.Length; $i++) {
                 [string]$line = $content[$i]
 
                 ## Replace PowerShell global variables in brackets
@@ -2188,9 +2242,9 @@ function Expand-NxtVariablesInFile {
 						[string]$globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
 					}
 
-                    $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
+                    [string]$line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
                 }
-				$globalVariableMatchesInBracket = $null
+				[PSObject]$globalVariableMatchesInBracket = $null
 
                 ## Replace PowerShell global variables
                 [PSObject]$globalVariableMatches = [regex]::Matches($line, '\$global:([A-Za-z_.][A-Za-z0-9_.\[\]]+)')
@@ -2200,11 +2254,11 @@ function Expand-NxtVariablesInFile {
                     ## Variables with properties and/or subproperties won't be found
                     if([string]::IsNullOrEmpty($globalVariableValue))
                     {
-                        $globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
+                        [PSObject]$globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
                     }
-                    $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
+                    [string]$line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
                 }
-				$globalVariableMatches = $null
+				[PSObject]$globalVariableMatches = $null
 
                 ## Replace PowerShell environment variables in brackets
                 [PSObject]$environmentMatchesInBracket = [regex]::Matches($line, '\$\(\$env:([A-Za-z_.][A-Za-z0-9_.]+)(\([^)]*\))?\)')
@@ -2218,9 +2272,9 @@ function Expand-NxtVariablesInFile {
                     
                     [string]$envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
 
-                    $line = $line.Replace($expressionMatch.Value, $envVariableValue)
+                    [string]$line = $line.Replace($expressionMatch.Value, $envVariableValue)
                 }
-				$environmentMatchesInBracket = $null
+				[PSObject]$environmentMatchesInBracket = $null
 
                 ## Replace PowerShell environment variables
                 [PSObject]$environmentMatches = [regex]::Matches($line, '\$env:([A-Za-z_.][A-Za-z0-9_.]+)(\([^)]*\))?')
@@ -2233,9 +2287,9 @@ function Expand-NxtVariablesInFile {
 					}
                     [string]$envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
 
-                    $line = $line.Replace($expressionMatch.Value, $envVariableValue)
+                    [string]$line = $line.Replace($expressionMatch.Value, $envVariableValue)
                 }
-				$environmentMatches = $null
+				[PSObject]$environmentMatches = $null
 
                 ## Replace PowerShell variable in brackets with its value
                 [PSObject]$variableMatchesInBrackets = [regex]::Matches($line, '\$\(\$[A-Za-z_.][A-Za-z0-9_.\[\]]+\)')
@@ -2255,9 +2309,9 @@ function Expand-NxtVariablesInFile {
 						[string]$variableValue = (Get-Variable -Name $cleanedExpression -ValueOnly)
 					}
 
-                    $line = $line.Replace($expressionMatch.Value, $variableValue)
+                    [string]$line = $line.Replace($expressionMatch.Value, $variableValue)
                 }
-				$variableMatchesInBrackets = $null
+				[PSObject]$variableMatchesInBrackets = $null
 
                 ## Replace PowerShell variable with its value
                 [PSObject]$variableMatches = [regex]::Matches($line, '\$[A-Za-z_.][A-Za-z0-9_.\[\]]+')
@@ -2276,14 +2330,14 @@ function Expand-NxtVariablesInFile {
 						[string]$variableValue = (Get-Variable -Name $variableName -ValueOnly)
 					}
                     
-                    $line = $line.Replace($match.Value, $variableValue)
+                    [string]$line = $line.Replace($match.Value, $variableValue)
                 }
-				$variableMatches = $null
+				[PSObject]$variableMatches = $null
 
                 ## Replace common Windows environment variables
-                $line = [System.Environment]::ExpandEnvironmentVariables($line)
+                [string]$line = [System.Environment]::ExpandEnvironmentVariables($line)
 
-                $content[$i] = $line
+                [string]$content[$i] = $line
             }
 
             Set-Content -Path $Path -Value $content -Encoding $fileEncoding
@@ -2319,6 +2373,7 @@ function Format-NxtPackageSpecificVariables {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
+		[PSObject]
 		$PackageConfig = $global:PackageConfig
 	)
 		
@@ -2330,8 +2385,8 @@ function Format-NxtPackageSpecificVariables {
 	Process {
 		
 		## Get String from object and Expand String if requested
-		$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[string],[string]]"
-		foreach($packageSpecificVariable in $global:PackageConfig.PackageSpecificVariablesRaw){
+		[System.Collections.Generic.Dictionary[string,string]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[string,string]"
+		foreach($packageSpecificVariable in $PackageConfig.PackageSpecificVariablesRaw){
 			if ($packageSpecificVariable.ExpandVariables) {
 				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name,$ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
 			}else{
@@ -2446,7 +2501,7 @@ function Get-NxtComputerManufacturer {
 	Process {
 		[string]$result = [string]::Empty
 		try {
-			$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Manufacturer).Manufacturer
+			[string]$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Manufacturer).Manufacturer
 		}
 		catch {
 			Write-Log -Message "Failed to get computer manufacturer. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -2480,7 +2535,7 @@ function Get-NxtComputerModel {
 	Process {
 		[string]$result = [string]::Empty
 		try {
-			$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Model).Model
+			[string]$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Model).Model
 		}
 		catch {
 			Write-Log -Message "Failed to get computer model. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -2623,9 +2678,9 @@ function Get-NxtFileEncoding {
 	}
 	Process {
 		try {
-			$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
+			[string]$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
 			if ([System.String]::IsNullOrEmpty($intEncoding)) {
-				$intEncoding = $DefaultEncoding
+				[string]$intEncoding = $DefaultEncoding
 			}
 			Write-Output $intEncoding
 			return
@@ -2666,9 +2721,9 @@ function Get-NxtFileVersion {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[version]$result = $null
+		[string]$result = $null
 		try {
-			$result = (New-Object -TypeName System.IO.FileInfo -ArgumentList $FilePath).VersionInfo.FileVersion
+			[string]$result = (New-Object -TypeName System.IO.FileInfo -ArgumentList $FilePath).VersionInfo.FileVersion
 		}
 		catch {
 			Write-Log -Message "Failed to get version from file '$FilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -2715,7 +2770,7 @@ function Get-NxtFolderSize {
 		[long]$result = 0
 		try {
 			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
-			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
+			[long]$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
 			[long]$folderSize = [math]::round(($result/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
@@ -2978,7 +3033,7 @@ function Get-NxtPackageConfig {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
+		[PSObject]$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -3017,7 +3072,7 @@ function Get-NxtParentProcess {
 	}
 	Process {
 		[System.Management.ManagementBaseObject]$process = Get-WmiObject Win32_Process -filter "ProcessID ='$ID'"
-		$parentProcess = Get-WmiObject Win32_Process -filter "ProcessID ='$($process.ParentProcessId)'"
+		[System.Management.ManagementBaseObject]$parentProcess = Get-WmiObject Win32_Process -filter "ProcessID ='$($process.ParentProcessId)'"
 		Write-Output $parentProcess
 		if ($Recurse -and ![string]::IsNullOrEmpty($parentProcess)) {
 			Get-NxtParentProcess -Id ($process.ParentProcessId) -Recurse
@@ -3055,7 +3110,7 @@ function Get-NxtProcessEnvironmentVariable {
 	Process {
 		[string]$result = $null
 		try {
-			$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Process)
+			[string]$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Process)
 		}
 		catch {
 			Write-Log -Message "Failed to get the process environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -3098,7 +3153,7 @@ function Get-NxtProcessName {
 	Process {
 		[string]$result = [string]::Empty
 		try {
-			$result = (Get-Process -Id $ProcessId).Name
+			[string]$result = (Get-Process -Id $ProcessId).Name
 		}
 		catch {
 			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -3153,31 +3208,30 @@ function Get-NxtProcessorArchiteW6432 {
 #region Function Get-NxtRegisterOnly
 function Get-NxtRegisterOnly {
 	<#
-.SYNOPSIS
-	Detects if the target application is already installed
-.DESCRIPTION
-	Uses registry values to detect the application in target or higher versions
-.PARAMETER PackageFamilyGUID
-	Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER SoftMigration
-	Specifies if a Software should be registered only if it already exists through a different installation.
-	Defaults to the corresponding value from the Setup.cfg.
-.PARAMETER DisplayVersion
-	Specifies the DisplayVersion of the Software Package.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallKey
-	Specifies the original UninstallKey set by the Installer in this Package.
-	Defaults to the corresponding value from the PackageConfig object.
-.Parameter DetectedDisplayVersion
-	Specifies the Detected Displayversion of an installed predecessor App Version.
-	Defaults to the corresponding Variable set in the App Global Variables.
-.EXAMPLE
-	Get-NxtRegisterOnly
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
-
+	.SYNOPSIS
+		Detects if the target application is already installed
+	.DESCRIPTION
+		Uses registry values to detect the application in target or higher versions
+	.PARAMETER PackageFamilyGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER SoftMigration
+		Specifies if a Software should be registered only if it already exists through a different installation.
+		Defaults to the corresponding value from the Setup.cfg.
+	.PARAMETER DisplayVersion
+		Specifies the DisplayVersion of the Software Package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKey
+		Specifies the original UninstallKey set by the Installer in this Package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.Parameter DetectedDisplayVersion
+		Specifies the Detected Displayversion of an installed predecessor App Version.
+		Defaults to the corresponding Variable set in the App Global Variables.
+	.EXAMPLE
+		Get-NxtRegisterOnly
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
@@ -3199,20 +3253,20 @@ function Get-NxtRegisterOnly {
 	)
 	If ($true -eq $SoftMigration) {
 		## Perform soft migration 
-
-		[string]$installPhase = 'Soft-Migration'
-		if ([string]::IsNullOrEmpty($DisplayVersion)){
-			Write-Log -Message 'DisplayVersion is $null or empty. Set SoftMigration to $false.'
+		[string]$script:installPhase = 'Soft-Migration'
+		if ([string]::IsNullOrEmpty($DisplayVersion)) {
+			Write-Log -Message 'DisplayVersion is $null or empty. SoftMigration not possible.'
 			return $false
 		}
-		if ([string]::IsNullOrEmpty($DetectedDisplayVersion)){
-			Write-Log -Message 'DetectedDisplayVersion is $null or empty. Set SoftMigration to $false.'
+		if ([string]::IsNullOrEmpty($DetectedDisplayVersion)) {
+			Write-Log -Message 'DetectedDisplayVersion is $null or empty. SoftMigration not possible.'
 			return $false
 		}
 		If (
-			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
-			) {
-			Write-Log -Message 'Application is already present. Set SoftMigration to $true.'
+			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and
+			-not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
+		) {
+			Write-Log -Message 'Application is already present. Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...'
 			return $true
 		}
 	}
@@ -3248,7 +3302,7 @@ function Get-NxtServiceState {
 	}
 	Process {
 		try {
-			$service = Get-WmiObject -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
+			[System.Management.ManagementBaseObject]$service = Get-WmiObject -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
 			if ($service) {
 				Write-Output $service.State
 			}
@@ -3341,7 +3395,7 @@ function Get-NxtSystemEnvironmentVariable {
 	Process {
 		[string]$result = $null
 		try {
-			$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Machine)
+			[string]$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Machine)
 		}
 		catch {
 			Write-Log -Message "Failed to get the system environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -3548,19 +3602,19 @@ function Import-NxtIniFile {
 	Process {
 		try {
 			[hashtable]$ini = @{}
-		$section = 'default'
-		switch -Regex -File $Path {
-			'^\[(.+)\]$' {
-				$section = $matches[1]
-				if (!$ini.ContainsKey($section)) {
-					$ini[$section] = @{}
+			[string]$section = 'default'
+			switch -Regex -File $Path {
+				'^\[(.+)\]$' {
+					[string]$section = $matches[1]
+					if (!$ini.ContainsKey($section)) {
+						[hashtable]$ini[$section] = @{}
+					}
+				}
+				'^([^\s]+)\s*=\s*(.+)$' {
+					[string]$ini[$section][$matches[1]] = $matches[2]
 				}
 			}
-			'^([^\s]+)\s*=\s*(.+)$' {
-				$ini[$section][$matches[1]] = $matches[2]
-			}
-		}
-		write-output $ini
+			write-output $ini
 		}
 		catch {
 			Write-Log -Message "Failed to read ini file [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -3669,9 +3723,27 @@ function Install-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedInstallExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Install-NxtApplication
 	.LINK
@@ -3704,9 +3776,27 @@ function Install-NxtApplication {
 		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstallMethod = $global:PackageConfig.InstallMethod
+		$AcceptedInstallExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallMethod = $global:PackageConfig.InstallMethod,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckRegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor
 	)
-	[string]$global:installPhase = 'Installation'
+	[string]$script:installPhase = 'Installation'
 
 	[hashtable]$executeNxtParams = @{
 		Action							= 'Install'
@@ -3717,14 +3807,17 @@ function Install-NxtApplication {
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendInstParaToDefaultParameters) {
-			$executeNxtParams["AddParameters"] = "$InstPara"
+			[string]$executeNxtParams["AddParameters"] = "$InstPara"
 		}
 		else {
-			$executeNxtParams["Parameters"] = "$InstPara"
+			[string]$executeNxtParams["Parameters"] = "$InstPara"
 		}
 	}
+	if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
+		[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+	}
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
-		[string]$internalInstallerMethod = ""
+		[string]$internalInstallerMethod = [string]::Empty
 	}
 	else {
 		[string]$internalInstallerMethod = $InstallMethod
@@ -3744,20 +3837,24 @@ function Install-NxtApplication {
 			Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 		}
 		none {
-
+			Write-Log -Message "An installation method was NOT set. Skipping a default process execution." -Source ${CmdletName}
+			return $true
 		}
 		Default {
 			[hashtable]$executeParams = @{
 				Path	= "$InstFile"
 			}
 			if (![string]::IsNullOrEmpty($InstPara)) {
-				$executeParams["Parameters"] = "$InstPara"
+				[string]$executeParams["Parameters"] = "$InstPara"
+			}
+			if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+				[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
 			}
 			Execute-Process @executeParams
 		}
 	}
-	$InstallExitCode = $LastExitCode
-
+	[int]$InstallExitCode = $LastExitCode
+	## Delay for filehandle release etc. to occur.
 	Start-Sleep -Seconds 5
 
 	## Test for successfull installation (if UninstallKey value is set)
@@ -3765,8 +3862,14 @@ function Install-NxtApplication {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull installation via registry." -Source ${CmdletName}
 	}
 	else {
-		if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude)) {
-			Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+		if ( $true -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)
+		) {
+			if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude)) {
+				Exit-NxtScriptWithError -ErrorMessage "Installation of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+			}
+		}
+		else {
+			Exit-NxtScriptWithError -ErrorMessage "Installation RegistryAndProcessCondition of $appName failed. ErrorLevel: $InstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 		}
 	}
 
@@ -3779,11 +3882,15 @@ function Move-NxtItem {
 	.DESCRIPTION
 		Renames or moves a file or directory.
 	.EXAMPLE
-		Move-NxtItem -SourcePath C:\Temp\Sources\Installer.exe -DestinationPath C:\Temp\Sources\Installer_bak.exe
+		Move-NxtItem -Path C:\Temp\Sources\Installer.exe -Destination C:\Temp\Sources\Installer_bak.exe
 	.PARAMETER Path
 		Source Path of the File or Directory.
-	.PARAMETER DestinationPath
+	.PARAMETER Destination
 		Destination Path for the File or Directory.
+	.PARAMETER Force
+		Overwrite existing file.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
 	.OUTPUTS
 		none.
 	.LINK
@@ -3796,7 +3903,13 @@ function Move-NxtItem {
 		$Path,
 		[Parameter(Mandatory = $true)]
 		[String]
-		$DestinationPath
+		$Destination,
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$Force,
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [boolean]$ContinueOnError = $true
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3805,10 +3918,20 @@ function Move-NxtItem {
 	}
 	Process {
 		try {
-			Move-Item -Path $Path -Destination $DestinationPath
+			[array]$functionParametersToBeRemoved = (
+			"ContinueOnError"
+		)
+		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved){
+			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
+		}
+			Write-Log -Message "Move $path to $Destination." -Source ${cmdletName}
+			Move-Item @PSBoundParameters -ErrorAction Stop
 		}
 		catch {
-			Write-Log -Message "Failed to move $path to $DestinationPath. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to move $Path to $Destination. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			If (-not $ContinueOnError) {
+				Throw "Failed to move $Path to $Destination`: $($_.Exception.Message)"
+			}
 		}
 	}
 	End {
@@ -3922,8 +4045,11 @@ function Register-NxtPackage {
 		Specifies the Logname.
 		Defaults to $logname defined in the AppDeployToolkitMain.
 	.PARAMETER MainExitCode
-		The Exitcode that should be written to Registry.
+		The value, the script returns to the deployment system and that will be written as LastExitCode to the package entry in the the registry.
 		Defaults to the variable $mainExitCode.
+	.PARAMETER PackageStatus
+		The value, that will be written as PackageStatus to the package entry in the the registry.
+		Defaults to "Success".
 	.PARAMETER UninstallOld
 		Defines if the Setting "Uninstallold" is set.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -4009,6 +4135,9 @@ function Register-NxtPackage {
 		$MainExitCode = $mainExitCode,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$PackageStatus = "Success",
+		[Parameter(Mandatory = $false)]
+		[string]
 		$EnvArchitecture = $envArchitecture,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -4050,6 +4179,7 @@ function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'LastExitCode' -Value $MainExitCode
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'PackageArchitecture' -Value $AppArch
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'PackageStatus' -Value $PackageStatus
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductName' -Value $AppName
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'Revision' -Value $AppRevision
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'SrcPath' -Value $ScriptParentPath
@@ -4328,7 +4458,7 @@ function Remove-NxtLocalGroupMember {
 				if ([string]::IsNullOrEmpty($MemberName)) {
 					[int]$count = 0
 					foreach ($member in $group.psbase.Invoke("Members")) {
-						$class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
+						[string]$class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
 						if ($AllMember) {
 							$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
 							$count++
@@ -4505,54 +4635,121 @@ function Remove-NxtSystemEnvironmentVariable {
 #region Function Repair-NxtApplication
 function Repair-NxtApplication {
 	<#
-.SYNOPSIS
-	Defines the required steps to repair an MSI based application.
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER InstFile
-	Defines the path to the Installation File.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER InstPara
-	Defines the parameters which will be passed in the Installation Commandline.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER AppendInstParaToDefaultParameters
-	If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
-	If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
-	Defaults to the corresponding value from the PackageConfig object.
-.EXAMPLE
-	Repair-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Defines the required steps to repair an MSI based application.
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER UninstallKey
+		Either the applications uninstallregistrykey or the applications displayname, searched for in the regvalue "Displayname" below all uninstallkeys (e.g. "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" or "an application display name").
+		Using a displayname value requires to set the parameter -UninstallKeyIsDisplayName to $true.
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\" (basically this matches with the entry 'ProductCode' in property table inside of source msi file, therefore the InstFile is not provided as parameter for this function).
+	.PARAMETER UninstallKeyIsDisplayName
+		Determines if the value given as UninstallKey should be interpreted as a displayname.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RepairLogFile
+		Defines the path to the Logfile that should be used by the installer.
+		Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
+		Note: <ProductCode> will be retrieved from installed msi by registry with provided Uninstallkey automatically
+	.PARAMETER RepairPara
+		Defines the parameters which will be passed in the Repair Commandline.
+		Defaults to the value "InstPara" from the PackageConfig object.
+	.PARAMETER AppendRepairParaToDefaultParameters
+		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
+		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
+		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedRepairExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Repair-NxtApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstFile = $global:PackageConfig.InstFile,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$InstPara = $global:PackageConfig.InstPara,
+		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$AppendInstParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[AllowEmptyString()]
+		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+		[string]
+		$RepairLogFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RepairPara = $global:PackageConfig.InstPara,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes
 	)
-	[string]$global:installPhase = 'Repair-NxtApplication'
+	[string]$script:installPhase = 'Repair-NxtApplication'
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
-		Path   = "$InstFile"
+	}
+	if (![string]::IsNullOrEmpty($UninstallKey)) {
+		[string]$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
+	}
+	else {
+		Exit-NxtScriptWithError -ErrorMessage 'No repair function executable - missing value for parameter "UninstallKey"!' -ErrorMessagePSADT 'expected function parameter "UninstallKey" is empty' -MainExitCode $mainExitCode
+	}
+	if ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
+		Write-Log "Repair function could not run for provided UninstallKey=`"$UninstallKey`". The expected msi setup of the application seems not to be installed on system!" -severity 2
+		## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
+		return $true
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
-		if ($AppendInstParaToDefaultParameters) {
-			$executeNxtParams["AddParameters"] = "$InstPara"
+		if ($AppendRepairParaToDefaultParameters) {
+			[string]$executeNxtParams["AddParameters"] = "$RepairPara"
 		}
 		else {
-			$executeNxtParams["Parameters"] = "$InstPara"
+			[string]$executeNxtParams["Parameters"] = "$RepairPara"
 		}
 	}
-	## <Perform repair tasks here>
-	Execute-MSI @executeNxtParams -LogName "Repair.$InstFile.$($global:DeploymentTimestamp).log" -RepairFromSource $true
+	if (![string]::IsNullOrEmpty($AcceptedRepairExitCodes)) {
+		[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
+	}
+	if ([string]::IsNullOrEmpty($RepairLogFile)) {
+			## now set default path and name including retrieved ProductCode
+			[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
+	}
 
-	$RepairExitCode = $LastExitCode
+	## <Perform repair tasks here>
+	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
+	[int]$repairExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
+
+	## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
+	if ( (3010 -eq $repairExitCode) -or (1641 -eq $repairExitCode) ) {
+		[int]$RepairExitCode = 0
+	}
+
+	Start-Sleep -Seconds 5
+
+	if ( (0 -ne $repairExitCode) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+		Exit-NxtScriptWithError -ErrorMessage "Repair of $appName failed. ErrorLevel: $repairExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+	}
+
+	return $true
 }
 #endregion
 #region Function Set-NxtDetectedDisplayVersion
@@ -4987,71 +5184,107 @@ function Set-NxtSystemEnvironmentVariable {
 #region Function Show-NxtInstallationWelcome
 function Show-NxtInstallationWelcome {
 	<#
-.SYNOPSIS
-Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
-.DESCRIPTION
-Is only called in the Main function and should not be modified!
-To customize the script always use the "CustomXXXX" entry points.
-.Parameter IsInstall
-Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
-.PARAMETER DeferDays
-Specifies how long a user may defer an installation (will be ignored on uninstallation)
-Defaults to the corresponding value from the Setup.cfg.
-.PARAMETER AskKillProcessApps
-Specifies a list of Processnames which should be stopped for the (un)installation to start.
-For Example "WINWORD,EXCEL"
-Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER CloseAppsCountdown
-Countdown until the Apps will either be forcibly closed or the Installation will abort
-Defaults to the timeout value from the Setup.cfg.
-.PARAMETER ContinueType
-If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
-this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
-	ABORT:       After the timeout has expired, the installation will be abort 
-	CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
-Defaults to the timeout value from the Setup.cfg.
-.PARAMETER BlockExecution
-Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
-Defaults to the corresponding value from the PackageConfig object.
-.EXAMPLE
-Show-NxtInstallationWelcome
-.LINK
-https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.Parameter IsInstall
+		Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
+	.PARAMETER DeferDays
+		Specifies how long a user may defer an installation (will be ignored on uninstallation)
+		Defaults to the corresponding value from the Setup.cfg.
+	.PARAMETER AskKillProcessApps
+		Specifies a list of Processnames which should be stopped for the (un)installation to start.
+		For Example "WINWORD,EXCEL"
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER CloseAppsCountdown
+		Countdown until the Apps will either be forcibly closed or the Installation will abort
+		Defaults to the timeout value from the Setup.cfg.
+	.PARAMETER ContinueType
+		If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
+		this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
+			ABORT:       After the timeout has expired, the installation will be abort 
+			CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
+		Defaults to the timeout value from the Setup.cfg.
+	.PARAMETER BlockExecution
+		Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Show-NxtInstallationWelcome
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	param (
 		[Parameter(Mandatory = $true)]
 		[bool]
 		$IsInstall,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[int]
 		$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
 		[Parameter(Mandatory = $false)]
-		[String]
-		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses -join ","),
+		[array]
+		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses),
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet("ABORT", "CONTINUE")]
-		[String]
+		[string]
 		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$BlockExecution = $($global:PackageConfig.BlockExecution)
 	)
+	## To break the array references to the parent object we have to create new(copied) objects from the provided array.
+	[array]$AskKillProcessApps = $AskKillProcessApps | Select-Object *
 	## override $DeferDays with 0 in Case of Uninstall
-	if (!$isInstall) {
-		$DeferDays = 0
+	if (!$IsInstall) {
+		[int]$DeferDays = 0
 	}
-
-	if (![string]::IsNullOrEmpty($AskKillProcessApps)) {
-		switch ($ContinueType) {
-			"ABORT" {
-				Show-InstallationWelcome -CloseApps $AskKillProcessApps -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+	[string]$closeAppsList = $null
+	[string]$fileExtension = ".exe"
+	if ( $AskKillProcessApps.count -ne 0 ) {
+		foreach ( $processAppsItem in $AskKillProcessApps ) {
+			if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
+				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
+				Throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!"
 			}
-			"CONTINUE" {
-				Show-InstallationWelcome -CloseApps $AskKillProcessApps -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
-			}		
+			elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name) ) {				
+				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
+				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension","") -join ","
+				if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
+					Write-Log -Message "... no processes found." -Source ${cmdletName}
+				}
+				else {
+					Write-Log -Message "... found processes (with file extensions removed): $($processAppsItem.Name)" -Source ${cmdletName}
+				}
+				## be sure there is no description to add in case of process name with wildcards
+				[string]$processAppsItem.Description = [string]::Empty
+			}
+			else {
+				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
+				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$",""
+				if ( ![String]::IsNullOrEmpty($processAppsItem.Description) ) {
+					[string]$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
+				}
+			}
+		}
+		[string]$closeAppsList = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
+		if ( !([String]::IsNullOrEmpty($closeAppsList)) ) {
+			switch ($ContinueType) {
+				"ABORT" {
+					Show-InstallationWelcome -CloseApps $closeAppsList -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+				}
+				"CONTINUE" {
+					Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
+				}		
+			}
+			if ( ($true -eq $BlockExecution) -and ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\AppDeployToolkitConfig.xml")) ) {
+				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
+				Copy-File -Path "$scriptParentPath\setup.ico" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
+				Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\AppDeployToolkitConfig.xml" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
+			}
 		}
 	}
 }
@@ -5238,14 +5471,14 @@ function Test-NxtProcessExists {
 	}
 	Process {
 		try {
-			[string]$wqlString = ""
+			[string]$wqlString = [string]::Empty
 			if ($IsWql) {
-				$wqlString = $ProcessName
+				[string]$wqlString = $ProcessName
 			}
 			else {
-				$wqlString = "Name LIKE '$($ProcessName)'"
+				[string]$wqlString = "Name LIKE '$($ProcessName.Replace("*","%"))'"
 			}
-			$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
+			[System.Management.ManagementBaseObject]$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
 			if ($processes) {
 				Write-Output $true
 			}
@@ -5300,6 +5533,9 @@ function Uninstall-NxtApplication {
 		If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedUninstallExitCodes
+		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallMethod
 		Defines the type of the uninstaller used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -5309,6 +5545,21 @@ function Uninstall-NxtApplication {
 	.PARAMETER Wow6432Node
 		Switches between 32/64 Bit Registry Keys.
 		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckProcesListToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Uninstall-NxtApplication
 	.LINK
@@ -5341,15 +5592,33 @@ function Uninstall-NxtApplication {
 		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$AcceptedUninstallExitCodes = $global:PackageConfig.AcceptedUninstallExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$UninstallMethod = $global:PackageConfig.UninstallMethod,
 		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
 		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Wow6432Node = $global:Wow6432Node
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckRegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor
 	)
-	[string]$global:installPhase = 'Pre-Uninstallation'
+	[string]$script:installPhase = 'Pre-Uninstallation'
 
 	## <Perform Pre-Uninstallation tasks here>
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
@@ -5384,7 +5653,7 @@ function Uninstall-NxtApplication {
 		Write-Log -Message "Unhiding uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$thisUninstallKeyToHideIs64Bit], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
 		[Array]$installedAppResults = Get-NxtInstalledApplication @unhideNxtParams | Where-Object Is64BitApplication -eq $thisUninstallKeyToHideIs64Bit
 		if ($installedAppResults.Count -eq 1){
-			[string]$wowEntry = ""
+			[string]$wowEntry = [string]::Empty
 			if ($false -eq $thisUninstallKeyToHideIs64Bit -and $true -eq $Is64Bit) {
 				[string]$wowEntry = "\Wow6432Node"
 			}
@@ -5398,7 +5667,7 @@ function Uninstall-NxtApplication {
 		}
 	}
 
-	[string]$global:installPhase = 'Uninstallation'
+	[string]$script:installPhase = 'Uninstallation'
 
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
@@ -5409,7 +5678,7 @@ function Uninstall-NxtApplication {
 			if ([System.IO.File]::Exists($UninstFile)) {
 				Write-Log -Message "UninstFile found: '$UninstFile' Executing the uninstallation..." -Source ${CmdletName}
 				Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
-				$UninstallExitCode = $LastExitCode
+				[int]$UninstallExitCode = $LastExitCode
 			}
 			else {
 				Write-Log -Message "UninstFile NOT found: '$UninstFile' Uninstallation NOT executed."  -Severity 2 -Source ${CmdletName}
@@ -5427,14 +5696,17 @@ function Uninstall-NxtApplication {
 			}
 			if ($false -eq [string]::IsNullOrEmpty($UninstPara)) {
 				if ($AppendUninstParaToDefaultParameters) {
-					$executeNxtParams["AddParameters"] = "$UninstPara"
+					[string]$executeNxtParams["AddParameters"] = "$UninstPara"
 				}
 				else {
-					$executeNxtParams["Parameters"] = "$UninstPara"
+					[string]$executeNxtParams["Parameters"] = "$UninstPara"
 				}
 			}
+			if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+				[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+			}
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
-				[string]$internalInstallerMethod = ""
+				[string]$internalInstallerMethod = [string]::Empty
 			}
 			else {
 				[string]$internalInstallerMethod = $UninstallMethod
@@ -5453,29 +5725,38 @@ function Uninstall-NxtApplication {
 					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 				}
 				none {
-
+					Write-Log -Message "An uninstallation method was NOT set. Skipping a default process execution." -Source ${CmdletName}
+					return $true
 				}
 				Default {
 					[hashtable]$executeParams = @{
 						Path	= "$UninstFile"
 					}
 					if (![string]::IsNullOrEmpty($UninstPara)) {
-						$executeParams["Parameters"] = "$UninstPara"
+						[string]$executeParams["Parameters"] = "$UninstPara"
 					}
-					Execute-Process @executeParams
+					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+						[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+					}
+				Execute-Process @executeParams
 				}
 			}
-			$UninstallExitCode = $LastExitCode
-
+			[int]$UninstallExitCode = $LastExitCode
+			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
-
 			## Test successfull uninstallation
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for successfull uninstallation via registry." -Source ${CmdletName}
 			}
 			else {
-				if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude)) {
-					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+				if ( $true -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)
+				) {
+					if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude)) {
+						Exit-NxtScriptWithError -ErrorMessage "Uninstallation of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+					}
+				}
+				else {
+					Exit-NxtScriptWithError -ErrorMessage "Uninstallation RegistryAndProcessCondition of $appName failed. ErrorLevel: $UninstallExitCode" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 				}
 			}
 		}
@@ -5803,27 +6084,27 @@ function Update-NxtTextInFile {
 	Process {
 		[String]$intEncoding = $Encoding
 		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
-			$intEncoding = "UTF8"
+			[string]$intEncoding = "UTF8"
 		}
 		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			try {
-				$getFileEncodingParams = @{
+				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
 				}
 				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
-					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
 				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
 				}
 				ElseIf ($intEncoding -eq "UTF8withBom") {
 					[bool]$noBOMDetected = $false
-					$intEncoding = "UTF8"
+					[string]$intEncoding = "UTF8"
 				}
 			}
 			catch {
-				$intEncoding = "UTF8"
+				[string]$intEncoding = "UTF8"
 			}
 		}
 		try {
@@ -5831,9 +6112,9 @@ function Update-NxtTextInFile {
 				Path = $Path
 			}
 			if (![string]::IsNullOrEmpty($intEncoding)) {
-				$contentParams['Encoding'] = $intEncoding
+				[string]$contentParams['Encoding'] = $intEncoding
 			}
-			$Content = Get-Content @contentParams -Raw
+			[string]$Content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
 			[Array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
@@ -5842,7 +6123,7 @@ function Update-NxtTextInFile {
 			}
 			[Array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
-				$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
+				[string]$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
 			}
 			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
 				[System.IO.File]::WriteAllLines($Path, $Content)
@@ -5853,6 +6134,217 @@ function Update-NxtTextInFile {
 		}
 		catch {
 			Write-Log -Message "Failed to add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+		return
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Wait-NxtRegistryAndProcessCondition
+function Wait-NxtRegistryAndProcessCondition {
+	<#
+	.SYNOPSIS
+		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
+		Integrated to Install-NxtApplication and Uninstall-Nxtapplication.
+	.DESCRIPTION
+		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
+		Integrated to Install-NxtApplication, Uninstall-Nxtapplication.
+	.PARAMETER TotalSecondsToWaitFor
+		Timeout in seconds the function waits and checks for the condition to occur.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProcessOperator
+		Operator to define process condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProcessesToWaitFor
+		An array of process conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegKeyOperator
+		Operator to define regkey condition requirements.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegkeyListToWaitFor
+		An array of regkey conditions to check for.
+		Defaults to the corresponding value from the PackageConfig object.
+	.OUTPUTS
+		System.Boolean.
+	.EXAMPLE
+		Wait-NxtRegistryAndProcessCondition
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdLetBinding()]
+	param (
+		[Parameter(Mandatory = $false)]
+		[ValidateRange(1, 3600)]
+		[int]
+		$TotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("And", "Or")]
+		[string]
+		$ProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$ProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("And", "Or")]
+		[string]
+		$RegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$RegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegkeysToWaitFor
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
+		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
+		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
+	}
+	Process {
+		# wait for Processes
+		[System.Diagnostics.Stopwatch]$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+		$stopWatch.Start()
+		[bool]$firstRun = $true
+		if ($ProcessesToWaitFor.count -eq 0) {
+			[bool]$processesFinished = $true
+		}
+		else {
+			[bool]$processesFinished = $false
+		}
+		if ($RegkeysToWaitFor.count -eq 0) {
+			[bool]$regKeysFinished = $true
+		}
+		else {
+			[bool]$regKeysFinished = $false
+		}
+		
+		while (
+			$stopWatch.Elapsed.TotalSeconds -lt $TotalSecondsToWaitFor -and 
+			!($processesFinished -and $regKeysFinished)
+		) {
+			if (!$firstRun) {
+				Start-Sleep 5
+			}
+			## Check Process Conditions
+			foreach ($processToWaitFor in ($ProcessesToWaitFor | Where-Object success -ne $true)) {
+				if ($true -eq $processToWaitFor.ShouldExist) {
+					$processToWaitFor.success = Watch-NxtProcess -ProcessName $processToWaitFor.Name -Timeout 0
+					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
+				}
+				else {
+					$processToWaitFor.success = Watch-NxtProcessIsStopped -ProcessName $processToWaitFor.Name -Timeout 0
+					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" not exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
+				}
+			}
+			if ($ProcessOperator -eq "Or") {
+				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -contains $true
+			}
+			elseif ($ProcessOperator -eq "And") {
+				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
+			}
+			## Check Regkey Conditions
+			foreach ($regkeyToWaitFor in ($RegkeysToWaitFor | Where-Object success -ne $true)) {
+				if (
+					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.KeyPath) -or
+					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.ValueName)
+				) {
+					Write-Log -Message "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file." -Severity 3 -Source ${cmdletName}
+					throw "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file."
+				}
+				if (![string]::IsNullOrEmpty($regkeyToWaitFor.KeyPath)) {
+					switch ($regkeyToWaitFor) {
+						{
+							## test pathExists
+							([string]::IsNullOrEmpty($_.ValueName)) -and
+							($null -eq $_.ValueData ) -and
+							($true -eq $_.ShouldExist)
+						} {
+							Write-Log -Message "Check if KeyPath exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							$regkeyToWaitFor.success = Watch-NxtRegistryKey -RegistryKey $regkeyToWaitFor.KeyPath -Timeout 0
+						}
+						{
+							## test pathNotExists
+							([string]::IsNullOrEmpty($_.ValueName)) -and
+							($null -eq $_.ValueData ) -and
+							($false -eq $_.ShouldExist)
+						} {
+							Write-Log -Message "Check if KeyPath not exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							$regkeyToWaitFor.success = Watch-NxtRegistryKeyIsRemoved -RegistryKey $regkeyToWaitFor.KeyPath -Timeout 0
+						}
+						{
+							## test valueExists
+							(![string]::IsNullOrEmpty($_.ValueName)) -and
+							($null -eq $_.ValueData ) -and
+							($true -eq $_.ShouldExist)
+						} {
+							Write-Log -Message "Check if value exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value exists
+							if ($null -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
+								$regkeyToWaitFor.success = $true
+							}
+						}
+						{
+							## test valueNotExists
+							(![string]::IsNullOrEmpty($_.ValueName)) -and
+							($null -eq $_.ValueData ) -and
+							($false -eq $_.ShouldExist)
+						} {
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" not exists in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value not exists
+							if ($null -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
+								$regkeyToWaitFor.success = $true
+							}
+						}
+						{
+							## valueEquals
+						(![string]::IsNullOrEmpty($_.ValueName)) -and
+						(![string]::IsNullOrEmpty($_.ValueData) ) -and
+						($true -eq $_.ShouldExist)
+					 } {
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value is equal
+							if ( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
+								$regkeyToWaitFor.success = $true
+							}
+					 }
+					 {
+							## valueNotEquals
+						(![string]::IsNullOrEmpty($_.ValueName)) -and
+						(![string]::IsNullOrEmpty($_.ValueData) ) -and
+						($false -eq $_.ShouldExist)
+					 } {
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value is not equal
+							if ( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
+								$regkeyToWaitFor.success = $true
+							}
+					 }
+						Default {
+							Write-Log -Message "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file." -Severity 3 -Source ${cmdletName}
+							throw "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file."
+						}
+					}
+				}
+				else {
+					Write-Log -Message "A RegKey is required, please check the config file." -Severity 3 -Source ${cmdletName}
+					throw "A RegKey is required, please check the config file."
+				}
+			}
+			if ($RegkeyOperator -eq "Or") {
+				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -contains $true
+			}
+			elseif ($RegkeyOperator -eq "And") {
+				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
+			}
+			[bool]$firstRun = $false
+		}
+		if ($processesFinished -and $regKeysFinished) {
+			Write-Output $true
+		}
+		else {
+			Write-Output $false
 		}
 		return
 	}
@@ -6007,21 +6499,23 @@ function Watch-NxtProcess {
 	Process {
 		try {
 			[int]$waited = 0
-			[bool]$result = $null
-			while ($waited -lt $Timeout) {
+			[bool]$result = $false
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				if ($IsWql) {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
+					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
 				else {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName
+					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName
 				}
 				
 				if ($result) {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -6072,21 +6566,23 @@ function Watch-NxtProcessIsStopped {
 	Process {
 		try {
 			[int]$waited = 0
-			[bool]$result = $null
-			while ($waited -lt $Timeout) {
+			[bool]$result = $false
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
 				if ($IsWql) {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
+					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
 				else {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName
+					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName
 				}
 				
 				if ($false -eq $result) {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -6131,15 +6627,17 @@ function Watch-NxtRegistryKey {
 	}
 	Process {
 		try {
-			$waited = 0
-			while ($waited -lt $Timeout) {
-				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
-				if ($key) {
+			[int]$waited = 0
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
+				[string]$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				if ($null -ne $key) {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -6183,15 +6681,17 @@ function Watch-NxtRegistryKeyIsRemoved {
 	}
 	Process {
 		try {
-			$waited = 0
-			while ($waited -lt $Timeout) {
-				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+			[int]$waited = 0
+			while ($waited -le $Timeout) {
+				if ($waited -gt 0){
+					Start-Sleep -Seconds 1
+				}
+				$waited += 1
+				[string]$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
 				if ($null -eq $key) {
 					Write-Output $true
 					return
 				}
-				$waited += 1
-				Start-Sleep -Seconds 1
 			}
 			Write-Output $false
 		}
@@ -6242,7 +6742,7 @@ function Write-NxtSingleXmlNode {
 		try {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
-			$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
+			[string]$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
 			$xmlDoc.Save($XmlFilePath)
 		}
 		catch {
@@ -6309,15 +6809,15 @@ function Write-NxtXmlNode {
 			[scriptblock]$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
 				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, "")
 
-				for ($i = 0; $i -lt $child.Attributes.count; $i++) {
-					$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
+				for ([int]$i = 0; $i -lt $child.Attributes.count; $i++) {
+					[System.Collections.Generic.KeyValuePair[string,string]]$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
 					[System.Xml.XmlAttribute]$xmlAttribute = $doc.CreateAttribute($attribute.Key, "http://www.w3.org/1999/XSL/Transform")
-					$xmlAttribute.Value = $attribute.Value
+					[string]$xmlAttribute.Value = $attribute.Value
 					[void]$xmlNode.Attributes.Append($xmlAttribute)
 				}
 			
 				if ($false -eq [string]::IsNullOrEmpty($child.Value)) {
-					$xmlNode.InnerText = $child.Value
+					[string]$xmlNode.InnerText = $child.Value
 				}
 				elseif ($null -ne $child.Child) {
 					[System.Xml.XmlLinkedNode]$node = &$createXmlNode -Doc $doc -Child ($child.Child)
@@ -6327,7 +6827,7 @@ function Write-NxtXmlNode {
 				return $xmlNode
 			}
 			
-			$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
+			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
 			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
 			[void]$xmlDoc.Save($XmlFilePath)
 		}
