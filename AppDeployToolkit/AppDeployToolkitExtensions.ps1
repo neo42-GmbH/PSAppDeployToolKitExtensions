@@ -87,19 +87,19 @@ function Add-NxtContent {
 					Path = $Path
 				}
 				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
-					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
 				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
 				}
 				ElseIf ($intEncoding -eq "UTF8withBom") {
 					[bool]$noBOMDetected = $false
-					$intEncoding = "UTF8"
+					[string]$intEncoding = "UTF8"
 				}
 			}
 			catch {
-				$intEncoding = "UTF8"
+				[string]$intEncoding = "UTF8"
 			}
 		}
 		try {
@@ -108,7 +108,7 @@ function Add-NxtContent {
 				Value = $Value
 			}
 			if (![string]::IsNullOrEmpty($intEncoding)) {
-				$contentParams['Encoding'] = $intEncoding 
+				[string]$contentParams['Encoding'] = $intEncoding 
 			}
 			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
 				[System.IO.File]::AppendAllLines($Path, $Content)
@@ -432,26 +432,26 @@ function Compare-NxtVersion {
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($DetectedVersion)){
-			$DetectedVersion = "0"
+			[string]$DetectedVersion = "0"
 		}
 		try {
 			[scriptblock]$parseVersion = { param($version) 	
 				[int[]]$result = 0, 0, 0, 0
-				$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
-				for ($i = 0; $i -lt $versionParts.count; $i++) {
+				[System.Array]$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
+				for ([int]$i = 0; $i -lt $versionParts.count; $i++) {
 					[int]$versionPartValue = 0
-					$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
+					[System.Object]$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
 					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo, bool]] { param($x) [System.Char]::IsDigit($x.Value) })) {
-						$versionPartValue = [int]::Parse($pair.Key)
+						[int]$versionPartValue = [int]::Parse($pair.Key)
 					}
 					else {
-						$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
+						[PSADTNXT.VersionPartInfo]$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
 						if ($null -ne $value -and [System.Char]::IsLetter($value.Value)) {
 							#Important for compare (An upper 'A'==65 char must have the value 10) 
-							$versionPartValue = $value.AsciiValue - 55
+							[int]$versionPartValue = $value.AsciiValue - 55
 						}
 					}
-					$result[$i] = $versionPartValue
+					[int]$result[$i] = $versionPartValue
 				}
 				Write-Output (New-Object System.Version -ArgumentList $result[0], $result[1], $result[2], $result[3])
 				return }.GetNewClosure()
@@ -547,7 +547,7 @@ function Complete-NxtPackageInstallation {
 	}
 
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-		[string]$wowEntry = ""
+		[string]$wowEntry = [string]::Empty
 		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
 			[string]$wowEntry = "\Wow6432Node"
 		}
@@ -853,11 +853,11 @@ function Execute-NxtBitRockInstaller {
     
 		## Replace default parameters if specified.
 		If ($Parameters) {
-			$argsBitRockInstaller = $Parameters
+			[string]$argsBitRockInstaller = $Parameters
 		}
 		## Append parameters to default parameters if specified.
 		If ($AddParameters) {
-			$argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
+			[string]$argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
 		}
  
 		[hashtable]$ExecuteProcessSplat = @{
@@ -1138,16 +1138,16 @@ function Execute-NxtInnoSetup {
     
 		## Replace default parameters if specified.
 		If ($Parameters) {
-			$argsInnoSetup = $Parameters
+			[string]$argsInnoSetup = $Parameters
 		}
 		## Append parameters to default parameters if specified.
 		If ($AddParameters) {
-			$argsInnoSetup = "$argsInnoSetup $AddParameters"
+			[string]$argsInnoSetup = "$argsInnoSetup $AddParameters"
 		}
 
 		## MergeTasks if parameters were not replaced
 		if ((-not($Parameters)) -and (-not([string]::IsNullOrWhiteSpace($MergeTasks)))) {
-			$argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
+			[string]$argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
 		}
     
 		[string]$fullLogPath = $null
@@ -1167,18 +1167,18 @@ function Execute-NxtInnoSetup {
 
 		## Append file extension if necessary
 		if (($LogFileExtension -ne '.txt') -and ($LogFileExtension -ne '.log')) {
-			$Log = $Log + '.log'
+			[string]$Log = $Log + '.log'
 		}
 
 		## Check, if $Log is a full path
 		if (-not($Log.Contains('\'))) {
-			$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
+			[string]$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
 		}
 		else {
-			$fullLogPath = $Log
+			[string]$fullLogPath = $Log
 		}
 
-		$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
+		[string]$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
     
 		[hashtable]$ExecuteProcessSplat = @{
 			Path        = $innoSetupPath
@@ -1404,7 +1404,7 @@ function Execute-NxtMSI {
 			"ConfigMSILogDir"
 		)
 		foreach ($functionParametersWithDefault in $functionParametersWithDefaults) {
-			$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
+			[PSObject]$PSBoundParameters[$functionParametersWithDefault] = Get-Variable -Name $functionParametersWithDefault -ValueOnly
 		}
 		[array]$functionParametersToBeRemoved = (
 			"Log",
@@ -1417,7 +1417,7 @@ function Execute-NxtMSI {
 	}
 	Process {
 		if ($UninstallKeyIsDisplayName -and $Action -eq "Uninstall") {
-			$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey | Select-Object -First 1 -ExpandProperty ProductCode
+			[string]$PSBoundParameters["Path"] = Get-NxtInstalledApplication -UninstallKey $Uninstallkey | Select-Object -First 1 -ExpandProperty ProductCode
 		}
 		if ([string]::IsNullOrEmpty($Parameters)) {
 			$null = $PSBoundParameters.Remove('Parameters')
@@ -1426,7 +1426,7 @@ function Execute-NxtMSI {
 			$null = $PSBoundParameters.Remove('AddParameters')
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$executeNxtParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
+			[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
 		}
 		if (![string]::IsNullOrEmpty($Log)) {
 			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
@@ -1435,7 +1435,7 @@ function Execute-NxtMSI {
 		Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
 		if ([System.IO.Path]::IsPathRooted($Log)) {
-			$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
+			[string]$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
 			[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
 			if (Test-Path -Path $logPath) {
 				Move-NxtItem $logPath -Destination $Log -Force
@@ -1612,11 +1612,11 @@ function Execute-NxtNullsoft {
     
 		## Replace default parameters if specified.
 		If ($Parameters) {
-			$argsnullsoft = $Parameters
+			[string]$argsnullsoft = $Parameters
 		}
 		## Append parameters to default parameters if specified.
 		If ($AddParameters) {
-			$argsnullsoft = "$argsnullsoft $AddParameters"
+			[string]$argsnullsoft = "$argsnullsoft $AddParameters"
 		}
  
 		[hashtable]$ExecuteProcessSplat = @{
@@ -1987,6 +1987,7 @@ function Expand-NxtPackageConfig {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
+		[PSObject]
 		$PackageConfig = $global:PackageConfig
 	)
 		
@@ -1996,17 +1997,17 @@ function Expand-NxtPackageConfig {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
-		$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
-		$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
-		$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstLogFile)
-		$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstLogFile)
-		$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstFile)
-		$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstPara)
-		$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstFile)
-		$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstPara)
+		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
+		[string]$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
+		[string]$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
+		[string]$global:PackageConfig.InstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstLogFile)
+		[string]$global:PackageConfig.UninstLogFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstLogFile)
+		[string]$global:PackageConfig.InstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstFile)
+		[string]$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstPara)
+		[string]$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstFile)
+		[string]$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstPara)
 		foreach($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
-			$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
+			[string]$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
 		}
 	}
 	End {
@@ -2045,7 +2046,7 @@ function Expand-NxtVariablesInFile {
             [string[]]$content = Get-Content -Path $Path
             [string]$fileEncoding = Get-NxtFileEncoding -Path $Path -DefaultEncoding Default
 
-            for ($i = 0; $i -lt $content.Length; $i++) {
+            for ([int]$i = 0; $i -lt $content.Length; $i++) {
                 [string]$line = $content[$i]
 
                 ## Replace PowerShell global variables in brackets
@@ -2065,9 +2066,9 @@ function Expand-NxtVariablesInFile {
 						[string]$globalVariableValue = (Get-Variable -Name $globalVariableName -Scope Global -ValueOnly -ErrorAction SilentlyContinue)
 					}
 
-                    $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
+                    [string]$line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
                 }
-				$globalVariableMatchesInBracket = $null
+				[PSObject]$globalVariableMatchesInBracket = $null
 
                 ## Replace PowerShell global variables
                 [PSObject]$globalVariableMatches = [regex]::Matches($line, '\$global:([A-Za-z_.][A-Za-z0-9_.\[\]]+)')
@@ -2077,11 +2078,11 @@ function Expand-NxtVariablesInFile {
                     ## Variables with properties and/or subproperties won't be found
                     if([string]::IsNullOrEmpty($globalVariableValue))
                     {
-                        $globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
+                        [PSObject]$globalVariableValue = Invoke-Command -ScriptBlock ([ScriptBlock]::Create($globalVariableMatch.Value))
                     }
-                    $line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
+                    [string]$line = $line.Replace($globalVariableMatch.Value, $globalVariableValue)
                 }
-				$globalVariableMatches = $null
+				[PSObject]$globalVariableMatches = $null
 
                 ## Replace PowerShell environment variables in brackets
                 [PSObject]$environmentMatchesInBracket = [regex]::Matches($line, '\$\(\$env:([A-Za-z_.][A-Za-z0-9_.]+)(\([^)]*\))?\)')
@@ -2095,9 +2096,9 @@ function Expand-NxtVariablesInFile {
                     
                     [string]$envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
 
-                    $line = $line.Replace($expressionMatch.Value, $envVariableValue)
+                    [string]$line = $line.Replace($expressionMatch.Value, $envVariableValue)
                 }
-				$environmentMatchesInBracket = $null
+				[PSObject]$environmentMatchesInBracket = $null
 
                 ## Replace PowerShell environment variables
                 [PSObject]$environmentMatches = [regex]::Matches($line, '\$env:([A-Za-z_.][A-Za-z0-9_.]+)(\([^)]*\))?')
@@ -2110,9 +2111,9 @@ function Expand-NxtVariablesInFile {
 					}
                     [string]$envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
 
-                    $line = $line.Replace($expressionMatch.Value, $envVariableValue)
+                    [string]$line = $line.Replace($expressionMatch.Value, $envVariableValue)
                 }
-				$environmentMatches = $null
+				[PSObject]$environmentMatches = $null
 
                 ## Replace PowerShell variable in brackets with its value
                 [PSObject]$variableMatchesInBrackets = [regex]::Matches($line, '\$\(\$[A-Za-z_.][A-Za-z0-9_.\[\]]+\)')
@@ -2132,9 +2133,9 @@ function Expand-NxtVariablesInFile {
 						[string]$variableValue = (Get-Variable -Name $cleanedExpression -ValueOnly)
 					}
 
-                    $line = $line.Replace($expressionMatch.Value, $variableValue)
+                    [string]$line = $line.Replace($expressionMatch.Value, $variableValue)
                 }
-				$variableMatchesInBrackets = $null
+				[PSObject]$variableMatchesInBrackets = $null
 
                 ## Replace PowerShell variable with its value
                 [PSObject]$variableMatches = [regex]::Matches($line, '\$[A-Za-z_.][A-Za-z0-9_.\[\]]+')
@@ -2153,14 +2154,14 @@ function Expand-NxtVariablesInFile {
 						[string]$variableValue = (Get-Variable -Name $variableName -ValueOnly)
 					}
                     
-                    $line = $line.Replace($match.Value, $variableValue)
+                    [string]$line = $line.Replace($match.Value, $variableValue)
                 }
-				$variableMatches = $null
+				[PSObject]$variableMatches = $null
 
                 ## Replace common Windows environment variables
-                $line = [System.Environment]::ExpandEnvironmentVariables($line)
+                [string]$line = [System.Environment]::ExpandEnvironmentVariables($line)
 
-                $content[$i] = $line
+                [string]$content[$i] = $line
             }
 
             Set-Content -Path $Path -Value $content -Encoding $fileEncoding
@@ -2196,6 +2197,7 @@ function Format-NxtPackageSpecificVariables {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
+		[PSObject]
 		$PackageConfig = $global:PackageConfig
 	)
 		
@@ -2207,8 +2209,8 @@ function Format-NxtPackageSpecificVariables {
 	Process {
 		
 		## Get String from object and Expand String if requested
-		$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[[string],[string]]"
-		foreach($packageSpecificVariable in $global:PackageConfig.PackageSpecificVariablesRaw){
+		[System.Collections.Generic.Dictionary[string,string]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[string,string]"
+		foreach($packageSpecificVariable in $PackageConfig.PackageSpecificVariablesRaw){
 			if ($packageSpecificVariable.ExpandVariables) {
 				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name,$ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
 			}else{
@@ -2288,7 +2290,7 @@ function Get-NxtComputerManufacturer {
 	Process {
 		[string]$result = [string]::Empty
 		try {
-			$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Manufacturer).Manufacturer
+			[string]$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Manufacturer).Manufacturer
 		}
 		catch {
 			Write-Log -Message "Failed to get computer manufacturer. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -2322,7 +2324,7 @@ function Get-NxtComputerModel {
 	Process {
 		[string]$result = [string]::Empty
 		try {
-			$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Model).Model
+			[string]$result = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object -Property Model).Model
 		}
 		catch {
 			Write-Log -Message "Failed to get computer model. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -2465,9 +2467,9 @@ function Get-NxtFileEncoding {
 	}
 	Process {
 		try {
-			$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
+			[string]$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
 			if ([System.String]::IsNullOrEmpty($intEncoding)) {
-				$intEncoding = $DefaultEncoding
+				[string]$intEncoding = $DefaultEncoding
 			}
 			Write-Output $intEncoding
 			return
@@ -2508,9 +2510,9 @@ function Get-NxtFileVersion {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[version]$result = $null
+		[string]$result = $null
 		try {
-			$result = (New-Object -TypeName System.IO.FileInfo -ArgumentList $FilePath).VersionInfo.FileVersion
+			[string]$result = (New-Object -TypeName System.IO.FileInfo -ArgumentList $FilePath).VersionInfo.FileVersion
 		}
 		catch {
 			Write-Log -Message "Failed to get version from file '$FilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -2557,7 +2559,7 @@ function Get-NxtFolderSize {
 		[long]$result = 0
 		try {
 			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
-			$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
+			[long]$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
 			[long]$folderSize = [math]::round(($result/"$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
@@ -2782,7 +2784,7 @@ function Get-NxtPackageConfig {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
+		[PSObject]$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -2821,7 +2823,7 @@ function Get-NxtParentProcess {
 	}
 	Process {
 		[System.Management.ManagementBaseObject]$process = Get-WmiObject Win32_Process -filter "ProcessID ='$ID'"
-		$parentProcess = Get-WmiObject Win32_Process -filter "ProcessID ='$($process.ParentProcessId)'"
+		[System.Management.ManagementBaseObject]$parentProcess = Get-WmiObject Win32_Process -filter "ProcessID ='$($process.ParentProcessId)'"
 		Write-Output $parentProcess
 		if ($Recurse -and ![string]::IsNullOrEmpty($parentProcess)) {
 			Get-NxtParentProcess -Id ($process.ParentProcessId) -Recurse
@@ -2859,7 +2861,7 @@ function Get-NxtProcessEnvironmentVariable {
 	Process {
 		[string]$result = $null
 		try {
-			$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Process)
+			[string]$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Process)
 		}
 		catch {
 			Write-Log -Message "Failed to get the process environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -2902,7 +2904,7 @@ function Get-NxtProcessName {
 	Process {
 		[string]$result = [string]::Empty
 		try {
-			$result = (Get-Process -Id $ProcessId).Name
+			[string]$result = (Get-Process -Id $ProcessId).Name
 		}
 		catch {
 			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -3051,7 +3053,7 @@ function Get-NxtServiceState {
 	}
 	Process {
 		try {
-			$service = Get-WmiObject -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
+			[System.Management.ManagementBaseObject]$service = Get-WmiObject -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
 			if ($service) {
 				Write-Output $service.State
 			}
@@ -3144,7 +3146,7 @@ function Get-NxtSystemEnvironmentVariable {
 	Process {
 		[string]$result = $null
 		try {
-			$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Machine)
+			[string]$result = [System.Environment]::GetEnvironmentVariable($Key, [System.EnvironmentVariableTarget]::Machine)
 		}
 		catch {
 			Write-Log -Message "Failed to get the system environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -3351,19 +3353,19 @@ function Import-NxtIniFile {
 	Process {
 		try {
 			[hashtable]$ini = @{}
-		$section = 'default'
-		switch -Regex -File $Path {
-			'^\[(.+)\]$' {
-				$section = $matches[1]
-				if (!$ini.ContainsKey($section)) {
-					$ini[$section] = @{}
+			[string]$section = 'default'
+			switch -Regex -File $Path {
+				'^\[(.+)\]$' {
+					[string]$section = $matches[1]
+					if (!$ini.ContainsKey($section)) {
+						[hashtable]$ini[$section] = @{}
+					}
+				}
+				'^([^\s]+)\s*=\s*(.+)$' {
+					[string]$ini[$section][$matches[1]] = $matches[2]
 				}
 			}
-			'^([^\s]+)\s*=\s*(.+)$' {
-				$ini[$section][$matches[1]] = $matches[2]
-			}
-		}
-		write-output $ini
+			write-output $ini
 		}
 		catch {
 			Write-Log -Message "Failed to read ini file [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -3546,17 +3548,17 @@ function Install-NxtApplication {
 	}
 	if (![string]::IsNullOrEmpty($InstPara)) {
 		if ($AppendInstParaToDefaultParameters) {
-			$executeNxtParams["AddParameters"] = "$InstPara"
+			[string]$executeNxtParams["AddParameters"] = "$InstPara"
 		}
 		else {
-			$executeNxtParams["Parameters"] = "$InstPara"
+			[string]$executeNxtParams["Parameters"] = "$InstPara"
 		}
 	}
 	if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-		$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+		[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
 	}
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
-		[string]$internalInstallerMethod = ""
+		[string]$internalInstallerMethod = [string]::Empty
 	}
 	else {
 		[string]$internalInstallerMethod = $InstallMethod
@@ -3585,10 +3587,10 @@ function Install-NxtApplication {
 				Path	= "$InstFile"
 			}
 			if (![string]::IsNullOrEmpty($InstPara)) {
-				$executeParams["Parameters"] = "$InstPara"
+				[string]$executeParams["Parameters"] = "$InstPara"
 			}
 			if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-				$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
+				[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
 			}
 			Execute-Process @executeParams
 		}
@@ -4216,7 +4218,7 @@ function Remove-NxtLocalGroupMember {
 				if ([string]::IsNullOrEmpty($MemberName)) {
 					[int]$count = 0
 					foreach ($member in $group.psbase.Invoke("Members")) {
-						$class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
+						[string]$class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
 						if ($AllMember) {
 							$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
 							$count++
@@ -4486,23 +4488,23 @@ function Repair-NxtApplication {
 		else {
 			if (![string]::IsNullOrEmpty($InstPara)) {
 				if ($AppendRepairParaToDefaultParameters) {
-					$executeNxtParams["AddParameters"] = "$RepairPara"
+					[string]$executeNxtParams["AddParameters"] = "$RepairPara"
 				}
 				else {
-					$executeNxtParams["Parameters"] = "$RepairPara"
+					[string]$executeNxtParams["Parameters"] = "$RepairPara"
 				}
 			}
 			if (![string]::IsNullOrEmpty($AcceptedRepairExitCodes)) {
-				$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
+				[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
 			}
 			if ([string]::IsNullOrEmpty($RepairLogFile)) {
 				## now set default path and name including retrieved ProductCode
-				$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
+				[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
 			}
 
-			## <Perform repair tasks here>
-			## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
-			$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
+	## <Perform repair tasks here>
+	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
+	[int]$repairExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
 
 			## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
 			if ( (3010 -eq $repairResult.ApplicationExitCode) -or (1641 -eq $repairResult.ApplicationExitCode) ) {
@@ -5006,7 +5008,7 @@ function Show-NxtInstallationWelcome {
 			}
 			elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name) ) {				
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
-				$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension","") -join ","
+				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension","") -join ","
 				if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
@@ -5014,13 +5016,13 @@ function Show-NxtInstallationWelcome {
 					Write-Log -Message "... found processes (with file extensions removed): $($processAppsItem.Name)" -Source ${cmdletName}
 				}
 				## be sure there is no description to add in case of process name with wildcards
-				$processAppsItem.Description = ""
+				[string]$processAppsItem.Description = [string]::Empty
 			}
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
-				$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$",""
+				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$",""
 				if ( ![String]::IsNullOrEmpty($processAppsItem.Description) ) {
-					$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
+					[string]$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
 				}
 			}
 		}
@@ -5225,14 +5227,14 @@ function Test-NxtProcessExists {
 	}
 	Process {
 		try {
-			[string]$wqlString = ""
+			[string]$wqlString = [string]::Empty
 			if ($IsWql) {
-				$wqlString = $ProcessName
+				[string]$wqlString = $ProcessName
 			}
 			else {
-				$wqlString = "Name LIKE '$($ProcessName.Replace("*","%"))'"
+				[string]$wqlString = "Name LIKE '$($ProcessName.Replace("*","%"))'"
 			}
-			$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
+			[System.Management.ManagementBaseObject]$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
 			if ($processes) {
 				Write-Output $true
 			}
@@ -5361,7 +5363,7 @@ function Uninstall-NxtApplication {
 	[int]$logMessageSeverity = 1
 	## <Perform Pre-Uninstallation tasks here>
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-		[string]$wowEntry = ""
+		[string]$wowEntry = [string]::Empty
 		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
 			[string]$wowEntry = "\Wow6432Node"
 		}
@@ -5419,14 +5421,14 @@ function Uninstall-NxtApplication {
 					[string]$executeNxtParams["AddParameters"] = "$UninstPara"
 				}
 				else {
-					$executeNxtParams["Parameters"] = "$UninstPara"
+					[string]$executeNxtParams["Parameters"] = "$UninstPara"
 				}
 			}
 			if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-				$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+				[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 			}
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
-				[string]$internalInstallerMethod = ""
+				[string]$internalInstallerMethod = [string]::Empty
 			}
 			else {
 				[string]$internalInstallerMethod = $UninstallMethod
@@ -5454,10 +5456,10 @@ function Uninstall-NxtApplication {
 						Path	= "$UninstFile"
 					}
 					if (![string]::IsNullOrEmpty($UninstPara)) {
-						$executeParams["Parameters"] = "$UninstPara"
+						[string]$executeParams["Parameters"] = "$UninstPara"
 					}
 					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-						$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+						[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 					}
 				Execute-Process @executeParams
 				}
@@ -5867,27 +5869,27 @@ function Update-NxtTextInFile {
 	Process {
 		[String]$intEncoding = $Encoding
 		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
-			$intEncoding = "UTF8"
+			[string]$intEncoding = "UTF8"
 		}
 		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			try {
-				$getFileEncodingParams = @{
+				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
 				}
 				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
-					$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
 				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
 				}
 				ElseIf ($intEncoding -eq "UTF8withBom") {
 					[bool]$noBOMDetected = $false
-					$intEncoding = "UTF8"
+					[string]$intEncoding = "UTF8"
 				}
 			}
 			catch {
-				$intEncoding = "UTF8"
+				[string]$intEncoding = "UTF8"
 			}
 		}
 		try {
@@ -5895,9 +5897,9 @@ function Update-NxtTextInFile {
 				Path = $Path
 			}
 			if (![string]::IsNullOrEmpty($intEncoding)) {
-				$contentParams['Encoding'] = $intEncoding
+				[string]$contentParams['Encoding'] = $intEncoding
 			}
-			$Content = Get-Content @contentParams -Raw
+			[string]$Content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
 			[Array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
@@ -5906,7 +5908,7 @@ function Update-NxtTextInFile {
 			}
 			[Array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
-				$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
+				[string]$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
 			}
 			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
 				[System.IO.File]::WriteAllLines($Path, $Content)
@@ -5959,18 +5961,18 @@ function Wait-NxtRegistryAndProcessCondition {
 	[CmdLetBinding()]
 	param (
 		[Parameter(Mandatory = $false)]
-		[ValidateRange(1,3600)]
+		[ValidateRange(1, 3600)]
 		[int]
 		$TotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.TotalSecondsToWaitFor,
 		[Parameter(Mandatory = $false)]
-		[ValidateSet("And","Or")]
+		[ValidateSet("And", "Or")]
 		[string]
 		$ProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessOperator,
 		[Parameter(Mandatory = $false)]
 		[array]
 		$ProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.ProcessesToWaitFor,
 		[Parameter(Mandatory = $false)]
-		[ValidateSet("And","Or")]
+		[ValidateSet("And", "Or")]
 		[string]
 		$RegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.$Deploymenttype.RegKeyOperator,
 		[Parameter(Mandatory = $false)]
@@ -5982,24 +5984,24 @@ function Wait-NxtRegistryAndProcessCondition {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
-		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *,@{n="success";e={$false}}
-		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *,@{n="success";e={$false}}
+		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
+		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
 	}
 	Process {
 		# wait for Processes
 		[System.Diagnostics.Stopwatch]$stopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
 		$stopWatch.Start()
 		[bool]$firstRun = $true
-		if ($ProcessesToWaitFor.count -eq 0){
+		if ($ProcessesToWaitFor.count -eq 0) {
 			[bool]$processesFinished = $true
 		}
-		else{
+		else {
 			[bool]$processesFinished = $false
 		}
-		if ($RegkeysToWaitFor.count -eq 0){
+		if ($RegkeysToWaitFor.count -eq 0) {
 			[bool]$regKeysFinished = $true
 		}
-		else{
+		else {
 			[bool]$regKeysFinished = $false
 		}
 		
@@ -6007,7 +6009,7 @@ function Wait-NxtRegistryAndProcessCondition {
 			$stopWatch.Elapsed.TotalSeconds -lt $TotalSecondsToWaitFor -and 
 			!($processesFinished -and $regKeysFinished)
 		) {
-			if(!$firstRun){
+			if (!$firstRun) {
 				Start-Sleep 5
 			}
 			## Check Process Conditions
@@ -6021,20 +6023,20 @@ function Wait-NxtRegistryAndProcessCondition {
 					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" not exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
 				}
 			}
-			if ($ProcessOperator -eq "Or"){
+			if ($ProcessOperator -eq "Or") {
 				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -contains $true
 			}
-			elseif($ProcessOperator -eq "And"){
+			elseif ($ProcessOperator -eq "And") {
 				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
 			}
 			## Check Regkey Conditions
-			foreach ($regkeyToWaitFor in ($RegkeysToWaitFor|Where-Object success -ne $true)) {
+			foreach ($regkeyToWaitFor in ($RegkeysToWaitFor | Where-Object success -ne $true)) {
 				if (
 					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.KeyPath) -or
 					[WildcardPattern]::ContainsWildcardCharacters($regkeyToWaitFor.ValueName)
-					) {
-						Write-Log -Message "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file." -Severity 3 -Source ${cmdletName}
-						throw "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file."
+				) {
+					Write-Log -Message "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file." -Severity 3 -Source ${cmdletName}
+					throw "KeyPath `"$($regkeyToWaitFor.KeyPath)`" or ValueName `"$($regkeyToWaitFor.ValueName)`" contains wildcard pattern, please check the config file."
 				}
 				if (![string]::IsNullOrEmpty($regkeyToWaitFor.KeyPath)) {
 					switch ($regkeyToWaitFor) {
@@ -6064,7 +6066,7 @@ function Wait-NxtRegistryAndProcessCondition {
 						} {
 							Write-Log -Message "Check if value exists: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value exists
-							if($null -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+							if ($null -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
 								$regkeyToWaitFor.success = $true
 							}
 						}
@@ -6076,7 +6078,7 @@ function Wait-NxtRegistryAndProcessCondition {
 						} {
 							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" not exists in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value not exists
-							if($null -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+							if ($null -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
 								$regkeyToWaitFor.success = $true
 							}
 						}
@@ -6086,9 +6088,9 @@ function Wait-NxtRegistryAndProcessCondition {
 						(![string]::IsNullOrEmpty($_.ValueData) ) -and
 						($true -eq $_.ShouldExist)
 					 } {
-						Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value is equal
-							if( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+							if ( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
 								$regkeyToWaitFor.success = $true
 							}
 					 }
@@ -6098,9 +6100,9 @@ function Wait-NxtRegistryAndProcessCondition {
 						(![string]::IsNullOrEmpty($_.ValueData) ) -and
 						($false -eq $_.ShouldExist)
 					 } {
-						Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 							## Check if Value is not equal
-							if( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)){
+							if ( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
 								$regkeyToWaitFor.success = $true
 							}
 					 }
@@ -6109,23 +6111,24 @@ function Wait-NxtRegistryAndProcessCondition {
 							throw "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file."
 						}
 					}
-				}else{
+				}
+				else {
 					Write-Log -Message "A RegKey is required, please check the config file." -Severity 3 -Source ${cmdletName}
 					throw "A RegKey is required, please check the config file."
 				}
 			}
-			if ($RegkeyOperator -eq "Or"){
+			if ($RegkeyOperator -eq "Or") {
 				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -contains $true
 			}
-			elseif($RegkeyOperator -eq "And"){
+			elseif ($RegkeyOperator -eq "And") {
 				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
 			}
 			[bool]$firstRun = $false
 		}
-		if ($processesFinished -and $regKeysFinished){
+		if ($processesFinished -and $regKeysFinished) {
 			Write-Output $true
 		}
-		else{
+		else {
 			Write-Output $false
 		}
 		return
@@ -6288,10 +6291,10 @@ function Watch-NxtProcess {
 				}
 				$waited += 1
 				if ($IsWql) {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
+					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
 				else {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName
+					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName
 				}
 				
 				if ($result) {
@@ -6355,10 +6358,10 @@ function Watch-NxtProcessIsStopped {
 				}
 				$waited += 1
 				if ($IsWql) {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
+					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
 				}
 				else {
-					$result = Test-NxtProcessExists -ProcessName $ProcessName
+					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName
 				}
 				
 				if ($false -eq $result) {
@@ -6415,8 +6418,8 @@ function Watch-NxtRegistryKey {
 					Start-Sleep -Seconds 1
 				}
 				$waited += 1
-				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
-				if ($key) {
+				[string]$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				if ($null -ne $key) {
 					Write-Output $true
 					return
 				}
@@ -6469,7 +6472,7 @@ function Watch-NxtRegistryKeyIsRemoved {
 					Start-Sleep -Seconds 1
 				}
 				$waited += 1
-				$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
+				[string]$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
 				if ($null -eq $key) {
 					Write-Output $true
 					return
@@ -6524,7 +6527,7 @@ function Write-NxtSingleXmlNode {
 		try {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
-			$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
+			[string]$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
 			$xmlDoc.Save($XmlFilePath)
 		}
 		catch {
@@ -6591,15 +6594,15 @@ function Write-NxtXmlNode {
 			[scriptblock]$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
 				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, "")
 
-				for ($i = 0; $i -lt $child.Attributes.count; $i++) {
-					$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
+				for ([int]$i = 0; $i -lt $child.Attributes.count; $i++) {
+					[System.Collections.Generic.KeyValuePair[string,string]]$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
 					[System.Xml.XmlAttribute]$xmlAttribute = $doc.CreateAttribute($attribute.Key, "http://www.w3.org/1999/XSL/Transform")
-					$xmlAttribute.Value = $attribute.Value
+					[string]$xmlAttribute.Value = $attribute.Value
 					[void]$xmlNode.Attributes.Append($xmlAttribute)
 				}
 			
 				if ($false -eq [string]::IsNullOrEmpty($child.Value)) {
-					$xmlNode.InnerText = $child.Value
+					[string]$xmlNode.InnerText = $child.Value
 				}
 				elseif ($null -ne $child.Child) {
 					[System.Xml.XmlLinkedNode]$node = &$createXmlNode -Doc $doc -Child ($child.Child)
@@ -6609,7 +6612,7 @@ function Write-NxtXmlNode {
 				return $xmlNode
 			}
 			
-			$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
+			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
 			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
 			[void]$xmlDoc.Save($XmlFilePath)
 		}
