@@ -3426,15 +3426,12 @@ function Initialize-NxtEnvironment {
 		}
 		Get-NxtPackageConfig
 		Set-NxtSetupCfg -Path $setupCfgPath
-		#[int32]$pkgsArchReturnCode = Set-NxtPackageArchitecture
-		#if ($pkgsArchReturnCode -ne 0) {
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
 		}
 		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
 		Format-NxtPackageSpecificVariables
-		#Write-Output $pkgsArchReturnCode
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -4748,7 +4745,6 @@ function Set-NxtPackageArchitecture {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[int]$thisFunctionReturnCode = 0
 		Write-Log -Message "Setting package architecture variables..." -Source ${CmdletName}
 		Try {
 			If ($AppArch -ne 'x86' -and $AppArch -ne 'x64' -and $AppArch -ne '*') {
@@ -4756,12 +4752,14 @@ function Set-NxtPackageArchitecture {
 				[int32]$thisFunctionReturnCode = $mainExitCode
 				[string]$mainErrorMessage = "ERROR: The value of '$appArch' must be set to 'x86', 'x64' or '*'. Abort!"
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
+				throw "Wrong setting for value 'appArch'."
 			}
 			ElseIf ($AppArch -eq 'x64' -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[int32]$mainExitCode = 70001
 				[int32]$thisFunctionReturnCode = $mainExitCode
 				[string]$mainErrorMessage = "ERROR: This software package can only be installed on 64 bit Windows systems. Abort!"
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
+				throw "This software is not allowed to run on this architecture."
 			}
 			ElseIf ($AppArch -eq 'x86' -and $PROCESSOR_ARCHITECTURE -eq 'AMD64') {
 				[string]$global:ProgramFilesDir = ${ProgramFiles(x86)}
@@ -4794,10 +4792,9 @@ function Set-NxtPackageArchitecture {
 				[string]$global:Wow6432Node = ''
 			}
 
-			if (0 -eq $thisFunctionReturnCode) {
-				Write-Log -Message "Package architecture variables successfully set." -Source ${cmdletName}
-			}
-			}
+			Write-Log -Message "Package architecture variables successfully set." -Source ${cmdletName}
+			[int]$thisFunctionReturnCode = 0
+		}
 		Catch {
 			Write-Log -Message "Failed to set the package architecture variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			[int32]$thisFunctionReturnCode = $mainExitCode

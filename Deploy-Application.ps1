@@ -101,10 +101,7 @@ Catch {
 
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
-	[int32]$initNxtEnvReturnCode = Initialize-NxtEnvironment
-	#if (0 -ne $initNxtEnvReturnCode) {
-	#	Exit-Script -ExitCode $initNxtEnvReturnCode
-	#}
+	Initialize-NxtEnvironment
 ##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
@@ -172,12 +169,6 @@ param (
 	$InstallMethod = $global:PackageConfig.InstallMethod
 )
 	try {
-		[PSADTNXT.NxtApplicationResult]$mainNxtResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		$mainNxtResult.Success = $false
-		$mainNxtResult.ApplicationExitCode = $null
-		$mainNxtResult.MainExitCode = 0
-		$mainNxtResult.ErrorMessage = [string]::Empty
-		$mainNxtResult.ErrorMessagePSADT = [string]::Empty
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
@@ -323,6 +314,11 @@ function CustomInstallAndReinstallBegin {
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
+	param (
+		[Parameter(Mandatory=$true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
 
 	## Executes after the completed install or reinstall process and on SoftMigration
@@ -341,6 +337,11 @@ function CustomReinstallPreUninstall {
 }
 
 function CustomReinstallPostUninstall {
+	param (
+		[Parameter(Mandatory=$true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstall'
 
 	## Executes at after the uninstallation in the reinstall process
@@ -353,6 +354,11 @@ function CustomReinstallPreInstall {
 }
 
 function CustomReinstallPostInstall {
+	param (
+		[Parameter(Mandatory=$true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
 	[string]$script:installPhase = 'CustomReinstallPostInstall'
 
 	## Executes after the installation in the reinstall process
@@ -365,12 +371,22 @@ function CustomInstallBegin {
 }
 
 function CustomInstallEnd {
+	param (
+		[Parameter(Mandatory=$true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
 	[string]$script:installPhase = 'CustomInstallEnd'
 
 	## Executes after the installation in the install process
 }
 
 function CustomInstallAndReinstallEnd {
+	param (
+		[Parameter(Mandatory=$true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
 	[string]$script:installPhase = 'CustomPostInstallAndReinstall'
 
 	## Executes after the completed install or reinstall process
@@ -383,6 +399,11 @@ function CustomUninstallBegin {
 }
 
 function CustomUninstallEnd {
+	param (
+		[Parameter(Mandatory=$true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
 	[string]$script:installPhase = 'CustomUninstallEnd'
 
 	## Executes after the uninstallation in the uninstall process
