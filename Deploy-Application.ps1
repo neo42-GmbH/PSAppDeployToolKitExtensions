@@ -174,35 +174,40 @@ param (
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
 				CustomInstallAndReinstallBegin
 				## START OF INSTALL
-				[string]$script:installPhase = 'Pre-InstallationChecks'
-
+				[string]$script:installPhase = 'Package-PreCleanup'
 				Uninstall-NxtOld 
+				[string]$script:installPhase = 'Check-Softmigration'
 				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
 					## Application is present. Register package only.
-					[string]$script:installPhase = 'Package-Registration'
 					CustomInstallAndReinstallAndSoftMigrationEnd
+					[string]$script:installPhase = 'Package-Completition'
 					Complete-NxtPackageInstallation
+					[string]$script:installPhase = 'Package-Registration'
 					Register-NxtPackage
 					Exit-Script -ExitCode $mainExitCode
 				}
+				[string]$script:installPhase = 'Package-Preparation'
 				Show-NxtInstallationWelcome -IsInstall $true
 				CustomInstallAndReinstallPreInstallAndReinstall
 				[bool]$isInstalled = $false
-				[string]$script:installPhase = 'Check-ReinstallMethod'
+				[string]$script:installPhase = 'Decide-ReInstallMode'
 				if ($true -eq $(Get-NxtAppIsInstalled)) {
-					[string]$script:installPhase = 'Package-Reinstallation'
+					Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 					switch ($ReinstallMode) {
 						"Reinstall" {
 							CustomReinstallPreUninstall
+							[string]$script:installPhase = 'Package-Reinstallation'
 							$isUninstalled = Uninstall-NxtApplication
 							CustomReinstallPostUninstall
 							CustomReinstallPreInstall
+							[string]$script:installPhase = 'Package-Reinstallation'
 							$isInstalled = Install-NxtApplication
 							CustomReinstallPostInstall
 						}
 						"MSIRepair" {
 							if ("MSI" -eq $InstallMethod) {
 								CustomReinstallPreInstall
+								[string]$script:installPhase = 'Package-Reinstallation'
 								$isInstalled = Repair-NxtApplication
 								CustomReinstallPostInstall
 							}
@@ -216,6 +221,7 @@ param (
 							}
 							else {
 								CustomReinstallPreInstall
+								[string]$script:installPhase = 'Package-Reinstallation'
 								$isInstalled = Install-NxtApplication
 								CustomReinstallPostInstall
 							}
@@ -228,12 +234,14 @@ param (
 				else {
 					## Default installation
 					CustomInstallBegin
+					[string]$script:installPhase = 'Package-Installation'
 					$isInstalled = Install-NxtApplication
 					CustomInstallEnd
 				}
 				CustomInstallAndReinstallEnd
 				CustomInstallAndReinstallAndSoftMigrationEnd
 				If ($true -eq $isInstalled) {
+					[string]$script:installPhase = 'Package-Completition'
 					Complete-NxtPackageInstallation
 					if ($true -eq $global:registerPackage) {
 						## Register package for uninstall
@@ -245,11 +253,14 @@ param (
 			}
 			"Uninstall" {
 				## START OF UNINSTALL
+				[string]$script:installPhase = 'Package-Preparation'
 				Show-NxtInstallationWelcome -IsInstall $false
 				CustomUninstallBegin
+				[string]$script:installPhase = 'Package-Uninstallation'
 				[bool]$isUninstalled = Uninstall-NxtApplication
 				CustomUninstallEnd
 				if ($true -eq $isUninstalled) {
+					[string]$script:installPhase = 'Package-Completition'
 					Complete-NxtPackageUninstallation
 					[string]$script:installPhase = 'Package-Unregistration'
 					Unregister-NxtPackage
@@ -270,7 +281,7 @@ param (
 			}
 			Default {}
 		}
-
+		[string]$script:installPhase = 'Package-Finish'
 		## Calculate exit code
 		If ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
 		If ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
