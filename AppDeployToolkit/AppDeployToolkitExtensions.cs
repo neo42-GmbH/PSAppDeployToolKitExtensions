@@ -1,5 +1,5 @@
-// Date Modified: 10.08.2022
-// Version Number: 0.1.1
+// Date Modified: 23.03.2023
+// Version Number: 0.1.2
 
 using System;
 using System.Diagnostics;
@@ -125,6 +125,15 @@ namespace PSADTNXT
         Equal = 1,
         Update = 2,
         Downgrade = 3
+    }
+
+    public class NxtApplicationResult
+    {
+        public bool? Success { get; set; }
+        public int ApplicationExitCode { get; set; }
+        public int MainExitCode { get; set; }
+        public string ErrorMessage { get; set; }
+        public string ErrorMessagePsadt { get; set; }
     }
 
     public class XmlNodeModel
