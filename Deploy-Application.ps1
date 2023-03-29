@@ -233,6 +233,10 @@ param (
 					}
 					CustomInstallAndReinstallEnd
 				}
+				else {
+					## soft migration = application is installed
+					[bool]$isInstalled = $true
+				}
 				## here we continue if application is present and/or register package is necesary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd
 				If ($true -eq $isInstalled) {
