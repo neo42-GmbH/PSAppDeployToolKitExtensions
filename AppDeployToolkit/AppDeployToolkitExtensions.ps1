@@ -5242,9 +5242,9 @@ function Uninstall-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Uninstall-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Param(
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -5292,9 +5292,7 @@ function Uninstall-NxtApplication {
 		[array]
 		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor
 	)
-	[string]$script:installPhase = 'Pre-Uninstallation'
-
-	## <Perform Pre-Uninstallation tasks here>
+	## begin code block 'Pre-Uninstallation' -> will be seperated with issue #175
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 		[string]$wowEntry = [string]::Empty
 		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
@@ -5318,9 +5316,7 @@ function Uninstall-NxtApplication {
 			}
 		}
 	}
-
-	[string]$script:installPhase = 'Uninstallation'
-
+	## end code block 'Pre-Uninstallation' -> will be seperated with issue #175
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
 		if ([string]::IsNullOrEmpty($UninstFile)) {
@@ -5388,7 +5384,7 @@ function Uninstall-NxtApplication {
 					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 						[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 					}
-				Execute-Process @executeParams
+					Execute-Process @executeParams
 				}
 			}
 			[int]$UninstallExitCode = $LastExitCode
