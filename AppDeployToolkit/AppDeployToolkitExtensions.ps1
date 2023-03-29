@@ -3520,8 +3520,6 @@ function Install-NxtApplication {
 		[array]
 		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor
 	)
-	[string]$script:installPhase = 'Installation'
-
 	[hashtable]$executeNxtParams = @{
 		Action                    = 'Install'
 		Path                      = "$InstFile"
@@ -3544,7 +3542,7 @@ function Install-NxtApplication {
 	else {
 		[string]$internalInstallerMethod = $InstallMethod
 	}
-	## <Perform Installation tasks here>
+
 	switch -Wildcard ($internalInstallerMethod) {
 		MSI {
 			Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
