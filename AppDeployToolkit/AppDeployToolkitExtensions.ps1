@@ -552,21 +552,9 @@ function Complete-NxtPackageInstallation {
 			DisplayNamesToExclude	= $uninstallKeyToHide.DisplayNamesToExcludeFromHiding
 		}
 		if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
-			if ("True" -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-				[bool]$uninstallKeyToHide.KeyNameIsDisplayName = $true
-			}
-			else {
-				[bool]$uninstallKeyToHide.KeyNameIsDisplayName = $false
-			}
 			$hideNxtParams["UninstallKeyIsDisplayName"] = $uninstallKeyToHide.KeyNameIsDisplayName
 		}
 		if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
-			if ("True" -eq $uninstallKeyToHide.KeyNameContainsWildCards) {
-				[bool]$uninstallKeyToHide.KeyNameContainsWildCards = $true
-			}
-			else {
-				[bool]$uninstallKeyToHide.KeyNameContainsWildCards = $false
-			}
 			$hideNxtParams["UninstallKeyContainsWildCards"] = $uninstallKeyToHide.KeyNameContainsWildCards
 		}
 		if ($false -eq $uninstallKeyToHide.Is64Bit) {
@@ -2174,10 +2162,18 @@ function Expand-NxtPackageConfig {
 		foreach ($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
 			[string]$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
 			if($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
-				[string]$uninstallKeyToHide.KeyNameIsDisplayName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameIsDisplayName)
+				try {
+					[bool]$uninstallKeyToHide.KeyNameIsDisplayName = [System.Convert]::ToBoolean($ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameIsDisplayName))
+				} catch [FormatException] {
+					Throw "Failed to expand UninstallKeysToHide. Could not convert [$($uninstallKeyToHide.KeyNameIsDisplayName)] to boolean value."
+				}
 			}
 			if($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
-				[string]$uninstallKeyToHide.KeyNameContainsWildCards = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameContainsWildCards)
+				try {
+					[bool]$uninstallKeyToHide.KeyNameContainsWildCards = [System.Convert]::ToBoolean($ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameContainsWildCards))
+				} catch [FormatException] {
+					Throw "Failed to expand UninstallKeysToHide. Could not convert [$($uninstallKeyToHide.KeyNameContainsWildCards)] to boolean value."
+				}
 			}
 			if($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.DisplayNamesToExcludeFromHiding)) {
 				[array]$uninstallKeyToHide.DisplayNamesToExcludeFromHiding = foreach($displayNameToExcludeFromHiding in $uninstallKeyToHide.DisplayNamesToExcludeFromHiding) {
@@ -5627,21 +5623,9 @@ function Uninstall-NxtApplication {
 			DisplayNamesToExclude	= $uninstallKeyToHide.DisplayNamesToExcludeFromHiding
 		}
 		if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
-			if ("True" -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-				[bool]$uninstallKeyToHide.KeyNameIsDisplayName = $true
-			}
-			else {
-				[bool]$uninstallKeyToHide.KeyNameIsDisplayName = $false
-			}
 			$unhideNxtParams["UninstallKeyIsDisplayName"] = $uninstallKeyToHide.KeyNameIsDisplayName
 		}
 		if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
-			if ("True" -eq $uninstallKeyToHide.KeyNameContainsWildCards) {
-				[bool]$uninstallKeyToHide.KeyNameContainsWildCards = $true
-			}
-			else {
-				[bool]$uninstallKeyToHide.KeyNameContainsWildCards = $false
-			}
 			$unhideNxtParams["UninstallKeyContainsWildCards"] = $uninstallKeyToHide.KeyNameContainsWildCards
 		}
 		if ($false -eq $uninstallKeyToHide.Is64Bit) {
