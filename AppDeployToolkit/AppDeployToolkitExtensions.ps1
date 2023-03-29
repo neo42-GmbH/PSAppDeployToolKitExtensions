@@ -481,37 +481,37 @@ function Compare-NxtVersion {
 #region Function Complete-NxtPackageInstallation
 function Complete-NxtPackageInstallation {
 	<#
-.SYNOPSIS
+	.SYNOPSIS
 	Defines the required steps to finalize the installation of the package
-.DESCRIPTION
+	.DESCRIPTION
 	Is only called in the Main function and should not be modified!
 	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER App
+	.PARAMETER App
 	Defines the path to a local persistent cache for installation files.
 	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UserPartOnInstallation
+	.PARAMETER UserPartOnInstallation
 	Defines if the Userpart should be executed for this installation.
 	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER PackageFamilyGUID
+	.PARAMETER PackageFamilyGUID
 	Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
 	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UserPartRevision
+	.PARAMETER UserPartRevision
 	Specifies the UserPartRevision for this installation
 	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallKeysToHide
+	.PARAMETER UninstallKeysToHide
 	Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
 	Defaults to the corresponding values from the PackageConfig object.
-.PARAMETER DesktopShortcut
+	.PARAMETER DesktopShortcut
 	Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
 	Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
-.PARAMETER Wow6432Node
+	.PARAMETER Wow6432Node
 	Switches between 32/64 Bit Registry Keys.
 	Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
-.EXAMPLE
+	.EXAMPLE
 	Complete-NxtPackageInstallation
-.LINK
+	.LINK
 	https://neo42.de/psappdeploytoolkit
-#>
+	#>
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -535,10 +535,6 @@ function Complete-NxtPackageInstallation {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-	[string]$script:installPhase = 'Complete-NxtPackageInstallation'
-
-	## <Perform Complete-NxtPackageInstallation tasks here>
-
 	If ($DesktopShortcut) {
 		Copy-NxtDesktopShortcuts
 	}
@@ -571,7 +567,7 @@ function Complete-NxtPackageInstallation {
 	}
 
 	If ($true -eq $UserPartOnInstallation) {
-		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
+		## Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
