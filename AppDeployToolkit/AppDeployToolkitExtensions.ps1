@@ -2995,8 +2995,6 @@ function Get-NxtRegisterOnly {
 	
 	)
 	If ($true -eq $SoftMigration) {
-		## Perform soft migration 
-		[string]$script:installPhase = 'Soft-Migration'
 		if ([string]::IsNullOrEmpty($DisplayVersion)) {
 			Write-Log -Message 'DisplayVersion is $null or empty. SoftMigration not possible.'
 			return $false
