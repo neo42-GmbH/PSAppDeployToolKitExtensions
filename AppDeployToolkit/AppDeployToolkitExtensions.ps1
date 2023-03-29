@@ -2180,7 +2180,7 @@ function Expand-NxtPackageConfig {
 				[string]$uninstallKeyToHide.KeyNameContainsWildCards = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameContainsWildCards)
 			}
 			if($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.DisplayNamesToExcludeFromHiding)) {
-				[string]$uninstallKeyToHide.DisplayNamesToExcludeFromHiding = foreach($displayNameToExcludeFromHiding in $uninstallKeyToHide.DisplayNamesToExcludeFromHiding) {
+				[array]$uninstallKeyToHide.DisplayNamesToExcludeFromHiding = foreach($displayNameToExcludeFromHiding in $uninstallKeyToHide.DisplayNamesToExcludeFromHiding) {
 					$ExecutionContext.InvokeCommand.ExpandString($displayNameToExcludeFromHiding)
 				}
 			}
