@@ -4793,7 +4793,7 @@ function Set-NxtPackageArchitecture {
 			}
 
 			Write-Log -Message "Package architecture variables successfully set." -Source ${cmdletName}
-			[int]$thisFunctionReturnCode = 0
+			[int32]$thisFunctionReturnCode = 0
 		}
 		Catch {
 			Write-Log -Message "Failed to set the package architecture variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -5499,7 +5499,6 @@ function Uninstall-NxtApplication {
 			}
 		}
 		else {
-			## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end by default)!
 			$uninstallResult.ErrorMessage = "Uninstall function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected application seems not to be installed on system!"
 			$uninstallResult.Success = $null
 			[int]$logMessageSeverity = 1
