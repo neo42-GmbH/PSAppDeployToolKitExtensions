@@ -4499,9 +4499,9 @@ function Repair-NxtApplication {
 				[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
 			}
 
-	## <Perform repair tasks here>
-	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
-	$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
+			## <Perform repair tasks here>
+			## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
+			$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
 
 			## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
 			if ( (3010 -eq $repairResult.ApplicationExitCode) -or (1641 -eq $repairResult.ApplicationExitCode) ) {
