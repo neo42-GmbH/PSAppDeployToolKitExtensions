@@ -4423,7 +4423,6 @@ function Repair-NxtApplication {
 		[string]
 		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes
 	)
-	[string]$script:installPhase = 'Repair-NxtApplication'
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
 	}
@@ -4450,11 +4449,10 @@ function Repair-NxtApplication {
 		[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
 	}
 	if ([string]::IsNullOrEmpty($RepairLogFile)) {
-			## now set default path and name including retrieved ProductCode
-			[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
+		## now set default path and name including retrieved ProductCode
+		[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
 	}
 
-	## <Perform repair tasks here>
 	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
 	[int]$repairExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
 
