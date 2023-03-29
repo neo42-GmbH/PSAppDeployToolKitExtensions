@@ -3696,6 +3696,92 @@ function Move-NxtItem {
 	}
 }
 #endregion
+#region Function Prepare-NxtUninstallApplication
+Prepare-NxtUninstallApplication {
+	<#
+	.SYNOPSIS
+		Defines the required steps to prepare the uninstallation of the package
+	.DESCRIPTION
+		Unhides all defined registry keys from a corresponding value in the PackageConfig object.
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.EXAMPLE
+		Prepare-NxtUninstallApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Param(
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstLogFile = $global:PackageConfig.UninstLogFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstFile = $global:PackageConfig.UninstFile,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstPara = $global:PackageConfig.UninstPara,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AppendUninstParaToDefaultParameters = $global:PackageConfig.AppendUninstParaToDefaultParameters,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedUninstallExitCodes = $global:PackageConfig.AcceptedUninstallExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstallMethod = $global:PackageConfig.UninstallMethod,
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckProcessOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.ProcessOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckProcessesToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PreSuccessCheckRegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegKeyOperator,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor
+	)
+	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
+		[string]$wowEntry = [string]::Empty
+		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
+			[string]$wowEntry = "\Wow6432Node"
+		}
+		if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+			[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+		}
+		else {
+			[string]$currentKeyName = $uninstallKeyToHide.KeyName
+		}
+		if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Value SystemComponent) {
+			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent'
+		}
+		else {
+			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+				Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped deleting SystemComponent entry." -Source ${CmdletName}
+			}
+			else {
+				Write-Log -Message "Did not find a SystemComponent entry under registry key [$currentKeyName]. Skipped deleting the entry for this key." -Source ${CmdletName}
+			}
+		}
+	}
+}
+#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
@@ -5358,31 +5444,6 @@ function Uninstall-NxtApplication {
 	[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$uninstallResult.Success = $false
 	[int]$logMessageSeverity = 1
-	## <Perform Pre-Uninstallation tasks here>
-	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-		[string]$wowEntry = [string]::Empty
-		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
-			[string]$wowEntry = "\Wow6432Node"
-		}
-		if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-			[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
-		}
-		else {
-			[string]$currentKeyName = $uninstallKeyToHide.KeyName
-		}
-		if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Value SystemComponent) {
-			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent'
-		}
-		else {
-			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-				Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped deleting SystemComponent entry." -Source ${CmdletName}
-			}
-			else {
-				Write-Log -Message "Did not find a SystemComponent entry under registry key [$currentKeyName]. Skipped deleting the entry for this key." -Source ${CmdletName}
-			}
-		}
-	}
-
 	[string]$script:installPhase = 'Uninstallation'
 
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
