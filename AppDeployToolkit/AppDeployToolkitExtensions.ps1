@@ -2276,45 +2276,53 @@ function Get-NxtAppIsInstalled {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		[bool]$approvedMSI = $true
+		## default error message, if no special case for msi is to process
 		[string]$returnErrorMessage = "Search for application installation status failed. Could not retrieve information about an installed application."
 		[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
 		if ( ("MSI" -eq $DeploymentMethod) -and $installedAppResults -and ($true -eq $UninstallKeyIsDisplayName) ) {
 			if ([string]::IsNullOrEmpty($DisplayVersion)) {
 				## Note: Especially in case of msi uninstallation it may necessary to run it against all found versions!
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check for an expected msi display version!" -Severity 2 -Source ${cmdletName}
+				[bool]$approvedMSI = $true
 			}
 			else {
-				[bool]$approvedMSI = $false
 				if ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
 					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
 					Write-Log -Message "Detected 'DisplayVersion' is $null or empty. Wrong installation results maybe possible." -Severity 2 -Source ${cmdletName}
 					[string]$returnErrorMessage = "Exact check for an installed msi application was not possible!"
+					[bool]$approvedMSI = $false
 				}
 				else {
 					Write-Log -Message "Processing msi setup: double check for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
 					switch ( $(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion) ) {
 						"Equal" { 
+							## everything is fine: that was expected in general :)
 							[bool]$approvedMSI = $true
 						}
 						"Update" {
 							[string]$returnErrorMessage = "Found a lower target display version like expected."
 							If ($DeploymentType -eq "Install") {
 								[string]$returnErrorMessage += " This leads to trying to do an msi inplace upgrade ..."
+								[bool]$approvedMSI = $false
 							}
 						}
 						"Downgrade" {
 							[string]$returnErrorMessage = "Found a higher target display version like expected."
 							If ($DeploymentType -eq "Install") {
 								[string]$returnErrorMessage += " This leads to trying to do a msi downgrade (if supported) ..."
+								[bool]$approvedMSI = $false
 							}
 						}
 						Default {
 							Write-Error "Unsupported compare result at this point: '$_'"
+							[bool]$approvedMSI = $false
 						}
 					}
 				}
 			}
+		}
+		else {
+			[bool]$approvedMSI = $true
 		}
 		If ( !$installedAppResults -or ($false -eq $approvedMSI) ) {
 			Write-Log -Message "$returnErrorMessage" -Source ${cmdletName}
