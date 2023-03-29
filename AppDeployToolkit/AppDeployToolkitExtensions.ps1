@@ -4325,6 +4325,52 @@ function Remove-NxtProcessEnvironmentVariable {
 	}
 }
 #endregion
+#region Function Remove-NxtRegistryKeyForAllUsers
+function Remove-NxtRegistryKeyForAllUsers {
+	<#
+	.DESCRIPTION
+		Removes a regkey from all user registries.
+	.PARAMETER Path
+		Path to the regkey in HKCU.
+	.EXAMPLE
+		Remove-NxtRegistryKeyForAllUsers -Path "HKCU:Software\TestKey"
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    param(
+        [Parameter(Mandatory=$true)]
+		[ValidatePattern("^HKCU:*\\*")]
+        [string]
+        $Key,
+		[Parameter(Mandatory=$false)]
+        [switch]
+        $Recurse
+    )
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process{
+		if ($true -eq $Recurse){
+			[ScriptBlock]$hKCURegistrySettings = {
+        		Remove-RegistryKey -Key $Key -SID $UserProfile.SID -ContinueOnError $true -Recurse
+    		}
+		}else{
+			[ScriptBlock]$hKCURegistrySettings = {
+        		Remove-RegistryKey -Key $Key -SID $UserProfile.SID -ContinueOnError $true
+    		}
+		}
+		
+    Invoke-HKCURegistrySettingsForAllUsers -RegistrySettings $HKCURegistrySettings
+	}
+    End{
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Remove-NxtSystemEnvironmentVariable
 function Remove-NxtSystemEnvironmentVariable {
 	<#
@@ -5496,6 +5542,15 @@ function Uninstall-NxtOld {
 	}
 	Process {
 		If ($true -eq $UninstallOld) {
+			## deleting from the registry can have severe impact on the system, so we make sure all neccesary parameters are not null or empty.
+			if (
+				[string]::IsNullOrEmpty($RegPackagesKey) -or
+				[string]::IsNullOrEmpty($AppVendor) -or
+				[string]::IsNullOrEmpty($AppName) -or
+				[string]::IsNullOrEmpty($AppVersion)
+			) {
+				throw "One of the parameters RegPackagesKey, AppVendor, AppName or AppVersion is empty"
+			}
 			Write-Log -Message "Checking for old packages..." -Source ${cmdletName}
 			Try {
 				## Check for Empirum packages under "HKLM:SOFTWARE\WOW6432Node\"
@@ -5503,7 +5558,8 @@ function Uninstall-NxtOld {
 					If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") {
 						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 						If (($appEmpirumPackageVersions).Count -eq 0) {
-							Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
+							Remove-RegistryKey -Key "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Recurse
+							Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Recurse
 							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
 						}
 						Else {
@@ -5511,7 +5567,11 @@ function Uninstall-NxtOld {
 								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 								If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 									Try {
-										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
+										[string]$appendAW = [string]::Empty
+										if ((Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'MachineSetup') -eq "1"){
+											$appendAW = " /AW"
+										}
+										cmd /c "$(Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') /X8 /S0$appendAW"
 									}
 									Catch {
 									}
@@ -5526,18 +5586,23 @@ function Uninstall-NxtOld {
 									}
 								}
 								Else {
-									$appEmpirumPackageVersion | Remove-Item
+									$appEmpirumPackageVersion | Foreach-Object {
+										Remove-RegistryKey -Key $_.Name -Recurse
+										Remove-NxtRegistryKeyForAllUsers -Key "$($_.Name -replace "^HKEY_LOCAL_MACHINE\\","HKCU:")" -Recurse
+									}
 									Write-Log -Message "This key contained no 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 								}
 							}
 							If ((($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName")) {
-								Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
+								Remove-RegistryKey -Key "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Recurse
+								Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Recurse
 								Write-Log -Message "Deleted the now empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
 							}
 						}
 					}
 					If ((Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) {
-						Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor"
+						Remove-RegistryKey -Key "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor" -Recurse
+						Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor" -Recurse
 						Write-Log -Message "Deleted empty Empirum vendor key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor" -Source ${cmdletName}
 					}
 				}
@@ -5546,7 +5611,8 @@ function Uninstall-NxtOld {
 					If (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName") {
 						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 						If (($appEmpirumPackageVersions).Count -eq 0) {
-							Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
+							Remove-RegistryKey -Key "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Recurse
+							Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Recurse
 							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
 						}
 						Else {
@@ -5554,7 +5620,11 @@ function Uninstall-NxtOld {
 								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 								If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 									Try {
-										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
+										[string]$appendAW = [string]::Empty
+										if ((Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'MachineSetup') -eq "1"){
+											$appendAW = " /AW"
+										}
+										cmd /c "$(Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') /X8 /S0$appendAW"
 									}
 									Catch {
 									}
@@ -5566,21 +5636,28 @@ function Uninstall-NxtOld {
 									}
 									Else {
 										Write-Log -Message "Successfully uninstalled Empirum package: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+										Remove-RegistryKey -Key $appEmpirumPackageVersion.name -Recurse
+										Remove-NxtRegistryKeyForAllUsers -Key "$($appEmpirumPackageVersion.name -replace "^HKEY_LOCAL_MACHINE\\","HKCU:")" -Recurse
 									}
 								}
 								Else {
-									$appEmpirumPackageVersion | Remove-Item
+									$appEmpirumPackageVersion | ForEach-Object {
+										Remove-RegistryKey -Key $_.name -Recurse
+										Remove-NxtRegistryKeyForAllUsers -Key "$($_.name -replace "^HKEY_LOCAL_MACHINE\\","HKCU:")" -Recurse
+									}
 									Write-Log -Message "This key contained no 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 								}
 							}
 							If ((($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName")) {
-								Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
+								Remove-RegistryKey -Key "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Recurse
+								Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Recurse
 								Write-Log -Message "Deleted the now empty Empirum application key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
 							}
 						}
 					}
 					If ((Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor").Count -eq 0) {
-						Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor"
+						Remove-RegistryKey -Key "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor" -Recurse
+						Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\$RegPackagesKey\$AppVendor" -Recurse
 						Write-Log -Message "Deleted empty Empirum vendor key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor" -Source ${cmdletName}
 					}
 				}
