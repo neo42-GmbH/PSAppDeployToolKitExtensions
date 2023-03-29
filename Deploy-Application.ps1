@@ -102,9 +102,9 @@ Catch {
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
 	[int32]$initNxtEnvReturnCode = Initialize-NxtEnvironment
-	if (0 -ne $initNxtEnvReturnCode) {
-		Exit-Script -ExitCode $initNxtEnvReturnCode
-	}
+	#if (0 -ne $initNxtEnvReturnCode) {
+	#	Exit-Script -ExitCode $initNxtEnvReturnCode
+	#}
 ##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================

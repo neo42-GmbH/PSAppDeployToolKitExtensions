@@ -3422,16 +3422,17 @@ function Initialize-NxtEnvironment {
 				throw "File not found: $ExtensionCsPath"
 			}
 		}
-		[int32]$pkgsArchReturnCode = 0
 		Get-NxtPackageConfig
 		Set-NxtSetupCfg -Path $setupCfgPath
-		[int32]$pkgsArchReturnCode = Set-NxtPackageArchitecture
-		if ($pkgsArchReturnCode -eq 0) {
-			[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
-			Expand-NxtPackageConfig
-			Format-NxtPackageSpecificVariables
+		#[int32]$pkgsArchReturnCode = Set-NxtPackageArchitecture
+		#if ($pkgsArchReturnCode -ne 0) {
+		if (0 -ne $(Set-NxtPackageArchitecture)) {
+			throw "Error during setting package architecture variables."
 		}
-		Write-Output $pkgsArchReturnCode
+		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
+		Expand-NxtPackageConfig
+		Format-NxtPackageSpecificVariables
+		#Write-Output $pkgsArchReturnCode
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -3537,10 +3538,6 @@ function Install-NxtApplication {
 	[string]$script:installPhase = 'Installation'
 	[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$installResult.Success = $false
-	$installResult.ApplicationExitCode = $null
-	$installResult.MainExitCode = 0
-	$installResult.ErrorMessage = [string]::Empty
-	$installResult.ErrorMessagePSADT = [string]::Empty
 	[int]$logMessageSeverity = 1
 	[hashtable]$executeNxtParams = @{
 		Action                    = 'Install'
@@ -4467,10 +4464,6 @@ function Repair-NxtApplication {
 	[string]$script:installPhase = 'Repair-NxtApplication'
 	[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$repairResult.Success = $false
-	$repairResult.ApplicationExitCode = $null
-	$repairResult.MainExitCode = 0
-	$repairResult.ErrorMessage = [string]::Empty
-	$repairResult.ErrorMessagePSADT = [string]::Empty
 	[int]$logMessageSeverity = 1
 	[hashtable]$executeNxtParams = @{
 		Action	= 'Repair'
@@ -5365,10 +5358,6 @@ function Uninstall-NxtApplication {
 	[string]$script:installPhase = 'Pre-Uninstallation'
 	[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$uninstallResult.Success = $false
-	$uninstallResult.ApplicationExitCode = $null
-	$uninstallResult.MainExitCode = 0
-	$uninstallResult.ErrorMessage = [string]::Empty
-	$uninstallResult.ErrorMessagePSADT = [string]::Empty
 	[int]$logMessageSeverity = 1
 	## <Perform Pre-Uninstallation tasks here>
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
@@ -5591,10 +5580,6 @@ function Uninstall-NxtOld {
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 		$uninstallOldResult.Success = $null
-		$uninstallOldResult.ApplicationExitCode = $null
-		$uninstallOldResult.MainExitCode = 0
-		$uninstallOldResult.ErrorMessage = [string]::Empty
-		$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 		If ($true -eq $UninstallOld) {
 			Write-Log -Message "Checking for old packages..." -Source ${cmdletName}
 			Try {
