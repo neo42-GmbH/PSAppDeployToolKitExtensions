@@ -177,68 +177,63 @@ param (
 				[string]$script:installPhase = 'Package-PreCleanup'
 				Uninstall-NxtOld 
 				[string]$script:installPhase = 'Check-Softmigration'
-				if (($true -eq $(Get-NxtRegisterOnly)) -and ($true -eq $global:registerPackage)) {
-					## Application is present. Register package only.
-					CustomInstallAndReinstallAndSoftMigrationEnd
-					[string]$script:installPhase = 'Package-Completition'
-					Complete-NxtPackageInstallation
-					[string]$script:installPhase = 'Package-Registration'
-					Register-NxtPackage
-					Exit-Script -ExitCode $mainExitCode
-				}
-				[string]$script:installPhase = 'Package-Preparation'
-				Show-NxtInstallationWelcome -IsInstall $true
-				CustomInstallAndReinstallPreInstallAndReinstall
-				[bool]$isInstalled = $false
-				[string]$script:installPhase = 'Decide-ReInstallMode'
-				if ($true -eq $(Get-NxtAppIsInstalled)) {
-					Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
-					switch ($ReinstallMode) {
-						"Reinstall" {
-							CustomReinstallPreUninstall
-							[string]$script:installPhase = 'Package-Reinstallation'
-							$isUninstalled = Uninstall-NxtApplication
-							CustomReinstallPostUninstall
-							CustomReinstallPreInstall
-							[string]$script:installPhase = 'Package-Reinstallation'
-							$isInstalled = Install-NxtApplication
-							CustomReinstallPostInstall
-						}
-						"MSIRepair" {
-							if ("MSI" -eq $InstallMethod) {
-								CustomReinstallPreInstall
+				if ( ($false -eq $(Get-NxtRegisterOnly)) -or ($false -eq $global:registerPackage) ) {
+					## soft migration is not requested or not possible
+					[string]$script:installPhase = 'Package-Preparation'
+					Show-NxtInstallationWelcome -IsInstall $true
+					CustomInstallAndReinstallPreInstallAndReinstall
+					[bool]$isInstalled = $false
+					[string]$script:installPhase = 'Decide-ReInstallMode'
+					if ($true -eq $(Get-NxtAppIsInstalled)) {
+						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
+						switch ($ReinstallMode) {
+							"Reinstall" {
+								CustomReinstallPreUninstall
 								[string]$script:installPhase = 'Package-Reinstallation'
-								$isInstalled = Repair-NxtApplication
-								CustomReinstallPostInstall
-							}
-							else {
-								Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
-							}
-						}
-						"Install" {
-							if ("MSI" -eq $InstallMethod) {
-								Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Select value 'MSIRepair' or 'Reinstall' in 'ReinstallMode' for installation method 'MSI'!"
-							}
-							else {
+								$isUninstalled = Uninstall-NxtApplication
+								CustomReinstallPostUninstall
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								$isInstalled = Install-NxtApplication
 								CustomReinstallPostInstall
 							}
-						}
-						Default {
-							Throw "Unsupported 'ReinstallMode' property: $ReinstallMode"
+							"MSIRepair" {
+								if ("MSI" -eq $InstallMethod) {
+									CustomReinstallPreInstall
+									[string]$script:installPhase = 'Package-Reinstallation'
+									$isInstalled = Repair-NxtApplication
+									CustomReinstallPostInstall
+								}
+								else {
+									Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
+								}
+							}
+							"Install" {
+								if ("MSI" -eq $InstallMethod) {
+									Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Select value 'MSIRepair' or 'Reinstall' in 'ReinstallMode' for installation method 'MSI'!"
+								}
+								else {
+									CustomReinstallPreInstall
+									[string]$script:installPhase = 'Package-Reinstallation'
+									$isInstalled = Install-NxtApplication
+									CustomReinstallPostInstall
+								}
+							}
+							Default {
+								Throw "Unsupported 'ReinstallMode' property: $ReinstallMode"
+							}
 						}
 					}
+					else {
+						## Default installation
+						CustomInstallBegin
+						[string]$script:installPhase = 'Package-Installation'
+						$isInstalled = Install-NxtApplication
+						CustomInstallEnd
+					}
+					CustomInstallAndReinstallEnd
 				}
-				else {
-					## Default installation
-					CustomInstallBegin
-					[string]$script:installPhase = 'Package-Installation'
-					$isInstalled = Install-NxtApplication
-					CustomInstallEnd
-				}
-				CustomInstallAndReinstallEnd
+				## here we continue if application is present and/or register package is necesary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd
 				If ($true -eq $isInstalled) {
 					[string]$script:installPhase = 'Package-Completition'
