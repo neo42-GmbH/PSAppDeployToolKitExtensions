@@ -3380,9 +3380,9 @@ function Initialize-NxtEnvironment {
 	.PARAMETER ExtensionCsPath
 		Provides the Path to the AppDeployToolkitExtensions.cs containing c# to be used in the extension functions
 		Defaults to "$scriptRoot\AppDeployToolkitExtensions.cs"
-	.PARAMETER SetupCFGPath
+	.PARAMETER SetupCfgPath
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
-		Defaults to the "$scriptParentPath\Setup.cfg".
+		Defaults to the "$global:SetupCfgPath".
 	.OUTPUTS
 		System.Int32.
 	.EXAMPLE
@@ -3397,7 +3397,7 @@ function Initialize-NxtEnvironment {
 		$ExtensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$setupCfgPath = "$scriptParentPath\Setup.cfg"
+		$SetupCfgPath = "$global:SetupCfgPath"
 	)
 		
 	Begin {
@@ -3415,7 +3415,7 @@ function Initialize-NxtEnvironment {
 			}
 		}
 		Get-NxtPackageConfig
-		Set-NxtSetupCfg -Path $setupCfgPath
+		Set-NxtSetupCfg -Path $SetupCfgPath
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
 		}
