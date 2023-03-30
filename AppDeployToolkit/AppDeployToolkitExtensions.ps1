@@ -3686,7 +3686,7 @@ function Move-NxtItem {
 }
 #endregion
 #region Function Prepare-NxtUninstallApplication
-Prepare-NxtUninstallApplication {
+function Prepare-NxtUninstallApplication {
 	<#
 	.SYNOPSIS
 		Defines the required steps to prepare the uninstallation of the package
