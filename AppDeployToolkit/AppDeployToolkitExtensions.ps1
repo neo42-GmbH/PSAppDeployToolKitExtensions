@@ -3511,7 +3511,7 @@ function Install-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
 		Determins if the value given as UninstallKey should be interpreted as a displayname.
-		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Only applies to Inno Setup, Nullsoft and BitRockInstaller.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayVersion
 		Expected version of installed application from a msi setup.
@@ -5386,7 +5386,7 @@ function Uninstall-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
 		Determins if the value given as UninstallKey should be interpreted as a displayname.
-		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Only applies to Inno Setup, Nullsoft and BitRockInstaller.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayVersion
 		Expected version of installed application from a msi setup.
