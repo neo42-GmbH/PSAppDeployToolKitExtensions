@@ -64,8 +64,10 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
+## global variables for configuration files additionally used
+[string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 ## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT delete this section! <-- HJT
-$global:PackageConfig = Get-Content "$PSScriptRoot\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
+$global:PackageConfig = Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json
 [string]$appVendor = $global:PackageConfig.AppVendor
 [string]$appName = $global:PackageConfig.AppName
 [string]$appVersion = $global:PackageConfig.AppVersion
@@ -86,7 +88,7 @@ If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostI
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
 ## Dot source the required App Deploy Toolkit Functions
 Try {
-	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
+	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\$(split-path "$scriptRoot" -leaf)\AppDeployToolkitMain.ps1"
 	If (-not (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
 	If ($DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
 }
