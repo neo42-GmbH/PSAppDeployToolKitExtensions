@@ -240,7 +240,7 @@ param (
 				}
 				else {
 					## soft migration = application is installed
-					[bool]$mainNxtResult.Success = $true
+					$mainNxtResult.Success = $true
 				}
 				## here we continue if application is present and/or register package is necesary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
