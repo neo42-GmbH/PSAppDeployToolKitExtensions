@@ -88,7 +88,7 @@ If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostI
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
 ## Dot source the required App Deploy Toolkit Functions
 Try {
-	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\$(split-path "$scriptRoot" -leaf)\AppDeployToolkitMain.ps1"
+	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
 	If (-not (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
 	If ($DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
 }
@@ -111,9 +111,6 @@ try {
 	## Variables not from neo42PackageConfig.json
 	[string]$setupCfgPath = "$scriptParentPath\Setup.cfg"
 	
-
-	## Environment
-	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
 
 	## App Global Variables
 	Set-NxtDetectedDisplayVersion
