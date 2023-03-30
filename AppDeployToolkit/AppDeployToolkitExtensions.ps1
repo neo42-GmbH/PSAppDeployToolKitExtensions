@@ -3685,6 +3685,63 @@ function Move-NxtItem {
 	}
 }
 #endregion
+#region Function Prepare-NxtUninstallApplication
+Prepare-NxtUninstallApplication {
+	<#
+	.SYNOPSIS
+		Defines the required steps to prepare the uninstallation of the package
+	.DESCRIPTION
+		Unhides all defined registry keys from a corresponding value in the PackageConfig object.
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+		Defaults to the corresponding values from the PackageConfig object.
+	.EXAMPLE
+		Prepare-NxtUninstallApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Param(
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
+			[string]$wowEntry = [string]::Empty
+			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
+				$wowEntry = "\Wow6432Node"
+			}
+			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+				[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+			}
+			else {
+				[string]$currentKeyName = $uninstallKeyToHide.KeyName
+			}
+			if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Value SystemComponent) {
+				Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent'
+			}
+			else {
+				if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+					Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped deleting SystemComponent entry." -Source ${CmdletName}
+				}
+				else {
+					Write-Log -Message "Did not find a SystemComponent entry under registry key [$currentKeyName]. Skipped deleting the entry for this key." -Source ${CmdletName}
+				}
+			}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
@@ -5343,31 +5400,6 @@ function Uninstall-NxtApplication {
 	[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$uninstallResult.Success = $false
 	[int]$logMessageSeverity = 1
-	## begin code block 'Pre-Uninstallation' -> will be seperated with issue #175
-	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-		[string]$wowEntry = [string]::Empty
-		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
-			[string]$wowEntry = "\Wow6432Node"
-		}
-		if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-			[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
-		}
-		else {
-			[string]$currentKeyName = $uninstallKeyToHide.KeyName
-		}
-		if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Value SystemComponent) {
-			Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent'
-		}
-		else {
-			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-				Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped deleting SystemComponent entry." -Source ${CmdletName}
-			}
-			else {
-				Write-Log -Message "Did not find a SystemComponent entry under registry key [$currentKeyName]. Skipped deleting the entry for this key." -Source ${CmdletName}
-			}
-		}
-	}
-	## end code block 'Pre-Uninstallation' -> will be seperated with issue #175
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
 		$uninstallResult.Success = $null

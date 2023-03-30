@@ -262,6 +262,7 @@ param (
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
 				Show-NxtInstallationWelcome -IsInstall $false
+				Prepare-NxtUninstallApplication
 				CustomUninstallBegin
 				[string]$script:installPhase = 'Package-Uninstallation'
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
