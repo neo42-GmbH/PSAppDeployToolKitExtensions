@@ -2232,11 +2232,11 @@ function Get-NxtAppIsInstalled {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeploymentMethod
 		Defines the type of the installer used in this package.
-		Only applies for MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value for installation case and uninstallation case from the PackageConfig object ('InstallMethod' includes repair mode or 'UninstallMethod').
 	.PARAMETER DisplayVersion
 		Expected version of installed application from a msi setup.
-		Only applies for MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtAppIsInstalled
@@ -2257,7 +2257,7 @@ function Get-NxtAppIsInstalled {
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentMethod = $global:PackageConfig.InstallMethod,
+		$DeploymentMethod,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion
@@ -2273,14 +2273,14 @@ function Get-NxtAppIsInstalled {
 		[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
 		if ( ("MSI" -eq $DeploymentMethod) -and $installedAppResults -and ($true -eq $UninstallKeyIsDisplayName) ) {
 			if ([string]::IsNullOrEmpty($DisplayVersion)) {
-				## Note: Especially in case of msi uninstallation it may necessary to run it against all found versions!
+				## Note: Especially in case of msi uninstallation it may be necessary to run it against all found versions!
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check for an expected msi display version!" -Severity 2 -Source ${cmdletName}
 				[bool]$approvedMSI = $true
 			}
 			else {
 				if ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
 					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
-					Write-Log -Message "Detected 'DisplayVersion' is $null or empty. Wrong installation results maybe possible." -Severity 2 -Source ${cmdletName}
+					Write-Log -Message "Detected 'DisplayVersion' is $null or empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
 					[string]$returnErrorMessage = "Exact check for an installed msi application was not possible!"
 					[bool]$approvedMSI = $false
 				}
@@ -2288,25 +2288,24 @@ function Get-NxtAppIsInstalled {
 					Write-Log -Message "Processing msi setup: double check for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
 					switch ( $(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion) ) {
 						"Equal" { 
-							## everything is fine: that was expected in general :)
 							[bool]$approvedMSI = $true
 						}
 						"Update" {
-							[string]$returnErrorMessage = "Found a lower target display version like expected."
-							If ($DeploymentType -eq "Install") {
+							[string]$returnErrorMessage = "Found a lower target display version than expected."
+							if ($DeploymentType -eq "Install") {
 								[string]$returnErrorMessage += " This leads to trying to do an msi inplace upgrade ..."
 								[bool]$approvedMSI = $false
 							}
 						}
 						"Downgrade" {
-							[string]$returnErrorMessage = "Found a higher target display version like expected."
-							If ($DeploymentType -eq "Install") {
+							[string]$returnErrorMessage = "Found a higher target display version than expected."
+							if ($DeploymentType -eq "Install") {
 								[string]$returnErrorMessage += " This leads to trying to do a msi downgrade (if supported) ..."
 								[bool]$approvedMSI = $false
 							}
 						}
-						Default {
-							Write-Error "Unsupported compare result at this point: '$_'"
+						default {
+							Write-Log -Message "Unsupported compare result at this point: '$_'" -Severity 3 -Source ${cmdletName}
 							[bool]$approvedMSI = $false
 						}
 					}
@@ -2316,11 +2315,11 @@ function Get-NxtAppIsInstalled {
 		else {
 			[bool]$approvedMSI = $true
 		}
-		If ( !$installedAppResults -or ($false -eq $approvedMSI) ) {
+		if ( !$installedAppResults -or ($false -eq $approvedMSI) ) {
 			Write-Log -Message "$returnErrorMessage" -Source ${cmdletName}
 			Write-Output $false
 		}
-		Else {
+		else {
 			Write-Log -Message "Search for application installation status successful." -Source ${cmdletName}
 			Write-Output $true
 		}
@@ -3516,7 +3515,7 @@ function Install-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayVersion
 		Expected version of installed application from a msi setup.
-		Only applies for MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER InstLogFile
 		Defines the path to the Logfile that should be used by the installer.
@@ -4529,7 +4528,7 @@ function Repair-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayVersion
 		Expected version of installed application from a msi setup.
-		Only applies for MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER RepairLogFile
 		Defines the path to the Logfile that should be used by the installer.
@@ -5391,7 +5390,7 @@ function Uninstall-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayVersion
 		Expected version of installed application from a msi setup.
-		Only applies for MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER UninstLogFile
 		Defines the path to the Logfile that should be used by the uninstaller.
