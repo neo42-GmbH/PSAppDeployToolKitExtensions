@@ -61,11 +61,11 @@ if ($false -eq (Test-Path "$scriptDirectory\AppDeployToolkitExtensions.ps1")) {
 }
 
 [string]$scriptContent = Get-Content -Path "$scriptDirectory\AppDeployToolkitExtensions.ps1" -Raw
-[System.Collections.Generic.List`1[System.Management.Automation.Language.Ast]]$ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$null, [ref]$null)
+[psobject]$ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$null, [ref]$null)
 
 New-Item -Name "wiki" -ItemType Directory -Force -ErrorAction SilentlyContinue
 
-[System.Management.Automation.Language.FunctionDefinitionAst]$functionDefinitions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+[psobject]$functionDefinitions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
 foreach ($functionDefinition in $functionDefinitions) {
     [string]$functionName = $functionDefinition.Name
     [string]$summaryBlockPattern = '(?s)<#(.*?)#>'
