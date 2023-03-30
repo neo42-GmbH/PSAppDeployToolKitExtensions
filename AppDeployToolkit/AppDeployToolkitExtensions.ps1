@@ -3727,7 +3727,7 @@ Prepare-NxtUninstallApplication {
 		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 			[string]$wowEntry = [string]::Empty
 			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
-				[string]$wowEntry = "\Wow6432Node"
+				$wowEntry = "\Wow6432Node"
 			}
 			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
 				[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
