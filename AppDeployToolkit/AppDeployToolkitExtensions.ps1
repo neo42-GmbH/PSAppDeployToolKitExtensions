@@ -481,37 +481,37 @@ function Compare-NxtVersion {
 #region Function Complete-NxtPackageInstallation
 function Complete-NxtPackageInstallation {
 	<#
-.SYNOPSIS
-	Defines the required steps to finalize the installation of the package
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER App
-	Defines the path to a local persistent cache for installation files.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UserPartOnInstallation
-	Defines if the Userpart should be executed for this installation.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER PackageFamilyGUID
-	Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UserPartRevision
-	Specifies the UserPartRevision for this installation
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UninstallKeysToHide
-	Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
-	Defaults to the corresponding values from the PackageConfig object.
-.PARAMETER DesktopShortcut
-	Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
-	Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
-.PARAMETER Wow6432Node
-	Switches between 32/64 Bit Registry Keys.
-	Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
-.EXAMPLE
-	Complete-NxtPackageInstallation
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Defines the required steps to finalize the installation of the package
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartOnInstallation
+		Defines if the Userpart should be executed for this installation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageFamilyGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartRevision
+		Specifies the UserPartRevision for this installation
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+		Defaults to the corresponding values from the PackageConfig object.
+	.PARAMETER DesktopShortcut
+		Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
+		Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.EXAMPLE
+		Complete-NxtPackageInstallation
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -535,10 +535,6 @@ function Complete-NxtPackageInstallation {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-	[string]$script:installPhase = 'Complete-NxtPackageInstallation'
-
-	## <Perform Complete-NxtPackageInstallation tasks here>
-
 	If ($DesktopShortcut) {
 		Copy-NxtDesktopShortcuts
 	}
@@ -571,7 +567,7 @@ function Complete-NxtPackageInstallation {
 	}
 
 	If ($true -eq $UserPartOnInstallation) {
-		## <Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add your per User commands to the CustomInstallUserPart-function below.>
+		## Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
@@ -585,28 +581,28 @@ function Complete-NxtPackageInstallation {
 #region Function Complete-NxtPackageUninstallation
 function Complete-NxtPackageUninstallation {
 	<#
-.SYNOPSIS
-	Defines the required steps to finalize the uninstallation of the package
-.DESCRIPTION
-	Is only called in the Main function and should not be modified!
-	To customize the script always use the "CustomXXXX" entry points.
-.PARAMETER App
-	Defines the path to a local persistent cache for installation files.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER PackageFamilyGUID
-	Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UserPartOnUninstallation
-	Specifies if a Userpart should take place during uninstallation.
-	Defaults to the corresponding value from the PackageConfig object.
-.PARAMETER UserPartRevision
-	Specifies the UserPartRevision for this installation.
-	Defaults to the corresponding value from the PackageConfig object.
-.EXAMPLE
-	Complete-NxtPackageUninstallation
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.SYNOPSIS
+		Defines the required steps to finalize the uninstallation of the package
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageFamilyGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartOnUninstallation
+		Specifies if a Userpart should take place during uninstallation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UserPartRevision
+		Specifies the UserPartRevision for this installation.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Complete-NxtPackageUninstallation
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -621,14 +617,10 @@ function Complete-NxtPackageUninstallation {
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision
 	)
-	[string]$script:installPhase = 'Complete-NxtPackageUninstallation'
-
-	## <Perform Complete-NxtPackageUninstallation tasks here>
-
 	Remove-NxtDesktopShortcuts
 	Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 	If ($true -eq $UserPartOnUninstallation) {
-		## <Userpart-unInstallation: Copy all needed files to "...\SupportFiles\neo42-Uerpart\" and add your per User commands to the CustomUninstallUserPart-function below.>
+		## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
 		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
@@ -3003,8 +2995,6 @@ function Get-NxtRegisterOnly {
 	
 	)
 	If ($true -eq $SoftMigration) {
-		## Perform soft migration 
-		[string]$script:installPhase = 'Soft-Migration'
 		if ([string]::IsNullOrEmpty($DisplayVersion)) {
 			Write-Log -Message 'DisplayVersion is $null or empty. SoftMigration not possible.'
 			return $false
@@ -3534,7 +3524,6 @@ function Install-NxtApplication {
 		[array]
 		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor
 	)
-	[string]$script:installPhase = 'Installation'
 	[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$installResult.Success = $false
 	[int]$logMessageSeverity = 1
@@ -3560,7 +3549,7 @@ function Install-NxtApplication {
 	else {
 		[string]$internalInstallerMethod = $InstallMethod
 	}
-	## <Perform Installation tasks here>
+
 	switch -Wildcard ($internalInstallerMethod) {
 		MSI {
 			Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
@@ -4460,7 +4449,6 @@ function Repair-NxtApplication {
 		[string]
 		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes
 	)
-	[string]$script:installPhase = 'Repair-NxtApplication'
 	[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$repairResult.Success = $false
 	[int]$logMessageSeverity = 1
@@ -4477,7 +4465,6 @@ function Repair-NxtApplication {
 	else {
 		$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
 		if ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
-			## even return succesfull after writing information about happened situation (else no completing task and no package register task will be done at the script end)!
 			$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
 			$repairResult.Success = $null
 			[int]$logMessageSeverity = 2
@@ -4499,7 +4486,6 @@ function Repair-NxtApplication {
 				[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
 			}
 
-	## <Perform repair tasks here>
 	## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
 	[int]$repairExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
 
@@ -5304,9 +5290,9 @@ function Uninstall-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Uninstall-NxtApplication
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
 	Param(
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -5354,11 +5340,10 @@ function Uninstall-NxtApplication {
 		[array]
 		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor
 	)
-	[string]$script:installPhase = 'Pre-Uninstallation'
 	[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$uninstallResult.Success = $false
 	[int]$logMessageSeverity = 1
-	## <Perform Pre-Uninstallation tasks here>
+	## begin code block 'Pre-Uninstallation' -> will be seperated with issue #175
 	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 		[string]$wowEntry = [string]::Empty
 		if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
@@ -5382,9 +5367,7 @@ function Uninstall-NxtApplication {
 			}
 		}
 	}
-
-	[string]$script:installPhase = 'Uninstallation'
-
+	## end code block 'Pre-Uninstallation' -> will be seperated with issue #175
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
 		Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
 		$uninstallResult.Success = $null
@@ -5458,7 +5441,7 @@ function Uninstall-NxtApplication {
 					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 						[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 					}
-				Execute-Process @executeParams
+					Execute-Process @executeParams
 				}
 			}
 			## if nothing was to execute herein just finish
