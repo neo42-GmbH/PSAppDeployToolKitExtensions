@@ -2229,8 +2229,15 @@ function Get-NxtAppIsInstalled {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
 		Determines if the value given as UninstallKey should be interpreted as a displayname.
-		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentMethod
+		Defines the type of the installer used in this package.
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Defaults to the corresponding value for installation case and uninstallation case from the PackageConfig object ('InstallMethod' includes repair mode or 'UninstallMethod').
+	.PARAMETER DisplayVersion
+		Expected version of installed application from a msi setup.
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtAppIsInstalled
 	.EXAMPLE
@@ -2240,23 +2247,85 @@ function Get-NxtAppIsInstalled {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	param(
 		[Parameter(Mandatory=$false)]
 		[String]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
-		
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentMethod,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DisplayVersion = $global:PackageConfig.DisplayVersion
 	)
-
-	[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
-
-	If (!$installedAppResults) {
-		return $false
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
-	Else {
-		return $true
+	Process {
+		## default error message, if no special case for msi is to process
+		[string]$returnErrorMessage = "Search for application installation status failed. Could not retrieve information about an installed application."
+		[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+		if ( ("MSI" -eq $DeploymentMethod) -and $installedAppResults -and ($true -eq $UninstallKeyIsDisplayName) ) {
+			if ([string]::IsNullOrEmpty($DisplayVersion)) {
+				## Note: Especially in case of msi uninstallation it may be necessary to run it against all found versions!
+				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check for an expected msi display version!" -Severity 2 -Source ${cmdletName}
+				[bool]$approvedMSI = $true
+			}
+			else {
+				if ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
+					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
+					Write-Log -Message "Detected 'DisplayVersion' is $null or empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
+					[string]$returnErrorMessage = "Exact check for an installed msi application was not possible!"
+					[bool]$approvedMSI = $false
+				}
+				else {
+					Write-Log -Message "Processing msi setup: double check for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
+					switch ( $(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion) ) {
+						"Equal" { 
+							[bool]$approvedMSI = $true
+						}
+						"Update" {
+							[string]$returnErrorMessage = "Found a lower target display version than expected."
+							if ($DeploymentType -eq "Install") {
+								[string]$returnErrorMessage += " This leads to trying to do an msi inplace upgrade ..."
+								[bool]$approvedMSI = $false
+							}
+						}
+						"Downgrade" {
+							[string]$returnErrorMessage = "Found a higher target display version than expected."
+							if ($DeploymentType -eq "Install") {
+								[string]$returnErrorMessage += " This leads to trying to do a msi downgrade (if supported) ..."
+								[bool]$approvedMSI = $false
+							}
+						}
+						default {
+							Write-Log -Message "Unsupported compare result at this point: '$_'" -Severity 3 -Source ${cmdletName}
+							[bool]$approvedMSI = $false
+						}
+					}
+				}
+			}
+		}
+		else {
+			[bool]$approvedMSI = $true
+		}
+		if ( !$installedAppResults -or ($false -eq $approvedMSI) ) {
+			Write-Log -Message "$returnErrorMessage" -Source ${cmdletName}
+			Write-Output $false
+		}
+		else {
+			Write-Log -Message "Search for application installation status successful." -Source ${cmdletName}
+			Write-Output $true
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -3442,8 +3511,12 @@ function Install-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
 		Determins if the value given as UninstallKey should be interpreted as a displayname.
-		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Only applies to Inno Setup, Nullsoft and BitRockInstaller.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DisplayVersion
+		Expected version of installed application from a msi setup.
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER InstLogFile
 		Defines the path to the Logfile that should be used by the installer.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -3490,6 +3563,9 @@ function Install-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DisplayVersion = $global:PackageConfig.DisplayVersion,
 		[Parameter(Mandatory = $false)]
 		[String]
 		$InstLogFile = $global:PackageConfig.InstLogFile,
@@ -4450,6 +4526,10 @@ function Repair-NxtApplication {
 	.PARAMETER UninstallKeyIsDisplayName
 		Determines if the value given as UninstallKey should be interpreted as a displayname.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DisplayVersion
+		Expected version of installed application from a msi setup.
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER RepairLogFile
 		Defines the path to the Logfile that should be used by the installer.
 		Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
@@ -4491,6 +4571,9 @@ function Repair-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DisplayVersion = $global:PackageConfig.DisplayVersion,
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
 		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
@@ -5303,8 +5386,12 @@ function Uninstall-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
 		Determins if the value given as UninstallKey should be interpreted as a displayname.
-		Only applies for Inno Setup, Nullsoft and BitRockInstaller.
+		Only applies to Inno Setup, Nullsoft and BitRockInstaller.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DisplayVersion
+		Expected version of installed application from a msi setup.
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER UninstLogFile
 		Defines the path to the Logfile that should be used by the uninstaller.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -5357,6 +5444,9 @@ function Uninstall-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DisplayVersion = $global:PackageConfig.DisplayVersion,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstLogFile = $global:PackageConfig.UninstLogFile,
@@ -5422,7 +5512,7 @@ function Uninstall-NxtApplication {
 		}
 	}
 	else {
-		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -DisplayVersion $DisplayVersion -DeploymentMethod $UninstallMethod)) {
 
 			[hashtable]$executeNxtParams = @{
 				Action                    = 'Uninstall'
