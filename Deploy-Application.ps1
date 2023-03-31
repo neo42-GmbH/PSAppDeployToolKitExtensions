@@ -68,11 +68,11 @@ switch ($DeploymentType) {
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 ## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT delete this section! <-- HJT
-$packageConfigTmp = Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json
+[PSObject]$packageConfigTmp = Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json
 [string]$appVendor = $packageConfigTmp.AppVendor
 [string]$appName = $packageConfigTmp.AppName
 [string]$appVersion = $packageConfigTmp.AppVersion
-$packageConfigTmp = $null
+[PSObject]$packageConfigTmp = $null
 
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
