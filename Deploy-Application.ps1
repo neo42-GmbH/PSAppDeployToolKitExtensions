@@ -64,6 +64,9 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
+##ä global variables for configuration files additionally used
+[string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json" # for compliance this should be used/changed too -> new issue
+[string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 ## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT delete this section! <-- HJT
 $global:PackageConfig = Get-Content "$PSScriptRoot\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
 [string]$appVendor = $global:PackageConfig.AppVendor
@@ -105,10 +108,6 @@ try {
 ##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
-
-	## Variables not from neo42PackageConfig.json
-	[string]$setupCfgPath = "$scriptParentPath\Setup.cfg"
-	
 
 	## Environment
 	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
