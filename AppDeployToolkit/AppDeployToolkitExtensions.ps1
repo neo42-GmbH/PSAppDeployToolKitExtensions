@@ -2219,119 +2219,6 @@ function Format-NxtPackageSpecificVariables {
 	}
 }
 #endregion
-#region Function Get-NxtAppIsInstalled
-function Get-NxtAppIsInstalled {
-	<#
-	.SYNOPSIS
-		Detects if the target application is installed.
-	.DESCRIPTION
-		Uses the registry Uninstall Key to detect if the application is present.
-	.PARAMETER UninstallKey
-		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
-		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER UninstallKeyIsDisplayName
-		Determines if the value given as UninstallKey should be interpreted as a displayname.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER DeploymentMethod
-		Defines the type of the installer used in this package.
-		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
-		Defaults to the corresponding value for installation case and uninstallation case from the PackageConfig object ('InstallMethod' includes repair mode or 'UninstallMethod').
-	.PARAMETER DisplayVersion
-		Expected version of installed application from a msi setup.
-		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
-		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
-	.EXAMPLE
-		Get-NxtAppIsInstalled
-	.EXAMPLE
-		Get-NxtAppIsInstalled -UninstallKey "This Application_is1"
-	.EXAMPLE
-		Get-NxtAppIsInstalled -UninstallKey "This Application" -UninstallKeyIsDisplayName $true
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	param(
-		[Parameter(Mandatory=$false)]
-		[String]
-		$UninstallKey = $global:PackageConfig.UninstallKey,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$DeploymentMethod,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$DisplayVersion = $global:PackageConfig.DisplayVersion
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-	}
-	Process {
-		## default error message, if no special case for msi is to process
-		[string]$returnErrorMessage = "Search for application installation status failed. Could not retrieve information about an installed application."
-		[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
-		if ( ("MSI" -eq $DeploymentMethod) -and $installedAppResults -and ($true -eq $UninstallKeyIsDisplayName) ) {
-			if ([string]::IsNullOrEmpty($DisplayVersion)) {
-				## Note: Especially in case of msi uninstallation it may be necessary to run it against all found versions!
-				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check for an expected msi display version!" -Severity 2 -Source ${cmdletName}
-				[bool]$approvedMSI = $true
-			}
-			else {
-				if ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
-					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
-					Write-Log -Message "Detected 'DisplayVersion' is $null or empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
-					[string]$returnErrorMessage = "Exact check for an installed msi application was not possible!"
-					[bool]$approvedMSI = $false
-				}
-				else {
-					Write-Log -Message "Processing msi setup: double check for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
-					switch ( $(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion) ) {
-						"Equal" { 
-							[bool]$approvedMSI = $true
-						}
-						"Update" {
-							[string]$returnErrorMessage = "Found a lower target display version than expected."
-							if ($DeploymentType -eq "Install") {
-								[string]$returnErrorMessage += " This leads to trying to do an msi inplace upgrade ..."
-								[bool]$approvedMSI = $false
-							}
-						}
-						"Downgrade" {
-							[string]$returnErrorMessage = "Found a higher target display version than expected."
-							if ($DeploymentType -eq "Install") {
-								[string]$returnErrorMessage += " This leads to trying to do a msi downgrade (if supported) ..."
-								[bool]$approvedMSI = $false
-							}
-						}
-						default {
-							Write-Log -Message "Unsupported compare result at this point: '$_'" -Severity 3 -Source ${cmdletName}
-							[bool]$approvedMSI = $false
-						}
-					}
-				}
-			}
-		}
-		else {
-			[bool]$approvedMSI = $true
-		}
-		if ( !$installedAppResults -or ($false -eq $approvedMSI) ) {
-			Write-Log -Message "$returnErrorMessage" -Source ${cmdletName}
-			Write-Output $false
-		}
-		else {
-			Write-Log -Message "Search for application installation status successful." -Source ${cmdletName}
-			Write-Output $true
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
 #region Function Get-NxtComputerManufacturer
 function Get-NxtComputerManufacturer {
 	<#
@@ -3500,6 +3387,63 @@ function Initialize-NxtEnvironment {
 	}
 }
 #endregion
+#region Function Initialize-NxtUninstallApplication
+function Initialize-NxtUninstallApplication {
+	<#
+	.SYNOPSIS
+		Defines the required steps to prepare the uninstallation of the package
+	.DESCRIPTION
+		Unhides all defined registry keys from a corresponding value in the PackageConfig object.
+		Is only called in the Main function and should not be modified!
+		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER UninstallKeysToHide
+		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
+		Defaults to the corresponding values from the PackageConfig object.
+	.EXAMPLE
+		Initialize-NxtUninstallApplication
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Param(
+		[Parameter(Mandatory = $false)]
+		[PSCustomObject]
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
+			[string]$wowEntry = [string]::Empty
+			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
+				$wowEntry = "\Wow6432Node"
+			}
+			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+				[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
+			}
+			else {
+				[string]$currentKeyName = $uninstallKeyToHide.KeyName
+			}
+			if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Value SystemComponent) {
+				Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent'
+			}
+			else {
+				if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
+					Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped deleting SystemComponent entry." -Source ${CmdletName}
+				}
+				else {
+					Write-Log -Message "Did not find a SystemComponent entry under registry key [$currentKeyName]. Skipped deleting the entry for this key." -Source ${CmdletName}
+				}
+			}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Install-NxtApplication
 function Install-NxtApplication {
 	<#
@@ -3682,7 +3626,7 @@ function Install-NxtApplication {
 				[int]$logMessageSeverity = 3
 			}
 			else {
-				if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+				if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 					$installResult.ErrorMessage = "Installation of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
 					$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					$installResult.Success = $false
@@ -3756,63 +3700,6 @@ function Move-NxtItem {
 			Write-Log -Message "Failed to move $Path to $Destination. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			If (-not $ContinueOnError) {
 				Throw "Failed to move $Path to $Destination`: $($_.Exception.Message)"
-			}
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
-#region Function Prepare-NxtUninstallApplication
-function Prepare-NxtUninstallApplication {
-	<#
-	.SYNOPSIS
-		Defines the required steps to prepare the uninstallation of the package
-	.DESCRIPTION
-		Unhides all defined registry keys from a corresponding value in the PackageConfig object.
-		Is only called in the Main function and should not be modified!
-		To customize the script always use the "CustomXXXX" entry points.
-	.PARAMETER UninstallKeysToHide
-		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
-		Defaults to the corresponding values from the PackageConfig object.
-	.EXAMPLE
-		Prepare-NxtUninstallApplication
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	Param(
-		[Parameter(Mandatory = $false)]
-		[PSCustomObject]
-		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-	}
-	Process {
-		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-			[string]$wowEntry = [string]::Empty
-			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
-				$wowEntry = "\Wow6432Node"
-			}
-			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-				[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
-			}
-			else {
-				[string]$currentKeyName = $uninstallKeyToHide.KeyName
-			}
-			if (Get-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Value SystemComponent) {
-				Remove-RegistryKey -Key HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName -Name 'SystemComponent'
-			}
-			else {
-				if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
-					Write-Log -Message "Did not find an uninstall registry key with DisplayName [$($uninstallKeyToHide.KeyName)]. Skipped deleting SystemComponent entry." -Source ${CmdletName}
-				}
-				else {
-					Write-Log -Message "Did not find a SystemComponent entry under registry key [$currentKeyName]. Skipped deleting the entry for this key." -Source ${CmdletName}
-				}
 			}
 		}
 	}
@@ -4547,21 +4434,6 @@ function Repair-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
-	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
-		Timeout in seconds the function waits and checks for the condition to occur.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckProcessOperator
-		Operator to define process condition requirements.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckProcesListToWaitFor
-		An array of process conditions to check for.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckRegKeyOperator
-		Operator to define regkey condition requirements.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
-		An array of regkey conditions to check for.
-		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AcceptedRepairExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -4645,7 +4517,7 @@ function Repair-NxtApplication {
 			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
 
-			if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+			if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
 				$repairResult.MainExitCode = $mainExitCode
 				$repairResult.ErrorMessage = "Repair of '$appName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 				$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
@@ -5231,6 +5103,119 @@ function Stop-NxtProcess {
 	}
 }
 #endregion
+#region Function Test-NxtAppIsInstalled
+function Test-NxtAppIsInstalled {
+	<#
+	.SYNOPSIS
+		Detects if the target application is installed.
+	.DESCRIPTION
+		Uses the registry Uninstall Key to detect if the application is present.
+	.PARAMETER UninstallKey
+		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
+		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Determines if the value given as UninstallKey should be interpreted as a displayname.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentMethod
+		Defines the type of the installer used in this package.
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Defaults to the corresponding value for installation case and uninstallation case from the PackageConfig object ('InstallMethod' includes repair mode or 'UninstallMethod').
+	.PARAMETER DisplayVersion
+		Expected version of installed application from a msi setup.
+		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
+		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
+	.EXAMPLE
+		Test-NxtAppIsInstalled
+	.EXAMPLE
+		Test-NxtAppIsInstalled -UninstallKey "This Application_is1"
+	.EXAMPLE
+		Test-NxtAppIsInstalled -UninstallKey "This Application" -UninstallKeyIsDisplayName $true
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$false)]
+		[String]
+		$UninstallKey = $global:PackageConfig.UninstallKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentMethod,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DisplayVersion = $global:PackageConfig.DisplayVersion
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		## default error message, if no special case for msi is to process
+		[string]$returnErrorMessage = "Search for application installation status failed. Could not retrieve information about an installed application."
+		[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
+		if ( ("MSI" -eq $DeploymentMethod) -and $installedAppResults ) {
+			if ([string]::IsNullOrEmpty($DisplayVersion)) {
+				## Note: Especially in case of msi uninstallation it may be necessary to run it against all found versions!
+				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check for an expected msi display version!" -Severity 2 -Source ${cmdletName}
+				[bool]$approvedMSI = $true
+			}
+			else {
+				if ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
+					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
+					Write-Log -Message "Detected 'DisplayVersion' is $null or empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
+					[string]$returnErrorMessage = "Exact check for an installed msi application was not possible!"
+					[bool]$approvedMSI = $false
+				}
+				else {
+					Write-Log -Message "Processing msi setup: double check for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
+					switch ( $(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion) ) {
+						"Equal" { 
+							[bool]$approvedMSI = $true
+						}
+						"Update" {
+							[string]$returnErrorMessage = "Found a lower target display version than expected."
+							if ($DeploymentType -eq "Install") {
+								[string]$returnErrorMessage += " This leads to trying to do an msi inplace upgrade ..."
+								[bool]$approvedMSI = $false
+							}
+						}
+						"Downgrade" {
+							[string]$returnErrorMessage = "Found a higher target display version than expected."
+							if ($DeploymentType -eq "Install") {
+								[string]$returnErrorMessage += " This leads to trying to do a msi downgrade (if supported) ..."
+								[bool]$approvedMSI = $false
+							}
+						}
+						default {
+							Write-Log -Message "Unsupported compare result at this point: '$_'" -Severity 3 -Source ${cmdletName}
+							[bool]$approvedMSI = $false
+						}
+					}
+				}
+			}
+		}
+		else {
+			[bool]$approvedMSI = $true
+		}
+		if ( !$installedAppResults -or ($false -eq $approvedMSI) ) {
+			Write-Log -Message "$returnErrorMessage" -Source ${cmdletName}
+			Write-Output $false
+		}
+		else {
+			Write-Log -Message "Search for application installation status successful." -Source ${cmdletName}
+			Write-Output $true
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Test-NxtLocalGroupExists
 function Test-NxtLocalGroupExists {
 	<#
@@ -5521,7 +5506,7 @@ function Uninstall-NxtApplication {
 		}
 	}
 	else {
-		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -DisplayVersion $DisplayVersion -DeploymentMethod $UninstallMethod)) {
+		if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -DisplayVersion $DisplayVersion -DeploymentMethod $UninstallMethod)) {
 
 			[hashtable]$executeNxtParams = @{
 				Action                    = 'Uninstall'
@@ -5597,7 +5582,7 @@ function Uninstall-NxtApplication {
 						[int]$logMessageSeverity = 3
 					}
 					else {
-						if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+						if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 							$uninstallResult.ErrorMessage = "Uninstallation of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallResult.Success = $false
