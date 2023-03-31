@@ -2274,7 +2274,7 @@ function Get-NxtAppIsInstalled {
 		## default error message, if no special case for msi is to process
 		[string]$returnErrorMessage = "Search for application installation status failed. Could not retrieve information about an installed application."
 		[PSCustomObject]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName
-		if ( ("MSI" -eq $DeploymentMethod) -and $installedAppResults -and ($true -eq $UninstallKeyIsDisplayName) ) {
+		if ( ("MSI" -eq $DeploymentMethod) -and $installedAppResults ) {
 			if ([string]::IsNullOrEmpty($DisplayVersion)) {
 				## Note: Especially in case of msi uninstallation it may be necessary to run it against all found versions!
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check for an expected msi display version!" -Severity 2 -Source ${cmdletName}
