@@ -64,12 +64,15 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
+## global variables for configuration files additionally used
+[string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
+[string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 ## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT delete this section! <-- HJT
-$global:PackageConfig = Get-Content "$PSScriptRoot\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
-[string]$appVendor = $global:PackageConfig.AppVendor
-[string]$appName = $global:PackageConfig.AppName
-[string]$appVersion = $global:PackageConfig.AppVersion
-
+Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {
+	[string]$appVendor = $_.AppVendor
+	[string]$appName = $_.AppName
+	[string]$appVersion = $_.AppVersion
+}
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
@@ -105,13 +108,6 @@ try {
 ##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
-
-	## Variables not from neo42PackageConfig.json
-	[string]$setupCfgPath = "$scriptParentPath\Setup.cfg"
-	
-
-	## Environment
-	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
 
 	## App Global Variables
 	Set-NxtDetectedDisplayVersion
@@ -186,7 +182,7 @@ param (
 					Show-NxtInstallationWelcome -IsInstall $true
 					CustomInstallAndReinstallPreInstallAndReinstall
 						[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ($true -eq $(Get-NxtAppIsInstalled)) {
+					if ($true -eq $(Test-NxtAppIsInstalled)) {
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
 							"Reinstall" {
@@ -262,7 +258,7 @@ param (
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
 				Show-NxtInstallationWelcome -IsInstall $false
-				Prepare-NxtUninstallApplication
+				Initialize-NxtUninstallApplication
 				CustomUninstallBegin
 				[string]$script:installPhase = 'Package-Uninstallation'
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
