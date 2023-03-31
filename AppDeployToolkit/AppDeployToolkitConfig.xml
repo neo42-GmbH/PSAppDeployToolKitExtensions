@@ -55,9 +55,9 @@
     <BannerIcon_Options>
         <Icon_Filename>..\Setup.ico</Icon_Filename>
         <!-- Specify filename of the icon. -->
-        <LogoImage_Filename>AppDeployToolkitLogo.png</LogoImage_Filename>
+        <LogoImage_Filename>CustomAppDeployToolkitLogo.png</LogoImage_Filename>
         <!-- Specify filename of the logo. -->
-        <Banner_Filename>logo.png</Banner_Filename>
+        <Banner_Filename>CustomAppDeployToolkitBanner.png</Banner_Filename>
         <!-- Specify filename of the banner. -->
         <Banner_MaxHeight>150</Banner_MaxHeight>
         <!-- Set a maximum banner height. Overflow will be invisible. -->
