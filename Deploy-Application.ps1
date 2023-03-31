@@ -108,9 +108,8 @@ try {
 	##* VARIABLE DECLARATION
 	##*===============================================
 
-	## Variables not from neo42PackageConfig.json
-	[string]$setupCfgPath = "$scriptParentPath\Setup.cfg"
-	
+	## Environment
+	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
 
 	## App Global Variables
 	Set-NxtDetectedDisplayVersion
