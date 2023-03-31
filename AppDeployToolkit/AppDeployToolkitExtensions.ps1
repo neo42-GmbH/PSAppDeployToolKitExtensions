@@ -568,14 +568,14 @@ function Complete-NxtPackageInstallation {
 		## Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
-		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
+		Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
-		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\neo42-Userpart\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
 	}
 	foreach ($oldAppFolder in $((Get-ChildItem (get-item $App).Parent.FullName | Where-Object Name -ne (get-item $App).Name).FullName)) {
-		Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
+		Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 		Start-Sleep -Seconds 1
 		Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -NoWait
 	}
@@ -625,10 +625,10 @@ function Complete-NxtPackageUninstallation {
 	If ($true -eq $UserPartOnUninstallation) {
 		## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
 		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
-		Copy-File -Path "$scriptParentPath\Setup.ico" -Destination "$App\neo42-Userpart\"
+		Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Userpart\"
 		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
-		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\AppDeployToolkit\AppDeployToolkitConfig.xml" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\neo42-Userpart\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
 	}
 }
@@ -819,8 +819,8 @@ function Execute-NxtBitRockInstaller {
 				}
 
 				## Get parent folder and filename of the uninstallation file
-				[string]$uninsFolder = split-path $bitRockInstallerSetupPath -Parent
-				[string]$uninsFileName = split-path $bitRockInstallerSetupPath -Leaf
+				[string]$uninsFolder = Split-Path $bitRockInstallerSetupPath -Parent
+				[string]$uninsFileName = Split-Path $bitRockInstallerSetupPath -Leaf
 
 				## If the uninstall file does not exist, restore it from $configNxtBitRockInstallerUninsBackupPath, if it exists there
 				if (![System.IO.File]::Exists($bitRockInstallerSetupPath) -and ($true -eq (Get-Item "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\$uninsFileName"))) {
@@ -914,7 +914,7 @@ function Execute-NxtBitRockInstaller {
 				}
 				
 				## Get parent folder of the uninstallation file
-				[string]$uninsFolder = split-path $bitRockInstallerUninstallPath -Parent
+				[string]$uninsFolder = Split-Path $bitRockInstallerUninstallPath -Parent
 
 				## Actually copy the uninstallation file, if it exists
 				If ($true -eq (Get-Item "$bitRockInstallerUninstallPath")) {
@@ -967,7 +967,7 @@ function Execute-NxtInnoSetup {
 		Use "!" before a task name for deselecting a specific task, otherwise it is selected.
 		For specific information see: https://jrsoftware.org/ishelp/topic_setupcmdline.htm
 	.PARAMETER Log
-		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$($global:deploymentTimestamp).log"')
+		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$($global:DeploymentTimestamp).log"')
 		If only a name is specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
@@ -978,14 +978,14 @@ function Execute-NxtInnoSetup {
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER DeploymentTimestamp
 		Timestamp used for logs (in this case if $Log is empty).
-		Defaults to $global:deploymentTimestamp.
+		Defaults to $global:DeploymentTimestamp.
 	.PARAMETER XmlConfigNxtInnoSetup
 		Contains the Default Settings for Innosetup.
 		Defaults to $xmlConfig.NxtInnoSetup_Options.
 	.EXAMPLE
 		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "ThisAppSetup.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
 	.EXAMPLE
-		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$app\Uninstall.$($global:deploymentTimestamp).log"
+		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$app\Uninstall.$($global:DeploymentTimestamp).log"
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -1035,7 +1035,7 @@ function Execute-NxtInnoSetup {
 		$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentTimestamp = $global:deploymentTimestamp,
+		$DeploymentTimestamp = $global:DeploymentTimestamp,
 		[Parameter(Mandatory = $false)]
 		[Xml.XmlElement]
 		$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
@@ -1098,7 +1098,7 @@ function Execute-NxtInnoSetup {
 				}
 				
 				## Get the parent folder of the uninstallation file
-				[string]$uninsFolder = split-path $innoSetupPath -Parent
+				[string]$uninsFolder = Split-Path $innoSetupPath -Parent
 
 				## If the uninstall file does not exist, restore it from $configNxtInnoSetupUninsBackupPath, if it exists there
 				if (![System.IO.File]::Exists($innoSetupPath) -and ($true -eq (Get-Item "$configNxtInnoSetupUninsBackupPath\$innoUninstallKey\unins[0-9][0-9][0-9].exe"))) {
@@ -1220,7 +1220,7 @@ function Execute-NxtInnoSetup {
 				}
 				
 				## Get the parent folder of the uninstallation file
-				[string]$uninsfolder = split-path $innoUninstallPath -Parent
+				[string]$uninsfolder = Split-Path $innoUninstallPath -Parent
 
 				## Actually copy the uninstallation file, if it exists
 				If ($true -eq (Get-Item "$uninsfolder\unins[0-9][0-9][0-9].exe")) {
@@ -1578,8 +1578,8 @@ function Execute-NxtNullsoft {
 				}
 				
 				## Get parent folder and filename of the uninstallation file
-				[string]$uninsFolder = split-path $nullsoftSetupPath -Parent
-				[string]$uninsFileName = split-path $nullsoftSetupPath -Leaf
+				[string]$uninsFolder = Split-Path $nullsoftSetupPath -Parent
+				[string]$uninsFileName = Split-Path $nullsoftSetupPath -Leaf
 
 				## If the uninstall file does not exist, restore it from $configNxtNullsoftUninsBackupPath, if it exists there
 				if (![System.IO.File]::Exists($nullsoftSetupPath) -and ($true -eq (Get-Item "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\$uninsFileName"))) {
@@ -1803,7 +1803,7 @@ function Exit-NxtScriptWithError {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeploymentTimestamp
 		Defines the Deployment Starttime which should be added as information to the error registry key.
-		Defaults to the $global:deploymentTimeStamp.
+		Defaults to the $global:DeploymentTimestamp.
 	.PARAMETER DebugLogFile
 		Path to the Debuglogfile which should be added as information to the error registry key.
 		Defaults to "$ConfigToolkitLogDir\$LogName".
@@ -1876,7 +1876,7 @@ function Exit-NxtScriptWithError {
 		$App = $global:PackageConfig.App,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentTimestamp = $global:deploymentTimestamp,
+		$DeploymentTimestamp = $global:DeploymentTimestamp,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DebugLogFile = "$ConfigToolkitLogDir\$LogName",
@@ -2714,7 +2714,7 @@ function Get-NxtPackageConfig {
 		Parses a neo42PackageConfig.json into the variable $global:PackageConfig.
 	.PARAMETER Path
 		Path to the Packageconfig.json
-		Defaults to "$scriptDirectory\neo42PackageConfig.json"
+		Defaults to "$global:Neo42PackageConfigPath"
 	.EXAMPLE
 		Get-NxtPackageConfig
 	.OUTPUTS
@@ -2726,7 +2726,7 @@ function Get-NxtPackageConfig {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Path = "$scriptDirectory\neo42PackageConfig.json"
+		$Path = "$global:Neo42PackageConfigPath"
 	)
 		
 	Begin {
@@ -3378,7 +3378,7 @@ function Initialize-NxtEnvironment {
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
 		}
-		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
+		[string]$global:DeploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
 		Format-NxtPackageSpecificVariables
 	}
@@ -3933,12 +3933,12 @@ function Register-NxtPackage {
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
 		Try {
-			Copy-File -Path "$ScriptParentPath\AppDeployToolkit" -Destination "$App\neo42-Install\" -Recurse
+			Copy-File -Path "$scriptRoot" -Destination "$App\neo42-Install\" -Recurse
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$ScriptParentPath\neo42PackageConfig.json" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$ScriptParentPath\Setup.ico" -Destination "$App\neo42-Install\"
-
+			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Userpart\"
+	
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'AppPath' -Value $App
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'Date' -Value (Get-Date -format "yyyy-MM-dd HH:mm:ss")
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'DebugLogFile' -Value $ConfigToolkitLogDir\$LogName
@@ -3966,7 +3966,7 @@ function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
 
-			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neo42-Install\Setup.ico
+			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayVersion' -Value $AppVersion
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'MachineKeyName' -Value $RegPackagesKey\$PackageFamilyGUID
@@ -4420,6 +4420,9 @@ function Repair-NxtApplication {
 		Expected version of installed application from a msi setup.
 		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
+	.PARAMETER DeploymentTimestamp
+		Timestamp used for logs (in this case if $Log is empty).
+		Defaults to $global:DeploymentTimestamp.
 	.PARAMETER RepairLogFile
 		Defines the path to the Logfile that should be used by the installer.
 		Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
@@ -4449,6 +4452,9 @@ function Repair-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentTimestamp = $global:DeploymentTimestamp,
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
 		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
@@ -4498,7 +4504,7 @@ function Repair-NxtApplication {
 			}
 			if ([string]::IsNullOrEmpty($RepairLogFile)) {
 				## now set default path and name including retrieved ProductCode
-				[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$global:DeploymentTimestamp.log")
+				[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$DeploymentTimestamp.log")
 			}
 
 			## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
@@ -5034,10 +5040,10 @@ function Show-NxtInstallationWelcome {
 					Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 				}		
 			}
-			if ( ($true -eq $BlockExecution) -and ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\AppDeployToolkitConfig.xml")) ) {
+			if ( ($true -eq $BlockExecution) -and ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) ) {
 				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
-				Copy-File -Path "$scriptParentPath\setup.ico" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
-				Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\AppDeployToolkitConfig.xml" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
+				Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
+				Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
 			}
 		}
 	}
