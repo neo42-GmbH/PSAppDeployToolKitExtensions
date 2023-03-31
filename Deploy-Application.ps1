@@ -185,7 +185,7 @@ param (
 					Show-NxtInstallationWelcome -IsInstall $true
 					CustomInstallAndReinstallPreInstallAndReinstall
 						[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ($true -eq $(Get-NxtAppIsInstalled)) {
+					if ($true -eq $(Test-NxtAppIsInstalled)) {
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
 							"Reinstall" {

@@ -2219,8 +2219,8 @@ function Format-NxtPackageSpecificVariables {
 	}
 }
 #endregion
-#region Function Get-NxtAppIsInstalled
-function Get-NxtAppIsInstalled {
+#region Function Test-NxtAppIsInstalled
+function Test-NxtAppIsInstalled {
 	<#
 	.SYNOPSIS
 		Detects if the target application is installed.
@@ -2242,11 +2242,11 @@ function Get-NxtAppIsInstalled {
 		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.EXAMPLE
-		Get-NxtAppIsInstalled
+		Test-NxtAppIsInstalled
 	.EXAMPLE
-		Get-NxtAppIsInstalled -UninstallKey "This Application_is1"
+		Test-NxtAppIsInstalled -UninstallKey "This Application_is1"
 	.EXAMPLE
-		Get-NxtAppIsInstalled -UninstallKey "This Application" -UninstallKeyIsDisplayName $true
+		Test-NxtAppIsInstalled -UninstallKey "This Application" -UninstallKeyIsDisplayName $true
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3682,7 +3682,7 @@ function Install-NxtApplication {
 				[int]$logMessageSeverity = 3
 			}
 			else {
-				if ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+				if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 					$installResult.ErrorMessage = "Installation of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
 					$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					$installResult.Success = $false
@@ -4639,7 +4639,7 @@ function Repair-NxtApplication {
 			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
 
-			if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+			if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
 				$repairResult.MainExitCode = $mainExitCode
 				$repairResult.ErrorMessage = "Repair of '$appName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 				$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
@@ -5515,7 +5515,7 @@ function Uninstall-NxtApplication {
 		}
 	}
 	else {
-		if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -DisplayVersion $DisplayVersion -DeploymentMethod $UninstallMethod)) {
+		if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -DisplayVersion $DisplayVersion -DeploymentMethod $UninstallMethod)) {
 
 			[hashtable]$executeNxtParams = @{
 				Action                    = 'Uninstall'
@@ -5591,7 +5591,7 @@ function Uninstall-NxtApplication {
 						[int]$logMessageSeverity = 3
 					}
 					else {
-						if ($true -eq $(Get-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
+						if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) {
 							$uninstallResult.ErrorMessage = "Uninstallation of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallResult.Success = $false
