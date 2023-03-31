@@ -977,7 +977,7 @@ function Execute-NxtInnoSetup {
 		Use "!" before a task name for deselecting a specific task, otherwise it is selected.
 		For specific information see: https://jrsoftware.org/ishelp/topic_setupcmdline.htm
 	.PARAMETER Log
-		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$($global:deploymentTimestamp).log"')
+		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$($global:DeploymentTimestamp).log"')
 		If only a name is specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
@@ -988,14 +988,14 @@ function Execute-NxtInnoSetup {
 		Continue if an error is encountered. Default is: $false.
 	.PARAMETER DeploymentTimestamp
 		Timestamp used for logs (in this case if $Log is empty).
-		Defaults to $global:deploymentTimestamp.
+		Defaults to $global:DeploymentTimestamp.
 	.PARAMETER XmlConfigNxtInnoSetup
 		Contains the Default Settings for Innosetup.
 		Defaults to $xmlConfig.NxtInnoSetup_Options.
 	.EXAMPLE
 		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "ThisAppSetup.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
 	.EXAMPLE
-		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$app\Uninstall.$($global:deploymentTimestamp).log"
+		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$app\Uninstall.$($global:DeploymentTimestamp).log"
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -1045,7 +1045,7 @@ function Execute-NxtInnoSetup {
 		$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentTimestamp = $global:deploymentTimestamp,
+		$DeploymentTimestamp = $global:DeploymentTimestamp,
 		[Parameter(Mandatory = $false)]
 		[Xml.XmlElement]
 		$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
@@ -1813,7 +1813,7 @@ function Exit-NxtScriptWithError {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeploymentTimestamp
 		Defines the Deployment Starttime which should be added as information to the error registry key.
-		Defaults to the $global:deploymentTimeStamp.
+		Defaults to the $global:DeploymentTimestamp.
 	.PARAMETER DebugLogFile
 		Path to the Debuglogfile which should be added as information to the error registry key.
 		Defaults to "$ConfigToolkitLogDir\$LogName".
@@ -1886,7 +1886,7 @@ function Exit-NxtScriptWithError {
 		$App = $global:PackageConfig.App,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentTimestamp = $global:deploymentTimestamp,
+		$DeploymentTimestamp = $global:DeploymentTimestamp,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DebugLogFile = "$ConfigToolkitLogDir\$LogName",
@@ -3501,7 +3501,7 @@ function Initialize-NxtEnvironment {
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
 		}
-		[string]$global:deploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
+		[string]$global:DeploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
 		Format-NxtPackageSpecificVariables
 	}
@@ -4550,7 +4550,7 @@ function Repair-NxtApplication {
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER DeploymentTimestamp
 		Timestamp used for logs (in this case if $Log is empty).
-		Defaults to $global:deploymentTimestamp.
+		Defaults to $global:DeploymentTimestamp.
 	.PARAMETER RepairLogFile
 		Defines the path to the Logfile that should be used by the installer.
 		Defaults to a file name "Repair_<ProductCode>.$global:DeploymentTimestamp.log" in app path (a corresponding value from the PackageConfig object).
@@ -4597,7 +4597,7 @@ function Repair-NxtApplication {
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentTimestamp = $global:deploymentTimestamp,
+		$DeploymentTimestamp = $global:DeploymentTimestamp,
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
 		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
