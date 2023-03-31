@@ -66,11 +66,13 @@ switch ($DeploymentType) {
 }
 ## global variables for configuration files additionally used
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
+[string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 ## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT delete this section! <-- HJT
-$global:PackageConfig = Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json
-[string]$appVendor = $global:PackageConfig.AppVendor
-[string]$appName = $global:PackageConfig.AppName
-[string]$appVersion = $global:PackageConfig.AppVersion
+$packageConfigTmp = Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json
+[string]$appVendor = $packageConfigTmp.AppVendor
+[string]$appName = $packageConfigTmp.AppName
+[string]$appVersion = $packageConfigTmp.AppVersion
+$packageConfigTmp = $null
 
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
@@ -107,9 +109,6 @@ try {
 ##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
-
-	## Environment
-	[string]$installLocation = $global:PackageConfig.InstallLocation # Not referenced anywhere, obsolete?
 
 	## App Global Variables
 	Set-NxtDetectedDisplayVersion
