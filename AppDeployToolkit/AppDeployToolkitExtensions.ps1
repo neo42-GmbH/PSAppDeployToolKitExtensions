@@ -4544,21 +4544,6 @@ function Repair-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
-	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
-		Timeout in seconds the function waits and checks for the condition to occur.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckProcessOperator
-		Operator to define process condition requirements.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckProcesListToWaitFor
-		An array of process conditions to check for.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckRegKeyOperator
-		Operator to define regkey condition requirements.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
-		An array of regkey conditions to check for.
-		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AcceptedRepairExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
