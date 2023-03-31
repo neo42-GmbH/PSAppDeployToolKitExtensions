@@ -3764,8 +3764,8 @@ function Move-NxtItem {
 	}
 }
 #endregion
-#region Function Prepare-NxtUninstallApplication
-function Prepare-NxtUninstallApplication {
+#region Function Initialize-NxtUninstallApplication
+function Initialize-NxtUninstallApplication {
 	<#
 	.SYNOPSIS
 		Defines the required steps to prepare the uninstallation of the package
@@ -3777,7 +3777,7 @@ function Prepare-NxtUninstallApplication {
 		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
 		Defaults to the corresponding values from the PackageConfig object.
 	.EXAMPLE
-		Prepare-NxtUninstallApplication
+		Initialize-NxtUninstallApplication
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
