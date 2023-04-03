@@ -5432,13 +5432,7 @@ function Test-NxtAppIsInstalled {
             Write-Log -Message "Found no application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$false]." -Source ${CmdletName}
             Write-Output $false
         }
-        elseif (
-				("MSI" -eq $DeploymentMethod) -and
-            (
-					($true -eq $UninstallKeyIsDisplayName) -or 
-					($true -eq $UninstallKeyContainsWildCards)
-            )
-        ) {
+        elseif ("MSI" -eq $DeploymentMethod) {
             if ($installedAppResults.Count -gt 1) {
                 ## This case maybe resolved with a foreach-loop in future.
                 Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$true]." -Severity 2 -Source ${CmdletName}
