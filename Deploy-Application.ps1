@@ -50,9 +50,11 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[switch]$TerminalServerMode = $false,
 	[Parameter(Mandatory = $false)]
-	[switch]$DisableLogging = $false
+	[switch]$DisableLogging = $false,
+	[Parameter(Mandatory = $false)]
+	[switch]$DeploymentSystem = [string]::Empty
 )
-## On UserPart execution call self as async to prohibe from activesetup logon freeze 
+## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
 	TriggerInstallUserPart { 
 		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserpart"
@@ -64,10 +66,11 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
-## global variables for configuration files additionally used
+## Global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
-## Several PSADT-functions do not work, if these variables are not set here. You may improve but NOT delete this section! <-- HJT
+[string]$global:DeploymentSystem = $DeploymentSystem
+## Several PSADT-functions do not work, if these variables are not set here.
 Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {
 	[string]$appVendor = $_.AppVendor
 	[string]$appName = $_.AppName
