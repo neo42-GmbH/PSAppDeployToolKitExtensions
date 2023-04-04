@@ -5480,72 +5480,75 @@ function Test-NxtAppIsInstalled {
         Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
         [array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
         if ($installedAppResults.Count -eq 0) {
-            Write-Log -Message "Found no application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$false]." -Source ${CmdletName}
-            Write-Output $false
+			[bool]$approvedResult = $false
+            Write-Log -Message "Found no application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
         }
 		elseif ("MSI" -eq $DeploymentMethod) {
-				if ($installedAppResults.Count -gt 1) {
-					## This case maybe resolved with a foreach-loop in future.
-					Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$true]." -Severity 2 -Source ${CmdletName}
-					throw "Processing multiple found msi installations is not supported yet! Abort."
+			if ($installedAppResults.Count -gt 1) {
+				## This case maybe resolved with a foreach-loop in future.
+				[bool]$approvedResult = $false
+				Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 3 -Source ${CmdletName}
+				throw "Processing multiple found msi installations is not supported yet! Abort."
+			}
+			else {
+				if ([string]::IsNullOrEmpty($DisplayVersion)) {
+					## Note: Especially in case of msi uninstallation it may be necessary to run it against all found versions!
+					Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check for an expected msi display version!" -Severity 2 -Source ${cmdletName}
+					[bool]$approvedResult = $true
 				}
 				else {
-					if ([string]::IsNullOrEmpty($DisplayVersion)) {
-						## Note: Especially in case of msi uninstallation it may be necessary to run it against all found versions!
-						Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check for an expected msi display version!" -Severity 2 -Source ${cmdletName}
-						[bool]$approvedMSI = $true
+					if ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
+						### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
+						Write-Log -Message "Detected 'DisplayVersion' is $null or empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
+						[bool]$approvedResult = $false
+						Write-Log -Message "Exact check for an installed msi application not possible! But found application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
 					}
 					else {
-						if ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
-							### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
-							Write-Log -Message "Detected 'DisplayVersion' is $null or empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
-							[string]$returnErrorMessage = "Exact check for an installed msi application was not possible!"
-							[bool]$approvedMSI = $false
-						}
-						else {
-							Write-Log -Message "Processing msi setup: double check for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
-							switch ( $(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion) ) {
-								"Equal" { 
-									[bool]$approvedMSI = $true
-									Write-Log -Message "Found the expected display version." -Source ${cmdletName}
+						Write-Log -Message "Processing msi setup: double check for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
+						switch ( $(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion) ) {
+							"Equal" { 
+								Write-Log -Message "Found the expected display version." -Source ${cmdletName}
+								[bool]$approvedResult = $true
+								Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
+							}
+							"Update" {
+								[string]$returnErrorMessage = "Found a lower target display version than expected."
+								if ($DeploymentType -eq "Install") {
+									[string]$returnErrorMessage += " This leads to trying to do an msi inplace upgrade ..."
 								}
-								"Update" {
-									[bool]$approvedMSI = $false
-									[string]$returnErrorMessage = "Found a lower target display version than expected."
-									if ($DeploymentType -eq "Install") {
-										[string]$returnErrorMessage += " This leads to trying to do an msi inplace upgrade ..."
-									}
-									Write-Log -Message "$returnErrorMessage" -Severity 2 -Source ${cmdletName}
+								Write-Log -Message "$returnErrorMessage" -Severity 2 -Source ${cmdletName}
+								[bool]$approvedResult = $false
+								Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
+							}
+							"Downgrade" {
+								[string]$returnErrorMessage = "Found a higher target display version than expected."
+								if ($DeploymentType -eq "Install") {
+									[string]$returnErrorMessage += " This leads to trying to do a msi downgrade (if supported) ..."
 								}
-								"Downgrade" {
-									[bool]$approvedMSI = $false
-									[string]$returnErrorMessage = "Found a higher target display version than expected."
-									if ($DeploymentType -eq "Install") {
-										[string]$returnErrorMessage += " This leads to trying to do a msi downgrade (if supported) ..."
-									}
-									Write-Log -Message "$returnErrorMessage" -Severity 2 -Source ${cmdletName}
-								}
-								default {
-									Write-Log -Message "Unsupported compare result at this point: '$_'" -Severity 3 -Source ${cmdletName}
-									[bool]$approvedMSI = $false
-								}
+								Write-Log -Message "$returnErrorMessage" -Severity 2 -Source ${cmdletName}
+								[bool]$approvedResult = $false
+								Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
+							}
+							default {
+								Write-Log -Message "Unsupported compare result at this point: '$_'" -Severity 3 -Source ${cmdletName}
+								[bool]$approvedResult = $false
 							}
 						}
 					}
-            	}
+				}
 			}
+		}
 		elseif ($installedAppResults.Count -gt 1) {
-			Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$true]." -Severity 2 -Source ${CmdletName}
-			Write-Output $true
+			## for all other types of installer (more than one search result)
+			[bool]$approvedResult = $true
+			Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 2 -Source ${CmdletName}
 		}
 		else {
-			## for all other types of installer
-			[bool]$approvedMSI = $true
+			## for all other types of installer (just 1 search result)
+			[bool]$approvedResult = $true
+			Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
 		}
-		if ($false -eq $approvedMSI) {
-			Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$true]." -Source ${CmdletName}
-			Write-Output $true
-		}
+		Write-Output $approvedResult			
 	}
 	End {
         Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -5988,9 +5991,12 @@ function Uninstall-NxtOld {
 	.PARAMETER UninstallOld
 		Will uninstall previous Versions before Installation if set to $true.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER deployAppScriptFriendlyName
+	.PARAMETER DeployAppScriptFriendlyName
 		The friendly name of the script used for deploying applications.
 		Defaults to $deployAppScriptFriendlyName definded in the DeployApplication.ps1.
+	.PARAMETER DeploymentSystem
+		Defines the deployment system used for the deployment.
+		Defaults to the corresponding value of the DeployApplication.ps1 parameter.
 	.EXAMPLE
 		Uninstall-NxtOld
 	.NOTES
@@ -6000,36 +6006,39 @@ function Uninstall-NxtOld {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-    [CmdletBinding()]
-    Param (
-        [Parameter(Mandatory = $false)]
-        [string]
-        $AppName = $global:PackageConfig.AppName,
-        [Parameter(Mandatory = $false)]
-        [string]
-        $AppVendor = $global:PackageConfig.AppVendor,
-        [Parameter(Mandatory = $false)]
-        [string]
-        $AppVersion = $global:PackageConfig.AppVersion,
-        [Parameter(Mandatory = $false)]
-        [string]
-        $PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
-        [Parameter(Mandatory = $false)]
-        [string]
-        $RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-        [Parameter(Mandatory = $false)]
-        [bool]
-        $UninstallOld = $global:PackageConfig.UninstallOld,
-        [Parameter(Mandatory = $false)]
-        [string]
-        $DeployAppScriptFriendlyName = $deployAppScriptFriendlyName
-    )
-    Begin {
-        ## Get the name of this function and write header
-        [string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-        Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-    }
-    Process {
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $global:PackageConfig.AppName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVendor = $global:PackageConfig.AppVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVersion = $global:PackageConfig.AppVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallOld = $global:PackageConfig.UninstallOld,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeployAppScriptFriendlyName = $deployAppScriptFriendlyName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentSystem = $global:DeploymentSystem
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
         If ($true -eq $UninstallOld) {
             ## deleting from the registry can have severe impact on the system, so we make sure all neccesary parameters are not null or empty.
