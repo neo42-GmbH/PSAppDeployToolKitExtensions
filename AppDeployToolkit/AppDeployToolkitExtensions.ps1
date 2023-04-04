@@ -55,7 +55,7 @@ function Add-NxtContent {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param(
+	Param (
 		[Parameter()]
 		[String]
 		$Path,
@@ -149,7 +149,7 @@ function Add-NxtLocalGroup {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
@@ -217,7 +217,7 @@ function Add-NxtLocalGroupMember {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
@@ -275,7 +275,6 @@ function Add-NxtLocalGroupMember {
 			Write-Log -Message "Failed to add $MemberName of type $MemberType to $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Write-Output $false
 		}
-			
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -311,7 +310,7 @@ function Add-NxtLocalUser {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'Default')]
-	param (
+	Param (
 		[Parameter(ParameterSetName = 'Default', Mandatory = $true)]
 		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
@@ -435,13 +434,13 @@ function Compare-NxtVersion {
 			[string]$DetectedVersion = "0"
 		}
 		try {
-			[scriptblock]$parseVersion = { param($version) 	
+			[scriptblock]$parseVersion = { Param ($version) 	
 				[int[]]$result = 0, 0, 0, 0
-				[System.Array]$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { param($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { param($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
+				[System.Array]$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { Param ($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { Param ($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
 				for ([int]$i = 0; $i -lt $versionParts.count; $i++) {
 					[int]$versionPartValue = 0
 					[System.Object]$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
-					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo, bool]] { param($x) [System.Char]::IsDigit($x.Value) })) {
+					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo, bool]] { Param ($x) [System.Char]::IsDigit($x.Value) })) {
 						[int]$versionPartValue = [int]::Parse($pair.Key)
 					}
 					else {
@@ -512,6 +511,7 @@ function Complete-NxtPackageInstallation {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -535,53 +535,62 @@ function Complete-NxtPackageInstallation {
 		[string]
 		$Wow6432Node = $global:Wow6432Node
 	)
-	If ($DesktopShortcut) {
-		Copy-NxtDesktopShortcuts
+	Begin {
+		[string]$cmdletName = $MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
-	Else {
-		Remove-NxtDesktopShortcuts
-	}
-	foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
-		[hashtable]$hideNxtParams = @{
-			UninstallKey			= $uninstallKeyToHide.KeyName
-			DisplayNamesToExclude	= $uninstallKeyToHide.DisplayNamesToExcludeFromHiding
+	Process {
+		If ($DesktopShortcut) {
+			Copy-NxtDesktopShortcuts
 		}
-		if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
-			$hideNxtParams["UninstallKeyIsDisplayName"] = $uninstallKeyToHide.KeyNameIsDisplayName
+		Else {
+			Remove-NxtDesktopShortcuts
 		}
-		if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
-			$hideNxtParams["UninstallKeyContainsWildCards"] = $uninstallKeyToHide.KeyNameContainsWildCards
-		}
-		if ($false -eq $uninstallKeyToHide.Is64Bit) {
-			[bool]$thisUninstallKeyToHideIs64Bit = $false
-		}
-		else {
-			[bool]$thisUninstallKeyToHideIs64Bit = $true
-		}
-		Write-Log -Message "Hiding uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$thisUninstallKeyToHideIs64Bit], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
-		[array]$installedAppResults = Get-NxtInstalledApplication @hideNxtParams | Where-Object Is64BitApplication -eq $thisUninstallKeyToHideIs64Bit
-		if ($installedAppResults.Count -eq 1) {
-			[string]$wowEntry = [string]::Empty
-			if ($false -eq $thisUninstallKeyToHideIs64Bit -and $true -eq $Is64Bit) {
-				[string]$wowEntry = "\Wow6432Node"
+		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
+			[hashtable]$hideNxtParams = @{
+				UninstallKey			= $uninstallKeyToHide.KeyName
+				DisplayNamesToExclude	= $uninstallKeyToHide.DisplayNamesToExcludeFromHiding
 			}
-			Set-RegistryKey -Key "HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent" -Type "Dword" -Value "1"
+			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
+				$hideNxtParams["UninstallKeyIsDisplayName"] = $uninstallKeyToHide.KeyNameIsDisplayName
+			}
+			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
+				$hideNxtParams["UninstallKeyContainsWildCards"] = $uninstallKeyToHide.KeyNameContainsWildCards
+			}
+			if ($false -eq $uninstallKeyToHide.Is64Bit) {
+				[bool]$thisUninstallKeyToHideIs64Bit = $false
+			}
+			else {
+				[bool]$thisUninstallKeyToHideIs64Bit = $true
+			}
+			Write-Log -Message "Hiding uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$thisUninstallKeyToHideIs64Bit], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
+			[array]$installedAppResults = Get-NxtInstalledApplication @hideNxtParams | Where-Object Is64BitApplication -eq $thisUninstallKeyToHideIs64Bit
+			if ($installedAppResults.Count -eq 1) {
+				[string]$wowEntry = [string]::Empty
+				if ($false -eq $thisUninstallKeyToHideIs64Bit -and $true -eq $Is64Bit) {
+					[string]$wowEntry = "\Wow6432Node"
+				}
+				Set-RegistryKey -Key "HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent" -Type "Dword" -Value "1"
+			}
+		}
+		If ($true -eq $UserPartOnInstallation) {
+			## Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
+			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
+			Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
+			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Userpart\"
+			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
+			Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+			Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
+			Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\neo42-Userpart\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
+		}
+		foreach ($oldAppFolder in $((Get-ChildItem (get-item $App).Parent.FullName | Where-Object Name -ne (get-item $App).Name).FullName)) {
+			Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
+			Start-Sleep -Seconds 1
+			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -NoWait
 		}
 	}
-	If ($true -eq $UserPartOnInstallation) {
-		## Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
-		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
-		Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
-		Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Userpart\"
-		Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
-		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
-		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\neo42-Userpart\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID"
-	}
-	foreach ($oldAppFolder in $((Get-ChildItem (get-item $App).Parent.FullName | Where-Object Name -ne (get-item $App).Name).FullName)) {
-		Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
-		Start-Sleep -Seconds 1
-		Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -NoWait
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -610,6 +619,7 @@ function Complete-NxtPackageUninstallation {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -624,7 +634,12 @@ function Complete-NxtPackageUninstallation {
 		[string]
 		$UserPartRevision = $global:PackageConfig.UserPartRevision
 	)
-	Remove-NxtDesktopShortcuts
+	Begin {
+		[string]$cmdletName = $MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
+	}
+	Process {
+		Remove-NxtDesktopShortcuts
 	Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
 	If ($true -eq $UserPartOnUninstallation) {
 		## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
@@ -634,6 +649,10 @@ function Complete-NxtPackageUninstallation {
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 		Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
 		Set-ActiveSetup -StubExePath "$global:System\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\neo42-Userpart\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageFamilyGUID.uninstall"
+	}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -669,8 +688,7 @@ function Copy-NxtDesktopShortcuts {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$StartMenu = $envCommonStartMenu
-	)
-		
+	)	
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -752,7 +770,7 @@ function Execute-NxtBitRockInstaller {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
 		[string]
@@ -811,12 +829,10 @@ function Execute-NxtBitRockInstaller {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-
 		[string]$bitRockInstallerUninstallKey = $UninstallKey
 		[bool]$bitRockInstallerUninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
 		[bool]$bitRockInstallerUninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
 		[array]$bitRockInstallerDisplayNamesToExclude = $DisplayNamesToExclude
-   
 		switch ($Action) {
 			'Install' {
 				[string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
@@ -1046,7 +1062,7 @@ function Execute-NxtInnoSetup {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
 		[string]
@@ -1115,12 +1131,10 @@ function Execute-NxtInnoSetup {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-
 		[string]$innoUninstallKey = $UninstallKey
 		[bool]$innoUninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
 		[bool]$innoUninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
 		[array]$innoDisplayNamesToExclude = $DisplayNamesToExclude
-   
 		switch ($Action) {
 			'Install' {
 				[string]$innoSetupDefaultParams = $configNxtInnoSetupInstallParams
@@ -1616,7 +1630,7 @@ function Execute-NxtNullsoft {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
 		[string]
@@ -1673,12 +1687,10 @@ function Execute-NxtNullsoft {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-
 		[string]$nullsoftUninstallKey = $UninstallKey
 		[bool]$nullsoftUninstallKeyIsDisplayName = $UninstallKeyIsDisplayName
 		[bool]$nullsoftUninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
 		[array]$nullsoftDisplayNamesToExclude = $DisplayNamesToExclude
-   
 		switch ($Action) {
 			'Install' {
 				[string]$nullsoftDefaultParams = $configNxtNullsoftInstallParams
@@ -1873,7 +1885,8 @@ function Exit-NxtAbortReboot {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageMachineKey = "$($global:PackageConfig.RegPackagesKey)\$($global:PackageConfig.PackageFamilyGUID)",
@@ -2065,7 +2078,6 @@ function Exit-NxtScriptWithError {
 		[bool]
 		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation
 	)
-	
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2129,7 +2141,6 @@ function Expand-NxtPackageConfig {
 		[PSObject]
 		$PackageConfig = $global:PackageConfig
 	)
-		
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2194,7 +2205,7 @@ function Expand-NxtVariablesInFile {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[String]
 		$Path
@@ -2359,14 +2370,12 @@ function Format-NxtPackageSpecificVariables {
 		[PSObject]
 		$PackageConfig = $global:PackageConfig
 	)
-		
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		
 		## Get String from object and Expand String if requested
 		[System.Collections.Generic.Dictionary[string, string]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[string,string]"
 		foreach ($packageSpecificVariable in $PackageConfig.PackageSpecificVariablesRaw) {
@@ -2397,7 +2406,7 @@ function Get-NxtComputerManufacturer {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	Param()
+	Param ()
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2431,7 +2440,7 @@ function Get-NxtComputerModel {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	Param()
+	Param ()
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2567,7 +2576,7 @@ function Get-NxtFileEncoding {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[String]
 		$Path,
@@ -2615,7 +2624,7 @@ function Get-NxtFileVersion {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	Param(
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]$FilePath
@@ -2657,7 +2666,7 @@ function Get-NxtFolderSize {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	Param(
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]$FolderPath,
@@ -2674,8 +2683,8 @@ function Get-NxtFolderSize {
 	Process {
 		[long]$result = 0
 		try {
-			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { param($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
-			[long]$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { param($x) $x.Length })
+			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { Param ($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
+			[long]$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { Param ($x) $x.Length })
 			[long]$folderSize = [math]::round(($result / "$("1$Unit" -replace "1B","1D")"))
 		}
 		catch {
@@ -2728,7 +2737,7 @@ function Get-NxtInstalledApplication {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param(
+	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -2962,7 +2971,7 @@ function Get-NxtParentProcess {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter()]
 		[int]
 		$Id = $global:PID,
@@ -3002,7 +3011,7 @@ function Get-NxtProcessEnvironmentVariable {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Key
@@ -3086,7 +3095,7 @@ function Get-NxtProcessorArchiteW6432 {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdLetBinding()]
-	param (
+	Param (
 		[Parameter()]
 		[ValidateSet($null, "AMD64")]
 		[string]
@@ -3238,7 +3247,6 @@ function Get-NxtSidByName {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
@@ -3285,7 +3293,8 @@ function Get-NxtSystemEnvironmentVariable {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Key
@@ -3369,7 +3378,6 @@ function Get-NxtVariablesFromDeploymentSystem {
 		[string]
 		$Reboot = $env:Reboot
 	)
-		
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -3408,7 +3416,7 @@ function Get-NxtWindowsBits {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdLetBinding()]
-	param (
+	Param (
 		[Parameter()]
 		[string]
 		$PROCESSOR_ARCHITECTURE = $env:PROCESSOR_ARCHITECTURE
@@ -3490,7 +3498,7 @@ function Import-NxtIniFile {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param(
+	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
 		[String]$Path,
 		[Parameter(Mandatory = $false)]
@@ -3525,7 +3533,6 @@ function Import-NxtIniFile {
 				Throw "Failed to read ini file [$path]: $($_.Exception.Message)"
 			}
 		}
-		
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -3561,7 +3568,6 @@ function Initialize-NxtEnvironment {
 		[string]
 		$SetupCfgPath = "$global:SetupCfgPath"
 	)
-		
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -3607,7 +3613,8 @@ function Initialize-NxtUninstallApplication {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
 		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide
@@ -3717,7 +3724,8 @@ function Install-NxtApplication {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $false)]
 		[String]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -3767,7 +3775,13 @@ function Install-NxtApplication {
 		[array]
 		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor
 	)
-	[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$installResult.Success = $false
 	[int]$logMessageSeverity = 1
 	[hashtable]$executeNxtParams = @{
@@ -3862,9 +3876,12 @@ function Install-NxtApplication {
 			}
 		}
 	}
-
 	Write-Log -Message $($installResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 	Write-Output $installResult
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 #region Function Move-NxtItem
@@ -3888,7 +3905,7 @@ function Move-NxtItem {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[String]
 		$Path,
@@ -3946,7 +3963,8 @@ function Read-NxtSingleXmlNode {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$XmlFilePath,
@@ -4244,7 +4262,6 @@ function Remove-NxtDesktopShortcuts {
 		[string]
 		$Desktop = $envCommonDesktop
 	)
-		
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -4289,7 +4306,6 @@ function Remove-NxtEmptyFolder {
 		[ValidateNotNullorEmpty()]
 		[string]$Path
 	)
-		
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -4347,7 +4363,7 @@ function Remove-NxtLocalGroup {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
@@ -4363,7 +4379,6 @@ function Remove-NxtLocalGroup {
 	}
 	Process {
 		try {
-				
 			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
 			if ($groupExists) {
 				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
@@ -4377,7 +4392,6 @@ function Remove-NxtLocalGroup {
 			Write-Log -Message "Failed to delete group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Write-Output $false
 		}
-			
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -4414,7 +4428,7 @@ function Remove-NxtLocalGroupMember {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
@@ -4512,7 +4526,7 @@ function Remove-NxtLocalUser {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
@@ -4528,7 +4542,6 @@ function Remove-NxtLocalUser {
 	}
 	Process {
 		try {
-				
 			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
 			if ($userExists) {
 				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
@@ -4542,7 +4555,6 @@ function Remove-NxtLocalUser {
 			Write-Log -Message "Failed to delete user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Write-Output $false
 		}
-			
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -4563,7 +4575,8 @@ function Remove-NxtProcessEnvironmentVariable {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Key
@@ -4600,7 +4613,8 @@ function Remove-NxtSystemEnvironmentVariable {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Key
@@ -4664,7 +4678,8 @@ function Repair-NxtApplication {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -4692,7 +4707,13 @@ function Repair-NxtApplication {
 		[string]
 		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes
 	)
-	[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$repairResult.Success = $false
 	[int]$logMessageSeverity = 1
 	[hashtable]$executeNxtParams = @{
@@ -4753,9 +4774,13 @@ function Repair-NxtApplication {
 			}
 		}
 	}
-
 	Write-Log -Message $($repairResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 	Write-Output $repairResult
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+	
 }
 #endregion
 #region Function Set-NxtDetectedDisplayVersion
@@ -4797,7 +4822,7 @@ function Set-NxtDetectedDisplayVersion {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param(
+	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -4842,7 +4867,6 @@ function Set-NxtDetectedDisplayVersion {
 				Write-Log -Message "Failed to detect DisplayVersion for UninstallKey [$UninstallKey] with UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. `n$(Resolve-Error)" -Severity 2 -Source ${CmdletName}
 			}
 		}
-		
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -4897,7 +4921,6 @@ function Set-NxtIniValue {
 		[ValidateNotNullorEmpty()]
 		[bool]$Create = $true
 	)
-	
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -5047,7 +5070,6 @@ function Set-NxtPackageArchitecture {
 				[string]$global:System = "$SystemRoot\System32"
 				[string]$global:Wow6432Node = ''
 			}
-
 			Write-Log -Message "Package architecture variables successfully set." -Source ${cmdletName}
 			[int32]$thisFunctionReturnCode = 0
 		}
@@ -5078,7 +5100,8 @@ function Set-NxtProcessEnvironmentVariable {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Key,
@@ -5121,7 +5144,7 @@ function Set-NxtSetupCfg {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param(
+	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
 		[String]$Path,
 		[Parameter(Mandatory = $false)]
@@ -5164,7 +5187,8 @@ function Set-NxtSystemEnvironmentVariable {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Key,
@@ -5224,7 +5248,8 @@ function Show-NxtInstallationWelcome {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[bool]
 		$IsInstall,
@@ -5245,7 +5270,13 @@ function Show-NxtInstallationWelcome {
 		[bool]
 		$BlockExecution = $($global:PackageConfig.BlockExecution)
 	)
-	## To break the array references to the parent object we have to create new(copied) objects from the provided array.
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
 	[array]$AskKillProcessApps = $AskKillProcessApps | Select-Object *
 	## override $DeferDays with 0 in Case of Uninstall
 	if (!$IsInstall) {
@@ -5296,6 +5327,10 @@ function Show-NxtInstallationWelcome {
 			}
 		}
 	}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 #region Function Stop-NxtProcess
@@ -5320,7 +5355,6 @@ function Stop-NxtProcess {
 		[ValidateNotNullOrEmpty()]
 		[string]$Name
 	)
-		
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -5399,7 +5433,7 @@ function Test-NxtAppIsInstalled {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param(
+	Param (
 		[Parameter(Mandatory = $false)]
 		[String]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -5521,7 +5555,7 @@ function Test-NxtLocalGroupExists {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[string]
@@ -5568,7 +5602,7 @@ function Test-NxtLocalUserExists {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]
@@ -5616,7 +5650,7 @@ function Test-NxtProcessExists {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdLetBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$ProcessName,
@@ -5729,7 +5763,8 @@ function Uninstall-NxtApplication {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -5785,7 +5820,13 @@ function Uninstall-NxtApplication {
 		[array]
 		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor
 	)
-	[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 	$uninstallResult.Success = $false
 	[int]$logMessageSeverity = 1
 	if ([string]::IsNullOrEmpty($UninstallKey)) {
@@ -5912,6 +5953,10 @@ function Uninstall-NxtApplication {
 
 	Write-Log -Message $($uninstallResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 	Write-Output $uninstallResult
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
 #region Function Uninstall-NxtOld
@@ -6194,7 +6239,6 @@ function Unregister-NxtPackage {
 		[string]
 		$ScriptRoot = $scriptRoot
 	)
-	
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -6244,7 +6288,7 @@ function Update-NxtTextInFile {
 		https://neo42.de/psappdeploytoolkit
   #>
 	[CmdletBinding()]
-	param(
+	Param (
 		[Parameter(Mandatory = $true)]
 		[String]
 		$Path,
@@ -6367,7 +6411,7 @@ function Wait-NxtRegistryAndProcessCondition {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdLetBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateRange(1, 3600)]
 		[int]
@@ -6564,7 +6608,7 @@ function Watch-NxtFile {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdLetBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]$FileName,
 		[Parameter()]
@@ -6806,7 +6850,7 @@ function Watch-NxtRegistryKey {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdLetBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]$RegistryKey,
 		[Parameter()]
@@ -6860,7 +6904,7 @@ function Watch-NxtRegistryKeyIsRemoved {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdLetBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]$RegistryKey,
 		[Parameter()]
@@ -6915,7 +6959,8 @@ function Write-NxtSingleXmlNode {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdLetBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$XmlFilePath,
@@ -6981,7 +7026,8 @@ function Write-NxtXmlNode {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	Param(
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$XmlFilePath,
@@ -6999,7 +7045,7 @@ function Write-NxtXmlNode {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
 
-			[scriptblock]$createXmlNode = { param([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
+			[scriptblock]$createXmlNode = { Param ([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
 				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, "")
 
 				for ([int]$i = 0; $i -lt $child.Attributes.count; $i++) {
