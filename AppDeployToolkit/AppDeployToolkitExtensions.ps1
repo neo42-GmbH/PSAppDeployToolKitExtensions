@@ -5942,7 +5942,7 @@ function Uninstall-NxtOld {
 		Defaults to $deployAppScriptFriendlyName definded in the DeployApplication.ps1.
 	.PARAMETER DeploymentSystem
 		Defines the deployment system used for the deployment.
-		Defaults to the corresponding value of the DeployApplication.ps1 value.
+		Defaults to the corresponding value of the DeployApplication.ps1 parameter.
 	.EXAMPLE
 		Uninstall-NxtOld
 	.NOTES
