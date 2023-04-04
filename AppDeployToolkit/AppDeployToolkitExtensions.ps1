@@ -4823,6 +4823,7 @@ function Set-NxtDetectedDisplayVersion {
 		}
 		else {
 			try {
+				$global:DetectedDisplayVersion = $null
 				Write-Log -Message "Setting DetectedDisplayVersion value..." -Source ${CmdletName}
 				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
 				if ($installedAppResults.Count -eq 0) {
