@@ -5937,9 +5937,12 @@ function Uninstall-NxtOld {
 	.PARAMETER UninstallOld
 		Will uninstall previous Versions before Installation if set to $true.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER deployAppScriptFriendlyName
+	.PARAMETER DeployAppScriptFriendlyName
 		The friendly name of the script used for deploying applications.
 		Defaults to $deployAppScriptFriendlyName definded in the DeployApplication.ps1.
+	.PARAMETER DeploymentSystem
+		Defines the deployment system used for the deployment.
+		Defaults to the corresponding value of the DeployApplication.ps1 value.
 	.EXAMPLE
 		Uninstall-NxtOld
 	.NOTES
@@ -5971,7 +5974,10 @@ function Uninstall-NxtOld {
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeployAppScriptFriendlyName = $deployAppScriptFriendlyName
+		$DeployAppScriptFriendlyName = $deployAppScriptFriendlyName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentSystem = $global:DeploymentSystem
 	)
 	Begin {
 		## Get the name of this function and write header
