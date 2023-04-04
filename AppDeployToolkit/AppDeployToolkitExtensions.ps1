@@ -637,6 +637,50 @@ function Complete-NxtPackageUninstallation {
 	}
 }
 #endregion
+#region Function Confirm-NxtVariables
+function Confirm-NxtVariables {
+	<#
+	.SYNOPSIS
+		Executes validation steps for custom variables of the package configuration.
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+	.PARAMETER VariableSet
+		Collection of variables to validate.
+	.EXAMPLE
+		Confirm-NxtVariables -VariableSet "$global:PackageConfig"
+		Confirm-NxtVariables -VariableSet "$global:SetupCfg"
+	.OUTPUTS
+		System.Boolean.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullorEmpty()]
+		[PSObject]
+		$VariableSet = $global:Neo42PackageConfigPath
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			Write-Output $true
+		}
+		catch {
+			Write-Log -Message "Failed to validate the variable set. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Output $false
+		}
+			
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Copy-NxtDesktopShortcuts
 function Copy-NxtDesktopShortcuts {
 	<#
