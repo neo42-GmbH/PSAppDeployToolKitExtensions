@@ -121,7 +121,6 @@ function Add-NxtContent {
 		catch {
 			Write-Log -Message "Failed to Add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -470,7 +469,6 @@ function Compare-NxtVersion {
 		catch {
 			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -2597,7 +2595,6 @@ function Get-NxtFileEncoding {
 				[string]$intEncoding = $DefaultEncoding
 			}
 			Write-Output $intEncoding
-			return
 		}
 		catch {
 			Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -3030,7 +3027,6 @@ function Get-NxtProcessEnvironmentVariable {
 			Write-Log -Message "Failed to get the process environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 		Write-Output $result
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -3223,7 +3219,6 @@ function Get-NxtServiceState {
 			}
 			else {
 				Write-Output $null
-				return
 			}
 		}
 		catch {
@@ -3275,7 +3270,6 @@ function Get-NxtSidByName {
 		catch {
 			Write-Log -Message "Failed to get the sid for the user '$UserName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -3316,7 +3310,6 @@ function Get-NxtSystemEnvironmentVariable {
 			Write-Log -Message "Failed to get the system environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 		Write-Output $result
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -6384,7 +6377,6 @@ function Update-NxtTextInFile {
 		catch {
 			Write-Log -Message "Failed to add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -6595,7 +6587,6 @@ function Wait-NxtRegistryAndProcessCondition {
 		else {
 			Write-Output $false
 		}
-		return
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
