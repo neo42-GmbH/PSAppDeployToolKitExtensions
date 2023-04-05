@@ -74,7 +74,7 @@ function Add-NxtContent {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[String]$intEncoding = $Encoding
@@ -164,7 +164,7 @@ function Add-NxtLocalGroup {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -236,7 +236,7 @@ function Add-NxtLocalGroupMember {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -343,7 +343,7 @@ function Add-NxtLocalUser {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -426,7 +426,7 @@ function Compare-NxtVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($DetectedVersion)) {
@@ -690,7 +690,7 @@ function Copy-NxtDesktopShortcuts {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -824,7 +824,7 @@ function Execute-NxtBitRockInstaller {
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		[string]$bitRockInstallerUninstallKey = $UninstallKey
@@ -1126,7 +1126,7 @@ function Execute-NxtInnoSetup {
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		[string]$innoUninstallKey = $UninstallKey
@@ -1483,7 +1483,7 @@ function Execute-NxtMSI {
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 		[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
 		## Add all parameters with defaults to the PSBoundParameters:
 		[array]$functionParametersWithDefaults = (
@@ -1682,7 +1682,7 @@ function Execute-NxtNullsoft {
 
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		[string]$nullsoftUninstallKey = $UninstallKey
@@ -1910,7 +1910,7 @@ function Exit-NxtAbortReboot {
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Initiating AbortReboot..." -Source ${CmdletName}
@@ -2079,7 +2079,7 @@ function Exit-NxtScriptWithError {
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		try {
@@ -2142,7 +2142,7 @@ function Expand-NxtPackageConfig {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
@@ -2211,7 +2211,7 @@ function Expand-NxtVariablesInFile {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -2371,7 +2371,7 @@ function Format-NxtPackageSpecificVariables {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		## Get String from object and Expand String if requested
@@ -2408,7 +2408,7 @@ function Get-NxtComputerManufacturer {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[string]$result = [string]::Empty
@@ -2442,7 +2442,7 @@ function Get-NxtComputerModel {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[string]$result = [string]::Empty
@@ -2489,7 +2489,7 @@ function Get-NxtDriveFreeSpace {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -2539,7 +2539,7 @@ function Get-NxtDriveType {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -2586,7 +2586,7 @@ function Get-NxtFileEncoding {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -2629,7 +2629,7 @@ function Get-NxtFileVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[string]$result = $null
@@ -2675,7 +2675,7 @@ function Get-NxtFolderSize {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[long]$result = 0
@@ -2751,7 +2751,7 @@ function Get-NxtInstalledApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
@@ -2819,7 +2819,7 @@ function Get-NxtIsSystemProcess {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -2861,7 +2861,7 @@ function Get-NxtNameBySid {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -2901,7 +2901,7 @@ function Get-NxtOsLanguage {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -2941,7 +2941,7 @@ function Get-NxtPackageConfig {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[PSObject]$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
@@ -2979,7 +2979,7 @@ function Get-NxtParentProcess {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[System.Management.ManagementBaseObject]$process = Get-WmiObject Win32_Process -filter "ProcessID ='$ID'"
@@ -3016,7 +3016,7 @@ function Get-NxtProcessEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[string]$result = $null
@@ -3058,7 +3058,7 @@ function Get-NxtProcessName {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[string]$result = [string]::Empty
@@ -3100,7 +3100,7 @@ function Get-NxtProcessorArchiteW6432 {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -3209,7 +3209,7 @@ function Get-NxtServiceState {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -3255,7 +3255,7 @@ function Get-NxtSidByName {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -3299,7 +3299,7 @@ function Get-NxtSystemEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[string]$result = $null
@@ -3333,7 +3333,7 @@ function Get-NxtUILanguage {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -3377,7 +3377,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Getting environment variables set by the deployment system..." -Source ${cmdletName}
@@ -3429,7 +3429,7 @@ function Get-NxtWindowsBits {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -3471,7 +3471,7 @@ function Get-NxtWindowsVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -3513,7 +3513,7 @@ function Import-NxtIniFile {
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		try {
@@ -3576,7 +3576,7 @@ function Initialize-NxtEnvironment {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		if (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
@@ -3627,7 +3627,7 @@ function Initialize-NxtUninstallApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
@@ -3783,7 +3783,7 @@ function Install-NxtApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
@@ -3927,7 +3927,7 @@ function Move-NxtItem {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -3980,7 +3980,7 @@ function Read-NxtSingleXmlNode {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -4173,7 +4173,7 @@ function Register-NxtPackage {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
@@ -4270,7 +4270,7 @@ function Remove-NxtDesktopShortcuts {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -4314,7 +4314,7 @@ function Remove-NxtEmptyFolder {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
@@ -4380,7 +4380,7 @@ function Remove-NxtLocalGroup {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -4458,7 +4458,7 @@ function Remove-NxtLocalGroupMember {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -4543,7 +4543,7 @@ function Remove-NxtLocalUser {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -4589,7 +4589,7 @@ function Remove-NxtProcessEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -4627,7 +4627,7 @@ function Remove-NxtSystemEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -4715,7 +4715,7 @@ function Repair-NxtApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
@@ -4844,7 +4844,7 @@ function Set-NxtDetectedDisplayVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
@@ -4930,7 +4930,7 @@ function Set-NxtIniValue {
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		try {
@@ -5027,7 +5027,7 @@ function Set-NxtPackageArchitecture {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Setting package architecture variables..." -Source ${CmdletName}
@@ -5118,7 +5118,7 @@ function Set-NxtProcessEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -5160,7 +5160,7 @@ function Set-NxtSetupCfg {
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Checking for setup.cfg under [$path]..." -Source ${CmdletName}
@@ -5205,7 +5205,7 @@ function Set-NxtSystemEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -5279,7 +5279,7 @@ function Show-NxtInstallationWelcome {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
@@ -5364,7 +5364,7 @@ function Stop-NxtProcess {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Stopping process with name '$Name'..." -Source ${cmdletName}
@@ -5462,7 +5462,7 @@ function Test-NxtAppIsInstalled {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
@@ -5573,7 +5573,7 @@ function Test-NxtLocalGroupExists {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -5620,7 +5620,7 @@ function Test-NxtLocalUserExists {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -5667,7 +5667,7 @@ function Test-NxtProcessExists {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -5829,7 +5829,7 @@ function Uninstall-NxtApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
@@ -6035,7 +6035,7 @@ function Uninstall-NxtOld {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
@@ -6248,7 +6248,7 @@ function Unregister-NxtPackage {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
@@ -6322,7 +6322,7 @@ function Update-NxtTextInFile {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		[String]$intEncoding = $Encoding
@@ -6439,7 +6439,7 @@ function Wait-NxtRegistryAndProcessCondition {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
 		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
 		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
@@ -6622,7 +6622,7 @@ function Watch-NxtFile {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -6677,7 +6677,7 @@ function Watch-NxtFileIsRemoved {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -6735,7 +6735,7 @@ function Watch-NxtProcess {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -6802,7 +6802,7 @@ function Watch-NxtProcessIsStopped {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -6864,7 +6864,7 @@ function Watch-NxtRegistryKey {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -6918,7 +6918,7 @@ function Watch-NxtRegistryKeyIsRemoved {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -6978,7 +6978,7 @@ function Write-NxtSingleXmlNode {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
@@ -7042,7 +7042,7 @@ function Write-NxtXmlNode {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
 		try {
