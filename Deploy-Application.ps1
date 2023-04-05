@@ -52,7 +52,7 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[switch]$DisableLogging = $false,
 	[Parameter(Mandatory = $false)]
-	[switch]$DeploymentSystem = [string]::Empty
+	[string]$DeploymentSystem = [string]::Empty
 )
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
@@ -108,7 +108,7 @@ Catch {
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
 	Initialize-NxtEnvironment
-##*===============================================
+	##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
 
@@ -154,19 +154,19 @@ function Main {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-param (
-	[Parameter(Mandatory=$false)]
-	[int]
-	[ValidateSet(0,1,2)]
-	$Reboot = $global:PackageConfig.reboot,
-	[Parameter(Mandatory=$false)]
-	[string]
-	[ValidateSet('Reinstall','MSIRepair','Install')]
-	$ReinstallMode = $global:PackageConfig.ReinstallMode,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$InstallMethod = $global:PackageConfig.InstallMethod
-)
+	param (
+		[Parameter(Mandatory = $false)]
+		[int]
+		[ValidateSet(0, 1, 2)]
+		$Reboot = $global:PackageConfig.reboot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Reinstall', 'MSIRepair', 'Install')]
+		$ReinstallMode = $global:PackageConfig.ReinstallMode,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallMethod = $global:PackageConfig.InstallMethod
+	)
 	try {
 		CustomBegin
 		switch ($DeploymentType) {
@@ -184,7 +184,7 @@ param (
 					[string]$script:installPhase = 'Package-Preparation'
 					Show-NxtInstallationWelcome -IsInstall $true
 					CustomInstallAndReinstallPreInstallAndReinstall
-						[string]$script:installPhase = 'Decide-ReInstallMode'
+					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
@@ -193,9 +193,9 @@ param (
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
 								CustomReinstallPostUninstall -ResultToCheck $mainNxtResult
-							if ($false -eq $mainNxtResult.Success) {
-								Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
-							}
+								if ($false -eq $mainNxtResult.Success) {
+									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+								}
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
@@ -325,7 +325,7 @@ function CustomInstallAndReinstallBegin {
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -348,7 +348,7 @@ function CustomReinstallPreUninstall {
 
 function CustomReinstallPostUninstall {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -365,7 +365,7 @@ function CustomReinstallPreInstall {
 
 function CustomReinstallPostInstall {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -382,7 +382,7 @@ function CustomInstallBegin {
 
 function CustomInstallEnd {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -393,7 +393,7 @@ function CustomInstallEnd {
 
 function CustomInstallAndReinstallEnd {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -410,7 +410,7 @@ function CustomUninstallBegin {
 
 function CustomUninstallEnd {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
