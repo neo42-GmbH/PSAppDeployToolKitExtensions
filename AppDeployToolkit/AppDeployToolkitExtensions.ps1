@@ -4610,8 +4610,8 @@ function Remove-NxtRegistryKeyForAllUsers {
 	<#
 	.DESCRIPTION
 		Removes a regkey from all user registries.
-	.PARAMETER Path
-		Path to the regkey in HKCU.
+	.PARAMETER Key
+		Key to the regkey in HKCU.
 	.EXAMPLE
 		Remove-NxtRegistryKeyForAllUsers -Path "HKCU:Software\TestKey"
 	.OUTPUTS
@@ -6140,7 +6140,7 @@ function Uninstall-NxtOld {
 										$uninstallOldResult.ErrorMessage = "Uninstallation of the found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
 										$uninstallOldResult.Success = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-										Remove-NxtRegistryKeyForAllUsers -Key "$($appEmpirumPackageVersion.name -replace "^HKEY_LOCAL_MACHINE\\","HKCU:" -replace "\Wow6432Node",'')" -Recurse
+										Remove-NxtRegistryKeyForAllUsers -Key "$($appEmpirumPackageVersion.name -replace "^HKEY_LOCAL_MACHINE\\","HKCU:" -replace "\\Wow6432Node",'')" -Recurse
 										Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Recurse
                                     }
                                 }
@@ -6170,15 +6170,21 @@ function Uninstall-NxtOld {
 							Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\$RegPackagesKey\$AppVendor"
 							Remove-NxtRegistryKeyForAllUsers -Key "HKCU:SOFTWARE\$RegPackagesKey"
 							## delete empty parent Registry Keys up to the RegPackagesKey
-							"HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName",
-							"HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor",
-							"HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey" | ForEach-Object {
-								if($true -eq (Test-Path -Path $_)){
-									if((Get-ChildItem -Path $_).count -eq 0){
-										Remove-RegistryKey -Key $_
+								if($true -eq (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName")){
+									if((Get-ChildItem -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName").count -eq 0){
+										Remove-RegistryKey -Key "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 									}
 								}
-							}
+								if($true -eq (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor")){
+									if((Get-ChildItem -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor").count -eq 0){
+										Remove-RegistryKey -Key "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor"
+									}
+								}
+								if($true -eq (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey")){
+									if((Get-ChildItem -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey").count -eq 0){
+										Remove-RegistryKey -Key "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey"
+									}
+								}
                         }
                     }
 					if (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor") {
@@ -6260,13 +6266,19 @@ function Uninstall-NxtOld {
 							## also cleanup keys under HKLM
 							Remove-RegistryKey -Key "$($appEmpirumPackageVersion.name)" -Recurse
 							## delete empty parent Registry Keys up to the RegPackagesKey
-							"HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName",
-							"HKLM:SOFTWARE\$RegPackagesKey\$AppVendor",
-							"HKLM:SOFTWARE\$RegPackagesKey"	| ForEach-Object {
-								if($true -eq (Test-Path -Path $_)){
-									if((Get-ChildItem -Path $_).count -eq 0){
-										Remove-RegistryKey -Key $_
-									}
+							if($true -eq (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName")){
+								if((Get-ChildItem -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName").count -eq 0){
+									Remove-RegistryKey -Key "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
+								}
+							}
+							if($true -eq (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor")){
+								if((Get-ChildItem -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor").count -eq 0){
+									Remove-RegistryKey -Key "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor"
+								}
+							}
+							if($true -eq (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey")){
+								if((Get-ChildItem -Path "HKLM:SOFTWARE\$RegPackagesKey").count -eq 0){
+									Remove-RegistryKey -Key "HKLM:SOFTWARE\$RegPackagesKey"
 								}
 							}
                         }
