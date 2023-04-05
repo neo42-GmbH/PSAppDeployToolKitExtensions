@@ -28,8 +28,7 @@ Param (
 # Variables: Script
 [string]$appDeployToolkitExtName = 'N42PSAppDeployToolkitExt'
 [string]$appDeployExtScriptFriendlyName = 'neo42 App Deploy Toolkit Extensions'
-[version]$appDeployExtScriptVersion = [version]'3.8.4'
-[string]$appDeployExtScriptDate = '26/01/2021'
+[version]$appDeployExtScriptVersion = [version]'2023.04.05.01'
 [hashtable]$appDeployExtScriptParameters = $PSBoundParameters
 
 ##*===============================================
