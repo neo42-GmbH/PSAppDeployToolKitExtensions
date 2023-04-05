@@ -6091,7 +6091,7 @@ function Uninstall-NxtOld {
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-        if ($true -eq $UninstallOld) {
+        if ( ( $true -eq $UninstallOld ) -and ( $DeploymentSystem -ne "Empirum" ) ) {
             ## deleting from the registry can have severe impact on the system, so we make sure all neccesary parameters are not null or empty.
             if (
                 [string]::IsNullOrEmpty($RegPackagesKey) -or
