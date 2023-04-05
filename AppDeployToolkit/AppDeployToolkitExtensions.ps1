@@ -93,7 +93,7 @@ function Add-NxtContent {
 				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
 				}
-				ElseIf ($intEncoding -eq "UTF8withBom") {
+				elseif ($intEncoding -eq "UTF8withBom") {
 					[bool]$noBOMDetected = $false
 					[string]$intEncoding = "UTF8"
 				}
@@ -151,11 +151,11 @@ function Add-NxtLocalGroup {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$GroupName,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$Description,
 		[Parameter(Mandatory = $false)]
@@ -182,7 +182,7 @@ function Add-NxtLocalGroup {
 				$objGroup.Put("Description", $Description)
 				$objGroup.SetInfo()
 			}
-			return $true
+			Write-Output $true
 		}
 		catch {
 			Write-Log -Message "Failed to create group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -219,11 +219,11 @@ function Add-NxtLocalGroupMember {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$GroupName,
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$MemberName,
 		[Parameter(Mandatory = $true)]
@@ -313,28 +313,28 @@ function Add-NxtLocalUser {
 	Param (
 		[Parameter(ParameterSetName = 'Default', Mandatory = $true)]
 		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$UserName,
 		[Parameter(ParameterSetName = 'Default', Mandatory = $true)]
 		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$Password,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$FullName,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$Description,
 		[Parameter(ParameterSetName = 'Default', Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[switch]
 		$SetPwdExpired,
 		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[switch]
 		$SetPwdNeverExpires,
 		[Parameter(Mandatory = $false)]
@@ -379,7 +379,7 @@ function Add-NxtLocalUser {
 				$objUser.UserFlags = 65536
 				$objUser.SetInfo()
 			}
-			return $true
+			Write-Output $true
 		}
 		catch {
 			Write-Log -Message "Failed to create user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -540,10 +540,10 @@ function Complete-NxtPackageInstallation {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Header
 	}
 	Process {
-		If ($DesktopShortcut) {
+		if ($DesktopShortcut) {
 			Copy-NxtDesktopShortcuts
 		}
-		Else {
+		else {
 			Remove-NxtDesktopShortcuts
 		}
 		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
@@ -573,7 +573,7 @@ function Complete-NxtPackageInstallation {
 				Set-RegistryKey -Key "HKLM\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent" -Type "Dword" -Value "1"
 			}
 		}
-		If ($true -eq $UserPartOnInstallation) {
+		if ($true -eq $UserPartOnInstallation) {
 			## Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID.uninstall"
 			Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
@@ -641,7 +641,7 @@ function Complete-NxtPackageUninstallation {
 	Process {
 		Remove-NxtDesktopShortcuts
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageFamilyGUID"
-		If ($true -eq $UserPartOnUninstallation) {
+		if ($true -eq $UserPartOnUninstallation) {
 			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
 			Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Userpart\"
@@ -695,14 +695,14 @@ function Copy-NxtDesktopShortcuts {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Try {
+		try {
 			foreach ($value in $StartMenuShortcutsToCopyToDesktop) {
 				Write-Log -Message "Copying start menu shortcut'$StartMenu\$($value.Source)' to [$Desktop]..." -Source ${cmdletName}
 				Copy-File -Path "$StartMenu\$($value.Source)" -Destination "$Desktop\$($value.TargetName)"
 				Write-Log -Message "Shortcut succesfully copied." -Source ${cmdletName}
 			}
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to copy shortcuts to [$Desktop]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
@@ -776,7 +776,7 @@ function Execute-NxtBitRockInstaller {
 		[string]
 		$Action = 'Install',
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$UninstallKey,
 		[Parameter(Mandatory = $false)]
@@ -795,19 +795,19 @@ function Execute-NxtBitRockInstaller {
 		[string]
 		$Parameters,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$AddParameters,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[switch]
 		$PassThru = $false,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[boolean]
 		$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
@@ -838,16 +838,16 @@ function Execute-NxtBitRockInstaller {
 				[string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
 
 				## If the Setup File is in the Files directory, set the full path during an installation
-				If (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $Path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
+				if (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $Path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
 					[string]$bitRockInstallerSetupPath = Join-Path -Path $DirFiles -ChildPath $Path
 				}
-				ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
+				elseif (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
 					[string]$bitRockInstallerSetupPath = (Get-Item -LiteralPath $Path).FullName
 				}
-				Else {
+				else {
 					Write-Log -Message "Failed to find installation file [$Path]." -Severity 3 -Source ${CmdletName}
-					If (-not $ContinueOnError) {
-						Throw "Failed to find installation file [$Path]."
+					if (-not $ContinueOnError) {
+						throw "Failed to find installation file [$Path]."
 					}
 					Continue
 				}
@@ -902,11 +902,11 @@ function Execute-NxtBitRockInstaller {
 		[string]$argsBitRockInstaller = $bitRockInstallerDefaultParams
     
 		## Replace default parameters if specified.
-		If ($Parameters) {
+		if ($Parameters) {
 			[string]$argsBitRockInstaller = $Parameters
 		}
 		## Append parameters to default parameters if specified.
-		If ($AddParameters) {
+		if ($AddParameters) {
 			[string]$argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
 		}
  
@@ -916,20 +916,20 @@ function Execute-NxtBitRockInstaller {
 			WindowStyle = 'Normal'
 		}
         
-		If ($ContinueOnError) {
+		if ($ContinueOnError) {
 			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		If ($PassThru) {
+		if ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
     
-		If ($PassThru) {
+		if ($PassThru) {
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
 		}
-		Else {
+		else {
 			Execute-Process @ExecuteProcessSplat
 		}
 
@@ -985,7 +985,7 @@ function Execute-NxtBitRockInstaller {
 		}
 	}
 	End {
-		If ($PassThru) {
+		if ($PassThru) {
 			Write-Output -InputObject $ExecuteResults
 		}
 
@@ -1068,7 +1068,7 @@ function Execute-NxtInnoSetup {
 		[string]
 		$Action = 'Install',
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$UninstallKey,
 		[Parameter(Mandatory = $false)]
@@ -1087,7 +1087,7 @@ function Execute-NxtInnoSetup {
 		[string]
 		$Parameters,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$AddParameters,
 		[Parameter(Mandatory = $false)]
@@ -1098,15 +1098,15 @@ function Execute-NxtInnoSetup {
 		[string]
 		$Log,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[switch]
 		$PassThru = $false,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[boolean]
 		$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
@@ -1143,13 +1143,13 @@ function Execute-NxtInnoSetup {
 				if (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
 					[string]$innoSetupPath = Join-Path -Path $DirFiles -ChildPath $path
 				}
-				elseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
+				elseif (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
 					[string]$innoSetupPath = (Get-Item -LiteralPath $Path).FullName
 				}
 				else {
 					Write-Log -Message "Failed to find installation file [$path]." -Severity 3 -Source ${CmdletName}
-					If (-not $ContinueOnError) {
-						Throw "Failed to find installation file [$path]."
+					if (-not $ContinueOnError) {
+						throw "Failed to find installation file [$path]."
 					}
 					Continue
 				}
@@ -1210,11 +1210,11 @@ function Execute-NxtInnoSetup {
 		[string]$argsInnoSetup = $innoSetupDefaultParams
     
 		## Replace default parameters if specified.
-		If ($Parameters) {
+		if ($Parameters) {
 			[string]$argsInnoSetup = $Parameters
 		}
 		## Append parameters to default parameters if specified.
-		If ($AddParameters) {
+		if ($AddParameters) {
 			[string]$argsInnoSetup = "$argsInnoSetup $AddParameters"
 		}
 
@@ -1259,20 +1259,20 @@ function Execute-NxtInnoSetup {
 			WindowStyle = 'Normal'
 		}
         
-		If ($ContinueOnError) {
+		if ($ContinueOnError) {
 			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		If ($PassThru) {
+		if ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
  
-		If ($PassThru) {
+		if ($PassThru) {
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
 		}
-		Else {
+		else {
 			Execute-Process @ExecuteProcessSplat
 		}
     
@@ -1303,7 +1303,7 @@ function Execute-NxtInnoSetup {
 				[string]$uninsfolder = Split-Path $innoUninstallPath -Parent
 
 				## Actually copy the uninstallation file, if it exists
-				If ($true -eq (Get-Item "$uninsfolder\unins[0-9][0-9][0-9].exe")) {
+				if ($true -eq (Get-Item "$uninsfolder\unins[0-9][0-9][0-9].exe")) {
 					Write-Log -Message "Copy uninstallation files to backup..." -Source ${CmdletName}
 					Copy-File -Path "$uninsfolder\unins[0-9][0-9][0-9].*" -Destination "$configNxtInnoSetupUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
@@ -1314,7 +1314,7 @@ function Execute-NxtInnoSetup {
 		}
 	}
 	End {
-		If ($PassThru) {
+		if ($PassThru) {
 			Write-Output -InputObject $ExecuteResults
 		}
 
@@ -1431,7 +1431,7 @@ function Execute-NxtMSI {
 		[string]
 		$Log,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$Transform,
 		[Parameter(Mandatory = $false)]
 		[Alias('Arguments')]
@@ -1439,44 +1439,44 @@ function Execute-NxtMSI {
 		[Parameter(Mandatory = $false)]
 		[string]$AddParameters,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[switch]$SecureParameters = $false,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$Patch,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$LoggingOptions,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$WorkingDirectory,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[switch]$SkipMSIAlreadyInstalledCheck = $false,
 		[Parameter(Mandatory = $false)]
 		[switch]$IncludeUpdatesAndHotfixes = $false,
 		[Parameter(Mandatory = $false)]
 		[switch]$NoWait = $false,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[switch]$PassThru = $false,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$IgnoreExitCodes,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
 		[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[boolean]$ExitOnProcessFailure = $true,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[boolean]$RepairFromSource = $false,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[boolean]$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -1564,7 +1564,7 @@ function Execute-NxtMSI {
 		}
 	}
 	End {
-		If ($PassThru) {
+		if ($PassThru) {
 			Write-Output -InputObject $ExecuteResults
 		}
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -1636,7 +1636,7 @@ function Execute-NxtNullsoft {
 		[string]
 		$Action = 'Install',
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$UninstallKey,
 		[Parameter(Mandatory = $false)]
@@ -1655,15 +1655,15 @@ function Execute-NxtNullsoft {
 		[string]
 		$Parameters,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$AddParameters,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[switch]
 		$PassThru = $false,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
@@ -1696,16 +1696,16 @@ function Execute-NxtNullsoft {
 				[string]$nullsoftDefaultParams = $configNxtNullsoftInstallParams
 
 				## If the Setup File is in the Files directory, set the full path during an installation
-				If (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
+				if (Test-Path -LiteralPath (Join-Path -Path $DirFiles -ChildPath $path -ErrorAction 'SilentlyContinue') -PathType 'Leaf' -ErrorAction 'SilentlyContinue') {
 					[string]$nullsoftSetupPath = Join-Path -Path $DirFiles -ChildPath $path
 				}
-				ElseIf (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
+				elseif (Test-Path -LiteralPath $Path -ErrorAction 'SilentlyContinue') {
 					[string]$nullsoftSetupPath = (Get-Item -LiteralPath $Path).FullName
 				}
-				Else {
+				else {
 					Write-Log -Message "Failed to find installation file [$path]." -Severity 3 -Source ${CmdletName}
-					If (-not $ContinueOnError) {
-						Throw "Failed to find installation file [$path]."
+					if (-not $ContinueOnError) {
+						throw "Failed to find installation file [$path]."
 					}
 					Continue
 				}
@@ -1760,11 +1760,11 @@ function Execute-NxtNullsoft {
 		[string]$argsnullsoft = $nullsoftDefaultParams
     
 		## Replace default parameters if specified.
-		If ($Parameters) {
+		if ($Parameters) {
 			[string]$argsnullsoft = $Parameters
 		}
 		## Append parameters to default parameters if specified.
-		If ($AddParameters) {
+		if ($AddParameters) {
 			[string]$argsnullsoft = "$argsnullsoft $AddParameters"
 		}
  
@@ -1774,20 +1774,20 @@ function Execute-NxtNullsoft {
 			WindowStyle = 'Normal'
 		}
         
-		If ($ContinueOnError) {
+		if ($ContinueOnError) {
 			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		If ($PassThru) {
+		if ($PassThru) {
 			$ExecuteProcessSplat.Add('PassThru', $PassThru)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
     
-		If ($PassThru) {
+		if ($PassThru) {
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
 		}
-		Else {
+		else {
 			Execute-Process @ExecuteProcessSplat
 		}
 
@@ -1823,18 +1823,18 @@ function Execute-NxtNullsoft {
 				}
 
 				## Actually copy the uninstallation file, if it exists
-				If ($true -eq (Get-Item "$nullsoftUninstallPath")) {
+				if ($true -eq (Get-Item "$nullsoftUninstallPath")) {
 					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
 					Copy-File -Path "$nullsoftUninstallPath" -Destination "$configNxtNullsoftUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
-				Else {
+				else {
 					Write-Log -Message "Uninstall file not found. Skipping [copy of uninstallation file to backup]..." -Source ${CmdletName}
 				}
 			}
 		}
 	}
 	End {
-		If ($PassThru) {
+		if ($PassThru) {
 			Write-Output -InputObject $ExecuteResults
 		}
 
@@ -1916,20 +1916,20 @@ function Exit-NxtAbortReboot {
 	}
 	Process {
 		Write-Log -Message "Initiating AbortReboot..." -Source ${CmdletName}
-		Try {
+		try {
 			Remove-RegistryKey -Key "HKLM\Software\$PackageMachineKey" -Recurse
 			Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageUninstallKey" -Recurse
-			If (Test-Path -Path "HKLM:Software\$EmpirumMachineKey") {
+			if (Test-Path -Path "HKLM:Software\$EmpirumMachineKey") {
 				Remove-RegistryKey -Key "HKLM\Software\$EmpirumMachineKey" -Recurse
 			}
-			If (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") {
+			if (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") {
 				Remove-RegistryKey -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
 			}
 			Exit-NxtScriptWithError -ErrorMessage $RebootMessage -MainExitCode $RebootExitCode -PackageStatus $PackageStatus
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to execute AbortReboot. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-			Throw "Failed to execute AbortReboot: $($_.Exception.Message)"
+			throw "Failed to execute AbortReboot: $($_.Exception.Message)"
 		}
 	}
 	End {
@@ -2016,7 +2016,7 @@ function Exit-NxtScriptWithError {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$ErrorMessage,
 		[Parameter(Mandatory = $false)]
@@ -2044,7 +2044,7 @@ function Exit-NxtScriptWithError {
 		[string]
 		$AppArch = $global:PackageConfig.AppArch,
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[int32]
 		$MainExitCode,
 		[Parameter(Mandatory = $false)]
@@ -2084,7 +2084,7 @@ function Exit-NxtScriptWithError {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Try {
+		try {
 			Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'AppPath' -Value $App
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'DebugLogFile' -Value $DebugLogFile
@@ -2107,7 +2107,7 @@ function Exit-NxtScriptWithError {
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error") -Name 'Version' -Value $AppVersion
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
 		if ($MainExitCode -eq 0) {
@@ -2166,7 +2166,7 @@ function Expand-NxtPackageConfig {
 					[bool]$uninstallKeyToHide.KeyNameIsDisplayName = [System.Convert]::ToBoolean($ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameIsDisplayName))
 				}
 				catch [FormatException] {
-					Throw "Failed to expand UninstallKeysToHide. Could not convert [$($uninstallKeyToHide.KeyNameIsDisplayName)] to boolean value."
+					throw "Failed to expand UninstallKeysToHide. Could not convert [$($uninstallKeyToHide.KeyNameIsDisplayName)] to boolean value."
 				}
 			}
 			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
@@ -2174,7 +2174,7 @@ function Expand-NxtPackageConfig {
 					[bool]$uninstallKeyToHide.KeyNameContainsWildCards = [System.Convert]::ToBoolean($ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyNameContainsWildCards))
 				}
 				catch [FormatException] {
-					Throw "Failed to expand UninstallKeysToHide. Could not convert [$($uninstallKeyToHide.KeyNameContainsWildCards)] to boolean value."
+					throw "Failed to expand UninstallKeysToHide. Could not convert [$($uninstallKeyToHide.KeyNameContainsWildCards)] to boolean value."
 				}
 			}
 			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.DisplayNamesToExcludeFromHiding)) {
@@ -2757,27 +2757,27 @@ function Get-NxtInstalledApplication {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		If ([string]::IsNullOrEmpty($UninstallKey)) {
+		if ([string]::IsNullOrEmpty($UninstallKey)) {
 			Write-Log -Message "Cannot retrieve information about installed applications: No uninstallkey or display name defined." -Severity 2 -Source ${CmdletName}
 		}
-		Else {
+		else {
 			try {
-				If ($true -eq $UninstallKeyContainsWildCards) {
-					If ($true -eq $UninstallKeyIsDisplayName) {
+				if ($true -eq $UninstallKeyContainsWildCards) {
+					if ($true -eq $UninstallKeyIsDisplayName) {
 						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -WildCard
 					}
-					Else {
+					else {
 						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name "*" -WildCard | Where-Object UninstallSubkey -Like $UninstallKey
-						ForEach ($installedAppResult in $installedAppResults) {
+						foreach ($installedAppResult in $installedAppResults) {
 							Write-Log -Message "Selected [$($installedAppResult.DisplayName)] version [$($installedAppResult.DisplayVersion)] using wildcard matching UninstallKey [$UninstallKey] from the results above." -Source ${CmdletName}
 						}
 					}
 				}
-				Else {
-					If ($true -eq $UninstallKeyIsDisplayName) {
+				else {
+					if ($true -eq $UninstallKeyIsDisplayName) {
 						[PSCustomObject]$installedAppResults = Get-InstalledApplication -Name $UninstallKey -Exact
 					}
-					Else {
+					else {
 						[PSCustomObject]$installedAppResults = Get-InstalledApplication -ProductCode $UninstallKey | Where-Object UninstallSubkey -eq $UninstallKey
 					}
 				}
@@ -3094,7 +3094,7 @@ function Get-NxtProcessorArchiteW6432 {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdLetBinding()]
+	[CmdletBinding()]
 	Param (
 		[Parameter()]
 		[ValidateSet($null, "AMD64")]
@@ -3165,24 +3165,27 @@ function Get-NxtRegisterOnly {
 		$DetectedDisplayVersion = $global:DetectedDisplayVersion
 	
 	)
-	If ($true -eq $SoftMigration) {
+	if ($true -eq $SoftMigration) {
 		if ([string]::IsNullOrEmpty($DisplayVersion)) {
 			Write-Log -Message 'DisplayVersion is $null or empty. SoftMigration not possible.'
-			return $false
+			Write-Output $false
+			return
 		}
 		if ([string]::IsNullOrEmpty($DetectedDisplayVersion)) {
 			Write-Log -Message 'DetectedDisplayVersion is $null or empty. SoftMigration not possible.'
-			return $false
+			Write-Output $false
+			return
 		}
-		If (
+		if (
 			(Compare-NxtVersion -DetectedVersion $DetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and
 			-not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
 		) {
 			Write-Log -Message 'Application is already present. Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...'
-			return $true
+			Write-Output $true
+			return
 		}
 	}
-	return $false
+	Write-Output $false
 }
 #endregion
 #region Function Get-NxtServiceState
@@ -3385,13 +3388,22 @@ function Get-NxtVariablesFromDeploymentSystem {
 	}
 	Process {
 		Write-Log -Message "Getting environment variables set by the deployment system..." -Source ${cmdletName}
-		Try {
-			If ("false" -eq $registerPackage) { [bool]$global:registerPackage = $false } Else { [bool]$global:registerPackage = $true }
-			If ("false" -eq $uninstallOld) { [bool]$global:uninstallOld = $false }
-			If ($null -ne $Reboot) { [int]$global:reboot = $Reboot }
+		try {
+			if ("false" -eq $registerPackage) {
+				[bool]$global:registerPackage = $false 
+			} 
+			else { 
+				[bool]$global:registerPackage = $true
+			}
+			if ("false" -eq $uninstallOld) {
+				[bool]$global:uninstallOld = $false
+			}
+			if ($null -ne $Reboot) {
+				[int]$global:reboot = $Reboot
+			}
 			Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to get environment variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
@@ -3415,7 +3427,7 @@ function Get-NxtWindowsBits {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdLetBinding()]
+	[CmdletBinding()]
 	Param (
 		[Parameter()]
 		[string]
@@ -3525,12 +3537,12 @@ function Import-NxtIniFile {
 					[string]$ini[$section][$matches[1]] = $matches[2]
 				}
 			}
-			write-output $ini
+			Write-Output $ini
 		}
 		catch {
 			Write-Log -Message "Failed to read ini file [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-			If (-not $ContinueOnError) {
-				Throw "Failed to read ini file [$path]: $($_.Exception.Message)"
+			if (-not $ContinueOnError) {
+				throw "Failed to read ini file [$path]: $($_.Exception.Message)"
 			}
 		}
 	}
@@ -3574,7 +3586,7 @@ function Initialize-NxtEnvironment {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		If (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
+		if (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
 			if (Test-Path -Path $ExtensionCsPath) {
 				Add-Type -Path $ExtensionCsPath -IgnoreWarnings -ErrorAction 'Stop'
 			}
@@ -3916,7 +3928,7 @@ function Move-NxtItem {
 		[switch]
 		$Force,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[boolean]$ContinueOnError = $true
 	)
 	Begin {
@@ -3937,8 +3949,8 @@ function Move-NxtItem {
 		}
 		catch {
 			Write-Log -Message "Failed to move $Path to $Destination. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			If (-not $ContinueOnError) {
-				Throw "Failed to move $Path to $Destination`: $($_.Exception.Message)"
+			if (-not $ContinueOnError) {
+				throw "Failed to move $Path to $Destination`: $($_.Exception.Message)"
 			}
 		}
 	}
@@ -4172,7 +4184,7 @@ function Register-NxtPackage {
 	}
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
-		Try {
+		try {
 			Copy-File -Path "$scriptRoot" -Destination "$App\neo42-Install\" -Recurse
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
@@ -4199,7 +4211,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'UninstallString' -Value ("""$global:System\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
-			If ($true -eq $UserPartOnInstallation) {
+			if ($true -eq $UserPartOnInstallation) {
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartPath' -Value ('"' + $App + '\neo42-Userpart"')
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartUninstPath' -Value ('"%AppData%\neoPackages\' + $PackageFamilyGUID + '"')
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartRevision' -Value $UserPartRevision
@@ -4223,7 +4235,7 @@ function Register-NxtPackage {
 			Remove-RegistryKey HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error")
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to register package. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
@@ -4268,14 +4280,14 @@ function Remove-NxtDesktopShortcuts {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Try {
+		try {
 			foreach ($value in $DesktopShortcutsToDelete) {
 				Write-Log -Message "Removing desktop shortcut '$Desktop\$value'..." -Source ${cmdletName}
 				Remove-File -Path "$Desktop\$value"
 				Write-Log -Message "Desktop shortcut succesfully removed." -Source ${cmdletName}
 			}
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to remove desktopshortcuts from [$Desktop]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
@@ -4303,7 +4315,7 @@ function Remove-NxtEmptyFolder {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$Path
 	)
 	Begin {
@@ -4313,12 +4325,12 @@ function Remove-NxtEmptyFolder {
 	}
 	Process {
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
-		If (Test-Path -LiteralPath $Path -PathType 'Container') {
-			Try {
-				If ( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
+		if (Test-Path -LiteralPath $Path -PathType 'Container') {
+			try {
+				if ( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
 					Write-Log -Message "Delete empty folder [$Path]..." -Source ${CmdletName}
 					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveFolder'
-					If ($ErrorRemoveFolder) {
+					if ($ErrorRemoveFolder) {
 						Write-Log -Message "The following error(s) took place while deleting the empty folder [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${CmdletName}
 					}
 					else {
@@ -4329,14 +4341,14 @@ function Remove-NxtEmptyFolder {
 					Write-Log -Message "Folder [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
 				}
 			}
-			Catch {
+			catch {
 				Write-Log -Message "Failed to delete empty folder [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-				If (-not $ContinueOnError) {
-					Throw "Failed to delete empty folder [$Path]: $($_.Exception.Message)"
+				if (-not $ContinueOnError) {
+					throw "Failed to delete empty folder [$Path]: $($_.Exception.Message)"
 				}
 			}
 		}
-		Else {
+		else {
 			Write-Log -Message "Folder [$Path] does not exist..." -Source ${CmdletName}
 		}
 	}
@@ -4365,7 +4377,7 @@ function Remove-NxtLocalGroup {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$GroupName,
 		[Parameter(Mandatory = $false)]
@@ -4430,11 +4442,11 @@ function Remove-NxtLocalGroupMember {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$GroupName,
 		[Parameter(ParameterSetName = 'SingleMember')]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$MemberName,
 		[Parameter(ParameterSetName = 'Users')]
@@ -4528,7 +4540,7 @@ function Remove-NxtLocalUser {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$UserName,
 		[Parameter(Mandatory = $false)]
@@ -4902,23 +4914,23 @@ function Set-NxtIniValue {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$Section,
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]$Key,
 		# Don't strongly type this variable as [string] b/c PowerShell replaces [string]$Value = $null with an empty string
 		[Parameter(Mandatory = $true)]
 		[AllowNull()]
 		$Value,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[bool]$ContinueOnError = $true,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[bool]$Create = $true
 	)
 	Begin {
@@ -4927,7 +4939,7 @@ function Set-NxtIniValue {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Try {
+		try {
 			if (!(Test-Path -Path $FilePath) -and $Create) {
 				New-Item -ItemType File -Path $FilePath -Force
 			}
@@ -4939,7 +4951,7 @@ function Set-NxtIniValue {
 				Write-Log -Message "INI file $FilePath does not exist!" -Source ${CmdletName}
 			}
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to create INI file or write INI file key value. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
 	}
@@ -5025,22 +5037,22 @@ function Set-NxtPackageArchitecture {
 	}
 	Process {
 		Write-Log -Message "Setting package architecture variables..." -Source ${CmdletName}
-		Try {
-			If ($AppArch -ne 'x86' -and $AppArch -ne 'x64' -and $AppArch -ne '*') {
+		try {
+			if ($AppArch -ne 'x86' -and $AppArch -ne 'x64' -and $AppArch -ne '*') {
 				[int32]$mainExitCode = 70001
 				[int32]$thisFunctionReturnCode = $mainExitCode
 				[string]$mainErrorMessage = "ERROR: The value of '$appArch' must be set to 'x86', 'x64' or '*'. Abort!"
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 				throw "Wrong setting for value 'appArch'."
 			}
-			ElseIf ($AppArch -eq 'x64' -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
+			elseif ($AppArch -eq 'x64' -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[int32]$mainExitCode = 70001
 				[int32]$thisFunctionReturnCode = $mainExitCode
 				[string]$mainErrorMessage = "ERROR: This software package can only be installed on 64 bit Windows systems. Abort!"
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 				throw "This software is not allowed to run on this architecture."
 			}
-			ElseIf ($AppArch -eq 'x86' -and $PROCESSOR_ARCHITECTURE -eq 'AMD64') {
+			elseif ($AppArch -eq 'x86' -and $PROCESSOR_ARCHITECTURE -eq 'AMD64') {
 				[string]$global:ProgramFilesDir = ${ProgramFiles(x86)}
 				[string]$global:ProgramFilesDirx86 = ${ProgramFiles(x86)}
 				[string]$global:ProgramW6432 = $ProgramFiles
@@ -5050,7 +5062,7 @@ function Set-NxtPackageArchitecture {
 				[string]$global:System = "$SystemRoot\SysWOW64"
 				[string]$global:Wow6432Node = '\Wow6432Node'
 			}
-			ElseIf (($AppArch -eq 'x86' -or $AppArch -eq '*') -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
+			elseif (($AppArch -eq 'x86' -or $AppArch -eq '*') -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[string]$global:ProgramFilesDir = $ProgramFiles
 				[string]$global:ProgramFilesDirx86 = $ProgramFiles
 				[string]$global:ProgramW6432 = ''
@@ -5060,7 +5072,7 @@ function Set-NxtPackageArchitecture {
 				[string]$global:System = "$SystemRoot\System32"
 				[string]$global:Wow6432Node = ''
 			}
-			Else {
+			else {
 				[string]$global:ProgramFilesDir = $ProgramFiles
 				[string]$global:ProgramFilesDirx86 = ${ProgramFiles(x86)}
 				[string]$global:ProgramW6432 = $ProgramFiles
@@ -5073,7 +5085,7 @@ function Set-NxtPackageArchitecture {
 			Write-Log -Message "Package architecture variables successfully set." -Source ${cmdletName}
 			[int32]$thisFunctionReturnCode = 0
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to set the package architecture variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			[int32]$thisFunctionReturnCode = $mainExitCode
 		}
@@ -5131,7 +5143,7 @@ function Set-NxtProcessEnvironmentVariable {
 function Set-NxtSetupCfg {
 	<#
 	.SYNOPSIS
-		Set the contents from Setup.cfg to $global:setupCfg.
+		Set the contents from Setup.cfg to $global:SetupCfg.
 	.DESCRIPTION
 		Imports a Setup.cfg file in Ini format.
 	.PARAMETER Path
@@ -5158,8 +5170,8 @@ function Set-NxtSetupCfg {
 	}
 	Process {
 		Write-Log -Message "Checking for setup.cfg under [$path]..." -Source ${CmdletName}
-		If ([System.IO.File]::Exists($Path)) {
-			[hashtable]$global:setupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+		if ([System.IO.File]::Exists($Path)) {
+			[hashtable]$global:SetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
 			Write-Log -Message "Setup.cfg found and successfully parsed into global:setupCfg object." -Source ${CmdletName}
 		}
 		else {
@@ -5284,13 +5296,13 @@ function Show-NxtInstallationWelcome {
 		}
 		[string]$closeAppsList = $null
 		[string]$fileExtension = ".exe"
-		if ( $AskKillProcessApps.count -ne 0 ) {
+		if ($AskKillProcessApps.count -ne 0) {
 			foreach ( $processAppsItem in $AskKillProcessApps ) {
 				if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
 					Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
-					Throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!"
+					throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!"
 				}
-				elseif ( [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name) ) {				
+				elseif ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name)) {				
 					Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
 					[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension", "") -join ","
 					if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
@@ -5305,14 +5317,14 @@ function Show-NxtInstallationWelcome {
 				else {
 					## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
 					[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", ""
-					if ( ![String]::IsNullOrEmpty($processAppsItem.Description) ) {
+					if (![String]::IsNullOrEmpty($processAppsItem.Description)) {
 						[string]$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
 					}
 				}
 			}
 			[string]$closeAppsList = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
-			if ( !([String]::IsNullOrEmpty($closeAppsList)) ) {
-				switch ($ContinueType) {
+			if (!([string]::IsNullOrEmpty($closeAppsList))) {
+				switch ($ContinueType.ToUppper()) {
 					"ABORT" {
 						Show-InstallationWelcome -CloseApps $closeAppsList -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 					}
@@ -5320,7 +5332,7 @@ function Show-NxtInstallationWelcome {
 						Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
 					}		
 				}
-				if ( ($true -eq $BlockExecution) -and ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) ) {
+				if (($true -eq $BlockExecution) -and ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)"))) {
 					## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
 					Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
@@ -5362,11 +5374,11 @@ function Stop-NxtProcess {
 	}
 	Process {
 		Write-Log -Message "Stopping process with name '$Name'..." -Source ${cmdletName}
-		Try {
-			If (Get-Process -Name $Name -ErrorAction SilentlyContinue) {
+		try {
+			if (Get-Process -Name $Name -ErrorAction SilentlyContinue) {
 				Stop-Process -Name $Name -Force
 				Start-Sleep 1
-				If (Get-Process -Name $Name -ErrorAction SilentlyContinue) {
+				if (Get-Process -Name $Name -ErrorAction SilentlyContinue) {
 					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				}
 				else {
@@ -5377,7 +5389,7 @@ function Stop-NxtProcess {
 				Write-Log -Message "The process does not exist. Skipped stopping the process." -Source ${cmdletName}
 			}
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
@@ -5487,7 +5499,7 @@ function Test-NxtAppIsInstalled {
 					}
 					else {
 						Write-Log -Message "Processing msi setup: double check for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
-						switch ( $(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion) ) {
+						switch ($(Compare-NxtVersion -DetectedVersion $installedAppResults.DisplayVersion -TargetVersion $DisplayVersion)) {
 							"Equal" { 
 								Write-Log -Message "Found the expected display version." -Source ${cmdletName}
 								[bool]$approvedResult = $true
@@ -5557,7 +5569,7 @@ function Test-NxtLocalGroupExists {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullorEmpty()]
+		[ValidateNotNullOrEmpty()]
 		[string]
 		$GroupName,
 		[Parameter(Mandatory = $false)]
@@ -5591,7 +5603,7 @@ function Test-NxtLocalUserExists {
 		Checks if a local user exists by name.
 	.PARAMETER UserName
 		Name of the user.
-	.PARAMETER Computername
+	.PARAMETER ComputerName
 		Name of the Computer,
 		Defaults to $env:COMPUTERNAME.
 	.EXAMPLE
@@ -5609,7 +5621,7 @@ function Test-NxtLocalUserExists {
 		$UserName,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$COMPUTERNAME = $env:COMPUTERNAME
+		$ComputerName = $env:COMPUTERNAME
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5618,7 +5630,7 @@ function Test-NxtLocalUserExists {
 	}
 	Process {
 		try {
-			[bool]$userExists = ([ADSI]::Exists("WinNT://$COMPUTERNAME/$UserName,user"))
+			[bool]$userExists = ([ADSI]::Exists("WinNT://$ComputerName/$UserName,user"))
 			Write-Output $userExists
 		}
 		catch {
@@ -5649,7 +5661,7 @@ function Test-NxtProcessExists {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdLetBinding()]
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -5894,7 +5906,7 @@ function Uninstall-NxtApplication {
 						$uninstallResult.Success = $null
 						[int]$logMessageSeverity = 1
 					}
-					Default {
+					default {
 						[hashtable]$executeParams = @{
 							Path	= "$UninstFile"
 						}
@@ -5922,7 +5934,7 @@ function Uninstall-NxtApplication {
 						[int]$logMessageSeverity = 2
 					}
 					else {
-						if ( $false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor) ) {
+						if ($false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)) {
 							$uninstallResult.ErrorMessage = "Uninstallation RegistryAndProcessCondition of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallResult.Success = $false
@@ -6034,28 +6046,28 @@ function Uninstall-NxtOld {
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 		$uninstallOldResult.Success = $null
-		If ($true -eq $UninstallOld) {
+		if ($true -eq $UninstallOld) {
 			Write-Log -Message "Checking for old packages..." -Source ${cmdletName}
-			Try {
+			try {
 				[bool]$ReturnWithError = $false
 				## Check for Empirum packages under "HKLM:SOFTWARE\WOW6432Node\"
-				If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor") {
-					If (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") {
+				if (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor") {
+					if (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") {
 						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
-						If (($appEmpirumPackageVersions).Count -eq 0) {
+						if (($appEmpirumPackageVersions).Count -eq 0) {
 							Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
 						}
-						Else {
-							Foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
+						else {
+							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
 								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
-								If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
-									Try {
+								if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+									try {
 										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
 									}
-									Catch {
+									catch {
 									}
-									If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+									if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 										[int32]$mainExitCode = 70001
 										$uninstallOldResult.MainExitCode = $mainExitCode
 										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
@@ -6065,20 +6077,20 @@ function Uninstall-NxtOld {
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
 										break
 									}
-									Else {
+									else {
 										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
 										$uninstallOldResult.Success = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 									}
 								}
-								Else {
+								else {
 									$appEmpirumPackageVersion | Remove-Item
 									$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
 									$uninstallOldResult.Success = $null
 									Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 								}
 							}
-							If ( !$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") ) {
+							if ( !$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") ) {
 								Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 								$uninstallOldResult.Success = $null
@@ -6086,7 +6098,7 @@ function Uninstall-NxtOld {
 							}
 						}
 					}
-					If ( !$ReturnWithError -and ((Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
+					if ( !$ReturnWithError -and ((Get-ChildItem "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
 						Remove-Item -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.Success = $null
@@ -6094,23 +6106,23 @@ function Uninstall-NxtOld {
 					}
 				}
 				## Check for Empirum packages under "HKLM:SOFTWARE\"
-				If ( !$ReturnWithError -and (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor") ) {
-					If (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName") {
+				if ( !$ReturnWithError -and (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor") ) {
+					if (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName") {
 						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
-						If (($appEmpirumPackageVersions).Count -eq 0) {
+						if (($appEmpirumPackageVersions).Count -eq 0) {
 							Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 							Write-Log -Message "Deleted an empty Empirum application key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
 						}
-						Else {
-							Foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
+						else {
+							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
 								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
-								If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
-									Try {
+								if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+									try {
 										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
 									}
-									Catch {
+									catch {
 									}
-									If (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+									if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 										[int32]$mainExitCode = 70001
 										$uninstallOldResult.MainExitCode = $mainExitCode
 										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
@@ -6120,20 +6132,20 @@ function Uninstall-NxtOld {
 										[bool]$ReturnWithError = $true
 										break
 									}
-									Else {
+									else {
 										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
 										$uninstallOldResult.Success = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 									}
 								}
-								Else {
+								else {
 									$appEmpirumPackageVersion | Remove-Item
 									$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
 									$uninstallOldResult.Success = $null
 									Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 								}
 							}
-							If (!$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName")) {
+							if (!$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName")) {
 								Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName"
 								$uninstallOldResult.Success = $null
@@ -6141,26 +6153,26 @@ function Uninstall-NxtOld {
 							}
 						}
 					}
-					If (!$ReturnWithError -and ((Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor").Count -eq 0)) {
+					if (!$ReturnWithError -and ((Get-ChildItem "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor").Count -eq 0)) {
 						Remove-Item -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:SOFTWARE\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.Success = $null
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
 				}
-				If (!$ReturnWithError) {
+				if (!$ReturnWithError) {
 					## Check for VBS or PSADT packages
-					If (Test-RegistryValue -Key HKLM\Software\Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Value 'UninstallString') {
+					if (Test-RegistryValue -Key HKLM\Software\Wow6432Node\$RegPackagesKey\$PackageFamilyGUID -Value 'UninstallString') {
 						[string]$regPackageFamilyGUID = "HKLM\Software\Wow6432Node\$RegPackagesKey\$PackageFamilyGUID"
 					}
-					Else {
+					else {
 						[string]$regPackageFamilyGUID = "HKLM\Software\$RegPackagesKey\$PackageFamilyGUID"
 					}
 					## Check if the installed package's version is lower than the current one's and if the UninstallString entry exists
-					If ((Get-RegistryKey -Key $regPackageFamilyGUID -Value 'Version') -lt $AppVersion -and (Test-RegistryValue -Key $regPackageFamilyGUID -Value 'UninstallString')) {
+					if ((Get-RegistryKey -Key $regPackageFamilyGUID -Value 'Version') -lt $AppVersion -and (Test-RegistryValue -Key $regPackageFamilyGUID -Value 'UninstallString')) {
 						Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package..." -Source ${cmdletName}
 						cmd /c (Get-RegistryKey -Key $regPackageFamilyGUID -Value 'UninstallString')
-						If (Test-RegistryValue -Key $regPackageFamilyGUID -Value 'UninstallString') {
+						if (Test-RegistryValue -Key $regPackageFamilyGUID -Value 'UninstallString') {
 							[int32]$mainExitCode = 70001
 							$uninstallOldResult.MainExitCode = $mainExitCode
 							$uninstallOldResult.ErrorMessage = "ERROR: Uninstallation of old package failed. Abort!"
@@ -6169,21 +6181,21 @@ function Uninstall-NxtOld {
 							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source $DeployAppScriptFriendlyName
 							Show-DialogBox -Text $($uninstallOldResult.ErrorMessage) -Icon 'Stop'
 						}
-						Else {
+						else {
 							Write-Log -Message  -Source ${cmdletName}
 							$uninstallOldResult.ErrorMessage = "Uninstallation of old package successful."
 							$uninstallOldResult.Success = $true
 							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 						}
 					}
-					Else {
+					else {
 						$uninstallOldResult.ErrorMessage = "No need to uninstall old packages."
 						$uninstallOldResult.Success = $null
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
 				}
 			}
-			Catch {
+			catch {
 				$uninstallOldResult.ErrorMessage = "The Uninstall-Old function threw an error."
 				$uninstallOldResult.Success = $false
 				Write-Log -Message "$($uninstallOldResult.ErrorMessage)`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -6246,7 +6258,7 @@ function Unregister-NxtPackage {
 	}
 	Process {
 		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
-		Try {
+		try {
 			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\" 
 			Start-Sleep -Seconds 1
 			Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -NoWait
@@ -6254,7 +6266,7 @@ function Unregister-NxtPackage {
 			Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID
 			Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to unregister package. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
@@ -6335,7 +6347,7 @@ function Update-NxtTextInFile {
 				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
 				}
-				ElseIf ($intEncoding -eq "UTF8withBom") {
+				elseif ($intEncoding -eq "UTF8withBom") {
 					[bool]$noBOMDetected = $false
 					[string]$intEncoding = "UTF8"
 				}
@@ -6353,12 +6365,12 @@ function Update-NxtTextInFile {
 			}
 			[string]$Content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
-			[Array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
+			[array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
 				Write-Log -Message "Did not find anything to replace in file '$Path'."
 				return
 			}
-			[Array]::Reverse($regexMatches)
+			[array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
 				[string]$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
 			}
@@ -6410,7 +6422,7 @@ function Wait-NxtRegistryAndProcessCondition {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdLetBinding()]
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateRange(1, 3600)]
@@ -6539,26 +6551,26 @@ function Wait-NxtRegistryAndProcessCondition {
 						(![string]::IsNullOrEmpty($_.ValueName)) -and
 						(![string]::IsNullOrEmpty($_.ValueData) ) -and
 						($true -eq $_.ShouldExist)
-					 } {
-							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
-							## Check if Value is equal
-							if ( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
-								$regkeyToWaitFor.success = $true
-							}
-					 }
-					 {
-							## valueNotEquals
-						(![string]::IsNullOrEmpty($_.ValueName)) -and
-						(![string]::IsNullOrEmpty($_.ValueData) ) -and
-						($false -eq $_.ShouldExist)
-					 } {
-							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
-							## Check if Value is not equal
-							if ( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
-								$regkeyToWaitFor.success = $true
-							}
-					 }
-						Default {
+						} {
+								Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+								## Check if Value is equal
+								if ( $regkeyToWaitFor.ValueData -eq (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
+									$regkeyToWaitFor.success = $true
+								}
+						}
+						{
+								## valueNotEquals
+							(![string]::IsNullOrEmpty($_.ValueName)) -and
+							(![string]::IsNullOrEmpty($_.ValueData) ) -and
+							($false -eq $_.ShouldExist)
+						} {
+								Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+								## Check if Value is not equal
+								if ( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
+									$regkeyToWaitFor.success = $true
+								}
+						}
+							default {
 							Write-Log -Message "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file." -Severity 3 -Source ${cmdletName}
 							throw "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file."
 						}
@@ -6607,7 +6619,7 @@ function Watch-NxtFile {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdLetBinding()]
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]$FileName,
@@ -6849,7 +6861,7 @@ function Watch-NxtRegistryKey {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdLetBinding()]
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]$RegistryKey,
@@ -6903,7 +6915,7 @@ function Watch-NxtRegistryKeyIsRemoved {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdLetBinding()]
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]$RegistryKey,
@@ -6959,7 +6971,7 @@ function Write-NxtSingleXmlNode {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdLetBinding()]
+	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -7087,10 +7099,10 @@ function Write-NxtXmlNode {
 ##* SCRIPT BODY
 ##*===============================================
 
-If ($scriptParentPath) {
+if ($scriptParentPath) {
 	Write-Log -Message "Script [$($MyInvocation.MyCommand.Definition)] dot-source invoked by [$(((Get-Variable -Name MyInvocation).Value).ScriptName)]" -Source $appDeployToolkitExtName
 }
-Else {
+else {
 	Write-Log -Message "Script [$($MyInvocation.MyCommand.Definition)] invoked directly" -Source $appDeployToolkitExtName
 }
 
