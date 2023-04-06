@@ -69,6 +69,7 @@ switch ($DeploymentType) {
 ## Global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
+[string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
 ## Several PSADT-functions do not work, if these variables are not set here.
 Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {

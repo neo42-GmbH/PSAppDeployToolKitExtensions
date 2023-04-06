@@ -3571,7 +3571,10 @@ function Initialize-NxtEnvironment {
 		$ExtensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SetupCfgPath = "$global:SetupCfgPath"
+		$SetupCfgPath = "$global:SetupCfgPath",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$CustomSetupCfgPath = "$global:CustomSetupCfgPath"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3589,6 +3592,7 @@ function Initialize-NxtEnvironment {
 		}
 		Get-NxtPackageConfig
 		Set-NxtSetupCfg -Path $SetupCfgPath
+		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
 		}
@@ -5133,6 +5137,57 @@ function Set-NxtProcessEnvironmentVariable {
 	}
 }
 #endregion
+function Set-NxtCustomSetupCfg {
+	<#
+	.SYNOPSIS
+		Set the contents from CustomSetup.cfg to $global:SetupCfg.
+	.DESCRIPTION
+		Imports a Setup.cfg file in Ini format.
+	.PARAMETER Path
+		The path to the CustomSetup.cfg file.
+	.EXAMPLE
+		Set-NxtCustomSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+		[String]$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContinueOnError = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			if($true -eq (Test-Path $Path)){
+				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+				Write-Log -Message "CustomSetupCfg successfully set." -Source ${CmdletName}
+			}
+			else {
+				Write-Log -Message "File '$Path' not found. Setting CustomSetupCfg to Defaults." -Source ${CmdletName}
+				[hashtable]$global:CustomSetupCfg = @{
+					UserCanAbort = $false
+					UserCanCloseAll = $false
+					PopupInterval = 10
+				}
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to set the CustomSetupCfg. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
 #region Function Set-NxtSetupCfg
 function Set-NxtSetupCfg {
 	<#
