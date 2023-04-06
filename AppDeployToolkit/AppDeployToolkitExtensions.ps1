@@ -4495,20 +4495,6 @@ function Remove-NxtLocalUser {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-        	Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
-		}
 	}
 	Process {
 		try {
