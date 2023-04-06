@@ -6250,6 +6250,14 @@ https://psappdeploytoolkit.com
 
         $control_MainWindow.TopMost = $TopMost
 
+		[ScriptBlock]$windowLeftButtonDownHandler = {
+            # Check if the left mouse button is pressed
+            if ($_.ChangedButton -eq [System.Windows.Input.MouseButton]::Left) {
+                # Call the DragMove method to allow the user to move the window
+                $control_MainWindow.DragMove()
+            }
+        }
+
         [ScriptBlock]$windowsCloseButtonClickHandler = {
             $control_MainWindow.Tag = "Cancel"
             $control_MainWindow.Close()
@@ -6291,6 +6299,8 @@ https://psappdeploytoolkit.com
             $control_MainPanel.Opacity = 1
         }
 
+
+		$control_HeaderPanel.add_MouseLeftButtonDown($windowLeftButtonDownHandler)
         $control_WindowCloseButton.add_Click($windowsCloseButtonClickHandler)
         $control_CloseButton.add_Click($closeButtonClickHandler)
         $control_DeferButton.add_Click($deferbuttonClickHandler)
@@ -6471,7 +6481,8 @@ https://psappdeploytoolkit.com
                 $control_CancelButton.remove_Click($cancelButtonClickHandler)
                 $control_PopupCloseApplication.remove_Click($popupCloseApplicationClickHandler)
                 $control_PopupCancel.remove_Click($popupCancelClickHandler)
-                if ($null -ne $welcomeTimerPersist.IsEnabled -eq $true) {
+				$control_HeaderPanel.remove_MouseLeftButtonDown($windowLeftButtonDownHandler)
+				if ($null -ne $welcomeTimerPersist.IsEnabled -eq $true) {
                     $welcomeTimerPersist.remove_Tick($welcomeTimerPersist_Tick)
                 }
                 if ($null -ne $timerRunningProcesses.IsEnabled -eq $true) {
