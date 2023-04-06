@@ -74,20 +74,6 @@ function Add-NxtContent {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[String]$intEncoding = $Encoding
@@ -177,20 +163,6 @@ function Add-NxtLocalGroup {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -262,20 +234,6 @@ function Add-NxtLocalGroupMember {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -382,20 +340,6 @@ function Add-NxtLocalUser {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -478,20 +422,6 @@ function Compare-NxtVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($DetectedVersion)) {
@@ -601,20 +531,6 @@ function Complete-NxtPackageInstallation {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		if ($DesktopShortcut) {
@@ -714,20 +630,6 @@ function Complete-NxtPackageUninstallation {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Remove-NxtDesktopShortcuts
@@ -783,20 +685,6 @@ function Copy-NxtDesktopShortcuts {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -930,20 +818,6 @@ function Execute-NxtBitRockInstaller {
 
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$bitRockInstallerUninstallKey = $UninstallKey
@@ -1245,20 +1119,6 @@ function Execute-NxtInnoSetup {
 
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$innoUninstallKey = $UninstallKey
@@ -1615,20 +1475,6 @@ function Execute-NxtMSI {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 		[string]$xmlConfigMSIOptionsLogPath = $ExecutionContext.InvokeCommand.ExpandString($xmlConfigMSIOptions.MSI_LogPath)
 		## Add all parameters with defaults to the PSBoundParameters:
 		[array]$functionParametersWithDefaults = (
@@ -1827,20 +1673,6 @@ function Execute-NxtNullsoft {
 
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$nullsoftUninstallKey = $UninstallKey
@@ -2068,20 +1900,6 @@ function Exit-NxtAbortReboot {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Initiating AbortReboot..." -Source ${CmdletName}
@@ -2250,20 +2068,6 @@ function Exit-NxtScriptWithError {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -2326,20 +2130,6 @@ function Expand-NxtPackageConfig {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
@@ -2408,20 +2198,6 @@ function Expand-NxtVariablesInFile {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -2581,20 +2357,6 @@ function Format-NxtPackageSpecificVariables {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		## Get String from object and Expand String if requested
@@ -2631,20 +2393,6 @@ function Get-NxtComputerManufacturer {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$result = [string]::Empty
@@ -2678,20 +2426,6 @@ function Get-NxtComputerModel {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$result = [string]::Empty
@@ -2738,20 +2472,6 @@ function Get-NxtDriveFreeSpace {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -2801,20 +2521,6 @@ function Get-NxtDriveType {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -2861,20 +2567,6 @@ function Get-NxtFileEncoding {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -2917,20 +2609,6 @@ function Get-NxtFileVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$result = $null
@@ -2976,20 +2654,6 @@ function Get-NxtFolderSize {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[long]$result = 0
@@ -3065,20 +2729,6 @@ function Get-NxtInstalledApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
@@ -3146,20 +2796,6 @@ function Get-NxtIsSystemProcess {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -3201,20 +2837,6 @@ function Get-NxtNameBySid {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -3254,20 +2876,6 @@ function Get-NxtOsLanguage {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -3307,20 +2915,6 @@ function Get-NxtPackageConfig {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[PSObject]$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
@@ -3358,20 +2952,6 @@ function Get-NxtParentProcess {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[System.Management.ManagementBaseObject]$process = Get-WmiObject Win32_Process -filter "ProcessID ='$ID'"
@@ -3408,20 +2988,6 @@ function Get-NxtProcessEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$result = $null
@@ -3463,20 +3029,6 @@ function Get-NxtProcessName {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$result = [string]::Empty
@@ -3518,20 +3070,6 @@ function Get-NxtProcessorArchiteW6432 {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -3640,20 +3178,6 @@ function Get-NxtServiceState {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -3699,20 +3223,6 @@ function Get-NxtSidByName {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -3756,20 +3266,6 @@ function Get-NxtSystemEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[string]$result = $null
@@ -3803,20 +3299,6 @@ function Get-NxtUILanguage {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -3860,20 +3342,6 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Getting environment variables set by the deployment system..." -Source ${cmdletName}
@@ -3926,20 +3394,6 @@ function Get-NxtWindowsBits {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -3981,20 +3435,6 @@ function Get-NxtWindowsVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -4036,20 +3476,6 @@ function Import-NxtIniFile {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -4112,20 +3538,6 @@ function Initialize-NxtEnvironment {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		if (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
@@ -4176,20 +3588,6 @@ function Initialize-NxtUninstallApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
@@ -4345,20 +3743,6 @@ function Install-NxtApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
@@ -4502,20 +3886,6 @@ function Move-NxtItem {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -4568,20 +3938,6 @@ function Read-NxtSingleXmlNode {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -4774,20 +4130,6 @@ function Register-NxtPackage {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
@@ -4884,20 +4226,6 @@ function Remove-NxtDesktopShortcuts {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -4941,20 +4269,6 @@ function Remove-NxtEmptyFolder {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
@@ -5020,20 +4334,6 @@ function Remove-NxtLocalGroup {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -5111,20 +4411,6 @@ function Remove-NxtLocalGroupMember {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -5221,8 +4507,8 @@ function Remove-NxtLocalUser {
 		}
 		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
 			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
+        	Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -5268,20 +4554,6 @@ function Remove-NxtProcessEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -5319,20 +4591,6 @@ function Remove-NxtSystemEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -5420,20 +4678,6 @@ function Repair-NxtApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
@@ -5562,20 +4806,6 @@ function Set-NxtDetectedDisplayVersion {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
@@ -5661,20 +4891,6 @@ function Set-NxtIniValue {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -5771,20 +4987,6 @@ function Set-NxtPackageArchitecture {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Setting package architecture variables..." -Source ${CmdletName}
@@ -5875,20 +5077,6 @@ function Set-NxtProcessEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -5930,20 +5118,6 @@ function Set-NxtSetupCfg {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Checking for setup.cfg under [$path]..." -Source ${CmdletName}
@@ -5988,20 +5162,6 @@ function Set-NxtSystemEnvironmentVariable {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -6075,20 +5235,6 @@ function Show-NxtInstallationWelcome {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
@@ -6173,20 +5319,6 @@ function Stop-NxtProcess {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Stopping process with name '$Name'..." -Source ${cmdletName}
@@ -6284,20 +5416,6 @@ function Test-NxtAppIsInstalled {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
@@ -6408,20 +5526,6 @@ function Test-NxtLocalGroupExists {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -6468,20 +5572,6 @@ function Test-NxtLocalUserExists {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -6528,20 +5618,6 @@ function Test-NxtProcessExists {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -6703,20 +5779,6 @@ function Uninstall-NxtApplication {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
@@ -6922,20 +5984,6 @@ function Uninstall-NxtOld {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
@@ -7148,20 +6196,6 @@ function Unregister-NxtPackage {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
@@ -7235,20 +6269,6 @@ function Update-NxtTextInFile {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		[String]$intEncoding = $Encoding
@@ -7547,20 +6567,6 @@ function Watch-NxtFile {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -7615,20 +6621,6 @@ function Watch-NxtFileIsRemoved {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -7686,20 +6678,6 @@ function Watch-NxtProcess {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -7766,20 +6744,6 @@ function Watch-NxtProcessIsStopped {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -7841,20 +6805,6 @@ function Watch-NxtRegistryKey {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -7908,20 +6858,6 @@ function Watch-NxtRegistryKeyIsRemoved {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -7981,20 +6917,6 @@ function Write-NxtSingleXmlNode {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
@@ -8058,20 +6980,6 @@ function Write-NxtXmlNode {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[Hashtable]$parametersToLog = New-Object -TypeName System.Collections.Hashtable
-		[System.Management.Automation.CommandMetadata]::new($PSCmdlet.MyInvocation.MyCommand).Parameters.Keys | ForEach-Object {
-			if ($false -eq [string]::IsNullOrEmpty((Get-Variable -Name $_ -ValueOnly))){
-				$parametersToLog[$_]=Get-Variable -Name $_ -ValueOnly
-			}
-		}
-		[Hashtable]$WriteFunctionHeaderOrFooterParams =@{
-			CmdletName = ${CmdletName}
-			Header	= $true
-		}
-		if ($false -eq [string]::IsNullOrEmpty($parametersToLog)){
-			[Hashtable]$WriteFunctionHeaderOrFooterParams["CmdletBoundParameters"] = $parametersToLog
-		}
-        Write-FunctionHeaderOrFooter @WriteFunctionHeaderOrFooterParams -Verbose
 	}
 	Process {
 		try {
