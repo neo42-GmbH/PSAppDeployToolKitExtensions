@@ -5178,7 +5178,6 @@ function Set-NxtCustomSetupCfg {
 				[hashtable]$global:CustomSetupCfg = @{
 					UserCanAbort = $false
 					UserCanCloseAll = $false
-					PopupInterval = 10
 				}
 			}
 		}
@@ -5511,12 +5510,11 @@ Function Show-NxtInstallationWelcome {
         [PSADTNXT.ContinueType]$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
         ## Specifies if the user can close all applications
         [Parameter(Mandatory = $false)]
-        [Switch]$UserCanCloseAll = $false,
+        [Switch]$UserCanCloseAll = [System.Convert]::ToBoolean(($global:CustomSetupCfg.ASKKILLPROCESSES.USERCANCLOSEALL)),
         ## Specifies if the user can abort the process
         [Parameter(Mandatory = $false)]
-        [Switch]$UserCanAbort = $false
+        [Switch]$UserCanAbort = [System.Convert]::ToBoolean(($global:CustomSetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER))
     )
-
     Begin {
         ## Get the name of this function and write header
         [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
