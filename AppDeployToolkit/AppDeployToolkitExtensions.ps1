@@ -2338,6 +2338,8 @@ function Expand-NxtVariablesInFile {
 		catch {
 			Write-Log -Message "Failed to expand variables in '$($Path)' `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
+		##Return with success code 0 and continue
+		Write-Output 0
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -5718,7 +5720,8 @@ Function Show-NxtInstallationWelcome {
                     #  Restore minimized windows
                     $null = $shellApp.UndoMinimizeAll()
 
-                    Exit-Script -ExitCode $configInstallationUIExitCode
+                    Write-Output $configInstallationUIExitCode
+					return
                 }
 
                 #  If the user has clicked OK, wait a few seconds for the process to terminate before evaluating the running processes again
@@ -5815,7 +5818,8 @@ Function Show-NxtInstallationWelcome {
                     #  Restore minimized windows
                     $null = $shellApp.UndoMinimizeAll()
 
-                    Exit-Script -ExitCode $configInstallationUIExitCode
+					Write-Output $configInstallationUIExitCode
+					return
                 }
                 #  Stop the script (user chose to defer)
                 ElseIf ($promptResult.Contains('Defer')) {
@@ -5827,7 +5831,8 @@ Function Show-NxtInstallationWelcome {
                     #  Restore minimized windows
                     $null = $shellApp.UndoMinimizeAll()
 
-                    Exit-Script -ExitCode $configInstallationDeferExitCode
+					Write-Output $configInstallationDeferExitCode
+					return
                 }
             }
         }

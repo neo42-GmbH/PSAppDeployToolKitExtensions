@@ -185,7 +185,10 @@ function Main {
 				if ( ($false -eq $(Get-NxtRegisterOnly)) -or ($false -eq $global:registerPackage) ) {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
-					Show-NxtInstallationWelcome -IsInstall $true
+					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
+					if ($showInstallationWelcomeResult -ne 0) {
+						Exit-Script -ExitCode $showInstallationWelcomeResult
+					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {
