@@ -52,7 +52,7 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[switch]$DisableLogging = $false,
 	[Parameter(Mandatory = $false)]
-	[switch]$DeploymentSystem = [string]::Empty
+	[string]$DeploymentSystem = [string]::Empty
 )
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
@@ -108,7 +108,7 @@ Catch {
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
 	Initialize-NxtEnvironment
-##*===============================================
+	##*===============================================
 	##* VARIABLE DECLARATION
 	##*===============================================
 
@@ -120,6 +120,7 @@ try {
 	##*===============================================
 	##* END VARIABLE DECLARATION
 	##*===============================================
+	Confirm-NxtVariables
 }
 catch {
 	[int32]$mainExitCode = 60001
@@ -446,4 +447,4 @@ function CustomUninstallUserPartEnd {
 #endregion
 
 ## Execute the main function to start the process
-Main
+main
