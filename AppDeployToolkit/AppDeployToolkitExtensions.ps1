@@ -5221,76 +5221,262 @@ function Set-NxtSystemEnvironmentVariable {
 }
 #endregion
 #region Function Show-NxtInstallationWelcome
-function Show-NxtInstallationWelcome {
-	<#
-	.SYNOPSIS
-		Wrapps around the Show-InstallationWelcome function to insert default Values from the neo42PackageConfigJson
-	.DESCRIPTION
-		Is only called in the Main function and should not be modified!
-		To customize the script always use the "CustomXXXX" entry points.
-	.Parameter IsInstall
-		Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
-	.PARAMETER DeferDays
-		Specifies how long a user may defer an installation (will be ignored on uninstallation)
-		Defaults to the corresponding value from the Setup.cfg.
-	.PARAMETER AskKillProcessApps
-		Specifies a list of Processnames which should be stopped for the (un)installation to start.
-		For Example "WINWORD,EXCEL"
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER CloseAppsCountdown
-		Countdown until the Apps will either be forcibly closed or the Installation will abort
-		Defaults to the timeout value from the Setup.cfg.
-	.PARAMETER ContinueType
-		If a dialog window is displayed that shows all processes or applications that must be closed by the user before an installation / uninstallation,
-		this window is automatically closed after the timeout and the further behavior can be influenced with the following values:
-			ABORT:       After the timeout has expired, the installation will be abort 
-			CONTINUE:    After the timeout has expired, the processes and applications will be terminated and the installation continues
-		Defaults to the timeout value from the Setup.cfg.
-	.PARAMETER BlockExecution
-		Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
-		Defaults to the corresponding value from the PackageConfig object.
-	.EXAMPLE
-		Show-NxtInstallationWelcome
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
+Function Show-NxtInstallationWelcome {
+    <#
+    .SYNOPSIS
+
+    Show a welcome dialog prompting the user with information about the installation and actions to be performed before the installation can begin.
+
+    .DESCRIPTION
+
+    The following prompts can be included in the welcome dialog:
+        a) Close the specified running applications, or optionally close the applications without showing a prompt (using the -Silent switch).
+        b) Defer the installation a certain number of times, for a certain number of days or until a deadline is reached.
+        c) Countdown until applications are automatically closed.
+        d) Prevent users from launching the specified applications while the installation is in progress.
+
+    Notes:
+        The process descriptions are retrieved from WMI, with a fall back on the process name if no description is available. Alternatively, you can specify the description yourself with a '=' symbol - see examples.
+        The dialog box will timeout after the timeout specified in the XML configuration file (default 1 hour and 55 minutes) to prevent SCCM installations from timing out and returning a failure code to SCCM. When the dialog times out, the script will exit and return a 1618 code (SCCM fast retry code).
+
+    .PARAMETER Silent
+
+    Stop processes without prompting the user.
+
+    .PARAMETER CloseAppsCountdown
+
+    Option to provide a countdown in seconds until the specified applications are automatically closed. This only takes effect if deferral is not allowed or has expired.
+
+    .PARAMETER ForceCloseAppsCountdown
+
+    Option to provide a countdown in seconds until the specified applications are automatically closed regardless of whether deferral is allowed.
+
+    .PARAMETER PromptToSave
+
+    Specify whether to prompt to save working documents when the user chooses to close applications by selecting the "Close Programs" button. Option does not work in SYSTEM context unless toolkit launched with "psexec.exe -s -i" to run it as an interactive process under the SYSTEM account.
+
+    .PARAMETER PersistPrompt
+
+    Specify whether to make the Show-InstallationWelcome prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml. The user will have no option but to respond to the prompt. This only takes effect if deferral is not allowed or has expired.
+
+    .PARAMETER BlockExecution
+
+    Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
+
+    .PARAMETER AllowDefer
+
+    Enables an optional defer button to allow the user to defer the installation.
+
+    .PARAMETER AllowDeferCloseApps
+
+    Enables an optional defer button to allow the user to defer the installation only if there are running applications that need to be closed. This parameter automatically enables -AllowDefer
+
+    .PARAMETER DeferTimes
+
+    Specify the number of times the installation can be deferred.
+
+    .PARAMETER DeferDays
+
+    Specify the number of days since first run that the installation can be deferred. This is converted to a deadline.
+
+    .PARAMETER DeferDeadline
+
+    Specify the deadline date until which the installation can be deferred.
+
+    Specify the date in the local culture if the script is intended for that same culture.
+
+    If the script is intended to run on EN-US machines, specify the date in the format: "08/25/2013" or "08-25-2013" or "08-25-2013 18:00:00"
+
+    If the script is intended for multiple cultures, specify the date in the universal sortable date/time format: "2013-08-22 11:51:52Z"
+
+    The deadline date will be displayed to the user in the format of their culture.
+
+    .PARAMETER MinimizeWindows
+
+    Specifies whether to minimize other windows when displaying prompt. Default: $true.
+
+    .PARAMETER TopMost
+
+    Specifies whether the windows is the topmost window. Default: $true.
+
+    .PARAMETER ForceCountdown
+
+    Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
+
+    .PARAMETER CustomText
+
+    Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
+        
+    .Parameter IsInstall
+        Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
+
+    .PARAMETER ContinueType
+
+    Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
+
+    .PARAMETER UserCanCloseAll
+
+    Specifies if the user can close all applications. Default: $false.
+
+    .PARAMETER UserCanAbort
+
+    Specifies if the user can abort the process. Default: $false.
+
+    .INPUTS
+
+    None
+
+    You cannot pipe objects to this function.
+
+    .OUTPUTS
+
+    None
+
+    This function does not return objects.
+
+    .EXAMPLE
+
+    Show-InstallationWelcome -CloseApps 'iexplore,winword,excel'
+
+    Prompt the user to close Internet Explorer, Word and Excel.
+
+    .EXAMPLE
+
+    Show-InstallationWelcome -CloseApps 'winword,excel' -Silent
+
+    Close Word and Excel without prompting the user.
+
+    .EXAMPLE
+
+    Show-InstallationWelcome -CloseApps 'winword,excel' -BlockExecution
+
+    Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
+
+    .EXAMPLE
+
+    Show-InstallationWelcome -CloseApps 'winword=Microsoft Office Word,excel=Microsoft Office Excel' -CloseAppsCountdown 600
+
+    Prompt the user to close Word and Excel, with customized descriptions for the applications and automatically close the applications after 10 minutes.
+
+    .EXAMPLE
+
+    Show-InstallationWelcome -CloseApps 'winword,msaccess,excel' -PersistPrompt
+
+    Prompt the user to close Word, MSAccess and Excel.
+
+    By using the PersistPrompt switch, the dialog will return to the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml, so the user cannot ignore it by dragging it aside.
+
+    .EXAMPLE
+
+    Show-InstallationWelcome -AllowDefer -DeferDeadline '25/08/2013'
+
+    Allow the user to defer the installation until the deadline is reached.
+
+    .EXAMPLE
+
+    Show-InstallationWelcome -CloseApps 'winword,excel' -BlockExecution -AllowDefer -DeferTimes 10 -DeferDeadline '25/08/2013' -CloseAppsCountdown 600
+
+    Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
+
+    Allow the user to defer the installation a maximum of 10 times or until the deadline is reached, whichever happens first.
+
+    When deferral expires, prompt the user to close the applications and automatically close them after 10 minutes.
+
+    .NOTES
+
+    .LINK
+
+    https://psappdeploytoolkit.com
+    #>
+    [CmdletBinding()]
+
+    Param (
+        ## Specify whether to prompt user or force close the applications
+        [Parameter(Mandatory = $false)]
+        [Switch]$Silent = $false,
+        ## Specify a countdown to display before automatically closing applications where deferral is not allowed or has expired
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Int32]$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
+        ## Specify a countdown to display before automatically closing applications whether or not deferral is allowed
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Int32]$ForceCloseAppsCountdown = 0,
+        ## Specify whether to prompt to save working documents when the user chooses to close applications by selecting the "Close Programs" button
+        [Parameter(Mandatory = $false)]
+        [Switch]$PromptToSave = $false,
+        ## Specify whether to make the prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml.
+        [Parameter(Mandatory = $false)]
+        [Switch]$PersistPrompt = $false,
+        ## Specify whether to block execution of the processes during installation
+        [Parameter(Mandatory = $false)]
+        [Switch]$BlockExecution = $($global:PackageConfig.BlockExecution),
+        ## Specify whether to enable the optional defer button on the dialog box
+        [Parameter(Mandatory = $false)]
+        [Switch]$AllowDefer = $false,
+        ## Specify whether to enable the optional defer button on the dialog box only if an app needs to be closed
+        [Parameter(Mandatory = $false)]
+        [Switch]$AllowDeferCloseApps = $false,
+        ## Specify the number of times the deferral is allowed
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Int32]$DeferTimes = 0,
+        ## Specify the number of days since first run that the deferral is allowed
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Int32]$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
+        ## Specify the deadline (in format dd/mm/yyyy) for which deferral will expire as an option
+        [Parameter(Mandatory = $false)]
+        [String]$DeferDeadline = '',
+        ## Specify whether to minimize other windows when displaying prompt
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Boolean]$MinimizeWindows = $true,
+        ## Specifies whether the window is the topmost window
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Boolean]$TopMost = $true,
+        ## Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Int32]$ForceCountdown = 0,
+        ## Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
+        [Parameter(Mandatory = $false)]
+        [Switch]$CustomText = $false,
 		[Parameter(Mandatory = $true)]
 		[bool]
 		$IsInstall,
-		[Parameter(Mandatory = $false)]
-		[int]
-		$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
-		[Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false)]
 		[array]
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses),
-		[Parameter(Mandatory = $false)]
-		[string]
-		$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
-		[Parameter(Mandatory = $false)]
-		[ValidateSet("ABORT", "CONTINUE")]
-		[string]
-		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$BlockExecution = $($global:PackageConfig.BlockExecution)
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-	}
-	Process {
-		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
+        ## this window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
+        [Parameter(Mandatory = $false)]
+        [PSADTNXT.ContinueType]$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
+        ## Specifies if the user can close all applications
+        [Parameter(Mandatory = $false)]
+        [Switch]$UserCanCloseAll = $false,
+        ## Specifies if the user can abort the process
+        [Parameter(Mandatory = $false)]
+        [Switch]$UserCanAbort = $false
+    )
+
+    Begin {
+        ## Get the name of this function and write header
+        [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+    }
+    Process {
+        ## To break the array references to the parent object we have to create new(copied) objects from the provided array.
 		[array]$AskKillProcessApps = $AskKillProcessApps | Select-Object *
-		## override $DeferDays with 0 in Case of Uninstall
+        ## override $DeferDays with 0 in Case of Uninstall
 		if (!$IsInstall) {
 			[int]$DeferDays = 0
 		}
-		[string]$closeAppsList = $null
-		[string]$fileExtension = ".exe"
-		if ($AskKillProcessApps.count -ne 0) {
+        ## If running in NonInteractive mode, force the processes to close silently
+        If ($deployModeNonInteractive) {
+            $Silent = $true
+        }
+        
 			foreach ( $processAppsItem in $AskKillProcessApps ) {
 				if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
 					Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
@@ -5316,27 +5502,1098 @@ function Show-NxtInstallationWelcome {
 					}
 				}
 			}
-			[string]$closeAppsList = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
-			if (!([string]::IsNullOrEmpty($closeAppsList))) {
-				switch ($ContinueType.ToUppper()) {
-					"ABORT" {
-						Show-InstallationWelcome -CloseApps $closeAppsList -CloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
-					}
-					"CONTINUE" {
-						Show-InstallationWelcome -CloseApps $closeAppsList -ForceCloseAppsCountdown $CloseAppsCountdown -PersistPrompt -BlockExecution:$BlockExecution -AllowDeferCloseApps -DeferDays $DeferDays -CheckDiskSpace
-					}		
-				}
-				if (($true -eq $BlockExecution) -and ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)"))) {
+			[string]$closeApps = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
+			if (
+                ($false -eq ([string]::IsNullOrEmpty($closeApps))) -and
+                ($true -eq $BlockExecution) -and
+                ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)"))
+                ) {
+
 					## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
 					Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
-				}
 			}
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
+        ## If using Zero-Config MSI Deployment, append any executables found in the MSI to the CloseApps list
+        If ($useDefaultMsi) {
+            [string]$closeApps = "$closeApps,$defaultMsiExecutablesList"
+        }
+
+        If ($false -eq [string]::IsNullOrEmpty($closeApps)) {
+            ## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
+            [PSObject[]]$processObjects = @()
+            #  Split multiple processes on a comma, then split on equal sign, then create custom object with process name and description
+            ForEach ($process in ($closeApps -split ',' | Where-Object { $_ })) {
+                If ($process.Contains('=')) {
+                    [String[]]$ProcessSplit = $process -split '='
+                    $processObjects += New-Object -TypeName 'PSObject' -Property @{
+                        ProcessName        = $ProcessSplit[0]
+                        ProcessDescription = $ProcessSplit[1]
+                    }
+                }
+                Else {
+                    [String]$ProcessInfo = $process
+                    $processObjects += New-Object -TypeName 'PSObject' -Property @{
+                        ProcessName        = $process
+                        ProcessDescription = ''
+                    }
+                }
+            }
+        }
+
+        ## Check Deferral history and calculate remaining deferrals
+        If (($allowDefer) -or ($AllowDeferCloseApps)) {
+            #  Set $allowDefer to true if $AllowDeferCloseApps is true
+            $allowDefer = $true
+
+            #  Get the deferral history from the registry
+            $deferHistory = Get-DeferHistory
+            $deferHistoryTimes = $deferHistory | Select-Object -ExpandProperty 'DeferTimesRemaining' -ErrorAction 'SilentlyContinue'
+            $deferHistoryDeadline = $deferHistory | Select-Object -ExpandProperty 'DeferDeadline' -ErrorAction 'SilentlyContinue'
+
+            #  Reset Switches
+            $checkDeferDays = $false
+            $checkDeferDeadline = $false
+            If ($DeferDays -ne 0) {
+                $checkDeferDays = $true
+            }
+            If ($DeferDeadline) {
+                $checkDeferDeadline = $true
+            }
+            If ($DeferTimes -ne 0) {
+                If ($deferHistoryTimes -ge 0) {
+                    Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${CmdletName}
+                    $DeferTimes = $deferHistory.DeferTimesRemaining - 1
+                }
+                Else {
+                    $DeferTimes = $DeferTimes - 1
+                }
+                Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${CmdletName}
+                If ($DeferTimes -lt 0) {
+                    Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+                    $AllowDefer = $false
+                }
+            }
+            Else {
+                If (Test-Path -LiteralPath 'variable:deferTimes') {
+                    Remove-Variable -Name 'deferTimes'
+                }
+                $DeferTimes = $null
+            }
+            If ($checkDeferDays -and $allowDefer) {
+                If ($deferHistoryDeadline) {
+                    Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${CmdletName}
+                    [String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
+                }
+                Else {
+                    [String]$deferDeadlineUniversal = Get-UniversalDate -DateTime (Get-Date -Date ((Get-Date).AddDays($deferDays)) -Format ($culture).DateTimeFormat.UniversalDateTimePattern).ToString()
+                }
+                Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${CmdletName}
+                If ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
+                    Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+                    $AllowDefer = $false
+                }
+            }
+            If ($checkDeferDeadline -and $allowDefer) {
+                #  Validate Date
+                Try {
+                    [String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferDeadline -ErrorAction 'Stop'
+                }
+                Catch {
+                    Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+                    Throw "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z': $($_.Exception.Message)"
+                }
+                Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${CmdletName}
+                If ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
+                    Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+                    $AllowDefer = $false
+                }
+            }
+        }
+        If (($deferTimes -lt 0) -and (-not $deferDeadlineUniversal)) {
+            $AllowDefer = $false
+        }
+
+        [string]$promptResult = [string]::Empty
+        ## Prompt the user to close running applications and optionally defer if enabled
+        If ((-not $deployModeSilent) -and (-not $silent)) {
+            If ($forceCloseAppsCountdown -gt 0) {
+                #  Keep the same variable for countdown to simplify the code:
+                $closeAppsCountdown = $forceCloseAppsCountdown
+                #  Change this variable to a boolean now to switch the countdown on even with deferral
+                [Boolean]$forceCloseAppsCountdown = $true
+            }
+            ElseIf ($forceCountdown -gt 0) {
+                #  Keep the same variable for countdown to simplify the code:
+                $closeAppsCountdown = $forceCountdown
+                #  Change this variable to a boolean now to switch the countdown on
+                [Boolean]$forceCountdown = $true
+            }
+            Set-Variable -Name 'closeAppsCountdownGlobal' -Value $closeAppsCountdown -Scope 'Script'
+            While ((Get-RunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses') -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
+                [String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+                #  If no proccesses are running close
+                if ([string]::IsNullOrEmpty($runningProcessDescriptions))
+                {
+                    break
+                }
+                #  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
+                If ($allowDefer) {
+                    #  If there is deferral and closing apps is allowed but there are no apps to be closed, break the while loop
+                    If ($AllowDeferCloseApps -and (-not $runningProcessDescriptions)) {
+                        Break
+                    }
+                    #  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
+                    ElseIf ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
+                        [String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
+                    }
+                }
+                #  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
+                ElseIf (($runningProcessDescriptions) -or ($forceCountdown)) {
+                    [String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
+                }
+                #  If there is no deferral and no processes running, break the while loop
+                Else {
+                    Break
+                }
+
+                If ($promptResult.Contains('Cancel'))
+                {
+                    Write-Log -Message 'The user selected to cancel...' -Source ${CmdletName}
+                    
+                    #  Restore minimized windows
+                    $null = $shellApp.UndoMinimizeAll()
+
+                    Exit-Script -ExitCode $configInstallationUIExitCode
+                }
+
+                #  If the user has clicked OK, wait a few seconds for the process to terminate before evaluating the running processes again
+                If ($promptResult.Contains('Continue')) {
+                    Write-Log -Message 'The user selected to continue...' -Source ${CmdletName}
+                    Start-Sleep -Seconds 2
+
+                    #  Break the while loop if there are no processes to close and the user has clicked OK to continue
+                    If (-not $runningProcesses) {
+                        Break
+                    }
+                }
+                #  Force the applications to close
+                ElseIf ($promptResult.Contains('Close')) {
+                    Write-Log -Message 'The user selected to force the application(s) to close...' -Source ${CmdletName}
+                    If (($PromptToSave) -and ($SessionZero -and (-not $IsProcessUserInteractive))) {
+                        Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
+                    }
+                    # Update the process list right before closing, in case it changed
+                    $runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects
+                    # Close running processes
+                    ForEach ($runningProcess in $runningProcesses) {
+                        [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
+                        #  If the PromptToSave parameter was specified and the process has a window open, then prompt the user to save work if there is work to be saved when closing window
+                        If (($PromptToSave) -and (-not ($SessionZero -and (-not $IsProcessUserInteractive))) -and ($AllOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
+                            [Timespan]$PromptToSaveTimeout = New-TimeSpan -Seconds $configInstallationPromptToSave
+                            [Diagnostics.StopWatch]$PromptToSaveStopWatch = [Diagnostics.StopWatch]::StartNew()
+                            $PromptToSaveStopWatch.Reset()
+                            ForEach ($OpenWindow in $AllOpenWindowsForRunningProcess) {
+                                Try {
+                                    Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${CmdletName}
+                                    [Boolean]$IsBringWindowToFrontSuccess = [PSADT.UiAutomation]::BringWindowToFront($OpenWindow.WindowHandle)
+                                    [Boolean]$IsCloseWindowCallSuccess = $runningProcess.CloseMainWindow()
+                                    If (-not $IsCloseWindowCallSuccess) {
+                                        Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${CmdletName}
+                                    }
+                                    Else {
+                                        $PromptToSaveStopWatch.Start()
+                                        Do {
+                                            [Boolean]$IsWindowOpen = [Boolean](Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.WindowHandle -eq $OpenWindow.WindowHandle })
+                                            If (-not $IsWindowOpen) {
+                                                Break
+                                            }
+                                            Start-Sleep -Seconds 3
+                                        } While (($IsWindowOpen) -and ($PromptToSaveStopWatch.Elapsed -lt $PromptToSaveTimeout))
+                                        $PromptToSaveStopWatch.Reset()
+                                        If ($IsWindowOpen) {
+                                            Write-Log -Message "Exceeded the [$configInstallationPromptToSave] seconds timeout value for the user to save work associated with process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)]." -Severity 2 -Source ${CmdletName}
+                                        }
+                                        Else {
+                                            Write-Log -Message "Window [$($OpenWindow.WindowTitle)] for process [$($runningProcess.ProcessName)] was successfully closed." -Source ${CmdletName}
+                                        }
+                                    }
+                                }
+                                Catch {
+                                    Write-Log -Message "Failed to close window [$($OpenWindow.WindowTitle)] for process [$($runningProcess.ProcessName)]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+                                    Continue
+                                }
+                                Finally {
+                                    $runningProcess.Refresh()
+                                }
+                            }
+                        }
+                        Else {
+                            Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${CmdletName}
+                            Stop-Process -Name $runningProcess.ProcessName -Force -ErrorAction 'SilentlyContinue'
+                        }
+                    }
+
+                    If ($runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging) {
+                        # Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
+                        Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
+                        Start-Sleep -Seconds 2
+                    }
+                }
+                #  Stop the script (if not actioned before the timeout value)
+                ElseIf ($promptResult.Contains('Timeout')) {
+                    Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${CmdletName}
+                    $BlockExecution = $false
+
+                    If (($deferTimes -ge 0) -or ($deferDeadlineUniversal)) {
+                        Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
+                    }
+                    ## Dispose the welcome prompt timer here because if we dispose it within the Show-WelcomePrompt function we risk resetting the timer and missing the specified timeout period
+                    If ($script:welcomeTimer) {
+                        Try {
+                            $script:welcomeTimer.Dispose()
+                            $script:welcomeTimer = $null
+                        }
+                        Catch {
+                        }
+                    }
+
+                    #  Restore minimized windows
+                    $null = $shellApp.UndoMinimizeAll()
+
+                    Exit-Script -ExitCode $configInstallationUIExitCode
+                }
+                #  Stop the script (user chose to defer)
+                ElseIf ($promptResult.Contains('Defer')) {
+                    Write-Log -Message 'Installation deferred by the user.' -Source ${CmdletName}
+                    $BlockExecution = $false
+
+                    Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
+
+                    #  Restore minimized windows
+                    $null = $shellApp.UndoMinimizeAll()
+
+                    Exit-Script -ExitCode $configInstallationDeferExitCode
+                }
+            }
+        }
+
+        ## Force the processes to close silently, without prompting the user
+        If (($Silent -or $deployModeSilent) -and $closeApps) {
+            [Array]$runningProcesses = $null
+            [Array]$runningProcesses = Get-RunningProcesses $processObjects
+            If ($runningProcesses) {
+                [String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+                Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
+                $runningProcesses.ProcessName | ForEach-Object -Process { Stop-Process -Name $_ -Force -ErrorAction 'SilentlyContinue' }
+                Start-Sleep -Seconds 2
+            }
+        }
+
+        ## Force nsd.exe to stop if Notes is one of the required applications to close
+        If (($processObjects | Select-Object -ExpandProperty 'ProcessName') -contains 'notes') {
+            ## Get the path where Notes is installed
+            [String]$notesPath = Get-Item -LiteralPath $regKeyLotusNotes -ErrorAction 'SilentlyContinue' | Get-ItemProperty | Select-Object -ExpandProperty 'Path'
+
+            ## Ensure we aren't running as a Local System Account and Notes install directory was found
+            If ((-not $IsLocalSystemAccount) -and ($notesPath)) {
+                #  Get a list of all the executables in the Notes folder
+                [string[]]$notesPathExes = Get-ChildItem -LiteralPath $notesPath -Filter '*.exe' -Recurse | Select-Object -ExpandProperty 'BaseName' | Sort-Object
+                ## Check for running Notes executables and run NSD if any are found
+                $notesPathExes | ForEach-Object {
+                    If ((Get-Process | Select-Object -ExpandProperty 'Name') -contains $_) {
+                        [String]$notesNSDExecutable = Join-Path -Path $notesPath -ChildPath 'NSD.exe'
+                        Try {
+                            If (Test-Path -LiteralPath $notesNSDExecutable -PathType 'Leaf' -ErrorAction 'Stop') {
+                                Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${CmdletName}
+                                [Diagnostics.Process]$notesNSDProcess = Start-Process -FilePath $notesNSDExecutable -ArgumentList '-kill' -WindowStyle 'Hidden' -PassThru -ErrorAction 'SilentlyContinue'
+
+                                If (-not $notesNSDProcess.WaitForExit(10000)) {
+                                    Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${CmdletName}
+                                    Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
+                                }
+                            }
+                        }
+                        Catch {
+                            Write-Log -Message "Failed to launch [$notesNSDExecutable]. `r`n$(Resolve-Error)" -Source ${CmdletName}
+                        }
+
+                        Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${CmdletName}
+
+                        #  Force NSD process to stop in case the previous command was not successful
+                        Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
+                    }
+                }
+            }
+
+            #  Strip all Notes processes from the process list except notes.exe, because the other notes processes (e.g. notes2.exe) may be invoked by the Notes installation, so we don't want to block their execution.
+            If ($notesPathExes) {
+                [Array]$processesIgnoringNotesExceptions = Compare-Object -ReferenceObject ($processObjects | Select-Object -ExpandProperty 'ProcessName' | Sort-Object) -DifferenceObject $notesPathExes -IncludeEqual | Where-Object { ($_.SideIndicator -eq '<=') -or ($_.InputObject -eq 'notes') } | Select-Object -ExpandProperty 'InputObject'
+                [Array]$processObjects = $processObjects | Where-Object { $processesIgnoringNotesExceptions -contains $_.ProcessName }
+            }
+        }
+
+        ## If block execution switch is true, call the function to block execution of these processes
+        If ($BlockExecution) {
+            #  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
+            Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
+            Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
+            Block-AppExecution -ProcessName ($processObjects | Select-Object -ExpandProperty 'ProcessName')
+        }
+    }
+    End {
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+    }
+}
+#endregion
+
+#region Function Show-NxtWelcomePrompt
+Function Show-NxtWelcomePrompt {
+    <#
+.SYNOPSIS
+
+Called by Show-InstallationWelcome to prompt the user to optionally do the following:
+    1) Close the specified running applications.
+    2) Provide an option to defer the installation.
+    3) Show a countdown before applications are automatically closed.
+
+.DESCRIPTION
+
+The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
+If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
+The dialog box will timeout after the timeout specified in the XML configuration file (default 1 hour and 55 minutes) to prevent SCCM installations from timing out and returning a failure code to SCCM. When the dialog times out, the script will exit and return a 1618 code (SCCM fast retry code).
+
+.PARAMETER ProcessDescriptions
+
+The descriptive names of the applications that are running and need to be closed.
+
+.PARAMETER CloseAppsCountdown
+
+Specify the countdown time in seconds before running applications are automatically closed when deferral is not allowed or expired.
+
+.PARAMETER PersistPrompt
+
+Specify whether to make the prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml.
+
+.PARAMETER AllowDefer
+
+Specify whether to provide an option to defer the installation.
+
+.PARAMETER DeferTimes
+
+Specify the number of times the user is allowed to defer.
+
+.PARAMETER DeferDeadline
+
+Specify the deadline date before the user is allowed to defer.
+
+.PARAMETER MinimizeWindows
+
+Specifies whether to minimize other windows when displaying prompt. Default: $true.
+
+.PARAMETER TopMost
+
+Specifies whether the windows is the topmost window. Default: $true.
+
+.PARAMETER CustomText
+
+Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
+
+.PARAMETER ContinueType
+
+Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
+
+.PARAMETER UserCanCloseAll
+
+Specifies if the user can close all applications. Default: $false.
+
+.PARAMETER UserCanAbort
+
+Specifies if the user can abort the process. Default: $false.
+
+.INPUTS
+
+None
+
+You cannot pipe objects to this function.
+
+.OUTPUTS
+
+System.String
+
+Returns the user's selection.
+
+.EXAMPLE
+
+Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10
+
+.NOTES
+
+This is an internal script function and should typically not be called directly. It is used by the Show-InstallationWelcome prompt to display a custom prompt.
+
+.LINK
+
+https://psappdeploytoolkit.com
+#>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $false)]
+        [String]$ProcessDescriptions,
+        [Parameter(Mandatory = $false)]
+        [Int32]$CloseAppsCountdown,
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Boolean]$PersistPrompt = $false,
+        [Parameter(Mandatory = $false)]
+        [Switch]$AllowDefer = $false,
+        [Parameter(Mandatory = $false)]
+        [String]$DeferTimes,
+        [Parameter(Mandatory = $false)]
+        [String]$DeferDeadline,
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Boolean]$MinimizeWindows = $true,
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Boolean]$TopMost = $true,
+        [Parameter(Mandatory = $false)]
+        [Switch]$CustomText = $false,
+        [Parameter(Mandatory = $false)]
+        [PSADTNXT.ContinueType]$ContinueType = [PSADTNXT.ContinueType]::Abort,
+        [Parameter(Mandatory = $false)]
+        [Switch]$UserCanCloseAll = $false,
+        [Parameter(Mandatory = $false)]
+        [Switch]$UserCanAbort = $false
+    )
+
+    Begin {
+        ## Get the name of this function and write header
+        [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+    }
+    Process {
+        ## Reset switches
+        [bool]$showCloseApps = $false
+        [bool]$showDefer = $false
+
+        ## Check if the countdown was specified
+        If ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeout)) {
+            Throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
+        }
+
+        ## Initial form layout: Close Applications / Allow Deferral
+        If ($ProcessDescriptions) {
+            Write-Log -Message "Prompting the user to close application(s) [$ProcessDescriptions]..." -Source ${CmdletName}
+            $showCloseApps = $true
+        }
+        If (($AllowDefer) -and (($DeferTimes -ge 0) -or ($DeferDeadline))) {
+            Write-Log -Message 'The user has the option to defer.' -Source ${CmdletName}
+            $showDefer = $true
+            If ($DeferDeadline) {
+                #  Remove the Z from universal sortable date time format, otherwise it could be converted to a different time zone
+                $DeferDeadline = $DeferDeadline -replace 'Z', ''
+                #  Convert the deadline date to a string
+                $DeferDeadline = (Get-Date -Date $DeferDeadline).ToString()
+            }
+        }
+
+        ## If deferral is being shown and 'close apps countdown' or 'persist prompt' was specified, enable those features.
+        If (-not $showDefer) {
+            If ($CloseAppsCountdown -gt 0) {
+                Write-Log -Message "Close applications countdown has [$CloseAppsCountdown] seconds remaining." -Source ${CmdletName}
+            }
+        }
+        if ($CloseAppsCountdown -gt 0)
+        {
+            [bool]$showCountdown = $true
+            Write-Log -Message "Close applications countdown has [$CloseAppsCountdown] seconds remaining." -Source ${CmdletName}
+        }
+
+[string]$inputXML = @'
+<Window x:Class="InstallationWelcome.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" Background="Red"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStartupLocation="CenterScreen"
+        xmlns:local="clr-namespace:InstallationWelcome" ResizeMode="NoResize" WindowStyle="None"
+        mc:Ignorable="d" SizeToContent="Height" x:Name="InstallationWelcomeMainWindow"
+        Width="450">
+    <Window.Resources>
+        <Color x:Key="ErrorColor" A="255" R="236" G="105" B="53" ></Color>
+        <SolidColorBrush x:Key="ErrorColorBrush" Color="{DynamicResource ErrorColor}"></SolidColorBrush>
+        <Color x:Key="MainColor" A="255" R="227" G="0" B="15" ></Color>
+        <SolidColorBrush x:Key="MainColorBrush" Color="{DynamicResource MainColor}"></SolidColorBrush>
+        <Color x:Key="BackColor" A="255" R="40" G="40" B="39"/>
+        <SolidColorBrush x:Key="BackColorBrush" Color="{DynamicResource BackColor}"></SolidColorBrush>
+        <Color x:Key="BackLightColor" A="255" R="87" G="86" B="86"/>
+        <SolidColorBrush x:Key="BackLightColorBrush" Color="{DynamicResource BackLightColor}"></SolidColorBrush>
+        <Color x:Key="ForeColor" A="255" R="255" G="255" B="255"/>
+        <SolidColorBrush x:Key="ForeColorBrush" Color="{DynamicResource ForeColor}"></SolidColorBrush>
+        <Color x:Key="MouseHoverColor" A="255" R="200" G="200" B="200"/>
+        <SolidColorBrush x:Key="MouseHoverColorBrush" Color="{DynamicResource MouseHoverColor}"></SolidColorBrush>
+        <Color x:Key="PressedColor" A="255" R="87" G="86" B="86"/>
+        <SolidColorBrush x:Key="PressedBrush" Color="{DynamicResource PressedColor}"></SolidColorBrush>
+        <Style TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"></Setter>
+            <Setter Property="Foreground" Value="{DynamicResource ForeColorBrush}"></Setter>
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="ToolTip">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Background="{DynamicResource BackLightColorBrush}">
+                            <StackPanel>
+                                <TextBlock Text="{TemplateBinding Content}" Foreground="{DynamicResource ForeColorBrush}" Padding="5"/>
+                            </StackPanel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TextBlockListStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"></Setter>
+            <Setter Property="Foreground" Value="{DynamicResource ForeColorBrush}"></Setter>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Width" Value="140"/>
+            <Setter Property="Foreground" Value="{DynamicResource ForeColorBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource BackLightColorBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource MouseHoverColorBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PressedBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <DockPanel HorizontalAlignment="Stretch"
+           VerticalAlignment="Stretch"
+           LastChildFill="True">
+           <Popup Placement="Center" x:Name="Popup">
+           <Border Background="{DynamicResource BackColorBrush}" BorderBrush="{DynamicResource ForeColorBrush}" BorderThickness="1">
+               <StackPanel Margin="10">
+                   <TextBlock x:Name="PopupCloseWithoutSavingText" Margin="0,0,0,10" Text="the following applications are about to be closed without saving:" VerticalAlignment="Center" TextAlignment="Center" Background="{DynamicResource BackColorBrush}" Foreground="{DynamicResource ForeColorBrush}"></TextBlock>
+                   <TextBlock x:Name="PopupListText" Text="notenpad" Foreground="{DynamicResource ErrorColorBrush}" VerticalAlignment="Center" FontSize="14" TextAlignment="Center" Background="{DynamicResource BackColorBrush}"></TextBlock>
+                   <TextBlock x:Name="PopupSureToCloseText" Text="Are you sure to close this?" Margin="0,10,0,0" VerticalAlignment="Center" TextAlignment="Center" Background="{DynamicResource BackColorBrush}" Foreground="{DynamicResource ForeColorBrush}"></TextBlock>
+                   <DockPanel VerticalAlignment="Bottom"  DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                       <Button x:Name="PopupCloseApplication" DockPanel.Dock="Left" Content="Close"></Button>
+                       <Button x:Name="PopupCancel" Content="back" HorizontalAlignment="Right" DockPanel.Dock="Right"/>
+                   </DockPanel>
+               </StackPanel>
+           </Border>
+       </Popup>
+        <DockPanel x:Name="HeaderPanel" HorizontalAlignment="Stretch" Height="30" DockPanel.Dock="Top" Background="{DynamicResource BackColorBrush}">
+            <TextBlock DockPanel.Dock="Left" x:Name="TitleText" VerticalAlignment="Center" Text="AppVendor AppName AppVersion" Margin="5,0,0,0" FontWeight="Bold" FontSize="14" />
+            <Button OverridesDefaultStyle="True" BorderThickness="0" DockPanel.Dock="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="WindowCloseButton" Background="Transparent" Content="X" Margin="0,0,0,0" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource ForeColorBrush}" Height="20" Width="20">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border x:Name="controlBorder" Margin="0,-5,0,0" Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger  Property="IsMouseOver" Value="true">
+                                            <Setter TargetName="controlBorder" Property="Background"  Value="{DynamicResource MainColorBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="controlBorder" Property="BorderBrush" Value="{DynamicResource PressedBrush}"/>
+                                            <Setter TargetName="controlBorder" Property="BorderThickness" Value="1"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </DockPanel>
+        <DockPanel x:Name="MainPanel" Background="{DynamicResource BackColorBrush}">
+            <Image x:Name="Banner" DockPanel.Dock="Top" Source="C:\Users\labadmin\Pictures\2.PNG" MaxHeight="100"></Image>
+            <StackPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+                <TextBlock x:Name="FollowApplicationText" TextAlignment="Center" TextWrapping="Wrap" Text="The following application is about to be installed:" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="AppNameText" Foreground="{DynamicResource MainColorBrush}" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="AppVendor AppName AppVersion" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" ></TextBlock>
+                <TextBlock x:Name="CustomTextBlock" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="The following application is about to be installed:" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="ApplicationCloseText" TextAlignment="Center" TextWrapping="Wrap" Margin="0,10,0,0" Text="The follwing programs must be closed before the installation can procced." HorizontalAlignment="Center"></TextBlock>
+                <TextBlock x:Name="SaveWorkText" TextWrapping="Wrap" Margin="10,10,10,0" Text="Please save your work, close the programs and than continue.&#10;Alternativly, save your work and click 'Close applications'."  HorizontalAlignment="Center" TextAlignment="Center"></TextBlock>
+                <ListView BorderThickness="0" Margin="10" HorizontalAlignment="center" x:Name="CloseApplicationList" Grid.Column="0" Width="Auto" Background="{DynamicResource BackColorBrush}">
+                    <ListView.View>
+                        <GridView  AllowsColumnReorder="False">
+                            <GridView.ColumnHeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
+                                                <TextBlock FontWeight="Bold" Foreground="{DynamicResource ErrorColorBrush}" Style="{DynamicResource TextBlockListStyle}" TextAlignment="Left" x:Name="ContentHeader" Text="{TemplateBinding Content}" Padding="5,5,5,0" Width="{TemplateBinding Width}"  />
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </GridView.ColumnHeaderContainerStyle>
+                            <GridViewColumn  Header="Name" DisplayMemberBinding="{Binding Name}" />
+                            <GridViewColumn  Header="StartedBy" DisplayMemberBinding="{Binding StartedBy}" />
+                        </GridView>
+                    </ListView.View>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="{x:Type ListViewItem}">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                        <Border
+                                            BorderBrush="Transparent"
+                                            BorderThickness="0"
+                                            Background="{TemplateBinding Background}">
+                                            <GridViewRowPresenter HorizontalAlignment="Stretch" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Width="Auto" Margin="0" Content="{TemplateBinding Content}">
+                                                <GridViewRowPresenter.Resources>
+                                                    <Style TargetType="{x:Type TextBlock}">
+                                                        <Setter Property="Foreground" Value="{DynamicResource ErrorColorBrush}"/>
+                                                    </Style>
+                                                </GridViewRowPresenter.Resources>
+                                            </GridViewRowPresenter>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
+
+                <TextBlock x:Name="DeferTextOne" TextAlignment="Center"  Margin="0,0,0,10" TextWrapping="Wrap" Text="You can choose to defer the installation until the deferral expires:" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="DeferTimerText" TextAlignment="Center" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="DeferDeadlineText" TextAlignment="Center" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="DeferTextTwo"  Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="Once the defferal is expired, you will no longer have the option to defer." HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="TimerText" Margin="20,10,20,0" TextAlignment="Center" TextWrapping="Wrap" Text="If you do not close your applications, they will be closed without saving, and the software installation will be continued." HorizontalAlignment="Center" ></TextBlock>
+                <Grid x:Name="ProgressGrid"  Margin="0,10,0,5">
+                    <ProgressBar x:Name="Progress" Value="5" Minimum="0" Maximum="10" Height="30">
+                        <ProgressBar.Template>
+                            <ControlTemplate TargetType="ProgressBar">
+                                <Grid>
+                                    <Border Margin="5,0,5,0" CornerRadius="2">
+                                        <Grid>
+                                            <Rectangle x:Name="PART_Track"  Fill="{DynamicResource PressedBrush}" RadiusX="2" RadiusY="2"/>
+                                            <Rectangle x:Name="PART_Indicator" HorizontalAlignment="Left" Fill="{DynamicResource MainColorBrush}" RadiusX="2" RadiusY="2"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </ControlTemplate>
+                        </ProgressBar.Template>
+                    </ProgressBar>
+                    <TextBlock x:Name="TimerBlock" Text="30:00:00"  Background="Transparent" FontWeight="Bold" Style="{DynamicResource TextBlockListStyle}" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
+            </StackPanel>
+            <DockPanel DockPanel.Dock="Bottom">
+                <Button x:Name="CloseButton" Margin="5,5,0,5" DockPanel.Dock="Left" Width="140" Height="30" Content="Close applications"></Button>
+                <Button x:Name="CancelButton" DockPanel.Dock="Right"  Margin="0,5,5,5"  Width="140" Height="30" Content="Cancel"></Button>
+                <Button x:Name="DeferButton" Width="140" Margin="0,5,0,5" Height="30" Content="Defer"></Button>
+            </DockPanel>
+        </DockPanel>
+    </DockPanel>
+</Window>
+'@
+        [bool]$IsLightTheme = Test-NxtPersonalizationLightTheme
+
+        [System.Windows.Window]$control = New-NxtWpfControl $inputXML
+
+        [System.Windows.Media.Color]$backColor = $control.Resources['BackColor']
+        [System.Windows.Media.Color]$backLightColor = $control.Resources['BackLightColor']
+        [System.Windows.Media.Color]$foreColor = $control.Resources['ForeColor']
+        [System.Windows.Media.Color]$mouseHoverColor = $control.Resources['MouseHoverColor']
+        [System.Windows.Media.Color]$pressedColor = $control.Resources['PressedColor']
+        
+        [System.Windows.Window]$control_MainWindow = $control.FindName('InstallationWelcomeMainWindow')
+        [System.Windows.Controls.TextBlock]$control_FollowApplicationText = $control.FindName('FollowApplicationText')
+        [System.Windows.Controls.TextBlock]$control_AppNameText = $control.FindName('AppNameText')
+        [System.Windows.Controls.TextBlock]$control_ApplicationCloseText = $control.FindName('ApplicationCloseText')
+        [System.Windows.Controls.TextBlock]$control_SaveWorkText = $control.FindName('SaveWorkText')
+        [System.Windows.Controls.ListView]$control_CloseApplicationList = $control.FindName('CloseApplicationList')
+        [System.Windows.Controls.TextBlock]$control_DeferTextOne = $control.FindName('DeferTextOne')
+        [System.Windows.Controls.TextBlock] $control_DeferTimerText = $control.FindName('DeferTimerText')
+        [System.Windows.Controls.TextBlock] $control_DeferTextTwo = $control.FindName('DeferTextTwo')
+        [System.Windows.Controls.TextBlock]$control_TimerText = $control.FindName('TimerText')
+        [System.Windows.Controls.Button]$control_CloseButton = $control.FindName('CloseButton')
+        [System.Windows.Controls.Button]$control_CancelButton = $control.FindName('CancelButton')
+        [System.Windows.Controls.Button]$control_DeferButton = $control.FindName('DeferButton')
+        [System.Windows.Controls.Button]$control_WindowCloseButton = $control.FindName('WindowCloseButton')
+        [System.Windows.Controls.ProgressBar]$control_Progress = $control.FindName('Progress')
+        [System.Windows.Controls.TextBlock]$control_TimerBlock = $control_Progress.FindName('TimerBlock')
+        [System.Windows.Controls.Image]$control_Banner = $control.FindName('Banner')
+        [System.Windows.Controls.TextBlock]$control_TitleText = $control.FindName('TitleText')
+        [System.Windows.Controls.TextBlock]$control_DeferDeadlineText = $control.FindName('DeferDeadlineText')
+        [System.Windows.Controls.TextBlock]$control_CustomText = $control.FindName('CustomTextBlock')
+        [System.Windows.Controls.TextBlock]$control_PopupCloseWithoutSavingText = $control.FindName('PopupCloseWithoutSavingText')
+        [System.Windows.Controls.TextBlock]$control_PopupListText = $control.FindName('PopupListText')
+        [System.Windows.Controls.TextBlock]$control_PopupSureToCloseText = $control.FindName('PopupSureToCloseText')
+        [System.Windows.Controls.DockPanel]$control_HeaderPanel = $control.FindName('HeaderPanel')
+        [System.Windows.Controls.DockPanel]$control_MainPanel = $control.FindName('MainPanel')
+        [System.Windows.Controls.Primitives.Popup]$control_Popup = $control.FindName('Popup')
+        [System.Windows.Controls.Button]$control_PopupCloseApplication = $control.FindName('PopupCloseApplication')
+        [System.Windows.Controls.Button]$control_PopupCancel = $control.FindName('PopupCancel')
+
+        $control_MainWindow.TopMost = $TopMost
+
+        [ScriptBlock]$windowsCloseButtonClickHandler = {
+            $control_MainWindow.Tag = "Cancel"
+            $control_MainWindow.Close()
+        }
+
+        [ScriptBlock]$closeButtonClickHandler = {
+            $control_Popup.IsOpen = $true
+            $control_HeaderPanel.IsEnabled = $false
+            $control_HeaderPanel.Opacity = 0.8
+            $control_MainPanel.IsEnabled = $false
+            $control_MainPanel.Opacity = 0.8
+        }
+
+        [ScriptBlock]$deferbuttonClickHandler = {
+            $control_MainWindow.Tag = "Defer"
+            $control_MainWindow.Close()
+        }
+
+        [ScriptBlock]$cancelButtonClickHandler = {
+            $control_MainWindow.Tag = "Cancel"
+            $control_MainWindow.Close()
+        }
+
+        [ScriptBlock]$popupCloseApplicationClickHandler = {
+            $control_Popup.IsOpen = $false
+            $control_HeaderPanel.IsEnabled = $true
+            $control_HeaderPanel.Opacity = 1
+            $control_MainPanel.IsEnabled = $true
+            $control_MainPanel.Opacity = 1
+            $control_MainWindow.Tag = "Close"
+            $control_MainWindow.Close()
+        }
+
+        [ScriptBlock]$popupCancelClickHandler = {
+            $control_Popup.IsOpen = $false
+            $control_HeaderPanel.IsEnabled = $true
+            $control_HeaderPanel.Opacity = 1
+            $control_MainPanel.IsEnabled = $true
+            $control_MainPanel.Opacity = 1
+        }
+
+        $control_WindowCloseButton.add_Click($windowsCloseButtonClickHandler)
+        $control_CloseButton.add_Click($closeButtonClickHandler)
+        $control_DeferButton.add_Click($deferbuttonClickHandler)
+        $control_CancelButton.add_Click($cancelButtonClickHandler)
+        $control_PopupCloseApplication.add_Click($popupCloseApplicationClickHandler)
+        $control_PopupCancel.add_Click($popupCancelClickHandler)
+            
+        if ($IsLightTheme)
+        {
+            $backColor.r = 246
+            $backColor.g = 246
+            $backColor.b = 246
+            $backLightColor.r = 218
+            $backLightColor.g = 218
+            $backLightColor.b = 218
+            $foreColor.r = 0
+            $foreColor.g = 0
+            $foreColor.b = 0
+            $mouseHoverColor.r = 255
+            $mouseHoverColor.g = 255
+            $mouseHoverColor.b = 255
+            $pressedColor.r = 218
+            $pressedColor.g = 218
+            $pressedColor.b = 218
+            $control.Resources['BackColor'] = $backColor
+            $control.Resources['BackLightColor'] = $backLightColor
+            $control.Resources['ForeColor'] = $foreColor
+            $control.Resources['MouseHoverColor'] = $mouseHoverColor
+            $control.Resources['PressedColor'] = $pressedColor  
+
+            $control_Banner.Source =  $appDeployLogoBanner
+        }
+        else
+        {
+            $control_Banner.Source =  $appDeployLogoBannerDark
+        }
+
+        [Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
+        $control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWork
+        $control_DeferTextTwo.Text = $xmlUIMessages.NxtWelcomePrompt_DeferalExpired
+        $control_CloseButton.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
+        $control_CancelButton.Content = $xmlUIMessages.NxtWelcomePrompt_Close
+        $control_DeferButton.Content = $xmlUIMessages.NxtWelcomePrompt_Defer
+        $control_CloseApplicationList.View.Columns[0].Header = $xmlUIMessages.NxtWelcomePrompt_ApplicationName
+        $control_CloseApplicationList.View.Columns[1].Header = $xmlUIMessages.NxtWelcomePrompt_StartedBy
+        $control_TimerText.Text = $xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving
+        $control_PopupCloseWithoutSavingText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpCloseApplicationText
+        $control_PopupSureToCloseText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpSureToCloseText
+        $control_PopupCloseApplication.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
+        $control_PopupCancel.Content = $xmlUIMessages.NxtWelcomePrompt_Close
+        Switch ($deploymentType) {
+            'Uninstall' {
+                $control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving -f $xmlUIMessages.DeploymentType_Uninstall);
+                $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_UninstallVerb);
+                $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Uninstall);
+                $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Uninstall);
+                Break
+            }
+            'Repair' {
+                $control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving -f $xmlUIMessages.DeploymentType_Repair);
+                $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_RepairVerb);
+                $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Repair);
+                $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Repair);
+                Break
+            }
+            Default {
+                $control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving -f $xmlUIMessages.DeploymentType_Install);
+                $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_InstallVerb);
+                $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Install);
+                $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Install);
+                Break
+            }
+        }
+        If ($CustomText -and $configWelcomePromptCustomMessage) {
+            $control_CustomText.Text = $configWelcomePromptCustomMessage
+            $control_CustomText.Visibility = "Visible"
+        }
+        else {
+            $control_CustomText.Visibility = "Collapsed"
+        }
+
+        $control_AppNameText.Text = $installTitle
+        $control_TitleText.Text = $installTitle
+                
+        [PSObject[]]$runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects
+
+        [ScriptBlock]$FillCloseApplacationList = {
+            param($runningProcessesParam)
+            ForEach ($runningProcessItem in $runningProcessesParam) {
+                [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
+                Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
+                    $item = New-Object PSObject -Property @{
+                        Name = $runningProcessItem.Name
+                        StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
+                    }
+                    $control_CloseApplicationList.Items.Add($item)
+                }
+            }
+        }
+        & $FillCloseApplacationList $runningProcesses
+
+        [string]$names = $runningProcesses | Select-Object -ExpandProperty Name
+        $control_PopupListText.Text = $names.Trim()
+        
+        [Int32]$OutNumber = $null
+
+        If ([Int32]::TryParse($DeferTimes,[ref]$OutNumber) -and $DeferTimes -ge 0) {
+            $control_DeferTimerText.Text =  $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
+        }
+        If ($DeferDeadline) {
+            $control_DeferDeadlineText.Text = $xmlUIMessages.DeferPrompt_Deadline + " " + $DeferDeadline
+        }
+
+        if ([string]::IsNullOrEmpty($control_DeferTimerText.Text))
+        {
+           $control_DeferTextOne.Visibility = "Collapsed"
+           $control_DeferTextTwo.Visibility = "Collapsed"
+           $control_DeferButton.Visibility = "Collapsed"
+           $control_DeferDeadlineText.Visibility = "Collapsed"         
+        }
+        else
+        {  
+          $control_DeferTextOne.Visibility = "Visible"
+          $control_DeferTextTwo.Visibility = "Visible"
+          $control_DeferButton.Visibility = "Visible"
+            If ($DeferDeadline)
+            {
+                $control_DeferDeadlineText.Visibility = "Visible"
+            }
+            else
+            {
+                $control_DeferDeadlineText.Visibility = "Collapsed"
+            }
+        }
+
+        if (-not $UserCanCloseAll)
+        {
+            $control_CloseButton.Visibility = "Collapsed"
+        }
+
+        if (-not $UserCanAbort)
+        {
+            $control_CancelButton.Visibility = "Collapsed"
+            $control_WindowCloseButton.Visibility = "Collapsed"
+        }
+
+        If ($showCloseApps) {
+            $control_CloseButton.ToolTip = $xmlUIMessages.ClosePrompt_ButtonContinueTooltip
+        }
+      
+        ## Add the timer if it doesn't already exist - this avoids the timer being reset if the continue button is clicked
+        If (-not $script:welcomeTimer) {
+            [System.Windows.Threading.DispatcherTimer]$script:welcomeTimer = New-Object System.Windows.Threading.DispatcherTimer
+        }
+
+        [ScriptBlock]$mainWindowLoaded = {
+            If ($showCountdown)
+            {
+                $control_Progress.Maximum = $CloseAppsCountdown
+                $control_Progress.Value = $CloseAppsCountdown
+                [Timespan]$tmpTime = [timespan]::fromseconds($CloseAppsCountdown)
+            }
+            else {
+                $control_Progress.Maximum = $configInstallationUITimeout
+                $control_Progress.Value = $configInstallationUITimeout
+                [Timespan]$tmpTime = [timespan]::fromseconds($configInstallationUITimeout)
+                Set-Variable -Name 'closeAppsCountdownGlobal' -Value $configInstallationUITimeout -Scope 'Script'
+            }
+            $control_TimerBlock.Text = [String]::Format('{0}:{1:d2}:{2:d2}', $tmpTime.Days * 24 + $tmpTime.Hours, $tmpTime.Minutes, $tmpTime.Seconds)
+            $script:welcomeTimer.Start()
+        }
+
+        [ScriptBlock]$mainWindowClosed = {
+            Try {
+                $control_WindowCloseButton.remove_Click($windowsCloseButtonClickHandler)
+                $control_CloseButton.remove_Click($closeButtonClickHandler)
+                $control_DeferButton.remove_Click($deferbuttonClickHandler)
+                $control_CancelButton.remove_Click($cancelButtonClickHandler)
+                $control_PopupCloseApplication.remove_Click($popupCloseApplicationClickHandler)
+                $control_PopupCancel.remove_Click($popupCancelClickHandler)
+                if ($null -ne $welcomeTimerPersist.IsEnabled -eq $true) {
+                    $welcomeTimerPersist.remove_Tick($welcomeTimerPersist_Tick)
+                }
+                if ($null -ne $timerRunningProcesses.IsEnabled -eq $true) {
+                    $timerRunningProcesses.remove_Tick($timerRunningProcesses_Tick)
+                }
+                if ($script:welcomeTimer.IsEnabled -eq $true) {
+                    $script:welcomeTimer.remove_Tick($welcomeTimer_Tick)
+                }
+                $control_MainWindow.remove_Loaded($mainWindowLoaded)
+                $control_MainWindow.remove_Closed($mainWindowClosed)
+            }
+            Catch {
+            }
+        }
+
+        $control_MainWindow.Add_Loaded($mainWindowLoaded)
+
+        $control_MainWindow.Add_Closed($mainWindowClosed)
+     
+        $script:welcomeTimer.Interval = [timespan]::fromseconds(1)
+        [ScriptBlock]$welcomeTimer_Tick = {
+        # Your code to be executed every second goes here
+        Try {
+                [Int32]$progressValue = $closeAppsCountdownGlobal - 1
+                Set-Variable -Name 'closeAppsCountdownGlobal' -Value $progressValue -Scope 'Script'
+                ## If the countdown is complete, close the application(s) or continue
+                If ($progressValue -lt 0) {
+                    if ($showCountdown)
+                    {
+                        if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
+                            $control_MainWindow.Tag = "Cancel"
+                        }
+                        else {
+                            $control_MainWindow.Tag = "Close"
+                        }
+                    }   
+                    else {
+                        $control_MainWindow.Tag = "Timeout"
+                    }
+                    $control_MainWindow.Close()
+                }
+                Else {
+                    $control_Progress.Value = $progressValue
+                    [timespan]$progressTime = [timespan]::fromseconds($progressValue)
+                    $control_TimerBlock.Text = [String]::Format('{0}:{1:d2}:{2:d2}', $progressTime.Days * 24 + $progressTime.Hours, $progressTime.Minutes, $progressTime.Seconds)
+            
+                }
+            }
+            Catch {
+            }
+        }
+        
+        $script:welcomeTimer.add_Tick($welcomeTimer_Tick)
+
+        ## Persistence Timer
+        If ($PersistPrompt) {
+            [System.Windows.Threading.DispatcherTimer]$welcomeTimerPersist = New-Object System.Windows.Threading.DispatcherTimer
+            $welcomeTimerPersist.Interval = [timespan]::fromseconds($configInstallationPersistInterval)
+            [ScriptBlock]$welcomeTimerPersist_Tick = {
+                $control_MainWindow.Topmost = $true;  
+                $control_MainWindow.Topmost = $TopMost;
+            }
+            $welcomeTimerPersist.add_Tick($welcomeTimerPersist_Tick)
+            $welcomeTimerPersist.Start()
+        }
+        ## Process Re-Enumeration Timer
+        If ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
+            [System.Windows.Threading.DispatcherTimer]$timerRunningProcesses = New-Object System.Windows.Threading.DispatcherTimer
+            $timerRunningProcesses.Interval = [timespan]::fromseconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
+            [ScriptBlock]$timerRunningProcesses_Tick = {
+                Try {
+                    [PSObject[]]$dynamicRunningProcesses = $null
+                    $dynamicRunningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging
+                    [String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+                    If ($dynamicRunningProcessDescriptions -ne $script:runningProcessDescriptions) {
+                        # Update the runningProcessDescriptions variable for the next time this function runs
+                        Set-Variable -Name 'runningProcessDescriptions' -Value $dynamicRunningProcessDescriptions -Force -Scope 'Script'
+                        If ($dynamicRunningProcesses) {
+                            Write-Log -Message "The running processes have changed. Updating the apps to close: [$script:runningProcessDescriptions]..." -Source ${CmdletName}
+                        }
+                        # Update the list box with the processes to close
+                        $control_CloseApplicationList.Items.Clear()
+                        & $FillCloseApplacationList $dynamicRunningProcesses
+                    }
+                    # If CloseApps processes were running when the prompt was shown, and they are subsequently detected to be closed while the form is showing, then close the form. The deferral and CloseApps conditions will be re-evaluated.
+                    If ($ProcessDescriptions) {
+                        If (-not $dynamicRunningProcesses) {
+                            Write-Log -Message 'Previously detected running processes are no longer running.' -Source ${CmdletName}
+                            $control_MainWindow.Close()
+                        }
+                    }
+                    # If CloseApps processes were not running when the prompt was shown, and they are subsequently detected to be running while the form is showing, then close the form for relaunch. The deferral and CloseApps conditions will be re-evaluated.
+                    Else {
+                        If ($dynamicRunningProcesses) {
+                            Write-Log -Message 'New running processes detected. Updating the form to prompt to close the running applications.' -Source ${CmdletName}
+                            $control_MainWindow.Close()
+                        }
+                    }
+                }
+                Catch {
+                }
+            }
+            $timerRunningProcesses.add_Tick($timerRunningProcesses_Tick)
+            $timerRunningProcesses.Start()
+        }
+
+        If ($MinimizeWindows) {
+            $shellApp.MinimizeAll()
+        }
+
+        # Open dialog and Wait
+        $control_MainWindow.ShowDialog() | Out-Null
+              
+        If ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
+            $timerRunningProcesses.Stop()
+        }
+
+        Write-Output -InputObject ($control_MainWindow.Tag)
+    }
+    End {
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+    }
 }
 #endregion
 #region Function Stop-NxtProcess
@@ -5637,6 +6894,55 @@ function Test-NxtLocalUserExists {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
+#endregion
+#region Test-NxtPersonalizationLightTheme
+
+Function Test-NxtPersonalizationLightTheme
+{
+	<#
+	.DESCRIPTION
+		Tests if a User has the Light Theme enabled.
+	.OUTPUTS
+		System.Boolean.
+	.EXAMPLE
+		Test-NxtPersonalizationLightTheme
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		## cannot return cmdletpsboundparameters here, because it is not yet set.
+	}
+	Process {
+		[bool]$lightThemeResult = $true
+    if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) 
+    {
+        if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
+            [bool]$lightThemeResult = $true
+        } else {
+            [bool]$lightThemeResult = $false
+        }
+    } 
+    else
+    {
+        if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) 
+        {
+            if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
+                [bool]$lightThemeResult = $true
+            } else {
+                [bool]$lightThemeResult = $false
+            }
+        } 
+    }
+    Write-Output $lightThemeResult
+	}
+    End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+
 #endregion
 #region Function Test-NxtProcessExists
 function Test-NxtProcessExists {
@@ -6944,6 +8250,33 @@ function Watch-NxtRegistryKeyIsRemoved {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
+#endregion
+#region New-NxtWpfControl
+function New-NxtWpfControl()
+{
+	param(
+		[parameter(Mandatory=$True)]
+		[string]$inputXML
+	)
+	[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+	$inputXML = $inputXML = $inputXML -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
+ 
+	#Read XAML
+	[xml]$xaml = $inputXML
+
+	[System.Xml.XmlNodeReader]$reader=(New-Object System.Xml.XmlNodeReader $xaml)
+	try
+	{
+		[System.Windows.Window]$control=[Windows.Markup.XamlReader]::Load( $reader )
+	}
+	catch 
+	{  
+		Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
+		Throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
+	}
+	return $control
+}
+
 #endregion
 #region Function Write-NxtSingleXmlNode
 function Write-NxtSingleXmlNode {
