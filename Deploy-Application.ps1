@@ -448,4 +448,4 @@ function CustomUninstallUserPartEnd {
 #endregion
 
 ## Execute the main function to start the process
-#Main
+Main
