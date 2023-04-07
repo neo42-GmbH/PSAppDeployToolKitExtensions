@@ -5142,13 +5142,13 @@ function Set-NxtProcessEnvironmentVariable {
 function Set-NxtCustomSetupCfg {
 	<#
 	.SYNOPSIS
-		Set the contents from CustomSetup.cfg to $global:SetupCfg.
+		Set the contents from CustomSetup.cfg to $global:CustomSetupCfg.
 	.DESCRIPTION
-		Imports a Setup.cfg file in Ini format.
+		Imports a CustomSetup.cfg file in Ini format.
 	.PARAMETER Path
 		The path to the CustomSetup.cfg file.
 	.EXAMPLE
-		Set-NxtCustomSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
+		Set-NxtCustomSetupCfg -Path C:\path\to\setupcfg\CustomSetup.cfg -ContinueOnError $false
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -5280,172 +5280,91 @@ function Set-NxtSystemEnvironmentVariable {
 Function Show-NxtInstallationWelcome {
     <#
     .SYNOPSIS
-
-    Show a welcome dialog prompting the user with information about the installation and actions to be performed before the installation can begin.
-
+    	Show a welcome dialog prompting the user with information about the installation and actions to be performed before the installation can begin.
     .DESCRIPTION
+		The following prompts can be included in the welcome dialog:
+			a) Close the specified running applications, or optionally close the applications without showing a prompt (using the -Silent switch).
+			b) Defer the installation a certain number of times, for a certain number of days or until a deadline is reached.
+			c) Countdown until applications are automatically closed.
+			d) Prevent users from launching the specified applications while the installation is in progress.
 
-    The following prompts can be included in the welcome dialog:
-        a) Close the specified running applications, or optionally close the applications without showing a prompt (using the -Silent switch).
-        b) Defer the installation a certain number of times, for a certain number of days or until a deadline is reached.
-        c) Countdown until applications are automatically closed.
-        d) Prevent users from launching the specified applications while the installation is in progress.
-
-    Notes:
-        The process descriptions are retrieved from WMI, with a fall back on the process name if no description is available. Alternatively, you can specify the description yourself with a '=' symbol - see examples.
-        The dialog box will timeout after the timeout specified in the XML configuration file (default 1 hour and 55 minutes) to prevent SCCM installations from timing out and returning a failure code to SCCM. When the dialog times out, the script will exit and return a 1618 code (SCCM fast retry code).
-
+		Notes:
+			The process descriptions are retrieved from WMI, with a fall back on the process name if no description is available. Alternatively, you can specify the description yourself with a '=' symbol - see examples.
+			The dialog box will timeout after the timeout specified in the XML configuration file (default 1 hour and 55 minutes) to prevent SCCM installations from timing out and returning a failure code to SCCM. When the dialog times out, the script will exit and return a 1618 code (SCCM fast retry code).
     .PARAMETER Silent
-
-    Stop processes without prompting the user.
-
+    	Stop processes without prompting the user.
     .PARAMETER CloseAppsCountdown
-
-    Option to provide a countdown in seconds until the specified applications are automatically closed. This only takes effect if deferral is not allowed or has expired.
-
+    	Option to provide a countdown in seconds until the specified applications are automatically closed. This only takes effect if deferral is not allowed or has expired.
     .PARAMETER ForceCloseAppsCountdown
-
-    Option to provide a countdown in seconds until the specified applications are automatically closed regardless of whether deferral is allowed.
-
+    	Option to provide a countdown in seconds until the specified applications are automatically closed regardless of whether deferral is allowed.
     .PARAMETER PromptToSave
-
-    Specify whether to prompt to save working documents when the user chooses to close applications by selecting the "Close Programs" button. Option does not work in SYSTEM context unless toolkit launched with "psexec.exe -s -i" to run it as an interactive process under the SYSTEM account.
-
+    	Specify whether to prompt to save working documents when the user chooses to close applications by selecting the "Close Programs" button. Option does not work in SYSTEM context unless toolkit launched with "psexec.exe -s -i" to run it as an interactive process under the SYSTEM account.
     .PARAMETER PersistPrompt
-
-    Specify whether to make the Show-InstallationWelcome prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml. The user will have no option but to respond to the prompt. This only takes effect if deferral is not allowed or has expired.
-
+    	Specify whether to make the Show-InstallationWelcome prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml. The user will have no option but to respond to the prompt. This only takes effect if deferral is not allowed or has expired.
     .PARAMETER BlockExecution
-
-    Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
-
+    	Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
     .PARAMETER AllowDefer
-
-    Enables an optional defer button to allow the user to defer the installation.
-
+    	Enables an optional defer button to allow the user to defer the installation.
     .PARAMETER AllowDeferCloseApps
-
-    Enables an optional defer button to allow the user to defer the installation only if there are running applications that need to be closed. This parameter automatically enables -AllowDefer
-
+    	Enables an optional defer button to allow the user to defer the installation only if there are running applications that need to be closed. This parameter automatically enables -AllowDefer
     .PARAMETER DeferTimes
-
-    Specify the number of times the installation can be deferred.
-
+    	Specify the number of times the installation can be deferred.
     .PARAMETER DeferDays
-
-    Specify the number of days since first run that the installation can be deferred. This is converted to a deadline.
-
+    	Specify the number of days since first run that the installation can be deferred. This is converted to a deadline.
     .PARAMETER DeferDeadline
-
-    Specify the deadline date until which the installation can be deferred.
-
-    Specify the date in the local culture if the script is intended for that same culture.
-
-    If the script is intended to run on EN-US machines, specify the date in the format: "08/25/2013" or "08-25-2013" or "08-25-2013 18:00:00"
-
-    If the script is intended for multiple cultures, specify the date in the universal sortable date/time format: "2013-08-22 11:51:52Z"
-
-    The deadline date will be displayed to the user in the format of their culture.
-
+		Specify the deadline date until which the installation can be deferred.
+		Specify the date in the local culture if the script is intended for that same culture.
+		If the script is intended to run on EN-US machines, specify the date in the format: "08/25/2013" or "08-25-2013" or "08-25-2013 18:00:00"
+		If the script is intended for multiple cultures, specify the date in the universal sortable date/time format: "2013-08-22 11:51:52Z"
+		The deadline date will be displayed to the user in the format of their culture.
     .PARAMETER MinimizeWindows
-
-    Specifies whether to minimize other windows when displaying prompt. Default: $true.
-
+    	Specifies whether to minimize other windows when displaying prompt. Default: $true.
     .PARAMETER TopMost
-
-    Specifies whether the windows is the topmost window. Default: $true.
-
+    	Specifies whether the windows is the topmost window. Default: $true.
     .PARAMETER ForceCountdown
-
-    Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
-
+    	Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
     .PARAMETER CustomText
-
-    Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
-        
+    	Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.   
     .Parameter IsInstall
         Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
-
     .PARAMETER ContinueType
-
-    Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
-
+    	Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
     .PARAMETER UserCanCloseAll
-
-    Specifies if the user can close all applications. Default: $false.
-
+    	Specifies if the user can close all applications. Default: $false.
     .PARAMETER UserCanAbort
-
-    Specifies if the user can abort the process. Default: $false.
-
-    .INPUTS
-
-    None
-
-    You cannot pipe objects to this function.
-
+		Specifies if the user can abort the process. Default: $false.
     .OUTPUTS
-
-    None
-
-    This function does not return objects.
-
+		Exit code depending on the user's response or the timeout.
     .EXAMPLE
-
-    Show-InstallationWelcome -CloseApps 'iexplore,winword,excel'
-
-    Prompt the user to close Internet Explorer, Word and Excel.
-
+		Show-InstallationWelcome -CloseApps 'iexplore,winword,excel'
+		Prompt the user to close Internet Explorer, Word and Excel.
     .EXAMPLE
-
-    Show-InstallationWelcome -CloseApps 'winword,excel' -Silent
-
-    Close Word and Excel without prompting the user.
-
+		Show-InstallationWelcome -CloseApps 'winword,excel' -Silent
+		Close Word and Excel without prompting the user.
     .EXAMPLE
-
-    Show-InstallationWelcome -CloseApps 'winword,excel' -BlockExecution
-
-    Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
-
+		Show-InstallationWelcome -CloseApps 'winword,excel' -BlockExecution
+		Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
     .EXAMPLE
-
-    Show-InstallationWelcome -CloseApps 'winword=Microsoft Office Word,excel=Microsoft Office Excel' -CloseAppsCountdown 600
-
-    Prompt the user to close Word and Excel, with customized descriptions for the applications and automatically close the applications after 10 minutes.
-
+		Show-InstallationWelcome -CloseApps 'winword=Microsoft Office Word,excel=Microsoft Office Excel' -CloseAppsCountdown 600
+		Prompt the user to close Word and Excel, with customized descriptions for the applications and automatically close the applications after 10 minutes.
     .EXAMPLE
-
-    Show-InstallationWelcome -CloseApps 'winword,msaccess,excel' -PersistPrompt
-
-    Prompt the user to close Word, MSAccess and Excel.
-
-    By using the PersistPrompt switch, the dialog will return to the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml, so the user cannot ignore it by dragging it aside.
-
+		Show-InstallationWelcome -CloseApps 'winword,msaccess,excel' -PersistPrompt
+		Prompt the user to close Word, MSAccess and Excel.
+		By using the PersistPrompt switch, the dialog will return to the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml, so the user cannot ignore it by dragging it aside.
     .EXAMPLE
-
-    Show-InstallationWelcome -AllowDefer -DeferDeadline '25/08/2013'
-
-    Allow the user to defer the installation until the deadline is reached.
-
+		Show-InstallationWelcome -AllowDefer -DeferDeadline '25/08/2013'
+		Allow the user to defer the installation until the deadline is reached.
     .EXAMPLE
-
-    Show-InstallationWelcome -CloseApps 'winword,excel' -BlockExecution -AllowDefer -DeferTimes 10 -DeferDeadline '25/08/2013' -CloseAppsCountdown 600
-
-    Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
-
-    Allow the user to defer the installation a maximum of 10 times or until the deadline is reached, whichever happens first.
-
-    When deferral expires, prompt the user to close the applications and automatically close them after 10 minutes.
-
-    .NOTES
-
+		Show-InstallationWelcome -CloseApps 'winword,excel' -BlockExecution -AllowDefer -DeferTimes 10 -DeferDeadline '25/08/2013' -CloseAppsCountdown 600
+		Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
+		Allow the user to defer the installation a maximum of 10 times or until the deadline is reached, whichever happens first.
+		When deferral expires, prompt the user to close the applications and automatically close them after 10 minutes.
+	.NOTES
+		The code of this function is mainly adopted from the PSAppDeployToolkit.
     .LINK
-
-    https://psappdeploytoolkit.com
+    	https://psappdeploytoolkit.com
     #>
     [CmdletBinding()]
-
     Param (
         ## Specify whether to prompt user or force close the applications
         [Parameter(Mandatory = $false)]
@@ -5907,91 +5826,53 @@ Function Show-NxtInstallationWelcome {
 #region Function Show-NxtWelcomePrompt
 Function Show-NxtWelcomePrompt {
     <#
-.SYNOPSIS
-
-Called by Show-InstallationWelcome to prompt the user to optionally do the following:
-    1) Close the specified running applications.
-    2) Provide an option to defer the installation.
-    3) Show a countdown before applications are automatically closed.
-
-.DESCRIPTION
-
-The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
-If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
-The dialog box will timeout after the timeout specified in the XML configuration file (default 1 hour and 55 minutes) to prevent SCCM installations from timing out and returning a failure code to SCCM. When the dialog times out, the script will exit and return a 1618 code (SCCM fast retry code).
-
-.PARAMETER ProcessDescriptions
-
-The descriptive names of the applications that are running and need to be closed.
-
-.PARAMETER CloseAppsCountdown
-
-Specify the countdown time in seconds before running applications are automatically closed when deferral is not allowed or expired.
-
-.PARAMETER PersistPrompt
-
-Specify whether to make the prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml.
-
-.PARAMETER AllowDefer
-
-Specify whether to provide an option to defer the installation.
-
-.PARAMETER DeferTimes
-
-Specify the number of times the user is allowed to defer.
-
-.PARAMETER DeferDeadline
-
-Specify the deadline date before the user is allowed to defer.
-
-.PARAMETER MinimizeWindows
-
-Specifies whether to minimize other windows when displaying prompt. Default: $true.
-
-.PARAMETER TopMost
-
-Specifies whether the windows is the topmost window. Default: $true.
-
-.PARAMETER CustomText
-
-Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
-
-.PARAMETER ContinueType
-
-Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
-
-.PARAMETER UserCanCloseAll
-
-Specifies if the user can close all applications. Default: $false.
-
-.PARAMETER UserCanAbort
-
-Specifies if the user can abort the process. Default: $false.
-
-.INPUTS
-
-None
-
-You cannot pipe objects to this function.
-
-.OUTPUTS
-
-System.String
-
-Returns the user's selection.
-
-.EXAMPLE
-
-Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10
-
-.NOTES
-
-This is an internal script function and should typically not be called directly. It is used by the Show-InstallationWelcome prompt to display a custom prompt.
-
-.LINK
-
-https://psappdeploytoolkit.com
-#>
+	.SYNOPSIS
+		Called by Show-InstallationWelcome to prompt the user to optionally do the following:
+			1) Close the specified running applications.
+			2) Provide an option to defer the installation.
+			3) Show a countdown before applications are automatically closed.
+	.DESCRIPTION
+		The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
+		If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
+		The dialog box will timeout after the timeout specified in the XML configuration file (default 1 hour and 55 minutes) to prevent SCCM installations from timing out and returning a failure code to SCCM. When the dialog times out, the script will exit and return a 1618 code (SCCM fast retry code).
+	.PARAMETER ProcessDescriptions
+		The descriptive names of the applications that are running and need to be closed.
+	.PARAMETER CloseAppsCountdown
+		Specify the countdown time in seconds before running applications are automatically closed when deferral is not allowed or expired.
+	.PARAMETER PersistPrompt
+		Specify whether to make the prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml.
+	.PARAMETER AllowDefer
+		Specify whether to provide an option to defer the installation.
+	.PARAMETER DeferTimes
+		Specify the number of times the user is allowed to defer.
+	.PARAMETER DeferDeadline
+		Specify the deadline date before the user is allowed to defer.
+	.PARAMETER MinimizeWindows
+		Specifies whether to minimize other windows when displaying prompt. Default: $true.
+	.PARAMETER TopMost
+		Specifies whether the windows is the topmost window. Default: $true.
+	.PARAMETER CustomText
+		Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
+	.PARAMETER ContinueType
+		Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
+	.PARAMETER UserCanCloseAll
+		Specifies if the user can close all applications. Default: $false.
+	.PARAMETER UserCanAbort
+		Specifies if the user can abort the process. Default: $false.
+	.INPUTS
+		None
+		You cannot pipe objects to this function.
+	.OUTPUTS
+		System.String
+		Returns the user's selection.
+	.EXAMPLE
+		Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10
+	.NOTES
+		This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
+		The code of this function is mainly adopted from the PSAppDeployToolkit.
+	.LINK
+		https://psappdeploytoolkit.com
+	#>
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $false)]
@@ -6965,12 +6846,10 @@ function Test-NxtLocalUserExists {
 }
 #endregion
 #region Test-NxtPersonalizationLightTheme
-
-Function Test-NxtPersonalizationLightTheme
-{
+function Test-NxtPersonalizationLightTheme {
 	<#
 	.DESCRIPTION
-		Tests if a User has the Light Theme enabled.
+		Tests if a user has the light theme enabled.
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
@@ -6981,37 +6860,36 @@ Function Test-NxtPersonalizationLightTheme
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		## cannot return cmdletpsboundparameters here, because it is not yet set.
 	}
 	Process {
 		[bool]$lightThemeResult = $true
-    if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) 
-    {
-        if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
-            [bool]$lightThemeResult = $true
-        } else {
-            [bool]$lightThemeResult = $false
-        }
-    } 
-    else
-    {
-        if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) 
-        {
-            if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
-                [bool]$lightThemeResult = $true
-            } else {
-                [bool]$lightThemeResult = $false
-            }
-        } 
-    }
-    Write-Output $lightThemeResult
+		if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) 
+		{
+			if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
+				[bool]$lightThemeResult = $true
+			} 
+			else {
+				[bool]$lightThemeResult = $false
+			}
+		} 
+		else
+		{
+			if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) 
+			{
+				if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
+					[bool]$lightThemeResult = $true
+				} 
+				else {
+					[bool]$lightThemeResult = $false
+				}
+			} 
+		}
+		Write-Output $lightThemeResult
 	}
     End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-
-
 #endregion
 #region Function Test-NxtProcessExists
 function Test-NxtProcessExists {
@@ -8323,27 +8201,48 @@ function Watch-NxtRegistryKeyIsRemoved {
 #region New-NxtWpfControl
 function New-NxtWpfControl()
 {
-	param(
-		[parameter(Mandatory=$True)]
-		[string]$inputXML
+	<#
+	.DESCRIPTION
+		Creates a WPF control.
+	.PARAMETER InputXml
+		Xml input that is converted to a WPF control.
+	.EXAMPLE
+		New-NxtWpfControl -InputXml $inputXml
+	.OUTPUTS
+		none.
+	.NOTES
+		This is an internal script function and should typically not be called directly. It is used by the Show-NxtWelcomePrompt to create the WPF control.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Param(
+		[Parameter(Mandatory = $True)]
+		[string]
+		$InputXml
 	)
-	[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-	$inputXML = $inputXML = $inputXML -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
- 
-	#Read XAML
-	[xml]$xaml = $inputXML
-
-	[System.Xml.XmlNodeReader]$reader=(New-Object System.Xml.XmlNodeReader $xaml)
-	try
-	{
-		[System.Windows.Window]$control=[Windows.Markup.XamlReader]::Load( $reader )
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
-	catch 
-	{  
-		Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
-		Throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
+	Process {
+		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+		$InputXml = $InputXml -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
+		#Read XAML
+		[xml]$xaml = $InputXml
+		[System.Xml.XmlNodeReader]$reader=(New-Object System.Xml.XmlNodeReader $xaml)
+		try {
+			[System.Windows.Window]$control=[Windows.Markup.XamlReader]::Load($reader)
+		}
+		catch {  
+			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
+			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
+		}
+		return $control
 	}
-	return $control
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 
 #endregion
