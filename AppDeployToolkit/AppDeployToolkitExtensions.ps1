@@ -5282,29 +5282,32 @@ Function Show-NxtInstallationWelcome {
     .OUTPUTS
 		Exit code depending on the user's response or the timeout.
     .EXAMPLE
-		Show-InstallationWelcome -CloseApps 'iexplore,winword,excel'
+		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"},[pscustomobject]@{Name = "winword"},[pscustomobject]@{Name = "excel"})
 		Prompt the user to close Internet Explorer, Word and Excel.
     .EXAMPLE
-		Show-InstallationWelcome -CloseApps 'winword,excel' -Silent
+		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"},[pscustomobject]@{Name = "winword"}) -Silent
 		Close Word and Excel without prompting the user.
     .EXAMPLE
-		Show-InstallationWelcome -CloseApps 'winword,excel' -BlockExecution
+		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"},[pscustomobject]@{Name = "winword"}) -BlockExecution
 		Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
     .EXAMPLE
-		Show-InstallationWelcome -CloseApps 'winword=Microsoft Office Word,excel=Microsoft Office Excel' -CloseAppsCountdown 600
+		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "winword";Description = "Microsoft Office Word"},[pscustomobject]@{Name = "excel";Description = "Microsoft Office Excel"}) -CloseAppsCountdown 600
 		Prompt the user to close Word and Excel, with customized descriptions for the applications and automatically close the applications after 10 minutes.
     .EXAMPLE
-		Show-InstallationWelcome -CloseApps 'winword,msaccess,excel' -PersistPrompt
-		Prompt the user to close Word, MSAccess and Excel.
+		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "excel"},[pscustomobject]@{Name = "winword"}) -PersistPrompt
+		Prompt the user to close Word and Excel.
 		By using the PersistPrompt switch, the dialog will return to the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml, so the user cannot ignore it by dragging it aside.
     .EXAMPLE
 		Show-InstallationWelcome -AllowDefer -DeferDeadline '25/08/2013'
 		Allow the user to defer the installation until the deadline is reached.
     .EXAMPLE
-		Show-InstallationWelcome -CloseApps 'winword,excel' -BlockExecution -AllowDefer -DeferTimes 10 -DeferDeadline '25/08/2013' -CloseAppsCountdown 600
+		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "excel"},[pscustomobject]@{Name = "winword"}) -BlockExecution -AllowDefer -DeferTimes 10 -DeferDeadline '25/08/2013' -CloseAppsCountdown 600
 		Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
 		Allow the user to defer the installation a maximum of 10 times or until the deadline is reached, whichever happens first.
 		When deferral expires, prompt the user to close the applications and automatically close them after 10 minutes.
+	.EXAMPLE
+		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "excel"},[pscustomobject]@{Name = "winword"}) -UserCanCloseAll -UserCanAbort
+		Prompt the user to close Word and Excel. The user can close all applications or abort the installation.
 	.NOTES
 		The code of this function is mainly adopted from the PSAppDeployToolkit.
     .LINK
@@ -6270,7 +6273,9 @@ Function Show-NxtWelcomePrompt {
         $control_AppNameText.Text = $installTitle
         $control_TitleText.Text = $installTitle
                 
-        [PSObject[]]$runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects
+        [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects){
+			Get-RunningProcesses -ProcessObjects $processObject #|Add-Member -NotePropertyName "ProcessDescription" -NotePropertyValue $processObject.ProcessDescription
+		}
 
         [ScriptBlock]$FillCloseApplacationList = {
             param($runningProcessesParam)
@@ -6278,7 +6283,7 @@ Function Show-NxtWelcomePrompt {
                 [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
                 Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
                     $item = New-Object PSObject -Property @{
-                        Name = $runningProcessItem.Name
+                        Name = $runningProcessItem.ProcessDescription
                         StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
                     }
                     $control_CloseApplicationList.Items.Add($item)
