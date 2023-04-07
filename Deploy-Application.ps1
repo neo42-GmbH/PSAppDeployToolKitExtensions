@@ -1,16 +1,19 @@
 ﻿<#
 .SYNOPSIS
-	This script performs the installation or uninstallation of an application(s).
+	This script performs the installation, repair or uninstallation of an application(s).
 	# LICENSE #
 	PowerShell App Deployment Toolkit - Provides a set of functions to perform common application deployment tasks on Windows.
 	Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
 	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 	You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 .DESCRIPTION
-	The script is provided as a template to perform an install or uninstall of an application(s).
-	The script either performs an "Install" deployment type or an "Uninstall" deployment type.
-	The install deployment type is broken down into 3 main sections/phases: Pre-Install, Install, and Post-Install.
+	The script is provided as a template to perform an install, repair or uninstall of an application(s).
+	The script either performs an "Install", a "Repair" or an "Uninstall" deployment type.
+	The script also supports tasks that are performed in the user context by using the "InstallUserPart" and "UninstallUserPart" deployment types.
 	The script dot-sources the AppDeployToolkitMain.ps1 script which contains the logic and functions required to install or uninstall an application.
+	The script makes heavy use of "*-Nxt*"" functions from the AppDeployToolkitExtensions.ps1 that are created by "neo42 GmbH" to extend the functionality of the PSADT.
+	The "Main" function defines the basic procedure to handle various installer types automatically. It relies on the neo42PackageConfig.json file to determine the installer type and the parameters to be passed to the installer.
+	The "Main" function should not be modified. Instead, the prepared functions starting with "Custom" should be used to customize the deployment process since they are called by the "Main" function in a specific order.
 .PARAMETER DeploymentType
 	The type of deployment to perform. Default is: Install.
 .PARAMETER DeployMode
@@ -21,6 +24,9 @@
 	Changes to "user install mode" and back to "user execute mode" for installing/uninstalling applications for Remote Destkop Session Hosts/Citrix servers.
 .PARAMETER DisableLogging
 	Disables logging to file for the script. Default is: $false.
+.PARAMETER DeploymentSystem
+	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
+	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
 .EXAMPLE
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; Exit $LastExitCode }"
 .EXAMPLE
