@@ -3322,6 +3322,10 @@ function Get-NxtVariablesFromDeploymentSystem {
 		Should be called at the end of the variable definition section of any 'Deploy-Application.ps1' 
 		Variables not set by the deployment system (or set to an unsuitable value) get a default value (e.g. [bool]$global:$registerPackage = $true)
 		Variables set by the deployment system overwrite the values from the neo42PackageConfig.json
+	.PARAMETER RegisterPackage
+		Value to set $global:RegisterPackage to. Defaults to $env:registerPackage
+	.PARAMETER UninstallOld
+		Value to set $global:UninstallOld to. Defaults to $env:uninstallOld
 	.EXAMPLE
 		Get-NxtVariablesFromDeploymentSystem
 	.LINK
@@ -3331,10 +3335,10 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$registerPackage = $env:registerPackage,
+		$RegisterPackage = $env:registerPackage,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$uninstallOld = $env:uninstallOld,
+		$UninstallOld = $env:uninstallOld,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$Reboot = $env:Reboot
@@ -3346,17 +3350,17 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Process {
 		Write-Log -Message "Getting environment variables set by the deployment system..." -Source ${cmdletName}
 		try {
-			if ("false" -eq $registerPackage) {
-				[bool]$global:registerPackage = $false 
+			if ("false" -eq $RegisterPackage) {
+				[bool]$global:RegisterPackage = $false 
 			} 
 			else { 
-				[bool]$global:registerPackage = $true
+				[bool]$global:RegisterPackage = $true
 			}
-			if ("false" -eq $uninstallOld) {
-				[bool]$global:uninstallOld = $false
+			if ("false" -eq $UninstallOld) {
+				[bool]$global:UninstallOld = $false
 			}
 			if ($null -ne $Reboot) {
-				[int]$global:reboot = $Reboot
+				[int]$global:Reboot = $Reboot
 			}
 			Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
 		}
@@ -3374,8 +3378,8 @@ function Get-NxtWindowsBits {
 	<#
 	.DESCRIPTION
 		Translates the environment variable $env:PROCESSOR_ARCHITECTURE from x86 and amd64 to 32 / 64.
-	.PARAMETER PROCESSOR_ARCHITEW6432
-		Accepts the string "x86" or "x64".
+	.PARAMETER ProcessorArchitecture
+		Accepts the string "x86" or "AMD64".
 		Defaults to $env:PROCESSOR_ARCHITECTURE.
 	.EXAMPLE
 		Get-NxtWindowsBits
@@ -3388,8 +3392,7 @@ function Get-NxtWindowsBits {
 	Param (
 		[Parameter()]
 		[string]
-		$PROCESSOR_ARCHITECTURE = $env:PROCESSOR_ARCHITECTURE,
-		$test
+		$ProcessorArchitecture = $env:PROCESSOR_ARCHITECTURE
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3397,20 +3400,20 @@ function Get-NxtWindowsBits {
 	}
 	Process {
 		try {
-			switch ($PROCESSOR_ARCHITECTURE) {
+			switch ($ProcessorArchitecture.ToUpper()) {
 				"AMD64" { 
 					Write-Output 64
 				}
-				"x86" {
+				"X86" {
 					Write-Output 32
 				}
 				Default {
-					Write-Error "$($PROCESSOR_ARCHITECTURE) could not be translated to CPU bitness 'WindowsBits'"
+					Write-Error "$($ProcessorArchitecture) could not be translated to CPU bitness 'WindowsBits'"
 				}
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to translate $($PROCESSOR_ARCHITECTURE) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to translate $($ProcessorArchitecture) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -3468,7 +3471,8 @@ function Import-NxtIniFile {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-		[String]$Path,
+		[String]
+		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$ContinueOnError = $true
