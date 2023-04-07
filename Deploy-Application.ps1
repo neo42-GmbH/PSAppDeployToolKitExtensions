@@ -70,6 +70,7 @@ switch ($DeploymentType) {
 ## Global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
+[string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
 ## Several PSADT-functions do not work, if these variables are not set here.
 Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {
@@ -96,6 +97,8 @@ Try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
 	If (-not (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
 	If ($DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
+	## Add Custom Nxt Variables
+	[string]$appDeployLogoBannerDark = Join-Path -Path $scriptRoot -ChildPath $xmlBannerIconOptions.Banner_Filename_Dark
 }
 Catch {
 	If ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
@@ -183,7 +186,10 @@ function Main {
 				if ( ($false -eq $(Get-NxtRegisterOnly)) -or ($false -eq $global:registerPackage) ) {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
-					Show-NxtInstallationWelcome -IsInstall $true
+					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
+					if ($showInstallationWelcomeResult -ne 0) {
+						Exit-Script -ExitCode $showInstallationWelcomeResult
+					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {

@@ -125,6 +125,11 @@ namespace PSADTNXT
         Update = 2,
         Downgrade = 3
     }
+    
+    public enum ContinueType {
+        Abort = 0,
+        Continue = 1
+    }
 
     public class NxtApplicationResult
     {
