@@ -5362,7 +5362,7 @@ Function Show-NxtInstallationWelcome {
 	.NOTES
 		The code of this function is mainly adopted from the PSAppDeployToolkit.
     .LINK
-    	https://psappdeploytoolkit.com
+    	https://neo42.de/psappdeploytoolkit
     #>
     [CmdletBinding()]
     Param (
@@ -5871,7 +5871,7 @@ Function Show-NxtWelcomePrompt {
 		This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
 		The code of this function is mainly adopted from the PSAppDeployToolkit.
 	.LINK
-		https://psappdeploytoolkit.com
+		https://neo42.de/psappdeploytoolkit
 	#>
     [CmdletBinding()]
     Param (
