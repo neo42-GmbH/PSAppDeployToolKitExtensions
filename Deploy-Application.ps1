@@ -36,7 +36,7 @@
 .EXAMPLE
     Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"
 .NOTES
-	Version: 2023.04.11.01
+	Version: 2023.04.11.02
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -92,7 +92,7 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 [int32]$mainExitCode = 0
 ## Variables: Script
 [string]$deployAppScriptFriendlyName = 'Deploy Application'
-[version]$deployAppScriptVersion = [version]'3.8.4'
+[version]$deployAppScriptVersion = [version]'2023.04.11.02'
 [string]$deployAppScriptDate = '26/01/2021'
 [hashtable]$deployAppScriptParameters = $psBoundParameters
 ## Variables: Environment
