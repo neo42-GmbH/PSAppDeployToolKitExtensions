@@ -1,5 +1,4 @@
-// Date Modified: 23.03.2023
-// Version Number: 0.1.2
+// Version: 2023.04.05.01
 
 using System;
 using System.Diagnostics;
@@ -125,6 +124,11 @@ namespace PSADTNXT
         Equal = 1,
         Update = 2,
         Downgrade = 3
+    }
+    
+    public enum ContinueType {
+        Abort = 0,
+        Continue = 1
     }
 
     public class NxtApplicationResult

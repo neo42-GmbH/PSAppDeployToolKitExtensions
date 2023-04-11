@@ -1,16 +1,19 @@
 ﻿<#
 .SYNOPSIS
-	This script performs the installation or uninstallation of an application(s).
+	This script performs the installation, repair or uninstallation of an application(s).
 	# LICENSE #
 	PowerShell App Deployment Toolkit - Provides a set of functions to perform common application deployment tasks on Windows.
 	Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
 	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 	You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 .DESCRIPTION
-	The script is provided as a template to perform an install or uninstall of an application(s).
-	The script either performs an "Install" deployment type or an "Uninstall" deployment type.
-	The install deployment type is broken down into 3 main sections/phases: Pre-Install, Install, and Post-Install.
+	The script is provided as a template to perform an install, repair or uninstall of an application(s).
+	The script either performs an "Install", a "Repair" or an "Uninstall" deployment type.
+	The script also supports tasks that are performed in the user context by using the "InstallUserPart" and "UninstallUserPart" deployment types.
 	The script dot-sources the AppDeployToolkitMain.ps1 script which contains the logic and functions required to install or uninstall an application.
+	The script makes heavy use of "*-Nxt*"" functions from the AppDeployToolkitExtensions.ps1 that are created by "neo42 GmbH" to extend the functionality of the PSADT.
+	The "Main" function defines the basic procedure to handle various installer types automatically. It relies on the neo42PackageConfig.json file to determine the installer type and the parameters to be passed to the installer.
+	The "Main" function should not be modified. Instead, the prepared functions starting with "Custom" should be used to customize the deployment process since they are called by the "Main" function in a specific order.
 .PARAMETER DeploymentType
 	The type of deployment to perform. Default is: Install.
 .PARAMETER DeployMode
@@ -21,6 +24,9 @@
 	Changes to "user install mode" and back to "user execute mode" for installing/uninstalling applications for Remote Destkop Session Hosts/Citrix servers.
 .PARAMETER DisableLogging
 	Disables logging to file for the script. Default is: $false.
+.PARAMETER DeploymentSystem
+	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
+	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
 .EXAMPLE
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; Exit $LastExitCode }"
 .EXAMPLE
@@ -30,6 +36,7 @@
 .EXAMPLE
     Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"
 .NOTES
+	Version: 2023.04.11.02
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -69,6 +76,7 @@ switch ($DeploymentType) {
 ## Global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
+[string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
 ## Several PSADT-functions do not work, if these variables are not set here.
 Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {
@@ -84,7 +92,7 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 [int32]$mainExitCode = 0
 ## Variables: Script
 [string]$deployAppScriptFriendlyName = 'Deploy Application'
-[version]$deployAppScriptVersion = [version]'3.8.4'
+[version]$deployAppScriptVersion = [version]'2023.04.11.02'
 [string]$deployAppScriptDate = '26/01/2021'
 [hashtable]$deployAppScriptParameters = $psBoundParameters
 ## Variables: Environment
@@ -95,6 +103,8 @@ Try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
 	If (-not (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
 	If ($DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
+	## Add Custom Nxt Variables
+	[string]$appDeployLogoBannerDark = Join-Path -Path $scriptRoot -ChildPath $xmlBannerIconOptions.Banner_Filename_Dark
 }
 Catch {
 	If ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
@@ -155,19 +165,19 @@ function Main {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-param (
-	[Parameter(Mandatory=$false)]
-	[int]
-	[ValidateSet(0,1,2)]
-	$Reboot = $global:PackageConfig.reboot,
-	[Parameter(Mandatory=$false)]
-	[string]
-	[ValidateSet('Reinstall','MSIRepair','Install')]
-	$ReinstallMode = $global:PackageConfig.ReinstallMode,
-	[Parameter(Mandatory=$false)]
-	[string]
-	$InstallMethod = $global:PackageConfig.InstallMethod
-)
+	param (
+		[Parameter(Mandatory = $false)]
+		[int]
+		[ValidateSet(0, 1, 2)]
+		$Reboot = $global:PackageConfig.reboot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Reinstall', 'MSIRepair', 'Install')]
+		$ReinstallMode = $global:PackageConfig.ReinstallMode,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallMethod = $global:PackageConfig.InstallMethod
+	)
 	try {
 		CustomBegin
 		switch ($DeploymentType) {
@@ -183,9 +193,12 @@ param (
 				if ( ($false -eq $(Get-NxtRegisterOnly)) -or ($false -eq $global:registerPackage) ) {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
-					Show-NxtInstallationWelcome -IsInstall $true
+					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
+					if ($showInstallationWelcomeResult -ne 0) {
+						Exit-Script -ExitCode $showInstallationWelcomeResult
+					}
 					CustomInstallAndReinstallPreInstallAndReinstall
-						[string]$script:installPhase = 'Decide-ReInstallMode'
+					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
@@ -194,9 +207,9 @@ param (
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
 								CustomReinstallPostUninstall -ResultToCheck $mainNxtResult
-							if ($false -eq $mainNxtResult.Success) {
-								Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
-							}
+								if ($false -eq $mainNxtResult.Success) {
+									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+								}
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
@@ -326,7 +339,7 @@ function CustomInstallAndReinstallBegin {
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -349,7 +362,7 @@ function CustomReinstallPreUninstall {
 
 function CustomReinstallPostUninstall {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -366,7 +379,7 @@ function CustomReinstallPreInstall {
 
 function CustomReinstallPostInstall {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -383,7 +396,7 @@ function CustomInstallBegin {
 
 function CustomInstallEnd {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -394,7 +407,7 @@ function CustomInstallEnd {
 
 function CustomInstallAndReinstallEnd {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
@@ -411,7 +424,7 @@ function CustomUninstallBegin {
 
 function CustomUninstallEnd {
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
