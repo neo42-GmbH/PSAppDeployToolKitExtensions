@@ -732,7 +732,7 @@ function Confirm-NxtVariables {
 		}
 		## check for specific value content
 		foreach ( $variableSetItem in ($VariableSet | Get-Member -MemberType 'NoteProperty') ) {
-			switch ($variableSetItem.Name) {
+			switch ($($variableSetItem.Name)) {
 				'AppArch' {
 					## note: possibly this parameter will be needed before this validation is called ...
 					If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -notin ("x86","x64","*") ) {
@@ -780,17 +780,25 @@ function Confirm-NxtVariables {
 						}
 					}
 				}
+				## type: object[]
 				'AppKillProcesses' {
-					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name))) ) {
+					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name).Name)) ) {
 						$($VariableSet | Select-Object *).$($variableSetItem.Name) | ForEach-Object -process {
-							if ($_.Name -cnotmatch '.{3,}' -or $_.Name -cmatch '[\\\/\:\?\"\<\>\|]+') {
-								throw "Property 'Name' of list item '$($_.Name)' of parameter '$($variableSetItem.Name)' is invalid, use at least 3 valid characters for a file name! Abort."
+							[string]$unexpectedName = ($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -notin "Name","Description").Name
+							if ( !([string]::IsNullOrEmpty($unexpectedName)) ) {
+								throw "List item '$unexpectedName' in parameter '$($variableSetItem.Name)' is invalid, use: 'Name' or 'Description'! Abort."
+							}
+							foreach ($subItem in $($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -in "Name").Name) {
+								if ( $_.Name -cnotmatch '.{3,}' -or $_.Name -cmatch '[\\\/\:\?\"\<\>\|]+' -or ($_.Name.ToCharArray() | Where-Object {$_.Name -eq '*'} | Measure-Object).Count -eq $_.Name.length ) {
+									throw "Property 'Name' of list item '$($_.Name)' of parameter '$($variableSetItem.Name)' is invalid, use at least 3 valid characters for a file name! Abort."
+								}
 							}
 						}
 					}
 				}
+				## type: object[]
 				'TestConditionsPreSetupSuccessCheck' {
-					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name))) ) {
+					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name).Name)) ) {
 						$($VariableSet | Select-Object *).$($variableSetItem.Name) | ForEach-Object -process {
 							[string]$unexpectedName = ($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -notin "Install","Uninstall").Name
 							if ( !([string]::IsNullOrEmpty($unexpectedName)) ) {
