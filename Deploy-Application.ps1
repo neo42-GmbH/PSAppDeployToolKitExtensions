@@ -36,7 +36,7 @@
 .EXAMPLE
     Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"
 .NOTES
-	Version: 2023.04.05.01
+	Version: 2023.04.11.01
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
