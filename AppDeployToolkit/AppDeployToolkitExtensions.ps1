@@ -10,7 +10,7 @@
 .DESCRIPTION
 	The script is automatically dot-sourced by the AppDeployToolkitMain.ps1 script.
 .NOTES
-	Version: 2023.04.05.01
+	Version: 2023.04.11.01
     Toolkit Exit Code Ranges:
     60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
     69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
