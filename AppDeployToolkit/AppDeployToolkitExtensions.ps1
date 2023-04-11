@@ -5225,7 +5225,7 @@ function Set-NxtSystemEnvironmentVariable {
 #endregion
 #region Function Show-NxtInstallationWelcome
 Function Show-NxtInstallationWelcome {
-    <#
+	<#
     .SYNOPSIS
     	Show a welcome dialog prompting the user with information about the installation and actions to be performed before the installation can begin.
     .DESCRIPTION
@@ -5314,467 +5314,456 @@ Function Show-NxtInstallationWelcome {
     .LINK
     	https://neo42.de/psappdeploytoolkit
     #>
-    [CmdletBinding()]
-    Param (
-        ## Specify whether to prompt user or force close the applications
-        [Parameter(Mandatory = $false)]
-        [Switch]$Silent = $false,
-        ## Specify a countdown to display before automatically closing applications where deferral is not allowed or has expired
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [Int32]$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
-        ## Specify a countdown to display before automatically closing applications whether or not deferral is allowed
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [Int32]$ForceCloseAppsCountdown = 0,
-        ## Specify whether to prompt to save working documents when the user chooses to close applications by selecting the "Close Programs" button
-        [Parameter(Mandatory = $false)]
-        [Switch]$PromptToSave = $false,
-        ## Specify whether to make the prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml.
-        [Parameter(Mandatory = $false)]
-        [Switch]$PersistPrompt = $false,
-        ## Specify whether to block execution of the processes during installation
-        [Parameter(Mandatory = $false)]
-        [Switch]$BlockExecution = $($global:PackageConfig.BlockExecution),
-        ## Specify whether to enable the optional defer button on the dialog box
-        [Parameter(Mandatory = $false)]
-        [Switch]$AllowDefer = $false,
-        ## Specify whether to enable the optional defer button on the dialog box only if an app needs to be closed
-        [Parameter(Mandatory = $false)]
-        [Switch]$AllowDeferCloseApps = $false,
-        ## Specify the number of times the deferral is allowed
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [Int32]$DeferTimes = 0,
-        ## Specify the number of days since first run that the deferral is allowed
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [Int32]$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
-        ## Specify the deadline (in format dd/mm/yyyy) for which deferral will expire as an option
-        [Parameter(Mandatory = $false)]
-        [String]$DeferDeadline = '',
-        ## Specify whether to minimize other windows when displaying prompt
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [Boolean]$MinimizeWindows = $true,
-        ## Specifies whether the window is the topmost window
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [Boolean]$TopMost = $true,
-        ## Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [Int32]$ForceCountdown = 0,
-        ## Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
-        [Parameter(Mandatory = $false)]
-        [Switch]$CustomText = $false,
+	[CmdletBinding()]
+	Param (
+		## Specify whether to prompt user or force close the applications
+		[Parameter(Mandatory = $false)]
+		[Switch]$Silent = $false,
+		## Specify a countdown to display before automatically closing applications where deferral is not allowed or has expired
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Int32]$CloseAppsCountdown = $global:SetupCfg.AskKillProcesses.Timeout,
+		## Specify a countdown to display before automatically closing applications whether or not deferral is allowed
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Int32]$ForceCloseAppsCountdown = 0,
+		## Specify whether to prompt to save working documents when the user chooses to close applications by selecting the "Close Programs" button
+		[Parameter(Mandatory = $false)]
+		[Switch]$PromptToSave = $false,
+		## Specify whether to make the prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml.
+		[Parameter(Mandatory = $false)]
+		[Switch]$PersistPrompt = $false,
+		## Specify whether to block execution of the processes during installation
+		[Parameter(Mandatory = $false)]
+		[Switch]$BlockExecution = $($global:PackageConfig.BlockExecution),
+		## Specify whether to enable the optional defer button on the dialog box
+		[Parameter(Mandatory = $false)]
+		[Switch]$AllowDefer = $false,
+		## Specify whether to enable the optional defer button on the dialog box only if an app needs to be closed
+		[Parameter(Mandatory = $false)]
+		[Switch]$AllowDeferCloseApps = $false,
+		## Specify the number of times the deferral is allowed
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Int32]$DeferTimes = 0,
+		## Specify the number of days since first run that the deferral is allowed
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Int32]$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
+		## Specify the deadline (in format dd/mm/yyyy) for which deferral will expire as an option
+		[Parameter(Mandatory = $false)]
+		[String]$DeferDeadline = '',
+		## Specify whether to minimize other windows when displaying prompt
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Boolean]$MinimizeWindows = $true,
+		## Specifies whether the window is the topmost window
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Boolean]$TopMost = $true,
+		## Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Int32]$ForceCountdown = 0,
+		## Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
+		[Parameter(Mandatory = $false)]
+		[Switch]$CustomText = $false,
 		[Parameter(Mandatory = $true)]
 		[bool]
 		$IsInstall,
-        [Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $false)]
 		[array]
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses),
-        ## this window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
-        [Parameter(Mandatory = $false)]
-        [PSADTNXT.ContinueType]$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
-        ## Specifies if the user can close all applications
-        [Parameter(Mandatory = $false)]
-        [Switch]$UserCanCloseAll = [System.Convert]::ToBoolean(($global:CustomSetupCfg.ASKKILLPROCESSES.USERCANCLOSEALL)),
-        ## Specifies if the user can abort the process
-        [Parameter(Mandatory = $false)]
-        [Switch]$UserCanAbort = [System.Convert]::ToBoolean(($global:CustomSetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER))
-    )
-    Begin {
-        ## Get the name of this function and write header
-        [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-    }
-    Process {
-        ## To break the array references to the parent object we have to create new(copied) objects from the provided array.
+		## this window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
+		[Parameter(Mandatory = $false)]
+		[PSADTNXT.ContinueType]$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
+		## Specifies if the user can close all applications
+		[Parameter(Mandatory = $false)]
+		[Switch]$UserCanCloseAll = [System.Convert]::ToBoolean(($global:CustomSetupCfg.ASKKILLPROCESSES.USERCANCLOSEALL)),
+		## Specifies if the user can abort the process
+		[Parameter(Mandatory = $false)]
+		[Switch]$UserCanAbort = [System.Convert]::ToBoolean(($global:CustomSetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER))
+	)
+	Begin {
+		## Get the name of this function and write header
+		[String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
 		[array]$AskKillProcessApps = $AskKillProcessApps | Select-Object *
-        ## override $DeferDays with 0 in Case of Uninstall
+		## override $DeferDays with 0 in Case of Uninstall
 		if (!$IsInstall) {
 			[int]$DeferDays = 0
 		}
-        ## If running in NonInteractive mode, force the processes to close silently
-        If ($deployModeNonInteractive) {
-            $Silent = $true
-        }
+		## If running in NonInteractive mode, force the processes to close silently
+		If ($deployModeNonInteractive) {
+			$Silent = $true
+		}
         
-			foreach ( $processAppsItem in $AskKillProcessApps ) {
-				if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
-					Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
-					throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please the check parameter for processes ask to kill in config file!"
-				}
-				elseif ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name)) {				
-					Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
-					[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension", "") -join ","
-					if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
-						Write-Log -Message "... no processes found." -Source ${cmdletName}
-					}
-					else {
-						Write-Log -Message "... found processes (with file extensions removed): $($processAppsItem.Name)" -Source ${cmdletName}
-					}
-					## be sure there is no description to add in case of process name with wildcards
-					[string]$processAppsItem.Description = [string]::Empty
+		foreach ( $processAppsItem in $AskKillProcessApps ) {
+			if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
+				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
+				throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
+			}
+			elseif ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name)) {				
+				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
+				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension", "") -join ","
+				if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
+					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
 				else {
-					## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
-					[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", ""
-					if (![String]::IsNullOrEmpty($processAppsItem.Description)) {
-						[string]$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
+					Write-Log -Message "... found processes (with file extensions removed): $($processAppsItem.Name)" -Source ${cmdletName}
+				}
+				## be sure there is no description to add in case of process name with wildcards
+				[string]$processAppsItem.Description = [string]::Empty
+			}
+			else {
+				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
+				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", ""
+				if (![String]::IsNullOrEmpty($processAppsItem.Description)) {
+					[string]$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
+				}
+			}
+		}
+		[string]$closeApps = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
+
+		## If using Zero-Config MSI Deployment, append any executables found in the MSI to the CloseApps list
+		If ($useDefaultMsi) {
+			[string]$closeApps = "$closeApps,$defaultMsiExecutablesList"
+		}
+
+		If ($false -eq [string]::IsNullOrEmpty($closeApps)) {
+			## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
+			[PSObject[]]$processObjects = @()
+			#  Split multiple processes on a comma, then split on equal sign, then create custom object with process name and description
+			ForEach ($process in ($closeApps -split ',' | Where-Object { $_ })) {
+				If ($process.Contains('=')) {
+					[String[]]$ProcessSplit = $process -split '='
+					$processObjects += New-Object -TypeName 'PSObject' -Property @{
+						ProcessName        = $ProcessSplit[0]
+						ProcessDescription = $ProcessSplit[1]
+					}
+				}
+				Else {
+					[String]$ProcessInfo = $process
+					$processObjects += New-Object -TypeName 'PSObject' -Property @{
+						ProcessName        = $process
+						ProcessDescription = ''
 					}
 				}
 			}
-			[string]$closeApps = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
-			if (
-                ($false -eq ([string]::IsNullOrEmpty($closeApps))) -and
-                ($true -eq $BlockExecution) -and
-                ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)"))
-                ) {
+		}
 
-					## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
-					Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
-					Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
+		## Check Deferral history and calculate remaining deferrals
+		If (($allowDefer) -or ($AllowDeferCloseApps)) {
+			#  Set $allowDefer to true if $AllowDeferCloseApps is true
+			$allowDefer = $true
+
+			#  Get the deferral history from the registry
+			$deferHistory = Get-DeferHistory
+			$deferHistoryTimes = $deferHistory | Select-Object -ExpandProperty 'DeferTimesRemaining' -ErrorAction 'SilentlyContinue'
+			$deferHistoryDeadline = $deferHistory | Select-Object -ExpandProperty 'DeferDeadline' -ErrorAction 'SilentlyContinue'
+
+			#  Reset Switches
+			$checkDeferDays = $false
+			$checkDeferDeadline = $false
+			If ($DeferDays -ne 0) {
+				$checkDeferDays = $true
 			}
-        ## If using Zero-Config MSI Deployment, append any executables found in the MSI to the CloseApps list
-        If ($useDefaultMsi) {
-            [string]$closeApps = "$closeApps,$defaultMsiExecutablesList"
-        }
+			If ($DeferDeadline) {
+				$checkDeferDeadline = $true
+			}
+			If ($DeferTimes -ne 0) {
+				If ($deferHistoryTimes -ge 0) {
+					Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${CmdletName}
+					$DeferTimes = $deferHistory.DeferTimesRemaining - 1
+				}
+				Else {
+					$DeferTimes = $DeferTimes - 1
+				}
+				Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${CmdletName}
+				If ($DeferTimes -lt 0) {
+					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					$AllowDefer = $false
+				}
+			}
+			Else {
+				If (Test-Path -LiteralPath 'variable:deferTimes') {
+					Remove-Variable -Name 'deferTimes'
+				}
+				$DeferTimes = $null
+			}
+			If ($checkDeferDays -and $allowDefer) {
+				If ($deferHistoryDeadline) {
+					Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${CmdletName}
+					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
+				}
+				Else {
+					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime (Get-Date -Date ((Get-Date).AddDays($deferDays)) -Format ($culture).DateTimeFormat.UniversalDateTimePattern).ToString()
+				}
+				Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${CmdletName}
+				If ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
+					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					$AllowDefer = $false
+				}
+			}
+			If ($checkDeferDeadline -and $allowDefer) {
+				#  Validate Date
+				Try {
+					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferDeadline -ErrorAction 'Stop'
+				}
+				Catch {
+					Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+					Throw "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z': $($_.Exception.Message)"
+				}
+				Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${CmdletName}
+				If ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
+					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					$AllowDefer = $false
+				}
+			}
+		}
+		If (($deferTimes -lt 0) -and (-not $deferDeadlineUniversal)) {
+			$AllowDefer = $false
+		}
 
-        If ($false -eq [string]::IsNullOrEmpty($closeApps)) {
-            ## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
-            [PSObject[]]$processObjects = @()
-            #  Split multiple processes on a comma, then split on equal sign, then create custom object with process name and description
-            ForEach ($process in ($closeApps -split ',' | Where-Object { $_ })) {
-                If ($process.Contains('=')) {
-                    [String[]]$ProcessSplit = $process -split '='
-                    $processObjects += New-Object -TypeName 'PSObject' -Property @{
-                        ProcessName        = $ProcessSplit[0]
-                        ProcessDescription = $ProcessSplit[1]
-                    }
-                }
-                Else {
-                    [String]$ProcessInfo = $process
-                    $processObjects += New-Object -TypeName 'PSObject' -Property @{
-                        ProcessName        = $process
-                        ProcessDescription = ''
-                    }
-                }
-            }
-        }
+		[string]$promptResult = [string]::Empty
+		## Prompt the user to close running applications and optionally defer if enabled
+		If ((-not $deployModeSilent) -and (-not $silent)) {
+			If ($forceCloseAppsCountdown -gt 0) {
+				#  Keep the same variable for countdown to simplify the code:
+				$closeAppsCountdown = $forceCloseAppsCountdown
+				#  Change this variable to a boolean now to switch the countdown on even with deferral
+				[Boolean]$forceCloseAppsCountdown = $true
+			}
+			ElseIf ($forceCountdown -gt 0) {
+				#  Keep the same variable for countdown to simplify the code:
+				$closeAppsCountdown = $forceCountdown
+				#  Change this variable to a boolean now to switch the countdown on
+				[Boolean]$forceCountdown = $true
+			}
+			Set-Variable -Name 'closeAppsCountdownGlobal' -Value $closeAppsCountdown -Scope 'Script'
+			While ((Get-RunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses') -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
+				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+				#  If no proccesses are running close
+				if ([string]::IsNullOrEmpty($runningProcessDescriptions)) {
+					break
+				}
+				#  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
+				If ($allowDefer) {
+					#  If there is deferral and closing apps is allowed but there are no apps to be closed, break the while loop
+					If ($AllowDeferCloseApps -and (-not $runningProcessDescriptions)) {
+						Break
+					}
+					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
+					ElseIf ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
+						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
+					}
+				}
+				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
+				ElseIf (($runningProcessDescriptions) -or ($forceCountdown)) {
+					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
+				}
+				#  If there is no deferral and no processes running, break the while loop
+				Else {
+					Break
+				}
 
-        ## Check Deferral history and calculate remaining deferrals
-        If (($allowDefer) -or ($AllowDeferCloseApps)) {
-            #  Set $allowDefer to true if $AllowDeferCloseApps is true
-            $allowDefer = $true
-
-            #  Get the deferral history from the registry
-            $deferHistory = Get-DeferHistory
-            $deferHistoryTimes = $deferHistory | Select-Object -ExpandProperty 'DeferTimesRemaining' -ErrorAction 'SilentlyContinue'
-            $deferHistoryDeadline = $deferHistory | Select-Object -ExpandProperty 'DeferDeadline' -ErrorAction 'SilentlyContinue'
-
-            #  Reset Switches
-            $checkDeferDays = $false
-            $checkDeferDeadline = $false
-            If ($DeferDays -ne 0) {
-                $checkDeferDays = $true
-            }
-            If ($DeferDeadline) {
-                $checkDeferDeadline = $true
-            }
-            If ($DeferTimes -ne 0) {
-                If ($deferHistoryTimes -ge 0) {
-                    Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${CmdletName}
-                    $DeferTimes = $deferHistory.DeferTimesRemaining - 1
-                }
-                Else {
-                    $DeferTimes = $DeferTimes - 1
-                }
-                Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${CmdletName}
-                If ($DeferTimes -lt 0) {
-                    Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
-                    $AllowDefer = $false
-                }
-            }
-            Else {
-                If (Test-Path -LiteralPath 'variable:deferTimes') {
-                    Remove-Variable -Name 'deferTimes'
-                }
-                $DeferTimes = $null
-            }
-            If ($checkDeferDays -and $allowDefer) {
-                If ($deferHistoryDeadline) {
-                    Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${CmdletName}
-                    [String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
-                }
-                Else {
-                    [String]$deferDeadlineUniversal = Get-UniversalDate -DateTime (Get-Date -Date ((Get-Date).AddDays($deferDays)) -Format ($culture).DateTimeFormat.UniversalDateTimePattern).ToString()
-                }
-                Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${CmdletName}
-                If ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
-                    Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
-                    $AllowDefer = $false
-                }
-            }
-            If ($checkDeferDeadline -and $allowDefer) {
-                #  Validate Date
-                Try {
-                    [String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferDeadline -ErrorAction 'Stop'
-                }
-                Catch {
-                    Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-                    Throw "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z': $($_.Exception.Message)"
-                }
-                Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${CmdletName}
-                If ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
-                    Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
-                    $AllowDefer = $false
-                }
-            }
-        }
-        If (($deferTimes -lt 0) -and (-not $deferDeadlineUniversal)) {
-            $AllowDefer = $false
-        }
-
-        [string]$promptResult = [string]::Empty
-        ## Prompt the user to close running applications and optionally defer if enabled
-        If ((-not $deployModeSilent) -and (-not $silent)) {
-            If ($forceCloseAppsCountdown -gt 0) {
-                #  Keep the same variable for countdown to simplify the code:
-                $closeAppsCountdown = $forceCloseAppsCountdown
-                #  Change this variable to a boolean now to switch the countdown on even with deferral
-                [Boolean]$forceCloseAppsCountdown = $true
-            }
-            ElseIf ($forceCountdown -gt 0) {
-                #  Keep the same variable for countdown to simplify the code:
-                $closeAppsCountdown = $forceCountdown
-                #  Change this variable to a boolean now to switch the countdown on
-                [Boolean]$forceCountdown = $true
-            }
-            Set-Variable -Name 'closeAppsCountdownGlobal' -Value $closeAppsCountdown -Scope 'Script'
-            While ((Get-RunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses') -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
-                [String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
-                #  If no proccesses are running close
-                if ([string]::IsNullOrEmpty($runningProcessDescriptions))
-                {
-                    break
-                }
-                #  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
-                If ($allowDefer) {
-                    #  If there is deferral and closing apps is allowed but there are no apps to be closed, break the while loop
-                    If ($AllowDeferCloseApps -and (-not $runningProcessDescriptions)) {
-                        Break
-                    }
-                    #  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
-                    ElseIf ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
-                        [String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
-                    }
-                }
-                #  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
-                ElseIf (($runningProcessDescriptions) -or ($forceCountdown)) {
-                    [String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
-                }
-                #  If there is no deferral and no processes running, break the while loop
-                Else {
-                    Break
-                }
-
-                If ($promptResult.Contains('Cancel'))
-                {
-                    Write-Log -Message 'The user selected to cancel...' -Source ${CmdletName}
+				If ($promptResult.Contains('Cancel')) {
+					Write-Log -Message 'The user selected to cancel...' -Source ${CmdletName}
                     
-                    #  Restore minimized windows
-                    $null = $shellApp.UndoMinimizeAll()
-
-                    Write-Output $configInstallationUIExitCode
-					return
-                }
-
-                #  If the user has clicked OK, wait a few seconds for the process to terminate before evaluating the running processes again
-                If ($promptResult.Contains('Continue')) {
-                    Write-Log -Message 'The user selected to continue...' -Source ${CmdletName}
-                    Start-Sleep -Seconds 2
-
-                    #  Break the while loop if there are no processes to close and the user has clicked OK to continue
-                    If (-not $runningProcesses) {
-                        Break
-                    }
-                }
-                #  Force the applications to close
-                ElseIf ($promptResult.Contains('Close')) {
-                    Write-Log -Message 'The user selected to force the application(s) to close...' -Source ${CmdletName}
-                    If (($PromptToSave) -and ($SessionZero -and (-not $IsProcessUserInteractive))) {
-                        Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
-                    }
-                    # Update the process list right before closing, in case it changed
-                    $runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects
-                    # Close running processes
-                    ForEach ($runningProcess in $runningProcesses) {
-                        [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
-                        #  If the PromptToSave parameter was specified and the process has a window open, then prompt the user to save work if there is work to be saved when closing window
-                        If (($PromptToSave) -and (-not ($SessionZero -and (-not $IsProcessUserInteractive))) -and ($AllOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
-                            [Timespan]$PromptToSaveTimeout = New-TimeSpan -Seconds $configInstallationPromptToSave
-                            [Diagnostics.StopWatch]$PromptToSaveStopWatch = [Diagnostics.StopWatch]::StartNew()
-                            $PromptToSaveStopWatch.Reset()
-                            ForEach ($OpenWindow in $AllOpenWindowsForRunningProcess) {
-                                Try {
-                                    Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${CmdletName}
-                                    [Boolean]$IsBringWindowToFrontSuccess = [PSADT.UiAutomation]::BringWindowToFront($OpenWindow.WindowHandle)
-                                    [Boolean]$IsCloseWindowCallSuccess = $runningProcess.CloseMainWindow()
-                                    If (-not $IsCloseWindowCallSuccess) {
-                                        Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${CmdletName}
-                                    }
-                                    Else {
-                                        $PromptToSaveStopWatch.Start()
-                                        Do {
-                                            [Boolean]$IsWindowOpen = [Boolean](Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.WindowHandle -eq $OpenWindow.WindowHandle })
-                                            If (-not $IsWindowOpen) {
-                                                Break
-                                            }
-                                            Start-Sleep -Seconds 3
-                                        } While (($IsWindowOpen) -and ($PromptToSaveStopWatch.Elapsed -lt $PromptToSaveTimeout))
-                                        $PromptToSaveStopWatch.Reset()
-                                        If ($IsWindowOpen) {
-                                            Write-Log -Message "Exceeded the [$configInstallationPromptToSave] seconds timeout value for the user to save work associated with process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)]." -Severity 2 -Source ${CmdletName}
-                                        }
-                                        Else {
-                                            Write-Log -Message "Window [$($OpenWindow.WindowTitle)] for process [$($runningProcess.ProcessName)] was successfully closed." -Source ${CmdletName}
-                                        }
-                                    }
-                                }
-                                Catch {
-                                    Write-Log -Message "Failed to close window [$($OpenWindow.WindowTitle)] for process [$($runningProcess.ProcessName)]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-                                    Continue
-                                }
-                                Finally {
-                                    $runningProcess.Refresh()
-                                }
-                            }
-                        }
-                        Else {
-                            Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${CmdletName}
-                            Stop-Process -Name $runningProcess.ProcessName -Force -ErrorAction 'SilentlyContinue'
-                        }
-                    }
-
-                    If ($runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging) {
-                        # Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
-                        Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
-                        Start-Sleep -Seconds 2
-                    }
-                }
-                #  Stop the script (if not actioned before the timeout value)
-                ElseIf ($promptResult.Contains('Timeout')) {
-                    Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${CmdletName}
-                    $BlockExecution = $false
-
-                    If (($deferTimes -ge 0) -or ($deferDeadlineUniversal)) {
-                        Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
-                    }
-                    ## Dispose the welcome prompt timer here because if we dispose it within the Show-WelcomePrompt function we risk resetting the timer and missing the specified timeout period
-                    If ($script:welcomeTimer) {
-                        Try {
-                            $script:welcomeTimer.Dispose()
-                            $script:welcomeTimer = $null
-                        }
-                        Catch {
-                        }
-                    }
-
-                    #  Restore minimized windows
-                    $null = $shellApp.UndoMinimizeAll()
+					#  Restore minimized windows
+					$null = $shellApp.UndoMinimizeAll()
 
 					Write-Output $configInstallationUIExitCode
 					return
-                }
-                #  Stop the script (user chose to defer)
-                ElseIf ($promptResult.Contains('Defer')) {
-                    Write-Log -Message 'Installation deferred by the user.' -Source ${CmdletName}
-                    $BlockExecution = $false
+				}
 
-                    Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
+				#  If the user has clicked OK, wait a few seconds for the process to terminate before evaluating the running processes again
+				If ($promptResult.Contains('Continue')) {
+					Write-Log -Message 'The user selected to continue...' -Source ${CmdletName}
+					Start-Sleep -Seconds 2
 
-                    #  Restore minimized windows
-                    $null = $shellApp.UndoMinimizeAll()
+					#  Break the while loop if there are no processes to close and the user has clicked OK to continue
+					If (-not $runningProcesses) {
+						Break
+					}
+				}
+				#  Force the applications to close
+				ElseIf ($promptResult.Contains('Close')) {
+					Write-Log -Message 'The user selected to force the application(s) to close...' -Source ${CmdletName}
+					If (($PromptToSave) -and ($SessionZero -and (-not $IsProcessUserInteractive))) {
+						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
+					}
+					# Update the process list right before closing, in case it changed
+					$runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects
+					# Close running processes
+					ForEach ($runningProcess in $runningProcesses) {
+						[PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
+						#  If the PromptToSave parameter was specified and the process has a window open, then prompt the user to save work if there is work to be saved when closing window
+						If (($PromptToSave) -and (-not ($SessionZero -and (-not $IsProcessUserInteractive))) -and ($AllOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
+							[Timespan]$PromptToSaveTimeout = New-TimeSpan -Seconds $configInstallationPromptToSave
+							[Diagnostics.StopWatch]$PromptToSaveStopWatch = [Diagnostics.StopWatch]::StartNew()
+							$PromptToSaveStopWatch.Reset()
+							ForEach ($OpenWindow in $AllOpenWindowsForRunningProcess) {
+								Try {
+									Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${CmdletName}
+									[Boolean]$IsBringWindowToFrontSuccess = [PSADT.UiAutomation]::BringWindowToFront($OpenWindow.WindowHandle)
+									[Boolean]$IsCloseWindowCallSuccess = $runningProcess.CloseMainWindow()
+									If (-not $IsCloseWindowCallSuccess) {
+										Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${CmdletName}
+									}
+									Else {
+										$PromptToSaveStopWatch.Start()
+										Do {
+											[Boolean]$IsWindowOpen = [Boolean](Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.WindowHandle -eq $OpenWindow.WindowHandle })
+											If (-not $IsWindowOpen) {
+												Break
+											}
+											Start-Sleep -Seconds 3
+										} While (($IsWindowOpen) -and ($PromptToSaveStopWatch.Elapsed -lt $PromptToSaveTimeout))
+										$PromptToSaveStopWatch.Reset()
+										If ($IsWindowOpen) {
+											Write-Log -Message "Exceeded the [$configInstallationPromptToSave] seconds timeout value for the user to save work associated with process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)]." -Severity 2 -Source ${CmdletName}
+										}
+										Else {
+											Write-Log -Message "Window [$($OpenWindow.WindowTitle)] for process [$($runningProcess.ProcessName)] was successfully closed." -Source ${CmdletName}
+										}
+									}
+								}
+								Catch {
+									Write-Log -Message "Failed to close window [$($OpenWindow.WindowTitle)] for process [$($runningProcess.ProcessName)]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+									Continue
+								}
+								Finally {
+									$runningProcess.Refresh()
+								}
+							}
+						}
+						Else {
+							Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${CmdletName}
+							Stop-Process -Name $runningProcess.ProcessName -Force -ErrorAction 'SilentlyContinue'
+						}
+					}
+
+					If ($runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging) {
+						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
+						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
+						Start-Sleep -Seconds 2
+					}
+				}
+				#  Stop the script (if not actioned before the timeout value)
+				ElseIf ($promptResult.Contains('Timeout')) {
+					Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${CmdletName}
+					$BlockExecution = $false
+
+					If (($deferTimes -ge 0) -or ($deferDeadlineUniversal)) {
+						Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
+					}
+					## Dispose the welcome prompt timer here because if we dispose it within the Show-WelcomePrompt function we risk resetting the timer and missing the specified timeout period
+					If ($script:welcomeTimer) {
+						Try {
+							$script:welcomeTimer.Dispose()
+							$script:welcomeTimer = $null
+						}
+						Catch {
+						}
+					}
+
+					#  Restore minimized windows
+					$null = $shellApp.UndoMinimizeAll()
+
+					Write-Output $configInstallationUIExitCode
+					return
+				}
+				#  Stop the script (user chose to defer)
+				ElseIf ($promptResult.Contains('Defer')) {
+					Write-Log -Message 'Installation deferred by the user.' -Source ${CmdletName}
+					$BlockExecution = $false
+
+					Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
+
+					#  Restore minimized windows
+					$null = $shellApp.UndoMinimizeAll()
 
 					Write-Output $configInstallationDeferExitCode
 					return
-                }
-            }
-        }
+				}
+			}
+		}
 
-        ## Force the processes to close silently, without prompting the user
-        If (($Silent -or $deployModeSilent) -and $closeApps) {
-            [Array]$runningProcesses = $null
-            [Array]$runningProcesses = Get-RunningProcesses $processObjects
-            If ($runningProcesses) {
-                [String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
-                Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
-                $runningProcesses.ProcessName | ForEach-Object -Process { Stop-Process -Name $_ -Force -ErrorAction 'SilentlyContinue' }
-                Start-Sleep -Seconds 2
-            }
-        }
+		## Force the processes to close silently, without prompting the user
+		If (($Silent -or $deployModeSilent) -and $closeApps) {
+			[Array]$runningProcesses = $null
+			[Array]$runningProcesses = Get-RunningProcesses $processObjects
+			If ($runningProcesses) {
+				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
+				$runningProcesses.ProcessName | ForEach-Object -Process { Stop-Process -Name $_ -Force -ErrorAction 'SilentlyContinue' }
+				Start-Sleep -Seconds 2
+			}
+		}
 
-        ## Force nsd.exe to stop if Notes is one of the required applications to close
-        If (($processObjects | Select-Object -ExpandProperty 'ProcessName') -contains 'notes') {
-            ## Get the path where Notes is installed
-            [String]$notesPath = Get-Item -LiteralPath $regKeyLotusNotes -ErrorAction 'SilentlyContinue' | Get-ItemProperty | Select-Object -ExpandProperty 'Path'
+		## Force nsd.exe to stop if Notes is one of the required applications to close
+		If (($processObjects | Select-Object -ExpandProperty 'ProcessName') -contains 'notes') {
+			## Get the path where Notes is installed
+			[String]$notesPath = Get-Item -LiteralPath $regKeyLotusNotes -ErrorAction 'SilentlyContinue' | Get-ItemProperty | Select-Object -ExpandProperty 'Path'
 
-            ## Ensure we aren't running as a Local System Account and Notes install directory was found
-            If ((-not $IsLocalSystemAccount) -and ($notesPath)) {
-                #  Get a list of all the executables in the Notes folder
-                [string[]]$notesPathExes = Get-ChildItem -LiteralPath $notesPath -Filter '*.exe' -Recurse | Select-Object -ExpandProperty 'BaseName' | Sort-Object
-                ## Check for running Notes executables and run NSD if any are found
-                $notesPathExes | ForEach-Object {
-                    If ((Get-Process | Select-Object -ExpandProperty 'Name') -contains $_) {
-                        [String]$notesNSDExecutable = Join-Path -Path $notesPath -ChildPath 'NSD.exe'
-                        Try {
-                            If (Test-Path -LiteralPath $notesNSDExecutable -PathType 'Leaf' -ErrorAction 'Stop') {
-                                Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${CmdletName}
-                                [Diagnostics.Process]$notesNSDProcess = Start-Process -FilePath $notesNSDExecutable -ArgumentList '-kill' -WindowStyle 'Hidden' -PassThru -ErrorAction 'SilentlyContinue'
+			## Ensure we aren't running as a Local System Account and Notes install directory was found
+			If ((-not $IsLocalSystemAccount) -and ($notesPath)) {
+				#  Get a list of all the executables in the Notes folder
+				[string[]]$notesPathExes = Get-ChildItem -LiteralPath $notesPath -Filter '*.exe' -Recurse | Select-Object -ExpandProperty 'BaseName' | Sort-Object
+				## Check for running Notes executables and run NSD if any are found
+				$notesPathExes | ForEach-Object {
+					If ((Get-Process | Select-Object -ExpandProperty 'Name') -contains $_) {
+						[String]$notesNSDExecutable = Join-Path -Path $notesPath -ChildPath 'NSD.exe'
+						Try {
+							If (Test-Path -LiteralPath $notesNSDExecutable -PathType 'Leaf' -ErrorAction 'Stop') {
+								Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${CmdletName}
+								[Diagnostics.Process]$notesNSDProcess = Start-Process -FilePath $notesNSDExecutable -ArgumentList '-kill' -WindowStyle 'Hidden' -PassThru -ErrorAction 'SilentlyContinue'
 
-                                If (-not $notesNSDProcess.WaitForExit(10000)) {
-                                    Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${CmdletName}
-                                    Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
-                                }
-                            }
-                        }
-                        Catch {
-                            Write-Log -Message "Failed to launch [$notesNSDExecutable]. `r`n$(Resolve-Error)" -Source ${CmdletName}
-                        }
+								If (-not $notesNSDProcess.WaitForExit(10000)) {
+									Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${CmdletName}
+									Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
+								}
+							}
+						}
+						Catch {
+							Write-Log -Message "Failed to launch [$notesNSDExecutable]. `r`n$(Resolve-Error)" -Source ${CmdletName}
+						}
 
-                        Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${CmdletName}
+						Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${CmdletName}
 
-                        #  Force NSD process to stop in case the previous command was not successful
-                        Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
-                    }
-                }
-            }
+						#  Force NSD process to stop in case the previous command was not successful
+						Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
+					}
+				}
+			}
 
-            #  Strip all Notes processes from the process list except notes.exe, because the other notes processes (e.g. notes2.exe) may be invoked by the Notes installation, so we don't want to block their execution.
-            If ($notesPathExes) {
-                [Array]$processesIgnoringNotesExceptions = Compare-Object -ReferenceObject ($processObjects | Select-Object -ExpandProperty 'ProcessName' | Sort-Object) -DifferenceObject $notesPathExes -IncludeEqual | Where-Object { ($_.SideIndicator -eq '<=') -or ($_.InputObject -eq 'notes') } | Select-Object -ExpandProperty 'InputObject'
-                [Array]$processObjects = $processObjects | Where-Object { $processesIgnoringNotesExceptions -contains $_.ProcessName }
-            }
-        }
+			#  Strip all Notes processes from the process list except notes.exe, because the other notes processes (e.g. notes2.exe) may be invoked by the Notes installation, so we don't want to block their execution.
+			If ($notesPathExes) {
+				[Array]$processesIgnoringNotesExceptions = Compare-Object -ReferenceObject ($processObjects | Select-Object -ExpandProperty 'ProcessName' | Sort-Object) -DifferenceObject $notesPathExes -IncludeEqual | Where-Object { ($_.SideIndicator -eq '<=') -or ($_.InputObject -eq 'notes') } | Select-Object -ExpandProperty 'InputObject'
+				[Array]$processObjects = $processObjects | Where-Object { $processesIgnoringNotesExceptions -contains $_.ProcessName }
+			}
+		}
 
-        ## If block execution switch is true, call the function to block execution of these processes
-        If ($true -eq $BlockExecution) {
-            #  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
-            Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
-            Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
-            Block-AppExecution -ProcessName ($processObjects | Select-Object -ExpandProperty 'ProcessName')
-			if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")){
+		## If block execution switch is true, call the function to block execution of these processes
+		If ($true -eq $BlockExecution) {
+			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
+			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
+			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
+			Block-AppExecution -ProcessName ($processObjects | Select-Object -ExpandProperty 'ProcessName')
+			if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 				Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
 				Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
 			}
-        }
-    }
-    End {
-        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
-    }
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
 }
 #endregion
 
