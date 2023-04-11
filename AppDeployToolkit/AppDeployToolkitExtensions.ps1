@@ -1,6 +1,7 @@
 ﻿<#
 .SYNOPSIS
 	This script is a template that allows you to extend the toolkit with your own custom functions.
+	The "*-Nxt*" function name pattern is used by "neo42 GmbH" to avoid naming conflicts with the built-in functions of the toolkit.
     # LICENSE #
     PowerShell App Deployment Toolkit - Provides a set of functions to perform common application deployment tasks on Windows.
     Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
