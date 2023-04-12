@@ -130,7 +130,6 @@ try {
 	##*===============================================
 	##* END VARIABLE DECLARATION
 	##*===============================================
-	Confirm-NxtVariables
 }
 catch {
 	[int32]$mainExitCode = 60001
@@ -179,6 +178,7 @@ function Main {
 		$InstallMethod = $global:PackageConfig.InstallMethod
 	)
 	try {
+		Test-NxtPackageConfig
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {

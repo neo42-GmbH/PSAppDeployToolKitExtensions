@@ -650,260 +650,6 @@ function Complete-NxtPackageUninstallation {
 	}
 }
 #endregion
-#region Function Confirm-NxtVariables
-function Confirm-NxtVariables {
-	<#
-	.SYNOPSIS
-		Executes validation steps for custom variables of the package configuration.
-	.DESCRIPTION
-		Is only called in the Main function and should not be modified!
-	.PARAMETER VariableSet
-		Collection of variables to validate.
-	.EXAMPLE
-		Confirm-NxtVariables
-		Confirm-NxtVariables -VariableSet "$global:SetupCfg"
-	.OUTPUTS
-		System.Boolean.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	param (
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullorEmpty()]
-		[PSCustomObject]
-		$VariableSet = $global:PackageConfig
-		# | Select-Object *)
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		## add to list if check for value type AND emptyness only (a nullable bool may not be expected here, this setting will be ignored for validation!)
-		## note: a nullable string or extended object (Object[]) may be empty too.
-		[array]$parameterListToValidateType = @(
-			[PSCustomObject]@{Name='Build';Type='string';Nullable=$false}
-			[PSCustomObject]@{Name='AppVendor';Type='string';Nullable=$false}
-			[PSCustomObject]@{Name='AppName';Type='string';Nullable=$false}
-			[PSCustomObject]@{Name='AppVersion';Type='string';Nullable=$false}
-			[PSCustomObject]@{Name='AppRevision';Type='string';Nullable=$false}
-			[PSCustomObject]@{Name='RegPackagesKey';Type='string';Nullable=$false}
-			[PSCustomObject]@{Name='ReinstallMode';Type='string';Nullable=$false}
-			[PSCustomObject]@{Name='App';Type='string';Nullable=$false}
-			[PSCustomObject]@{Name='UninstallOld';Type='bool';Nullable=$true}
-			[PSCustomObject]@{Name='Reboot';Type='int';Nullable=$false}
-			[PSCustomObject]@{Name='UninstallOld';Type='bool';Nullable=$true}
-			[PSCustomObject]@{Name='UserPartOnInstallation';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='UserPartOnUninstallation';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='HidePackageUninstallButton';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='HidePackageUninstallEntry';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='UninstallKeyIsDisplayName';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='UninstallKeyContainsWildCards';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='AppendInstParaToDefaultParameters';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='AppendUninstParaToDefaultParameters';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='AcceptedUninstallExitCodes';Type='string';Nullable=$true}
-			[PSCustomObject]@{Name='AppKillProcesses';Type='Object[]';Nullable=$true}
-			[PSCustomObject]@{Name='BlockExecution';Type='bool';Nullable=$false}
-			[PSCustomObject]@{Name='UninstallKeysToHide';Type='Object[]';Nullable=$true}
-
-		)
-	}
-	Process {
-		## check for value type and empty parameter values
-		foreach ( $variableSetItem in ($VariableSet | Get-Member -MemberType 'NoteProperty' | Where-Object Name -in $parameterListToValidateType.Name) ) {
-			[string]$expectedParameterType = $parameterListToValidateType[[array]::indexof($parameterListToValidateType.Name,$($variableSetItem.Name))].Type
-			[string]$detectedParameterType = $($variableSetItem.Definition.split(" ")[0])
-			## validate type definition of parameter value
-			if ($expectedParameterType -ne $detectedParameterType) {
-				## NO nullable bool accepted here!!!
-				if ( ($expectedParameterType -eq "bool") -or ($false -eq $parameterListToValidateType[[array]::indexof($parameterListToValidateType.Name,$($variableSetItem.Name))].Nullable) ) {
-					## note: in case of $null-value the detected value type always is a simple 'object' in property 'definition' with value 'null' after import of json file
-					## = if ($variableSetItem.Definition -match "=null") {
-					if ( ($null -eq $($VariableSet | Select-Object *).$($variableSetItem.Name)) ) {
-						
-						throw "Parameter '$($variableSetItem.Name)' may not be 'null'! Abort."
-					}
-					else {
-						throw "Wrong value type of '$($variableSetItem.Definition)' - expected value type: '$($parameterListToValidateType[[array]::indexof($($parameterListToValidateType.Name),$($variableSetItem.Name))].Type)'! Abort."
-					}
-				}
-			}
-			if ( ($false -eq $parameterListToValidateType[[array]::indexof($parameterListToValidateType.Name,$($variableSetItem.Name))].Nullable) ) {
-				switch ($expectedParameterType) {
-					'string' {
-						if ( [string]::Empty -eq $($VariableSet | Select-object $variableSetItem.Name).$($variableSetItem.Name) ) {
-							throw "Parameter '$($variableSetItem.Name)' may not be empty! Abort."
-						}
-					}
-					'Object[]' {
-						if ( [string]::Empty -eq $((($VariableSet | Select-Object $variableSetItem.Name).$($variableSetItem.Name)).Name) ) {
-							throw "Parameter '$($variableSetItem.Name)' may not be empty! Abort."
-						}
-					}
-				}
-			}
-		}
-		## check for specific value content
-		foreach ( $variableSetItem in ($VariableSet | Get-Member -MemberType 'NoteProperty') ) {
-			switch ($($variableSetItem.Name)) {
-				'AppArch' {
-					## note: possibly this parameter will be needed before this validation is called ...
-					If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -notin ("x86","x64","*") ) {
-						throw "Parameter '$($variableSetItem.Name)' is invalid, use: 'x86', 'x64' or '*'! Abort."
-					}
-				}
-				'AppLang' {
-					If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^[A-Z]{2,3}$' ) {
-						throw "Parameter '$($variableSetItem.Name)' is invalid, use a 2- or 3-letter language code (like in ISO 639-1 or ISO 639-2 B/T), i.e.: 'DE', 'EN', 'DEU', 'ENG' or 'MUI'! Abort."
-					}
-				}
-				'App' {
-					If ( !(Test-Path -LiteralPath $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -IsValid) -or [WildcardPattern]::ContainsWildcardCharacters($($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name)) ) {
-						throw "Parameter '$($variableSetItem.Name)' is invalid, use a path string (without wildcards)! Abort."
-					}
-				}
-				'Reboot' {
-					If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^[0-5]$' ) {
-						throw "Parameter '$($variableSetItem.Name)' is invalid, use numbers in range: '0 .. 5'! Abort."
-					}
-				}
-				'PackageFamilyGUID' {
-					If ($true -eq $global:registerPackage) {
-						If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}\}$') {
-							throw "Parameter '$($variableSetItem.Name)' is invalid, use a pattern like: '{????????-????-????-????-????????????}'! Abort."
-						}
-					}
-				}
-				'UserPartRevision' {
-					If ( ($true -eq [bool]$($VariableSet | Select-Object UserPartOnInstallation).UserPartOnInstallation) -or ($true -eq [bool]$($VariableSet | Select-Object UserPartOnUninstallation).UserPartOnUninstallation) ) {
-						If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^[0-9]{4},[0-9]{2},[0-9]{2},[0-9]{2}$' ) {
-							throw "Parameter '$($variableSetItem.Name)' is invalid, use comma-separated numbers (date+counter): '<yyyy>,<mm>,<dd>,<counter>'! Abort."
-						}
-					}
-				}
-				'AcceptedUninstallExitCodes' {
-					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name))) ) {
-						if ("string" -eq $($variableSetItem.Definition.split(" ")[0])) {
-							If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^[0-9,]+[0-9]$' ) {
-								throw "Parameter '$($variableSetItem.Name)' is invalid, use a comma-separated list of error code numbers: i.e. '121,122'! Abort."
-							}
-						}
-						else {
-							throw "Parameter '$($variableSetItem.Name)' is invalid, use a comma-separated list of error code numbers: i.e. '121,122'! Abort."
-						}
-					}
-				}
-				## type: object[]
-				'AppKillProcesses' {
-					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name).Name)) ) {
-						$($VariableSet | Select-Object *).$($variableSetItem.Name) | ForEach-Object -process {
-							[string]$unexpectedName = ($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -notin "Name","Description").Name
-							if ( !([string]::IsNullOrEmpty($unexpectedName)) ) {
-								throw "List item '$unexpectedName' in parameter '$($variableSetItem.Name)' is invalid, use: 'Name' or 'Description'! Abort."
-							}
-							foreach ($subItem in $($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -in "Name").Name) {
-								if ( $_.Name -cnotmatch '.{3,}' -or $_.Name -cmatch '[\\\/\:\?\"\<\>\|]+' -or ($_.Name.ToCharArray() | Where-Object {$_.Name -eq '*'} | Measure-Object).Count -eq $_.Name.length ) {
-									throw "Property 'Name' of list item '$($_.Name)' of parameter '$($variableSetItem.Name)' is invalid, use at least 3 valid characters for a file name! Abort."
-								}
-							}
-						}
-					}
-				}
-				## type: object[]
-				'TestConditionsPreSetupSuccessCheck' {
-					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name).Name)) ) {
-						$($VariableSet | Select-Object *).$($variableSetItem.Name) | ForEach-Object -process {
-							[string]$unexpectedName = ($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -notin "Install","Uninstall").Name
-							if ( !([string]::IsNullOrEmpty($unexpectedName)) ) {
-								throw "List item '$unexpectedName' in parameter '$($variableSetItem.Name)' is invalid, use: 'Install' or 'Uninstall'! Abort."
-							}
-							foreach ($subItem in $($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -in "Install","Uninstall").Name) {
-								$(($VariableSet | Select-Object *).$($variableSetItem.Name)) | Foreach-Object -process {
-									foreach ($subItemValue in $($_.$subItem | get-member -MemberType 'NoteProperty' | Select-Object Name).Name) {
-										switch ($subItemValue) {
-											'TotalSecondsToWaitFor' {
-												if ( (($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue -lt '1') -or (($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue -gt '3600') ) {
-													throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' is invalid, use: '1 .. 3600'! Abort."
-												}
-											}
-											'ProcessOperator' {
-												if ( ($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue -notin "And","Or" ) {
-													throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' is invalid, use: 'And' or 'Or'! Abort."
-												}
-											}
-											'ProcessesToWaitFor' {
-												if ( !([string]::IsNullOrEmpty($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue))) ) {
-													if ( !([string]::IsNullOrEmpty($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.Name))) ) {
-														if ( ($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.Name) -cnotmatch '.{3,}') -or ($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.Name) -cmatch '[\\\/\:\?\"\<\>\|]+') ) {
-															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'Name', use at least 3 valid characters for a file name! Abort."
-														}
-													}
-													if ( $null -ne $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist) ) {
-														if ( "bool" -ne ($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist.Gettype() ) {
-															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'ShouldExist', use: a bool value for it! Abort."
-														}
-													}
-													else {
-														If ((($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue | get-member -MemberType 'NoteProperty').count -gt 0) {
-															if ( $null -eq $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist) ) {
-																throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'ShouldExist', use: a bool value for it! Abort."
-															}
-														}
-														else {
-															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value structure! Abort."
-														}
-													}
-												}
-											}
-											'RegKeyOperator' {
-												if ( ($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue -notin "And","Or" ) {
-													throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' is invalid, use: 'And' or 'Or'! Abort."
-												}
-											}
-											'RegKeysToWaitFor' {
-												if ( !([string]::IsNullOrEmpty($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue))) ) {
-													if ( !([string]::IsNullOrEmpty($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.KeyPath))) ) {
-														if ( !(Test-Path -LiteralPath $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.KeyPath) -IsValid) ) {
-															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'KeyPath', use a path string! Abort."
-														}
-													}
-													if ( $null -ne $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist) ) {
-														if ( "bool" -ne ($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist.Gettype() ) {
-															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'ShouldExist', use: a bool value for it! Abort."
-														}
-													}
-													else {
-														If ((($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue | get-member -MemberType 'NoteProperty').count -gt 0) {
-															if ( $null -eq $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist) ) {
-																throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'ShouldExist', use: a bool value for it! Abort."
-															}
-															else {
-																throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value structure! Abort."
-															}
-														}
-													}
-												}
-											}
-											default {
-												throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' is invalid, use: 'TotalSecondsToWaitFor', 'ProcessOperator', ''ProcessesToWaitFor', 'RegKeyOperator' or 'RegKeysToWaitFor'! Abort."
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		Write-Log -Message "Succesfully validated the variable set." -Source ${cmdletName}
-		#Write-Output $true
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
 #region Function Copy-NxtDesktopShortcuts
 function Copy-NxtDesktopShortcuts {
 	<#
@@ -6798,6 +6544,513 @@ function Stop-NxtProcess {
 		catch {
 			Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Test-NxtPackageConfig
+function Test-NxtPackageConfig {
+	<#
+	.SYNOPSIS
+		Executes validation steps for custom variables of the package configuration.
+	.DESCRIPTION
+		Is only called in the Main function and should not be modified!
+	.PARAMETER VariableSet
+		Collection of variables to validate.
+	.EXAMPLE
+		Test-NxtPackageConfig
+		Test-NxtPackageConfig -PackageConfig "$global:PackageConfig"
+	.OUTPUTS
+		System.Boolean.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[PSCustomObject]
+		$PackageConfig = $global:PackageConfig
+		# | Select-Object *)
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		## add to list if check for value type AND emptyness only (a nullable bool may not be expected here, this setting will be ignored for validation!)
+		## note: a nullable string or extended object (Object[]) may be empty too.
+		[hashtable]$validationRules = @{
+			[PSCustomObject]'AcceptedInstallExitCodes' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'Regex' = @{
+						"Pattern" ='^\d+(,\d+)*$'
+						"Operator" = "match"
+				}
+				'ErrorMessage' = 'AcceptedInstallExitCodes must be a comma separated list of numbers.'
+			}
+			[PSCustomObject]'AcceptedRepairExitCodes' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'Regex' = @{
+						"Pattern" ='^\d+(,\d+)*$'
+						"Operator" = "match"
+				}
+				'HelpText' = 'AcceptedRepairExitCodes must be a comma separated list of numbers.'
+			}
+			[PSCustomObject]'AcceptedUninstallExitCodes' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'Regex' = @{
+						"Pattern" ='^\d+(,\d+)*$'
+						"Operator" = "match"
+				}
+				'HelpText' = 'AcceptedUninstallExitCodes must be a comma separated list of numbers.'
+			}
+			[PSCustomObject]'App' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'HelpText' = 'App is mandatory and must be a string.'
+			}
+			[PSCustomObject]'AppArch' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'Validateset' = @("x86","x64","*")
+				'HelpText' = 'AppArch is mandatory and must be a string with a value of x86, x64 or *.'
+			}
+			[PSCustomObject]'AppendInstParaToDefaultParameters' = @{
+				'Type' = 'System.Boolean'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'HelpText' = 'AppendInstParaToDefaultParameters is mandatory and must be a boolean.'
+			}
+			[PSCustomObject]'AppendUninstParaToDefaultParameters' = @{
+				'Type' = 'System.Boolean'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'HelpText' = 'AppendUninstParaToDefaultParameters is mandatory and must be a boolean.'
+			}
+			[PSCustomObject]'AppKillProcesses' = @{
+				'Type' = 'System.Array'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'AppKillProcesses is mandatory and must be an array.'
+			}
+			[PSCustomObject]'AppKillProcesses.Name' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'HelpText' = 'AppKillProcesses.Name is mandatory in each item below AppKillProcesses and must be a string.'
+			}
+			[PSCustomObject]'AppKillProcesses.Description' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'AppKillProcesses.Description is mandatory and must be a string. If empty, the name will be used.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck' = @{
+				'Type' = 'System.HashTable'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck is mandatory and must be a hashtable.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install' = @{
+				'Type' = 'System.HashTable'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install is mandatory and must be a hashtable.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor' = @{
+				'Type' = 'System.Int32'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor is mandatory and must be an integer.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.ProcessOperator' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'Validateset' = @("AND","OR")
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.ProcessOperator is mandatory and must be a string with a value of AND or OR.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor' = @{
+				'Type' = 'System.Array'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor is mandatory and must be an array.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.Name' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.Name is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor and must be a string.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.ShouldExist' = @{
+				'Type' = 'System.Boolean'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor and must be a boolean.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.RegKeyOperator' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'Validateset' = @("AND","OR")
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegKeyOperator is mandatory and must be a string with a value of AND or OR.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor' = @{
+				'Type' = 'System.Array'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor is mandatory and must be an array.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor.KeyPath' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor.KeyPath is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor and must be a string.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor.ValueName' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor and must be a string.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor.ValueData' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor and must be a string.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor.ShouldExist' = @{
+				'Type' = 'System.Boolean'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegKeysToWaitFor and must be a boolean.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall' = @{
+				'Type' = 'System.HashTable'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Unnstall is mandatory and must be a hashtable.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor' = @{
+				'Type' = 'System.Int32'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor is mandatory and must be an integer.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessOperator' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'Validateset' = @("AND","OR")
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessOperator is mandatory and must be a string with a value of AND or OR.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor' = @{
+				'Type' = 'System.Array'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor is mandatory and must be an array.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.Name' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.Name is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor and must be a string.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.ShouldExist' = @{
+				'Type' = 'System.Boolean'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor and must be a boolean.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeyOperator' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'Validateset' = @("AND","OR")
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeyOperator is mandatory and must be a string with a value of AND or OR.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor' = @{
+				'Type' = 'System.Array'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor is mandatory and must be an array.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor.KeyPath' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor.KeyPath is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor and must be a string.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor.ValueName' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor and must be a string.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor.ValueData' = @{
+				'Type' = 'System.String'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor and must be a string.'
+			}
+			[PSCustomObject]'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor.ShouldExist' = @{
+				'Type' = 'System.Boolean'
+				'Nullable' = $false
+				'Mandatory' = $true
+				'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegKeysToWaitFor and must be a boolean.'
+			}
+		
+		}
+		function Test-NxtPackageConfigObject {
+			<#
+			.SYNOPSIS
+				Validates the package configuration object.
+			#>
+			[CmdletBinding()]
+			param(
+				[Parameter(Mandatory=$true)]
+				[ValidateNotNullOrEmpty()]
+				[hashtable]$VariableSet
+			)
+
+
+		}
+	}
+	Process {
+		## check for value type and empty parameter values
+		foreach ($VariableSetItem in ($VariableSet | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty Name | Where-Object {$_ -in $parameterListToValidateType.Keys})){
+			if( ( $null -eq $VariableSet.$variableSetItem) -and ($false -eq $parameterListToValidateType[$variableSetItem].Nullable)){
+				throw "Parameter '$($variableSetItem)' must not be 'null' or empty! Abort."
+			}
+			if ( $parameterListToValidateType[$variableSetItem].type -ne $VariableSet.$variableSetItem.GetType().Name ) {
+				throw "Parameter '$($variableSetItem)' must be of type '$($parameterListToValidateType[$variableSetItem].type)'! Abort."
+			}
+		}
+		foreach ( $variableSetItem in ($VariableSet | Get-Member -MemberType 'NoteProperty' | Where-Object Name -in $parameterListToValidateType.Name) ) {
+			[string]$expectedParameterType = $parameterListToValidateType[[array]::indexof($parameterListToValidateType.Name,$($variableSetItem.Name))].Type
+			[string]$detectedParameterType = $($variableSetItem.Definition.split(" ")[0])
+			## validate type definition of parameter value
+			if ($expectedParameterType -ne $detectedParameterType) {
+				## NO nullable bool accepted here!!!
+				if ( ($expectedParameterType -eq "bool") -or ($false -eq $parameterListToValidateType[[array]::indexof($parameterListToValidateType.Name,$($variableSetItem.Name))].Nullable) ) {
+					## note: in case of $null-value the detected value type always is a simple 'object' in property 'definition' with value 'null' after import of json file
+					## = if ($variableSetItem.Definition -match "=null") {
+					if ( ($null -eq $($VariableSet | Select-Object *).$($variableSetItem.Name)) ) {
+						
+						throw "Parameter '$($variableSetItem.Name)' may not be 'null'! Abort."
+					}
+					else {
+						throw "Wrong value type of '$($variableSetItem.Definition)' - expected value type: '$($parameterListToValidateType[[array]::indexof($($parameterListToValidateType.Name),$($variableSetItem.Name))].Type)'! Abort."
+					}
+				}
+			}
+			if ( ($false -eq $parameterListToValidateType[[array]::indexof($parameterListToValidateType.Name,$($variableSetItem.Name))].Nullable) ) {
+				switch ($expectedParameterType) {
+					'string' {
+						if ( [string]::Empty -eq $($VariableSet | Select-object $variableSetItem.Name).$($variableSetItem.Name) ) {
+							throw "Parameter '$($variableSetItem.Name)' may not be empty! Abort."
+						}
+					}
+					'Object[]' {
+						if ( [string]::Empty -eq $((($VariableSet | Select-Object $variableSetItem.Name).$($variableSetItem.Name)).Name) ) {
+							throw "Parameter '$($variableSetItem.Name)' may not be empty! Abort."
+						}
+					}
+				}
+			}
+		}
+		## check for specific value content
+		foreach ( $variableSetItem in ($VariableSet | Get-Member -MemberType 'NoteProperty') ) {
+			switch ($($variableSetItem.Name)) {
+				'AppArch' {
+					## note: possibly this parameter will be needed before this validation is called ...
+					If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -notin ("x86","x64","*") ) {
+						throw "Parameter '$($variableSetItem.Name)' is invalid, use: 'x86', 'x64' or '*'! Abort."
+					}
+				}
+				'AppLang' {
+					If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^[A-Z]{2,3}$' ) {
+						throw "Parameter '$($variableSetItem.Name)' is invalid, use a 2- or 3-letter language code (like in ISO 639-1 or ISO 639-2 B/T), i.e.: 'DE', 'EN', 'DEU', 'ENG' or 'MUI'! Abort."
+					}
+				}
+				'App' {
+					If ( !(Test-Path -LiteralPath $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -IsValid) -or [WildcardPattern]::ContainsWildcardCharacters($($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name)) ) {
+						throw "Parameter '$($variableSetItem.Name)' is invalid, use a path string (without wildcards)! Abort."
+					}
+				}
+				'Reboot' {
+					If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^[0-5]$' ) {
+						throw "Parameter '$($variableSetItem.Name)' is invalid, use numbers in range: '0 .. 5'! Abort."
+					}
+				}
+				'PackageFamilyGUID' {
+					If ($true -eq $global:registerPackage) {
+						If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}\}$') {
+							throw "Parameter '$($variableSetItem.Name)' is invalid, use a pattern like: '{????????-????-????-????-????????????}'! Abort."
+						}
+					}
+				}
+				'UserPartRevision' {
+					If ( ($true -eq [bool]$($VariableSet | Select-Object UserPartOnInstallation).UserPartOnInstallation) -or ($true -eq [bool]$($VariableSet | Select-Object UserPartOnUninstallation).UserPartOnUninstallation) ) {
+						If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^[0-9]{4},[0-9]{2},[0-9]{2},[0-9]{2}$' ) {
+							throw "Parameter '$($variableSetItem.Name)' is invalid, use comma-separated numbers (date+counter): '<yyyy>,<mm>,<dd>,<counter>'! Abort."
+						}
+					}
+				}
+				'AcceptedUninstallExitCodes' {
+					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name))) ) {
+						if ("string" -eq $($variableSetItem.Definition.split(" ")[0])) {
+							If ( $($VariableSet | Select-Object $($variableSetItem.Name)).$($variableSetItem.Name) -cnotmatch '^[0-9,]+[0-9]$' ) {
+								throw "Parameter '$($variableSetItem.Name)' is invalid, use a comma-separated list of error code numbers: i.e. '121,122'! Abort."
+							}
+						}
+						else {
+							throw "Parameter '$($variableSetItem.Name)' is invalid, use a comma-separated list of error code numbers: i.e. '121,122'! Abort."
+						}
+					}
+				}
+				## type: object[]
+				'AppKillProcesses' {
+					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name).Name)) ) {
+						$($VariableSet | Select-Object *).$($variableSetItem.Name) | ForEach-Object -process {
+							[string]$unexpectedName = ($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -notin "Name","Description").Name
+							if ( !([string]::IsNullOrEmpty($unexpectedName)) ) {
+								throw "List item '$unexpectedName' in parameter '$($variableSetItem.Name)' is invalid, use: 'Name' or 'Description'! Abort."
+							}
+							foreach ($subItem in $($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -in "Name").Name) {
+								if ( $_.Name -cnotmatch '.{3,}' -or $_.Name -cmatch '[\\\/\:\?\"\<\>\|]+' -or ($_.Name.ToCharArray() | Where-Object {$_.Name -eq '*'} | Measure-Object).Count -eq $_.Name.length ) {
+									throw "Property 'Name' of list item '$($_.Name)' of parameter '$($variableSetItem.Name)' is invalid, use at least 3 valid characters for a file name! Abort."
+								}
+							}
+						}
+					}
+				}
+				## type: object[]
+				'TestConditionsPreSetupSuccessCheck' {
+					if ( !([string]::IsNullOrEmpty($($VariableSet | Select-Object *).$($variableSetItem.Name).Name)) ) {
+						$($VariableSet | Select-Object *).$($variableSetItem.Name) | ForEach-Object -process {
+							[string]$unexpectedName = ($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -notin "Install","Uninstall").Name
+							if ( !([string]::IsNullOrEmpty($unexpectedName)) ) {
+								throw "List item '$unexpectedName' in parameter '$($variableSetItem.Name)' is invalid, use: 'Install' or 'Uninstall'! Abort."
+							}
+							foreach ($subItem in $($_ | get-member -MemberType 'NoteProperty' | Where-Object Name -in "Install","Uninstall").Name) {
+								$(($VariableSet | Select-Object *).$($variableSetItem.Name)) | Foreach-Object -process {
+									foreach ($subItemValue in $($_.$subItem | get-member -MemberType 'NoteProperty' | Select-Object Name).Name) {
+										switch ($subItemValue) {
+											'TotalSecondsToWaitFor' {
+												if ( (($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue -lt '1') -or (($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue -gt '3600') ) {
+													throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' is invalid, use: '1 .. 3600'! Abort."
+												}
+											}
+											'ProcessOperator' {
+												if ( ($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue -notin "And","Or" ) {
+													throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' is invalid, use: 'And' or 'Or'! Abort."
+												}
+											}
+											'ProcessesToWaitFor' {
+												if ( !([string]::IsNullOrEmpty($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue))) ) {
+													if ( !([string]::IsNullOrEmpty($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.Name))) ) {
+														if ( ($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.Name) -cnotmatch '.{3,}') -or ($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.Name) -cmatch '[\\\/\:\?\"\<\>\|]+') ) {
+															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'Name', use at least 3 valid characters for a file name! Abort."
+														}
+													}
+													if ( $null -ne $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist) ) {
+														if ( "bool" -ne ($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist.Gettype() ) {
+															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'ShouldExist', use: a bool value for it! Abort."
+														}
+													}
+													else {
+														If ((($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue | get-member -MemberType 'NoteProperty').count -gt 0) {
+															if ( $null -eq $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist) ) {
+																throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'ShouldExist', use: a bool value for it! Abort."
+															}
+														}
+														else {
+															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value structure! Abort."
+														}
+													}
+												}
+											}
+											'RegKeyOperator' {
+												if ( ($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue -notin "And","Or" ) {
+													throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' is invalid, use: 'And' or 'Or'! Abort."
+												}
+											}
+											'RegKeysToWaitFor' {
+												if ( !([string]::IsNullOrEmpty($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue))) ) {
+													if ( !([string]::IsNullOrEmpty($(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.KeyPath))) ) {
+														if ( !(Test-Path -LiteralPath $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.KeyPath) -IsValid) ) {
+															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'KeyPath', use a path string! Abort."
+														}
+													}
+													if ( $null -ne $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist) ) {
+														if ( "bool" -ne ($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist.Gettype() ) {
+															throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'ShouldExist', use: a bool value for it! Abort."
+														}
+													}
+													else {
+														If ((($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue | get-member -MemberType 'NoteProperty').count -gt 0) {
+															if ( $null -eq $(($VariableSet | Select-Object *).$($variableSetItem.Name).$subItem.$subItemValue.ShouldExist) ) {
+																throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value 'ShouldExist', use: a bool value for it! Abort."
+															}
+															else {
+																throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' has an invalid sub value structure! Abort."
+															}
+														}
+													}
+												}
+											}
+											default {
+												throw "List sub item '$subItemValue' in '$subItem' in parameter '$($variableSetItem.Name)' is invalid, use: 'TotalSecondsToWaitFor', 'ProcessOperator', ''ProcessesToWaitFor', 'RegKeyOperator' or 'RegKeysToWaitFor'! Abort."
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		Write-Log -Message "Succesfully validated the variable set." -Source ${cmdletName}
+		#Write-Output $true
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
