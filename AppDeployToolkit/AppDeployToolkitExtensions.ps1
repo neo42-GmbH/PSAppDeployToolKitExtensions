@@ -3240,6 +3240,8 @@ function Get-NxtRegisterOnly {
 		) {
 			Write-Log -Message 'Application is already present. Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...'
 			Write-Output $true
+		} else {
+			Write-Output $false
 		}
 	}
 }
