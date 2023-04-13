@@ -6,6 +6,8 @@
   "InstallMethod": "Inno Setup",
   "UninstallMethod": "Inno Setup",
   "ReinstallMode": "Reinstall",
+  "MSIInplaceUpgradable": true,
+  "MSIDowngradeable": false,
   "TestedOn": "Win10 x64",
   "Dependencies": "",
   "LastChange": "22/09/2022",

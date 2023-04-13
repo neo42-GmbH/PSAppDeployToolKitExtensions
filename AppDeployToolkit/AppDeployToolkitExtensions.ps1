@@ -3661,6 +3661,12 @@ function Install-NxtApplication {
 		Expected version of installed application from a msi setup.
 		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
+	.PARAMETER MSIInplaceUpgradable
+		Only applies to MSI Installer and is necessary to control/switch the behavior of msi setup process in case of an upgrade.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER MSIDowngradeable
+		Only applies to MSI Installer and is necessary to control/switch the behavior of msi setup process in case of a downgrade.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstLogFile
 		Defines the path to the Logfile that should be used by the installer.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -3717,6 +3723,12 @@ function Install-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MSIInplaceUpgradable = $global:PackageConfig.MSIInplaceUpgradable,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable,
 		[Parameter(Mandatory = $false)]
 		[String]
 		$InstLogFile = $global:PackageConfig.InstLogFile,
@@ -3837,7 +3849,7 @@ function Install-NxtApplication {
 					[int]$logMessageSeverity = 3
 				}
 				else {
-					if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude)) {
+					if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod -DisplayVersion $DisplayVersion -MSIInplaceUpgradable $MSIInplaceUpgradable -MSIDowngradeable $MSIDowngradeable)) {
 						$installResult.ErrorMessage = "Installation of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
 						$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 						$installResult.Success = $false
@@ -4617,10 +4629,27 @@ function Repair-NxtApplication {
 	.PARAMETER UninstallKeyIsDisplayName
 		Determines if the value given as UninstallKey should be interpreted as a displayname.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyContainsWildCards
+		Determines if the value given as UninstallKey contains WildCards.
+		If set to $true, "*" are interpreted as WildCards.
+		If set to $false, "*" are interpreted as part of the actual string.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DisplayNamesToExclude
+		DisplayName(s) to exclude from the search result.
+		Use commas to separate more than one value.
+		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
+		We reccommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
+		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
 	.PARAMETER DisplayVersion
 		Expected version of installed application from a msi setup.
 		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
+	.PARAMETER MSIInplaceUpgradable
+		Only applies to MSI Installer and is necessary to control/switch the behavior of msi setup process in case of an upgrade.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER MSIDowngradeable
+		Only applies to MSI Installer and is necessary to control/switch the behavior of msi setup process in case of a downgrade.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeploymentTimestamp
 		Timestamp used for logs (in this case if $Log is empty).
 		Defaults to $global:DeploymentTimestamp.
@@ -4652,8 +4681,20 @@ function Repair-NxtApplication {
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
 		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
+		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MSIInplaceUpgradable = $global:PackageConfig.MSIInplaceUpgradable,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentTimestamp = $global:DeploymentTimestamp,
@@ -4724,7 +4765,7 @@ function Repair-NxtApplication {
 				## Delay for filehandle release etc. to occur.
 				Start-Sleep -Seconds 5
 
-				if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName)) ) {
+				if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI" -DisplayVersion $DisplayVersion -MSIInplaceUpgradable $MSIInplaceUpgradable -MSIDowngradeable $MSIDowngradeable)) ) {
 					$repairResult.MainExitCode = $mainExitCode
 					$repairResult.ErrorMessage = "Repair of '$appName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 					$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
@@ -6583,6 +6624,12 @@ function Test-NxtAppIsInstalled {
 		Expected version of installed application from a msi setup.
 		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
+	.PARAMETER MSIInplaceUpgradable
+		Only applies to MSI Installer and is necessary to control/switch the behavior of msi setup process in case of an upgrade.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER MSIDowngradeable
+		Only applies to MSI Installer and is necessary to control/switch the behavior of msi setup process in case of a downgrade.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Test-NxtAppIsInstalled
 	.EXAMPLE
@@ -6615,7 +6662,14 @@ function Test-NxtAppIsInstalled {
 		$DeploymentMethod,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DisplayVersion = $global:PackageConfig.DisplayVersion
+		$DisplayVersion = $global:PackageConfig.DisplayVersion,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MSIInplaceUpgradable = $global:PackageConfig.MSIInplaceUpgradable,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable
+
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6659,19 +6713,31 @@ function Test-NxtAppIsInstalled {
 							"Update" {
 								[string]$returnErrorMessage = "Found a lower target display version than expected."
 								if ($DeploymentType -eq "Install") {
-									[string]$returnErrorMessage += " This leads to trying to do an msi inplace upgrade ..."
+									## possibly this has to change the defined reinstall mode set by PackageConfig.json
+									If ($false -eq $MSIInplaceUpgradable) {
+										[string]$global:PackageConfig.ReinstallMode = "Reinstall"
+									} else {
+										[string]$global:PackageConfig.ReinstallMode = "Install"
+										[string]$returnErrorMessage += " Doing an msi inplace upgrade ..."
+									}
 								}
 								Write-Log -Message "$returnErrorMessage" -Severity 2 -Source ${cmdletName}
-								[bool]$approvedResult = $false
+								[bool]$approvedResult = $true
 								Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
 							}
 							"Downgrade" {
 								[string]$returnErrorMessage = "Found a higher target display version than expected."
 								if ($DeploymentType -eq "Install") {
-									[string]$returnErrorMessage += " This leads to trying to do a msi downgrade (if supported) ..."
+									## possibly this has to change the defined reinstall mode set by PackageConfig.json
+									If ($false -eq $MSIDowngradeable) {
+										[string]$global:PackageConfig.ReinstallMode = "Reinstall"
+									} else {
+										[string]$global:PackageConfig.ReinstallMode = "Install"
+										[string]$returnErrorMessage += " Doing a msi downgrade ..."
+									}
 								}
 								Write-Log -Message "$returnErrorMessage" -Severity 2 -Source ${cmdletName}
-								[bool]$approvedResult = $false
+								[bool]$approvedResult = $true
 								Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
 							}
 							default {
@@ -6924,6 +6990,12 @@ function Uninstall-NxtApplication {
 		Expected version of installed application from a msi setup.
 		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
+	.PARAMETER MSIInplaceUpgradable
+		Only applies to MSI Installer and is necessary to control/switch the behavior of msi setup process in case of an upgrade.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER MSIDowngradeable
+		Only applies to MSI Installer and is necessary to control/switch the behavior of msi setup process in case of a downgrade.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstLogFile
 		Defines the path to the Logfile that should be used by the uninstaller.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -6986,6 +7058,12 @@ function Uninstall-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MSIInplaceUpgradable = $global:PackageConfig.MSIInplaceUpgradable,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstLogFile = $global:PackageConfig.UninstLogFile,
@@ -7056,7 +7134,7 @@ function Uninstall-NxtApplication {
 			}
 		}
 		else {
-			if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DisplayVersion $DisplayVersion -DeploymentMethod $UninstallMethod)) {
+			if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod -DisplayVersion $DisplayVersion -MSIInplaceUpgradable $MSIInplaceUpgradable -MSIDowngradeable $MSIDowngradeable)) {
 
 				[hashtable]$executeNxtParams = @{
 					Action							= 'Uninstall'
@@ -7134,7 +7212,7 @@ function Uninstall-NxtApplication {
 							[int]$logMessageSeverity = 3
 						}
 						else {
-							if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude)) {
+							if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod -DisplayVersion $DisplayVersion -MSIInplaceUpgradable $MSIInplaceUpgradable -MSIDowngradeable $MSIDowngradeable)) {
 								$uninstallResult.ErrorMessage = "Uninstallation of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 								$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 								$uninstallResult.Success = $false

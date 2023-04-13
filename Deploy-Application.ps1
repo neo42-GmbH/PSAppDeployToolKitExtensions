@@ -199,6 +199,8 @@ function Main {
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {
+						## because it could be manipulated by last call of Test-NxtAppIsInstalled re-read this parameter here
+						[string]$ReinstallMode = $global:PackageConfig.ReinstallMode
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
 							"Reinstall" {
