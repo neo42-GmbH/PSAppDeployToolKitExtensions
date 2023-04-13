@@ -123,7 +123,7 @@ try {
 	##*===============================================
 
 	## App Global Variables
-	Set-NxtDetectedDisplayVersion
+	$global:DetectedDisplayVersion = Get-NxtCurrentDisplayVersion
 
 	Get-NxtVariablesFromDeploymentSystem
 
