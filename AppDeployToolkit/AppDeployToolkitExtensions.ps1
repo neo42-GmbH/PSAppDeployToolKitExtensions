@@ -4700,6 +4700,17 @@ function Repair-NxtApplication {
 	.PARAMETER UninstallKeyIsDisplayName
 		Determines if the value given as UninstallKey should be interpreted as a displayname.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyContainsWildCards
+		Determines if the value given as UninstallKey contains WildCards.
+		If set to $true "*" are interpreted as WildCards.
+		If set to $false "*" are interpreted as part of the actual string.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DisplayNamesToExclude
+		DisplayName(s) to exclude, when retrieving Data about the application from the uninstall key in the registry.
+		Use commas to separate more than one value.
+		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
+		We reccommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
+		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
 	.PARAMETER DeploymentTimestamp
 		Timestamp used for logs (in this case if $Log is empty).
 		Defaults to $global:DeploymentTimestamp.
@@ -4730,6 +4741,12 @@ function Repair-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentTimestamp = $global:DeploymentTimestamp,
