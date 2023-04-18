@@ -6963,8 +6963,12 @@ function Test-NxtPackageConfig {
 		Executes validation steps for custom variables of the package configuration.
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
-	.PARAMETER VariableSet
+	.PARAMETER PackageConfig
 		Collection of variables to validate.
+		Default: $global:PackageConfig
+	.PARAMETER ContinueOnError
+		Continue on error.
+		Default: $false
 	.EXAMPLE
 		Test-NxtPackageConfig
 		Test-NxtPackageConfig -PackageConfig "$global:PackageConfig"
@@ -7070,7 +7074,7 @@ function Test-NxtPackageConfig {
 				'Type' = 'System.String'
 				'Mandatory' = $true
 				'AllowEmpty' = $false
-				'validateset' = [System.Globalization.CultureInfo]::GetCultures([System.Globalization.CultureTypes]::NeutralCultures) | ForEach-Object { $_.Name } | Where-Object { $_ -notlike "*-*"}
+				#'validateset' = [System.Globalization.CultureInfo]::GetCultures([System.Globalization.CultureTypes]::NeutralCultures) | ForEach-Object { $_.Name } | Where-Object { $_ -notlike "*-*"}
 				'HelpText' = 'AppLang is mandatory and must be a string with a value of a valid culture name.'
 			}
 			[PSCustomObject]'AppName' = @{

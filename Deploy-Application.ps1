@@ -127,6 +127,9 @@ try {
 
 	Get-NxtVariablesFromDeploymentSystem
 
+	## Validate Package Config Variables
+	Test-NxtPackageConfig
+	
 	##*===============================================
 	##* END VARIABLE DECLARATION
 	##*===============================================
@@ -178,7 +181,6 @@ function Main {
 		$InstallMethod = $global:PackageConfig.InstallMethod
 	)
 	try {
-		Test-NxtPackageConfig
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
