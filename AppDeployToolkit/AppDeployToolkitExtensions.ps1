@@ -6821,10 +6821,10 @@ function Test-NxtObjectValidation {
 		}
 		Process{
 			## ckeck for missing mandatory parameters
-			foreach ($Key in $ValidationRule.Keys){
-				if ($ValidationRule[$Key].Mandatory -eq $true){
+			foreach ($key in $ValidationRule.Keys){
+				if ($ValidationRule[$key].Mandatory -eq $true){
 					if ($false -eq ([bool]($ObjectToValidate.psobject.Properties.Name -contains $key))){
-						Write-Log -Message "The mandatory parameter '$Key' is missing in the package configuration object."   -severity 3
+						Write-Log -Message "The mandatory parameter '$key' is missing in the package configuration object."   -severity 3
 					}
 					else{
 						Write-Verbose "[${cmdletName}] Object found $key"
@@ -6841,81 +6841,81 @@ function Test-NxtObjectValidation {
 				$objecttovalidate.psobject.Properties.Remove($_)
 			}
 			## test each found object against the validation rule
-			foreach ($Key in $ObjectToValidate.psobject.Properties.Name){
+			foreach ($key in $ObjectToValidate.psobject.Properties.Name){
 				## check for allowed objects
 				if ($true -eq ([bool]($ValidationRule.Keys -match $key))){
 					Write-Verbose "[${cmdletName}] Object $key is allowed"
 				}
 				else{
-					Write-Log -Message "The parameter '$Key' is not allowed in the package configuration object."   -severity 3
+					Write-Log -Message "The parameter '$key' is not allowed in the package configuration object."   -severity 3
 					if ($false -eq $ContinueOnError){
-						throw "The parameter '$Key' is not allowed in the package configuration object. $($ValidationRule[$Key].HelpText)"
+						throw "The parameter '$key' is not allowed in the package configuration object. $($ValidationRule[$key].HelpText)"
 					}
 				}
 				## check for allowed object types and trigger the validation function for sub objects
-				switch ($ValidationRule[$Key].Type) {
+				switch ($ValidationRule[$key].Type) {
 					"System.Array" {
-						if ($true -eq ([bool]($ValidationRule[$Key].Type -match $ObjectToValidate.$Key.GetType().BaseType.FullName))){
-							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().BaseType.FullName)"
+						if ($true -eq ([bool]($ValidationRule[$key].Type -match $ObjectToValidate.$key.GetType().BaseType.FullName))){
+							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$key.GetType().BaseType.FullName)"
 						}
 						else{
-							Write-Log -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object."  -severity 3
+							Write-Log -Message "The parameter '$key' is not of the allowed type $($ValidationRule[$key].Type) in the package configuration object."  -severity 3
 							if ($false -eq $ContinueOnError){
-								throw "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+								throw "The parameter '$key' is not of the allowed type $($ValidationRule[$key].Type) in the package configuration object. $($ValidationRule[$key].HelpText)"
 							}
 						}
 						## check for sub objects
-						foreach ($arrayItem in $ObjectToValidate.$Key){
+						foreach ($arrayItem in $ObjectToValidate.$key){
 							[hashtable]$testNxtObjectValidationParams = @{
-								"ValidationRule" = $ValidationRule[$Key].SubKeys
+								"ValidationRule" = $ValidationRule[$key].SubKeys
 								"ObjectToValidate" = $arrayItem
 								"ContinueOnError" = $ContinueOnError
 							}
-							if($true -eq $ValidationRule[$Key].ContainsDirectValues){
+							if($true -eq $ValidationRule[$key].ContainsDirectValues){
 								$testNxtObjectValidationParams["ContainsDirectValues"] = $true
 							}
 							Test-NxtObjectValidation @testNxtObjectValidationParams
 						}
 					}
 					"System.Management.Automation.PSCustomObject" {
-						if ($true -eq ([bool]($ValidationRule[$Key].Type -match $ObjectToValidate.$Key.GetType().FullName))){
-							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().FullName)"
+						if ($true -eq ([bool]($ValidationRule[$key].Type -match $ObjectToValidate.$key.GetType().FullName))){
+							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$key.GetType().FullName)"
 						}
 						else{
-							Write-Log -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object."  -severity 3
+							Write-Log -Message "The parameter '$key' is not of the allowed type $($ValidationRule[$key].Type) in the package configuration object."  -severity 3
 							if ($false -eq $ContinueOnError){
-								throw "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+								throw "The parameter '$key' is not of the allowed type $($ValidationRule[$key].Type) in the package configuration object. $($ValidationRule[$key].HelpText)"
 							}
 						}
 						## check for sub objects
-						foreach ($subkey in $ValidationRule[$Key].SubKeys.Keys){
-							Test-NxtObjectValidation -ValidationRule $ValidationRule[$Key].SubKeys[$subkey].SubKeys -ObjectToValidate $ObjectToValidate.$Key.$Subkey -ContinueOnError:$ContinueOnError
+						foreach ($subkey in $ValidationRule[$key].SubKeys.Keys){
+							Test-NxtObjectValidation -ValidationRule $ValidationRule[$key].SubKeys[$subkey].SubKeys -ObjectToValidate $ObjectToValidate.$key.$Subkey -ContinueOnError:$ContinueOnError
 						}
 					}
 					Default {
-						if ($true -eq ([bool]($ValidationRule[$Key].Type -match $ObjectToValidate.$Key.GetType().FullName))){
-							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().FullName)"
+						if ($true -eq ([bool]($ValidationRule[$key].Type -match $ObjectToValidate.$key.GetType().FullName))){
+							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$key.GetType().FullName)"
 						}
 						else{
-							Write-Log -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object." -severity 3
+							Write-Log -Message "The parameter '$key' is not of the allowed type $($ValidationRule[$key].Type) in the package configuration object." -severity 3
 							if ($false -eq $ContinueOnError){
-								throw "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+								throw "The parameter '$key' is not of the allowed type $($ValidationRule[$key].Type) in the package configuration object. $($ValidationRule[$key].HelpText)"
 							}
 						}
-						if ($true -eq $ValidationRule[$Key].AllowEmpty -and $ObjectToValidate.$Key -eq [string]::Empty){
+						if ($true -eq $ValidationRule[$key].AllowEmpty -and $ObjectToValidate.$key -eq [string]::Empty){
 							Write-Verbose "[${cmdletName}] Object $key is allowed to be empty"
 						}
 						else{
-							if ($ValidationRule[$Key].Regex.Operator -eq "match"){
-								if ($false -eq [string]::IsNullOrEmpty($ValidationRule[$Key].Regex.ReplaceBeforeMatch)) {
-									$ObjectToValidate.$Key = $ObjectToValidate.$Key -replace $ValidationRule[$Key].Regex.ReplaceBeforeMatch
+							if ($ValidationRule[$key].Regex.Operator -eq "match"){
+								if ($false -eq [string]::IsNullOrEmpty($ValidationRule[$key].Regex.ReplaceBeforeMatch)) {
+									$ObjectToValidate.$key = $ObjectToValidate.$key -replace $ValidationRule[$key].Regex.ReplaceBeforeMatch
 								}
 								#CheckInvalidFileNameChars
-								if ($true -eq $ValidationRule[$Key].Regex.CheckInvalidFileNameChars) {
-									if ($ObjectToValidate.$Key.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0){
-										Write-Log -Message "The parameter '$Key' contains invalid characters in the package configuration object. $($ValidationRule[$Key].HelpText)" -severity 3
+								if ($true -eq $ValidationRule[$key].Regex.CheckInvalidFileNameChars) {
+									if ($ObjectToValidate.$key.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0){
+										Write-Log -Message "The parameter '$key' contains invalid characters in the package configuration object. $($ValidationRule[$key].HelpText)" -severity 3
 										if ($false -eq $ContinueOnError){
-											throw "The parameter '$Key' contains invalid characters in the package configuration object. $($ValidationRule[$Key].HelpText)"
+											throw "The parameter '$key' contains invalid characters in the package configuration object. $($ValidationRule[$key].HelpText)"
 										}
 									}
 									else {
@@ -6924,24 +6924,24 @@ function Test-NxtObjectValidation {
 								}
 								
 								## validate regex pattern
-								if ($true -eq ([bool]($ObjectToValidate.$Key -match $ValidationRule[$Key].Regex.Pattern))){
-									Write-Verbose "[${cmdletName}] Object $key matches the regex $($ValidationRule[$Key].Regex.Pattern)"
+								if ($true -eq ([bool]($ObjectToValidate.$key -match $ValidationRule[$key].Regex.Pattern))){
+									Write-Verbose "[${cmdletName}] Object $key matches the regex $($ValidationRule[$key].Regex.Pattern)"
 								}
 								else{
-									Write-Log -Message "The parameter '$Key' does not match the regex $($ValidationRule[$Key].Regex.Pattern) in the package configuration object." -severity 3
+									Write-Log -Message "The parameter '$key' does not match the regex $($ValidationRule[$key].Regex.Pattern) in the package configuration object." -severity 3
 									if ($false -eq $ContinueOnError){
-										throw "The parameter '$Key' does not match the regex $($ValidationRule[$Key].Regex.Pattern) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+										throw "The parameter '$key' does not match the regex $($ValidationRule[$key].Regex.Pattern) in the package configuration object. $($ValidationRule[$key].HelpText)"
 									}
 								}
 							}
-							if ($ValidationRule[$Key].Keys -contains "ValidateSet"){
-								if ($true -eq ([bool]($ValidationRule[$Key].ValidateSet -contains $ObjectToValidate.$Key))){
-									Write-Verbose "[${cmdletName}] Object $key is in the allowed set $($ValidationRule[$Key].ValidateSet)"
+							if ($ValidationRule[$key].Keys -contains "ValidateSet"){
+								if ($true -eq ([bool]($ValidationRule[$key].ValidateSet -contains $ObjectToValidate.$key))){
+									Write-Verbose "[${cmdletName}] Object $key is in the allowed set $($ValidationRule[$key].ValidateSet)"
 								}
 								else{
-									Write-Log -Message "The parameter '$Key' is not in the allowed set $($ValidationRule[$Key].ValidateSet) in the package configuration object." -severity 3
+									Write-Log -Message "The parameter '$key' is not in the allowed set $($ValidationRule[$key].ValidateSet) in the package configuration object." -severity 3
 									if ($false -eq $ContinueOnError){
-										throw "The parameter '$Key' is not in the allowed set $($ValidationRule[$Key].ValidateSet) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+										throw "The parameter '$key' is not in the allowed set $($ValidationRule[$key].ValidateSet) in the package configuration object. $($ValidationRule[$key].HelpText)"
 									}
 								}
 							}
