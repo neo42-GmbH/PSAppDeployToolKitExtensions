@@ -6803,10 +6803,18 @@ function Test-NxtObjectValidation {
 	param(
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
-		[hashtable]$ValidationRule,
+		[hashtable]
+		$ValidationRule,
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
-		[psobject]$ObjectToValidate
+		[psobject]
+		$ObjectToValidate,
+		[Parameter(Mandatory=$false)]
+		[switch]
+		$ContainsDirectValues = $false,
+		[Parameter(Mandatory=$false)]
+		[switch]
+		$ContinueOnError
 		)
 		Begin {
 
@@ -6815,14 +6823,19 @@ function Test-NxtObjectValidation {
 			## ckeck for missing mandatory parameters
 			foreach ($Key in $ValidationRule.Keys){
 				if ($ValidationRule[$Key].Mandatory -eq $true){
-					if ($false -eq ([bool]($ObjectToValidate.psobject.Properties.Name -match $key))){
-						Write-Error -Message "The mandatory parameter '$Key' is missing in the package configuration object."
+					if ($false -eq ([bool]($ObjectToValidate.psobject.Properties.Name -contains $key))){
+						Write-Log -Message "The mandatory parameter '$Key' is missing in the package configuration object."   -severity 3
 					}
 					else{
-						Write-Log "Object found"
+						Write-Verbose "[${cmdletName}] Object found $key"
 					}
 				}
 			}
+			if ($true -eq $ContainsDirectValues){
+					[PSCustomObject]$ObjectToValidate = [PSCustomObject]@{
+						"DirectValues" = $ObjectToValidate
+					}
+				}
 			## until we have Rules for each key, we just check the defined keys
 			$ObjectToValidate.psobject.Properties.Name | Where-Object { $ValidationRule.Keys -notcontains $_ } | ForEach-Object {
 				$objecttovalidate.psobject.Properties.Remove($_)
@@ -6831,60 +6844,112 @@ function Test-NxtObjectValidation {
 			foreach ($Key in $ObjectToValidate.psobject.Properties.Name){
 				## check for allowed objects
 				if ($true -eq ([bool]($ValidationRule.Keys -match $key))){
-					Write-Log "Object $key is allowed"
+					Write-Verbose "[${cmdletName}] Object $key is allowed"
 				}
 				else{
-					Write-Error -Message "The parameter '$Key' is not allowed in the package configuration object."
+					Write-Log -Message "The parameter '$Key' is not allowed in the package configuration object."   -severity 3
+					if ($false -eq $ContinueOnError){
+						throw "The parameter '$Key' is not allowed in the package configuration object. $($ValidationRule[$Key].HelpText)"
+					}
 				}
 				## check for allowed object types and trigger the validation function for sub objects
 				switch ($ValidationRule[$Key].Type) {
 					"System.Array" {
 						if ($true -eq ([bool]($ValidationRule[$Key].Type -match $ObjectToValidate.$Key.GetType().BaseType.FullName))){
-							Write-Log "Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().BaseType.FullName)"
+							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().BaseType.FullName)"
 						}
 						else{
-							Write-Error -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object."
+							Write-Log -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object."  -severity 3
+							if ($false -eq $ContinueOnError){
+								throw "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+							}
+						}
+						## check for sub objects
+						foreach ($arrayItem in $ObjectToValidate.$Key){
+							[hashtable]$testNxtObjectValidationParams = @{
+								"ValidationRule" = $ValidationRule[$Key].SubKeys
+								"ObjectToValidate" = $arrayItem
+								"ContinueOnError" = $ContinueOnError
+							}
+							if($true -eq $ValidationRule[$Key].ContainsDirectValues){
+								$testNxtObjectValidationParams["ContainsDirectValues"] = $true
+							}
+							Test-NxtObjectValidation @testNxtObjectValidationParams
 						}
 					}
 					"System.Management.Automation.PSCustomObject" {
 						if ($true -eq ([bool]($ValidationRule[$Key].Type -match $ObjectToValidate.$Key.GetType().FullName))){
-							Write-Log "Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().FullName)"
+							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().FullName)"
 						}
 						else{
-							Write-Error -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object."
+							Write-Log -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object."  -severity 3
+							if ($false -eq $ContinueOnError){
+								throw "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+							}
 						}
 						## check for sub objects
 						foreach ($subkey in $ValidationRule[$Key].SubKeys.Keys){
-							Test-NxtObjectValidation -ValidationRule $ValidationRule[$Key].SubKeys[$subkey].SubKeys -ObjectToValidate $ObjectToValidate.$Key.$Subkey
+							Test-NxtObjectValidation -ValidationRule $ValidationRule[$Key].SubKeys[$subkey].SubKeys -ObjectToValidate $ObjectToValidate.$Key.$Subkey -ContinueOnError:$ContinueOnError
 						}
 					}
 					Default {
 						if ($true -eq ([bool]($ValidationRule[$Key].Type -match $ObjectToValidate.$Key.GetType().FullName))){
-							Write-Log "Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().FullName)"
+							Write-Verbose "[${cmdletName}] Object $key is of the allowed type $($ObjectToValidate.$Key.GetType().FullName)"
 						}
 						else{
-							Write-Error -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object."
+							Write-Log -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object." -severity 3
+							if ($false -eq $ContinueOnError){
+								throw "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+							}
 						}
-						## validate regex ##Continue here####################
-						if ($ValidationRule[$Key].Regex.Operator -eq "match"){
-							if ($true -eq ([bool]($ObjectToValidate.$Key -match $ValidationRule[$Key].Regex.Pattern))){
-							Write-Log "Object $key matches the regex $($ValidationRule[$Key].Regex)"
+						if ($true -eq $ValidationRule[$Key].AllowEmpty -and $ObjectToValidate.$Key -eq [string]::Empty){
+							Write-Verbose "[${cmdletName}] Object $key is allowed to be empty"
 						}
 						else{
-							Write-Error -Message "The parameter '$Key' is not of the allowed type $($ValidationRule[$Key].Type) in the package configuration object."
+							if ($ValidationRule[$Key].Regex.Operator -eq "match"){
+								if ($false -eq [string]::IsNullOrEmpty($ValidationRule[$Key].Regex.ReplaceBeforeMatch)) {
+									$ObjectToValidate.$Key = $ObjectToValidate.$Key -replace $ValidationRule[$Key].Regex.ReplaceBeforeMatch
+								}
+								#CheckInvalidFileNameChars
+								if ($true -eq $ValidationRule[$Key].Regex.CheckInvalidFileNameChars) {
+									if ($ObjectToValidate.$Key.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0){
+										Write-Log -Message "The parameter '$Key' contains invalid characters in the package configuration object. $($ValidationRule[$Key].HelpText)" -severity 3
+										if ($false -eq $ContinueOnError){
+											throw "The parameter '$Key' contains invalid characters in the package configuration object. $($ValidationRule[$Key].HelpText)"
+										}
+									}
+									else {
+										Write-Verbose "[${cmdletName}] Object $key passed the filename check"
+									}
+								}
+								
+								## validate regex pattern
+								if ($true -eq ([bool]($ObjectToValidate.$Key -match $ValidationRule[$Key].Regex.Pattern))){
+									Write-Verbose "[${cmdletName}] Object $key matches the regex $($ValidationRule[$Key].Regex.Pattern)"
+								}
+								else{
+									Write-Log -Message "The parameter '$Key' does not match the regex $($ValidationRule[$Key].Regex.Pattern) in the package configuration object." -severity 3
+									if ($false -eq $ContinueOnError){
+										throw "The parameter '$Key' does not match the regex $($ValidationRule[$Key].Regex.Pattern) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+									}
+								}
+							}
+							if ($ValidationRule[$Key].Keys -contains "ValidateSet"){
+								if ($true -eq ([bool]($ValidationRule[$Key].ValidateSet -contains $ObjectToValidate.$Key))){
+									Write-Verbose "[${cmdletName}] Object $key is in the allowed set $($ValidationRule[$Key].ValidateSet)"
+								}
+								else{
+									Write-Log -Message "The parameter '$Key' is not in the allowed set $($ValidationRule[$Key].ValidateSet) in the package configuration object." -severity 3
+									if ($false -eq $ContinueOnError){
+										throw "The parameter '$Key' is not in the allowed set $($ValidationRule[$Key].ValidateSet) in the package configuration object. $($ValidationRule[$Key].HelpText)"
+									}
+								}
+							}
+							
 						}
-						}
-						
-						
 					}
 				}
-					
-
 			}
-			## validate object types
-
-
-
 		}
 		End{
 
@@ -6913,10 +6978,15 @@ function Test-NxtPackageConfig {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[PSCustomObject]
-		$PackageConfig = $global:PackageConfig
-		# | Select-Object *)
+		$PackageConfig = $global:PackageConfig,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[switch]
+		$ContinueOnError = $false
 	)
 	Begin {
+		## break reference to global variable
+		$PackageConfig = $PackageConfig | Select-Object *
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
@@ -6925,7 +6995,6 @@ function Test-NxtPackageConfig {
 		[hashtable]$validationRules = @{
 			[PSCustomObject]'AcceptedInstallExitCodes' = @{
 				'Type' = 'System.String'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'AllowEmpty' = $true
 				'Regex' = @{
@@ -6936,7 +7005,6 @@ function Test-NxtPackageConfig {
 			}
 			[PSCustomObject]'AcceptedRepairExitCodes' = @{
 				'Type' = 'System.String'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'AllowEmpty' = $true
 				'Regex' = @{
@@ -6947,7 +7015,6 @@ function Test-NxtPackageConfig {
 			}
 			[PSCustomObject]'AcceptedUninstallExitCodes' = @{
 				'Type' = 'System.String'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'AllowEmpty' = $true
 				'Regex' = @{
@@ -6958,14 +7025,12 @@ function Test-NxtPackageConfig {
 			}
 			[PSCustomObject]'App' = @{
 				'Type' = 'System.String'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'AllowEmpty' = $false
 				'HelpText' = 'App is mandatory and must be a string.'
 			}
 			[PSCustomObject]'AppArch' = @{
 				'Type' = 'System.String'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'AllowEmpty' = $false
 				'Validateset' = @("x86","x64","*")
@@ -6973,83 +7038,105 @@ function Test-NxtPackageConfig {
 			}
 			[PSCustomObject]'AppendInstParaToDefaultParameters' = @{
 				'Type' = 'System.Boolean'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'HelpText' = 'AppendInstParaToDefaultParameters is mandatory and must be a boolean.'
 			}
 			[PSCustomObject]'AppendUninstParaToDefaultParameters' = @{
 				'Type' = 'System.Boolean'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'HelpText' = 'AppendUninstParaToDefaultParameters is mandatory and must be a boolean.'
 			}
 			[PSCustomObject]'AppKillProcesses' = @{
 				'Type' = 'System.Array'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'AllowEmpty' = $true
 				'HelpText' = 'AppKillProcesses is mandatory and must be an array.'
 				'SubKeys' = [hashtable]@{
 					[PSCustomObject]'Name' = @{
 						'Type' = 'System.String'
-						'Nullable' = $false
 						'Mandatory' = $true
 						'AllowEmpty' = $false
 						'HelpText' = 'AppKillProcesses.Name is mandatory in each item below AppKillProcesses and must be a string.'
 					}
 					[PSCustomObject]'Description' = @{
 						'Type' = 'System.String'
-						'Nullable' = $false
 						'Mandatory' = $true
 						'AllowEmpty' = $true
 						'HelpText' = 'AppKillProcesses.Description is mandatory for each item below AppKillProcesses and must be a string. If empty, the name will be used.'
 					}
 				}
 			}
+			[PSCustomObject]'AppLang' = @{
+				'Type' = 'System.String'
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'validateset' = [System.Globalization.CultureInfo]::GetCultures([System.Globalization.CultureTypes]::NeutralCultures) | ForEach-Object { $_.Name } | Where-Object { $_ -notlike "*-*"}
+				'HelpText' = 'AppLang is mandatory and must be a string with a value of a valid culture name.'
+			}
+			[PSCustomObject]'AppName' = @{
+				'Type' = 'System.String'
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'HelpText' = 'AppName is mandatory and must be a string.'
+			}
+			[PSCustomObject]'DisplayNamesToExcludeFromAppSearches' = @{
+				'Type' = 'System.Array'
+				'Mandatory' = $true
+				'AllowEmpty' = $true
+				'HelpText' = 'DisplayNamesToExcludeFromAppSearches is mandatory and must be an array.'
+				'ContainsDirectValues' = $true
+				'SubKeys' = @{
+					[PSCustomObject]'DirectValues' = @{
+						'Type' = 'System.String'
+						'Mandatory' = $false
+						'Regex' = @{
+							'ReplaceBeforeMatch' = '\*'
+							'Pattern' = '.*'
+							'Operator' = 'match'
+							'CheckInvalidFileNameChars' = $true
+						}
+						'HelpText' = 'DisplayNamesToExcludeFromAppSearches.DirectValues is optional and must be a string.'
+					}
+				}
+			}
 			[PSCustomObject]'TestConditionsPreSetupSuccessCheck' = @{
 				'Type' = 'System.Management.Automation.PSCustomObject'
-				'Nullable' = $false
 				'Mandatory' = $true
 				'AllowEmpty' = $false
 				'HelpText' = 'TestConditionsPreSetupSuccessCheck is mandatory and must be a PSCustomObject.'
 				'SubKeys' = [hashtable]@{
 					[PSCustomObject]'Install' = @{
 						'Type' = 'System.Management.Automation.PSCustomObject'
-						'Nullable' = $false
+						
 						'Mandatory' = $true
 						'AllowEmpty' = $true
 						'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install is mandatory and must be a PSCustomObject.'
 						'Subkeys' = [hashtable]@{
 							[PSCustomObject]'TotalSecondsToWaitFor' = @{
 								'Type' = 'System.Int32'
-								'Nullable' = $false
 								'Mandatory' = $true
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor is mandatory and must be an integer.'
 							}
 							[PSCustomObject]'ProcessOperator' = @{
 								'Type' = 'System.String'
-								'Nullable' = $false
 								'Mandatory' = $true
 								'Validateset' = @("AND","OR")
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.ProcessOperator is mandatory and must be a string with a value of AND or OR.'
 							}
 							[PSCustomObject]'ProcessesToWaitFor' = @{
 								'Type' = 'System.Array'
-								'Nullable' = $false
 								'Mandatory' = $true
 								'AllowEmpty' = $false
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor is mandatory and must be an array.'
 								'SubKeys' = [hashtable]@{
 									[PSCustomObject]'Name' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $false
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.Name is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor and must be a string.'
 									}
 									[PSCustomObject]'Description' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $true
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.Description is mandatory and must be a string. If empty, the name will be used.'
@@ -7058,42 +7145,39 @@ function Test-NxtPackageConfig {
 							}
 							[PSCustomObject]'RegKeyOperator' = @{
 								'Type' = 'System.String'
-								'Nullable' = $false
+								
 								'Mandatory' = $true
 								'Validateset' = @("AND","OR")
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegKeyOperator is mandatory and must be a string with a value of AND or OR.'
 							}
 							[PSCustomObject]'RegkeysToWaitFor' = @{
 								'Type' = 'System.Array'
-								'Nullable' = $false
+								
 								'Mandatory' = $true
 								'AllowEmpty' = $false
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor is mandatory and must be an array.'
 								'SubKeys' = [hashtable]@{
 									[PSCustomObject]'KeyPath' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
+										
 										'Mandatory' = $true
 										'AllowEmpty' = $false
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.KeyPath is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.'
 									}
 									[PSCustomObject]'ValueName' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $false
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.'
 									}
 									[PSCustomObject]'ValueData' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $false
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.'
 									}
 									[PSCustomObject]'ShouldExist' = @{
 										'Type' = 'System.Boolean'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a boolean.'
 									}
@@ -7103,41 +7187,35 @@ function Test-NxtPackageConfig {
 					}
 					[PSCustomObject]'Uninstall' = @{
 						'Type' = 'System.Management.Automation.PSCustomObject'
-						'Nullable' = $false
 						'Mandatory' = $true
 						'AllowEmpty' = $true
 						'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall is mandatory and must be a hashtable.'
 						'Subkeys' = [hashtable]@{
 							[PSCustomObject]'TotalSecondsToWaitFor' = @{
 								'Type' = 'System.Int32'
-								'Nullable' = $false
 								'Mandatory' = $true
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor is mandatory and must be an integer.'
 							}
 							[PSCustomObject]'ProcessOperator' = @{
 								'Type' = 'System.String'
-								'Nullable' = $false
 								'Mandatory' = $true
 								'Validateset' = @("AND","OR")
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessOperator is mandatory and must be a string with a value of AND or OR.'
 							}
 							[PSCustomObject]'ProcessesToWaitFor' = @{
 								'Type' = 'System.Array'
-								'Nullable' = $false
 								'Mandatory' = $true
 								'AllowEmpty' = $false
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor is mandatory and must be an array.'
 								'SubKeys' = [hashtable]@{
 									[PSCustomObject]'Name' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $false
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.Name is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor and must be a string.'
 									}
 									[PSCustomObject]'Description' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $true
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.Description is mandatory and must be a string. If empty, the name will be used.'
@@ -7146,42 +7224,38 @@ function Test-NxtPackageConfig {
 							}
 							[PSCustomObject]'RegKeyOperator' = @{
 								'Type' = 'System.String'
-								'Nullable' = $false
+								
 								'Mandatory' = $true
 								'Validateset' = @("AND","OR")
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegKeyOperator is mandatory and must be a string with a value of AND or OR.'
 							}
 							[PSCustomObject]'RegkeysToWaitFor' = @{
 								'Type' = 'System.Array'
-								'Nullable' = $false
+								
 								'Mandatory' = $true
 								'AllowEmpty' = $false
 								'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor is mandatory and must be an array.'
 								'SubKeys' = [hashtable]@{
 									[PSCustomObject]'KeyPath' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $false
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor.KeyPath is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor and must be a string.'
 									}
 									[PSCustomObject]'ValueName' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $false
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor and must be a string.'
 									}
 									[PSCustomObject]'ValueData' = @{
 										'Type' = 'System.String'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'AllowEmpty' = $false
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor and must be a string.'
 									}
 									[PSCustomObject]'ShouldExist' = @{
 										'Type' = 'System.Boolean'
-										'Nullable' = $false
 										'Mandatory' = $true
 										'HelpText' = 'TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor and must be a boolean.'
 									}
@@ -7191,10 +7265,30 @@ function Test-NxtPackageConfig {
 					}
 				}
 			}
+			[PSCustomObject]'PackageFamilyGUID' = @{
+				'Type' = "System.String"
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'Regex' = @{
+					"Pattern" = '^\{[a-zA-Z0-9]{8}-([a-zA-Z0-9]{4}-){3}[a-zA-Z0-9]{12}\}$'
+					"Operator" = "match"
+				}
+				'HelpText' = 'PackagFamilyGUID is mandatory and must be a string.'
+			}
+			[PSCustomObject]'UserPartRevision' = @{
+				'Type' = "System.String"
+				'Mandatory' = $true
+				'AllowEmpty' = $false
+				'Regex' = @{
+					"Pattern" = '^[0-9]{4},[0-9]{2},[0-9]{2},[0-9]{2}$'
+					"Operator" = "match"
+				}
+				'HelpText' = 'UserPartRevision is mandatory and must be a string.'
+			}
 		}
 	}
 	Process {
-			Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig
+			Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError:$continueOnError
 		}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
