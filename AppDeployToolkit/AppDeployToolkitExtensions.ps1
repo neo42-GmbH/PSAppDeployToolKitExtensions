@@ -2921,6 +2921,7 @@ function Get-NxtPackageConfig {
 	}
 	Process {
 		[PSObject]$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
+		Write-Log -Message "Package configuration successfully parsed into global:PackageConfig object." -Source ${CmdletName}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -3523,6 +3524,9 @@ function Initialize-NxtEnvironment {
 	.PARAMETER ExtensionCsPath
 		Provides the Path to the AppDeployToolkitExtensions.cs containing c# to be used in the extension functions
 		Defaults to "$scriptRoot\AppDeployToolkitExtensions.cs"
+	.PARAMETER PackageConfigPath
+		Defines the path to the Packageconfig.json to be loaded to the global packageconfig Variable.
+		Defaults to "$global:Neo42PackageConfigPath"
 	.PARAMETER SetupCfgPath
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
 		Defaults to the "$global:SetupCfgPath".
@@ -3538,6 +3542,9 @@ function Initialize-NxtEnvironment {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$ExtensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageConfigPath = "$global:Neo42PackageConfigPath",
 		[Parameter(Mandatory = $false)]
 		[string]
 		$SetupCfgPath = "$global:SetupCfgPath",
@@ -3558,7 +3565,7 @@ function Initialize-NxtEnvironment {
 				throw "File not found: $ExtensionCsPath"
 			}
 		}
-		Get-NxtPackageConfig
+		Get-NxtPackageConfig -Path $PackageConfigPath
 		Set-NxtSetupCfg -Path $SetupCfgPath
 		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
