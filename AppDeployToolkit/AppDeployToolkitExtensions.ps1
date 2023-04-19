@@ -3572,8 +3572,8 @@ function Initialize-NxtEnvironment {
 			throw "Error during setting package architecture variables."
 		}
 		[string]$global:DeploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
-		Expand-NxtPackageConfig -PackageConfig $PackageConfigPath
-		Format-NxtPackageSpecificVariables -PackageConfig $PackageConfigPath
+		Expand-NxtPackageConfig
+		Format-NxtPackageSpecificVariables
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
