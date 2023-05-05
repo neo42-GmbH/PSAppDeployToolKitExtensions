@@ -7039,6 +7039,7 @@ function Uninstall-NxtApplication {
 			Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
 			$uninstallResult.Success = $null
 			if ([string]::IsNullOrEmpty($UninstFile)) {
+				$uninstallResult.ApplicationExitCode = $null
 				$uninstallResult.ErrorMessage = "Value 'UninstFile' NOT set. Uninstallation NOT executed."
 				[int]$logMessageSeverity = 2
 			}
@@ -7076,7 +7077,7 @@ function Uninstall-NxtApplication {
 				if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 				}
-				if ([string]::IsNullOrEmpty($UninstallKey)) {
+				if ( ([string]::IsNullOrEmpty($UninstallKey)) -and ($UninstallMethod -ne "none")) {
 					[string]$internalInstallerMethod = [string]::Empty
 				}
 				else {
@@ -7096,6 +7097,7 @@ function Uninstall-NxtApplication {
 						Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 					}
 					none {
+						$uninstallResult.ApplicationExitCode = $null
 						$uninstallResult.ErrorMessage = "An uninstallation method was NOT set. Skipping a default process execution."
 						$uninstallResult.Success = $null
 						[int]$logMessageSeverity = 1
@@ -7113,11 +7115,11 @@ function Uninstall-NxtApplication {
 						Execute-Process @executeParams
 					}
 				}
+				$uninstallResult.MainExitCode = $mainExitCode
 				## if nothing was to execute herein just finish
 				if ($internalInstallerMethod -ne "none") {
 
 					$uninstallResult.ApplicationExitCode = $LastExitCode
-					$uninstallResult.MainExitCode = $mainExitCode
 					## Delay for filehandle release etc. to occur.
 					Start-Sleep -Seconds 5
 
