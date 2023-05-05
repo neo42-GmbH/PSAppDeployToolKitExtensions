@@ -3764,69 +3764,67 @@ function Install-NxtApplication {
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		$installResult.Success = $false
-		[int]$logMessageSeverity = 1
-		[hashtable]$executeNxtParams = @{
-			Action                        = 'Install'
-			Path                          = "$InstFile"
-			UninstallKeyIsDisplayName     = $UninstallKeyIsDisplayName
-			UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
-			DisplayNamesToExclude         = $DisplayNamesToExclude
-		}
-		if (![string]::IsNullOrEmpty($InstPara)) {
-			if ($AppendInstParaToDefaultParameters) {
-				[string]$executeNxtParams["AddParameters"] = "$InstPara"
-			}
-			else {
-				[string]$executeNxtParams["Parameters"] = "$InstPara"
-			}
-		}
-		if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-			[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
-		}
-		if ( [string]::IsNullOrEmpty($UninstallKey) -and ($UninstallMethod -ne "none") ) {
-			[string]$internalInstallerMethod = [string]::Empty
+		if ($InstallMethod -eq "none") {
+			$installResult.ApplicationExitCode = $null
+			$installResult.ErrorMessage = "An installation method was NOT set. Skipping a default process execution."
+			$installResult.Success = $null
+			[int]$logMessageSeverity = 1
 		}
 		else {
-			[string]$internalInstallerMethod = $InstallMethod
-		}
+			$installResult.Success = $false
+			[int]$logMessageSeverity = 1
+			[hashtable]$executeNxtParams = @{
+				Action                        = 'Install'
+				Path                          = "$InstFile"
+				UninstallKeyIsDisplayName     = $UninstallKeyIsDisplayName
+				UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
+				DisplayNamesToExclude         = $DisplayNamesToExclude
+			}
+			if (![string]::IsNullOrEmpty($InstPara)) {
+				if ($AppendInstParaToDefaultParameters) {
+					[string]$executeNxtParams["AddParameters"] = "$InstPara"
+				}
+				else {
+					[string]$executeNxtParams["Parameters"] = "$InstPara"
+				}
+			}
+			if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
+				[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+			}
+			if ([string]::IsNullOrEmpty($UninstallKey)) {
+				[string]$internalInstallerMethod = [string]::Empty
+			}
+			else {
+				[string]$internalInstallerMethod = $InstallMethod
+			}
 
-		switch -Wildcard ($internalInstallerMethod) {
-			MSI {
-				Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
-			}
-			"Inno*" {
-				Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
-			}
-			Nullsoft {
-				Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
-			}
-			"BitRock*" {
-				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
-			}
-			none {
-				$installResult.ApplicationExitCode = $null
-				$installResult.ErrorMessage = "An installation method was NOT set. Skipping a default process execution."
-				$installResult.Success = $null
-				[int]$logMessageSeverity = 2
-			}
-			Default {
-				[hashtable]$executeParams = @{
-					Path	= "$InstFile"
+			switch -Wildcard ($internalInstallerMethod) {
+				MSI {
+					Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
 				}
-				if (![string]::IsNullOrEmpty($InstPara)) {
-					[string]$executeParams["Parameters"] = "$InstPara"
+				"Inno*" {
+					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
 				}
-				if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-					[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
+				Nullsoft {
+					Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
 				}
-				Execute-Process @executeParams
+				"BitRock*" {
+					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+				}
+				Default {
+					[hashtable]$executeParams = @{
+						Path	= "$InstFile"
+					}
+					if (![string]::IsNullOrEmpty($InstPara)) {
+						[string]$executeParams["Parameters"] = "$InstPara"
+					}
+					if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
+						[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
+					}
+					Execute-Process @executeParams
+				}
 			}
-		}
-		$installResult.MainExitCode = $mainExitCode
-		## if nothing was to execute herein just finish
-		if ($internalInstallerMethod -ne "none") {
-
+			$installResult.MainExitCode = $mainExitCode
 			$installResult.ApplicationExitCode = $LastExitCode
 			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
@@ -7034,92 +7032,90 @@ function Uninstall-NxtApplication {
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		$uninstallResult.Success = $false
-		[int]$logMessageSeverity = 1
-		if ([string]::IsNullOrEmpty($UninstallKey)) {
-			Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
+		if ($UninstallMethod -eq "none") {
+			$uninstallResult.ApplicationExitCode = $null
+			$uninstallResult.ErrorMessage = "An uninstallation method was NOT set. Skipping a default process execution."
 			$uninstallResult.Success = $null
-			if ([string]::IsNullOrEmpty($UninstFile)) {
-				$uninstallResult.ApplicationExitCode = $null
-				$uninstallResult.ErrorMessage = "Value 'UninstFile' NOT set. Uninstallation NOT executed."
-				[int]$logMessageSeverity = 2
-			}
-			else {
-				if ([System.IO.File]::Exists($UninstFile)) {
-					Write-Log -Message "File for running an uninstallation found: '$UninstFile'. Executing the uninstallation..." -Source ${CmdletName}
-					Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
-					$uninstallResult.ApplicationExitCode = $LastExitCode
-					$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($uninstallResult.ApplicationExitCode)'."
-					[int]$logMessageSeverity = 1
-				}
-				else {
-					$uninstallResult.ErrorMessage = "Excpected file for running an uninstallation NOT found: '$UninstFile'. Uninstallation NOT executed. Possibly the expected application is not installed on system anymore!"
-					[int]$logMessageSeverity = 2
-				}
-			}
+			[int]$logMessageSeverity = 1
 		}
 		else {
-			if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DisplayVersion $DisplayVersion -DeploymentMethod $UninstallMethod)) {
-
-				[hashtable]$executeNxtParams = @{
-					Action							= 'Uninstall'
-					UninstallKeyIsDisplayName		= $UninstallKeyIsDisplayName
-					UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
-					DisplayNamesToExclude			= $DisplayNamesToExclude
-				}
-				if ($false -eq [string]::IsNullOrEmpty($UninstPara)) {
-					if ($AppendUninstParaToDefaultParameters) {
-						[string]$executeNxtParams["AddParameters"] = "$UninstPara"
-					}
-					else {
-						[string]$executeNxtParams["Parameters"] = "$UninstPara"
-					}
-				}
-				if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
-				}
-				if ( [string]::IsNullOrEmpty($UninstallKey) -and ($UninstallMethod -ne "none") ) {
-					[string]$internalInstallerMethod = [string]::Empty
+			$uninstallResult.Success = $false
+			[int]$logMessageSeverity = 1
+			if ([string]::IsNullOrEmpty($UninstallKey)) {
+				Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
+				$uninstallResult.Success = $null
+				if ([string]::IsNullOrEmpty($UninstFile)) {
+					$uninstallResult.ApplicationExitCode = $null
+					$uninstallResult.ErrorMessage = "Value 'UninstFile' NOT set. Uninstallation NOT executed."
+					[int]$logMessageSeverity = 2
 				}
 				else {
-					[string]$internalInstallerMethod = $UninstallMethod
-				}
-				switch -Wildcard ($internalInstallerMethod) {
-					MSI {
-						Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
-					}
-					"Inno*" {
-						Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
-					}
-					Nullsoft {
-						Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
-					}
-					"BitRock*" {
-						Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
-					}
-					none {
-						$uninstallResult.ApplicationExitCode = $null
-						$uninstallResult.ErrorMessage = "An uninstallation method was NOT set. Skipping a default process execution."
-						$uninstallResult.Success = $null
+					if ([System.IO.File]::Exists($UninstFile)) {
+						Write-Log -Message "File for running an uninstallation found: '$UninstFile'. Executing the uninstallation..." -Source ${CmdletName}
+						Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
+						$uninstallResult.ApplicationExitCode = $LastExitCode
+						$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($uninstallResult.ApplicationExitCode)'."
 						[int]$logMessageSeverity = 1
 					}
-					default {
-						[hashtable]$executeParams = @{
-							Path	= "$UninstFile"
-						}
-						if (![string]::IsNullOrEmpty($UninstPara)) {
-							[string]$executeParams["Parameters"] = "$UninstPara"
-						}
-						if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-							[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
-						}
-						Execute-Process @executeParams
+					else {
+						$uninstallResult.ErrorMessage = "Excpected file for running an uninstallation NOT found: '$UninstFile'. Uninstallation NOT executed. Possibly the expected application is not installed on system anymore!"
+						[int]$logMessageSeverity = 2
 					}
 				}
-				$uninstallResult.MainExitCode = $mainExitCode
-				## if nothing was to execute herein just finish
-				if ($internalInstallerMethod -ne "none") {
+			}
+			else {
+				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DisplayVersion $DisplayVersion -DeploymentMethod $UninstallMethod)) {
 
+					[hashtable]$executeNxtParams = @{
+						Action							= 'Uninstall'
+						UninstallKeyIsDisplayName		= $UninstallKeyIsDisplayName
+						UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
+						DisplayNamesToExclude			= $DisplayNamesToExclude
+					}
+					if ($false -eq [string]::IsNullOrEmpty($UninstPara)) {
+						if ($AppendUninstParaToDefaultParameters) {
+							[string]$executeNxtParams["AddParameters"] = "$UninstPara"
+						}
+						else {
+							[string]$executeNxtParams["Parameters"] = "$UninstPara"
+						}
+					}
+					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+						[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+					}
+					if ([string]::IsNullOrEmpty($UninstallKey)) {
+						[string]$internalInstallerMethod = [string]::Empty
+					}
+					else {
+						[string]$internalInstallerMethod = $UninstallMethod
+					}
+					switch -Wildcard ($internalInstallerMethod) {
+						MSI {
+							Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
+						}
+						"Inno*" {
+							Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+						}
+						Nullsoft {
+							Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+						}
+						"BitRock*" {
+							Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+						}
+						default {
+							[hashtable]$executeParams = @{
+								Path	= "$UninstFile"
+							}
+							if (![string]::IsNullOrEmpty($UninstPara)) {
+								[string]$executeParams["Parameters"] = "$UninstPara"
+							}
+							if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+								[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+							}
+							Execute-Process @executeParams
+						}
+					}
+					$uninstallResult.MainExitCode = $mainExitCode
 					$uninstallResult.ApplicationExitCode = $LastExitCode
 					## Delay for filehandle release etc. to occur.
 					Start-Sleep -Seconds 5
@@ -7152,11 +7148,11 @@ function Uninstall-NxtApplication {
 						}
 					}
 				}
-			}
-			else {
-				$uninstallResult.ErrorMessage = "Uninstall function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected application seems not to be installed on system!"
-				$uninstallResult.Success = $null
-				[int]$logMessageSeverity = 1
+				else {
+					$uninstallResult.ErrorMessage = "Uninstall function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected application seems not to be installed on system!"
+					$uninstallResult.Success = $null
+					[int]$logMessageSeverity = 1
+				}
 			}
 		}
 
