@@ -3784,7 +3784,7 @@ function Install-NxtApplication {
 		if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
 			[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
 		}
-		if ([string]::IsNullOrEmpty($UninstallKey)) {
+		if ( [string]::IsNullOrEmpty($UninstallKey) -and ($UninstallMethod -ne "none") ) {
 			[string]$internalInstallerMethod = [string]::Empty
 		}
 		else {
@@ -3805,6 +3805,7 @@ function Install-NxtApplication {
 				Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 			}
 			none {
+				$installResult.ApplicationExitCode = $null
 				$installResult.ErrorMessage = "An installation method was NOT set. Skipping a default process execution."
 				$installResult.Success = $null
 				[int]$logMessageSeverity = 2
@@ -3822,11 +3823,11 @@ function Install-NxtApplication {
 				Execute-Process @executeParams
 			}
 		}
+		$installResult.MainExitCode = $mainExitCode
 		## if nothing was to execute herein just finish
 		if ($internalInstallerMethod -ne "none") {
 
 			$installResult.ApplicationExitCode = $LastExitCode
-			$installResult.MainExitCode = $mainExitCode
 			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
 
@@ -7077,7 +7078,7 @@ function Uninstall-NxtApplication {
 				if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 				}
-				if ( ([string]::IsNullOrEmpty($UninstallKey)) -and ($UninstallMethod -ne "none")) {
+				if ( [string]::IsNullOrEmpty($UninstallKey) -and ($UninstallMethod -ne "none") ) {
 					[string]$internalInstallerMethod = [string]::Empty
 				}
 				else {
