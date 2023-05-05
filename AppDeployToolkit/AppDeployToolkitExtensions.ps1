@@ -926,17 +926,21 @@ function Execute-NxtBitRockInstaller {
 		}
 
 		if ($Action -eq 'Uninstall') {
-			## Wait until all uninstallation processes terminated
-			Write-Log -Message "Wait while uninstallation process is still running..." -Source ${CmdletName}
+			## Wait until all uninstallation processes hopefully terminated
+			Write-Log -Message "Wait while an uninstallation process is still running..." -Source ${CmdletName}
 			Start-Sleep -Seconds 1
-			Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
+			[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
 			Start-Sleep -Seconds 1
-			Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
+			[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
 			Start-Sleep -Seconds 1
-			Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
+			[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
 			Start-Sleep -Seconds 1
-			Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
-			Write-Log -Message "Uninstallation process finished." -Source ${CmdletName}
+			[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "500"
+			If ($false -eq $result_UninstallProcess) {
+				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of at least 500s!" -Severity 2 -Source ${CmdletName}
+			} else {
+				Write-Log -Message "All uninstallation processes finished." -Source ${CmdletName}
+			}
 		}
     
 		## Update the desktop (in case of changed or added enviroment variables)
