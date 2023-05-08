@@ -36,7 +36,7 @@
 .EXAMPLE
     Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"
 .NOTES
-	Version: 2023.04.11.02
+	Version: 2023.05.08.01
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -123,7 +123,7 @@ try {
 	##*===============================================
 
 	## App Global Variables
-	Set-NxtDetectedDisplayVersion
+	[string]$global:DetectedDisplayVersion = Get-NxtCurrentDisplayVersion
 
 	Get-NxtVariablesFromDeploymentSystem
 
@@ -189,7 +189,7 @@ function Main {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
-				if ( ($false -eq $(Get-NxtRegisterOnly)) -or ($false -eq $global:registerPackage) ) {
+				if ($false -eq $(Get-NxtRegisterOnly)) {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
@@ -199,6 +199,7 @@ function Main {
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {
+						[string]$ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
 							"Reinstall" {
