@@ -75,6 +75,7 @@ switch ($DeploymentType) {
 }
 ## Global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
+[string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
@@ -462,4 +463,4 @@ function CustomUninstallUserPartEnd {
 #endregion
 
 ## Execute the main function to start the process
-main
+#main
