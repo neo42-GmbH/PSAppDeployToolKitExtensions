@@ -6588,7 +6588,7 @@ function Switch-NxtMSIReinstallMode {
 	.PARAMETER ReinstallMode
 		Defines how a reinstallation should be performed by default (maybe switched after dispolay version check inside of this function!).
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER MSIInplaceUpgradable
+	.PARAMETER MSIInplaceUpgradeable
 		Defines the behavior of msi setup process in case of an upgrade.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER MSIDowngradeable
@@ -6628,7 +6628,7 @@ function Switch-NxtMSIReinstallMode {
 		$ReinstallMode = $global:PackageConfig.ReinstallMode,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$MSIInplaceUpgradable = $global:PackageConfig.MSIInplaceUpgradable,
+		$MSIInplaceUpgradeable = $global:PackageConfig.MSIInplaceUpgradeable,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable
@@ -6660,7 +6660,7 @@ function Switch-NxtMSIReinstallMode {
 							## check just for sure
 							if ($DeploymentType -eq "Install") {
 								# in this case the defined reinstall mode set by PackageConfig.json has to change
-								If ($true -eq $MSIInplaceUpgradable) {
+								If ($true -eq $MSIInplaceUpgradeable) {
 									[string]$infoMessage += " Doing an msi inplace upgrade ..."
 									[string]$ReinstallMode = "Install"
 								} else {
