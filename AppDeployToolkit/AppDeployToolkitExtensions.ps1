@@ -3850,7 +3850,7 @@ function Install-NxtApplication {
 		[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 		if ($InstallMethod -eq "none") {
 			$installResult.ApplicationExitCode = $null
-			$installResult.ErrorMessage = "An installation method was NOT set. Skipping a default process execution."
+			$installResult.ErrorMessage = "An installation method was not set. Skipping a default process execution."
 			$installResult.Success = $null
 			[int]$logMessageSeverity = 1
 		}
