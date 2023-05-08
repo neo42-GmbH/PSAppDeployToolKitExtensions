@@ -928,9 +928,13 @@ function Execute-NxtBitRockInstaller {
 		if ($Action -eq 'Uninstall') {
 			## Wait until all uninstallation processes are terminated or write a warning to the log if the waiting period is exceeded
 			Write-Log -Message "Wait while an uninstallation process is still running..." -Source ${CmdletName}
-			[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout "2000"
+			## wait for process 5 times, BitRock uninstaller can close and reappear several times
+			for ($i = 0; $i -lt 5; $i++) {
+				[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout 500
+				Start-Sleep 1
+			}
 			If ($false -eq $result_UninstallProcess) {
-				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of 2000s!" -Severity 2 -Source ${CmdletName}
+				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of at least 500s!" -Severity 2 -Source ${CmdletName}
 			} else {
 				Write-Log -Message "All uninstallation processes finished." -Source ${CmdletName}
 			}
