@@ -7040,11 +7040,7 @@ function Test-NxtPackageConfig {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		## add to list if check for value type AND emptyness only (a nullable bool may not be expected here, this setting will be ignored for validation!)
-		## note: a nullable string or extended object (Object[]) may be empty too.
-
 		[PSCustomObject]$validationRules = Get-Content $ValidationRulePath -Raw | Out-String | ConvertFrom-Json
-		#Get-Content $Path | Out-String | ConvertFrom-Json
 	}
 	Process {
 			Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError:$continueOnError
