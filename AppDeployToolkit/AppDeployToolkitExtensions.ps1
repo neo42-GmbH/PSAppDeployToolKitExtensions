@@ -5446,7 +5446,11 @@ Function Show-NxtInstallationWelcome {
 			[string]$closeApps = "$closeApps,$defaultMsiExecutablesList"
 		}
 
-		If ($false -eq [string]::IsNullOrEmpty($closeApps)) {
+		if ($true -eq [string]::IsNullOrEmpty($closeApps)) {
+			## prevent BlockExecution function if there is no process to kill
+			$BlockExecution = $false
+		}
+		else {
 			## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
 			[PSObject[]]$processObjects = @()
 			#  Split multiple processes on a comma, then split on equal sign, then create custom object with process name and description
