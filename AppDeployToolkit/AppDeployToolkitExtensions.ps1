@@ -7464,7 +7464,6 @@ function Uninstall-NxtOld {
 							Show-DialogBox -Text $($uninstallOldResult.ErrorMessage) -Icon 'Stop'
 						}
 						else {
-							Write-Log -Message  -Source ${cmdletName}
 							$uninstallOldResult.ErrorMessage = "Uninstallation of old package successful."
 							$uninstallOldResult.Success = $true
 							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
