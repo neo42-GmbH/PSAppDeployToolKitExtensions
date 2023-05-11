@@ -5414,6 +5414,7 @@ Function Show-NxtInstallationWelcome {
 			$Silent = $true
 		}
         
+		[string]$fileExtension = ".exe"
 		foreach ( $processAppsItem in $AskKillProcessApps ) {
 			if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
 				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
@@ -5421,7 +5422,9 @@ Function Show-NxtInstallationWelcome {
 			}
 			elseif ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name)) {				
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
-				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension", "") -join ","
+				# Get-WmiObject always needs an extension, so let's add one for sure
+				[string]$processAppsItem.Name = $($processAppsItem.Name -replace "\$fileExtension","") + $fileExtension
+				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension","") -join ","
 				if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
@@ -6288,12 +6291,16 @@ Function Show-NxtWelcomePrompt {
         [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects){
 			Get-RunningProcesses -ProcessObjects $processObject #|Add-Member -NotePropertyName "ProcessDescription" -NotePropertyValue $processObject.ProcessDescription
 		}
-
+write-host runningProcesses: $runningProcesses
         [ScriptBlock]$FillCloseApplacationList = {
             param($runningProcessesParam)
+write-host runningProcessesParam: $runningProcessesParam
             ForEach ($runningProcessItem in $runningProcessesParam) {
+write-host runningProcessItem: $runningProcessItem
+write-host runningProcessItem.ProcessName: $runningProcessItem.ProcessName
                 [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
-                Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
+Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
+				Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
                     $item = New-Object PSObject -Property @{
                         Name = $runningProcessItem.ProcessDescription
                         StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
