@@ -6291,15 +6291,10 @@ Function Show-NxtWelcomePrompt {
         [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects){
 			Get-RunningProcesses -ProcessObjects $processObject #|Add-Member -NotePropertyName "ProcessDescription" -NotePropertyValue $processObject.ProcessDescription
 		}
-write-host runningProcesses: $runningProcesses
         [ScriptBlock]$FillCloseApplacationList = {
             param($runningProcessesParam)
-write-host runningProcessesParam: $runningProcessesParam
             ForEach ($runningProcessItem in $runningProcessesParam) {
-write-host runningProcessItem: $runningProcessItem
-write-host runningProcessItem.ProcessName: $runningProcessItem.ProcessName
                 [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
-Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
 				Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
                     $item = New-Object PSObject -Property @{
                         Name = $runningProcessItem.ProcessDescription
