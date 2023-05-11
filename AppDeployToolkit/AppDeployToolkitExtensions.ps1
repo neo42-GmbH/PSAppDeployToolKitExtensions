@@ -6289,22 +6289,30 @@ Function Show-NxtWelcomePrompt {
         $control_TitleText.Text = $installTitle
                 
         [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects){
-			Get-RunningProcesses -ProcessObjects $processObject #|Add-Member -NotePropertyName "ProcessDescription" -NotePropertyValue $processObject.ProcessDescription
+			Get-RunningProcesses -ProcessObjects $processObject | Where-Object {![string]::IsNullOrEmpty($_.id)}
+			#|Add-Member -NotePropertyName "ProcessDescription" -NotePropertyValue $processObject.ProcessDescription
 		}
-        [ScriptBlock]$FillCloseApplacationList = {
+		[ScriptBlock]$FillCloseApplicationList = {
             param($runningProcessesParam)
             ForEach ($runningProcessItem in $runningProcessesParam) {
                 [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
-				Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
-                    $item = New-Object PSObject -Property @{
-                        Name = $runningProcessItem.ProcessDescription
-                        StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
-                    }
-                    $control_CloseApplicationList.Items.Add($item)
+				# don't add processes without a viewable window to the list
+				if ($AllOpenWindowsForRunningProcess.count -gt 0) {		
+					Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
+					$item = New-Object PSObject -Property @{
+						Name = $runningProcessItem.ProcessDescription
+						StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
+					}
+					$control_CloseApplicationList.Items.Add($item)
+					}
                 }
+				else {
+					$runningProcessesParam = $runningProcessesParam | Where-Object { $_ -ne $runningProcessItem }
+					Write-Log -Message "This process runs hidden and may closed with 'End task' in task manager ONLY: '$($runningProcessItem.ProcessName)'" -Severity 3 -Source ${cmdletName}
+				}
             }
         }
-        & $FillCloseApplacationList $runningProcesses
+		& $FillCloseApplicationList $runningProcesses
 
         [string]$names = $runningProcesses | Select-Object -ExpandProperty Name
         $control_PopupListText.Text = $names.Trim()
@@ -6469,7 +6477,7 @@ Function Show-NxtWelcomePrompt {
                         }
                         # Update the list box with the processes to close
                         $control_CloseApplicationList.Items.Clear()
-                        & $FillCloseApplacationList $dynamicRunningProcesses
+                        & $FillCloseApplicationList $dynamicRunningProcesses
                     }
                     # If CloseApps processes were running when the prompt was shown, and they are subsequently detected to be closed while the form is showing, then close the form. The deferral and CloseApps conditions will be re-evaluated.
                     If ($ProcessDescriptions) {
