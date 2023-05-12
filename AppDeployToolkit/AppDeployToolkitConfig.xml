@@ -65,6 +65,13 @@
     </BannerIcon_Options>
     <!--Banner, Logo & Icon Options-->
 
+    <!--SoftMigration Options-->
+    <SoftMigration_Options>
+        <SoftMigration_Filename>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\#SoftMigrationDetector#</SoftMigration_Filename>
+        <!-- Specify a dummy file name to run a soft migration depending on successful individual checks by just detecting this file. -->
+    </SoftMigration_Options>
+    <!--SoftMigration Options-->
+
     <!--MSI Options-->
     <MSI_Options>
 		<MSI_LoggingOptions>/L*vx</MSI_LoggingOptions>

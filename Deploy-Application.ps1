@@ -188,6 +188,9 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
+				If ($true -eq $global:SetupCfg.Options.SoftMigration) {
+					CustomSoftMigrationBegin
+				}
 				[string]$script:installPhase = 'Check-Softmigration'
 				if ($false -eq $(Get-NxtRegisterOnly)) {
 					## soft migration is not requested or not possible
@@ -335,6 +338,14 @@ function CustomInstallAndReinstallBegin {
 	[string]$script:installPhase = 'CustomInstallAndReinstallBegin'
 
 	## Executes before any installation, reinstallation or softmigration tasks are performed
+}
+
+function CustomSoftMigrationBegin{
+	[string]$script:installPhase = 'CustomSoftMigrationBegin'
+
+	## Executes before a default check of SoftMigration runs
+	## leave default value of PackageConfig.SMFileName unchanged and after successful individual checks for soft migration just add this function call at the end of this section: Use-SoftMigrationDetector
+
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {

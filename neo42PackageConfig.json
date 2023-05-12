@@ -8,6 +8,8 @@
   "ReinstallMode": "Reinstall",
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
+  "SMFileName": "$($xmlConfig.SoftMigration_Options.SoftMigration_Filename)",
+  "SMFileVersion": "",
   "TestedOn": "Win10 x64",
   "Dependencies": "",
   "LastChange": "22/09/2022",
