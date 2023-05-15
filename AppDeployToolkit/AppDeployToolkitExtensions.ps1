@@ -3239,7 +3239,7 @@ function Get-NxtRegisterOnly {
 		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SMFileName =$global:PackageConfig.SMFileName,
+		$SMFileName = $global:PackageConfig.SMFileName,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$SMFileVersion = $global:PackageConfig.SMFileVersion,
@@ -3291,16 +3291,19 @@ function Get-NxtRegisterOnly {
 			if ([string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
 				Write-Output $false
-			}elseif ([string]::IsNullOrEmpty($currentlyDetectedDisplayVersion)) {
+			}
+			elseif ([string]::IsNullOrEmpty($currentlyDetectedDisplayVersion)) {
 				Write-Log -Message 'Currently detected DisplayVersion is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
 				Write-Output $false
-			}elseif (
+			}
+			elseif (
 				(Compare-NxtVersion -DetectedVersion $currentlyDetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and
 				-not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
 			) {
 				Write-Log -Message 'Application is already present (checked by DisplayVersion). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 				Write-Output $true
-			} else {
+			}
+			else {
 				Write-Log -Message 'No valid conditions for SoftMigration present.' -Source ${cmdletName}
 				Write-Output $false
 			}

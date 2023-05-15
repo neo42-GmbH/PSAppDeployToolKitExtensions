@@ -166,6 +166,9 @@ function Main {
 	#>
 	param (
 		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory = $false)]
 		[int]
 		[ValidateSet(0, 1, 2)]
 		$Reboot = $global:PackageConfig.reboot,
@@ -175,7 +178,10 @@ function Main {
 		$ReinstallMode = $global:PackageConfig.ReinstallMode,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstallMethod = $global:PackageConfig.InstallMethod
+		$InstallMethod = $global:PackageConfig.InstallMethod,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegisterPackage = $global:registerPackage
 	)
 	try {
 		CustomBegin
@@ -188,7 +194,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				If ($true -eq $global:SetupCfg.Options.SoftMigration) {
+				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') -and ($true -eq $RegisterPackage)) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
@@ -263,7 +269,7 @@ function Main {
 				If ($false -ne $mainNxtResult.Success) {
 					[string]$script:installPhase = 'Package-Completition'
 					Complete-NxtPackageInstallation
-					if ($true -eq $global:registerPackage) {
+					if ($true -eq $RegisterPackage) {
 						## Register package for uninstall
 						[string]$script:installPhase = 'Package-Registration'
 						Register-NxtPackage
