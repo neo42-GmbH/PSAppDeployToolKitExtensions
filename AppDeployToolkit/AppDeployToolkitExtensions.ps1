@@ -5423,8 +5423,8 @@ Function Show-NxtInstallationWelcome {
 			elseif ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name)) {				
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
 				# Get-WmiObject always needs an extension, so let's add one for sure
-				[string]$processAppsItem.Name = $($processAppsItem.Name -replace "\$fileExtension","") + $fileExtension
-				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension","") -join ","
+				[string]$processAppsItem.Name = $($processAppsItem.Name -replace "\$fileExtension$","") + $fileExtension
+				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension$","") -join ","
 				if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
