@@ -350,8 +350,8 @@ function CustomSoftMigrationBegin{
 	[string]$script:installPhase = 'CustomSoftMigrationBegin'
 
 	## Executes before a default check of SoftMigration runs
-	## leave default value of PackageConfig.SMFileName unchanged and after successful individual checks for soft migration just add this function call at the end of this section: Use-SoftMigrationDetector
-
+	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
+	## [bool]$global:PackageConfig.SoftMigration.Custom.ResultOK = $true
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
