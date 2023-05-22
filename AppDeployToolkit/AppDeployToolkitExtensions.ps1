@@ -7734,64 +7734,6 @@ function Update-NxtTextInFile {
 	}
 }
 #endregion
-#region Function Use-SoftMigrationDetector
-function Use-SoftMigrationDetector {
-	<#
-	.SYNOPSIS
-		Handles a file as detector for succesful individual SoftMigration method.
-	.DESCRIPTION
-		Writes or removes an empty file as place holder for default detection routine of SoftMigration.
-	.PARAMETER SMFileName
-		File name for the default file name detection routine of SoftMigration.
-		Defaults to the corresponding value from the PackageConfig object which should point to file the defined in PSADT-XML config file in value $xmlConfig.SoftMigration_Options.SoftMigration_Filename.
-	.PARAMETER Purge
-		Removes the detector file from it's location.
-	.OUTPUTS
-		System.Boolean.
-	.EXAMPLE
-		Use-SoftMigrationDetector
-		Use-SoftMigrationDetector -Purge
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $false)]
-		[string]
-		$SMFileName = $global:packageConfig.SMFileName,
-		[Parameter(Mandatory = $false)]
-		[switch]
-		$Purge = $false
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		if ($false -eq $Purge) {
-			if ($SMFileName -ne $($ExecutionContext.InvokeCommand.ExpandString($xmlConfig.SoftMigration_Options.SoftMigration_Filename)) ) {
-				Write-Log -Message "Note: the detector file for SoftMigration is not the expected default file!" -Severity 2 -Source ${cmdletName}
-			}
-			New-Item -Path "$SMFileName" -ItemType 'File' -Force  | Out-Null
-			if (Test-Path "$SMFileName") {
-					Write-Log -Message "Detector file for SoftMigration has been generated." -Source ${cmdletName}
-			}
-			else {
-				throw "Detector file for SoftMigration could not be generated."
-			}
-		}
-		else {
-			Remove-File -Path "$SMFileName"
-			if (Test-Path "$SMFileName") {
-				Write-Log -Message "Detector file for SoftMigration could not be removed." -Source ${cmdletName}
-			}
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
 #region Function Wait-NxtRegistryAndProcessCondition
 function Wait-NxtRegistryAndProcessCondition {
 	<#
