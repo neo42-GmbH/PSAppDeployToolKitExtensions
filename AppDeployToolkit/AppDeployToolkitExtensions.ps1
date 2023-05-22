@@ -6289,7 +6289,7 @@ Function Show-NxtWelcomePrompt {
         $control_TitleText.Text = $installTitle
                 
         [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects){
-			Get-RunningProcesses -ProcessObjects $processObject | Where-Object {![string]::IsNullOrEmpty($_.id)}
+			Get-RunningProcesses -ProcessObjects $processObject | Where-Object {$false -eq [string]::IsNullOrEmpty($_.id)}
 			#|Add-Member -NotePropertyName "ProcessDescription" -NotePropertyValue $processObject.ProcessDescription
 		}
 		[ScriptBlock]$FillCloseApplicationList = {
@@ -6326,7 +6326,7 @@ Function Show-NxtWelcomePrompt {
             $control_DeferDeadlineText.Text = $xmlUIMessages.DeferPrompt_Deadline + " " + $DeferDeadline
         }
 
-        if ([string]::IsNullOrEmpty($control_DeferTimerText.Text))
+        if ($true -eq [string]::IsNullOrEmpty($control_DeferTimerText.Text))
         {
            $control_DeferTextOne.Visibility = "Collapsed"
            $control_DeferTextTwo.Visibility = "Collapsed"
