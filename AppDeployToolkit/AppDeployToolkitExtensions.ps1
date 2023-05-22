@@ -6296,7 +6296,7 @@ Function Show-NxtWelcomePrompt {
             param($runningProcessesParam)
             ForEach ($runningProcessItem in $runningProcessesParam) {
                 [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
-				# don't add processes without a viewable window to the list
+				## actually don't add processes without a viewable window to the list yet
 				if ($AllOpenWindowsForRunningProcess.count -gt 0) {		
 					Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
 					$item = New-Object PSObject -Property @{
