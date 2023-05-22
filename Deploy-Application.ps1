@@ -200,7 +200,11 @@ function Main {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
-				if ($false -eq $(Get-NxtRegisterOnly)) {
+				if ($true -eq $(Get-NxtRegisterOnly)) {
+					## soft migration = application is installed
+					$mainNxtResult.Success = $true
+				}
+				else {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
@@ -261,10 +265,6 @@ function Main {
 						CustomInstallEnd -ResultToCheck $mainNxtResult
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
-				}
-				else {
-					## soft migration = application is installed
-					$mainNxtResult.Success = $true
 				}
 				## here we continue if application is present and/or register package is necesary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
