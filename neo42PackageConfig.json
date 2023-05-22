@@ -10,8 +10,7 @@
   "MSIDowngradeable": false,
   "SoftMigration": {
     "Custom": {
-      "UseChecksInFunction": false,
-      "ResultOK": false
+      "UseChecksInFunction": false
     },
     "File": {
       "FullNameToCheck": "",

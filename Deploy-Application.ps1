@@ -126,6 +126,8 @@ try {
 	[string]$global:DetectedDisplayVersion = Get-NxtCurrentDisplayVersion
 
 	Get-NxtVariablesFromDeploymentSystem
+	
+	[bool]$global:SoftMigrationCustomResultOk = $false
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -351,7 +353,7 @@ function CustomSoftMigrationBegin{
 
 	## Executes before a default check of SoftMigration runs
 	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
-	## [bool]$global:PackageConfig.SoftMigration.Custom.ResultOK = $true
+	## [bool]$global:SoftMigrationCustomResultOk = $true
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {

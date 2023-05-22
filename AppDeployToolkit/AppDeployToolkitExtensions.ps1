@@ -3213,9 +3213,9 @@ function Get-NxtRegisterOnly {
 	.PARAMETER SoftMigrationFileVersion
 		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the Software Package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.VersionToCheck.
-	.PARAMETER SoftMigrationResultOK
+	.PARAMETER SoftMigrationCustomResultOk
 		Specifies the result of a custom check routine for a SoftMigration of the Software Package.
-		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.Custom.ResultOK.
+		Defaults to the corresponding value from the Deploy-Aplication.ps1 object $global:SoftMigrationCustomResultOk.
 	.PARAMETER RegisterPackage
 		Specifies if package may be registered.
 		Defaults to the corresponding global value.
@@ -3246,7 +3246,7 @@ function Get-NxtRegisterOnly {
 		$SoftMigrationFileVersion = $global:PackageConfig.SoftMigration.File.VersionToCheck,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$SoftMigrationCustomResultOK = $global:PackageConfig.SoftMigration.Custom.ResultOK,
+		$SoftMigrationCustomResultOk = $global:SoftMigrationCustomResultOk,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$RegisterPackage = $global:registerPackage
@@ -3257,7 +3257,7 @@ function Get-NxtRegisterOnly {
 	}
 	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') ) {
 		[string]$messageAddon = [string]::Empty
-		if ($true -eq $SoftMigrationCustomResultOK) {
+		if ($true -eq $SoftMigrationCustomResultOk) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
 			[string]$messageAddon = "additionally "
@@ -3271,7 +3271,7 @@ function Get-NxtRegisterOnly {
 						Write-Log -Message "Application is already present (${messageAddon}checked by FileVersion). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ..." -Source ${cmdletName}
 						Write-Output $true
 					}
-					elseif ($false -eq $SoftMigrationCustomResultOK) {
+					elseif ($false -eq $SoftMigrationCustomResultOk) {
 						Write-Log -Message 'No valid conditions for SoftMigration present.' -Source ${cmdletName}
 						Write-Output $false
 					}
@@ -3282,12 +3282,12 @@ function Get-NxtRegisterOnly {
 					Write-Output $true
 				}
 			}
-			elseif ($false -eq $SoftMigrationCustomResultOK) {
+			elseif ($false -eq $SoftMigrationCustomResultOk) {
 				Write-Log -Message 'No valid conditions for SoftMigration present.' -Source ${cmdletName}
 				Write-Output $false
 			}
 		}
-		elseif ($false -eq $SoftMigrationCustomResultOK) {
+		elseif ($false -eq $SoftMigrationCustomResultOk) {
 			[string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion
 			if ([string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
