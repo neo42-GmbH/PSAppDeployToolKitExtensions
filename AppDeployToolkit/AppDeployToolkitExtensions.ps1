@@ -78,15 +78,15 @@ function Add-NxtContent {
 	}
 	Process {
 		[String]$intEncoding = $Encoding
-		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+		if (!(Test-Path -Path $Path) -and ($true -eq [String]::IsNullOrEmpty($intEncoding))) {
 			[String]$intEncoding = "UTF8"
 		}
-		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+		elseif ((Test-Path -Path $Path) -and ($true -eq [String]::IsNullOrEmpty($intEncoding))) {
 			try {
 				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
 				}
-				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
+				if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
 					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
 				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
@@ -107,7 +107,7 @@ function Add-NxtContent {
 				Path  = $Path
 				Value = $Value
 			}
-			if (![string]::IsNullOrEmpty($intEncoding)) {
+			if ($false -eq [string]::IsNullOrEmpty($intEncoding)) {
 				[string]$contentParams['Encoding'] = $intEncoding 
 			}
 			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
@@ -870,7 +870,7 @@ function Execute-NxtBitRockInstaller {
 				[string]$uninsFileName = Split-Path $bitRockInstallerSetupPath -Leaf
 
 				## If the uninstall file does not exist, restore it from $configNxtBitRockInstallerUninsBackupPath, if it exists there
-				if (![System.IO.File]::Exists($bitRockInstallerSetupPath) -and ($true -eq (Get-Item "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\$uninsFileName"))) {
+				if (![System.IO.File]::Exists($bitRockInstallerSetupPath) -and ($true -eq (Test-Path -Path "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\$uninsFileName"))) {
 					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
 					Copy-File -Path "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\unins*.*" -Destination "$uninsFolder\"	
 				}
@@ -967,7 +967,7 @@ function Execute-NxtBitRockInstaller {
 				[string]$uninsFolder = Split-Path $bitRockInstallerUninstallPath -Parent
 
 				## Actually copy the uninstallation file, if it exists
-				if ($true -eq (Get-Item "$bitRockInstallerUninstallPath")) {
+				if ($true -eq (Test-Path -Path "$bitRockInstallerUninstallPath")) {
 					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
 					Copy-File -Path "$uninsFolder\unins*.*" -Destination "$configNxtBitRockInstallerUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
@@ -1171,14 +1171,14 @@ function Execute-NxtInnoSetup {
 				[string]$uninsFolder = Split-Path $innoSetupPath -Parent
 
 				## If the uninstall file does not exist, restore it from $configNxtInnoSetupUninsBackupPath, if it exists there
-				if (![System.IO.File]::Exists($innoSetupPath) -and ($true -eq (Get-Item "$configNxtInnoSetupUninsBackupPath\$innoUninstallKey\unins[0-9][0-9][0-9].exe"))) {
+				if ( (![System.IO.File]::Exists($innoSetupPath)) -and ($true -eq (Test-Path -Path "$configNxtInnoSetupUninsBackupPath\$innoUninstallKey\unins[0-9][0-9][0-9].exe")) ) {
 					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
 					Remove-File -Path "$uninsFolder\unins*.*"
 					Copy-File -Path "$configNxtInnoSetupUninsBackupPath\$innoUninstallKey\unins[0-9][0-9][0-9].*" -Destination "$uninsFolder\"	
 				}
 
 				## If any "$uninsFolder\unins[0-9][0-9][0-9].exe" exists, use the one with the highest number
-				if ($true -eq (Get-Item "$uninsFolder\unins[0-9][0-9][0-9].exe")) {
+				if ($true -eq (Test-Path -Path "$uninsFolder\unins[0-9][0-9][0-9].exe")) {
 					[string]$innoSetupPath = Get-Item "$uninsFolder\unins[0-9][0-9][0-9].exe" | Select-Object -last 1 -ExpandProperty FullName
 					Write-Log -Message "Uninstall file set to: `"$innoSetupPath`"." -Source ${CmdletName}
 				}
@@ -1295,7 +1295,7 @@ function Execute-NxtInnoSetup {
 				[string]$uninsfolder = Split-Path $innoUninstallPath -Parent
 
 				## Actually copy the uninstallation file, if it exists
-				if ($true -eq (Get-Item "$uninsfolder\unins[0-9][0-9][0-9].exe")) {
+				if ($true -eq (Test-Path -Path "$uninsfolder\unins[0-9][0-9][0-9].exe")) {
 					Write-Log -Message "Copy uninstallation files to backup..." -Source ${CmdletName}
 					Copy-File -Path "$uninsfolder\unins[0-9][0-9][0-9].*" -Destination "$configNxtInnoSetupUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
@@ -1726,7 +1726,7 @@ function Execute-NxtNullsoft {
 				[string]$uninsFileName = Split-Path $nullsoftSetupPath -Leaf
 
 				## If the uninstall file does not exist, restore it from $configNxtNullsoftUninsBackupPath, if it exists there
-				if (![System.IO.File]::Exists($nullsoftSetupPath) -and ($true -eq (Get-Item "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\$uninsFileName"))) {
+				if (![System.IO.File]::Exists($nullsoftSetupPath) -and ($true -eq (Test-Path -Path "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\$uninsFileName"))) {
 					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
 					Copy-File -Path "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\$uninsFileName" -Destination "$uninsFolder\"	
 				}
@@ -1817,7 +1817,7 @@ function Execute-NxtNullsoft {
 				}
 
 				## Actually copy the uninstallation file, if it exists
-				if ($true -eq (Get-Item "$nullsoftUninstallPath")) {
+				if ($true -eq (Test-Path -Path "$nullsoftUninstallPath")) {
 					Write-Log -Message "Copy uninstallation file to backup..." -Source ${CmdletName}
 					Copy-File -Path "$nullsoftUninstallPath" -Destination "$configNxtNullsoftUninsBackupPath\$($InstalledAppResults.UninstallSubkey)\"	
 				}
