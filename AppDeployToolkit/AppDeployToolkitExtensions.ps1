@@ -2175,7 +2175,7 @@ function Expand-NxtPackageConfig {
 				}
 			}
 		}
-}
+	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
