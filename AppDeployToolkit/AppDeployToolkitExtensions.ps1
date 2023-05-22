@@ -3518,6 +3518,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 			else { 
 				[bool]$global:RegisterPackage = $true
 			}
+			## actually this $global:UninstallOld is not be used, because no re-overriding in this way is allowed yet
 			if ("false" -eq $UninstallOld) {
 				[bool]$global:UninstallOld = $false
 			}
