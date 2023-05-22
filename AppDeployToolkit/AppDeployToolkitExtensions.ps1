@@ -3260,9 +3260,9 @@ function Get-NxtRegisterOnly {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
 		}
-		elseif ( !([string]::IsNullOrEmpty($SoftMigrationFileName)) ) {
+		elseif ( $false -eq ([string]::IsNullOrEmpty($SoftMigrationFileName)) ) {
 			if ($true -eq (Test-Path -Path $SoftMigrationFileName)) {
-				if ( !([string]::IsNullOrEmpty($SoftMigrationFileVersion)) ) {
+				if ( $false -eq ([string]::IsNullOrEmpty($SoftMigrationFileVersion)) ) {
 					[string]$currentlyDetectedFileVersion = (Get-Item -Path "$SoftMigrationFileName").VersionInfo.FileVersionRaw    
 					Write-Log -Message "Currently detected file version [$($currentlyDetectedFileVersion)] for SoftMigration detection file [$SoftMigrationFileName] with expected version [$SoftMigrationFileVersion]." -Source ${cmdletName}
 					if ((Compare-NxtVersion -DetectedVersion $currentlyDetectedFileVersion -TargetVersion $SoftMigrationFileVersion) -eq "Equal") {
@@ -3274,7 +3274,7 @@ function Get-NxtRegisterOnly {
 						Write-Output $false
 					}
 				}
-				elseif ( ([string]::IsNullOrEmpty($SoftMigrationFileVersion)) ) {
+				elseif ( $true -eq ([string]::IsNullOrEmpty($SoftMigrationFileVersion)) ) {
 					Write-Log -Message "SoftMigration detection file [$SoftMigrationFileName] found." -Source ${cmdletName}
 					Write-Log -Message "Application is already present (checked by FileName). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ..." -Source ${cmdletName}
 					Write-Output $true
@@ -3287,11 +3287,11 @@ function Get-NxtRegisterOnly {
 		}
 		else {
 			[string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion
-			if ([string]::IsNullOrEmpty($DisplayVersion)) {
+			if ($true -eq [string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
 				Write-Output $false
 			}
-			elseif ([string]::IsNullOrEmpty($currentlyDetectedDisplayVersion)) {
+			elseif ($true -eq [string]::IsNullOrEmpty($currentlyDetectedDisplayVersion)) {
 				Write-Log -Message 'Currently detected DisplayVersion is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
 				Write-Output $false
 			}
