@@ -5101,6 +5101,7 @@ function Set-NxtProcessEnvironmentVariable {
 	}
 }
 #endregion
+#region Function Set-NxtCustomSetupCfg
 function Set-NxtCustomSetupCfg {
 	<#
 	.SYNOPSIS
@@ -5131,14 +5132,14 @@ function Set-NxtCustomSetupCfg {
 	}
 	Process {
 		try {
-			if($true -eq (Test-Path $Path)){
+			if ($true -eq (Test-Path $Path)) {
 				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
 				Write-Log -Message "CustomSetupCfg successfully set." -Source ${CmdletName}
 			}
 			else {
 				Write-Log -Message "File '$Path' not found. Setting CustomSetupCfg to Defaults." -Source ${CmdletName}
 				[hashtable]$global:CustomSetupCfg = @{
-					UserCanAbort = $false
+					UserCanAbort    = $false
 					UserCanCloseAll = $false
 				}
 			}
@@ -5151,6 +5152,7 @@ function Set-NxtCustomSetupCfg {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
+#endregion
 #region Function Set-NxtSetupCfg
 function Set-NxtSetupCfg {
 	<#
@@ -6890,7 +6892,7 @@ function Test-NxtLocalUserExists {
 	}
 }
 #endregion
-#region Test-NxtPersonalizationLightTheme
+#region Function Test-NxtPersonalizationLightTheme
 function Test-NxtPersonalizationLightTheme {
 	<#
 	.DESCRIPTION
@@ -6908,8 +6910,7 @@ function Test-NxtPersonalizationLightTheme {
 	}
 	Process {
 		[bool]$lightThemeResult = $true
-		if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) 
-		{
+		if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
 			if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
 				[bool]$lightThemeResult = $true
 			} 
@@ -6917,10 +6918,8 @@ function Test-NxtPersonalizationLightTheme {
 				[bool]$lightThemeResult = $false
 			}
 		} 
-		else
-		{
-			if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) 
-			{
+		else {
+			if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
 				if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
 					[bool]$lightThemeResult = $true
 				} 
@@ -6931,7 +6930,7 @@ function Test-NxtPersonalizationLightTheme {
 		}
 		Write-Output $lightThemeResult
 	}
-    End {
+	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
@@ -8223,9 +8222,8 @@ function Watch-NxtRegistryKeyIsRemoved {
 	}
 }
 #endregion
-#region New-NxtWpfControl
-function New-NxtWpfControl()
-{
+#region Function New-NxtWpfControl
+function New-NxtWpfControl() {
 	<#
 	.DESCRIPTION
 		Creates a WPF control.
@@ -8252,12 +8250,12 @@ function New-NxtWpfControl()
 	}
 	Process {
 		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-		$InputXml = $InputXml -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
+		$InputXml = $InputXml -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
 		#Read XAML
 		[xml]$xaml = $InputXml
-		[System.Xml.XmlNodeReader]$reader=(New-Object System.Xml.XmlNodeReader $xaml)
+		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
 		try {
-			[System.Windows.Window]$control=[Windows.Markup.XamlReader]::Load($reader)
+			[System.Windows.Window]$control = [Windows.Markup.XamlReader]::Load($reader)
 		}
 		catch {  
 			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
@@ -8270,56 +8268,6 @@ function New-NxtWpfControl()
 	}
 }
 
-#endregion
-#region Function Write-NxtSingleXmlNode
-function Write-NxtSingleXmlNode {
-	<#
-	.DESCRIPTION
-		Writes single node to xml file.
-	.PARAMETER XmlFilePath
-		Path to the xml file.
-	.PARAMETER SingleNodeName
-		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp).
-	.PARAMETER Value
-		Node value.
-	.EXAMPLE
-		Write-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -Value "müller"
-	.OUTPUTS
-		none.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $true)]
-		[string]
-		$XmlFilePath,
-		[Parameter(Mandatory = $true)]
-		[string]
-		$SingleNodeName,
-		[Parameter(Mandatory = $true)]
-		[string]
-		$Value
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		try {
-			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-			$xmlDoc.Load($XmlFilePath)
-			[string]$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
-			$xmlDoc.Save($XmlFilePath)
-		}
-		catch {
-			Write-Log -Message "Failed to write value '$Value' to single node '$SingleNodeName' in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
 #endregion
 #region Function Write-NxtXmlNode
 function Write-NxtXmlNode {
