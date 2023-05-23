@@ -8269,6 +8269,56 @@ function Watch-NxtRegistryKeyIsRemoved {
 	}
 }
 #endregion
+#region Function Write-NxtSingleXmlNode
+function Write-NxtSingleXmlNode {
+	<#
+	.DESCRIPTION
+		Writes single node to xml file.
+	.PARAMETER XmlFilePath
+		Path to the xml file.
+	.PARAMETER SingleNodeName
+		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp).
+	.PARAMETER Value
+		Node value.
+	.EXAMPLE
+		Write-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -Value "müller"
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$XmlFilePath,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SingleNodeName,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Value
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
+			$xmlDoc.Load($XmlFilePath)
+			[string]$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
+			$xmlDoc.Save($XmlFilePath)
+		}
+		catch {
+			Write-Log -Message "Failed to write value '$Value' to single node '$SingleNodeName' in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Write-NxtXmlNode
 function Write-NxtXmlNode {
 	<#
