@@ -4015,6 +4015,53 @@ function Move-NxtItem {
 	}
 }
 #endregion
+#region Function New-NxtWpfControl
+function New-NxtWpfControl() {
+	<#
+	.DESCRIPTION
+		Creates a WPF control.
+	.PARAMETER InputXml
+		Xml input that is converted to a WPF control.
+	.EXAMPLE
+		New-NxtWpfControl -InputXml $inputXml
+	.OUTPUTS
+		none.
+	.NOTES
+		This is an internal script function and should typically not be called directly. It is used by the Show-NxtWelcomePrompt to create the WPF control.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Param(
+		[Parameter(Mandatory = $True)]
+		[string]
+		$InputXml
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+		$InputXml = $InputXml -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+		#Read XAML
+		[xml]$xaml = $InputXml
+		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
+		try {
+			[System.Windows.Window]$control = [Windows.Markup.XamlReader]::Load($reader)
+		}
+		catch {  
+			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
+			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
+		}
+		return $control
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
@@ -8221,53 +8268,6 @@ function Watch-NxtRegistryKeyIsRemoved {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-#endregion
-#region Function New-NxtWpfControl
-function New-NxtWpfControl() {
-	<#
-	.DESCRIPTION
-		Creates a WPF control.
-	.PARAMETER InputXml
-		Xml input that is converted to a WPF control.
-	.EXAMPLE
-		New-NxtWpfControl -InputXml $inputXml
-	.OUTPUTS
-		none.
-	.NOTES
-		This is an internal script function and should typically not be called directly. It is used by the Show-NxtWelcomePrompt to create the WPF control.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	Param(
-		[Parameter(Mandatory = $True)]
-		[string]
-		$InputXml
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-	}
-	Process {
-		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-		$InputXml = $InputXml -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
-		#Read XAML
-		[xml]$xaml = $InputXml
-		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
-		try {
-			[System.Windows.Window]$control = [Windows.Markup.XamlReader]::Load($reader)
-		}
-		catch {  
-			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
-			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
-		}
-		return $control
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-
 #endregion
 #region Function Write-NxtXmlNode
 function Write-NxtXmlNode {
