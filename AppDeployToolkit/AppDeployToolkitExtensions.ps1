@@ -116,10 +116,10 @@ function Add-NxtContent {
 			else {
 				Add-Content @contentParams
 			}
-			
+			Write-Log -Message "Add content to the file '$Path'." -Source ${cmdletName}		
 		}
 		catch {
-			Write-Log -Message "Failed to Add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to add content to the file '$Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -3596,6 +3596,7 @@ function Import-NxtIniFile {
 				}
 			}
 			Write-Output $ini
+			Write-Log -Message "Read ini file [$path]. " -Source ${CmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to read ini file [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -4000,13 +4001,13 @@ function Move-NxtItem {
 			foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved) {
 				$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
 			}
-			Write-Log -Message "Move $path to $Destination." -Source ${cmdletName}
+			Write-Log -Message "Move '$path' to '$Destination'." -Source ${cmdletName}
 			Move-Item @PSBoundParameters -ErrorAction Stop
 		}
 		catch {
-			Write-Log -Message "Failed to move $Path to $Destination. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to move '$Path' to '$Destination'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			if (-not $ContinueOnError) {
-				throw "Failed to move $Path to $Destination`: $($_.Exception.Message)"
+				throw "Failed to move '$Path' to '$Destination'`: $($_.Exception.Message)"
 			}
 		}
 	}
@@ -4649,6 +4650,7 @@ function Remove-NxtProcessEnvironmentVariable {
 	Process {
 		try {
 			[System.Environment]::SetEnvironmentVariable($Key, $null, [System.EnvironmentVariableTarget]::Process)
+			Write-Log -Message "Remove the process environment variable with key '$Key'." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to remove the process environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -4686,6 +4688,7 @@ function Remove-NxtSystemEnvironmentVariable {
 	Process {
 		try {
 			[System.Environment]::SetEnvironmentVariable($Key, $null, [System.EnvironmentVariableTarget]::Machine)
+			Write-Log -Message "Remove the system environment variable with key '$Key'." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to remove the system environment variable with key '$Key'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -4912,7 +4915,7 @@ function Set-NxtIniValue {
 				Set-IniValue -FilePath $FilePath -Section $Section -Key $Key -Value $Value -ContinueOnError $ContinueOnError
 			}
 			else {
-				Write-Log -Message "INI file $FilePath does not exist!" -Source ${CmdletName}
+				Write-Log -Message "INI file '$FilePath' does not exist!" -Source ${CmdletName}
 			}
 		}
 		catch {
@@ -5091,6 +5094,7 @@ function Set-NxtProcessEnvironmentVariable {
 	Process {
 		try {
 			[System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Process)
+			Write-Log -Message "Process the environment variable with key '$Key' and value '{$Value}'." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to set the process environment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -5226,6 +5230,7 @@ function Set-NxtSystemEnvironmentVariable {
 	Process {
 		try {
 			[System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Machine)
+			Write-Log -Message "Set a system environment variable with key '$Key' and value '{$Value}'." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to set the system environment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -7649,6 +7654,9 @@ function Update-NxtTextInFile {
 				Write-Log -Message "Did not find anything to replace in file '$Path'."
 				return
 			}
+			else {
+				Write-Log -Message "Replace found text in file '$Path'."
+			}
 			[array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
 				[string]$Content = $Content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
@@ -7661,7 +7669,7 @@ function Update-NxtTextInFile {
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to add content to the file $Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to add content to the file '$Path'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -8311,6 +8319,7 @@ function Write-NxtSingleXmlNode {
 			$xmlDoc.Load($XmlFilePath)
 			[string]$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
 			$xmlDoc.Save($XmlFilePath)
+			Write-Log -Message "Write value '$Value' to single node '$SingleNodeName' in xml file '$XmlFilePath'." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to write value '$Value' to single node '$SingleNodeName' in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -8391,6 +8400,7 @@ function Write-NxtXmlNode {
 					[void]$xmlNode.AppendChild($node)
 				}
 
+				Write-Log -Message "Write a new node in xml file '$XmlFilePath'." -Source ${cmdletName}
 				return $xmlNode
 			}
 			
