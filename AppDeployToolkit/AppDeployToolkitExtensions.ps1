@@ -4016,6 +4016,53 @@ function Move-NxtItem {
 	}
 }
 #endregion
+#region Function New-NxtWpfControl
+function New-NxtWpfControl() {
+	<#
+	.DESCRIPTION
+		Creates a WPF control.
+	.PARAMETER InputXml
+		Xml input that is converted to a WPF control.
+	.EXAMPLE
+		New-NxtWpfControl -InputXml $inputXml
+	.OUTPUTS
+		none.
+	.NOTES
+		This is an internal script function and should typically not be called directly. It is used by the Show-NxtWelcomePrompt to create the WPF control.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	Param(
+		[Parameter(Mandatory = $True)]
+		[string]
+		$InputXml
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+		$InputXml = $InputXml -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+		#Read XAML
+		[xml]$xaml = $InputXml
+		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
+		try {
+			[System.Windows.Window]$control = [Windows.Markup.XamlReader]::Load($reader)
+		}
+		catch {  
+			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
+			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
+		}
+		return $control
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+
+#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
@@ -5105,6 +5152,7 @@ function Set-NxtProcessEnvironmentVariable {
 	}
 }
 #endregion
+#region Function Set-NxtCustomSetupCfg
 function Set-NxtCustomSetupCfg {
 	<#
 	.SYNOPSIS
@@ -5135,14 +5183,14 @@ function Set-NxtCustomSetupCfg {
 	}
 	Process {
 		try {
-			if($true -eq (Test-Path $Path)){
+			if ($true -eq (Test-Path $Path)) {
 				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
 				Write-Log -Message "CustomSetupCfg successfully set." -Source ${CmdletName}
 			}
 			else {
 				Write-Log -Message "File '$Path' not found. Setting CustomSetupCfg to Defaults." -Source ${CmdletName}
 				[hashtable]$global:CustomSetupCfg = @{
-					UserCanAbort = $false
+					UserCanAbort    = $false
 					UserCanCloseAll = $false
 				}
 			}
@@ -5155,6 +5203,7 @@ function Set-NxtCustomSetupCfg {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
+#endregion
 #region Function Set-NxtSetupCfg
 function Set-NxtSetupCfg {
 	<#
@@ -6895,7 +6944,7 @@ function Test-NxtLocalUserExists {
 	}
 }
 #endregion
-#region Test-NxtPersonalizationLightTheme
+#region Function Test-NxtPersonalizationLightTheme
 function Test-NxtPersonalizationLightTheme {
 	<#
 	.DESCRIPTION
@@ -6913,8 +6962,7 @@ function Test-NxtPersonalizationLightTheme {
 	}
 	Process {
 		[bool]$lightThemeResult = $true
-		if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) 
-		{
+		if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
 			if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
 				[bool]$lightThemeResult = $true
 			} 
@@ -6922,10 +6970,8 @@ function Test-NxtPersonalizationLightTheme {
 				[bool]$lightThemeResult = $false
 			}
 		} 
-		else
-		{
-			if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) 
-			{
+		else {
+			if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
 				if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
 					[bool]$lightThemeResult = $true
 				} 
@@ -6936,7 +6982,7 @@ function Test-NxtPersonalizationLightTheme {
 		}
 		Write-Output $lightThemeResult
 	}
-    End {
+	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
@@ -8230,54 +8276,6 @@ function Watch-NxtRegistryKeyIsRemoved {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-#endregion
-#region New-NxtWpfControl
-function New-NxtWpfControl()
-{
-	<#
-	.DESCRIPTION
-		Creates a WPF control.
-	.PARAMETER InputXml
-		Xml input that is converted to a WPF control.
-	.EXAMPLE
-		New-NxtWpfControl -InputXml $inputXml
-	.OUTPUTS
-		none.
-	.NOTES
-		This is an internal script function and should typically not be called directly. It is used by the Show-NxtWelcomePrompt to create the WPF control.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	Param(
-		[Parameter(Mandatory = $True)]
-		[string]
-		$InputXml
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-	}
-	Process {
-		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-		$InputXml = $InputXml -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
-		#Read XAML
-		[xml]$xaml = $InputXml
-		[System.Xml.XmlNodeReader]$reader=(New-Object System.Xml.XmlNodeReader $xaml)
-		try {
-			[System.Windows.Window]$control=[Windows.Markup.XamlReader]::Load($reader)
-		}
-		catch {  
-			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
-			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
-		}
-		return $control
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-
 #endregion
 #region Function Write-NxtSingleXmlNode
 function Write-NxtSingleXmlNode {
