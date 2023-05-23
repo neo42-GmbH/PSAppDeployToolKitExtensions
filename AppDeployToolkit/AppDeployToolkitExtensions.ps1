@@ -6290,7 +6290,6 @@ Function Show-NxtWelcomePrompt {
                 
         [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects){
 			Get-RunningProcesses -ProcessObjects $processObject | Where-Object {$false -eq [string]::IsNullOrEmpty($_.id)}
-			#|Add-Member -NotePropertyName "ProcessDescription" -NotePropertyValue $processObject.ProcessDescription
 		}
 		[ScriptBlock]$FillCloseApplicationList = {
             param($runningProcessesParam)
