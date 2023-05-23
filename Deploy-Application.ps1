@@ -27,6 +27,8 @@
 .PARAMETER DeploymentSystem
 	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
 	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
+.PARAMETER NeoForceLanguage
+	Can be used to explicitly specify the language will be used to install the application. Default is: [string]::Empty.
 .EXAMPLE
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; Exit $LastExitCode }"
 .EXAMPLE
@@ -59,7 +61,9 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[switch]$DisableLogging = $false,
 	[Parameter(Mandatory = $false)]
-	[string]$DeploymentSystem = [string]::Empty
+	[string]$DeploymentSystem = [string]::Empty,
+	[Parameter(Mandatory = $false)]
+	[string]$NeoForceLanguage = [string]::Empty
 )
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
@@ -78,6 +82,7 @@ switch ($DeploymentType) {
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
+[string]$global:NeoForceLanguage = $NeoForceLanguage
 ## Several PSADT-functions do not work, if these variables are not set here.
 Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {
 	[string]$appVendor = $_.AppVendor
