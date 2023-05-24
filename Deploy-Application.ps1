@@ -130,10 +130,9 @@ try {
 	## App Global Variables
 	[string]$global:DetectedDisplayVersion = Get-NxtCurrentDisplayVersion
 
-	[string]$global:AppInstallDetectionCustomResultOk = $false
-
 	Get-NxtVariablesFromDeploymentSystem
 	
+	[bool]$global:AppInstallDetectionCustomResult = $false
 	[bool]$global:SoftMigrationCustomResultOk = $false
 
 	##*===============================================
@@ -223,7 +222,7 @@ function Main {
 					[bool]$doReinstall = $false
 					if ($true -eq $UseCustomAppInstallDetection) {
 						Write-Log -Message "A custom decision to perform a reinstallation is used." -Source $deployAppScriptFriendlyName
-						[bool]$doReinstall = $global:AppInstallDetectionCustomResultOk
+						[bool]$doReinstall = $global:AppInstallDetectionCustomResult
 					}
 					else {
 						[bool]$doReinstall = $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)
@@ -387,7 +386,7 @@ function CustomInstallAndReinstallPreInstallAndReinstall {
 
 	## Executes before any installation or reinstallation tasks are performed
 	## after successful individual checks for installed application state the following variable has to be set at the end of this section:
-	## [bool]$global:AppInstallDetectionCustomResultOk = $true
+	## [bool]$global:AppInstallDetectionCustomResult = $true
 }
 
 function CustomReinstallPreUninstall {
