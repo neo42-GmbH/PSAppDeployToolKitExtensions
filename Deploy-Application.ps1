@@ -133,7 +133,7 @@ try {
 	Get-NxtVariablesFromDeploymentSystem
 	
 	[bool]$global:AppInstallDetectionCustomResult = $false
-	[bool]$global:SoftMigrationCustomResultOk = $false
+	[bool]$global:SoftMigrationCustomResult = $false
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -367,7 +367,7 @@ function CustomSoftMigrationBegin{
 
 	## Executes before a default check of SoftMigration runs
 	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
-	## [bool]$global:SoftMigrationCustomResultOk = $true
+	## [bool]$global:SoftMigrationCustomResult = $true
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
