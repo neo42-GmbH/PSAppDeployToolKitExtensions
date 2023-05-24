@@ -27,6 +27,8 @@
 .PARAMETER DeploymentSystem
 	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
 	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
+.PARAMETER NeoForceLanguage
+	Can be used to explicitly specify the language will be used to install the application. Default is: [string]::Empty.
 .EXAMPLE
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; Exit $LastExitCode }"
 .EXAMPLE
@@ -59,7 +61,9 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[switch]$DisableLogging = $false,
 	[Parameter(Mandatory = $false)]
-	[string]$DeploymentSystem = [string]::Empty
+	[string]$DeploymentSystem = [string]::Empty,
+	[Parameter(Mandatory = $false)]
+	[string]$NeoForceLanguage = [string]::Empty
 )
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
@@ -78,6 +82,7 @@ switch ($DeploymentType) {
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
+[string]$global:NeoForceLanguage = $NeoForceLanguage
 ## Several PSADT-functions do not work, if these variables are not set here.
 Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {
 	[string]$appVendor = $_.AppVendor
@@ -128,6 +133,8 @@ try {
 	[string]$global:AppInstallDetectionCustomResultOk = $false
 
 	Get-NxtVariablesFromDeploymentSystem
+	
+	[bool]$global:SoftMigrationCustomResultOk = $false
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -168,6 +175,9 @@ function Main {
 	#>
 	param (
 		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory = $false)]
 		[int]
 		[ValidateSet(0, 1, 2)]
 		$Reboot = $global:PackageConfig.reboot,
@@ -177,7 +187,10 @@ function Main {
 		$ReinstallMode = $global:PackageConfig.ReinstallMode,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstallMethod = $global:PackageConfig.InstallMethod
+		$InstallMethod = $global:PackageConfig.InstallMethod,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegisterPackage = $global:registerPackage
 	)
 	try {
 		CustomBegin
@@ -190,8 +203,15 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
+				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') -and ($true -eq $RegisterPackage)) {
+					CustomSoftMigrationBegin
+				}
 				[string]$script:installPhase = 'Check-Softmigration'
-				if ($false -eq $(Get-NxtRegisterOnly)) {
+				if ($true -eq $(Get-NxtRegisterOnly)) {
+					## soft migration = application is installed
+					$mainNxtResult.Success = $true
+				}
+				else {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
@@ -261,16 +281,12 @@ function Main {
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
 				}
-				else {
-					## soft migration = application is installed
-					$mainNxtResult.Success = $true
-				}
 				## here we continue if application is present and/or register package is necesary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
 				If ($false -ne $mainNxtResult.Success) {
 					[string]$script:installPhase = 'Package-Completition'
 					Complete-NxtPackageInstallation
-					if ($true -eq $global:registerPackage) {
+					if ($true -eq $RegisterPackage) {
 						## Register package for uninstall
 						[string]$script:installPhase = 'Package-Registration'
 						Register-NxtPackage
@@ -345,6 +361,14 @@ function CustomInstallAndReinstallBegin {
 	[string]$script:installPhase = 'CustomInstallAndReinstallBegin'
 
 	## Executes before any installation, reinstallation or softmigration tasks are performed
+}
+
+function CustomSoftMigrationBegin{
+	[string]$script:installPhase = 'CustomSoftMigrationBegin'
+
+	## Executes before a default check of SoftMigration runs
+	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
+	## [bool]$global:SoftMigrationCustomResultOk = $true
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
