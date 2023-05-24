@@ -202,6 +202,7 @@ function Main {
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					[bool]$doReinstall = $false
 					if ($true -eq $UseCustomAppInstallDetection) {
+						Write-Log -message "A custom decision for doing a reinstallation is used." -Source $deployAppScriptFriendlyName
 						[bool]$doReinstall = $AppInstallDetectionCustomResultOk
 					}
 					else {
@@ -361,6 +362,8 @@ function CustomInstallAndReinstallPreInstallAndReinstall {
 	[string]$script:installPhase = 'CustomInstallAndReinstallPreInstallAndReinstall'
 
 	## Executes before any installation or reinstallation tasks are performed
+	## after successful individual checks for installed application state the following variable has to be set at the end of this section:
+	## [bool]$global:AppInstallDetectionCustomResultOk = $true
 }
 
 function CustomReinstallPreUninstall {
