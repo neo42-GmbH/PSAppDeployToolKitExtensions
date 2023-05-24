@@ -257,7 +257,7 @@
 		<NxtWelcomePrompt_ApplicationName>Application name</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Started by</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>You can choose to defer the {0} until the deferral expires:</NxtWelcomePrompt_ChooseDefer>
-		<NxtWelcomePrompt_RemainingDefferals>Remaining defferals: {0}</NxtWelcomePrompt_RemainingDefferals>
+		<NxtWelcomePrompt_RemainingDefferals>Remaining deferrals: {0}</NxtWelcomePrompt_RemainingDefferals>
 		<NxtWelcomePrompt_DeferalExpired>Once the defferal is expired, you will no longer have the option to defer.</NxtWelcomePrompt_DeferalExpired>
 		<NxtWelcomePrompt_CloseWithoutSaving_Abort>If you do not close your applications the software {0} will be aborted.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
 		<NxtWelcomePrompt_CloseWithoutSaving_Continue>If you do not close your applications, they will be closed without saving, and the software {0} will be continued.</NxtWelcomePrompt_CloseWithoutSaving_Continue>
