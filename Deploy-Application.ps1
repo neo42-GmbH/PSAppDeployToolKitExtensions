@@ -203,7 +203,7 @@ function Main {
 					[bool]$doReinstall = $false
 					if ($true -eq $UseCustomAppInstallDetection) {
 						Write-Log -message "A custom decision to perform a reinstallation is used." -Source $deployAppScriptFriendlyName
-						[bool]$doReinstall = $AppInstallDetectionCustomResultOk
+						[bool]$doReinstall = $global:AppInstallDetectionCustomResultOk
 					}
 					else {
 						[bool]$doReinstall = $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)
