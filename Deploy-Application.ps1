@@ -131,6 +131,8 @@ try {
 	[string]$global:DetectedDisplayVersion = Get-NxtCurrentDisplayVersion
 
 	Get-NxtVariablesFromDeploymentSystem
+	
+	[bool]$global:SoftMigrationCustomResultOk = $false
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -171,6 +173,9 @@ function Main {
 	#>
 	param (
 		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory = $false)]
 		[int]
 		[ValidateSet(0, 1, 2)]
 		$Reboot = $global:PackageConfig.reboot,
@@ -180,7 +185,10 @@ function Main {
 		$ReinstallMode = $global:PackageConfig.ReinstallMode,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstallMethod = $global:PackageConfig.InstallMethod
+		$InstallMethod = $global:PackageConfig.InstallMethod,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegisterPackage = $global:registerPackage
 	)
 	try {
 		CustomBegin
@@ -193,8 +201,15 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
+				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') -and ($true -eq $RegisterPackage)) {
+					CustomSoftMigrationBegin
+				}
 				[string]$script:installPhase = 'Check-Softmigration'
-				if ($false -eq $(Get-NxtRegisterOnly)) {
+				if ($true -eq $(Get-NxtRegisterOnly)) {
+					## soft migration = application is installed
+					$mainNxtResult.Success = $true
+				}
+				else {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
@@ -256,16 +271,12 @@ function Main {
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
 				}
-				else {
-					## soft migration = application is installed
-					$mainNxtResult.Success = $true
-				}
 				## here we continue if application is present and/or register package is necesary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
 				If ($false -ne $mainNxtResult.Success) {
 					[string]$script:installPhase = 'Package-Completition'
 					Complete-NxtPackageInstallation
-					if ($true -eq $global:registerPackage) {
+					if ($true -eq $RegisterPackage) {
 						## Register package for uninstall
 						[string]$script:installPhase = 'Package-Registration'
 						Register-NxtPackage
@@ -340,6 +351,14 @@ function CustomInstallAndReinstallBegin {
 	[string]$script:installPhase = 'CustomInstallAndReinstallBegin'
 
 	## Executes before any installation, reinstallation or softmigration tasks are performed
+}
+
+function CustomSoftMigrationBegin{
+	[string]$script:installPhase = 'CustomSoftMigrationBegin'
+
+	## Executes before a default check of SoftMigration runs
+	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
+	## [bool]$global:SoftMigrationCustomResultOk = $true
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {

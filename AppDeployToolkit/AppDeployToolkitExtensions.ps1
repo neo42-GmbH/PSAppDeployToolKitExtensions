@@ -2138,6 +2138,7 @@ function Expand-NxtPackageConfig {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		[string]$global:PackageConfig.SoftMigration.File.FullNameToCheck = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.SoftMigration.File.FullNameToCheck)
 		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
 		[string]$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
 		[string]$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
@@ -3206,6 +3207,18 @@ function Get-NxtRegisterOnly {
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER SoftMigrationFileName
+		Specifies a file name (instead of DisplayVersion) depending a SoftMigration of the Software Package.
+		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.FullNameToCheck.
+	.PARAMETER SoftMigrationFileVersion
+		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the Software Package.
+		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.VersionToCheck.
+	.PARAMETER SoftMigrationCustomResultOk
+		Specifies the result of a custom check routine for a SoftMigration of the Software Package.
+		Defaults to the corresponding value from the Deploy-Aplication.ps1 object $global:SoftMigrationCustomResultOk.
+	.PARAMETER RegisterPackage
+		Specifies if package may be registered.
+		Defaults to the corresponding global value.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 	.LINK
@@ -3227,28 +3240,78 @@ function Get-NxtRegisterOnly {
 		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$SoftMigrationFileName = $global:PackageConfig.SoftMigration.File.FullNameToCheck,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SoftMigrationFileVersion = $global:PackageConfig.SoftMigration.File.VersionToCheck,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$SoftMigrationCustomResultOk = $global:SoftMigrationCustomResultOk,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$RegisterPackage = $global:registerPackage
 	)
 	if ($false -eq $RegisterPackage) {
-		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...'
+		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
 		Write-Output $false
-	} elseif ($true -eq $SoftMigration) {
-		[string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion
-		if ([string]::IsNullOrEmpty($DisplayVersion)) {
-			Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.'
-			Write-Output $false
-		}elseif ([string]::IsNullOrEmpty($currentlyDetectedDisplayVersion)) {
-			Write-Log -Message 'Currently detected DisplayVersion is $null or empty. SoftMigration not possible.'
-			Write-Output $false
-		}elseif (
-			(Compare-NxtVersion -DetectedVersion $currentlyDetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" -and
-			-not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName')
-		) {
-			Write-Log -Message 'Application is already present. Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...'
+	}
+	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') ) {
+		if ($true -eq $SoftMigrationCustomResultOk) {
+			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
-		} else {
-			Write-Output $false
 		}
+		elseif ( $false -eq ([string]::IsNullOrEmpty($SoftMigrationFileName)) ) {
+			if ($true -eq (Test-Path -Path $SoftMigrationFileName)) {
+				if ( $false -eq ([string]::IsNullOrEmpty($SoftMigrationFileVersion)) ) {
+					[string]$currentlyDetectedFileVersion = (Get-Item -Path "$SoftMigrationFileName").VersionInfo.FileVersionRaw    
+					Write-Log -Message "Currently detected file version [$($currentlyDetectedFileVersion)] for SoftMigration detection file [$SoftMigrationFileName] with expected version [$SoftMigrationFileVersion]." -Source ${cmdletName}
+					if ((Compare-NxtVersion -DetectedVersion $currentlyDetectedFileVersion -TargetVersion $SoftMigrationFileVersion) -eq "Equal") {
+						Write-Log -Message "Application is already present (checked by FileVersion). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ..." -Source ${cmdletName}
+						Write-Output $true
+					}
+					elseif ($false -eq $SoftMigrationCustomResultOk) {
+						Write-Log -Message 'No valid conditions for SoftMigration present.' -Source ${cmdletName}
+						Write-Output $false
+					}
+				}
+				elseif ( $true -eq ([string]::IsNullOrEmpty($SoftMigrationFileVersion)) ) {
+					Write-Log -Message "SoftMigration detection file [$SoftMigrationFileName] found." -Source ${cmdletName}
+					Write-Log -Message "Application is already present (checked by FileName). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ..." -Source ${cmdletName}
+					Write-Output $true
+				}
+			}
+			elseif ($false -eq $SoftMigrationCustomResultOk) {
+				Write-Log -Message 'No valid conditions for SoftMigration present.' -Source ${cmdletName}
+				Write-Output $false
+			}
+		}
+		else {
+			[string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion
+			if ($true -eq [string]::IsNullOrEmpty($DisplayVersion)) {
+				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
+				Write-Output $false
+			}
+			elseif ($true -eq [string]::IsNullOrEmpty($currentlyDetectedDisplayVersion)) {
+				Write-Log -Message 'Currently detected DisplayVersion is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
+				Write-Output $false
+			}
+			elseif ( (Compare-NxtVersion -DetectedVersion $currentlyDetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" ) {
+				Write-Log -Message 'Application is already present (checked by DisplayVersion). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
+				Write-Output $true
+			}
+			else {
+				Write-Log -Message 'No valid conditions for SoftMigration present.' -Source ${cmdletName}
+				Write-Output $false
+			}
+		}
+	}
+	elseif ( ($false -eq $SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') ) {
+		Write-Log -Message 'SoftMigration is disabled. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
+		Write-Output $false
+	}
+	else {
+		Write-Log -Message 'No valid conditions for SoftMigration present.' -Source ${cmdletName}
+		Write-Output $false
 	}
 }
 #endregion
@@ -3455,6 +3518,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 			else { 
 				[bool]$global:RegisterPackage = $true
 			}
+			## actually this $global:UninstallOld is not be used, because no re-overriding in this way should be allowed yet
 			if ("false" -eq $UninstallOld) {
 				[bool]$global:UninstallOld = $false
 			}

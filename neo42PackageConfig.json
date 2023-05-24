@@ -8,6 +8,15 @@
   "ReinstallMode": "Reinstall",
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
+  "SoftMigration": {
+    "Custom": {
+      "UseChecksInFunction": false
+    },
+    "File": {
+      "FullNameToCheck": "",
+      "VersionTocheck": ""
+    }
+  },
   "TestedOn": "Win10 x64",
   "Dependencies": "",
   "LastChange": "22/09/2022",
