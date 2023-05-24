@@ -6,6 +6,7 @@
   "InstallMethod": "Inno Setup",
   "UninstallMethod": "Inno Setup",
   "ReinstallMode": "Reinstall",
+  "UseCustomAppInstallDetection": false,
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
   "TestedOn": "Win10 x64",
