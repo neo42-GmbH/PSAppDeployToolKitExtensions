@@ -252,13 +252,15 @@
         <RestartPrompt_ButtonRestartNow>Restart Now</RestartPrompt_ButtonRestartNow>
 		<NxtWelcomePrompt_FollowApplication>The following application is about to be {0}:</NxtWelcomePrompt_FollowApplication>
 		<NxtWelcomePrompt_ApplicationClose>The follwing programs must be closed before the {0} can procced.</NxtWelcomePrompt_ApplicationClose>
-		<NxtWelcomePrompt_SaveWork>Please save your work, close the programs and than continue. Alternativly, save your work and click 'Close applications'</NxtWelcomePrompt_SaveWork>
+		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Please save your work and close the programs.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
+		<NxtWelcomePrompt_SaveWork>Please save your work, close the programs and this process will be continued. Alternativly, save your work and click 'Close applications'.</NxtWelcomePrompt_SaveWork>
 		<NxtWelcomePrompt_ApplicationName>Application name</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Started by</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>You can choose to defer the {0} until the deferral expires:</NxtWelcomePrompt_ChooseDefer>
 		<NxtWelcomePrompt_RemainingDefferals>Remaining defferals: {0}</NxtWelcomePrompt_RemainingDefferals>
 		<NxtWelcomePrompt_DeferalExpired>Once the defferal is expired, you will no longer have the option to defer.</NxtWelcomePrompt_DeferalExpired>
-		<NxtWelcomePrompt_CloseWithoutSaving>If you do not close your applications, they will be closed without saving, and the software {0} will be continued.</NxtWelcomePrompt_CloseWithoutSaving>
+		<NxtWelcomePrompt_CloseWithoutSaving_Abort>If you do not close your applications the software {0} will be aborted.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
+		<NxtWelcomePrompt_CloseWithoutSaving_Continue>If you do not close your applications, they will be closed without saving, and the software {0} will be continued.</NxtWelcomePrompt_CloseWithoutSaving_Continue>
 		<NxtWelcomePrompt_CloseApplications>Close applications</NxtWelcomePrompt_CloseApplications>
 		<NxtWelcomePrompt_Close>Cancel</NxtWelcomePrompt_Close>
 		<NxtWelcomePrompt_Defer>Defer</NxtWelcomePrompt_Defer>
@@ -414,13 +416,15 @@
         <RestartPrompt_ButtonRestartNow>Jetzt Neustarten</RestartPrompt_ButtonRestartNow>
 		<NxtWelcomePrompt_FollowApplication>Die folgende Anwendung wird gerade {0}:</NxtWelcomePrompt_FollowApplication>
 		<NxtWelcomePrompt_ApplicationClose>Die folgenden Programme müssen geschlossen werden, bevor die {0} fortgesetzt werden kann.</NxtWelcomePrompt_ApplicationClose>
-		<NxtWelcomePrompt_SaveWork>Bitte speichern Sie Ihre Arbeit, schließen Sie die Programme und fahren Sie dann fort. Speichern Sie alternativ Ihre Arbeit und klicken Sie auf 'Applikationen schließen'.</NxtWelcomePrompt_SaveWork>
+		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Bitte speichern Sie Ihre Arbeit und schließen Sie die Programme.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
+		<NxtWelcomePrompt_SaveWork>Bitte speichern Sie Ihre Arbeit, schließen Sie die Programme und dann wird dieser Prozess fortgeführt. Speichern Sie alternativ Ihre Arbeit und klicken Sie auf 'Applikationen schließen'.</NxtWelcomePrompt_SaveWork>
 		<NxtWelcomePrompt_ApplicationName>Applikation Name</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Gestartet von</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>Sie können Aufschieben auswählen, um die {0} bis zum Ablauf der Aufschiebung zu verzögern:</NxtWelcomePrompt_ChooseDefer>
 		<NxtWelcomePrompt_RemainingDefferals>Verbleibende Aufschiebungen: {0}</NxtWelcomePrompt_RemainingDefferals>
 		<NxtWelcomePrompt_DeferalExpired>Sobald die Aufschiebung abgelaufen ist, können Sie nicht mehr aufschieben.</NxtWelcomePrompt_DeferalExpired>
-		<NxtWelcomePrompt_CloseWithoutSaving>Wenn Sie Ihre Anwendungen nicht schließen, werden sie ohne Speichern geschlossen und die Software {0} wird fortgesetzt.</NxtWelcomePrompt_CloseWithoutSaving>
+		<NxtWelcomePrompt_CloseWithoutSaving_Abort>Wenn Sie Ihre Anwendungen nicht schließen, wird die Software {0} abgebrochen.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
+		<NxtWelcomePrompt_CloseWithoutSaving_Continue>Wenn Sie Ihre Anwendungen nicht schließen, werden sie ohne Speichern geschlossen und die Software {0} wird fortgesetzt.</NxtWelcomePrompt_CloseWithoutSaving_Continue>
 		<NxtWelcomePrompt_CloseApplications>Applikationen schließen</NxtWelcomePrompt_CloseApplications>
 		<NxtWelcomePrompt_Close>Abbrechen</NxtWelcomePrompt_Close>
 		<NxtWelcomePrompt_Defer>Aufschieben</NxtWelcomePrompt_Defer>
