@@ -125,6 +125,8 @@ try {
 	## App Global Variables
 	[string]$global:DetectedDisplayVersion = Get-NxtCurrentDisplayVersion
 
+	[string]$global:AppInstallDetectionCustomResultOk = $false
+
 	Get-NxtVariablesFromDeploymentSystem
 
 	##*===============================================
@@ -198,7 +200,14 @@ function Main {
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {
+					[bool]$doReinstall = $false
+					if ($true -eq $UseCustomAppInstallDetection) {
+						[bool]$doReinstall = $AppInstallDetectionCustomResultOk
+					}
+					else {
+						[bool]$doReinstall = $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)
+					}
+					if ($true -eq $doReinstall) {
 						[string]$ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
