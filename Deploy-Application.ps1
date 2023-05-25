@@ -134,6 +134,13 @@ try {
 	
 	[bool]$global:SoftMigrationCustomResultOk = $false
 
+	if ($global:SetupCfg.Options.DEFERDAYS -gt 0 -and $global:SetupCfg.Options.DEFERTIMES -gt 0) {
+		[bool]$global:AllowDefer = $true
+	}
+	else {
+		[bool]$global:AllowDefer = $false
+	}
+
 	##*===============================================
 	##* END VARIABLE DECLARATION
 	##*===============================================
@@ -212,7 +219,7 @@ function Main {
 				else {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
-					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
+					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDefer:$global:AllowDefer
 					if ($showInstallationWelcomeResult -ne 0) {
 						Exit-Script -ExitCode $showInstallationWelcomeResult
 					}
