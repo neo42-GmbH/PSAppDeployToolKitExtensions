@@ -5387,8 +5387,10 @@ Function Show-NxtInstallationWelcome {
     	Enables an optional defer button to allow the user to defer the installation only if there are running applications that need to be closed. This parameter automatically enables -AllowDefer
     .PARAMETER DeferTimes
     	Specify the number of times the installation can be deferred.
+		Defaults to the corresponding value from the $global:SetupCfg object.
     .PARAMETER DeferDays
     	Specify the number of days since first run that the installation can be deferred. This is converted to a deadline.
+		Defaults to the corresponding value from the $global:SetupCfg object.
     .PARAMETER DeferDeadline
 		Specify the deadline date until which the installation can be deferred.
 		Specify the date in the local culture if the script is intended for that same culture.
@@ -5476,7 +5478,7 @@ Function Show-NxtInstallationWelcome {
 		## Specify the number of times the deferral is allowed
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Int32]$DeferTimes = 0,
+		[Int32]$DeferTimes = $global:SetupCfg.AskKillProcesses.DeferTimes,
 		## Specify the number of days since first run that the deferral is allowed
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
