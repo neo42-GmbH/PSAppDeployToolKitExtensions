@@ -10,7 +10,7 @@
 .DESCRIPTION
 	The script is automatically dot-sourced by the AppDeployToolkitMain.ps1 script.
 .NOTES
-	Version: 2023.05.25.01
+	Version: 2023.05.25.02
     Toolkit Exit Code Ranges:
     60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
     69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -29,7 +29,7 @@ Param (
 # Variables: Script
 [string]$appDeployToolkitExtName = 'N42PSAppDeployToolkitExt'
 [string]$appDeployExtScriptFriendlyName = 'neo42 App Deploy Toolkit Extensions'
-[version]$appDeployExtScriptVersion = [version]'2023.05.25.01'
+[version]$appDeployExtScriptVersion = [version]'2023.05.25.02'
 [hashtable]$appDeployExtScriptParameters = $PSBoundParameters
 
 ##*===============================================
