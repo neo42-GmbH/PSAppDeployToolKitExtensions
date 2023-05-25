@@ -6798,6 +6798,24 @@ function Test-NxtObjectValidation {
 	<#
 	.SYNOPSIS
 		Validates the package configuration object.
+	.DESCRIPTION
+		Validates the package configuration object against the validation rules.
+	.PARAMETER ValidationRule
+		Validation rule object.
+	.PARAMETER ObjectToValidate
+		Object to validate.
+	.PARAMETER ContainsDirectValues
+		Indicates if the object contains direct values.
+	.PARAMETER ParentObjectName
+		Name of the parent object.
+	.PARAMETER ContinueOnError
+		Indicates if the validation should continue on error.
+	.EXAMPLE
+		Test-NxtObjectValidation -ValidationRule $ValidationRule -ObjectToValidate $ObjectToValidate
+	.OUTPUTS
+		none.
+	.LINK
+		private
 	#>
 	[CmdletBinding()]
 	param(
@@ -6942,36 +6960,36 @@ function Test-NxtObjectValidationHelper {
 	}
 	Process {
 		if ($true -eq [bool]($ValidationRule.Type -match $ObjectToValidate.GetType().FullName)){
-			Write-Verbose "[${cmdletName}]The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.GetType().FullName)"
+			Write-Verbose "[${cmdletName}]The variable '$ParentObjectName $ValidationRuleKey' is of the allowed type $($ObjectToValidate.GetType().FullName)"
 		}
 		else{
-			Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object." -severity 3
+			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object." -severity 3
 			if ($false -eq $ContinueOnError){
-				throw "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object. $($ValidationRule.HelpText)"
+				throw "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object. $($ValidationRule.HelpText)"
 			}
 		}
 		if (
 			$true -eq $ValidationRule.AllowEmpty -and
 			[string]::IsNullOrEmpty($ObjectToValidate)
 		){
-			Write-Verbose "[${cmdletName}]'$ParentObjectName $validationRuleKey' is allowed to be empty"
+			Write-Verbose "[${cmdletName}]'$ParentObjectName $ValidationRuleKey' is allowed to be empty"
 		}elseif( [string]::IsNullOrEmpty($ObjectToValidate) ){
-			Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not allowed to be empty in the package configuration object." -severity 3
+			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object." -severity 3
 			if ($false -eq $ContinueOnError){
-				throw "The variable '$ParentObjectName $validationRuleKey' is not allowed to be empty in the package configuration object. $($ValidationRule.HelpText)"
+				throw "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object. $($ValidationRule.HelpText)"
 			}
 		}else{
 			## regex
 			## CheckInvalidFileNameChars
 			if ($true -eq $ValidationRule.Regex.CheckInvalidFileNameChars) {
 				if ($ObjectToValidate.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0){
-					Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)" -severity 3
+					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)" -severity 3
 					if ($false -eq $ContinueOnError){
-						throw "The variable '$ParentObjectName $validationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)"
+						throw "The variable '$ParentObjectName $ValidationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)"
 					}
 				}
 				else {
-					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' passed the filename check"
+					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' passed the filename check"
 				}
 			}
 			if ($false -eq [string]::IsNullOrEmpty($ValidationRule.Regex.ReplaceBeforeMatch)) {
@@ -6980,24 +6998,24 @@ function Test-NxtObjectValidationHelper {
 			if ($ValidationRule.Regex.Operator -eq "match"){
 				## validate regex pattern
 				if ($true -eq ([bool]($ObjectToValidate -match $ValidationRule.Regex.Pattern))){
-					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' matches the regex $($ValidationRule.Regex.Pattern)"
+					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' matches the regex $($ValidationRule.Regex.Pattern)"
 				}
 				else{
-					Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object." -severity 3
+					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object." -severity 3
 					if ($false -eq $ContinueOnError){
-						throw "The variable '$ParentObjectName $validationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object. $($ValidationRule.HelpText)"
+						throw "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object. $($ValidationRule.HelpText)"
 					}
 				}
 			}
 			## ValidateSet
 			if ($false -eq [string]::IsNullOrEmpty($ValidationRule.ValidateSet)){
 				if ($true -eq ([bool]($ValidationRule.ValidateSet -contains $ObjectToValidate))){
-					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is in the allowed set $($ValidationRule.ValidateSet)"
+					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' is in the allowed set $($ValidationRule.ValidateSet)"
 				}
 				else{
-					Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object." -severity 3
+					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object." -severity 3
 					if ($false -eq $ContinueOnError){
-						throw "The variable '$ParentObjectName $validationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object. $($ValidationRule.HelpText)"
+						throw "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object. $($ValidationRule.HelpText)"
 					}
 				}
 			}
