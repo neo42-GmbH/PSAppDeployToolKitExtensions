@@ -9,6 +9,9 @@
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
   "SoftMigration": {
+    "Custom": {
+      "UseChecksInFunction": false
+    },
     "File": {
       "FullNameToCheck": "",
       "VersionTocheck": ""
