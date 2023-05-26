@@ -6359,7 +6359,6 @@ Function Show-NxtWelcomePrompt {
             $control_Banner.Source =  $appDeployLogoBannerDark
         }
 
-		$xmlUIMessageLanguage = "UI_Messages_FR"
 		if ($xmlUIMessageLanguage -ne "UI_Messages_EN" -and $xmlUIMessageLanguage -ne "UI_Messages_DE") {
 			## until we not support same languages in dialogues like ADT, we switch to english as default
 			[Xml.XmlElement]$xmlUIMessages = $xmlConfig."UI_Messages_EN"
