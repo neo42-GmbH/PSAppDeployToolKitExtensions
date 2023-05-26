@@ -38,7 +38,7 @@
 .EXAMPLE
     Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"
 .NOTES
-	Version: 2023.05.08.01
+	Version: 2023.05.25.01
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -79,6 +79,7 @@ switch ($DeploymentType) {
 }
 ## Global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
+[string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
@@ -134,6 +135,9 @@ try {
 	
 	[bool]$global:AppInstallDetectionCustomResult = $false
 	[bool]$global:SoftMigrationCustomResult = $false
+	
+	## Validate Package Config Variables
+	Test-NxtPackageConfig
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
