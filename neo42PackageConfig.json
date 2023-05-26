@@ -6,7 +6,6 @@
   "InstallMethod": "Inno Setup",
   "UninstallMethod": "Inno Setup",
   "ReinstallMode": "Reinstall",
-  "UseCustomAppReinstallDecision": true,
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
   "SoftMigration": {
