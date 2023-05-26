@@ -5512,10 +5512,10 @@ Function Show-NxtInstallationWelcome {
 		[PSADTNXT.ContinueType]$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		## Specifies if the user can close all applications
 		[Parameter(Mandatory = $false)]
-		[Switch]$UserCanCloseAll = [System.Convert]::ToBoolean(($global:CustomSetupCfg.ASKKILLPROCESSES.USERCANCLOSEALL)),
+		[Switch]$UserCanCloseAll = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:CustomSetupCfg.ASKKILLPROCESSES.USERCANCLOSEALL)),
 		## Specifies if the user can abort the process
 		[Parameter(Mandatory = $false)]
-		[Switch]$UserCanAbort = [System.Convert]::ToBoolean(($global:CustomSetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER))
+		[Switch]$UserCanAbort = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:CustomSetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER))
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5711,7 +5711,7 @@ Function Show-NxtInstallationWelcome {
 				}
 
 				If ($promptResult.Contains('Cancel')) {
-					Write-Log -Message 'The user selected to cancel...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${CmdletName}
                     
 					#  Restore minimized windows
 					$null = $shellApp.UndoMinimizeAll()
@@ -6112,9 +6112,9 @@ Function Show-NxtWelcomePrompt {
            <Popup Placement="Center" x:Name="Popup">
            <Border Background="{DynamicResource BackColorBrush}" BorderBrush="{DynamicResource ForeColorBrush}" BorderThickness="1">
                <StackPanel Margin="10">
-                   <TextBlock x:Name="PopupCloseWithoutSavingText" Margin="0,0,0,10" Text="the following applications are about to be closed without saving:" VerticalAlignment="Center" TextAlignment="Center" Background="{DynamicResource BackColorBrush}" Foreground="{DynamicResource ForeColorBrush}"></TextBlock>
-                   <TextBlock x:Name="PopupListText" Text="notenpad" Foreground="{DynamicResource ErrorColorBrush}" VerticalAlignment="Center" FontSize="14" TextAlignment="Center" Background="{DynamicResource BackColorBrush}"></TextBlock>
-                   <TextBlock x:Name="PopupSureToCloseText" Text="Are you sure to close this?" Margin="0,10,0,0" VerticalAlignment="Center" TextAlignment="Center" Background="{DynamicResource BackColorBrush}" Foreground="{DynamicResource ForeColorBrush}"></TextBlock>
+                   <TextBlock x:Name="PopupCloseWithoutSavingText" Margin="0,0,0,10" Text="[will be replaced later]" VerticalAlignment="Center" TextAlignment="Center" Background="{DynamicResource BackColorBrush}" Foreground="{DynamicResource ForeColorBrush}"></TextBlock>
+                   <TextBlock x:Name="PopupListText" Text="[will be replaced later]" Foreground="{DynamicResource ErrorColorBrush}" VerticalAlignment="Center" FontSize="14" TextAlignment="Center" Background="{DynamicResource BackColorBrush}"></TextBlock>
+                   <TextBlock x:Name="PopupSureToCloseText" Text="[will be replaced later]" Margin="0,10,0,0" VerticalAlignment="Center" TextAlignment="Center" Background="{DynamicResource BackColorBrush}" Foreground="{DynamicResource ForeColorBrush}"></TextBlock>
                    <DockPanel VerticalAlignment="Bottom"  DockPanel.Dock="Bottom" Margin="0,10,0,0">
                        <Button x:Name="PopupCloseApplication" DockPanel.Dock="Left" Content="Close"></Button>
                        <Button x:Name="PopupCancel" Content="back" HorizontalAlignment="Right" DockPanel.Dock="Right"/>
@@ -6123,7 +6123,7 @@ Function Show-NxtWelcomePrompt {
            </Border>
        </Popup>
         <DockPanel x:Name="HeaderPanel" HorizontalAlignment="Stretch" Height="30" DockPanel.Dock="Top" Background="{DynamicResource BackColorBrush}">
-            <TextBlock DockPanel.Dock="Left" x:Name="TitleText" VerticalAlignment="Center" Text="AppVendor AppName AppVersion" Margin="5,0,0,0" FontWeight="Bold" FontSize="14" />
+            <TextBlock DockPanel.Dock="Left" x:Name="TitleText" VerticalAlignment="Center" Text="[will be replaced later]" Margin="5,0,0,0" FontWeight="Bold" FontSize="14" />
             <Button OverridesDefaultStyle="True" BorderThickness="0" DockPanel.Dock="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="WindowCloseButton" Background="Transparent" Content="X" Margin="0,0,0,0" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource ForeColorBrush}" Height="20" Width="20">
                 <Button.Style>
                     <Style TargetType="Button">
@@ -6150,13 +6150,13 @@ Function Show-NxtWelcomePrompt {
             </Button>
         </DockPanel>
         <DockPanel x:Name="MainPanel" Background="{DynamicResource BackColorBrush}">
-            <Image x:Name="Banner" DockPanel.Dock="Top" Source="C:\Users\labadmin\Pictures\2.PNG" MaxHeight="100"></Image>
+            <Image x:Name="Banner" DockPanel.Dock="Top" Source="[will be replaced later]" MaxHeight="100"></Image>
             <StackPanel DockPanel.Dock="Top" Margin="0,10,0,0">
-                <TextBlock x:Name="FollowApplicationText" TextAlignment="Center" TextWrapping="Wrap" Text="The following application is about to be installed:" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="AppNameText" Foreground="{DynamicResource MainColorBrush}" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="AppVendor AppName AppVersion" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" ></TextBlock>
-                <TextBlock x:Name="CustomTextBlock" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="The following application is about to be installed:" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="ApplicationCloseText" TextAlignment="Center" TextWrapping="Wrap" Margin="0,10,0,0" Text="The follwing programs must be closed before the installation can procced." HorizontalAlignment="Center"></TextBlock>
-                <TextBlock x:Name="SaveWorkText" TextWrapping="Wrap" Margin="10,10,10,0" Text="Please save your work, close the programs and than continue.&#10;Alternativly, save your work and click 'Close applications'."  HorizontalAlignment="Center" TextAlignment="Center"></TextBlock>
+                <TextBlock x:Name="FollowApplicationText" TextAlignment="Center" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="AppNameText" Foreground="{DynamicResource MainColorBrush}" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" ></TextBlock>
+                <TextBlock x:Name="CustomTextBlock" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="ApplicationCloseText" TextAlignment="Center" TextWrapping="Wrap" Margin="0,10,0,0" Text="[will be replaced later]" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock x:Name="SaveWorkText" TextWrapping="Wrap" Margin="10,10,10,0" Text="[will be replaced later]"  HorizontalAlignment="Center" TextAlignment="Center"></TextBlock>
                 <ListView BorderThickness="0" Margin="10" HorizontalAlignment="center" x:Name="CloseApplicationList" Grid.Column="0" Width="Auto" Background="{DynamicResource BackColorBrush}">
                     <ListView.View>
                         <GridView  AllowsColumnReorder="False">
@@ -6200,11 +6200,11 @@ Function Show-NxtWelcomePrompt {
                     </ListView.ItemContainerStyle>
                 </ListView>
 
-                <TextBlock x:Name="DeferTextOne" TextAlignment="Center"  Margin="0,0,0,10" TextWrapping="Wrap" Text="You can choose to defer the installation until the deferral expires:" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="DeferTextOne" TextAlignment="Center"  Margin="0,0,0,10" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
                 <TextBlock x:Name="DeferTimerText" TextAlignment="Center" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" ></TextBlock>
                 <TextBlock x:Name="DeferDeadlineText" TextAlignment="Center" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="DeferTextTwo"  Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="Once the defferal is expired, you will no longer have the option to defer." HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="TimerText" Margin="20,10,20,0" TextAlignment="Center" TextWrapping="Wrap" Text="If you do not close your applications, they will be closed without saving, and the software installation will be continued." HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="DeferTextTwo"  Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock x:Name="TimerText" Margin="20,10,20,0" TextAlignment="Center" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
                 <Grid x:Name="ProgressGrid"  Margin="0,10,0,5">
                     <ProgressBar x:Name="Progress" Value="5" Minimum="0" Maximum="10" Height="30">
                         <ProgressBar.Template>
@@ -6220,7 +6220,7 @@ Function Show-NxtWelcomePrompt {
                             </ControlTemplate>
                         </ProgressBar.Template>
                     </ProgressBar>
-                    <TextBlock x:Name="TimerBlock" Text="30:00:00"  Background="Transparent" FontWeight="Bold" Style="{DynamicResource TextBlockListStyle}" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TimerBlock" Text="[will be replaced later]"  Background="Transparent" FontWeight="Bold" Style="{DynamicResource TextBlockListStyle}" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
             </StackPanel>
             <DockPanel DockPanel.Dock="Bottom">
@@ -6361,36 +6361,61 @@ Function Show-NxtWelcomePrompt {
             $control_Banner.Source =  $appDeployLogoBannerDark
         }
 
-        [Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
-        $control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWork
+		if ($xmlUIMessageLanguage -ne "UI_Messages_EN" -and $xmlUIMessageLanguage -ne "UI_Messages_DE") {
+			## until we not support same languages in dialogues like ADT, we switch to english as default
+			[Xml.XmlElement]$xmlUIMessages = $xmlConfig."UI_Messages_EN"
+		}
+		else {
+			[Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
+		}
+		if ($true -eq $UserCanCloseAll) {
+			$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWork
+		}
+		else {
+			$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWorkWithoutCloseButton
+		}
         $control_DeferTextTwo.Text = $xmlUIMessages.NxtWelcomePrompt_DeferalExpired
         $control_CloseButton.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
         $control_CancelButton.Content = $xmlUIMessages.NxtWelcomePrompt_Close
         $control_DeferButton.Content = $xmlUIMessages.NxtWelcomePrompt_Defer
         $control_CloseApplicationList.View.Columns[0].Header = $xmlUIMessages.NxtWelcomePrompt_ApplicationName
         $control_CloseApplicationList.View.Columns[1].Header = $xmlUIMessages.NxtWelcomePrompt_StartedBy
-        $control_TimerText.Text = $xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving
         $control_PopupCloseWithoutSavingText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpCloseApplicationText
         $control_PopupSureToCloseText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpSureToCloseText
         $control_PopupCloseApplication.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
         $control_PopupCancel.Content = $xmlUIMessages.NxtWelcomePrompt_Close
         Switch ($deploymentType) {
             'Uninstall' {
-                $control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving -f $xmlUIMessages.DeploymentType_Uninstall);
+				if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
+					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Uninstall)
+				}
+				else {
+					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Uninstall)
+				};
                 $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_UninstallVerb);
                 $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Uninstall);
                 $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Uninstall);
                 Break
             }
             'Repair' {
-                $control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving -f $xmlUIMessages.DeploymentType_Repair);
+				if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
+					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Repair)
+				}
+				else {
+					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Repair)
+				};
                 $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_RepairVerb);
                 $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Repair);
                 $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Repair);
                 Break
             }
             Default {
-                $control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving -f $xmlUIMessages.DeploymentType_Install);
+				if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
+					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Install)
+				}
+				else {
+					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Install)
+				};
                 $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_InstallVerb);
                 $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Install);
                 $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Install);
