@@ -38,7 +38,7 @@
 .EXAMPLE
     Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"
 .NOTES
-	Version: 2023.05.26.01
+	Version: 2023.05.26.02
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -98,7 +98,7 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 [int32]$mainExitCode = 0
 ## Variables: Script
 [string]$deployAppScriptFriendlyName = 'Deploy Application'
-[version]$deployAppScriptVersion = [version]'2023.05.26.01'
+[version]$deployAppScriptVersion = [version]'2023.05.26.02'
 [string]$deployAppScriptDate = '02/05/2023'
 [hashtable]$deployAppScriptParameters = $psBoundParameters
 ## Variables: Environment
@@ -133,7 +133,8 @@ try {
 
 	Get-NxtVariablesFromDeploymentSystem
 	
-	[bool]$global:SoftMigrationCustomResultOk = $false
+	[bool]$global:AppInstallDetectionCustomResult = $false
+	[bool]$global:SoftMigrationCustomResult = $false
 	
 	## Validate Package Config Variables
 	Test-NxtPackageConfig
@@ -222,7 +223,15 @@ function Main {
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {
+					[bool]$doReinstall = $false
+					if ($true -eq $global:PackageConfig.UseCustomAppInstallDetection) {
+						Write-Log -Message "A custom decision to perform a reinstallation is used." -Source $deployAppScriptFriendlyName
+						[bool]$doReinstall = $global:AppInstallDetectionCustomResult
+					}
+					else {
+						[bool]$doReinstall = $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)
+					}
+					if ($true -eq $doReinstall) {
 						[string]$ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
@@ -362,7 +371,7 @@ function CustomSoftMigrationBegin{
 
 	## Executes before a default check of SoftMigration runs
 	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
-	## [bool]$global:SoftMigrationCustomResultOk = $true
+	## [bool]$global:SoftMigrationCustomResult = $true
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
@@ -380,6 +389,8 @@ function CustomInstallAndReinstallPreInstallAndReinstall {
 	[string]$script:installPhase = 'CustomInstallAndReinstallPreInstallAndReinstall'
 
 	## Executes before any installation or reinstallation tasks are performed
+	## after successful individual checks for installed application state the following variable has to be set at the end of this section:
+	## [bool]$global:AppInstallDetectionCustomResult = $true
 }
 
 function CustomReinstallPreUninstall {
