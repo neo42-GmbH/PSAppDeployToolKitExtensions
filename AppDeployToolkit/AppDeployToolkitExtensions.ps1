@@ -4349,6 +4349,7 @@ function Register-NxtPackage {
 			Copy-File -Path "$scriptRoot" -Destination "$App\neo42-Install\" -Recurse
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
 	
