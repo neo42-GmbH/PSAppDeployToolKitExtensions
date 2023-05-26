@@ -98,8 +98,8 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 [int32]$mainExitCode = 0
 ## Variables: Script
 [string]$deployAppScriptFriendlyName = 'Deploy Application'
-[version]$deployAppScriptVersion = [version]'2023.04.11.02'
-[string]$deployAppScriptDate = '26/01/2021'
+[version]$deployAppScriptVersion = [version]'2023.05.26.01'
+[string]$deployAppScriptDate = '02/05/2023'
 [hashtable]$deployAppScriptParameters = $psBoundParameters
 ## Variables: Environment
 If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
