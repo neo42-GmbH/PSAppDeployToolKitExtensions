@@ -3267,6 +3267,10 @@ function Get-NxtRegisterOnly {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
 			}
+			else {
+				Write-Log -Message 'No valid (custom pre-checked) conditions for SoftMigration present.' -Source ${cmdletName}
+				Write-Output $false
+			}
 		}
 		elseif ( $false -eq ([string]::IsNullOrEmpty($SoftMigrationFileName)) ) {
 			if ($true -eq (Test-Path -Path $SoftMigrationFileName)) {
