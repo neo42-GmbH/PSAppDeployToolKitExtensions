@@ -3213,6 +3213,9 @@ function Get-NxtRegisterOnly {
 	.PARAMETER SoftMigrationFileVersion
 		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the Software Package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.VersionToCheck.
+	.PARAMETER SoftMigrationCustomChecks
+		Specifies if check routines defined in custom function have to decide a SoftMigration of the Software Package.
+		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.Custom.UseChecksInFunction.
 	.PARAMETER SoftMigrationCustomResultOk
 		Specifies the result of a custom check routine for a SoftMigration of the Software Package.
 		Defaults to the corresponding value from the Deploy-Aplication.ps1 object $global:SoftMigrationCustomResultOk.
@@ -3246,6 +3249,9 @@ function Get-NxtRegisterOnly {
 		$SoftMigrationFileVersion = $global:PackageConfig.SoftMigration.File.VersionToCheck,
 		[Parameter(Mandatory = $false)]
 		[bool]
+		$SoftMigrationCustomChecks = $global:PackageConfig.SoftMigration.Custom.UseChecksInFunction,
+		[Parameter(Mandatory = $false)]
+		[bool]
 		$SoftMigrationCustomResultOk = $global:SoftMigrationCustomResultOk,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -3256,9 +3262,11 @@ function Get-NxtRegisterOnly {
 		Write-Output $false
 	}
 	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') ) {
-		if ($true -eq $SoftMigrationCustomResultOk) {
+		if ($true -eq $SoftMigrationCustomChecks) {
+			if ($true -eq $SoftMigrationCustomResultOk) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
+			}
 		}
 		elseif ( $false -eq ([string]::IsNullOrEmpty($SoftMigrationFileName)) ) {
 			if ($true -eq (Test-Path -Path $SoftMigrationFileName)) {
