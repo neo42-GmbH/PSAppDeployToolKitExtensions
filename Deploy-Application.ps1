@@ -216,7 +216,7 @@ function Main {
 				else {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
-					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true
+					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
 					if ($showInstallationWelcomeResult -ne 0) {
 						Exit-Script -ExitCode $showInstallationWelcomeResult
 					}
