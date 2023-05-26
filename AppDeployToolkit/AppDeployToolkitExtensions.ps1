@@ -31,6 +31,15 @@ Param (
 [string]$appDeployExtScriptFriendlyName = 'neo42 App Deploy Toolkit Extensions'
 [version]$appDeployExtScriptVersion = [version]'2023.05.26.03'
 [hashtable]$appDeployExtScriptParameters = $PSBoundParameters
+[string]$extensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs"
+if (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
+	if (Test-Path -Path $extensionCsPath) {
+		Add-Type -Path $extensionCsPath -IgnoreWarnings -ErrorAction 'Stop'
+	}
+	else {
+		throw "File not found: $extensionCsPath"
+	}
+}
 
 ##*===============================================
 ##* FUNCTION LISTINGS
@@ -3681,9 +3690,6 @@ function Initialize-NxtEnvironment {
 		Initializes all neo42 functions and variables.
 		Should be called on top of any 'Deploy-Application.ps1'.
 		parses the neo42PackageConfig.json
-	.PARAMETER ExtensionCsPath
-		Provides the Path to the AppDeployToolkitExtensions.cs containing c# to be used in the extension functions
-		Defaults to "$scriptRoot\AppDeployToolkitExtensions.cs"
 	.PARAMETER PackageConfigPath
 		Defines the path to the Packageconfig.json to be loaded to the global packageconfig Variable.
 		Defaults to "$global:Neo42PackageConfigPath"
@@ -3701,9 +3707,6 @@ function Initialize-NxtEnvironment {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ExtensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs",
-		[Parameter(Mandatory = $false)]
-		[string]
 		$PackageConfigPath = "$global:Neo42PackageConfigPath",
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -3717,14 +3720,6 @@ function Initialize-NxtEnvironment {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
-			if (Test-Path -Path $ExtensionCsPath) {
-				Add-Type -Path $ExtensionCsPath -IgnoreWarnings -ErrorAction 'Stop'
-			}
-			else {
-				throw "File not found: $ExtensionCsPath"
-			}
-		}
 		Get-NxtPackageConfig -Path $PackageConfigPath
 		Set-NxtSetupCfg -Path $SetupCfgPath
 		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
