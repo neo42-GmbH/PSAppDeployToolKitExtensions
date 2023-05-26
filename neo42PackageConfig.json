@@ -6,12 +6,13 @@
   "InstallMethod": "Inno Setup",
   "UninstallMethod": "Inno Setup",
   "ReinstallMode": "Reinstall",
+  "UseCustomAppInstallDetection": false,
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
   "SoftMigration": {
     "File": {
       "FullNameToCheck": "",
-      "VersionTocheck": ""
+      "VersionToCheck": ""
     }
   },
   "TestedOn": "Win10 x64",

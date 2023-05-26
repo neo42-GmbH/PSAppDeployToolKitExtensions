@@ -133,7 +133,8 @@ try {
 
 	Get-NxtVariablesFromDeploymentSystem
 	
-	[bool]$global:SoftMigrationCustomResultOk = $false
+	[bool]$global:AppInstallDetectionCustomResult = $false
+	[bool]$global:SoftMigrationCustomResult = $false
 	
 	## Validate Package Config Variables
 	Test-NxtPackageConfig
@@ -222,7 +223,15 @@ function Main {
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) {
+					[bool]$doReinstall = $false
+					if ($true -eq $global:PackageConfig.UseCustomAppInstallDetection) {
+						Write-Log -Message "A custom decision to perform a reinstallation is used." -Source $deployAppScriptFriendlyName
+						[bool]$doReinstall = $global:AppInstallDetectionCustomResult
+					}
+					else {
+						[bool]$doReinstall = $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)
+					}
+					if ($true -eq $doReinstall) {
 						[string]$ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($ReinstallMode) {
@@ -362,7 +371,7 @@ function CustomSoftMigrationBegin{
 
 	## Executes before a default check of SoftMigration runs
 	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
-	## [bool]$global:SoftMigrationCustomResultOk = $true
+	## [bool]$global:SoftMigrationCustomResult = $true
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
@@ -380,6 +389,8 @@ function CustomInstallAndReinstallPreInstallAndReinstall {
 	[string]$script:installPhase = 'CustomInstallAndReinstallPreInstallAndReinstall'
 
 	## Executes before any installation or reinstallation tasks are performed
+	## after successful individual checks for installed application state the following variable has to be set at the end of this section:
+	## [bool]$global:AppInstallDetectionCustomResult = $true
 }
 
 function CustomReinstallPreUninstall {
