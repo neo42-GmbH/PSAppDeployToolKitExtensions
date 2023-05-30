@@ -133,8 +133,8 @@ try {
 
 	Get-NxtVariablesFromDeploymentSystem
 	
-	[bool]$global:AppInstallDetectionCustomResult = $false
 	[bool]$global:SoftMigrationCustomResult = $false
+	[bool]$global:AppInstallDetectionCustomResult = $false
 	
 	## Validate Package Config Variables
 	Test-NxtPackageConfig
@@ -186,10 +186,6 @@ function Main {
 		$Reboot = $global:PackageConfig.reboot,
 		[Parameter(Mandatory = $false)]
 		[string]
-		[ValidateSet('Reinstall', 'MSIRepair', 'Install')]
-		$ReinstallMode = $global:PackageConfig.ReinstallMode,
-		[Parameter(Mandatory = $false)]
-		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -223,18 +219,13 @@ function Main {
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
-					[bool]$doReinstall = $false
-					if ($true -eq $global:PackageConfig.UseCustomAppInstallDetection) {
-						Write-Log -Message "A custom decision to perform a reinstallation is used." -Source $deployAppScriptFriendlyName
-						[bool]$doReinstall = $global:AppInstallDetectionCustomResult
-					}
-					else {
-						[bool]$doReinstall = $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)
-					}
-					if ($true -eq $doReinstall) {
-						[string]$ReinstallMode = $(Switch-NxtMSIReinstallMode)
-						Write-Log -Message "[$script:installPhase] selected Mode: $ReinstallMode" -Source $deployAppScriptFriendlyName
-						switch ($ReinstallMode) {
+					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod) -or $true -eq $global:AppInstallDetectionCustomResult) {
+						if ($true -eq $global:AppInstallDetectionCustomResult) {
+							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
+						}
+						[string]$reinstallMode = $(Switch-NxtMSIReinstallMode)
+						Write-Log -Message "[$script:installPhase] selected Mode: $reinstallMode" -Source $deployAppScriptFriendlyName
+						switch ($reinstallMode) {
 							"Reinstall" {
 								CustomReinstallPreUninstall
 								[string]$script:installPhase = 'Package-Reinstallation'

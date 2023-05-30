@@ -6745,7 +6745,7 @@ function Switch-NxtMSIReinstallMode {
 		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
 		Defaults to the corresponding value for installation case and uninstallation case from the PackageConfig object ('InstallMethod' includes repair mode or 'UninstallMethod').
 	.PARAMETER ReinstallMode
-		Defines how a reinstallation should be performed by default (maybe switched after dispolay version check inside of this function!).
+		Defines how a reinstallation should be performed. By default read from global parameter (especially for msi setups this maybe switched after display version check inside of this function!).
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER MSIInplaceUpgradeable
 		Defines the behavior of msi setup process in case of an upgrade.
