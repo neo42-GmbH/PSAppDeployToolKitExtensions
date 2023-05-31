@@ -6435,20 +6435,22 @@ Function Show-NxtWelcomePrompt {
 		[ScriptBlock]$FillCloseApplicationList = {
             param($runningProcessesParam)
             ForEach ($runningProcessItem in $runningProcessesParam) {
-                [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcessItem.ProcessName }
+                [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcessID -eq $runningProcessItem.Id }
 				## actually don't add processes without a viewable window to the list yet
 				if ($AllOpenWindowsForRunningProcess.count -gt 0) {		
-					Get-WmiObject -Class Win32_Process | Where-Object {$_.ProcessId -eq $AllOpenWindowsForRunningProcess[0].ParentProcessId} | ForEach-Object {
-					$item = New-Object PSObject -Property @{
-						Name = $runningProcessItem.ProcessDescription
-						StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
-					}
-					$control_CloseApplicationList.Items.Add($item)
+					foreach ($WindowForRunningProcess in $AllOpenWindowsForRunningProcess){
+						Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($WindowForRunningProcess.ParentProcessId)'" | ForEach-Object {
+							$item = New-Object PSObject -Property @{
+								Name = $runningProcessItem.ProcessDescription
+								StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
+							}
+							$control_CloseApplicationList.Items.Add($item)
+						}
 					}
                 }
 				else {
 					$runningProcessesParam = $runningProcessesParam | Where-Object { $_ -ne $runningProcessItem }
-					Write-Log -Message "This process runs hidden and may closed with 'End task' in task manager ONLY: '$($runningProcessItem.ProcessName)'" -Severity 3 -Source ${cmdletName}
+					Write-Log -Message "The Process $($runningProcessItem.ProcessName) with id $($runningProcessItem.Id) has no Window and will not be shown in the ui." -Severity 2 -Source ${cmdletName}
 				}
             }
         }
