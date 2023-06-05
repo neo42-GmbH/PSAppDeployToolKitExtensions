@@ -414,7 +414,7 @@ function Compare-NxtVersion {
 	.OUTPUTS
 		PSADTNXT.VersionCompareResult.
 	.EXAMPLE
-		Compare-NxtVersion "1.7" "1.7.2"
+		Compare-NxtVersion -DetectedVersion "1.7" -TargetVersion "1.7.2"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
