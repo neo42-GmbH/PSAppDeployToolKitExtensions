@@ -1,0 +1,103 @@
+{
+    "ScriptAuthor": "neo42 GmbH",
+    "ScriptDate": "!CreationDate!",
+    "InventoryID": "!11DigitNeo42InventoryID!",
+    "Description": "!DescriptionText!",
+    "InstallMethod": "Setup|Inno Setup|Nullsoft|Bitrock|None",
+    "UninstallMethod": "Setup|Inno Setup|Nullsoft|Bitrock|None",
+    "ReinstallMode": "Reinstall",
+    "MSIInplaceUpgradeable": false,
+    "MSIDowngradeable": false,
+    "SoftMigration": {
+        "File": {
+          "FullNameToCheck": "",
+          "VersionToCheck": ""
+        }
+      },
+    "TestedOn": "Win x86, Win10 x64, Win11 x64",
+    "Dependencies": "",
+    "LastChange": "!LastChangeDate!",
+    "Build": "0",
+    "AppArch": "x86|x64|*",
+    "AppVendor": "!AppVendorString!",
+    "AppName": "!AppNameString!",
+    "AppVersion": "!AppVersionString!",
+    "AppRevision": "0",
+    "AppLang": "DEU|ENG|MUI",
+    "PackageFamilyGUID": "!Neo42PackageFamilyGUID!",
+    "RegPackagesKey": "neoPackages",
+    "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
+    "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
+    "UninstallOld": true,
+    "Reboot": 0,
+    "UserPartOnInstallation": false,
+    "UserPartOnUninstallation": false,
+    "UserPartRevision": "!4SectionCommaSeparatedNumberDerivedFromScriptDate!",
+    "HidePackageUninstallButton": false,
+    "HidePackageUninstallEntry": false,
+    "DisplayVersion": "!VersionSetInRegistry!",
+    "InstallerVersion": "!VersionUsedInInstFile!",
+    "UninstallKey": "!UninstallRegSubKeyName!",
+    "UninstallKeyIsDisplayName": false,
+    "UninstallKeyContainsWildCards": false,
+    "DisplayNamesToExcludeFromAppSearches": [
+      "$($global:PackageConfig.UninstallDisplayName)"
+    ],
+    "InstallLocation": "!INSTALLDIR!",
+    "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
+    "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
+    "InstFile": "!InstallerFilenameWithExtension!",
+    "InstPara": "!InstallerParameter!_i.e._for_INNO-Setup:/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART",
+    "AppendInstParaToDefaultParameters": false,
+    "AcceptedInstallExitCodes": "",
+    "AcceptedRepairExitCodes": "",
+    "UninstFile": "$($global:PackageConfig.installLocation)\\!Uninstallfile!",
+    "UninstPara": "!Uninstallparameter_i.e_for_INNO-Setup!/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART",
+    "AppendUninstParaToDefaultParameters": false,
+    "AcceptedUninstallExitCodes": "",
+    "AppKillProcesses": [
+      {
+        "Name": "!ProcessnameWithOrWithoutExtension!",
+        "Description": ""
+      }
+    ],
+    "BlockExecution": true,
+    "TestConditionsPreSetupSuccessCheck": {
+      "Install": {
+        "TotalSecondsToWaitFor": 30,
+        "ProcessOperator": "And",
+        "ProcessesToWaitFor": [],
+        "RegKeyOperator": "And",
+        "RegKeysToWaitFor": []
+      },
+      "Uninstall": {
+        "TotalSecondsToWaitFor": 30,
+        "ProcessOperator": "And",
+        "ProcessesToWaitFor": [],
+        "RegKeyOperator": "And",
+        "RegKeysToWaitFor": []
+      }
+    },
+    "CommonDesktopShortcutsToDelete": [
+        "!ApplicationPublicDesktopLinkName!.lnk"
+    ],
+    "CommonStartMenuShortcutsToCopyToCommonDesktop": [
+      {
+        "Source": "Programs\\!ApplicationStartmenuSubFoldername!\\!ApplicationStartmenuLinkName!.lnk",
+        "TargetName": "!ApplicationPublicDesktopLinkName!.lnk"
+      }
+    ],
+     "UninstallKeysToHide": [
+      {
+        "KeyName": "$($global:PackageConfig.UninstallKey)",
+        "Is64Bit": true,
+        "KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)",
+        "KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)",
+        "DisplayNamesToExcludeFromHiding": [
+          "$($global:PackageConfig.UninstallDisplayName)"
+        ]
+      }
+    ],
+    "PackageSpecificVariablesRaw": []
+  }
+  
