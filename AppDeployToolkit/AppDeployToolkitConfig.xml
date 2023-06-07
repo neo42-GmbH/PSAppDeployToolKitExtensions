@@ -99,7 +99,7 @@
 		<!-- Path used to backup the uninstallation file. -->
 		<NxtInnoSetup_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
 		<!-- Log path used for InnoSetup logging when RequireAdmin is False. -->
-		<NxtInnoSetup_InstallParams>/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_InstallParams>
+		<NxtInnoSetup_InstallParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_InstallParams>
 		<!-- Installation parameters used for non-silent InnoSetup actions. -->
 		<NxtInnoSetup_SilentParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_SilentParams>
 		<!-- Installation parameters used for silent InnoSetup actions. -->
