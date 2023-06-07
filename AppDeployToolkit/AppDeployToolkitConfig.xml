@@ -125,7 +125,7 @@
 	<NxtBitRockInstaller_Options>
 		<NxtBitRockInstaller_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neo42-Source</NxtBitRockInstaller_UninsBackupPath>
 		<!-- Path used to backup the uninstallation file. -->
-		<NxtBitRockInstaller_InstallParams>--mode unattended --unattendedmodeui minimal</NxtBitRockInstaller_InstallParams>
+		<NxtBitRockInstaller_InstallParams>--mode unattended</NxtBitRockInstaller_InstallParams>
 		<!-- Installation parameters used for non-silent BitRockInstaller actions. -->
 		<NxtBitRockInstaller_SilentParams>--mode unattended</NxtBitRockInstaller_SilentParams>
 		<!-- Installation parameters used for silent BitRockInstaller actions. -->
