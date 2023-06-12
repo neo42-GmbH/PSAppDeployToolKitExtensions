@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
-          ref: '3.9.3'
+          ref: ${{ vars.TARGET_ADT_VERSION }}
           path: ./PSAppDeployToolkit
       - name: PowerShell Script
         shell: pwsh

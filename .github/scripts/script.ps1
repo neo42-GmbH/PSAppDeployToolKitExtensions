@@ -8,10 +8,10 @@ Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
 Remove-Item -Force -Recurse ./PSAppDeployToolkit/.git
 Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe*"
 ## Copy files to new folder
-$Dirname = "Latest"
-New-Item -ItemType Directory -Name "./$DirName" -Force
-$exclude = Get-ChildItem -File "./$DirName/PSAppDeployToolkitExtensions" -Recurse
-Copy-Item "./PSAppDeployToolkit/Toolkit/*" "./$DirName/" -Recurse -Force -Exclude $exclude
-Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$DirName/"
-New-Item -ItemType Directory -Name ".\$DirName/SupportFiles/neo42-Userpart" -Force
-New-Item -ItemType File -Path ".\$DirName\" -Name "Add a Setup.ico here!!!"
+$dirname = "Latest"
+New-Item -ItemType Directory -Name "./$dirname" -Force
+$exclude = Get-ChildItem -File "./$dirname/PSAppDeployToolkitExtensions" -Recurse
+Copy-Item "./PSAppDeployToolkit/Toolkit/*" "./$dirname/" -Recurse -Force -Exclude $exclude
+Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/"
+New-Item -ItemType Directory -Name ".\$dirname/SupportFiles/neo42-Userpart" -Force
+New-Item -ItemType File -Path ".\$dirname\" -Name "Add a Setup.ico here!!!"
