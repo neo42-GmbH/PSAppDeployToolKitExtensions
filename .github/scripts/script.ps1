@@ -15,3 +15,5 @@ Copy-Item "./PSAppDeployToolkit/Toolkit/*" "./$dirname/" -Recurse -Force -Exclud
 Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/"
 New-Item -ItemType Directory -Name ".\$dirname/SupportFiles/neo42-Userpart" -Force
 New-Item -ItemType File -Path ".\$dirname\" -Name "Add a Setup.ico here!!!"
+New-Item -ItemType Directory -Name Artifacts
+Compress-Archive -Path ./Latest -DestinationPath ./Artifacts/Latest.zip
