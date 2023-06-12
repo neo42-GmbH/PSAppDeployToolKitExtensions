@@ -31,4 +31,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ vars.RELEASE_VERSION }}-${{ github.run_number }}
-          path: Latest
+          path: Artifacts
