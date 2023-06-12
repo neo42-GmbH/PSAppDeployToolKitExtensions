@@ -8,7 +8,7 @@ Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
 Remove-Item -Force -Recurse ./PSAppDeployToolkit/.git
 Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe*"
 ## Copy files to new folder
-$dirname = "Latest"
+$dirname = "$($Env:GITHUB_RELEASE_VERSION)-$($Env:GITHUB_RUN_NUMBER)"
 New-Item -ItemType Directory -Name "./$dirname" -Force
 $exclude = Get-ChildItem -File "./$dirname/PSAppDeployToolkitExtensions" -Recurse
 Copy-Item "./PSAppDeployToolkit/Toolkit/*" "./$dirname/" -Recurse -Force -Exclude $exclude
@@ -17,4 +17,4 @@ New-Item -ItemType Directory -Name ".\$dirname/SupportFiles/neo42-Userpart" -For
 New-Item -ItemType Directory -Name ".\$dirname/Files" -Force
 New-Item -ItemType File -Path ".\$dirname\" -Name "Add a Setup.ico here!!!"
 New-Item -ItemType Directory -Name Artifacts
-Compress-Archive -Path ./Latest -DestinationPath ./Artifacts/Latest.zip
+Compress-Archive -Path "./$dirname" -DestinationPath ./Artifacts/$dirname
