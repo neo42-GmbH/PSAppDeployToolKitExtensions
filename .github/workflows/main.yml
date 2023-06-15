@@ -1,7 +1,7 @@
 ## Allow Action
 on: 
     push:
-      branches: [ 291-add-github-action-to-create-merged-ready-to-use-zip-1 ]
+      branches: [ develop ]
 name: Create Artifacts
 env:
   GITHUB_RUN_NUMBER: ${{ github.run_number }}
