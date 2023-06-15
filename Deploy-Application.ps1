@@ -251,15 +251,10 @@ function Main {
 								}
 							}
 							"Install" {
-								if ("MSI" -eq $InstallMethod) {
-									Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Select value 'MSIRepair' or 'Reinstall' in 'ReinstallMode' for installation method 'MSI'!"
-								}
-								else {
-									CustomReinstallPreInstall
-									[string]$script:installPhase = 'Package-Reinstallation'
-									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
-									CustomReinstallPostInstall -ResultToCheck $mainNxtResult
-								}
+								CustomReinstallPreInstall
+								[string]$script:installPhase = 'Package-Reinstallation'
+								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
+								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
 							Default {
 								Throw "Unsupported 'ReinstallMode' property: $ReinstallMode"
