@@ -27,5 +27,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ vars.RELEASE_VERSION }}-${{ github.run_number }}
+          name: PSAppDeployToolKitExtensions-${{ vars.RELEASE_VERSION }}-${{ github.run_number }}
           path: ${{ vars.RELEASE_VERSION }}-${{ github.run_number }}
