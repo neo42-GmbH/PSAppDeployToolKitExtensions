@@ -24,12 +24,8 @@ jobs:
       - name: PowerShell Script
         shell: pwsh
         run: ./PSAppDeployToolkitExtensions/.github/scripts/script.ps1
-      - name: Replace Version and BuildDate into Scripts
-        run: |
-          sed -i "s/##REPLACEVERSION##/$GITHUB_RUN_NUMBER/g" ./Latest/Deploy-Application.ps1
-          sed -i "s/##REPLACEVERSION##/$GITHUB_RUN_NUMBER/g" ./Latest/AppDeployToolkit/AppDeployToolkitExtensions.ps1
-      - name: Upload Release Asset
+      - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ vars.RELEASE_VERSION }}-${{ github.run_number }}
-          path: Artifacts/${{ vars.RELEASE_VERSION }}-${{ github.run_number }}.zip
+          path: ${{ vars.RELEASE_VERSION }}-${{ github.run_number }}

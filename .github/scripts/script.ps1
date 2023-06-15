@@ -9,12 +9,14 @@ Remove-Item -Force -Recurse ./PSAppDeployToolkit/.git
 Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe*"
 ## Copy files to new folder
 $dirname = "$($Env:GITHUB_RELEASE_VERSION)-$($Env:GITHUB_RUN_NUMBER)"
-New-Item -ItemType Directory -Name "./$dirname" -Force
-$exclude = Get-ChildItem -File "./$dirname/PSAppDeployToolkitExtensions" -Recurse
-Copy-Item "./PSAppDeployToolkit/Toolkit/*" "./$dirname/" -Recurse -Force -Exclude $exclude
+New-Item -ItemType Directory -Name "$dirname" -Force
+Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/" -Recurse -Force -Exclude $exclude
 Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/"
-New-Item -ItemType Directory -Name ".\$dirname/SupportFiles/neo42-Userpart" -Force
-New-Item -ItemType Directory -Name ".\$dirname/Files" -Force
-New-Item -ItemType File -Path ".\$dirname\" -Name "Add a Setup.ico here!!!"
+New-Item -ItemType Directory -Name "$dirname/SupportFiles/neo42-Userpart" -Force
+New-Item -ItemType File -Path "$dirname/SupportFiles/neo42-Userpart" -Name "place UserPart files here!!!"
+New-Item -ItemType Directory -Name "$dirname/Files" -Force
+New-Item -ItemType File -Path "$dirname/Files" -Name "place setup files here!!!"
+New-Item -ItemType File -Path "$dirname\" -Name "Add a Setup.ico here!!!"
 New-Item -ItemType Directory -Name Artifacts
-Compress-Archive -Path "./$dirname" -DestinationPath ./Artifacts/$dirname
+sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/Deploy-Application.ps1
+sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/AppDeployToolkit/AppDeployToolkitExtensions.ps1
