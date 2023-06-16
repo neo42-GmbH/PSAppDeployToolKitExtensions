@@ -3729,6 +3729,24 @@ function Initialize-NxtEnvironment {
 		[string]$global:DeploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
 		Format-NxtPackageSpecificVariables
+		switch ($SetupCfg.Options.ShowBalloonNotifications) {
+			"0"	{
+					[bool]$script:configShowBalloonNotifications = $false
+					Write-Log -message "A general setting from XML config file is superseeded now: balloon notifications deactivated" -Source ${CmdletName}
+				}
+			"1" {
+					[bool]$script:configShowBalloonNotifications = $true
+					Write-Log -message "A general setting from XML config file is superseeded now: balloon notifications activated" -Source ${CmdletName}
+				}
+			"2" {
+					## Do no superseedence of general balloon notification setting!
+				}
+			default {
+					if ($false -eq [string]::IsNullOrEmpty($SetupCfg.Options.ShowBalloonNotifications)) {
+						throw "Not supported value detected for option 'SHOWBALLOONNOTIFICATIONS' while reading setting from setup.cfg"
+					}
+				}
+		}		
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
