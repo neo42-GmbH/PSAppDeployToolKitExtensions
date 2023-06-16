@@ -5238,9 +5238,9 @@ function Set-NxtCustomSetupCfg {
 	.DESCRIPTION
 		Imports a CustomSetup.cfg file in Ini format.
 	.PARAMETER Path
-		The path to the CustomSetup.cfg file.
+		The path to the CustomSetup.cfg file (including file name).
 	.EXAMPLE
-		Set-NxtCustomSetupCfg -Path C:\path\to\setupcfg\CustomSetup.cfg -ContinueOnError $false
+		Set-NxtCustomSetupCfg -Path C:\path\to\customsetupcfg\CustomSetup.cfg -ContinueOnError $false
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -5261,12 +5261,14 @@ function Set-NxtCustomSetupCfg {
 	}
 	Process {
 		try {
+			[string]$customSetupCfgFileName = Split-Path -path "$Path" -Leaf
+			Write-Log -Message "Checking for custom config file [$customSetupCfgFileName] under [$Path]..." -Source ${CmdletName}
 			if ($true -eq (Test-Path $Path)) {
 				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
-				Write-Log -Message "CustomSetupCfg successfully set." -Source ${CmdletName}
+				Write-Log -Message "[$customSetupCfgFileName] was found and successfully parsed into global:CustomSetupCfg object." -Source ${CmdletName}
 			}
 			else {
-				Write-Log -Message "File '$Path' not found. Setting CustomSetupCfg to Defaults." -Source ${CmdletName}
+				Write-Log -Message "No [$customSetupCfgFileName] found. Skipped parsing values and setting values for global:CustomSetupCfg object to defaults." -Source ${CmdletName}
 				[hashtable]$global:CustomSetupCfg = @{
 					UserCanAbort    = $false
 					UserCanCloseAll = $false
