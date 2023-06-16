@@ -81,9 +81,9 @@
 		<MSI_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</MSI_LogPathNoAdminRights>
         <!-- Log path used for MSI logging when RequireAdmin is False. -->
 		<MSI_InstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_InstallParams>
-        <!-- Installation parameters used for non-silent MSI actions. -->
+        <!-- Installation parameters used for MSI actions in non-silent Deploy-Application call. -->
 		<MSI_SilentParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_SilentParams>
-        <!-- Installation parameters used for silent MSI actions. -->
+        <!-- Installation parameters used for MSI actions in silent Deploy-Application call. -->
 		<MSI_UninstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qn</MSI_UninstallParams>
         <!-- Installation parameters used for MSI uninstall actions. -->
         <MSI_MutexWaitTime>600</MSI_MutexWaitTime>
@@ -100,9 +100,9 @@
 		<NxtInnoSetup_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
 		<!-- Log path used for InnoSetup logging when RequireAdmin is False. -->
 		<NxtInnoSetup_InstallParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_InstallParams>
-		<!-- Installation parameters used for non-silent InnoSetup actions. -->
+		<!-- Installation parameters used for InnoSetup actions in non-silent Deploy-Application call. -->
 		<NxtInnoSetup_SilentParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_SilentParams>
-		<!-- Installation parameters used for silent InnoSetup actions. -->
+		<!-- Installation parameters used for InnoSetup actions in silent Deploy-Application call. -->
 		<NxtInnoSetup_UninstallParams>/VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_UninstallParams>
 		<!-- Installation parameters used for InnoSetup uninstall actions. -->
 	</NxtInnoSetup_Options>
@@ -113,9 +113,9 @@
 		<NxtNullsoft_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neo42-Source</NxtNullsoft_UninsBackupPath>
 		<!-- Path used to backup the uninstallation file. -->
 		<NxtNullsoft_InstallParams>/AllUsers /S</NxtNullsoft_InstallParams>
-		<!-- Installation parameters used for non-silent Nullsoft actions. -->
+		<!-- Installation parameters used for Nullsoft actions in non-silent Deploy-Application call. -->
 		<NxtNullsoft_SilentParams>/AllUsers /S</NxtNullsoft_SilentParams>
-		<!-- Installation parameters used for silent Nullsoft actions. -->
+		<!-- Installation parameters used for Nullsoft actions in silent Deploy-Application call. -->
 		<NxtNullsoft_UninstallParams>/AllUsers /S</NxtNullsoft_UninstallParams>
 		<!-- Installation parameters used for Nullsoft uninstall actions. -->
 	</NxtNullsoft_Options>
@@ -126,9 +126,9 @@
 		<NxtBitRockInstaller_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neo42-Source</NxtBitRockInstaller_UninsBackupPath>
 		<!-- Path used to backup the uninstallation file. -->
 		<NxtBitRockInstaller_InstallParams>--mode unattended</NxtBitRockInstaller_InstallParams>
-		<!-- Installation parameters used for non-silent BitRockInstaller actions. -->
+		<!-- Installation parameters used for BitRockInstaller actions in non-silent Deploy-Application call. -->
 		<NxtBitRockInstaller_SilentParams>--mode unattended</NxtBitRockInstaller_SilentParams>
-		<!-- Installation parameters used for silent BitRockInstaller actions. -->
+		<!-- Installation parameters used for BitRockInstaller actions in silent Deploy-Application call. -->
 		<NxtBitRockInstaller_UninstallParams>--mode unattended</NxtBitRockInstaller_UninstallParams>
 		<!-- Installation parameters used for BitRockInstaller uninstall actions. -->
 	</NxtBitRockInstaller_Options>
