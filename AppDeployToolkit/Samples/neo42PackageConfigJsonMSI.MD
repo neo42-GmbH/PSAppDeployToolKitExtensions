@@ -97,26 +97,38 @@ a package description as free text
 
 **"InstallMethod"** *mandatory string value*
 ```
-value has to be "MSI" for a MSI setup
-install method used for MSI setup during main routine (executes default MSI engine installation switch '/i')
-note: a value of 'none' will skip the default installation procedure (in this case manual steps for installation are possible)
+value has to be "MSI" for a MSI setup (executes default MSI engine installation switch '/i' with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters")
+install method used for MSI setup in main routine, additionally the defined "AcceptedInstallExitCodes" always are provided to the default process execution
+to test process and/or registry conditions in setup pre-succes check state use settings in sub-structure "Install" of value "TestConditionsPreSetupSuccessCheck"
+note: a value of 'none' will skip the default installation procedure (in this case manual steps for installation in a corresponding custom function are possible/necessary)
+```
+following pre-defined parameter set will be used (see value "MSI_InstallParams" in section "MSI_Options" in file 'AppDeployToolkitConfig.xml'):
+```
+MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn
+note: a log file parameter always will be appended (see description of value "InstLogFile" too)
 ```
 
 **"UninstallMethod"** *mandatory string value*
 ```
-value has to be "MSI" for a MSI setup
-uninstall method used for MSI setup during main routine (executes default MSI engine uninstallation switch '/x')
-note: a value of 'none' will skip the default uninstallation procedure (in this case manual steps for uninstallation are possible)
+value has to be "MSI" for a MSI setup (executes default MSI engine uninstallation switch '/x' with default pre-defined parameter set for uninstallation, to use customized parameters see values "UninstPara" and "AppendUninstParaToDefaultParameters")
+uninstall method used for MSI setup in main routine, additionally the defined "AcceptedUninstallExitCodes" always are provided to the default process execution
+to test process and/or registry conditions in setup pre-succes check state use settings in sub-structure "Uninstall" of value "TestConditionsPreSetupSuccessCheck"
+note: a value of 'none' will skip the default uninstallation procedure (in this case manual steps for uninstallation in a corresponding custom function are possible/necessary)
+```
+following pre-defined parameter set will be used (see value "MSI_UninstallParams" in section "MSI_Options" in file 'AppDeployToolkitConfig.xml'):
+```
+MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qn
+note: a log file parameter always will be appended (see description of value "UninstLogFile" too)
 ```
 
 **"ReinstallMode"** *mandatory string value*
 ```
-default value should be "MSIRepair"
-reinstall method used for MSI setup during main routine (executes default MSI engine repair switch '/fvomus')
-note: additionally valid values are "Reinstall" and "Install"
+default value should be "MSIRepair" for a MSI setup (executes default MSI engine repair switch '/fvomus' with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters"), additionally the defined "AcceptedRepairExitCodes" are provided to the default process execution
+reinstall mode used for MSI setup in main routine, in case provided value "UninstallKey" is a display name (value "UninstallKeyIsDisplayName" is set to "true"), reinstall mode may be changed by function "Switch-NxtMSIReinstallMode" depending of double check result for display version of installed application (prevents running the repair procedure for wrong MSIGUID)
+note: additionally valid values are "Reinstall" and "Install" (important: here corresponding values for un/installation mode will be used!)
 ```
 - MSIRepair: does a default MSI setup integrated repair procedure
-- Reinstall: does an external 2-step procedure with uninstallation first and installation again afterwards (note: an intermediate reboot may be required!)
+- Reinstall: does an external 2-step procedure with regular MSI engine uninstallation first and a regular MSI engine installation again afterwards (note: an intermediate reboot may be required!)
 - Install  : does a regular MSI engine installation call and may do an inplace upgrade if allowed by value 'MSIInplaceUpgradeable' in case of detecting installed application just with DISPLAYNAME instead of MSIGUID as Uninstallkey
 
 **"MSIInplaceUpgradeable"** *optional bool value (considered for MSI setups only!)*
@@ -368,7 +380,7 @@ note: this variable is not used by default in any function of AppDeployToolkitEx
 ```
 default value: "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log"
 setup log file name for installation process
-note: by default a logfile always will be appended internally (if supported/applied by setup), even if no name is provided in this variable!
+note: by default a logfile always will be appended internally (if value "InstallMethod" is set to 'MSI' and logging is supported/applied by setup), even if no name is provided in this variable!
 ```
 
 **"UninstLogFile"** *mandatory string value*
@@ -377,7 +389,7 @@ note: by default a logfile always will be appended internally (if supported/appl
 ```
 default value: "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log"
 setup log file name for uninstallation process
-note: by default a logfile always will be appended internally (if supported/applied by setup), even if no name is provided in this variable!
+note: by default a logfile always will be appended internally (if value "UninstallMethod" is set to 'MSI' and logging is supported/applied by setup), even if no name is provided in this variable!
 ```
 
 **"InstFile"** *mandatory string value*
@@ -393,7 +405,7 @@ note: by default this file will be expected in package subfolder 'Files', else a
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 default value: ""
-collection of setup installer parameters as one string
+collection of setup installer parameters as one string, but don't include a log file parameter, if "InstallMethod" is set to 'MSI' (see descriptions of values "InstallMethod" and "InstLogFile" too)
 note: especially consider masking rules for some characters inside the string
 ```
 
@@ -437,7 +449,7 @@ note: by default the MSI-GUID provided in value "UninstallKey" or a derived unin
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 default value: ""
-collection of setup uninstaller parameters as one string
+collection of setup uninstaller parameters as one string, but don't include a log file parameter, if "UninstallMethod" is set to 'MSI' (see descriptions of values "UninstallMethod" and "UninstLogFile" too)
 note: especially consider masking rules for some characters inside the string
 ```
 
@@ -460,7 +472,7 @@ note: '*' is allowed for all exit codes
 
 **"AppKillProcesses": [** *optional value structure (possibly a collection)*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's neccessary, has to be comma-separated and at least the value "Name" has to be provided for each entry, but an empty list is allowed too (that means: "AppKillProcesses": [])!
+note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the value "Name" has to be provided for each entry, but an empty list is allowed too (that means: "AppKillProcesses": [])!
 
 ***{***
 
@@ -514,7 +526,7 @@ note: valid values are "And" and "Or"
 
 **"ProcessesToWaitFor": [** *optional value sub-structure (possibly a collection)*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's neccessary, has to be comma-separated and both values "Name" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "ProcessesToWaitFor": [],)!
+note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Name" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "ProcessesToWaitFor": [],)!
 
 ***{*** *optional value sub-structure*
 
@@ -542,7 +554,7 @@ note: valid values are "And" and "Or"
 
 **"RegKeysToWaitFor": [** *optional value sub-structure (possibly a collection)*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's neccessary, has to be comma-separated and at least the values "KeyPath" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "RegKeysToWaitFor": [])!
+note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyPath" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "RegKeysToWaitFor": [])!
 
 ***{*** *optional value sub-structure*
 
@@ -596,7 +608,7 @@ note: valid values are "And" and "Or"
 
 **"ProcessesToWaitFor": [** *optional value sub-structure (possibly a collection)*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's neccessary, has to be comma-separated and both values "Name" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "ProcessesToWaitFor": [],)!
+note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Name" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "ProcessesToWaitFor": [],)!
 
 ***{*** *optional value sub-structure*
 
@@ -624,7 +636,7 @@ note: valid values are "And" and "Or"
 
 **"RegKeysToWaitFor": [** *optional value sub-structure (possibly a collection)*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's neccessary, has to be comma-separated and at least the values "KeyPath" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "RegKeysToWaitFor": [])!
+note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyPath" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "RegKeysToWaitFor": [])!
 
 ***{*** *optional value sub-structure*
 
@@ -670,7 +682,7 @@ note: an empty list is allowed (that means: "CommonDesktopShortcutsToDelete": []
 
 **"CommonStartMenuShortcutsToCopyToCommonDesktop": [** *optional value structure (possibly a collection)*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's neccessary, has to be comma-separated and both values "Source" and "TargetName" have to be provided for each item, but an empty list is allowed too (that means: "CommonStartMenuShortcutsToCopyToCommonDesktop": [])!
+note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Source" and "TargetName" have to be provided for each item, but an empty list is allowed too (that means: "CommonStartMenuShortcutsToCopyToCommonDesktop": [])!
 
 ***{***
 
@@ -690,9 +702,9 @@ link file name on public desktop folder
 
 **"UninstallKeysToHide": [** *optional value structure (possibly a collection)*
 
-this optional structure (in curly brackets) may be copied any times it's neccessary, has to be comma-separated and at least the values "KeyName", "Is64Bit", "KeyNameIsDisplayName" and "KeyNameContainsWildCards" have to be provided for each item, but an empty list is allowed too (that means: "UninstallKeysToHide": [])!
+this optional structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyName", "Is64Bit", "KeyNameIsDisplayName" and "KeyNameContainsWildCards" have to be provided for each item, but an empty list is allowed too (that means: "UninstallKeysToHide": [])!
 
-note: the recommended default entry is always a reference to the current installed application (but the value "Is64Bit" has to be approved always and readjusted if neccessary)
+note: the recommended default entry is always a reference to the current installed application (but the value "Is64Bit" has to be approved always and readjusted if necessary)
 
 ***{***
 
@@ -733,7 +745,7 @@ switch to control the interpretation of character '\*' in a defined string of va
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 default value: "$($global:PackageConfig.UninstallDisplayName)"
-comma separated list of display names to exclude from hiding, where a character '\*' inside of each string here always will interpreted as part of the defined string!
+comma separated list of display names to exclude from hiding, where a character '*' inside of each string here always will interpreted as part of the defined string!
 note: an empty list is allowed that means: "DisplayNamesToExcludeFromHiding": []), but at least the value of the corresponding installed application package for a defined current "KeyName" is recommended to prevent hiding this package uninstall entry if current value of "KeyNameIsDisplayName" is set to 'true'!
 ```
 
@@ -749,7 +761,7 @@ value collection to define customer specific variables
 
 ***[***
 
-note: the following sub-structure (in curly brackets) may be copied any times it's neccessary, has to be comma-separated and at least the values "Name" and "Value" have to be provided for each item, but an empty list is allowed too (that means: "PackageSpecificVariablesRaw": [])!
+note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "Name" and "Value" have to be provided for each item, but an empty list is allowed too (that means: "PackageSpecificVariablesRaw": [])!
 
 ***{*** *optional value sub-structure*
 
@@ -769,7 +781,7 @@ note: especially consider masking rules for some characters inside the string
 
 **"ExpandVariables"** *optional bool value*
 ```
-value dependent of neccessary value extraction (valid are only 'true' and 'false')
+value dependent of necessary value extraction (valid are only 'true' and 'false')
 note: this value may be omitted (that's equal to 'false')
 ```
 
