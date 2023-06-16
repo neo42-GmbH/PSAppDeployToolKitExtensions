@@ -9,11 +9,11 @@
     "MSIInplaceUpgradeable": false,
     "MSIDowngradeable": false,
     "SoftMigration": {
-        "File": {
-          "FullNameToCheck": "",
-          "VersionToCheck": ""
-        }
-      },
+      "File": {
+        "FullNameToCheck": "",
+        "VersionToCheck": ""
+      }
+    },
     "TestedOn": "Win x86, Win10 x64, Win11 x64",
     "Dependencies": "",
     "LastChange": "!LastChangeDate!",
