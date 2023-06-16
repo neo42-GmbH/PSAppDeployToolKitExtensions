@@ -445,7 +445,7 @@ note: '*' is allowed for all exit codes
 
 ```
 default value: ""
-comma separated list of exit codes to accept for successfull repair execution of legacy setup
+comma separated list of exit codes to accept for successfull repair execution of msi setup
 note: '*' is allowed for all exit codes
 ```
 
