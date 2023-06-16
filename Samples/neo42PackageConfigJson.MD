@@ -1,4 +1,4 @@
-This file contains descriptions to all possible values in the file neo42PackageConfig.json for processing a msi setup.
+This file contains descriptions to all possible values in the file neo42PackageConfig.json for processing a setup.
 # general information
 ## good to know
 *consider following masking rules for characters in json files:*
@@ -97,39 +97,78 @@ a package description as free text
 
 **"InstallMethod"** *mandatory string value*
 ```
-value has to be "MSI" for a MSI setup (executes default MSI engine installation switch '/i' with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters")
-install method used for MSI setup in main routine, additionally the defined "AcceptedInstallExitCodes" always are provided to the default process execution
+default value: may define a well-known type of setups (especially for MSI setups the default MSI engine installation switch '/i' will be executed), else (if an individual text is defined here) a regular process execution of an existing "InstFile" with defined "InstPara" is tried to call
+
+install method used for default setup execution in main routine
+
+for a well-known type of setups pre-defined parameter sets are used for default installation processing, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters"
+additionally the defined "AcceptedInstallExitCodes" always are provided to the default process execution
 to test process and/or registry conditions in setup pre-succes check state use settings in sub-structure "Install" of value "TestConditionsPreSetupSuccessCheck"
+
 note: a value of 'none' will skip the default installation procedure (in this case manual steps for installation in a corresponding custom function are possible/necessary)
 ```
-following pre-defined parameter set will be used (see value "MSI_InstallParams" in section "MSI_Options" in file 'AppDeployToolkitConfig.xml'):
+for following well-known types of setups pre-defined parameter sets in file 'AppDeployToolkitConfig.xml' are available (value is NOT case-sensitive):
+- **MSI**: if value is set to '*MSI*' only the default process execution with corresponding parameter set of a MSI setup will be done
+- **InnoSetup**: all values like '*Inno\**' will do default process execution with corresponding parameter set of legacy setup 'InnoSetup'
+- **NullSoft/NSIS**: if value is set to '*NullSoft*' only the default process execution with corresponding parameter set of legacy setup 'NullSoft' will be done
+- **BitRockInstaller**: all values like '*BitRock\**' will do default process execution with corresponding parameter set of legacy setup 'BitRockInstaller'
+- **none**: if value is set to '*none*' only any of the pre-defined procedures for well-known types of setups mentioned above will be skipped
+
+following pre-defined parameter set will be used (see value "MSI_InstallParams"/"Nxt\<setup_type\>_InstallParams" in section "MSI_Options"/"Nxt\<setup_type>_Options" in file 'AppDeployToolkitConfig.xml'):
 ```
-MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn
-note: a log file parameter always will be appended (see description of value "InstLogFile" too)
+MSI_InstallParams: MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn
+
+NxtInnoSetup_InstallParams       : /FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010
+NxtNullsoft_InstallParams        : /AllUsers /S
+NxtBitRockInstaller_InstallParams: --mode unattended
+
+note: a log file parameter always will be appended, if supported by setup type (see description of value "InstLogFile" too)
 ```
 
 **"UninstallMethod"** *mandatory string value*
 ```
-value has to be "MSI" for a MSI setup (executes default MSI engine uninstallation switch '/x' with default pre-defined parameter set for uninstallation, to use customized parameters see values "UninstPara" and "AppendUninstParaToDefaultParameters")
-uninstall method used for MSI setup in main routine, additionally the defined "AcceptedUninstallExitCodes" always are provided to the default process execution
+default value: may define a well-known type of setups (especially for MSI setups the default MSI engine installation switch '/x' will be executed), else (if an individual text is defined here) a regular process execution of an existing "UninstFile" with defined "UninstPara" is tried to call
+
+uninstall method used for default setup execution in main routine
+
+for a well-known type of setups pre-defined parameter sets are used for default uninstallation processing, to use customized parameters see values "UninstPara" and "AppendUninstParaToDefaultParameters"
+additionally the defined "AcceptedUninstallExitCodes" always are provided to the default process execution
 to test process and/or registry conditions in setup pre-succes check state use settings in sub-structure "Uninstall" of value "TestConditionsPreSetupSuccessCheck"
+
 note: a value of 'none' will skip the default uninstallation procedure (in this case manual steps for uninstallation in a corresponding custom function are possible/necessary)
 ```
-following pre-defined parameter set will be used (see value "MSI_UninstallParams" in section "MSI_Options" in file 'AppDeployToolkitConfig.xml'):
+for following well-known types of setups pre-defined parameter sets in file 'AppDeployToolkitConfig.xml' are available (value is NOT case-sensitive):
+- **MSI**: if value is set to '*MSI*' only the default process execution with corresponding parameter set of a MSI setup will be done
+- **InnoSetup**: all values like '*Inno\**' will do default process execution with corresponding parameter set of legacy setup 'InnoSetup'
+- **NullSoft/NSIS**: if value is set to '*NullSoft*' only the default process execution with corresponding parameter set of legacy setup 'NullSoft' will be done
+- **BitRockInstaller**: all values like '*BitRock\**' will do default process execution with corresponding parameter set of legacy setup 'BitRockInstaller'
+- **none**: if value is set to '*none*' only any of the pre-defined procedures for well-known types of setups mentioned above will be skipped
+
+following pre-defined parameter set will be used (see value "MSI_UninstallParams"/"Nxt\<setup_type\>_UninstallParams" in section "MSI_Options"/"Nxt\<setup_type>_Options" in file 'AppDeployToolkitConfig.xml'):
 ```
-MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qn
-note: a log file parameter always will be appended (see description of value "UninstLogFile" too)
+MSI_UninstallParams: MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qn
+
+NxtInnoSetup_UninstallParams       : /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010
+NxtNullsoft_UninstallParams        : /AllUsers /S
+NxtBitRockInstaller_UninstallParams: --mode unattended
+
+note: a log file parameter always will be appended, if supported by setup type (see description of value "UninstLogFile" too)
 ```
 
 **"ReinstallMode"** *mandatory string value*
 ```
-default value should be "MSIRepair" for a MSI setup (executes default MSI engine repair switch '/fvomus' with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters"), additionally the defined "AcceptedRepairExitCodes" are provided to the default process execution
-reinstall mode used for MSI setup in main routine, in case provided value "UninstallKey" is a display name (value "UninstallKeyIsDisplayName" is set to "true"), reinstall mode may be changed by function "Switch-NxtMSIReinstallMode" depending of double check result for display version of installed application (prevents running the repair procedure for wrong MSIGUID)
-note: additionally valid values are "Reinstall" and "Install" (important: here corresponding values for un/installation mode will be used!)
+default value: "Reinstall", but "MSIRepair" is recommended for MSI setups (executes default MSI engine repair switch '/fvomus' with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters")
+
+reinstall mode used for default setup execution in main routine
+
+especially for MSI setups in case provided value "UninstallKey" is a display name (value "UninstallKeyIsDisplayName" is set to "true"), reinstall mode may be changed dynamically by function "Switch-NxtMSIReinstallMode" depending of double check result for display version of installed application (prevents running the repair procedure for wrong MSIGUID!)
+
+additionally the defined "AcceptedRepairExitCodes" are provided to the default process execution
+note: additionally valid value is "Install" (important: like for mode 'Reinstall' the related settings for the corresponding values "InstallMethod" and "UninstallMethod" will be used!)
 ```
-- MSIRepair: does a default MSI setup integrated repair procedure
-- Reinstall: does an external 2-step procedure with regular MSI engine uninstallation first and a regular MSI engine installation again afterwards (note: an intermediate reboot may be required!)
-- Install  : does a regular MSI engine installation call and may do an inplace upgrade if allowed by value 'MSIInplaceUpgradeable' in case of detecting installed application just with DISPLAYNAME instead of MSIGUID as Uninstallkey
+- **MSIRepair**: does a default MSI setup integrated repair procedure - note: usage with a legacy setups will throw a controlled error!
+- **Reinstall**: does an external 2-step procedure with a regular uninstallation procedure first and an regular installation procedure again afterwards (note: an intermediate reboot may be required!)
+- **Install**: does a regular installation procedure (it's just an "over-installing", especially for MSI setups it may do an inplace upgrade if allowed by value 'MSIInplaceUpgradeable' in case of detecting installed application just with DISPLAYNAME instead of MSIGUID as Uninstallkey) - note: be careful, the application/setup has to support this procedure!
 
 **"MSIInplaceUpgradeable"** *optional bool value (considered for MSI setups only!)*
 ```
@@ -321,7 +360,7 @@ switch to hide own uninstall registry entry for this package (defined in value "
 **"DisplayVersion"** *optional string value*
 ```
 default value: (expected) version of installed application (by default taken from registry value 'DisplayVersion' in uninstall registry entry set by a regular test installation of the application)
-note: if this value is not set no default soft migration is proceeded (see description of value "SoftMigration" too) and no double check for correct decision of "ReinstallMode" may be done in case value "UninstallKeyIsDisplayName" is set to 'true' (see description of values "UninstallKey" and "UninstallKeyIsDisplayName" too)!
+note: if this value is not set no default soft migration is proceeded (see description of value "SoftMigration" too) and especially for MSI setups no double check for correct decision of "ReinstallMode" may be done in case value "UninstallKeyIsDisplayName" is set to 'true' (see description of values "UninstallKey" and "UninstallKeyIsDisplayName" too)!
 ```
 
 **"InstallerVersion"** *optional string value*
@@ -333,7 +372,7 @@ note: this variable is not used by default in any function of AppDeployToolkitEx
 
 **"UninstallKey"** *optional string value*
 ```
-default value: MSI-GUID (by default the same name of registry subkey in uninstall registry entry of installed application (under '..\CurrentVersion\Uninstall\"UninstallKey"'))
+default value: name of registry subkey in uninstall registry entry of installed application setup ('...\CurrentVersion\Uninstall\"UninstallKey"'), especially for MSI setups generally this is the MSI-GUID
 used for application detection as search string (for an uninstall registry subkey or a display name) of installed application
 note: if this value is set dynamically at runtime of un/installation process (or is not defineable at startup) here may be defined the display name of the installed application set in registry key 'DisplayName' in uninstall registry entry of installed application (in this case it is mandatory to set value "UninstallKeyIsDisplayName" to 'true'); this value may be empty too (in this case no default application detection is possible, custom actions have to be defined in custom functions)
 ```
@@ -380,7 +419,7 @@ note: this variable is not used by default in any function of AppDeployToolkitEx
 ```
 default value: "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log"
 setup log file name for installation process
-note: by default a logfile always will be appended internally (if value "InstallMethod" is set to 'MSI' and logging is supported/applied by setup), even if no name is provided in this variable!
+note: by default a logfile always will be appended internally (if value "InstallMethod" is set to a well-know type of setups and logging is supported/applied by setup), even if no name is provided in this variable!
 ```
 
 **"UninstLogFile"** *mandatory string value*
@@ -389,14 +428,14 @@ note: by default a logfile always will be appended internally (if value "Install
 ```
 default value: "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log"
 setup log file name for uninstallation process
-note: by default a logfile always will be appended internally (if value "UninstallMethod" is set to 'MSI' and logging is supported/applied by setup), even if no name is provided in this variable!
+note: by default a logfile always will be appended internally (if value "UninstallMethod" is set to a well-know type of setups and logging is supported/applied by setup), even if no name is provided in this variable!
 ```
 
 **"InstFile"** *mandatory string value*
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
-name of the msi setup installer file (including file extension)
+name of the used setup installer file (including file extension)
 note: by default this file will be expected in package subfolder 'Files', else add a (relative) path to the provided file name; in case of value "InstallMethod" is set to "none" the provided value "InstFile" will be ignored by default installation routine (see description of value "InstallMethod" too)
 ```
 
@@ -405,7 +444,7 @@ note: by default this file will be expected in package subfolder 'Files', else a
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 default value: ""
-collection of setup installer parameters as one string, but don't include a log file parameter, if "InstallMethod" is set to 'MSI' (see descriptions of values "InstallMethod" and "InstLogFile" too)
+collection of setup installer parameters as one string, but don't include a log file parameter, if "InstallMethod" is set to a well-know type of setups (see descriptions of values "InstallMethod" and "InstLogFile" too)
 note: especially consider masking rules for some characters inside the string
 ```
 
@@ -423,7 +462,7 @@ note: by default a logfile always will be appended to used parameters (if suppor
 
 ```
 default value: ""
-comma separated list of exit codes to accept for successfull installation execution of msi setup
+comma separated list of exit codes to accept for successfull installation execution of the used setup installer file
 note: '*' is allowed for all exit codes
 ```
 
@@ -431,7 +470,7 @@ note: '*' is allowed for all exit codes
 
 ```
 default value: ""
-comma separated list of exit codes to accept for successfull repair execution of msi setup
+comma separated list of exit codes to accept for successfull repair execution of msi setup file
 note: '*' is allowed for all exit codes
 ```
 
@@ -449,7 +488,7 @@ note: by default the MSI-GUID provided in value "UninstallKey" or a derived unin
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 default value: ""
-collection of setup uninstaller parameters as one string, but don't include a log file parameter, if "UninstallMethod" is set to 'MSI' (see descriptions of values "UninstallMethod" and "UninstLogFile" too)
+collection of setup uninstaller parameters as one string, but don't include a log file parameter, if "UninstallMethod" is set to a well-know type of setups (see descriptions of values "UninstallMethod" and "UninstLogFile" too)
 note: especially consider masking rules for some characters inside the string
 ```
 
@@ -466,7 +505,7 @@ note: by default a logfile always will be appended to used parameters (if suppor
 **"AcceptedUninstallExitCodes"** *optional string value*
 ```
 default value: ""
-comma separated list of exit codes to accept for successfull uninstallation execution of msi setup
+comma separated list of exit codes to accept for successfull uninstallation execution of the used setup installer file
 note: '*' is allowed for all exit codes
 ```
 
