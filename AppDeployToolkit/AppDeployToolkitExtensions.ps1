@@ -3732,14 +3732,14 @@ function Initialize-NxtEnvironment {
 		switch ($SetupCfg.Options.ShowBalloonNotifications) {
 			"0"	{
 					[bool]$script:configShowBalloonNotifications = $false
-					Write-Log -message "A general setting from XML config file is superseeded now: balloon notifications deactivated" -Source ${CmdletName}
+					Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
 				}
 			"1" {
 					[bool]$script:configShowBalloonNotifications = $true
-					Write-Log -message "A general setting from XML config file is superseeded now: balloon notifications activated" -Source ${CmdletName}
+					Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
 				}
 			"2" {
-					## Do no superseedence of general balloon notification setting!
+					## Use ShowBalloonNotifications setting from XML config
 				}
 			default {
 					if ($false -eq [string]::IsNullOrEmpty($SetupCfg.Options.ShowBalloonNotifications)) {
