@@ -5290,7 +5290,7 @@ function Set-NxtSetupCfg {
 	.DESCRIPTION
 		Imports a Setup.cfg file in Ini format.
 	.PARAMETER Path
-		The path to the Setup.cfg file.
+		The path to the Setup.cfg file (including file name).
 	.EXAMPLE
 		Set-NxtSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
 	.NOTES
@@ -5311,13 +5311,14 @@ function Set-NxtSetupCfg {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Log -Message "Checking for setup.cfg under [$path]..." -Source ${CmdletName}
+		[string]$setupCfgFileName = Split-Path -path "$Path" -Leaf
+		Write-Log -Message "Checking for config file [$setupCfgFileName] under [$Path]..." -Source ${CmdletName}
 		if ([System.IO.File]::Exists($Path)) {
 			[hashtable]$global:SetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
-			Write-Log -Message "Setup.cfg found and successfully parsed into global:setupCfg object." -Source ${CmdletName}
+			Write-Log -Message "[$setupCfgFileName] was found and successfully parsed into global:SetupCfg object." -Source ${CmdletName}
 		}
 		else {
-			Write-Log -Message "No Setup.cfg found. Skipped parsing of setup.cfg." -Severity 2 -Source ${CmdletName}
+			Write-Log -Message "No [$setupCfgFileName] found. Skipped parsing values." -Severity 2 -Source ${CmdletName}
 		}
 	}
 	End {
