@@ -5238,9 +5238,9 @@ function Set-NxtCustomSetupCfg {
 	.DESCRIPTION
 		Imports a CustomSetup.cfg file in Ini format.
 	.PARAMETER Path
-		The path to the CustomSetup.cfg file.
+		The path to the CustomSetup.cfg file (including file name).
 	.EXAMPLE
-		Set-NxtCustomSetupCfg -Path C:\path\to\setupcfg\CustomSetup.cfg -ContinueOnError $false
+		Set-NxtCustomSetupCfg -Path C:\path\to\customsetupcfg\CustomSetup.cfg -ContinueOnError $false
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -5261,12 +5261,14 @@ function Set-NxtCustomSetupCfg {
 	}
 	Process {
 		try {
+			[string]$customSetupCfgFileName = Split-Path -path "$Path" -Leaf
+			Write-Log -Message "Checking for custom config file [$customSetupCfgFileName] under [$Path]..." -Source ${CmdletName}
 			if ($true -eq (Test-Path $Path)) {
 				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
-				Write-Log -Message "CustomSetupCfg successfully set." -Source ${CmdletName}
+				Write-Log -Message "[$customSetupCfgFileName] was found and successfully parsed into global:CustomSetupCfg object." -Source ${CmdletName}
 			}
 			else {
-				Write-Log -Message "File '$Path' not found. Setting CustomSetupCfg to Defaults." -Source ${CmdletName}
+				Write-Log -Message "No [$customSetupCfgFileName] found. Skipped parsing values and setting values for global:CustomSetupCfg object to defaults." -Source ${CmdletName}
 				[hashtable]$global:CustomSetupCfg = @{
 					UserCanAbort    = $false
 					UserCanCloseAll = $false
@@ -5290,7 +5292,7 @@ function Set-NxtSetupCfg {
 	.DESCRIPTION
 		Imports a Setup.cfg file in Ini format.
 	.PARAMETER Path
-		The path to the Setup.cfg file.
+		The path to the Setup.cfg file (including file name).
 	.EXAMPLE
 		Set-NxtSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
 	.NOTES
@@ -5311,13 +5313,14 @@ function Set-NxtSetupCfg {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Log -Message "Checking for setup.cfg under [$path]..." -Source ${CmdletName}
+		[string]$setupCfgFileName = Split-Path -path "$Path" -Leaf
+		Write-Log -Message "Checking for config file [$setupCfgFileName] under [$Path]..." -Source ${CmdletName}
 		if ([System.IO.File]::Exists($Path)) {
 			[hashtable]$global:SetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
-			Write-Log -Message "Setup.cfg found and successfully parsed into global:setupCfg object." -Source ${CmdletName}
+			Write-Log -Message "[$setupCfgFileName] was found and successfully parsed into global:SetupCfg object." -Source ${CmdletName}
 		}
 		else {
-			Write-Log -Message "No Setup.cfg found. Skipped parsing of setup.cfg." -Severity 2 -Source ${CmdletName}
+			Write-Log -Message "No [$setupCfgFileName] found. Skipped parsing values." -Severity 2 -Source ${CmdletName}
 		}
 	}
 	End {
