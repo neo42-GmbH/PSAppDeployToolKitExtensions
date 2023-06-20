@@ -316,11 +316,12 @@ note: this value may be overwritten by deployment system (if variable '$env:unin
 **"Reboot"** *mandatory integer value*
 ```
 default value: 0
-reboot behavior of package (only values '0' and '1' are allowed)
+reboot behavior of package (only values '0', '1' and '2' are allowed)
 note: this value may be overwritten by deployment system (if variable '$env:Reboot' is set)
 ```
-- 0: no reboot required
-- 1: reboot required (will be re-set during script run by default routines or in custom functions, i.e. depending on msi return code 3010)
+- 0: no reboot required (don't overwrites main exit code inside script)
+- 1: reboot required (always overwrites main exit code inside script to exit code 3010)
+- 2: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
 
 **"UserPartOnInstallation"** *optional bool value*
 ```
