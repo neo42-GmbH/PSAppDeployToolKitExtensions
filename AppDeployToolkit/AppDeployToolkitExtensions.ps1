@@ -3657,15 +3657,20 @@ function Import-NxtIniFile {
 		try {
 			[hashtable]$ini = @{}
 			[string]$section = 'default'
-			switch -Regex -File $Path {
-				'^\[(.+)\]$' {
+			$content = Get-Content -Path $Path
+			foreach ($line in $content) {
+				if ($line -match '^\[(.+)\]$') {
 					[string]$section = $matches[1]
 					if (!$ini.ContainsKey($section)) {
 						[hashtable]$ini[$section] = @{}
 					}
 				}
-				'^([^\s]+)\s*=\s*(.+)$' {
-					[string]$ini[$section][$matches[1]] = $matches[2]
+				elseif ($line -match '^(;|#)') {
+				}
+				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
+					[string]$variableName = $Matches[1]
+					[string]$value = $Matches[2]
+					[string]$ini[$section][$variableName] = $value
 				}
 			}
 			Write-Output $ini
@@ -3681,6 +3686,65 @@ function Import-NxtIniFile {
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
+}
+#endregion
+#region Function Import-NxtIniFileWithComments
+function Import-NxtIniFileWithComments {
+    <#
+	.SYNOPSIS
+		Imports an Ini file into Powershell Object.
+	.DESCRIPTION
+		Imports an Ini file into Powershell Object.
+	.PARAMETER Path
+		The path to the INI file.
+	.EXAMPLE
+		Import-NxtIniFileWithComments -Path C:\path\to\ini\file.ini
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [String]
+        $Path,
+        [Parameter(Mandatory = $false)]
+        [bool]
+        $ContinueOnError = $true
+    )
+    try {
+        [hashtable]$ini = @{}
+        [string]$section = 'default'
+        $commentBuffer = @()
+        $content = Get-Content -Path $Path
+        foreach ($line in $content) {
+            if ($line -match '^\[(.+)\]$') {
+                [string]$section = $matches[1]
+                if (!$ini.ContainsKey($section)) {
+                    [hashtable]$ini[$section] = @{}
+                }
+            }
+            elseif ($line -match '^(;|#)\s*(.*)') {
+                $commentBuffer += $matches[2].trim("; ")
+            }
+            elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
+                [string]$variableName = $Matches[1]
+                [string]$value = $Matches[2].Trim()
+                [hashtable]$ini[$section][$variableName] = @{
+                    Value    = $value.trim()
+                    Comments = $commentBuffer -join "`r`n"
+                }
+                $commentBuffer = @()
+            }
+        }
+        Write-Output $ini
+    }
+    catch {
+        if (-not $ContinueOnError) {
+            throw "Failed to read ini file [$path]: $($_.Exception.Message)"
+        }
+    }
 }
 #endregion
 #region Function Initialize-NxtEnvironment
@@ -3721,7 +3785,19 @@ function Initialize-NxtEnvironment {
 	}
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
-		Set-NxtSetupCfg -Path $SetupCfgPath
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)"
+		if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)){
+			Move-NxtItem -Path $SetupCfgPathOverride\setupOverride.cfg -Destination $SetupCfgPathOverride\setup.cfg
+			Set-NxtSetupCfg -Path $SetupCfgPathOverride\setup.cfg
+		}else{
+			if (
+				$true -eq (Test-path $SetupCfgPathOverride) -and
+				$SetupCfgPathOverride -like "$env:temp\$($global:Packageconfig.RegPackagesKey)\*"
+				) {
+				Remove-Item -Recurse $SetupCfgPathOverride
+			}
+			Set-NxtSetupCfg -Path $SetupCfgPath
+		}
 		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
@@ -4354,6 +4430,9 @@ function Register-NxtPackage {
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)",
+		[Parameter(Mandatory = $false)]
+		[string]
 		$LastErrorMessage = $global:LastErrorMessage
 	)
 	
@@ -4368,7 +4447,12 @@ function Register-NxtPackage {
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
+			if ($true -eq (Test-Path "$SetupCfgPathOverride\Setup.cfg")){
+				Move-NxtItem -Path "$SetupCfgPathOverride\Setup.cfg" -Destination "$App\neo42-Install\" -Force
+				Remove-Item -Recurse -Path "$SetupCfgPathOverride"
+			}else{
+				Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
+			}
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
 	
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'AppPath' -Value $App
