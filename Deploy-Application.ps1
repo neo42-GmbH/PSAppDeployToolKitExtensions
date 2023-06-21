@@ -179,7 +179,7 @@ function Main {
 	param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		$PackageGUID = $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
 		[int]
 		[ValidateSet(0, 1, 2)]
