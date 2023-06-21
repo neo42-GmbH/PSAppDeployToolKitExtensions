@@ -100,7 +100,7 @@ initial date of script creation in format "DD/MM/YYYY"
 
 **"InventoryID"** *mandatory string value*
 ```
-internal unique identifer with 11 digits with format: 3 digits employee name abbreviation + 8 digits random hexadecimal number
+internal unique identifier with 11 digits with format: 3 digits employee name abbreviation + 8 digits random hexadecimal number
 ```
 
 **"Description"** *optional informational string value*
@@ -293,7 +293,7 @@ note: basically only these values are valid and supported by neo42: "DEU", "ENG"
 
 **"PackageFamilyGUID"** *mandatory string value*
 ```
-universal unique identifer in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}"
+universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}"
 note: the 3 very left digits inside of curly brackets are always "042"
 ```
 
