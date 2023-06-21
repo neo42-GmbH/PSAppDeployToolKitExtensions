@@ -5152,6 +5152,8 @@ function Set-NxtPackageArchitecture {
 				[string]$global:CommonProgramW6432 = $CommonProgramFiles
 				[string]$global:System = "$SystemRoot\SysWOW64"
 				[string]$global:Wow6432Node = '\Wow6432Node'
+				[string]$global:RegSoftwarePath = 'HKLM:\Software'
+				[string]$global:RegSoftwarePathx86 = 'HKLM:\Software\Wow6432Node'
 			}
 			elseif (($AppArch -eq 'x86' -or $AppArch -eq '*') -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[string]$global:ProgramFilesDir = $ProgramFiles
@@ -5162,6 +5164,8 @@ function Set-NxtPackageArchitecture {
 				[string]$global:CommonProgramW6432 = ''
 				[string]$global:System = "$SystemRoot\System32"
 				[string]$global:Wow6432Node = ''
+				[string]$global:RegSoftwarePath = 'HKLM:\Software'
+				[string]$global:RegSoftwarePathx86 = 'HKLM:\Software'
 			}
 			else {
 				[string]$global:ProgramFilesDir = $ProgramFiles
@@ -5172,6 +5176,8 @@ function Set-NxtPackageArchitecture {
 				[string]$global:CommonProgramW6432 = $CommonProgramFiles
 				[string]$global:System = "$SystemRoot\System32"
 				[string]$global:Wow6432Node = ''
+				[string]$global:RegSoftwarePath = 'HKLM:\Software'
+				[string]$global:RegSoftwarePathx86 = 'HKLM:\Software\Wow6432Node'
 			}
 			Write-Log -Message "Package architecture variables successfully set." -Source ${cmdletName}
 			[int32]$thisFunctionReturnCode = 0
