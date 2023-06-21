@@ -1,10 +1,12 @@
 This file contains descriptions to all possible values in the file neo42PackageConfig.json for processing a setup.
 # general information
 ## good to know
-*consider following masking rules for characters in json files:*
+*By the way ***backtick*** is the general masking character, but consider following masking rules for characters in json files:*
+
 | character | mask with | looks like |
 |:-----------:|:-----------:|:-----------:|
 | " | backtick | `" |
+| $ | backtick | `$ |
 | \ | backslash | \\\ |
 ## accessing values of other config files parsed into a global variable set
 *general notation: $($global:\<VariableSetName\>.\<(optional)SubSection(s)\>.\<VariableName\>)*
