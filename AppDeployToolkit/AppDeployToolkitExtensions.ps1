@@ -4212,6 +4212,9 @@ function Register-NxtPackage {
 	.PARAMETER DisplayVersion
 		Specifies the DisplayVersion used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUID
+		Specifies an optional product ID value for the package used for identification as member of a product family (i.e.: Firefox DEU, Firefox ENU, Firefox, Firefox ESR, etc.).
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageFamilyGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -4295,6 +4298,9 @@ function Register-NxtPackage {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
@@ -4397,6 +4403,7 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartRevision' -Value $UserPartRevision
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUID' -Value $ProductGUID
 
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
@@ -4413,6 +4420,30 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			Remove-RegistryKey HKLM\Software\$RegPackagesKey\$PackageFamilyGUID$("_Error")
+
+			If ( ![string]::IsNullOrEmpty($ProductGUID) ) {
+				## instead of package entry (='PackageGUID' has to be hided!) show product family entry of package (='ProductGUID') -> that's the really one is installed only!
+				#Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'SystemComponent' -Type 'Dword' -Value '1'
+				## lines have to be fix after merge issue #302
+				Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'SystemComponent' -Type 'Dword' -Value '1'
+				If ( $false -eq (Test-RegistryValue -Key "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -Value "DisplayName") ) {
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'DisplayName' -Value $UninstallDisplayName
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'DisplayVersion' -Value $AppVersion
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'MachineKeyName' -Value $RegPackagesKey\$PackageFamilyGUID
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'NoModify' -Type 'Dword' -Value 1
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'NoRemove' -Type 'Dword' -Value $HidePackageUninstallButton
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'NoRepair' -Type 'Dword' -Value 1
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'PackageApplicationDir' -Value $App
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'PackageProductName' -Value $AppName
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'PackageRevision' -Value $AppRevision
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'DisplayVersion' -Value $DisplayVersion
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'Publisher' -Value $AppVendor
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
+				}
+			}
+
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
 		catch {
