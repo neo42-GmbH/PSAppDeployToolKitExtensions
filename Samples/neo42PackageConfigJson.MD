@@ -25,6 +25,7 @@ following VariableSets of config files are useable (in order of availability):
 ### *("AppArch" = "x86") or ("AppArch" = "\*") on 32bit windows plattform*
 | useable script variable | set content | resulting variable value |
 | ----------------------------------- | ----------------------------------- | ----------------------------------- |
+| *filesystem* |||
 | $global:ProgramFilesDir | ${ProgramFiles} | C:\Program Files |
 | $global:ProgramFilesDirx86 | ${ProgramFiles(x86)} | C:\Program Files |
 | $global:ProgramW6432 | '' | |
@@ -32,11 +33,15 @@ following VariableSets of config files are useable (in order of availability):
 | $global:CommonFilesDirx86 | ${CommonProgramFiles(x86)} | C:\Program Files\Common Files |
 | $global:CommonProgramW6432 | '' | |
 | $global:System | $SystemRoot\System32 | C:\Windows\System32 |
+| *registry* |||
 | $global:Wow6432Node | '' | |
+| $global:RegSoftwarePath | 'HKLM:\Software' | 'HKLM:\Software' |
+| $global:RegSoftwarePathx86 | HKLM:\Software' | 'HKLM:\Software' |
 
 ### *("AppArch" = "x86") on 64bit windows plattform*
 | useable script variable | set content | resulting variable value |
 | ----------------------------------- | ----------------------------------- | ----------------------------------- |
+| *filesystem* |||
 | $global:ProgramFilesDir | ${ProgramFiles(x86)} | C:\Program Files (x86) |
 | $global:ProgramFilesDirx86 | ${ProgramFiles(x86)} | C:\Program Files (x86) |
 | $global:ProgramW6432 | $ProgramFiles | C:\Program Files |
@@ -44,11 +49,15 @@ following VariableSets of config files are useable (in order of availability):
 | $global:CommonFilesDirx86 | ${CommonProgramFiles(x86)} | C:\Program Files (x86)\Common Files |
 | $global:CommonProgramW6432 | $CommonProgramFiles | C:\Program Files\Common Files |
 | $global:System | $SystemRoot\SysWOW64 | C:\Windows\SysWOW64 |
-| $global:Wow6432Node | '\Wow6432Node' | |
+| *registry* |||
+| $global:Wow6432Node | '\Wow6432Node' | \Wow6432Node |
+| $global:RegSoftwarePath | 'HKLM:\Software' | 'HKLM:\Software' |
+| $global:RegSoftwarePathx86 | 'HKLM:\Software\Wow6432Node' | 'HKLM:\Software\Wow6432Node' |
 
 ### *("AppArch" = "x64") or ("AppArch" = "\*") on 64bit windows plattform*
 | useable script variable | set content | resulting variable value |
 | ----------------------------------- | ----------------------------------- | ----------------------------------- |
+| *filesystem* |||
 | $global:ProgramFilesDir | $ProgramFiles | C:\Program Files |
 | $global:ProgramFilesDirx86 | ${ProgramFiles(x86)} | C:\Program Files (x86) |
 | $global:ProgramW6432 | $ProgramFiles | C:\Program Files |
@@ -56,7 +65,10 @@ following VariableSets of config files are useable (in order of availability):
 | $global:CommonFilesDirx86 | ${CommonProgramFiles(x86)} | C:\Program Files (x86)\Common Files |
 | $global:CommonProgramW6432 | $CommonProgramFiles | C:\Program Files\Common Files |
 | $global:System | $SystemRoot\System32 | C:\Windows\System32 |
+| *registry* |||
 | $global:Wow6432Node | '' | |
+| $global:RegSoftwarePath | 'HKLM:\Software' | 'HKLM:\Software' |
+| $global:RegSoftwarePathx86 | 'HKLM:\Software\Wow6432Node' | 'HKLM:\Software\Wow6432Node' |
 ## values of json variables expanded during parsing into global variable set $global:PackageConfig
 *only these variable values may contain a reference to a variable again*
 - SoftMigration.File.FullNameToCheck
