@@ -3204,9 +3204,6 @@ function Get-NxtRegisterOnly {
 		Detects if the target application is already installed
 	.DESCRIPTION
 		Uses registry values to detect the application in target or higher versions
-	.PARAMETER PackageFamilyGUID
-		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
-		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageRegisterPath
 		Specifies the registry path used for the registered package (wrapper) entries
 		Defaults to the default location under "HKLM\Software" constructed with corresponding values from the PackageConfig objects of 'RegPackagesKey' and 'PackageGUID'.
@@ -3240,10 +3237,8 @@ function Get-NxtRegisterOnly {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		$PackageRegisterPath = "HKLM\Software\" + $global:PackageConfig.RegPackagesKey + "\" + $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
-		[string]
-		$PackageRegisterPath = "HKLM\Software\" + $global:PackageConfig.RegPackagesKey + "\" + $global:PackageConfig.PackageGUID,		[Parameter(Mandatory = $false)]
 		[bool]
 		$SoftMigration = [bool]([int]$global:SetupCfg.Options.SoftMigration),
 		[Parameter(Mandatory = $false)]
