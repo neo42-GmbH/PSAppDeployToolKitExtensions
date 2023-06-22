@@ -3728,6 +3728,9 @@ function Initialize-NxtEnvironment {
 		}
 		[string]$global:DeploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
+		if ( ($true -eq $($global:PackageConfig.ProductGUIDAware)) -and ([string]::IsNullOrEmpty($($global:PackageConfig.ProductGUIDAware))) ) {
+			throw "Error: A ProductGUID is missing for provided configuration."
+		}
 		Format-NxtPackageSpecificVariables
 		switch ($SetupCfg.Options.ShowBalloonNotifications) {
 			"0"	{
@@ -4418,9 +4421,30 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUID' -Value $ProductGUID
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUIDAware' -Type 'Dword' -Value $ProductGUIDAware
 
-			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'ActivePackageGUID' -Value $PackageGUID
-			## lines have to be fix after merge issue #302
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'ActivePackageGUID' -Value $PackageFamilyGUID
+			## save repair and uninstall parameters of currently installed application package for later usage in case of switching different application of a product family
+			if ($true -eq $ProductGUIDAware) {
+				#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PackageGUID' -Value $PackageGUID
+				## lines have to be fix after merge issue #302
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PackageGUID' -Value $PackageFamilyGUID
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'RepairPara' -Value $RepairPara			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'AppendRepairParaToDefaultParameters' -Type 'Dword' -Value $AppendRepairParaToDefaultParameters			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'AcceptedRepairExitCodes' -Value $AcceptedRepairExitCodes			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'UninstallKey' -Value $UninstallKey			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'UninstallKeyIsDisplayName' -Type 'Dword' -Value $UninstallKeyIsDisplayName			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'UninstallKeyContainsWildCards' -Type 'Dword' -Value $UninstallKeyContainsWildCards			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'DisplayNamesToExclude' -Value $DisplayNamesToExclude			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'UninstLogFile' -Value $UninstLogFile			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'UninstFile' -Value $UninstFile			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'UninstPara' -Value $UninstPara			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'AppendUninstParaToDefaultParameters' -Type 'Dword' -Value $AppendUninstParaToDefaultParameters			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'AcceptedUninstallExitCodes' -Value $AcceptedUninstallExitCodes			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'UninstallMethod' -Value $UninstallMethod			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PreSuccessCheckTotalSecondsToWaitFor' -Value $PreSuccessCheckTotalSecondsToWaitFor			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PreSuccessCheckProcessOperator' -Value $PreSuccessCheckProcessOperator		
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PreSuccessCheckRegKeyOperator' -Value $PreSuccessCheckRegKeyOperator		
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PreSuccessCheckProcessesToWaitFor' -Value $PreSuccessCheckProcessesToWaitFor			
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PreSuccessCheckRegkeysToWaitFor' -Value $PreSuccessCheckRegkeysToWaitFor
+			}			
 
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
@@ -4856,6 +4880,18 @@ function Repair-NxtApplication {
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER ProductGUID
+		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUIDAware
+		Defines if package family membership should be recognized for the assigned application package.
+		If this value is set to '$false' this package will processed as independent application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Either the applications uninstallregistrykey or the applications displayname, searched for in the regvalue "Displayname" below all uninstallkeys (e.g. "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" or "an application display name").
 		Using a displayname value requires to set the parameter -UninstallKeyIsDisplayName to $true.
@@ -4898,6 +4934,15 @@ function Repair-NxtApplication {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -7582,6 +7627,9 @@ function Uninstall-NxtApplication {
 		If this value is set to '$false' this package will processed as independent application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -7652,6 +7700,11 @@ function Uninstall-NxtApplication {
 		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
 		[Parameter(Mandatory = $false)]
 		[string]
+		#$PackageGUID = $global:PackageConfig.PackageGUID,
+		## lines have to be fix after merge issue #302
+		$PackageGUID = $global:PackageConfig.PackageFamilyGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -7709,9 +7762,23 @@ function Uninstall-NxtApplication {
 			[int]$logMessageSeverity = 1
 		}
 		else {
-			if ($true -eq $ProductGUIDAware) {
+			if ( ($true -eq $ProductGUIDAware) -and ([string]::IsNullOrEmpty($ProductGUID)) ) {
+				throw "Error: A ProductGUID is missing for provided configuration."
+			}
+			elseif ( ($true -eq $ProductGUIDAware) -and (![string]::IsNullOrEmpty($ProductGUID)) ) {
 				## possibly switch all currently assigned package parameters to real parameters of the corresponding installed package as member of the product family
-				## ---> because we have to reinstall the real installed application of the product family only!
+				## ---> because during reinstall we have to uninstall the real installed application of the product family!
+				[string]$activePackageGUID = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'PackageGUID')
+				if ( (![string]::IsNullOrEmpty($activePackageGUID)) -and ($PackageGUID -ne $activePackageGUID)) {
+					Write-Log -Message "Load saved parameter set of currently installed application package with PackageGUID [$activePackageGUID] for ProductGUID [$ProductGUID]..." -Source ${CmdletName}
+					[string]$UninstallKey = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'UninstallKey')
+					[bool]$UninstallKeyIsDisplayName = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'UninstallKeyIsDisplayName')
+					[bool]$UninstallKeyContainsWildCards = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'UninstallKeyContainsWildCards')
+					[string]$DisplayNamesToExclude = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'DisplayNamesToExclude')
+					[string]$UninstPara = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'UninstPara')
+					[bool]$AppendUninstParaToDefaultParameters = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'AppendUninstParaToDefaultParameters')
+					[string]$AcceptedUninstallExitCodes = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'AcceptedUninstallExitCodes')
+				}
 			}
 			$uninstallResult.Success = $false
 			[int]$logMessageSeverity = 1

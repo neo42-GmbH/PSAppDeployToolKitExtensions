@@ -158,6 +158,10 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER ProductGUID
+		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUIDAware
 		Defines if package family membership should be recognized for the assigned application package.
 		If this value is set to '$false' this package will processed as independent application package.
@@ -184,6 +188,12 @@ function Main {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
+		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
@@ -231,12 +241,22 @@ function Main {
 							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
 						}
 						[string]$reinstallMode = $(Switch-NxtMSIReinstallMode)
-						if ($true -eq $ProductGUIDAware) {
-							## possibly switch all currently assigned package parameters to real parameters of the corresponding installed package as member of the product family
-							## ---> because we have to reinstall the real installed application of the product family only!
-							## ---> in case of ReinstallMode "Install" we have to check if install sources are available
+
+						## prüfen, ob Test-NxtAppFamilyIsInstalled besser dafür eingesetzt werden kann!?!
+
+						if ( ($true -eq $ProductGUIDAware) -and ([string]::IsNullOrEmpty($ProductGUID)) ) {
+							throw "Error: A ProductGUID is missing for provided configuration."
 						}
-						Write-Log -Message "[$script:installPhase] selected Mode: $reinstallMode" -Source $deployAppScriptFriendlyName
+						elseif ( ($true -eq $ProductGUIDAware) -and (![string]::IsNullOrEmpty($ProductGUID)) ) {
+							## during reinstall we have to uninstall the real installed application of the product family, so matching reinstall mode "Reinstall" is necessary to do this!
+							[string]$activePackageGUID = $(Get-RegistryKey -Key "HKLM\Software\" + $RegPackagesKey + "\" + $ProductGUID -Value 'PackageGUID')
+							if ( (![string]::IsNullOrEmpty($activePackageGUID)) -and ($PackageGUID -ne $activePackageGUID)) {
+								Write-Log -Message "Found an installed application package with different PackageGUID [$activePackageGUID] of same ProductGUID [$ProductGUID]." -Source ${CmdletName}
+								[string]$reinstallMode = "Reinstall"
+								Write-Log -Message "Application will be switched to current package PackageGUID [$PackageGUID]. Set required reinstall mode..." -Source ${CmdletName}
+							}
+						}
+						Write-Log -Message "[$script:installPhase] selected mode: $reinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($reinstallMode) {
 							"Reinstall" {
 								CustomReinstallPreUninstall
