@@ -158,6 +158,9 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER PackageGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER Reboot
 		Defines if a reboot exitcode should be returned instead of the main Exitcode.
 		0 = do not override mainexitcode
@@ -165,11 +168,11 @@ function Main {
 		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will
 		be passed through.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER ReinstallMode
-		Defines how a reinstallation should be performed.
-		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
+		Defaults to the corresponding value from the PackageConfig object
+	.PARAMETER RegisterPackage
+		Defines the mode for registration of the package (maybe superseeded by deployment system!) .
 		Defaults to the corresponding value from the PackageConfig object
 	.EXAMPLE
 		Main
