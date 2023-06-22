@@ -4213,7 +4213,13 @@ function Register-NxtPackage {
 		Specifies the DisplayVersion used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUID
-		Specifies an optional product ID value for the package used for identification as member of a product family (i.e.: Firefox DEU, Firefox ENU, Firefox, Firefox ESR, etc.).
+		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUIDAware
+		Defines if package family membership should be recognized for the assigned application package.
+		If this value is set to '$false' this package will processed as independent application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageFamilyGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
@@ -4299,8 +4305,11 @@ function Register-NxtPackage {
 		[string]
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
 		[Parameter(Mandatory = $false)]
-		[string]
+		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
@@ -4404,8 +4413,14 @@ function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
 			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUID' -Value $ProductGUID
+			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUIDAware' -Value $ProductGUIDAware
 			## lines have to be fix after merge issue #302
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUID' -Value $ProductGUID
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUIDAware' -Value $ProductGUIDAware
+
+			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'ActivePackageGUID' -Value $PackageGUID
+			## lines have to be fix after merge issue #302
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ActivePackageGUID' -Value $PackageFamilyGUID
 
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
@@ -6889,13 +6904,84 @@ function Switch-NxtMSIReinstallMode {
 	}
 }
 #endregion
+#region Function Test-NxtAppFamilyIsInstalled
+function Test-NxtAppFamilyIsInstalled {
+	<#
+	.SYNOPSIS
+		Detects if a member of the target application family is installed.
+	.DESCRIPTION
+		Uses the value 'ProductGUID' in registry sub keys (installed application packages) under 'RegPackagesKey' to detect if an application of the product family is present.
+	.PARAMETER ProductGUID
+		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUIDAware
+		Defines if package family membership should be recognized for the assigned application package.
+		If this value is set to '$false' this package will processed as independent application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Test-NxtAppIsInstalled
+	.EXAMPLE
+		Test-NxtAppIsInstalled -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($false -eq $ProductGUIDAware) {
+			Write-Log -Message 'Product family membership should not be recognized. Package is processed as independent package...' -Source ${cmdletName}
+			Write-Output $false
+		}
+		else {
+			Write-Log -Message "Checking if a product family member of this application is already installed..." -Source ${CmdletName}
+			
+			## if test for any reg value HKLM:\Software\<RegPackagesKey>\<PackageGUID>\ProductGUID' with value is equal to $ProductGUID check if one of found the application packages are really installed too
+			[bool]$foundAppFamilyMember = $false
+			
+			if ($true -eq $foundAppFamilyMember) {
+				Write-Log -Message "At least one of the found registered product family members of this application is installed..." -Source ${CmdletName}
+				Write-Output $true
+			}
+			else {
+				Write-Log -Message "No registered product family member of this application was found..." -Source ${CmdletName}
+				Write-Output $false
+			}
+		}			
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Test-NxtAppIsInstalled
 function Test-NxtAppIsInstalled {
 	<#
 	.SYNOPSIS
 		Detects if the target application is installed.
 	.DESCRIPTION
-		Uses the registry Uninstall Key to detect if the application is present.
+		Uses the registry Uninstall Key and (if allowed) an assigned 'ProductGUID' to detect if the application is present.
+	.PARAMETER ProductGUID
+		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUIDAware
+		Defines if package family membership should be recognized for the assigned application package.
+		If this value is set to '$false' this package will processed as independent application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
 		Can be found under "HKLM\SOFTWARE\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
@@ -6928,11 +7014,19 @@ function Test-NxtAppIsInstalled {
 		Test-NxtAppIsInstalled -UninstallKey "SomeApp - Version *" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $true -DisplayNamesToExclude "SomeApp - Version 1.0","SomeApp - Version 1.1",$global:PackageConfig.UninstallDisplayName
 	.EXAMPLE
 		Test-NxtAppIsInstalled -UninstallKey "***MySuperSparklingApp***" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $false
+	.EXAMPLE
+		Test-NxtAppIsInstalled -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -ProductGUIDAware $true -UninstallKey "This Application_is1"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
 		[Parameter(Mandatory = $false)]
 		[String]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -6954,29 +7048,41 @@ function Test-NxtAppIsInstalled {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
-		[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
-		if ($installedAppResults.Count -eq 0) {
-			[bool]$approvedResult = $false
-			Write-Log -Message "Found no application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
-		}
-		elseif ($installedAppResults.Count -gt 1) {
-			if ("MSI" -eq $DeploymentMethod) {
-				## This case maybe resolved with a foreach-loop in future.
-				[bool]$approvedResult = $false
-				Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 3 -Source ${CmdletName}
-				throw "Processing multiple found msi installations is not supported yet! Abort."
-			} else {
-				[bool]$approvedResult = $true
-				Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 2 -Source ${CmdletName}
-			}
+		if ($false -eq $ProductGUIDAware) {
+			Write-Log -Message 'Product family membership should not be recognized. Package is processed as independent package...' -Source ${cmdletName}
+			[bool]$installedAppFamilyMember = $false
 		}
 		else {
-			## for all types of installer (just 1 search result)
-			[bool]$approvedResult = $true
-			Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
+			[bool]$installedAppFamilyMember = $(Test-NxtAppFamilyIsInstalled -ProductGUID $ProductGUID -ProductGUIDAware $ProductGUIDAware)
 		}
-		Write-Output $approvedResult			
+		if ($false -eq $installedAppFamilyMember) {
+			Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
+			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+			if ($installedAppResults.Count -eq 0) {
+				[bool]$approvedResult = $false
+				Write-Log -Message "Found no application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
+			}
+			elseif ($installedAppResults.Count -gt 1) {
+				if ("MSI" -eq $DeploymentMethod) {
+					## This case maybe resolved with a foreach-loop in future.
+					[bool]$approvedResult = $false
+					Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 3 -Source ${CmdletName}
+					throw "Processing multiple found msi installations is not supported yet! Abort."
+				} else {
+					[bool]$approvedResult = $true
+					Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 2 -Source ${CmdletName}
+				}
+			}
+			else {
+				## for all types of installer (just 1 search result)
+				[bool]$approvedResult = $true
+				Write-Log -Message "Found one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
+			}
+			Write-Output $approvedResult
+		}
+		else {
+			Write-Output $installedAppFamilyMember
+		}			
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer

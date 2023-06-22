@@ -158,12 +158,17 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER ProductGUIDAware
+		Defines if package family membership should be recognized for the actual processed package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER Reboot
 		Defines if a reboot exitcode should be returned instead of the main Exitcode.
 		0 = do not override mainexitcode
 		1 = Set Mainexitcode to 3010 (Reboot required)
-		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will
-		be passed through.
+		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will	be passed through.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ReinstallMode
 		Defines how a reinstallation should be performed.
@@ -202,7 +207,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') -and ($true -eq $RegisterPackage)) {
+				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') -and ($false -eq $(Test-NxtAppFamilyIsInstalled -ProductGUIDAware $true)) -and ($true -eq $RegisterPackage)) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
