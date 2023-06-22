@@ -4999,7 +4999,7 @@ function Repair-NxtApplication {
 				[int]$logMessageSeverity = 2
 			}
 			else {
-				if (![string]::IsNullOrEmpty($InstPara)) {
+				if (![string]::IsNullOrEmpty($RepairPara)) {
 					if ($AppendRepairParaToDefaultParameters) {
 						[string]$executeNxtParams["AddParameters"] = "$RepairPara"
 					}
