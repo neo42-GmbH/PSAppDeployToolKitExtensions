@@ -158,9 +158,9 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
-	.PARAMETER PackageGUID
-		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
-		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageRegisterPath
+		Specifies the registry path used for the registered package (wrapper) entries
+		Defaults to the default location under "HKLM\Software" constructed with corresponding values from the PackageConfig objects of 'RegPackagesKey' and 'PackageGUID'.
 	.PARAMETER Reboot
 		Defines if a reboot exitcode should be returned instead of the main Exitcode.
 		0 = do not override mainexitcode
@@ -180,6 +180,9 @@ function Main {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageRegisterPath = "HKLM\Software\" + $global:PackageConfig.RegPackagesKey + "\" + $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
@@ -205,7 +208,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage)) {
+				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and ($true -eq $RegisterPackage)) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
