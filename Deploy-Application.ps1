@@ -159,7 +159,9 @@ function Main {
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
 	.PARAMETER ProductGUIDAware
-		Defines if package family membership should be recognized for the actual processed package.
+		Defines if package family membership should be recognized for the assigned application package.
+		If this value is set to '$false' this package will processed as independent application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
@@ -229,12 +231,17 @@ function Main {
 							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
 						}
 						[string]$reinstallMode = $(Switch-NxtMSIReinstallMode)
+						if ($true -eq $ProductGUIDAware) {
+							## possibly switch all currently assigned package parameters to real parameters of the corresponding installed package as member of the product family
+							## ---> because we have to reinstall the real installed application of the product family only!
+							## ---> in case of ReinstallMode "Install" we have to check if install sources are available
+						}
 						Write-Log -Message "[$script:installPhase] selected Mode: $reinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($reinstallMode) {
 							"Reinstall" {
 								CustomReinstallPreUninstall
 								[string]$script:installPhase = 'Package-Reinstallation'
-								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
+								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication -IsReinstallMode $true
 								CustomReinstallPostUninstall -ResultToCheck $mainNxtResult
 								if ($false -eq $mainNxtResult.Success) {
 									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode

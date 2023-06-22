@@ -4413,14 +4413,14 @@ function Register-NxtPackage {
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
 			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUID' -Value $ProductGUID
-			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUIDAware' -Value $ProductGUIDAware
+			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUIDAware' -Type 'Dword' -Value $ProductGUIDAware
 			## lines have to be fix after merge issue #302
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUID' -Value $ProductGUID
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUIDAware' -Value $ProductGUIDAware
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUIDAware' -Type 'Dword' -Value $ProductGUIDAware
 
 			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'ActivePackageGUID' -Value $PackageGUID
 			## lines have to be fix after merge issue #302
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ActivePackageGUID' -Value $PackageFamilyGUID
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'ActivePackageGUID' -Value $PackageFamilyGUID
 
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID -Name 'DisplayName' -Value $UninstallDisplayName
@@ -6946,7 +6946,7 @@ function Test-NxtAppFamilyIsInstalled {
 			Write-Output $false
 		}
 		else {
-			Write-Log -Message "Checking if a product family member of this application is already installed..." -Source ${CmdletName}
+			Write-Log -Message "Checking if a product family member for ProductGUID [$ProductGUID] is already installed..." -Source ${CmdletName}
 			
 			## if test for any reg value HKLM:\Software\<RegPackagesKey>\<PackageGUID>\ProductGUID' with value is equal to $ProductGUID check if one of found the application packages are really installed too
 			[bool]$foundAppFamilyMember = $false
@@ -7570,11 +7570,23 @@ function Uninstall-NxtApplication {
 		Defines the required steps to uninstall the application based on the target installer type
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
+	.PARAMETER IsReinstallMode
+		Determines if the function works as first part of a 2-step reinstallation.
+		That's necessary to manage product family members in the right manner only.
+	.PARAMETER ProductGUID
+		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUIDAware
+		Defines if package family membership should be recognized for the assigned application package.
+		If this value is set to '$false' this package will processed as independent application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
-		Determins if the value given as UninstallKey should be interpreted as a displayname.
+		Determines if the value given as UninstallKey should be interpreted as a displayname.
 		Only applies to Inno Setup, Nullsoft and BitRockInstaller.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyContainsWildCards
@@ -7607,12 +7619,6 @@ function Uninstall-NxtApplication {
 	.PARAMETER UninstallMethod
 		Defines the type of the uninstaller used in this package.
 		Defaults to the corresponding value from the PackageConfig object
-	.PARAMETER UninstallKeysToHide
-		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
-		Defaults to the corresponding values from the PackageConfig object.
-	.PARAMETER Wow6432Node
-		Switches between 32/64 Bit Registry Keys.
-		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
 	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
 		Timeout in seconds the function waits and checks for the condition to occur.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -7635,6 +7641,15 @@ function Uninstall-NxtApplication {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IsReinstallMode = $false,
+		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -7666,12 +7681,6 @@ function Uninstall-NxtApplication {
 		[string]
 		$UninstallMethod = $global:PackageConfig.UninstallMethod,
 		[Parameter(Mandatory = $false)]
-		[PSCustomObject]
-		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$Wow6432Node = $global:Wow6432Node,
-		[Parameter(Mandatory = $false)]
 		[int]
 		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor,
 		[Parameter(Mandatory = $false)]
@@ -7700,6 +7709,10 @@ function Uninstall-NxtApplication {
 			[int]$logMessageSeverity = 1
 		}
 		else {
+			if ($true -eq $ProductGUIDAware) {
+				## possibly switch all currently assigned package parameters to real parameters of the corresponding installed package as member of the product family
+				## ---> because we have to reinstall the real installed application of the product family only!
+			}
 			$uninstallResult.Success = $false
 			[int]$logMessageSeverity = 1
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
@@ -7815,7 +7828,7 @@ function Uninstall-NxtApplication {
 					[int]$logMessageSeverity = 1
 				}
 			}
-		}
+}
 
 		Write-Log -Message $($uninstallResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 		Write-Output $uninstallResult
@@ -8067,6 +8080,15 @@ function Unregister-NxtPackage {
 		Removes package files and unregisters the package in the registry.
 	.DESCRIPTION
 		Removes the package files from "$APP\" and deletes the package's registry keys under "HKLM\Software\$regPackagesKey\$PackageFamilyGUID" and "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID".
+	.PARAMETER ProductGUID
+		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUIDAware
+		Defines if package family membership should be recognized for the assigned application package.
+		If this value is set to '$false' this package will processed as independent application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageFamilyGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -8090,6 +8112,12 @@ function Unregister-NxtPackage {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
@@ -8115,6 +8143,24 @@ function Unregister-NxtPackage {
 			Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -NoWait
 			Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID
 			Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID
+			if ( ($true -eq $ProductGUIDAware) -and (![string]::IsNullOrEmpty($ProductGUID)) ) {
+				Write-Log -Message "Cleanup registry for assigned package entries with active ProductGUID [$ProductGUID]..." -Source ${CmdletName}
+				Get-ChildItem "HKLM:\Software\$RegPackagesKey" | Where-Object {
+					((Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID") -and
+					((Get-ItemProperty -Path $_.PSPath).ProductGUIDAware -eq '1')
+				} | ForEach-Object {
+					[string]$assignedPackageGUID = Split-Path -Path "$_" -Leaf
+					Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID
+					Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
+				}
+				If ((Get-ChildItem "HKLM:\Software\$RegPackagesKey" | Where-Object {
+						((Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID") -and
+						((Get-ItemProperty -Path $_.PSPath).ProductGUIDAware -eq '1')
+					}).count -eq 0) {
+					Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID
+				}
+				Write-Log -Message "All obsolete registry entries for the active ProductGUID [$ProductGUID] are cleaned." -Source ${CmdletName}
+			}
 			Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
 		}
 		catch {
