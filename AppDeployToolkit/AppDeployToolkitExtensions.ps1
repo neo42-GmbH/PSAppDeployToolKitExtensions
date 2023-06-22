@@ -3862,13 +3862,13 @@ function Install-NxtApplication {
 	.PARAMETER PreSuccessCheckProcessOperator
 		Operator to define process condition requirements.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckProcesListToWaitFor
+	.PARAMETER PreSuccessCheckProcessesToWaitFor
 		An array of process conditions to check for.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PreSuccessCheckRegKeyOperator
 		Operator to define regkey condition requirements.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+	.PARAMETER PreSuccessCheckRegkeysToWaitFor
 		An array of regkey conditions to check for.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
@@ -7625,13 +7625,13 @@ function Uninstall-NxtApplication {
 	.PARAMETER PreSuccessCheckProcessOperator
 		Operator to define process condition requirements.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckProcesListToWaitFor
+	.PARAMETER PreSuccessCheckProcessesToWaitFor
 		An array of process conditions to check for.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PreSuccessCheckRegKeyOperator
 		Operator to define regkey condition requirements.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER PreSuccessCheckRegkeyListToWaitFor
+	.PARAMETER PreSuccessCheckRegkeysToWaitFor
 		An array of regkey conditions to check for.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
