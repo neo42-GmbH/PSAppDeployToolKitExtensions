@@ -3657,7 +3657,7 @@ function Import-NxtIniFile {
 		try {
 			[hashtable]$ini = @{}
 			[string]$section = 'default'
-			$content = Get-Content -Path $Path
+			[string]$content = Get-Content -Path $Path
 			foreach ($line in $content) {
 				if ($line -match '^\[(.+)\]$') {
 					[string]$section = $matches[1]
@@ -3717,7 +3717,7 @@ function Import-NxtIniFileWithComments {
         [hashtable]$ini = @{}
         [string]$section = 'default'
         $commentBuffer = @()
-        $content = Get-Content -Path $Path
+        [string]$content = Get-Content -Path $Path
         foreach ($line in $content) {
             if ($line -match '^\[(.+)\]$') {
                 [string]$section = $matches[1]
@@ -3726,7 +3726,7 @@ function Import-NxtIniFileWithComments {
                 }
             }
             elseif ($line -match '^(;|#)\s*(.*)') {
-                $commentBuffer += $matches[2].trim("; ")
+                [array]$commentBuffer += $matches[2].trim("; ")
             }
             elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
                 [string]$variableName = $Matches[1]
@@ -3735,7 +3735,7 @@ function Import-NxtIniFileWithComments {
                     Value    = $value.trim()
                     Comments = $commentBuffer -join "`r`n"
                 }
-                $commentBuffer = @()
+                [array]$commentBuffer = @()
             }
         }
         Write-Output $ini
