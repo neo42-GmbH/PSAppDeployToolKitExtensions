@@ -2414,9 +2414,9 @@ function Get-NxtActiveProductFamilyMember {
 		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
-		Test-NxtAppIsInstalled
+		Get-NxtActiveProductFamilyMember
 	.EXAMPLE
-		Test-NxtAppIsInstalled -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
+		Get-NxtActiveProductFamilyMember -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3305,7 +3305,7 @@ function Get-NxtRegisterOnly {
 		[string]
 		#$PackageRegisterPath = "HKLM\Software\" + $global:PackageConfig.RegPackagesKey + "\" + $global:PackageConfig.PackageGUID,
 		## lines have to be fix after merge issue #302
-		$PackageRegisterPath = "HKLM\Software\" + $global:PackageConfig.RegPackagesKey + "\" + $global:PackageConfig.PackaPackageFamilyGUIDgeGUID,
+		$PackageRegisterPath = "HKLM\Software\" + $global:PackageConfig.RegPackagesKey + "\" + $global:PackageConfig.PackageFamilyGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$SoftMigration = [bool]([int]$global:SetupCfg.Options.SoftMigration),
@@ -3332,7 +3332,7 @@ function Get-NxtRegisterOnly {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
 		Write-Output $false
 	}
-	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') ) {
+	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and -not (Test-NxtProductFamilyIsInstalled -ProductGUIDAware $true) ) {
 		if ($true -eq $SoftMigrationCustomResult) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
@@ -7630,7 +7630,10 @@ function Test-NxtProductFamilyIsInstalled {
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -7827,7 +7830,7 @@ function Uninstall-NxtApplication {
 				}
 			}
 			else {
-				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod)) {
+				if ($true -eq $(Test-NxtAppIsInstalled -ProductGUIDAware $false -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod)) {
 
 					[hashtable]$executeNxtParams = @{
 						Action							= 'Uninstall'
@@ -7897,7 +7900,7 @@ function Uninstall-NxtApplication {
 							[int]$logMessageSeverity = 3
 						}
 						else {
-							if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
+							if ($true -eq $(Test-NxtAppIsInstalled -ProductGUIDAware $false -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
 								$uninstallResult.ErrorMessage = "Uninstallation of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 								$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 								$uninstallResult.Success = $false
@@ -8249,8 +8252,6 @@ function Unregister-NxtPackage {
 					Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID
 					Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
 				}
-				Write-Log -message "Remove registration of ProductGUID [$ProductGUID]." -Source ${CmdletName}
-				Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID
 				Write-Log -Message "All folder and registry entries of assigned product family member applications with ProductGUID [$ProductGUID] are cleaned." -Source ${CmdletName}
 			}
 			Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
