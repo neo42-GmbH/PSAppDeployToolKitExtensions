@@ -15,9 +15,9 @@
         "HelpText": "AppendInstParaToDefaultParameters is mandatory and must be a boolean.",
         "Type": "System.Boolean"
     },
-    "PackageFamilyGUID": {
+    "PackageGUID": {
         "Mandatory": true,
-        "HelpText": "PackageFamilyGUID is mandatory and must be a string.",
+        "HelpText": "PackageGUID is mandatory and must be a string.",
         "Regex": {
             "Pattern": "^\\{[a-zA-Z0-9]{8}-([a-zA-Z0-9]{4}-){3}[a-zA-Z0-9]{12}\\}$",
             "Operator": "match"
