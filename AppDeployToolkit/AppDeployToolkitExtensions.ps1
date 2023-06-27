@@ -2394,72 +2394,6 @@ function Format-NxtPackageSpecificVariables {
 	}
 }
 #endregion
-#region Function Get-NxtActiveProductFamilyMember
-function Get-NxtActiveProductFamilyMember {
-	<#
-	.SYNOPSIS
-		Retrieves the 'ProductGUID' of the active and installed application package of a given product family.
-	.DESCRIPTION
-		Checks if saved active 'PackageGUID' for the given 'ProductGUID' matches one of the found installed application packages under 'RegPackagesKey' and if it's regular package registry uninstall key is present.
-	.PARAMETER ProductGUID
-		Specifies the registry key name for membership GUID of assigned application package in a product family.
-		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER ProductGUIDAware
-		Defines if package family membership should be recognized for the assigned application package.
-		If this value is set to '$false' this package will processed as independent application package.
-		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RegPackagesKey
-		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
-		Defaults to the corresponding value from the PackageConfig object.
-	.EXAMPLE
-		Get-NxtActiveProductFamilyMember
-	.EXAMPLE
-		Get-NxtActiveProductFamilyMember -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $false)]
-		[String]
-		$ProductGUID = $global:PackageConfig.ProductGUID,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		[string]$activePackageGUID = [string]::Empty
-		if ( ($true -eq $ProductGUIDAware) -and (![string]::IsNullOrEmpty($ProductGUID)) ) {
-			if ($true -eq $(Test-NxtProductFamilyIsInstalled)) {
-				[string]$activePackageGUID = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID").PackageGUID
-				if ($true -eq $(Test-Path -Path "$((Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").AppPath)")) {
-					if ( ($false -eq ($((Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").UninstallString) -like '*\neo42-Install\Deploy-Application.ps1*')) -or ($false -eq $(Test-Path -Path "$((Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").AppPath)\neo42-Install\Deploy-Application.ps1")) ) {
-						Write-Log -Message "Evaluating required script in package maintenance subfolder failed!" -Severity 2 -Source ${CmdletName}
-						[string]$activePackageGUID = [string]::Empty
-					}
-				}
-				else {
-					Write-Log -Message "Expected package maintenance folder is not found!" -Severity 2 -Source ${CmdletName}
-					[string]$activePackageGUID = [string]::Empty
-				}
-			}
-		}
-		else {
-			Write-Log -Message 'No valid conditions for retrieving an active product family member application present.' -Source ${cmdletName}
-		}	
-		Write-Output $activePackageGUID
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
 #region Function Get-NxtComputerManufacturer
 function Get-NxtComputerManufacturer {
 	<#
@@ -3263,6 +3197,72 @@ function Get-NxtProcessorArchiteW6432 {
 	}
 }
 #endregion
+#region Function Get-NxtProductMember
+function Get-NxtProductMember {
+	<#
+	.SYNOPSIS
+		Retrieves the 'ProductGUID' of the active and installed application package of a given product.
+	.DESCRIPTION
+		Checks if saved active 'PackageGUID' for the given 'ProductGUID' matches one of the found installed application packages under 'RegPackagesKey' and if it's regular package registry uninstall key is present.
+	.PARAMETER ProductGUID
+		Specifies the registry key name for membership GUID of assigned application package for a product.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUIDAware
+		Defines if product membership should be recognized for the assigned application package.
+		If this value is set to '$false' this package will processed as independent application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Get-NxtProductMember
+	.EXAMPLE
+		Get-NxtProductMember -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[string]$activePackageGUID = [string]::Empty
+		if ( ($true -eq $ProductGUIDAware) -and (![string]::IsNullOrEmpty($ProductGUID)) ) {
+			if ($true -eq $(Test-NxtProductMemberIsInstalled)) {
+				[string]$activePackageGUID = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID").PackageGUID
+				if ($true -eq $(Test-Path -Path "$((Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").AppPath)")) {
+					if ( ($false -eq ($((Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").UninstallString) -like '*\neo42-Install\Deploy-Application.ps1*')) -or ($false -eq $(Test-Path -Path "$((Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").AppPath)\neo42-Install\Deploy-Application.ps1")) ) {
+						Write-Log -Message "Evaluating required script in package maintenance subfolder failed!" -Severity 2 -Source ${CmdletName}
+						[string]$activePackageGUID = [string]::Empty
+					}
+				}
+				else {
+					Write-Log -Message "Expected package maintenance folder is not found!" -Severity 2 -Source ${CmdletName}
+					[string]$activePackageGUID = [string]::Empty
+				}
+			}
+		}
+		else {
+			Write-Log -Message 'No valid conditions for retrieving an product member application package present.' -Source ${cmdletName}
+		}	
+		Write-Output $activePackageGUID
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Get-NxtRegisterOnly
 function Get-NxtRegisterOnly {
 	<#
@@ -3332,7 +3332,7 @@ function Get-NxtRegisterOnly {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
 		Write-Output $false
 	}
-	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and -not (Test-NxtProductFamilyIsInstalled -ProductGUIDAware $true) ) {
+	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and -not (Test-NxtProductMemberIsInstalled -ProductGUIDAware $true) ) {
 		if ($true -eq $SoftMigrationCustomResult) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
@@ -4284,11 +4284,11 @@ function Register-NxtPackage {
 		Specifies the DisplayVersion used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUID
-		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Specifies the registry key name for membership GUID of assigned application package for a product.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUIDAware
-		Defines if package family membership should be recognized for the assigned application package.
+		Defines if product membership should be recognized for the assigned application package.
 		If this value is set to '$false' this package will processed as independent application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -4483,15 +4483,14 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'UserPartRevision' -Value $UserPartRevision
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'Version' -Value $AppVersion
-			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUID' -Value $ProductGUID
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUID' -Value $ProductGUID
 			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUIDAware' -Type 'Dword' -Value $ProductGUIDAware
 			## lines have to be fix after merge issue #302
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUID' -Value $ProductGUID
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUIDAware' -Type 'Dword' -Value $ProductGUIDAware
 
-			## save currently installed application package as active installed appliction for a product family
+			## save currently installed application package as installed application for a product
 			if ($true -eq $ProductGUIDAware) {
-				Write-Log -message "Register active product family member application with ProductGUID [$ProductGUID]." -Source ${CmdletName}
+				Write-Log -message "Register product member application package with ProductGUID [$ProductGUID]." -Source ${CmdletName}
 				#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PackageGUID' -Value $PackageGUID
 				## lines have to be fix after merge issue #302
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PackageGUID' -Value $PackageFamilyGUID
@@ -4932,11 +4931,11 @@ function Repair-NxtApplication {
 		Is only called in the Main function and should not be modified!
 		To customize the script always use the "CustomXXXX" entry points.
 	.PARAMETER ProductGUID
-		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Specifies the registry key name for membership GUID of assigned application package for a product.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUIDAware
-		Defines if package family membership should be recognized for the assigned application package.
+		Defines if product membership should be recognized for the assigned application package.
 		If this value is set to '$false' this package will processed as independent application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -7008,11 +7007,11 @@ function Test-NxtAppIsInstalled {
 	.DESCRIPTION
 		Uses the registry Uninstall Key and (if allowed) an assigned 'ProductGUID' to detect if the application is present.
 	.PARAMETER ProductGUID
-		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Specifies the registry key name for membership GUID of assigned application package for a product.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUIDAware
-		Defines if package family membership should be recognized for the assigned application package.
+		Defines if product membership should be recognized for the assigned application package.
 		If this value is set to '$false' this package will processed as independent application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -7083,13 +7082,13 @@ function Test-NxtAppIsInstalled {
 	}
 	Process {
 		if ($false -eq $ProductGUIDAware) {
-			Write-Log -Message 'Product family membership should not be recognized. Package is processed as independent package...' -Source ${cmdletName}
-			[bool]$installedAppFamilyMember = $false
+			Write-Log -Message 'Product membership should not be recognized. Package is processed as independent package...' -Source ${cmdletName}
+			[bool]$installedProductMemberApp = $false
 		}
 		else {
-			[bool]$installedAppFamilyMember = $(Test-NxtProductFamilyIsInstalled -ProductGUID $ProductGUID -ProductGUIDAware $ProductGUIDAware)
+			[bool]$installedProductMemberApp = $(Test-NxtProductMemberIsInstalled -ProductGUID $ProductGUID -ProductGUIDAware $ProductGUIDAware)
 		}
-		if ($false -eq $installedAppFamilyMember) {
+		if ($false -eq $installedProductMemberApp) {
 			Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
 			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
 			if ($installedAppResults.Count -eq 0) {
@@ -7115,7 +7114,7 @@ function Test-NxtAppIsInstalled {
 			Write-Output $approvedResult
 		}
 		else {
-			Write-Output $installedAppFamilyMember
+			Write-Output $installedProductMemberApp
 		}			
 	}
 	End {
@@ -7597,19 +7596,19 @@ function Test-NxtProcessExists {
 	}
 }
 #endregion
-#region Function Test-NxtProductFamilyIsInstalled
-function Test-NxtProductFamilyIsInstalled {
+#region Function Test-NxtProductMemberIsInstalled
+function Test-NxtProductMemberIsInstalled {
 	<#
 	.SYNOPSIS
-		Detects if a recognizeable member (an application package) of the product family is active and installed.
+		Detects if a recognizeable product member application package is installed and registered.
 	.DESCRIPTION
-		Uses the value 'ProductGUID' in registry sub keys (installed application packages) under 'RegPackagesKey' to detect if an application of the product family is active.
+		Uses the value 'ProductGUID' in registry sub keys (installed application packages) under 'RegPackagesKey' to detect if an application package is a product member.
 	.PARAMETER ProductGUID
-		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Specifies the registry key name for membership GUID of assigned application package for a product.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUIDAware
-		Defines if package family membership should be recognized for the assigned application package.
+		Defines if product membership should be recognized for the assigned application package.
 		If this value is set to '$false' this package will processed as independent application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -7617,9 +7616,9 @@ function Test-NxtProductFamilyIsInstalled {
 		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
-		Test-NxtProductFamilyIsInstalled
+		Test-NxtProductMemberIsInstalled
 	.EXAMPLE
-		Test-NxtProductFamilyIsInstalled -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -ProductGUIDAware $true
+		Test-NxtProductMemberIsInstalled -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -ProductGUIDAware $true
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -7642,34 +7641,32 @@ function Test-NxtProductFamilyIsInstalled {
 	Process {
 		if ( ($true -eq $ProductGUIDAware) -and (![string]::IsNullOrEmpty($ProductGUID)) ) {
 			Write-Log -Message "Checking for an active assigned application package for ProductGUID [$ProductGUID]..." -Source ${CmdletName}
-			[int]$countProductGUIDMembers = 0
+			[bool]$foundcurrentPackageGUID = $false
 			[string]$activePackageGUID = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID").PackageGUID
 			Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
 				((Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID") -and
 				((Get-ItemProperty -Path $_.PSPath).ProductGUIDAware -eq '1')
 			} | ForEach-Object {
-				[int]$countProductGUIDMembers += 1
-				[string]$foundcurrentPackageGUID = Split-Path -Path "$_" -Leaf
-				if ($foundcurrentPackageGUID -ne $activePackageGUID) {
-					[string]$foundcurrentPackageGUID = $null
+				if ($(Split-Path -Path "$_" -Leaf) -eq $activePackageGUID) {
+					[bool]$foundcurrentPackageGUID = $true
 				}
 			}
-			if (($countProductGUIDMembers -gt 0) -and ![string]::IsNullOrEmpty($activePackageGUID) -and ![string]::IsNullOrEmpty($foundcurrentPackageGUID)) {
-				Write-Log -Message "One registered product family member application is active and installed..." -Source ${CmdletName}
+			if (![string]::IsNullOrEmpty($activePackageGUID) -and ($true -eq $foundcurrentPackageGUID)) {
+				Write-Log -Message "One registered product member application is active and installed..." -Source ${CmdletName}
 				Write-Output $true
 			}
 			else {
-				Write-Log -Message "No registered product family member application seems to be active and installed..." -Severity 2 -Source ${CmdletName}
+				Write-Log -Message "No registered product member application seems to be active and installed..." -Severity 2 -Source ${CmdletName}
 				Write-Output $false
 			}
 		}
 		else {
 			if ($false -eq $ProductGUIDAware) {
-				Write-Log -Message 'Product family membership awareness is switched off. Package is processed as independent package...' -Source ${cmdletName}
+				Write-Log -Message 'Product membership awareness is switched off. Package is processed as independent package...' -Source ${cmdletName}
 			}
 			else {
 				if ([string]::IsNullOrEmpty($ProductGUID)) {
-					Write-Log -Message 'ProductGUID value NOT set. Skipping test for product family membership!' -Severity 2 -Source ${cmdletName}
+					Write-Log -Message 'ProductGUID value NOT set. Skipping test for product membership!' -Severity 2 -Source ${cmdletName}
 				}
 			}
 			Write-Output $false
@@ -8173,11 +8170,11 @@ function Unregister-NxtPackage {
 	.DESCRIPTION
 		Removes the package files from "$APP\" and deletes the package's registry keys under "HKLM\Software\$regPackagesKey\$PackageFamilyGUID" and "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID".
 	.PARAMETER ProductGUID
-		Specifies the registry key name for membership GUID of assigned application package in a product family.
+		Specifies the registry key name for membership GUID of assigned application package for a product.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUIDAware
-		Defines if package family membership should be recognized for the assigned application package.
+		Defines if product membership should be recognized for the assigned application package.
 		If this value is set to '$false' this package will processed as independent application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -8231,25 +8228,23 @@ function Unregister-NxtPackage {
 		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
 		try {
 			if ( ($true -eq $ProductGUIDAware) -and (![string]::IsNullOrEmpty($ProductGUID)) ) {
-				Write-Log -Message "Cleanup folder and registry entries of assigned product family member applications with ProductGUID [$ProductGUID]..." -Source ${CmdletName}
+				Write-Log -Message "Cleanup folder and registry entries of assigned product member application packages with ProductGUID [$ProductGUID]..." -Source ${CmdletName}
 				Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
 					((Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID") -and
 					((Get-ItemProperty -Path $_.PSPath).ProductGUIDAware -eq '1')
 				} | ForEach-Object {
 					[string]$assignedPackageGUID = Split-Path -Path "$_" -Leaf
-					Write-Log -message "Processing tasks for product family member application with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
-					#$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").AppPath
-					## lines have to be fix after merge issue #302
-					$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$PackageFamilyGUID").AppPath
+					Write-Log -message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
+					$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
 					Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\" 
 					Start-Sleep -Seconds 1
 					Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -NoWait
 					Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID
 					Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
-					Write-Log -message "Remove registration of ProductGUID [$ProductGUID]." -Source ${CmdletName}
-					Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID"
 				}
-				Write-Log -Message "All folder and registry entries of assigned product family member applications with ProductGUID [$ProductGUID] are cleaned." -Source ${CmdletName}
+				Write-Log -message "Remove registration of ProductGUID [$ProductGUID]." -Source ${CmdletName}
+				Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID"
+				Write-Log -Message "All folder and registry entries of assigned product member application packages with ProductGUID [$ProductGUID] are cleaned." -Source ${CmdletName}
 			}
 			else {
 				Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\" 
