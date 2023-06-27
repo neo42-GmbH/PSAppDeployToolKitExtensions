@@ -2496,7 +2496,7 @@ function Get-NxtCurrentDisplayVersion {
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.OUTPUTS
-		System.String.
+		PSADTNXT.NxtDisplayVersionResult.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2524,25 +2524,31 @@ function Get-NxtCurrentDisplayVersion {
 			Write-Log -Message "Can't detect display version: No uninstallkey or display name defined." -Source ${CmdletName}
 		}
 		else {
+			[PSADTNXT.NxtDisplayVersionResult]$DisplayVersionResult = New-Object -TypeName PSADTNXT.NxtDisplayVersionResult
 			try {
 				Write-Log -Message "Detect currently set DisplayVersion value of package application..." -Source ${CmdletName}
 				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
 				if ($installedAppResults.Count -eq 0) {
 					Write-Log -Message "Found no uninstall key with UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Skipped detecting a DisplayVersion." -Severity 2 -Source ${CmdletName}
-					Write-Output $null
+					$DisplayVersionResult.DisplayVersion = [string]::Empty
+					$DisplayVersionResult.UninstallKeyExists = $false
 				}
 				elseif ($installedAppResults.Count -gt 1) {
 					Write-Log -Message "Found more than one uninstall key with UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Skipped detecting a DisplayVersion." -Severity 2 -Source ${CmdletName}
-					Write-Output $null
+					$DisplayVersionResult.DisplayVersion = [string]::Empty
+					$DisplayVersionResult.UninstallKeyExists = $false
 				}
 				elseif ([string]::IsNullOrEmpty($installedAppResults.DisplayVersion)) {
 					Write-Log -Message "Detected no DisplayVersion for UninstallKey [$UninstallKey] with UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]." -Severity 2 -Source ${CmdletName}
-					Write-Output ""
+					$DisplayVersionResult.DisplayVersion = [string]::Empty
+					$DisplayVersionResult.UninstallKeyExists = $true
 				}
 				else {
 					Write-Log -Message "Currently detected display version [$($installedAppResults.DisplayVersion)] for UninstallKey [$UninstallKey] with UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]." -Source ${CmdletName}
-					Write-Output $installedAppResults.DisplayVersion
+					$DisplayVersionResult.DisplayVersion = $installedAppResults.DisplayVersion
+					$DisplayVersionResult.UninstallKeyExists = $true
 				}
+				Write-Output $DisplayVersionResult
 			}
 			catch {
 				Write-Log -Message "Failed to detect DisplayVersion for UninstallKey [$UninstallKey] with UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. `n$(Resolve-Error)" -Severity 2 -Source ${CmdletName}
@@ -3295,7 +3301,7 @@ function Get-NxtRegisterOnly {
 			}
 		}
 		else {
-			[string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion
+			[string]$currentlyDetectedDisplayVersion = (Get-NxtCurrentDisplayVersion).DisplayVersion
 			if ($true -eq [string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
 				Write-Output $false
@@ -6825,19 +6831,19 @@ function Switch-NxtMSIReinstallMode {
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check ReinstallMode for an expected msi display version!. Returning [$ReinstallMode]." -Severity 2 -Source ${cmdletName}
 			}
 			else {
-				[string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion
-				If ($null -eq ([string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion)) {
+				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion
+				If ($false -eq $displayVersionResult.UninstallKeyExists) {
 					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
 					throw "No repair function executable under current conditions!"
 				}
-				elseif ($currentlyDetectedDisplayVersion -eq "") {
+				elseif ($true -eq [string]::IsNullOrEmpty($displayVersionResult.DisplayVersion)) {
 					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
 					Write-Log -Message "Detected 'DisplayVersion' is empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
 					Write-Log -Message "Exact check for an installed msi application not possible! But found application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$ReinstallMode]." -Source ${CmdletName}
 				}	
 				else {
 					Write-Log -Message "Processing msi setup: double check ReinstallMode for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
-					switch ($(Compare-NxtVersion -DetectedVersion $currentlyDetectedDisplayVersion -TargetVersion $DisplayVersion)) {
+					switch ($(Compare-NxtVersion -DetectedVersion ($displayVersionResult.DisplayVersion) -TargetVersion $DisplayVersion)) {
 						"Equal" { 
 							Write-Log -Message "Found the expected display version." -Source ${cmdletName}
 						}
