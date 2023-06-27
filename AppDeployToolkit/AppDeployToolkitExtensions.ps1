@@ -8230,11 +8230,6 @@ function Unregister-NxtPackage {
 	Process {
 		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
 		try {
-			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\" 
-			Start-Sleep -Seconds 1
-			Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -NoWait
-			Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID
-			Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID
 			if ( ($true -eq $ProductGUIDAware) -and (![string]::IsNullOrEmpty($ProductGUID)) ) {
 				Write-Log -Message "Cleanup folder and registry entries of assigned product family member applications with ProductGUID [$ProductGUID]..." -Source ${CmdletName}
 				Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
@@ -8251,10 +8246,19 @@ function Unregister-NxtPackage {
 					Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -NoWait
 					Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID
 					Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
+					Write-Log -message "Remove registration of ProductGUID [$ProductGUID]." -Source ${CmdletName}
+					Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID"
 				}
 				Write-Log -Message "All folder and registry entries of assigned product family member applications with ProductGUID [$ProductGUID] are cleaned." -Source ${CmdletName}
 			}
-			Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
+			else {
+				Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\" 
+				Start-Sleep -Seconds 1
+				Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -NoWait
+				Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageFamilyGUID
+				Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID
+				Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
+			}
 		}
 		catch {
 			Write-Log -Message "Failed to unregister package. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
