@@ -6826,11 +6826,15 @@ function Switch-NxtMSIReinstallMode {
 			}
 			else {
 				[string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion
-				if ([string]::IsNullOrEmpty($currentlyDetectedDisplayVersion)) {
-					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
-					Write-Log -Message "Detected 'DisplayVersion' is `$null or empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
-					Write-Log -Message "Exact check for an installed msi application not possible! But found application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$ReinstallMode]." -Source ${CmdletName}
+				If ($null -eq ([string]$currentlyDetectedDisplayVersion = Get-NxtCurrentDisplayVersion)) {
+					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
+					throw "No repair function executable under current conditions!"
 				}
+				elseif ($currentlyDetectedDisplayVersion -eq "") {
+					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
+					Write-Log -Message "Detected 'DisplayVersion' is empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
+					Write-Log -Message "Exact check for an installed msi application not possible! But found application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$ReinstallMode]." -Source ${CmdletName}
+				}	
 				else {
 					Write-Log -Message "Processing msi setup: double check ReinstallMode for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
 					switch ($(Compare-NxtVersion -DetectedVersion $currentlyDetectedDisplayVersion -TargetVersion $DisplayVersion)) {
