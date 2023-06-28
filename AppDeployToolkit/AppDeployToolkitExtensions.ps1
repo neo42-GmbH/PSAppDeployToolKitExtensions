@@ -3770,7 +3770,7 @@ function Initialize-NxtEnvironment {
 		Defaults to the "$global:SetupCfgPath".
 	.PARAMETER SetupCfgPathOverride
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
-		Defaults to "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)".
+		Defaults to "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)".
 	.OUTPUTS
 		System.Int32.
 	.EXAMPLE
@@ -3791,7 +3791,7 @@ function Initialize-NxtEnvironment {
 		$CustomSetupCfgPath = "$global:CustomSetupCfgPath",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)"
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4358,7 +4358,7 @@ function Register-NxtPackage {
 		Defaults to the $global:LastErrorMessage.
 	.PARAMETER SetupCfgPathOverride
 		Defines the SetupCfgPathOverride.
-		Defaults to $env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID).
+		Defaults to $env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID).
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -4447,7 +4447,7 @@ function Register-NxtPackage {
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)",
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
 		$LastErrorMessage = $global:LastErrorMessage
