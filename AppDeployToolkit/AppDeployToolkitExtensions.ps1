@@ -3760,6 +3760,9 @@ function Initialize-NxtEnvironment {
 	.PARAMETER SetupCfgPath
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
 		Defaults to the "$global:SetupCfgPath".
+	.PARAMETER SetupCfgPathOverride
+		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
+		Defaults to "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)".
 	.OUTPUTS
 		System.Int32.
 	.EXAMPLE
@@ -3777,7 +3780,10 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPath = "$global:SetupCfgPath",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$CustomSetupCfgPath = "$global:CustomSetupCfgPath"
+		$CustomSetupCfgPath = "$global:CustomSetupCfgPath",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3785,7 +3791,6 @@ function Initialize-NxtEnvironment {
 	}
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
-		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)"
 		if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)){
 			Move-NxtItem -Path $SetupCfgPathOverride\setupOverride.cfg -Destination $SetupCfgPathOverride\setup.cfg
 			Set-NxtSetupCfg -Path $SetupCfgPathOverride\setup.cfg
