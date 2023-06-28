@@ -3634,9 +3634,9 @@ function Get-NxtWindowsVersion {
 function Import-NxtIniFile {
 	<#
 	.SYNOPSIS
-		Imports an Ini file into Powershell Object.
+		Imports an INI file into Powershell Object.
 	.DESCRIPTION
-		Imports an Ini file into Powershell Object.
+		Imports an INI file into Powershell Object.
 	.PARAMETER Path
 		The path to the INI file.
 	.EXAMPLE
@@ -3663,15 +3663,20 @@ function Import-NxtIniFile {
 		try {
 			[hashtable]$ini = @{}
 			[string]$section = 'default'
-			switch -Regex -File $Path {
-				'^\[(.+)\]$' {
+			[Array]$content = Get-Content -Path $Path
+			foreach ($line in $content) {
+				if ($line -match '^\[(.+)\]$') {
 					[string]$section = $matches[1]
 					if (!$ini.ContainsKey($section)) {
 						[hashtable]$ini[$section] = @{}
 					}
 				}
-				'^([^\s]+)\s*=\s*(.+)$' {
-					[string]$ini[$section][$matches[1]] = $matches[2]
+				elseif ($line -match '^(;|#)') {
+				}
+				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
+					[string]$variableName = $matches[1]
+					[string]$value = $matches[2]
+					[string]$ini[$section][$variableName] = $value
 				}
 			}
 			Write-Output $ini
@@ -3689,6 +3694,67 @@ function Import-NxtIniFile {
 	}
 }
 #endregion
+#region Function Import-NxtIniFileWithComments
+function Import-NxtIniFileWithComments {
+    <#
+	.SYNOPSIS
+		Imports an INI file into Powershell Object.
+	.DESCRIPTION
+		Imports an INI file into Powershell Object.
+	.PARAMETER Path
+		The path to the INI file.
+	.PARAMETER ContinueOnError
+		Continue on error.
+	.EXAMPLE
+		Import-NxtIniFileWithComments -Path C:\path\to\ini\file.ini
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [String]
+        $Path,
+        [Parameter(Mandatory = $false)]
+        [bool]
+        $ContinueOnError = $true
+    )
+    try {
+        [hashtable]$ini = @{}
+        [string]$section = 'default'
+        [array]$commentBuffer = @()
+        [Array]$content = Get-Content -Path $Path
+        foreach ($line in $content) {
+            if ($line -match '^\[(.+)\]$') {
+                [string]$section = $matches[1]
+                if (!$ini.ContainsKey($section)) {
+                    [hashtable]$ini[$section] = @{}
+                }
+            }
+            elseif ($line -match '^(;|#)\s*(.*)') {
+                [array]$commentBuffer += $matches[2].trim("; ")
+            }
+            elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
+                [string]$variableName = $matches[1]
+                [string]$value = $matches[2].Trim()
+                [hashtable]$ini[$section][$variableName] = @{
+                    Value    = $value.trim()
+                    Comments = $commentBuffer -join "`r`n"
+                }
+                [array]$commentBuffer = @()
+            }
+        }
+        Write-Output $ini
+    }
+    catch {
+        if (-not $ContinueOnError) {
+            throw "Failed to read ini file [$path]: $($_.Exception.Message)"
+        }
+    }
+}
+#endregion
 #region Function Initialize-NxtEnvironment
 function Initialize-NxtEnvironment {
 	<#
@@ -3702,6 +3768,9 @@ function Initialize-NxtEnvironment {
 	.PARAMETER SetupCfgPath
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
 		Defaults to the "$global:SetupCfgPath".
+	.PARAMETER SetupCfgPathOverride
+		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
+		Defaults to "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)".
 	.OUTPUTS
 		System.Int32.
 	.EXAMPLE
@@ -3719,7 +3788,10 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPath = "$global:SetupCfgPath",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$CustomSetupCfgPath = "$global:CustomSetupCfgPath"
+		$CustomSetupCfgPath = "$global:CustomSetupCfgPath",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3727,7 +3799,19 @@ function Initialize-NxtEnvironment {
 	}
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
-		Set-NxtSetupCfg -Path $SetupCfgPath
+		if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)) {
+			Move-NxtItem -Path $SetupCfgPathOverride\setupOverride.cfg -Destination $SetupCfgPathOverride\setup.cfg
+			Set-NxtSetupCfg -Path $SetupCfgPathOverride\setup.cfg
+		}
+		else {
+			if (
+				$true -eq (Test-path $SetupCfgPathOverride) -and
+				$SetupCfgPathOverride -like "$env:temp\$($global:Packageconfig.RegPackagesKey)\*"
+			) {
+				Remove-Item -Recurse $SetupCfgPathOverride
+			}
+			Set-NxtSetupCfg -Path $SetupCfgPath
+		}
 		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
@@ -3737,21 +3821,21 @@ function Initialize-NxtEnvironment {
 		Format-NxtPackageSpecificVariables
 		switch ($SetupCfg.Options.ShowBalloonNotifications) {
 			"0"	{
-					[bool]$script:configShowBalloonNotifications = $false
-					Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
-				}
+				[bool]$script:configShowBalloonNotifications = $false
+				Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
+			}
 			"1" {
-					[bool]$script:configShowBalloonNotifications = $true
-					Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
-				}
+				[bool]$script:configShowBalloonNotifications = $true
+				Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
+			}
 			"2" {
-					## Use ShowBalloonNotifications setting from XML config
-				}
+				## Use ShowBalloonNotifications setting from XML config
+			}
 			default {
-					if ($false -eq [string]::IsNullOrEmpty($SetupCfg.Options.ShowBalloonNotifications)) {
-						throw "Not supported value detected for option 'SHOWBALLOONNOTIFICATIONS' while reading setting from setup.cfg"
-					}
+				if ($false -eq [string]::IsNullOrEmpty($SetupCfg.Options.ShowBalloonNotifications)) {
+					throw "Not supported value detected for option 'SHOWBALLOONNOTIFICATIONS' while reading setting from setup.cfg"
 				}
+			}
 		}		
 	}
 	End {
@@ -4272,6 +4356,9 @@ function Register-NxtPackage {
 	.PARAMETER LastErrorMessage
 		If set the message is written to the registry.
 		Defaults to the $global:LastErrorMessage.
+	.PARAMETER SetupCfgPathOverride
+		Defines the SetupCfgPathOverride.
+		Defaults to $env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID).
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -4360,6 +4447,9 @@ function Register-NxtPackage {
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID)",
+		[Parameter(Mandatory = $false)]
+		[string]
 		$LastErrorMessage = $global:LastErrorMessage
 	)
 	
@@ -4374,7 +4464,12 @@ function Register-NxtPackage {
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
+			if ($true -eq (Test-Path "$SetupCfgPathOverride\Setup.cfg")){
+				Move-NxtItem -Path "$SetupCfgPathOverride\Setup.cfg" -Destination "$App\neo42-Install\" -Force
+				Remove-Item -Recurse -Path "$SetupCfgPathOverride"
+			}else{
+				Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
+			}
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
 	
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'AppPath' -Value $App
@@ -5248,7 +5343,7 @@ function Set-NxtCustomSetupCfg {
 	.SYNOPSIS
 		Set the contents from CustomSetup.cfg to $global:CustomSetupCfg.
 	.DESCRIPTION
-		Imports a CustomSetup.cfg file in Ini format.
+		Imports a CustomSetup.cfg file in INI format.
 	.PARAMETER Path
 		The path to the CustomSetup.cfg file (including file name).
 	.EXAMPLE
@@ -5302,7 +5397,7 @@ function Set-NxtSetupCfg {
 	.SYNOPSIS
 		Set the contents from Setup.cfg to $global:SetupCfg.
 	.DESCRIPTION
-		Imports a Setup.cfg file in Ini format.
+		Imports a Setup.cfg file in INI format.
 	.PARAMETER Path
 		The path to the Setup.cfg file (including file name).
 	.EXAMPLE
