@@ -89,27 +89,37 @@ following VariableSets of config files are useable (in order of availability):
 # json variable descriptions
 
 **"ScriptAuthor"** *mandatory informational string value*
+
+parent: /
 ```
 default value: "neo42 GmbH"
 author of the script
 ```
 **"ScriptDate"** *mandatory informational string value*
+
+parent: /
 ```
 initial date of script creation in format "DD/MM/YYYY"
 ```
 
 **"InventoryID"** *mandatory string value*
+
+parent: /
 ```
 internal unique identifier with 11 digits with format: 3 digits employee name abbreviation + 8 digits random hexadecimal number
 ```
 
 **"Description"** *optional informational string value*
+
+parent: /
 ```
 default value: ""
 a package description as free text
 ```
 
 **"InstallMethod"** *mandatory string value*
+
+parent: /
 ```
 default value: may define a well-known type of setups (especially for MSI setups the default MSI engine installation switch '/i' will be executed), else (if an individual text is defined here) a regular process execution of an existing "InstFile" with defined "InstPara" is tried to call
 
@@ -140,6 +150,8 @@ note: a log file parameter always will be appended, if supported by setup type (
 ```
 
 **"UninstallMethod"** *mandatory string value*
+
+parent: /
 ```
 default value: may define a well-known type of setups (especially for MSI setups the default MSI engine installation switch '/x' will be executed), else (if an individual text is defined here) a regular process execution of an existing "UninstFile" with defined "UninstPara" is tried to call
 
@@ -170,6 +182,8 @@ note: a log file parameter always will be appended, if supported by setup type (
 ```
 
 **"ReinstallMode"** *mandatory string value*
+
+parent: /
 ```
 default value: "Reinstall", but "MSIRepair" is recommended for MSI setups (executes default MSI engine repair switch '/fvomus' with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters")
 
@@ -185,6 +199,8 @@ note: additionally valid value is "Install" (important: like for mode 'Reinstall
 - **Install**: does a regular installation procedure (it's just an "over-installing", especially for MSI setups it may do an inplace upgrade if allowed by value 'MSIInplaceUpgradeable' in case of detecting installed application just with DISPLAYNAME instead of MSIGUID as Uninstallkey) - note: be careful, the application/setup has to support this procedure!
 
 **"MSIInplaceUpgradeable"** *optional bool value (considered for MSI setups only!)*
+
+parent: /
 ```
 default value: false
 switch for a valid inplace upgrade (valid are only 'true' and 'false')
@@ -192,13 +208,17 @@ note: only set it on demand if this option is safe for this MSI setup
 ```
 
 **"MSIDowngradeable"** *optional bool value (considered for MSI setups only!)*
+
+parent: /
 ```
 default value: false
 switch for a valid downgrade (valid are only 'true' and 'false')
 note: only set it on demand if this option is safe for this MSI setup
 ```
 
-**"SoftMigration": {** *optional value structure collection*
+**"SoftMigration":** *optional value structure collection (children have to be surrounded by {})*
+
+parent: /
 
 note: following sequence is proceeded for soft migration decision:
 1. if variable '$global:SoftMigrationCustomResult' is true (maybe set in custom function 'CustomSoftMigrationBegin' if a custom procedure is used)
@@ -207,32 +227,37 @@ note: following sequence is proceeded for soft migration decision:
 
 note: the following sub-structure "File" is singular (by default it may be tested for only one file name/version)!
 
-***"File": {*** *mandatory value sub-structure*
+***"File":*** *mandatory value sub-structure (children have to be surrounded by {})*
+
+parent: /SoftMigration/
 
 **"FullNameToCheck"** *optional string value*
 
+parent: /SoftMigration/File/
 ```
 default value: ""
 points to a file (including full path) to check for soft migration decision (if file is there AND no file version is set soft migration will be done)
 ```
 
 **"VersionToCheck"** *optional string value*
+
+parent: /SoftMigration/File/
 ```
 default value: ""
 file version to check for soft migration decision (if file version of existing file is same or newer do soft migration)
 ```
 
-***}***
-
-***}***
-
 **"TestedOn"** *mandatory informational string value*
+
+parent: /
 ```
 comma separated list of tested Windows platforms in one string
 note: generally it would be like this "Win x86, Win10 x64, Win11 x64"
 ```
 
 **"Dependencies"** *mandatory informational string value*
+
+parent: /
 ```
 default value: ""
 comma separated list of depending applications, Windows features or services in one string (if any)
@@ -240,11 +265,15 @@ note: usually these dependencies should be pre-checked in a custom function (i.e
 ```
 
 **"LastChange"** *mandatory informational string value*
+
+parent: /
 ```
 date of last script manipulation in format "DD/MM/YYYY"
 ```
 
 **"Build"** *mandatory string value*
+
+parent: /
 ```
 default value: "0"
 build number of the script starting with 0 for each revision (in general it is a numeric value as type 'string')
@@ -252,6 +281,8 @@ note: increment this value if script is changed AND package is not already distr
 ```
 
 **"AppArch"** *mandatory string value*
+
+parent: /
 ```
 application architecture of the packaged application
 note: depends on installation location in file system and position in registry hive and these values are valid: "x86", "x64", "*" only
@@ -261,24 +292,32 @@ note: depends on installation location in file system and position in registry h
 - \*  : behavior of application on x86 and x64 platforms is different or package contains both application architectures
 
 **"AppVendor"** *mandatory string value*
+
+parent: /
 ```
 application manufacturer name of the packaged application
 note: basically it must NOT contain corporate forms like 'GmbH' or 'Ltd.' and so on
 ```
 
 **"AppName"** *mandatory string value*
+
+parent: /
 ```
 application name of the packaged application
 note: basically it must NOT contain version numbers except so called branding versions like 'Office 2019'
 ```
 
 **"AppVersion"** *mandatory string value*
+
+parent: /
 ```
 real version number of the packaged application (like noted in registry uninstall entry, if set there)
 note: in general it must NOT be a so called branding number, but a numeric value in format 'aaa.bbb.ccc.ddd' as type 'string'
 ```
 
 **"AppRevision"** *mandatory string value*
+
+parent: /
 ```
 default value: "0"
 revision number of the application package starting with 0 (in general it is a numeric value as type 'string')
@@ -286,18 +325,24 @@ note: increment this value if script/package content is changed AND package has 
 ```
 
 **"AppLang"** *mandatory string value*
+
+parent: /
 ```
 application language of the packaged application
 note: basically only these values are valid and supported by neo42: "DEU", "ENG", "MUI"
 ```
 
-**"PackageFamilyGUID"** *mandatory string value*
+**"PackageGUID"** *mandatory string value*
+
+parent: /
 ```
-universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}"
+universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" for a single package
 note: the 3 very left digits inside of curly brackets are always "042"
 ```
 
 **"RegPackagesKey"** *mandatory string value*
+
+parent: /
 ```
 default value: "neoPackages"
 registry sub key to store all package depending information seperated by "PackageFamilyGUID" (always stored in registry path HKLM:\Software)
@@ -306,6 +351,8 @@ registry sub key to store all package depending information seperated by "Packag
 **"UninstallDisplayName"** *mandatory string value*
 
 *(note: may contain reference to other defined variables, content will be expanded)*
+
+parent: /
 ```
 default value: "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)"
 registered display name of uninstall registry entry of installed application package on client system (= data of value name 'DisplayName' for the installed application package entry under registry path '..\CurrentVersion\Uninstall\"PackageFamilyGUID"')
@@ -315,12 +362,16 @@ note: this package system registration is done additionally to a regular manufac
 **"App"** *mandatory string value*
 
 *(note: may contain reference to other defined variables, content will be expanded)*
+
+parent: /
 ```
 default value: "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)"
 package cache folder on client system (i.e. possible user parts of package are executed from there)
 ```
  
 **"UninstallOld"** *optional bool value*
+
+parent: /
 ```
 default value: true
 switch to instruct script to remove packages in former framework versions (especially Empirum setup.inf packages) and/or with same "PackageFamilyGUID" (especially packages in VBS style)
@@ -328,6 +379,8 @@ note: this value may be overwritten by deployment system (if variable '$env:unin
 ```
 
 **"Reboot"** *mandatory integer value*
+
+parent: /
 ```
 default value: 0
 reboot behavior of package (only values '0', '1' and '2' are allowed)
@@ -338,6 +391,8 @@ note: this value may be overwritten by deployment system (if variable '$env:Rebo
 - 2: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
 
 **"UserPartOnInstallation"** *optional bool value*
+
+parent: /
 ```
 default value: false
 switch of behavior for installation of an user part of package during main installation process, by default this value should be set to 'true' if the package contains an user part (valid are only 'true' and 'false')
@@ -345,6 +400,8 @@ note: the script may be called explicit with a parameter later: synchonously 'De
 ```
 
 **"UserPartOnUninstallation"** *optional bool value*
+
+parent: /
 ```
 default value: false
 switch of behavior for uninstallation of an user part of package during main uninstallation process, by default user parts should not be triggered to be uninstalled even if there are ones except requested i.e. by customer (valid are only 'true' and 'false')
@@ -352,6 +409,8 @@ note: the script may be called explicit with a parameter later: synchonously 'De
 ```
 
 **"UserPartRevision"** *optional string value*
+
+parent: /
 
 note: this value is mandatory if the value "UserPartOnInstallation" and/or "UserPartOnUninstallation" is set to 'true'
 ```
@@ -361,24 +420,32 @@ note: to re-run the user part installation together with a package reinstallatio
 ```
 
 **"HidePackageUninstallButton"** *optional bool value*
+
+parent: /
 ```
 default value: false
 switch to hide own uninstall button for this package in system control settings (valid are only 'true' and 'false')
 ```
 
 **"HidePackageUninstallEntry"** *optional bool value*
+
+parent: /
 ```
 default value: false
 switch to hide own uninstall registry entry for this package (defined in value "UninstallDisplayName") in system control settings (valid are only 'true' and 'false')
 ```
 
 **"DisplayVersion"** *optional string value*
+
+parent: /
 ```
 default value: (expected) version of installed application (by default taken from registry value 'DisplayVersion' in uninstall registry entry set by a regular test installation of the application)
 note: if this value is not set no default soft migration is proceeded (see description of value "SoftMigration" too) and especially for MSI setups no double check for correct decision of "ReinstallMode" may be done in case value "UninstallKeyIsDisplayName" is set to 'true' (see description of values "UninstallKey" and "UninstallKeyIsDisplayName" too)!
 ```
 
 **"InstallerVersion"** *optional string value*
+
+parent: /
 ```
 default value: ""
 possible part of setup installer file name set in value "InstFile"
@@ -386,6 +453,8 @@ note: this variable is not used by default in any function of AppDeployToolkitEx
 ```
 
 **"UninstallKey"** *optional string value*
+
+parent: /
 ```
 default value: name of registry subkey in uninstall registry entry of installed application setup ('...\CurrentVersion\Uninstall\"UninstallKey"'), especially for MSI setups generally this is the MSI-GUID
 used for application detection as search string (for an uninstall registry subkey or a display name) of installed application
@@ -394,6 +463,8 @@ note: if this value is set dynamically at runtime of un/installation process (or
 
 **"UninstallKeyIsDisplayName"** *optional bool value*
 
+parent: /
+
 note: this value is mandatory if the value "UninstallKey" contains the display name of installed application
 ```
 default value: false
@@ -401,6 +472,8 @@ switch to define the usage of the value "UninstallKey" as search string for a di
 ```
 
 **"UninstallKeyContainsWildCards"** *optional bool value*
+
+parent: /
 ```
 default value: false
 switch to control the interpretation of character '*' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
@@ -408,7 +481,9 @@ switch to control the interpretation of character '*' in a defined string of val
 - true : '\*' is interpreted as a wildcard
 - false: '\*' is interpreted as part of the defined string
 
-**"DisplayNamesToExcludeFromAppSearches": [** *optional string value list*
+**"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by [])*
+
+parent: /
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -417,9 +492,9 @@ comma separated list of display name strings to exclude from application searche
 note: an empty list is allowed that means: "DisplayNamesToExcludeFromAppSearches": []), but at least the default value is recommended to prevent finding entry of current installed application package defined in value "UninstallDisplayName" (see description of value "UninstallDisplayName" too)!
 ```
 
-**]**
-
 **"InstallLocation"** *optional string value*
+
+parent: /
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -430,6 +505,8 @@ note: this variable is not used by default in any function of AppDeployToolkitEx
 
 **"InstLogFile"** *mandatory string value*
 
+parent: /
+
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 default value: "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log"
@@ -438,6 +515,8 @@ note: by default a logfile always will be appended internally (if value "Install
 ```
 
 **"UninstLogFile"** *mandatory string value*
+
+parent: /
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -448,6 +527,8 @@ note: by default a logfile always will be appended internally (if value "Uninsta
 
 **"InstFile"** *mandatory string value*
 
+parent: /
+
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 name of the used setup installer file (including file extension)
@@ -455,6 +536,8 @@ note: by default this file will be expected in package subfolder 'Files', else a
 ```
 
 **"InstPara"** *optional string value*
+
+parent: /
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -464,6 +547,8 @@ note: especially consider masking rules for some characters inside the string
 ```
 
 **"AppendInstParaToDefaultParameters"** *optional bool value*
+
+parent: /
 
 ```
 default value: false
@@ -475,6 +560,8 @@ note: by default a logfile always will be appended to used parameters (if suppor
 
 **"AcceptedInstallExitCodes"** *optional string value*
 
+parent: /
+
 ```
 default value: ""
 comma separated list of exit codes to accept for successfull installation execution of the used setup installer file
@@ -483,6 +570,8 @@ note: '*' is allowed for all exit codes
 
 **"AcceptedRepairExitCodes"** *optional string value (considered for MSI setups only!)*
 
+parent: /
+
 ```
 default value: ""
 comma separated list of exit codes to accept for successfull repair execution of msi setup file
@@ -490,6 +579,8 @@ note: '*' is allowed for all exit codes
 ```
 
 **"UninstFile"** *optional string value*
+
+parent: /
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -500,6 +591,8 @@ note: by default the MSI-GUID provided in value "UninstallKey" or a derived unin
 
 **"UninstPara"** *optional string value*
 
+parent: /
+
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 default value: ""
@@ -509,6 +602,7 @@ note: especially consider masking rules for some characters inside the string
 
 **"AppendUninstParaToDefaultParameters"** *optional bool value*
 
+parent: /
 ```
 default value: false
 switch to control the behavior for using the defined parameters in value "UninstPara" (valid are only 'true' and 'false')
@@ -518,19 +612,23 @@ note: by default a logfile always will be appended to used parameters (if suppor
 - false: replaces the parameters got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedUninstallExitCodes"** *optional string value*
+
+parent: /
 ```
 default value: ""
 comma separated list of exit codes to accept for successfull uninstallation execution of the used setup installer file
 note: '*' is allowed for all exit codes
 ```
 
-**"AppKillProcesses": [** *optional value structure (possibly a collection)*
+**"AppKillProcesses":** *optional value structure (possibly a collection) (children have to be surrounded by [])*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the value "Name" has to be provided for each entry, but an empty list is allowed too (that means: "AppKillProcesses": [])!
+parent: /
 
-***{***
+note: the following sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the value "Name" has to be provided for each entry, but an empty list is allowed too (that means: "AppKillProcesses": [])!
 
 **"Name"** *mandatory string value*
+
+parent: /AppKillProcesses/
 
 ```
 a type 'exe' process file name for check to kill (with or without file extension)
@@ -538,92 +636,107 @@ note: there are wildcards allowed, but just wildcards only will be prevented for
 ```
 
 **"Description"** *optional string value*
+
+parent: /AppKillProcesses/
 ```
 default value: ""
 text will be shown instead of default file description value of the process file in process close list of user information window (for better 'human understanding')
 ```
 
-***}***
-
-***]***
-
 **"BlockExecution"** *optional bool value*
 
+parent: /
 ```
 default value: true
 switch prevent start each of the defined process name during un/installation procedure (valid are only 'true' and 'false')
 note: if defined values "Name" in "AppKillProcesses" are including wildcard only process names are matching running processes at initial process check will recognized for blocking later!
 ```
 
-**"TestConditionsPreSetupSuccessCheck": {** *optional value structure*
+**"TestConditionsPreSetupSuccessCheck":** *optional value structure (children have to be surrounded by {})*
+
+parent: /
 
 value collection to control pre setup success checks for process items and/or registry items
 
-**"Install": {** *mandatory value sub-structure*
+**"Install":** *mandatory value sub-structure (children have to be surrounded by {})*
+
+parent: /TestConditionsPreSetupSuccessCheck/
 
 value sub-collection provides an optional custom opportunity for checking conditions after finishing the default setup installation routine and checking for installation state on the client and is valid for process items and/or registry items in last step during default installation process
 
 note: empty lists for process items and/or registry items are allowed!
  
 **"TotalSecondsToWaitFor"** *mandatory integer value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/
 ```
 default value: 30
 total time in seconds to wait for (all) process items/registry items to be completed
 ```
 
 **"ProcessOperator"** *mandatory string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/
 ```
 default value: "And"
 behavior of logical connection between more then one provided process item in sub-structure "ProcessesToWaitFor"
 note: valid values are "And" and "Or"
 ```
 
-**"ProcessesToWaitFor": [** *optional value sub-structure (possibly a collection)*
+**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Name" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "ProcessesToWaitFor": [],)!
+parent: /TestConditionsPreSetupSuccessCheck/Install/
 
-***{*** *optional value sub-structure*
+note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Name" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "ProcessesToWaitFor": [],)!
 
 **"Name"** *mandatory string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/ProcessesToWaitFor/
 ```
 process file name (with or without file extension) to monitor
 note: there are wildcards allowed, but just wildcards only will be prevented for usage
 ```
 
 **"ShouldExist"** *mandatory bool value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/ProcessesToWaitFor/
 ```
 value dependent of expected behavior for existence of the process (valid are only 'true' and 'false')
 ```
 
-***}***
-
-***]***
-
 **"RegKeyOperator"** *mandatory string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/
 ```
 default value: "And"
 behavior of logical connection between more then one provided registry item in sub-structure "RegKeysToWaitFor"
 note: valid values are "And" and "Or"
 ```
 
-**"RegKeysToWaitFor": [** *optional value sub-structure (possibly a collection)*
+**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyPath" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "RegKeysToWaitFor": [])!
+parent: /TestConditionsPreSetupSuccessCheck/Install/
 
-***{*** *optional value sub-structure*
+note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyPath" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "RegKeysToWaitFor": [])!
 
 **"KeyPath"** *mandatory string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/RegKeysToWaitFor/
 ```
 registry path of the registry key/value to monitor
 ```
 
 **"ValueName"** *optional string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/RegKeysToWaitFor/
 ```
 default value: null
 registry value name of provided registry key in "KeyPath" to monitor
 ```
 
 **"ValueData"** *optional string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/RegKeysToWaitFor/
 ```
 default value: null
 registry value data of provided registry value in "ValueName" to monitor
@@ -631,81 +744,91 @@ note: will be checked for exact the same content of registry value data like pro
 ```
 
 **"ShouldExist"** *mandatory bool value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Install/RegKeysToWaitFor/
 ```
 value dependent of expected behavior for existence of the registry key (valid are only 'true' and 'false')
 ```
 
-***}***
+**"Uninstall":** *optional value sub-structure (children have to be surrounded by {})*
 
-***]***
+parent: /TestConditionsPreSetupSuccessCheck/
 
-***},***
-
-**"Uninstall": {** *optional value sub-structure*
-
-this value sub-collection provides an optional custom opportunity for checking conditions after finishing the default setup uninstallation routine and checking for uninstallation state on the client and is valid for process items and/or registry items in last step during default uninstallation process
+sub-collection provides an optional custom opportunity for checking conditions after finishing the default setup uninstallation routine and checking for uninstallation state on the client and is valid for process items and/or registry items in last step during default uninstallation process
 
 note: empty lists for process items and/or registry items are allowed!
 
 **"TotalSecondsToWaitFor"** *mandatory integer value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 ```
 default value: 30
 total time in seconds to wait for (all) process items/registry items to be completed
 ```
 
 **"ProcessOperator"** *mandatory string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 ```
 default value: "And"
 behavior of logical connection between more then one provided process item in sub-structure "ProcessesToWaitFor"
 note: valid values are "And" and "Or"
 ```
 
-**"ProcessesToWaitFor": [** *optional value sub-structure (possibly a collection)*
+**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Name" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "ProcessesToWaitFor": [],)!
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 
-***{*** *optional value sub-structure*
+note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Name" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "ProcessesToWaitFor": [],)!
 
 **"Name"** *mandatory string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/ProcessesToWaitFor/
 ```
 process file name (with or without file extension) to monitor
 note: there are wildcards allowed, but just wildcards only will be prevented for usage
 ```
 
 **"ShouldExist"** *mandatory bool value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/ProcessesToWaitFor/
 ```
 value dependent of expected behavior for existence of the process (valid are only 'true' and 'false')
 ```
 
-***}***
-
-***],***
-
 **"RegKeyOperator"** *mandatory string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 ```
 default value: "And"
 behavior of logical connection between  more then one provided registry item in sub-structure "RegKeysToWaitFor"
 note: valid values are "And" and "Or"
 ```
 
-**"RegKeysToWaitFor": [** *optional value sub-structure (possibly a collection)*
+**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
 
-note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyPath" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "RegKeysToWaitFor": [])!
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 
-***{*** *optional value sub-structure*
+note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyPath" and "ShouldExist" have to be provided for each item, but an empty list is allowed too (that means: "RegKeysToWaitFor": [])!
 
 **"KeyPath"** *mandatory string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/RegKeysToWaitFor/
 ```
 registry path of the registry key/value to monitor
 ```
 
 **"ValueName"** *optional string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/RegKeysToWaitFor/
 ```
 default value: null
 registry value name of provided registry key in "KeyPath" to monitor
 ```
 
 **"ValueData"** *optional string value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/RegKeysToWaitFor/
 ```
 default value: null
 registry value data of provided registry value in "ValueName" to monitor
@@ -713,56 +836,51 @@ note: will be checked for exact the same content of registry value data like pro
 ```
 
 **"ShouldExist"** *mandatory bool value*
+
+parent: /TestConditionsPreSetupSuccessCheck/Uninstall/RegKeysToWaitFor/
 ```
 value dependent of expected behavior for existence of the registry key (valid are only 'true' and 'false')
 ```
 
-***}***
+**"CommonDesktopShortcutsToDelete":** *optional string value list (has to be surrounded by [])*
 
-***]***
-
-***}***
-
-***},***
-
-**"CommonDesktopShortcutsToDelete": [** *optional string value list*
-
+parent: /
 ```
 comma separated list of public desktop shortcut names to delete
 note: an empty list is allowed (that means: "CommonDesktopShortcutsToDelete": [])!
 ```
 
-***]***
+**"CommonStartMenuShortcutsToCopyToCommonDesktop":** *optional value structure (possibly a collection) (children have to be surrounded by [])*
 
-**"CommonStartMenuShortcutsToCopyToCommonDesktop": [** *optional value structure (possibly a collection)*
+parent: /
 
-note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Source" and "TargetName" have to be provided for each item, but an empty list is allowed too (that means: "CommonStartMenuShortcutsToCopyToCommonDesktop": [])!
-
-***{***
+note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Source" and "TargetName" have to be provided for each item, but an empty list is allowed too (that means: "CommonStartMenuShortcutsToCopyToCommonDesktop": [])!
 
 **"Source"** *mandatory string value*
+
+parent: /CommonStartMenuShortcutsToCopyToCommonDesktop/
 ```
 link file name from somewhere inside of public start menu folder (including relative start menu subfolder structure starting with subfolder 'Programs')
 ```
 
-**"TargetName"** *mandatory string value*
+**"TargetName"** *optional string value*
+
+parent: /CommonStartMenuShortcutsToCopyToCommonDesktop/
+``` 
+link file name on public desktop folder (necessary only if different name to Source)
 ```
-link file name on public desktop folder
-```
 
-***}***
+**"UninstallKeysToHide":** *optional value structure (possibly a collection) (children have to be surrounded by []*
 
-***]***
+parent: /
 
-**"UninstallKeysToHide": [** *optional value structure (possibly a collection)*
-
-this optional structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyName", "Is64Bit", "KeyNameIsDisplayName" and "KeyNameContainsWildCards" have to be provided for each item, but an empty list is allowed too (that means: "UninstallKeysToHide": [])!
+this optional structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "KeyName", "Is64Bit", "KeyNameIsDisplayName" and "KeyNameContainsWildCards" have to be provided for each item, but an empty list is allowed too (that means: "UninstallKeysToHide": [])!
 
 note: the recommended default entry is always a reference to the current installed application (but the value "Is64Bit" has to be approved always and readjusted if necessary)
 
-***{***
-
 **"KeyName"** *mandatory string value*
+
+parent: /UninstallKeysToHide/
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -771,12 +889,16 @@ name of uninstall registry key entry of a corresponding installed application to
 ```
 
 **"Is64Bit"** *mandatory bool value*
+
+parent: /UninstallKeysToHide/
 ```
 value dependent of architecture path is used in registry for defined value "KeyName" of current entry in "UninstallKeysToHide" (valid are only 'true' and 'false')
 note: this value will be ignored if set on x86 windows architecture (ADT variable '$Is64Bit' is set to '$false')
 ```
 
 **"KeyNameIsDisplayName"** *mandatory bool value*
+
+parent: /UninstallKeysToHide/
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -786,6 +908,8 @@ switch to define the usage of the value "KeyName" for current entry in "Uninstal
 
 **"KeyNameContainsWildCards"** *mandatory bool value*
 
+parent: /UninstallKeysToHide/
+
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 default value: "$($global:PackageConfig.UninstallKeyContainsWildCards)"
@@ -794,7 +918,9 @@ switch to control the interpretation of character '\*' in a defined string of va
 - true : '\*' is interpreted as a wildcard
 - false: '\*' is interpreted as part of the defined string
 
-**"DisplayNamesToExcludeFromHiding": [** *optional string value list*
+**"DisplayNamesToExcludeFromHiding":** *optional string value list (has to be surrounded by [])*
+
+parent: /UninstallKeysToHide/
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -803,23 +929,17 @@ comma separated list of display names to exclude from hiding, where a character 
 note: an empty list is allowed that means: "DisplayNamesToExcludeFromHiding": []), but at least the value of the corresponding installed application package for a defined current "KeyName" is recommended to prevent hiding this package uninstall entry if current value of "KeyNameIsDisplayName" is set to 'true'!
 ```
 
-***]***
-       
-***}***
+**"PackageSpecificVariablesRaw"** *optional value structure (children have to be surrounded by []*
 
-***]***
-
-**"PackageSpecificVariablesRaw"** *optional value structure*
+parent: /
 
 value collection to define customer specific variables
 
-***[***
-
-note: the following sub-structure (in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "Name" and "Value" have to be provided for each item, but an empty list is allowed too (that means: "PackageSpecificVariablesRaw": [])!
-
-***{*** *optional value sub-structure*
+note: the following sub-structure (each member group curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "Name" and "Value" have to be provided for each item, but an empty list is allowed too (that means: "PackageSpecificVariablesRaw": [])!
 
 **"Name"** *mandatory string value*
+
+parent: /PackageSpecificVariablesRaw/
 ```
 customer variable name
 note: after parsing into variable set access to such a variable is done via '$global:PackageConfig.PackageSpecificVariables.<customer_variable_name>'
@@ -827,6 +947,8 @@ note: after parsing into variable set access to such a variable is done via '$gl
 
 **"Value"** *mandatory string value*
 
+
+parent: /PackageSpecificVariablesRaw/
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
 customer variable value
@@ -834,11 +956,9 @@ note: especially consider masking rules for some characters inside the string
 ```
 
 **"ExpandVariables"** *optional bool value*
+
+parent: /PackageSpecificVariablesRaw/
 ```
 value dependent of necessary value extraction (valid are only 'true' and 'false')
 note: this value may be omitted (that's equal to 'false')
 ```
-
-***}***
-
-***]***
