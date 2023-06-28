@@ -139,11 +139,13 @@ namespace PSADTNXT
         public string ErrorMessage { get; set; }
         public string ErrorMessagePsadt { get; set; }
     }
+
     public class NxtDisplayVersionResult
     {
         public bool UninstallKeyExists { get; set; }
         public string DisplayVersion { get; set; }
     }
+    
     public class XmlNodeModel
     {
         private readonly Dictionary<string, string> _attributes;
