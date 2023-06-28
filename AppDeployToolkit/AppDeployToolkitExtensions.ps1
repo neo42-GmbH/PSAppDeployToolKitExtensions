@@ -3628,9 +3628,9 @@ function Get-NxtWindowsVersion {
 function Import-NxtIniFile {
 	<#
 	.SYNOPSIS
-		Imports an Ini file into Powershell Object.
+		Imports an INI file into Powershell Object.
 	.DESCRIPTION
-		Imports an Ini file into Powershell Object.
+		Imports an INI file into Powershell Object.
 	.PARAMETER Path
 		The path to the INI file.
 	.EXAMPLE
@@ -3657,7 +3657,7 @@ function Import-NxtIniFile {
 		try {
 			[hashtable]$ini = @{}
 			[string]$section = 'default'
-			[string]$content = Get-Content -Path $Path
+			[Array]$content = Get-Content -Path $Path
 			foreach ($line in $content) {
 				if ($line -match '^\[(.+)\]$') {
 					[string]$section = $matches[1]
@@ -3668,8 +3668,8 @@ function Import-NxtIniFile {
 				elseif ($line -match '^(;|#)') {
 				}
 				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
-					[string]$variableName = $Matches[1]
-					[string]$value = $Matches[2]
+					[string]$variableName = $matches[1]
+					[string]$value = $matches[2]
 					[string]$ini[$section][$variableName] = $value
 				}
 			}
@@ -3692,11 +3692,13 @@ function Import-NxtIniFile {
 function Import-NxtIniFileWithComments {
     <#
 	.SYNOPSIS
-		Imports an Ini file into Powershell Object.
+		Imports an INI file into Powershell Object.
 	.DESCRIPTION
-		Imports an Ini file into Powershell Object.
+		Imports an INI file into Powershell Object.
 	.PARAMETER Path
 		The path to the INI file.
+	.PARAMETER ContinueOnError
+		Continue on error.
 	.EXAMPLE
 		Import-NxtIniFileWithComments -Path C:\path\to\ini\file.ini
 	.NOTES
@@ -3716,8 +3718,8 @@ function Import-NxtIniFileWithComments {
     try {
         [hashtable]$ini = @{}
         [string]$section = 'default'
-        $commentBuffer = @()
-        [string]$content = Get-Content -Path $Path
+        [array]$commentBuffer = @()
+        [Array]$content = Get-Content -Path $Path
         foreach ($line in $content) {
             if ($line -match '^\[(.+)\]$') {
                 [string]$section = $matches[1]
@@ -3729,8 +3731,8 @@ function Import-NxtIniFileWithComments {
                 [array]$commentBuffer += $matches[2].trim("; ")
             }
             elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
-                [string]$variableName = $Matches[1]
-                [string]$value = $Matches[2].Trim()
+                [string]$variableName = $matches[1]
+                [string]$value = $matches[2].Trim()
                 [hashtable]$ini[$section][$variableName] = @{
                     Value    = $value.trim()
                     Comments = $commentBuffer -join "`r`n"
@@ -3791,14 +3793,15 @@ function Initialize-NxtEnvironment {
 	}
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
-		if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)){
+		if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)) {
 			Move-NxtItem -Path $SetupCfgPathOverride\setupOverride.cfg -Destination $SetupCfgPathOverride\setup.cfg
 			Set-NxtSetupCfg -Path $SetupCfgPathOverride\setup.cfg
-		}else{
+		}
+		else {
 			if (
 				$true -eq (Test-path $SetupCfgPathOverride) -and
 				$SetupCfgPathOverride -like "$env:temp\$($global:Packageconfig.RegPackagesKey)\*"
-				) {
+			) {
 				Remove-Item -Recurse $SetupCfgPathOverride
 			}
 			Set-NxtSetupCfg -Path $SetupCfgPath
@@ -3812,21 +3815,21 @@ function Initialize-NxtEnvironment {
 		Format-NxtPackageSpecificVariables
 		switch ($SetupCfg.Options.ShowBalloonNotifications) {
 			"0"	{
-					[bool]$script:configShowBalloonNotifications = $false
-					Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
-				}
+				[bool]$script:configShowBalloonNotifications = $false
+				Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
+			}
 			"1" {
-					[bool]$script:configShowBalloonNotifications = $true
-					Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
-				}
+				[bool]$script:configShowBalloonNotifications = $true
+				Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
+			}
 			"2" {
-					## Use ShowBalloonNotifications setting from XML config
-				}
+				## Use ShowBalloonNotifications setting from XML config
+			}
 			default {
-					if ($false -eq [string]::IsNullOrEmpty($SetupCfg.Options.ShowBalloonNotifications)) {
-						throw "Not supported value detected for option 'SHOWBALLOONNOTIFICATIONS' while reading setting from setup.cfg"
-					}
+				if ($false -eq [string]::IsNullOrEmpty($SetupCfg.Options.ShowBalloonNotifications)) {
+					throw "Not supported value detected for option 'SHOWBALLOONNOTIFICATIONS' while reading setting from setup.cfg"
 				}
+			}
 		}		
 	}
 	End {
@@ -4347,6 +4350,9 @@ function Register-NxtPackage {
 	.PARAMETER LastErrorMessage
 		If set the message is written to the registry.
 		Defaults to the $global:LastErrorMessage.
+	.PARAMETER SetupCfgPathOverride
+		Defines the SetupCfgPathOverride.
+		Defaults to $env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageFamilyGUID).
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -5325,7 +5331,7 @@ function Set-NxtCustomSetupCfg {
 	.SYNOPSIS
 		Set the contents from CustomSetup.cfg to $global:CustomSetupCfg.
 	.DESCRIPTION
-		Imports a CustomSetup.cfg file in Ini format.
+		Imports a CustomSetup.cfg file in INI format.
 	.PARAMETER Path
 		The path to the CustomSetup.cfg file (including file name).
 	.EXAMPLE
@@ -5379,7 +5385,7 @@ function Set-NxtSetupCfg {
 	.SYNOPSIS
 		Set the contents from Setup.cfg to $global:SetupCfg.
 	.DESCRIPTION
-		Imports a Setup.cfg file in Ini format.
+		Imports a Setup.cfg file in INI format.
 	.PARAMETER Path
 		The path to the Setup.cfg file (including file name).
 	.EXAMPLE
