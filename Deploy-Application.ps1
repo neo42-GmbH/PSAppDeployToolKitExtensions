@@ -134,7 +134,7 @@ try {
 	##*===============================================
 
 	## App Global Variables
-	[string]$global:DetectedDisplayVersion = Get-NxtCurrentDisplayVersion
+	[string]$global:DetectedDisplayVersion = (Get-NxtCurrentDisplayVersion).DisplayVersion
 
 	Get-NxtVariablesFromDeploymentSystem
 	
@@ -186,16 +186,13 @@ function Main {
 		Defines if a reboot exitcode should be returned instead of the main Exitcode.
 		0 = do not override mainexitcode
 		1 = Set Mainexitcode to 3010 (Reboot required)
-		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will	be passed through.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER ReinstallMode
-		Defines how a reinstallation should be performed.
+		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will be passed through.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
 	.PARAMETER RegisterPackage
-		Specifies if package may be registered.
+		Specifies if package may be registered (maybe superseeded by deployment system!).
 		Defaults to the corresponding global value.
 	.EXAMPLE
 		Main
@@ -214,7 +211,7 @@ function Main {
 		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$PackageFamilyGUID = $global:PackageConfig.PackageFamilyGUID,
+		$PackageGUID = $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
@@ -240,7 +237,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\neoPackages\$PackageFamilyGUID -Value 'ProductName') -and -not (Test-NxtProductMemberIsInstalled -ProductGUIDAware $true) -and ($true -eq $RegisterPackage)) {
+				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and -not (Test-NxtProductMemberIsInstalled -ProductGUIDAware $true) -and ($true -eq $RegisterPackage)) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
