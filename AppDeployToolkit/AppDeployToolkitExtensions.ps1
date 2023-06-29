@@ -3309,8 +3309,6 @@ function Get-NxtRegisterOnly {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		#$PackageRegisterPath = "HKLM\Software\" + $global:PackageConfig.RegPackagesKey + "\" + $global:PackageConfig.PackageGUID,
-		## lines have to be fix after merge issue #302
 		$PackageRegisterPath = "HKLM\Software\" + $global:PackageConfig.RegPackagesKey + "\" + $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -4584,17 +4582,13 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'UserPartRevision' -Value $UserPartRevision
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'Version' -Value $AppVersion
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUID' -Value $ProductGUID
-			#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUIDAware' -Type 'Dword' -Value $ProductGUIDAware
-			## lines have to be fix after merge issue #302
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageFamilyGUID -Name 'ProductGUIDAware' -Type 'Dword' -Value $ProductGUIDAware
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUID' -Value $ProductGUID
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUIDAware' -Type 'Dword' -Value $ProductGUIDAware
 
 			## save currently installed application package as installed application for a product
 			if ($true -eq $ProductGUIDAware) {
 				Write-Log -message "Register product member application package with ProductGUID [$ProductGUID]." -Source ${CmdletName}
-				#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PackageGUID' -Value $PackageGUID
-				## lines have to be fix after merge issue #302
-				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PackageGUID' -Value $PackageFamilyGUID
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductGUID -Name 'PackageGUID' -Value $PackageGUID
 			}			
 
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
