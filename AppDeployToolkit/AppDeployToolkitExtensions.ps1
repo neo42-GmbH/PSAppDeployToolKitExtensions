@@ -7909,34 +7909,47 @@ function Uninstall-NxtOld {
 						}
 						else {
 							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
-								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
-								if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
-									try {
-										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
-									}
-									catch {
-									}
-									if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
-										[int32]$mainExitCode = 70001
-										$uninstallOldResult.MainExitCode = $mainExitCode
-										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
-										$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-										$uninstallOldResult.Success = $false
-										[bool]$ReturnWithError = $true
-										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
-										break
+								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
+									[string]$appEmpirumPackageVersionNumer = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'Version'
+									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
+								}
+								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or (($appEmpirumPackageGUID -eq $PackageGUID) -and ($appEmpirumPackageVersionNumer -ne $AppVersion))) {
+									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
+										try {
+											[string]$appendAW = [string]::Empty
+											if ((Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'MachineSetup') -eq "1") {
+												[string]$appendAW = " /AW"
+											}
+											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
+											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
+											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
+											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`""
+										}
+										catch {
+										}
+										if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+											[int32]$mainExitCode = 70001
+											$uninstallOldResult.MainExitCode = $mainExitCode
+											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
+											$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+											$uninstallOldResult.Success = $false
+											[bool]$ReturnWithError = $true
+											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
+											break
+										}
+										else {
+											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
+											$uninstallOldResult.Success = $true
+											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+										}
 									}
 									else {
-										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
-										$uninstallOldResult.Success = $true
+										$appEmpirumPackageVersion | Remove-Item -Recurse
+										$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
+										$uninstallOldResult.Success = $null
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 									}
-								}
-								else {
-									$appEmpirumPackageVersion | Remove-Item
-									$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
-									$uninstallOldResult.Success = $null
-									Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 								}
 							}
 							if ( !$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName") ) {
@@ -7964,34 +7977,47 @@ function Uninstall-NxtOld {
 						}
 						else {
 							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
-								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
-								if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
-									try {
-										cmd /c (Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')
-									}
-									catch {
-									}
+								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
+									[string]$appEmpirumPackageVersionNumer = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'Version'
+									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
+								}
+								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or (($appEmpirumPackageGUID -eq $PackageGUID) -and ($appEmpirumPackageVersionNumer -ne $AppVersion))) {
+									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 									if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
-										[int32]$mainExitCode = 70001
-										$uninstallOldResult.MainExitCode = $mainExitCode
-										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
-										$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-										$uninstallOldResult.Success = $false
-										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
-										[bool]$ReturnWithError = $true
-										break
+										try {
+											[string]$appendAW = [string]::Empty
+											if ((Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'MachineSetup') -eq "1") {
+												[string]$appendAW = " /AW"
+											}
+											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
+											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
+											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
+											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`""
+										}
+										catch {
+										}
+										if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
+											[int32]$mainExitCode = 70001
+											$uninstallOldResult.MainExitCode = $mainExitCode
+											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
+											$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+											$uninstallOldResult.Success = $false
+											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
+											[bool]$ReturnWithError = $true
+											break
+										}
+										else {
+											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
+											$uninstallOldResult.Success = $true
+											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+										}
 									}
 									else {
-										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
-										$uninstallOldResult.Success = $true
+										$appEmpirumPackageVersion | Remove-Item -Recurse
+										$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
+										$uninstallOldResult.Success = $null
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 									}
-								}
-								else {
-									$appEmpirumPackageVersion | Remove-Item
-									$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
-									$uninstallOldResult.Success = $null
-									Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 								}
 							}
 							if (!$ReturnWithError -and (($appEmpirumPackageVersions).Count -eq 0) -and (Test-Path -Path "HKLM:SOFTWARE\$RegPackagesKey\$AppVendor\$AppName")) {
