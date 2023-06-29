@@ -29,8 +29,6 @@
 	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
 .PARAMETER NeoForceLanguage
 	Can be used to explicitly specify the language will be used to install the application. Default is: [string]::Empty.
-.PARAMETER ProductGUIDMode
-	Allows uninstallation without unregister of application package and no removal of package maintenance folder, necessary for internal calls for member applications of same product only.
 .EXAMPLE
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; Exit $LastExitCode }"
 .EXAMPLE
@@ -65,9 +63,7 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[string]$DeploymentSystem = [string]::Empty,
 	[Parameter(Mandatory = $false)]
-	[string]$NeoForceLanguage = [string]::Empty,
-	[Parameter(Mandatory = $false)]
-	[switch]$ProductGUIDMode = $false
+	[string]$NeoForceLanguage = [string]::Empty
 )
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
@@ -105,7 +101,6 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 [string]$deployAppScriptVersion = [string]'##REPLACEVERSION##'
 [string]$deployAppScriptDate = '02/05/2023'
 [hashtable]$deployAppScriptParameters = $psBoundParameters
-[bool]$productGUIDMode = $ProductGUIDMode
 ## Variables: Environment
 If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
@@ -163,18 +158,10 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
-	.PARAMETER ProductGUIDMode
-		Allows uninstallation without awareness of product membership for the application package and without unregister of application package and no removal of package maintenance folder.
-		Necessary for internal calls for member applications of same product only.
-		Defaults to the corresponding main script 'Deploy-Application.ps1' parameter switch value.
-	.PARAMETER ProductGUID
-		Specifies the registry key name for membership GUID of assigned application package for a product.
-		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER ProductGUIDAware
-		Defines if product membership should be recognized for the assigned application package.
-		If this value is set to '$false' this package will processed as independent application package.
-		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" of assigned application package member, by default the key 'RegPackagesKey' is 'neoPackages'.
+	.PARAMETER ProductGUIDRemovalAware
+		Defines an assigned application package should be recognized for unregister on uninstallation of the product.
+		If this value is set to '$false' this package will processed as independent application package on product uninstallation.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
@@ -200,15 +187,8 @@ function Main {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
-		[Parameter(Mandatory = $false)]
 		[bool]
-        $ProductGUIDMode = $productGUIDMode,
-		[Parameter(Mandatory = $false)]
-		[String]
-		$ProductGUID = $global:PackageConfig.ProductGUID,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$ProductGUIDAware = $global:PackageConfig.ProductGUIDAware,
+		$ProductGUIDRemovalAware = $global:PackageConfig.ProductGUIDRemovalAware,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
@@ -237,7 +217,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and -not (Test-NxtProductMemberIsInstalled -ProductGUIDAware $true) -and ($true -eq $RegisterPackage)) {
+				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and -not (Test-NxtProductMemberIsInstalled -ProductGUIDRemovalAware $true) -and ($true -eq $RegisterPackage)) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
@@ -254,25 +234,22 @@ function Main {
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ($true -eq $(Test-NxtAppIsInstalled -ProductGUIDAware $ProductGUIDAware -DeploymentMethod $InstallMethod) -or $true -eq $global:AppInstallDetectionCustomResult) {
+					if ($true -eq $(Test-NxtAppIsInstalled -ProductGUIDRemovalAware $ProductGUIDRemovalAware -DeploymentMethod $InstallMethod) -or $true -eq $global:AppInstallDetectionCustomResult) {
 						if ($true -eq $global:AppInstallDetectionCustomResult) {
 							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
 						}
-						[string]$activePackageGUID = $(Get-NxtProductMember)
-						if ( (![string]::IsNullOrEmpty($activePackageGUID)) -and ($PackageGUID -ne $activePackageGUID)) {
+						[string]$assignedPackageGUID = $(Get-NxtProductMember)
+						if ( (![string]::IsNullOrEmpty($assignedPackageGUID)) -and ($PackageGUID -ne $assignedPackageGUID)) {
 							## during reinstall we have to uninstall the real installed application of the product, so the matching reinstall mode "Install" is required to do this afterwards!
-							Write-Log -Message "Product membership detected. Application will be switched to current package PackageGUID [$PackageGUID] and required reinstall mode will be set..." -Source ${CmdletName}
-							#[string]$activePackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").UninstallString
-							[string]$activePackageUninstallString = "$(((Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").UninstallString) -Replace 'ps1`" uninstall','ps1`" -Deploymenttype uninstall -ProductGUIDMode')"
-							Write-Log -Message "Calling uninstallation of found product member application package: '$activePackageUninstallString'." -Source ${CmdletName}
-							#$runUninstallString = (Start-Process -FilePath "$(($activePackageUninstallString -split '"', 3)[1])" -ArgumentList "$(((($activePackageUninstallString -split '"', 3)[2]).replace('"','`"').trim()) -Replace 'ps1`" uninstall','ps1`" `-Deploymenttype uninstall `-ProductGUIDMode')" -PassThru -Wait)
-							$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$activePackageUninstallString`"" -PassThru -Wait)
+							Write-Log -Message "Product membership detected. Application will be switched to the assigned package with PackageGUID [$assignedPackageGUID] and required reinstall mode will be set..." -Source ${CmdletName}
+							[string]$currentPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").UninstallString
+							Write-Log -Message "Calling uninstallation of found product member application package: '$currentPackageUninstallString'." -Source ${CmdletName}
+							$runUninstallString = (Start-Process -FilePath "$(($currentPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($currentPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
+							#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$currentPackageUninstallString`"" -PassThru -Wait)
 							$runUninstallString.WaitForExit()
 							if ($runUninstallString.ExitCode -ne 0) {
 								Exit-NxtScriptWithError -ErrorMessage "Uninstallation of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
 							}
-							Write-Log -message "Remove registration of ProductGUID [$ProductGUID]." -Source ${CmdletName}
-							Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID"
 							[string]$reinstallMode = "Install"
 						}
 						else {
@@ -343,41 +320,17 @@ function Main {
 			"Uninstall" {
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
-				[string]$activePackageGUID = $(Get-NxtProductMember)
-				if ( (![string]::IsNullOrEmpty($activePackageGUID)) -and ($PackageGUID -ne $activePackageGUID)) {
-					[PSADTNXT.NxtApplicationResult]$mainNxtResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-					## during uninstall we have to uninstall the real installed application of the product!
-					Write-Log -Message "Product membership detected. Application will be switched to current installed package PackageGUID [$PackageGUID] and proceed with it's uninstallation..." -Source ${CmdletName}
-					#[string]$activePackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").UninstallString
-					[string]$activePackageUninstallString = "$(((Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$activePackageGUID").UninstallString) -Replace 'ps1`" uninstall','ps1`" -Deploymenttype uninstall -ProductGUIDMode')"
-					Write-Log -Message "Calling uninstallation of found product member application package: '$activePackageUninstallString'." -Source ${CmdletName}
-					#$runUninstallString = (Start-Process -FilePath "$(($activePackageUninstallString -split '"', 3)[1])" -ArgumentList "$(((($activePackageUninstallString -split '"', 3)[2]).replace('"','`"').trim()) -Replace 'ps1`" uninstall','ps1`" `-Deploymenttype uninstall `-ProductGUIDMode')" -PassThru -Wait)
-					$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$activePackageUninstallString`"" -PassThru -Wait)
-					$runUninstallString.WaitForExit()
-					if ($runUninstallString.ExitCode -ne 0) {
-						$mainNxtResult.Success = $false
-						Exit-NxtScriptWithError -ErrorMessage "Uninstallation of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
-					}
-					Write-Log -message "Remove registration of ProductGUID [$ProductGUID]." -Source ${CmdletName}
-					Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID"
-					$mainNxtResult.Success = $true
-				}
-				else {
-					[string]$script:installPhase = 'Package-Preparation'
-					Show-NxtInstallationWelcome -IsInstall $false
-					Initialize-NxtUninstallApplication
-					CustomUninstallBegin
-					[string]$script:installPhase = 'Package-Uninstallation'
-					[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
-					CustomUninstallEnd -ResultToCheck $mainNxtResult
-				}
+				Show-NxtInstallationWelcome -IsInstall $false
+				Initialize-NxtUninstallApplication
+				CustomUninstallBegin
+				[string]$script:installPhase = 'Package-Uninstallation'
+				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
+				CustomUninstallEnd -ResultToCheck $mainNxtResult
 				if ($false -ne $mainNxtResult.Success) {
 					[string]$script:installPhase = 'Package-Completition'
 					Complete-NxtPackageUninstallation
-					if ($false -eq $ProductGUIDMode) {
-						[string]$script:installPhase = 'Package-Unregistration'
-						Unregister-NxtPackage
-					}
+					[string]$script:installPhase = 'Package-Unregistration'
+					Unregister-NxtPackage
 				}
 				else {
 					Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
