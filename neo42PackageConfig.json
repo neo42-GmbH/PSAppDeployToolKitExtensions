@@ -25,6 +25,14 @@
   "AppRevision": "0",
   "AppLang": "DEU",
   "PackageGUID": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
+  "DependentPackages": [
+    {
+      "GUID": "{04243331-E468-41F5-BA2B-71750CE7B40C}",
+      "DesiredState": "Absent",
+      "OnConflict": "Uninstall",
+      "ErrorMessage": "Office 2016 32Bit is required"
+    }
+  ],
   "RegPackagesKey": "neoPackages",
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
   "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",

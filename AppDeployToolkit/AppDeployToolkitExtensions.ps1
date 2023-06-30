@@ -5079,6 +5079,60 @@ function Repair-NxtApplication {
 	}
 }
 #endregion
+#region Function Resolve-NxtDependentPackage
+function Resolve-NxtDependentPackage {
+	<#
+	.DESCRIPTION
+		Checks if depentent packages are (not) installed and updates the status of the package accordingly.
+	.PARAMETER DependentPackages
+		DependentPackages to check.
+	.EXAMPLE
+		Resolve-NxtDependentPackages -DependentPackages $Global:PackageConfig.DependentPackages
+	.OUTPUTS
+		PSADTNXT.ResolvedPackagesResult
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[array]
+		$DependentPackages = $Global:PackageConfig.DependentPackages
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		foreach ($dependentPackage in $DependentPackages){
+			$packagePresence = Test-NxtDependentPackage -DependentPackage $DependentPackage
+		}
+		[PSADTNXT.RegisteredPackage]$registeredPackage = Get-NxtRegisteredPackage -GUID $GUID
+		if ($registeredPackage.State -eq $DesiredState) {
+			Write-Log -Message "Dependent package '$($registeredPackage.Name)' is already in desired state '$DesiredState'." -Severity 1 -Source ${CmdletName}
+		}
+		else {
+			switch ($OnConflict) {
+				{
+					$OnConflict -eq "Uninstall" -and
+					$DesiredState -eq "Absent"
+				} {
+					Read-Host -Prompt "Uninstall"
+				}
+				Fail {
+					Read-Host -Prompt "Fail"
+				}
+				Default {}
+			}
+		}
+
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Set-NxtIniValue
 function Set-NxtIniValue {
 	<#
@@ -7239,7 +7293,7 @@ function Test-NxtObjectValidation {
 				## check for allowed object types and trigger the validation function for sub objects
 				switch ($ValidationRule.$validationRuleKey.Type) {
 					"System.Array" {
-						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match $ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName))){
+						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match [Regex]::Escape($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)))){
 							Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)"
 						}
 						else{

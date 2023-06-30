@@ -25,6 +25,49 @@
         "Type": "System.String",
         "AllowEmpty": false
     },
+    "DependentPackages": {
+        "SubKeys": {
+            "GUID": {
+                "Mandatory": false,
+                "HelpText": "DependentPackages.DirectValues is optional and must be a string with a valid GUID.",
+                "Type": "System.String",
+                "Regex": {
+                    "Pattern": "^\\{[a-zA-Z0-9]{8}-([a-zA-Z0-9]{4}-){3}[a-zA-Z0-9]{12}\\}$",
+                    "Operator": "match"
+                }
+            },
+            "DesiredState": {
+                "Mandatory": true,
+                "HelpText": "DependentPackages.DesiredState is mandatory and must be a string with a value of Present or Absent.",
+                "Type": "System.String",
+                "Validateset": [
+                    "Present",
+                    "Absent"
+                ]
+            },
+            "OnConflict": {
+                "Mandatory": true,
+                "HelpText": "DependentPackages.OnConflict is mandatory and must be a string with a value of Continue or Stop.",
+                "Type": "System.String",
+                "Validateset": [
+                    "Fail",
+                    "Uninstall",
+                    "Warn",
+                    "Continue"
+                ]
+            },
+            "ErrorMessage": {
+                "Mandatory": false,
+                "HelpText": "DependentPackages.ErrorMessage is optional and must be a string.",
+                "Type": "System.String"
+            }
+        },
+        "HelpText": "DependentPackages is optional and must be an array PSCustomObjects.",
+        "AllowEmpty": true,
+        "ContainsDirectValues": false,
+        "Type": "System.Array",
+        "Mandatory": true
+    },
     "UserPartRevision": {
         "Mandatory": true,
         "HelpText": "UserPartRevision is mandatory and must be a string.",
