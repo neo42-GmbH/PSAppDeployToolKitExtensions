@@ -158,11 +158,6 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
-	.PARAMETER ProductGUIDRemovalAware
-		Defines an assigned application package should be recognized for unregister on uninstallation of the product.
-		If this value is set to '$false' this package will processed as independent application package on product uninstallation.
-		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
-		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
 		Defaults to the corresponding value from the PackageConfig object.
@@ -187,8 +182,6 @@ function Main {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
-		[bool]
-		$ProductGUIDRemovalAware = $global:PackageConfig.ProductGUIDRemovalAware,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
@@ -217,7 +210,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and -not (Test-NxtProductMemberIsInstalled -ProductGUIDRemovalAware $true) -and ($true -eq $RegisterPackage)) {
+				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and (![string]::IsNullOrEmpty($(Get-NxtProductMember))) -and ($true -eq $RegisterPackage) ) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
@@ -228,33 +221,18 @@ function Main {
 				else {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
+					[string]$removedPackageGUID = Remove-NxtProductMember
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
 					if ($showInstallationWelcomeResult -ne 0) {
 						Exit-Script -ExitCode $showInstallationWelcomeResult
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ($true -eq $(Test-NxtAppIsInstalled -ProductGUIDRemovalAware $ProductGUIDRemovalAware -DeploymentMethod $InstallMethod) -or $true -eq $global:AppInstallDetectionCustomResult) {
+					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod) -or $true -eq $global:AppInstallDetectionCustomResult) {
 						if ($true -eq $global:AppInstallDetectionCustomResult) {
 							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
 						}
-						[string]$assignedPackageGUID = $(Get-NxtProductMember)
-						if ( (![string]::IsNullOrEmpty($assignedPackageGUID)) -and ($PackageGUID -ne $assignedPackageGUID)) {
-							## during reinstall we have to uninstall the real installed application of the product, so the matching reinstall mode "Install" is required to do this afterwards!
-							Write-Log -Message "Product membership detected. Application will be switched to the assigned package with PackageGUID [$assignedPackageGUID] and required reinstall mode will be set..." -Source ${CmdletName}
-							[string]$currentPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").UninstallString
-							Write-Log -Message "Calling uninstallation of found product member application package: '$currentPackageUninstallString'." -Source ${CmdletName}
-							$runUninstallString = (Start-Process -FilePath "$(($currentPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($currentPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
-							#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$currentPackageUninstallString`"" -PassThru -Wait)
-							$runUninstallString.WaitForExit()
-							if ($runUninstallString.ExitCode -ne 0) {
-								Exit-NxtScriptWithError -ErrorMessage "Uninstallation of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
-							}
-							[string]$reinstallMode = "Install"
-						}
-						else {
-							[string]$reinstallMode = $(Switch-NxtMSIReinstallMode)
-						}
+						[string]$reinstallMode = $(Switch-NxtMSIReinstallMode)
 						Write-Log -Message "[$script:installPhase] selected mode: $reinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($reinstallMode) {
 							"Reinstall" {
@@ -309,7 +287,7 @@ function Main {
 					if ($true -eq $RegisterPackage) {
 						## Register package for uninstall
 						[string]$script:installPhase = 'Package-Registration'
-						Register-NxtPackage
+						Register-NxtPackage -ProductMemberToRestore $removedPackageGUID
 					}
 				}
 				else {
@@ -320,21 +298,23 @@ function Main {
 			"Uninstall" {
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
-				Show-NxtInstallationWelcome -IsInstall $false
-				Initialize-NxtUninstallApplication
-				CustomUninstallBegin
-				[string]$script:installPhase = 'Package-Uninstallation'
-				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
-				CustomUninstallEnd -ResultToCheck $mainNxtResult
-				if ($false -ne $mainNxtResult.Success) {
-					[string]$script:installPhase = 'Package-Completition'
-					Complete-NxtPackageUninstallation
-					[string]$script:installPhase = 'Package-Unregistration'
-					Unregister-NxtPackage
+				if ($true -eq $(Test-NxtPackageIsInstalled)) {
+					Show-NxtInstallationWelcome -IsInstall $false
+					Initialize-NxtUninstallApplication
+					CustomUninstallBegin
+					[string]$script:installPhase = 'Package-Uninstallation'
+					[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
+					CustomUninstallEnd -ResultToCheck $mainNxtResult
+					if ($false -ne $mainNxtResult.Success) {
+						[string]$script:installPhase = 'Package-Completition'
+						Complete-NxtPackageUninstallation
+					}
+					else {
+						Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+					}
 				}
-				else {
-					Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
-				}
+				[string]$script:installPhase = 'Package-Unregistration'
+				Unregister-NxtPackage
 				## END OF UNINSTALL
 			}
 			"InstallUserPart" {

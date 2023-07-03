@@ -339,15 +339,18 @@ parent: /
 universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" for a single product (may be a collection of more than one package)
 note: the 3 very left digits inside of curly brackets are always "042"
 ```
+all application packages with same 'ProductGUID' are remain registered only and all product member package registrations will be removed first if the one appliction package which is registred and installed will be removed from the client
 
-**"ProductGUIDAware"** *optional bool value*
+**"HideInProductMemberSearch"** *optional bool value*
 
 parent: /
+
+if no value 'ProductGUID' is defined this value has no functionality
 ```
 default value: false
-switch to recognize an assignement of a ProductGUID (product membership) for the current application package for management of it's un/installation behavior
+switch to hide an assignement of a ProductGUID (product membership) to the current application package when searching for product member application packages by other application packages
 (valid are only 'true' and 'false')
-note: if a ProductGUID should be used, during (re)installation current package will be substitute an actual installed of same product group and leaf the other one registred on client, during uninstall it will remove all entries of each product member with active awareness if current package is really installed on client, otherwise the package just unregister itself
+note: the product assignment will be stored for the application package always, but if this value is set to '$true' during processing other product members it operates like an default independent application package only and the behavior on installation and uninstallation is like a product member (if a value 'ProductGUID' is defined)
 ```
 
 **"PackageGUID"** *mandatory string value*
