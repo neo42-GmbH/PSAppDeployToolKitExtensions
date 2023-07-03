@@ -3255,6 +3255,7 @@ function Get-NxtProductMember {
 				Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
 					(Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID" -and 
 					(Get-ItemProperty -Path $_.PSPath).HideInProductMemberSearch -eq "0"
+					(Get-ItemProperty -Path $_.PSPath).SoftwareUninstalled -eq "0"
 				} | Where-Object {-not ($_.Name -like "*_UndoUnregister")} | ForEach-Object {
 					[string]$currentRegistredPackageGUID = $(Split-Path -Path "$_" -Leaf)
 					[string]$currentUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentRegistredPackageGUID" -Value 'UninstallString')
@@ -8388,6 +8389,7 @@ function Unregister-NxtPackage {
 				Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
 					(Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID" -and 
 					(Get-ItemProperty -Path $_.PSPath).HideInProductMemberSearch -eq "0"
+					(Get-ItemProperty -Path $_.PSPath).SoftwareUninstalled -eq "0"
 				} | Where-Object {-not ($_.Name -like "*_UndoUnregister")} | ForEach-Object {
 					[string]$assignedPackageGUID = Split-Path -Path "$_" -Leaf
 					if ($true -eq $(Test-NxtPackageIsInstalled -PackageGUID "$assignedPackageGUID")) {
