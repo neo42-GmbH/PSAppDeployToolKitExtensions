@@ -3255,7 +3255,12 @@ function Get-NxtProductMember {
 				(Get-ItemProperty -Path $_.PSPath).HideInProductMemberSearch -eq "0"
 				} | ForEach-Object {
 				[string]$currentRegistredPackageGUID = $(Split-Path -Path "$_" -Leaf)
-				[string]$currentUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentRegistredPackageGUID" -Value 'UninstallString')
+				if ( -not ($false -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").SoftwareUninstalled) ) {
+					[string]$currentUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentRegistredPackageGUID" -Value 'UninstallString')
+				}
+				else {
+					[string]$currentUninstallString = [string]::Empty
+				}
 				if ( ([string]::IsNullOrEmpty($foundcurrentPackageGUID)) -and (![string]::IsNullOrEmpty($currentUninstallString)) ) {
 					[string]$foundcurrentPackageGUID = $currentRegistredPackageGUID
 				}
@@ -4602,10 +4607,14 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'Version' -Value $AppVersion
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'HideInProductMemberSearch' -Type 'Dword' -Value $HideInProductMemberSearch
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUID' -Value $ProductGUID
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'SoftwareUninstalled' -Type 'Dword' -Value '0'
 
 			if (![string]::IsNullOrEmpty($ProductMemberToRestore)) {
 				Move-Item "Registry::HKLM\Software\$RegPackagesKey\${ProductMemberToRestore}_UndoUnregister" -Destination "Registry::HKLM\Software\$RegPackagesKey\$ProductMemberToRestore"
-				Write-Log -message "'Restored 'ProductGUID' [$ProductGUID] to product member application package with PackageGUID '$ProductMemberToRestore'."  -Source ${cmdletName}
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductMemberToRestore -Name 'SoftwareUninstalled' -Type 'Dword' -Value '1'
+				Write-Log -message "Restored 'ProductGUID' [$ProductGUID] to product member application package with PackageGUID '$ProductMemberToRestore'." -Source ${cmdletName}
+				Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductMemberToRestore -Name 'SystemComponent' -Type 'Dword' -Value '1'
+				Write-Log -message "Uninstall entry for product member application package with PackageGUID '$ProductMemberToRestore' hided." -Source ${cmdletName}
 			}
 
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
@@ -7686,7 +7695,7 @@ function Test-NxtPackageIsInstalled {
 	}
 	Process {
 		Write-Log -Message "Checking if application package is installed..." -Source ${CmdletName}
-		If ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID").UninstallString) {
+		if ( -not ($false -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").SoftwareUninstalled) ) {
 			Write-Log -Message "Found one installed application package matching PackageGUID [$PackageGUID]." -Source ${CmdletName}
 			Write-Output $true
 		}
