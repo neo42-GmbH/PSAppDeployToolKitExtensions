@@ -4604,8 +4604,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUID' -Value $ProductGUID
 
 			if (![string]::IsNullOrEmpty($ProductMemberToRestore)) {
-				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductMemberToRestore -Name 'ProductGUID' -Type 'Dword' -Value $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$ProductMemberToRestore").ProductGUID_backup
-				Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductMemberToRestore -Name 'ProductGUID_backup'
+				Move-Item "Registry::HKLM\Software\$RegPackagesKey\${ProductMemberToRestore}_UndoUnregister" -Destination "Registry::HKLM\Software\$RegPackagesKey\$ProductMemberToRestore"
 				Write-Log -message "'Restored 'ProductGUID' [$ProductGUID] to product member application package with PackageGUID '$ProductMemberToRestore'."  -Source ${cmdletName}
 			}
 
@@ -5056,9 +5055,8 @@ function Remove-NxtProductMember {
 					Write-Log -Message "No maintenance subfolder for assigned application package found!" -Severity 2 -Source ${CmdletName}
 					throw "No application maintenance subfolder found!"
 				}
-				Write-Log -Message "Backup assigned value 'ProductGUID' of found product member application package and calling package uninstallation: '$assignedPackageUninstallString'." -Source ${CmdletName}
-				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID" -Name 'ProductGUID_backup' -Type 'String' -Value $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").ProductGUID
-				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID" -Name 'ProductGUID' -Type 'String' -Value ([string]::Empty)
+				Write-Log -Message "Save registered entries of found product member application package for undo and calling package uninstallation: '$assignedPackageUninstallString'." -Source ${CmdletName}
+				Copy-Item "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID" -Destination "Registry::HKLM\Software\$RegPackagesKey\${assignedPackageGUID}_UndoUnregister"
 				$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
 				#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$assignedPackageUninstallString`"" -PassThru -Wait)
 				$runUninstallString.WaitForExit()
@@ -8390,7 +8388,7 @@ function Unregister-NxtPackage {
 						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\" 
 						Start-Sleep -Seconds 1
 						Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -NoWait
-						Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID
+						Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
 					}
 				}
 				Write-Log -Message "All folder and registry entries of assigned product member application packages with 'ProductGUID' [$ProductGUID] are cleaned." -Source ${CmdletName}
@@ -8402,9 +8400,7 @@ function Unregister-NxtPackage {
 			Start-Sleep -Seconds 1
 			Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -NoWait
 			Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID
-			if ( ![string]::IsNullOrEmpty($(Get-RegistryKey -Key "HKLM\Software\$RegPackagesKey\$PackageGUID" -Value 'ProductGUID_backup')) ) {
-				Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID
-			}
+			Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID
 			Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
 		}
 		catch {
