@@ -3203,6 +3203,93 @@ function Get-NxtProcessorArchiteW6432 {
 	}
 }
 #endregion
+#region Function Get-NxtRegisteredPackage
+function Get-NxtRegisteredPackage {
+	<#
+	.SYNOPSIS
+		Detects if a package is registered in the registry.
+	.DESCRIPTION
+		Detects if a package is registered in the registry.
+	.PARAMETER PackageGUID
+		Filter by GUID of the package.
+	.PARAMETER ProductGuid
+		Filter by GUID of the product.
+	.PARAMETER InstalledState
+		Filter by installed state.
+	.EXAMPLE
+		Get-NxtRegisteredPackage -PackageGUID "12345678-1234-1234-1234-123456789012"
+	.EXAMPLE
+		Get-NxtRegisteredPackage -ProductGuid "12345678-1234-1234-1234-123456789012"
+	.EXAMPLE
+		Get-NxtRegisteredPackage -InstalledState 1 -ProductGuid "12345678-1234-1234-1234-123456789012"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProductGuid,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet("0", "1")]
+		$InstalledState,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $Global:PackageConfig.RegPackagesKey
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if($false -eq (Test-Path -Path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey")){
+			return
+		}
+		[Microsoft.Win32.RegistryKey[]]$neoPackages = Get-ChildItem "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey"
+		foreach ($neoPackage in $neoPackages) {
+			[PSADTNXT.NxtRegisteredApplication]$registeredApplication = New-Object -TypeName PSADTNXT.NxtRegisteredApplication
+			[string]$neoPackageGUID = $neoPackage.PSChildName
+			## Check if the PackageGUID is a valid GUID
+			if ( $false -eq [System.Guid]::TryParse($neoPackageGUID, [ref][System.Guid]::Empty)){
+				continue
+			}
+			if ([string]::IsNullOrEmpty($PackageGUID)) {
+				if ( $false -eq $neoPackageGUID.StartsWith("{042")) {
+					continue
+				}
+			}else{
+				if ($PackageGUID -ne $neoPackageGUID) {
+					continue
+				}
+			}
+			[string]$neoProductGuid = Get-RegistryKey -Key "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey\$neoPackageGUID" -Value "ProductGUID"
+			if($false -eq [string]::IsNullOrEmpty($ProductGuid)){
+				if ($neoProductGuid -ne $ProductGuid) {
+					continue
+				}
+			}
+			##cast 1 into true and 0 into false
+			[bool]$neoPackageIsInstalled = ( (Get-RegistryKey -Key "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$neoPackageGUID" -Value "Installed" ) -eq "1" )
+			if($false -eq [string]::IsNullOrEmpty($InstalledState)){
+				if ([System.Convert]::ToBoolean([System.Convert]::ToInt32($InstalledState)) -ne $neoPackageIsInstalled){
+					continue
+				}
+			}
+			$registeredApplication.PackageGUID = $neoPackageGUID
+			$registeredApplication.ProductGUID = $neoProductGuid
+			$registeredApplication.Installed = $neoPackageIsInstalled
+			Write-Output $registeredApplication
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Get-NxtRegisterOnly
 function Get-NxtRegisterOnly {
 	<#
