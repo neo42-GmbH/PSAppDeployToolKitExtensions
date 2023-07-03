@@ -3249,28 +3249,26 @@ function Get-NxtProductMember {
 	Process {
 		Write-Log -Message "Checking for assigned application packages to ProductGUID [$ProductGUID]..." -Source ${CmdletName}
 		[string]$foundcurrentPackageGUID = [string]::Empty
+		[string]$currentUninstallString = [string]::Empty
 		if ( (![string]::IsNullOrEmpty($ProductGUID)) -and (![string]::IsNullOrEmpty($PackageGUID)) ) {
-			Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
-				(Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID" -and 
-				(Get-ItemProperty -Path $_.PSPath).HideInProductMemberSearch -eq "0"
-				} | ForEach-Object {
-				[string]$currentRegistredPackageGUID = $(Split-Path -Path "$_" -Leaf)
-				if ( -not ($false -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").SoftwareUninstalled) ) {
+			if ($true -eq $(Test-NxtPackageIsInstalled)) {
+				Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
+					(Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID" -and 
+					(Get-ItemProperty -Path $_.PSPath).HideInProductMemberSearch -eq "0"
+				} | Where-Object {-not ($_.Name -like "*_UndoUnregister")} | ForEach-Object {
+					[string]$currentRegistredPackageGUID = $(Split-Path -Path "$_" -Leaf)
 					[string]$currentUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentRegistredPackageGUID" -Value 'UninstallString')
+					if ( ([string]::IsNullOrEmpty($foundcurrentPackageGUID)) -and (![string]::IsNullOrEmpty($currentUninstallString)) ) {
+						[string]$foundcurrentPackageGUID = $currentRegistredPackageGUID
+					}
+					elseif ( (![string]::IsNullOrEmpty($foundcurrentPackageGUID)) -and (![string]::IsNullOrEmpty($currentUninstallString)) ) {
+						Write-Log -Message "Found more than one assigned product member application is registered and installed."  -Severity 3 -Source ${CmdletName}
+						throw "Inconsistency: More than one registered and installed product member application at same time!"
+					}
 				}
-				else {
-					[string]$currentUninstallString = [string]::Empty
+				if (![string]::IsNullOrEmpty($foundcurrentPackageGUID)) {
+					Write-Log -Message "Found one assigned product member application is registered and installed." -Source ${CmdletName}
 				}
-				if ( ([string]::IsNullOrEmpty($foundcurrentPackageGUID)) -and (![string]::IsNullOrEmpty($currentUninstallString)) ) {
-					[string]$foundcurrentPackageGUID = $currentRegistredPackageGUID
-				}
-				elseif ( (![string]::IsNullOrEmpty($foundcurrentPackageGUID)) -and (![string]::IsNullOrEmpty($currentUninstallString)) ) {
-					Write-Log -Message "Found more than one assigned product member application is registered and installed."  -Severity 3 -Source ${CmdletName}
-					throw "Inconsistency: More than one registered and installed product member application at same time!"
-				}
-			}
-			if (![string]::IsNullOrEmpty($foundcurrentPackageGUID)) {
-				Write-Log -Message "Found one assigned product member application is registered and installed." -Source ${CmdletName}
 			}
 			else {
 				Write-Log -Message "No assigned product member application seems to be registered and installed." -Severity 2 -Source ${CmdletName}
@@ -5066,6 +5064,7 @@ function Remove-NxtProductMember {
 				}
 				Write-Log -Message "Save registered entries of found product member application package for undo and calling package uninstallation: '$assignedPackageUninstallString'." -Source ${CmdletName}
 				Copy-Item "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID" -Destination "Registry::HKLM\Software\$RegPackagesKey\${assignedPackageGUID}_UndoUnregister"
+				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID -Name 'ProductGUID' -Value ([string]::Empty)
 				$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
 				#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$assignedPackageUninstallString`"" -PassThru -Wait)
 				$runUninstallString.WaitForExit()
@@ -7695,7 +7694,7 @@ function Test-NxtPackageIsInstalled {
 	}
 	Process {
 		Write-Log -Message "Checking if application package is installed..." -Source ${CmdletName}
-		if ( -not ($false -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").SoftwareUninstalled) ) {
+		if ( ($false -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").SoftwareUninstalled) -or ($false -eq $(Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Value 'SoftwareUninstalled')) ) {
 			Write-Log -Message "Found one installed application package matching PackageGUID [$PackageGUID]." -Source ${CmdletName}
 			Write-Output $true
 		}
@@ -8386,12 +8385,12 @@ function Unregister-NxtPackage {
 		try {
 			if ( ![string]::IsNullOrEmpty($(Get-RegistryKey -Key "HKLM\Software\$RegPackagesKey\$PackageGUID" -Value 'ProductGUID')) ) {
 				Write-Log -Message "Cleanup registry entries and folder of assigned product member application packages with 'ProductGUID' [$ProductGUID]..." -Source ${CmdletName}
-					Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
+				Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
 					(Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID" -and 
 					(Get-ItemProperty -Path $_.PSPath).HideInProductMemberSearch -eq "0"
-					} | ForEach-Object {
+				} | Where-Object {-not ($_.Name -like "*_UndoUnregister")} | ForEach-Object {
 					[string]$assignedPackageGUID = Split-Path -Path "$_" -Leaf
-					if ($false -eq (Test-Path -Path  "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -PathType 'Container')) {
+					if ($true -eq $(Test-NxtPackageIsInstalled -PackageGUID "$assignedPackageGUID")) {
 						Write-Log -message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
 						$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
 						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\" 
