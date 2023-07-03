@@ -5106,24 +5106,20 @@ function Resolve-NxtDependentPackage {
 	}
 	Process {
 		foreach ($dependentPackage in $DependentPackages){
-			$packagePresence = Test-NxtDependentPackage -DependentPackage $DependentPackage
+			$packagePresence = Get-NxtInstalledApplication
 		}
 		[PSADTNXT.RegisteredPackage]$registeredPackage = Get-NxtRegisteredPackage -GUID $GUID
 		if ($registeredPackage.State -eq $DesiredState) {
 			Write-Log -Message "Dependent package '$($registeredPackage.Name)' is already in desired state '$DesiredState'." -Severity 1 -Source ${CmdletName}
 		}
 		else {
-			switch ($OnConflict) {
-				{
-					$OnConflict -eq "Uninstall" -and
-					$DesiredState -eq "Absent"
-				} {
-					Read-Host -Prompt "Uninstall"
-				}
-				Fail {
-					Read-Host -Prompt "Fail"
-				}
-				Default {}
+			if(
+				$OnConflict -eq "Uninstall" -and
+				$DesiredState -eq "Absent"
+			){
+
+			}elseif ( $OnConflict -eq "Fail" ){
+
 			}
 		}
 
