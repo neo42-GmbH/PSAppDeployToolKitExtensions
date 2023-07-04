@@ -230,7 +230,7 @@ function Main {
 				else {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
-					[string]$removedPackageGUID = Remove-NxtProductMember
+					Remove-NxtProductMember
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
 					if ($showInstallationWelcomeResult -ne 0) {
 						Exit-Script -ExitCode $showInstallationWelcomeResult
