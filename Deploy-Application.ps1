@@ -239,9 +239,11 @@ function Main {
 						if ($true -eq $global:AppInstallDetectionCustomResult) {
 							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
 						}
-						[string]$reinstallMode = $(Switch-NxtMSIReinstallMode)
-						Write-Log -Message "[$script:installPhase] selected mode: $reinstallMode" -Source $deployAppScriptFriendlyName
-						switch ($reinstallMode) {
+						else {
+						[string]$global:PackageConfig.ReinstallMode = $(Switch-NxtMSIReinstallMode)
+						}
+						Write-Log -Message "[$script:installPhase] selected Mode: $global:PackageConfig.ReinstallMode" -Source $deployAppScriptFriendlyName
+						switch ($global:PackageConfig.ReinstallMode) {
 							"Reinstall" {
 								CustomReinstallPreUninstall
 								[string]$script:installPhase = 'Package-Reinstallation'
@@ -273,7 +275,7 @@ function Main {
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
 							Default {
-								Throw "Unsupported 'ReinstallMode' property: $ReinstallMode"
+								Throw "Unsupported 'ReinstallMode' property: $global:PackageConfig.ReinstallMode"
 							}
 						}
 					}
