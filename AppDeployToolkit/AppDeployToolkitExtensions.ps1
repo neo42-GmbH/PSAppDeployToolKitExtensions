@@ -3306,67 +3306,6 @@ function Get-NxtRegisteredPackage {
 	}
 }
 #endregion
-#region Function Get-NxtProductMember
-function Get-NxtProductMember {
-	<#
-	.SYNOPSIS
-		Retrieves the 'PackageGUID' of a registered and installed application package of a given product.
-	.DESCRIPTION
-		Returns the found 'PackageGUID' on successful test of all registered and installed packages for an assigned 'ProductGUID'.
-		It will be checked if this package is registered (is found as installed application packages under 'RegPackagesKey') and installed (the regular package registry uninstall key is present).
-	.PARAMETER ProductGUID
-		Specifies a membership GUID for a product of an application package.
-		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RegPackagesKey
-		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
-		Defaults to the corresponding value from the PackageConfig object.
-	.EXAMPLE
-		Get-NxtProductMember
-	.EXAMPLE
-		Get-NxtProductMember -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -PackageGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
-	.OUTPUTS
-		System.String.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $false)]
-		[String]
-		$ProductGUID = $global:PackageConfig.ProductGUID,
-		[Parameter(Mandatory = $false)]
-		[String]
-		$PackageGUID = $global:PackageConfig.PackageGUID,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		Write-Log -Message "Checking for assigned application packages to ProductGUID [$ProductGUID]..." -Source ${CmdletName}
-		if (![string]::IsNullOrEmpty($ProductGUID)) {Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
-			(Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID"
-			} | Where-Object {
-				-not ($_.Name -like "*_UndoUnregister") -and
-				-not ($_.Name -like "*_Error")
-			} | ForEach-Object {
-				$(Split-Path -Path "$_" -Leaf)
-			}
-		}
-		else {
-			Write-Log -Message "No 'ProductGUID' provided to retrieve assigned packages to a product!" -Severity 2 -Source ${CmdletName}
-		}
-		#Write-Output $foundcurrentPackageGUID
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
 #region Function Get-NxtRegisterOnly
 function Get-NxtRegisterOnly {
 	<#
