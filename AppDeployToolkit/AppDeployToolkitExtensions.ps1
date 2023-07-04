@@ -3224,7 +3224,6 @@ function Get-NxtRegisteredPackage {
 	Get-NxtRegisteredPackage -ProductGUID "12345678-1234-1234-1234-123456789012"
 	.EXAMPLE
 	Get-NxtRegisteredPackage -InstalledState 1 -ProductGUID "12345678-1234-1234-1234-123456789012"
-	This command retrieves information about a package with GUID '{042ABCDE}', ProductGUID '1234-ABCD', and is installed.
 	.INPUTS
 	None.
 	.OUTPUTS
