@@ -5022,7 +5022,7 @@ function Remove-NxtProductMember {
 	.PARAMETER RegPackagesKey
 		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RemovePackagesWithSameProductID
+	.PARAMETER RemovePackagesWithSameProductGUID
 		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
 		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -5046,14 +5046,14 @@ function Remove-NxtProductMember {
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$RemovePackagesWithSameProductID = $global:PackageConfig.RemovePackagesWithSameProductID
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($true -eq $RemovePackagesWithSameProductID) {
+		if ($true -eq $RemovePackagesWithSameProductGUID) {
 
 			#(Get-ItemProperty -Path $_.PSPath).Installed -eq "1"
 

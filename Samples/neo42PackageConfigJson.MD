@@ -341,7 +341,7 @@ note: the 3 very left digits inside of curly brackets are always "042"
 ```
 all application packages with same 'ProductGUID' are remain registered only and all product member package registrations will be removed first if the one appliction package which is registred and installed will be removed from the client
 
-**"RemovePackagesWithSameProductID"** *optional bool value*
+**"RemovePackagesWithSameProductGUID"** *optional bool value*
 
 parent: /
 
