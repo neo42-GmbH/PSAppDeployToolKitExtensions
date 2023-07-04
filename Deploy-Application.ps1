@@ -84,6 +84,7 @@ switch ($DeploymentType) {
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
 [string]$global:NeoForceLanguage = $NeoForceLanguage
+[int]$global:NxtScriptDepth = $env:nxtScriptDepth
 ## Several PSADT-functions do not work, if these variables are not set here.
 Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {
 	[string]$appVendor = $_.AppVendor
@@ -104,6 +105,7 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 ## Variables: Environment
 If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
+[int]$env:nxtScriptDepth += 1
 ## Dot source the required App Deploy Toolkit Functions
 Try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
@@ -217,7 +219,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ([string]::IsNullOrEmpty($(Get-NxtProductMember))) -and (-not $RemovePackagesWithSameProductGUID) ) {
+				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "PackageGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
@@ -505,4 +507,6 @@ function CustomUninstallUserPartEnd {
 #endregion
 
 ## Execute the main function to start the process
-Main
+#Main
+Get-NxtRegisteredPackage -ProductGUID {04200815-0000-0000-0000-000000000000}
+((Get-NxtRegisteredPackage -ProductGUID {04200815-0000-0000-0000-000000000000}).PackageGUID).count
