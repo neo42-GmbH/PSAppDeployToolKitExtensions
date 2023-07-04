@@ -4419,14 +4419,10 @@ function Register-NxtPackage {
 		Specifies a membership GUID for a product of an application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER HideInProductMemberSearch
-		Switch for awareness of product membership of the application package, a value of '$true' defines the package itself will be hided during removal of other product member application packages, it will be processed like an default independent application package then.
-		During installation and uninstallation of itself the application package will operate like a product member too.
+	.PARAMETER RemovePackagesWithSameProductGUID
+		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
+		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER ProductMemberToRestore
-		Specifies the application package GUID for a product member where the 'ProductGUID' has to be restored.
-		After a removal of the application package the formerly assigned 'ProductGUID' will be stored in it's package registration key again (leave regisred).
-		The 'ProductGUID' can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
 	.PARAMETER PackageGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -4518,10 +4514,7 @@ function Register-NxtPackage {
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$HideInProductMemberSearch = $global:PackageConfig.HideInProductMemberSearch,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$ProductMemberToRestore = $null,
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
@@ -4632,14 +4625,19 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'UserPartRevision' -Value $UserPartRevision
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'Version' -Value $AppVersion
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'HideInProductMemberSearch' -Type 'Dword' -Value $HideInProductMemberSearch
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'RemovePackagesWithSameProductGUID' -Type 'Dword' -Value $RemovePackagesWithSameProductGUID
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUID' -Value $ProductGUID
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'SoftwareUninstalled' -Type 'Dword' -Value '0'
 
-			if (![string]::IsNullOrEmpty($ProductMemberToRestore)) {
-				Move-Item "Registry::HKLM\Software\$RegPackagesKey\${ProductMemberToRestore}_UndoUnregister" -Destination "Registry::HKLM\Software\$RegPackagesKey\$ProductMemberToRestore"
-				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$ProductMemberToRestore -Name 'SoftwareUninstalled' -Type 'Dword' -Value '1'
-				Write-Log -message "Restored 'ProductGUID' [$ProductGUID] to product member application package with PackageGUID '$ProductMemberToRestore'." -Source ${cmdletName}
+			Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {($_.Name -like "*_UndoUnregister")} | ForEach-Object {
+				[string]$ProductMemberToRestore = $(Split-Path -Path "$_" -Leaf) -Replace "_UndoUnregister", ""
+				if ($false -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\${ProductMemberToRestore}_UndoUnregister")) {
+					Move-Item -Path "Registry::HKLM\Software\$RegPackagesKey\${ProductMemberToRestore}_UndoUnregister" -Destination "Registry::HKLM\Software\$RegPackagesKey\$ProductMemberToRestore"
+				} 
+				else {
+					Write-Log -message "Failed to restore registry path. Path 'HKLM:\Software\$RegPackagesKey\$ProductMemberToRestore' still/already exist!" -Severity 3 -Source ${cmdletName}
+					throw "Registry path to restore still/already exists!"
+				}
+				Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'Installed' -Type 'Dword' -Value '0'
 				Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductMemberToRestore -Name 'SystemComponent' -Type 'Dword' -Value '1'
 				Write-Log -message "Uninstall entry for product member application package with PackageGUID '$ProductMemberToRestore' hided." -Source ${cmdletName}
 			}
@@ -4658,6 +4656,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'Publisher' -Value $AppVendor
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
+			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'Installed' -Type 'Dword' -Value '1'
 			Remove-RegistryKey HKLM\Software\$RegPackagesKey\$PackageGUID$("_Error")
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
