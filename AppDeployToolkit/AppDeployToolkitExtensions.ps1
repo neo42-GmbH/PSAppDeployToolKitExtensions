@@ -8385,16 +8385,16 @@ function Unregister-NxtPackage {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $false)]
 		[int]
 		$NxtScriptDepth=$global:NxtScriptDepth,
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $false)]
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$HideInProductMemberSearch = $global:PackageConfig.RemovePackagesWithSameProductGUID,
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]

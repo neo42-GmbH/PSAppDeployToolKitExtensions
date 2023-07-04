@@ -196,10 +196,10 @@ function Main {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $false)]
 		[int]
 		$NxtScriptDepth=$global:NxtScriptDepth,
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $false)]
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
