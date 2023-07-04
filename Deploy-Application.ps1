@@ -160,6 +160,14 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER NxtScriptDepth
+		Specifies which current call level of the script is running.
+		An unregister for assigned application packages to a product is done in level 0 only.
+		Defaults to the corresponding environment value.
+	.PARAMETER ProductGUID
+		Specifies a membership GUID for a product of an application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
 		Defaults to the corresponding value from the PackageConfig object.
@@ -188,6 +196,12 @@ function Main {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
+		[Parameter(Mandatory = $true)]
+		[int]
+		$NxtScriptDepth=$global:NxtScriptDepth,
+		[Parameter(Mandatory = $true)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
@@ -219,7 +233,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "PackageGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
+				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
@@ -309,7 +323,10 @@ function Main {
 			"Uninstall" {
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
-				if ($true -eq $(Test-NxtPackageIsInstalled)) {
+				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($NxtScriptDepth = 0) ) {
+					Remove-NxtProductMember
+				}
+				if ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1)) {
 					Show-NxtInstallationWelcome -IsInstall $false
 					Initialize-NxtUninstallApplication
 					CustomUninstallBegin

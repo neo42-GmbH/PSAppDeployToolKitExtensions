@@ -5083,18 +5083,16 @@ function Remove-NxtProductMember {
 		[int]$removalCounter = 0
 		if ($true -eq $RemovePackagesWithSameProductGUID) {
 			(Get-NxtRegisteredPackage -ProductGUID $ProductGUID -InstalledState 1).PackageGUID | ForEach-Object {
+				## we don't remove the current package inside this function
 				if ($_ -ne $PackageGUID) {
 					[string]$assignedPackageGUID = $_
 					[string]$currentUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Value 'UninstallString')
 					Write-Log -Message "Save registered entries of found product member application package for undo and remove application package with uninstall call: '$assignedPackageUninstallString'." -Source ${CmdletName}
 					Copy-Item "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID" -Destination "Registry::HKLM\Software\$RegPackagesKey\${assignedPackageGUID}_UndoUnregister"
-					#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID -Name 'ProductGUID' -Value ([string]::Empty)
 					$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
 					#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$assignedPackageUninstallString`"" -PassThru -Wait)
 					$runUninstallString.WaitForExit()
 					if ($runUninstallString.ExitCode -ne 0) {
-						#Write-Log -Message "Restore value 'ProductGUID' for failed uninstall of found product member application package." -Source ${CmdletName}
-						#Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID -Name 'ProductGUID' -Value $ProductGUID
 						Exit-NxtScriptWithError -ErrorMessage "Removal of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
 					}
 					$removalCounter += 1
@@ -5102,7 +5100,7 @@ function Remove-NxtProductMember {
 			}
 		}
 		if ($removalCounter = 0) {
-			Write-Log -Message "No valid conditions for removal of a found application package assigned to a product." -Source ${CmdletName}
+			Write-Log -Message "No valid conditions for removal of application packages assigned to a product." -Source ${CmdletName}
 		}
 	}
 	End {
