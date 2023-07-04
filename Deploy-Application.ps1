@@ -258,7 +258,7 @@ function Main {
 						else {
 						[string]$global:PackageConfig.ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						}
-						Write-Log -Message "[$script:installPhase] selected Mode: $global:PackageConfig.ReinstallMode" -Source $deployAppScriptFriendlyName
+						Write-Log -Message "[$script:installPhase] selected Mode: $($global:PackageConfig.ReinstallMode)" -Source $deployAppScriptFriendlyName
 						switch ($global:PackageConfig.ReinstallMode) {
 							"Reinstall" {
 								CustomReinstallPreUninstall
@@ -312,7 +312,7 @@ function Main {
 					if ($true -eq $RegisterPackage) {
 						## Register package for uninstall
 						[string]$script:installPhase = 'Package-Registration'
-						Register-NxtPackage -ProductMemberToRestore $removedPackageGUID
+						Register-NxtPackage
 					}
 				}
 				else {
