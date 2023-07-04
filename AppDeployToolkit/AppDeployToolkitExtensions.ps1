@@ -3247,10 +3247,12 @@ function Get-NxtRegisteredPackage {
 	}
 	Process {
 		if($false -eq (Test-Path -Path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey")){
+			Write-Log -Message "Registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey' does not exist." -Severity 1 -Source ${cmdletName}
 			return
 		}
 		[Microsoft.Win32.RegistryKey[]]$neoPackages = Get-ChildItem "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey"
 		foreach ($neoPackage in $neoPackages) {
+			Clear-Variable neoPackageGUID,neoProductGuid,neoPackageIsInstalled
 			[PSADTNXT.NxtRegisteredApplication]$registeredApplication = New-Object -TypeName PSADTNXT.NxtRegisteredApplication
 			[string]$neoPackageGUID = $neoPackage.PSChildName
 			## Check if the PackageGUID is a valid GUID
