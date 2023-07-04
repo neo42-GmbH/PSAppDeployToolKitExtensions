@@ -4625,22 +4625,8 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'UserPartRevision' -Value $UserPartRevision
 			}
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'Version' -Value $AppVersion
-			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'RemovePackagesWithSameProductGUID' -Type 'Dword' -Value $RemovePackagesWithSameProductGUID
 			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'ProductGUID' -Value $ProductGUID
-
-			Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {($_.Name -like "*_UndoUnregister")} | ForEach-Object {
-				[string]$ProductMemberToRestore = $(Split-Path -Path "$_" -Leaf) -Replace "_UndoUnregister", ""
-				if ($false -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\${ProductMemberToRestore}_UndoUnregister")) {
-					Move-Item -Path "Registry::HKLM\Software\$RegPackagesKey\${ProductMemberToRestore}_UndoUnregister" -Destination "Registry::HKLM\Software\$RegPackagesKey\$ProductMemberToRestore"
-				} 
-				else {
-					Write-Log -message "Failed to restore registry path. Path 'HKLM:\Software\$RegPackagesKey\$ProductMemberToRestore' still/already exist!" -Severity 3 -Source ${cmdletName}
-					throw "Registry path to restore still/already exists!"
-				}
-				Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'Installed' -Type 'Dword' -Value '0'
-				Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductMemberToRestore -Name 'SystemComponent' -Type 'Dword' -Value '1'
-				Write-Log -message "Uninstall entry for product member application package with PackageGUID '$ProductMemberToRestore' hided." -Source ${cmdletName}
-			}
+			Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Name 'RemovePackagesWithSameProductGUID' -Type 'Dword' -Value $RemovePackagesWithSameProductGUID
 
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'DisplayName' -Value $UninstallDisplayName
@@ -5086,15 +5072,27 @@ function Remove-NxtProductMember {
 				## we don't remove the current package inside this function
 				if ($_ -ne $PackageGUID) {
 					[string]$assignedPackageGUID = $_
-					[string]$currentUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Value 'UninstallString')
+					[string]$assignedPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Value 'UninstallString')
 					Write-Log -Message "Save registered entries of found product member application package for undo and remove application package with uninstall call: '$assignedPackageUninstallString'." -Source ${CmdletName}
 					Copy-Item "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID" -Destination "Registry::HKLM\Software\$RegPackagesKey\${assignedPackageGUID}_UndoUnregister"
 					$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
 					#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$assignedPackageUninstallString`"" -PassThru -Wait)
 					$runUninstallString.WaitForExit()
 					if ($runUninstallString.ExitCode -ne 0) {
+						Remove-RegistryKey HKLM\Software\$RegPackagesKey\$PackageGUID$("_UndoUnregister")
 						Exit-NxtScriptWithError -ErrorMessage "Removal of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
 					}
+					if ($false -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID")) {
+						Move-Item -Path "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID$("_UndoUnregister")" -Destination "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID"
+					} 
+					else {
+						Remove-RegistryKey HKLM\Software\$RegPackagesKey\$PackageGUID$("_UndoUnregister")
+						Write-Log -message "Failed to restore registry path. Path 'HKLM:\Software\$RegPackagesKey\$assignedPackageGUID' still/already exist!" -Severity 3 -Source ${cmdletName}
+						throw "Registry path to restore still/already exists!"
+					}
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'Installed' -Type 'Dword' -Value '0'
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID -Name 'SystemComponent' -Type 'Dword' -Value '1'
+					Write-Log -message "Uninstall entry for product member application package with PackageGUID '$assignedPackageGUID' hided." -Source ${cmdletName}
 					$removalCounter += 1
 				}
 			}
