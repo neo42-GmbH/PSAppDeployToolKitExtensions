@@ -524,6 +524,4 @@ function CustomUninstallUserPartEnd {
 #endregion
 
 ## Execute the main function to start the process
-#Main
-Get-NxtRegisteredPackage -ProductGUID {04200815-0000-0000-0000-000000000000}
-((Get-NxtRegisteredPackage -ProductGUID {04200815-0000-0000-0000-000000000000}).PackageGUID).count
+Main
