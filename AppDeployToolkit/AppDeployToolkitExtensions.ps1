@@ -8352,6 +8352,10 @@ function Unregister-NxtPackage {
 		Removes package files and unregisters the package in the registry.
 	.DESCRIPTION
 		Removes the package files from "$APP\" and deletes the package's registry keys under "HKLM\Software\$regPackagesKey\$PackageGUID" and "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID".
+	.PARAMETER NxtScriptDepth
+		Specifies which current call level of the script is running.
+		An unregister for assigned application packages to a product is done in level 0 only.
+		Defaults to the corresponding environment value.
 	.PARAMETER ProductGUID
 		Specifies a membership GUID for a product of an application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
@@ -8383,13 +8387,16 @@ function Unregister-NxtPackage {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
+		[int]
+		$NxtScriptDepth=$global:NxtScriptDepth,
+		[Parameter(Mandatory = $true)]
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$HideInProductMemberSearch = $global:PackageConfig.HideInProductMemberSearch,
-		[Parameter(Mandatory = $false)]
+		$HideInProductMemberSearch = $global:PackageConfig.RemovePackagesWithSameProductGUID,
+		[Parameter(Mandatory = $true)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
@@ -8407,36 +8414,42 @@ function Unregister-NxtPackage {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Log -Message "Unregistering package..." -Source ${cmdletName}
+		Write-Log -Message "Unregistering package(s)..." -Source ${cmdletName}
 		try {
-			if ( ![string]::IsNullOrEmpty($(Get-RegistryKey -Key "HKLM\Software\$RegPackagesKey\$PackageGUID" -Value 'ProductGUID')) ) {
-				Write-Log -Message "Cleanup registry entries and folder of assigned product member application packages with 'ProductGUID' [$ProductGUID]..." -Source ${CmdletName}
-				Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {
-					(Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID" -and 
-					(Get-ItemProperty -Path $_.PSPath).HideInProductMemberSearch -eq "0"
-					(Get-ItemProperty -Path $_.PSPath).SoftwareUninstalled -eq "0"
-				} | Where-Object {-not ($_.Name -like "*_UndoUnregister")} | ForEach-Object {
-					[string]$assignedPackageGUID = Split-Path -Path "$_" -Leaf
-					if ($true -eq $(Test-NxtPackageIsInstalled -PackageGUID "$assignedPackageGUID")) {
-						Write-Log -message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
-						$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
-						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\" 
-						Start-Sleep -Seconds 1
-						Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -NoWait
-						Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
+			if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($NxtScriptDepth = 0) ) {
+				[int]$removalCounter = 0
+				if (![string]::IsNullOrEmpty($ProductGUID)) {
+					Write-Log -Message "Cleanup registry entries and folder of assigned product member application packages with 'ProductGUID' [$ProductGUID]..." -Source ${CmdletName}
+					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID -InstalledState 0).PackageGUID | ForEach-Object {
+						if ($_ -ne $PackageGUID) {
+							[string]$assignedPackageGUID = $_
+							Write-Log -message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
+							$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
+							Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\" 
+							Start-Sleep -Seconds 1
+							Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -NoWait
+							Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
+						}
+					}
+					Write-Log -Message "All folder and registry entries of assigned product member application packages with 'ProductGUID' [$ProductGUID] are cleaned." -Source ${CmdletName}
+					if ($removalCounter = 0) {
+						Write-Log -Message "No application packages assigned to a product found for removal." -Source ${CmdletName}
 					}
 				}
-				Write-Log -Message "All folder and registry entries of assigned product member application packages with 'ProductGUID' [$ProductGUID] are cleaned." -Source ${CmdletName}
+				else {
+					Write-Log -Message "No ProductGUID was provided. Cleanup for application packages assigned to a product skipped." -Severity 2 -Source ${CmdletName}
+				}
 			}
 			else {
-				Write-Log -Message "No ProductGUID was provided. Cleanup for product menmber application packages skipped." -Severity 2 -Source ${CmdletName}
+				Write-Log -Message "No valid conditions for removal of application packages assigned to a product." -Source ${CmdletName}
+				Write-Log -Message "Unregistering current package..." -Source ${cmdletName}
+				Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\" 
+				Start-Sleep -Seconds 1
+				Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -NoWait
+				Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID
+				Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID
+				Write-Log -Message "Current package unregistration successful." -Source ${cmdletName}
 			}
-			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\" 
-			Start-Sleep -Seconds 1
-			Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -NoWait
-			Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID
-			Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID
-			Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to unregister package. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
