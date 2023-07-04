@@ -176,6 +176,10 @@ function Main {
 	.PARAMETER RegisterPackage
 		Specifies if package may be registered (maybe superseeded by deployment system!).
 		Defaults to the corresponding global value.
+	.PARAMETER RemovePackagesWithSameProductGUID
+		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
+		The uninstalled application packages stay registered, when removed during installation process of current application package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Main
 	.LINK
@@ -197,8 +201,11 @@ function Main {
 		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegisterPackage = $global:registerPackage
-		)
+		$RegisterPackage = $global:registerPackage,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
+	)
 	try {
 		CustomBegin
 		switch ($DeploymentType) {
@@ -210,7 +217,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and (![string]::IsNullOrEmpty($(Get-NxtProductMember))) -and ($true -eq $RegisterPackage) ) {
+				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ([string]::IsNullOrEmpty($(Get-NxtProductMember))) -and (-not $RemovePackagesWithSameProductGUID) ) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-Softmigration'
