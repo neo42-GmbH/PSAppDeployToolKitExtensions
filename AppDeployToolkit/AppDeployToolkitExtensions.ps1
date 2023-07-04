@@ -5022,6 +5022,10 @@ function Remove-NxtProductMember {
 	.PARAMETER RegPackagesKey
 		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RemovePackagesWithSameProductID
+		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
+		The uninstalled application packages stay registered, when removed during installation process of current application package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Remove-NxtProductMember
 	.EXAMPLE
@@ -5039,44 +5043,41 @@ function Remove-NxtProductMember {
 		$PackageGUID = $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$RemovePackagesWithSameProductID = $global:PackageConfig.RemovePackagesWithSameProductID
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[string]$assignedPackageGUID = $(Get-NxtProductMember -ProductGUID $ProductGUID -PackageGUID $PackageGUID)
-		if (![string]::IsNullOrEmpty($assignedPackageGUID)) {
-			if ($PackageGUID -ne $assignedPackageGUID) {
-				Write-Log -Message "Product membership detected." -Source ${CmdletName}
-				## in case of product membership we have to prepare the current installed application of the product for correct unregistration and do uninstall of this one during install of a new member application package!
-				[string]$assignedPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").UninstallString
-				[string]$assignedPackageAppPath = $(Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
-				if ($true -eq $(Test-Path -Path "$assignedPackageAppPath" -PathType 'Container')) {
-					if ( ($false -eq ($assignedPackageUninstallString -like '*\neo42-Install\Deploy-Application.ps1*')) -or ($false -eq $(Test-Path -Path "$assignedPackageAppPath\neo42-Install\Deploy-Application.ps1")) ) {
-						Write-Log -Message "Evaluating required script in requested package maintenance subfolder failed!" -Severity 2 -Source ${CmdletName}
-						throw "No required package script found!"
+		if ($true -eq $RemovePackagesWithSameProductID) {
+
+			#(Get-ItemProperty -Path $_.PSPath).Installed -eq "1"
+
+			Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {(Get-ItemProperty -Path $_.PSPath).ProductGUID -eq "$ProductGUID"} | Where-Object {-not ($_.Name -like "*_UndoUnregister")} | ForEach-Object {
+				[string]$currentRegistredPackageGUID = $(Split-Path -Path "$_" -Leaf)
+				if ($true -eq $(Test-NxtPackageIsInstalled)) {
+					[string]$currentUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentRegistredPackageGUID" -Value 'UninstallString')
+					Write-Log -Message "Save registered entries of found product member application package for undo and calling package uninstallation: '$assignedPackageUninstallString'." -Source ${CmdletName}
+					Copy-Item "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID" -Destination "Registry::HKLM\Software\$RegPackagesKey\${assignedPackageGUID}_UndoUnregister"
+					Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID -Name 'ProductGUID' -Value ([string]::Empty)
+					$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
+					#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$assignedPackageUninstallString`"" -PassThru -Wait)
+					$runUninstallString.WaitForExit()
+					if ($runUninstallString.ExitCode -ne 0) {
+						Write-Log -Message "Restore value 'ProductGUID' for failed uninstall of found product member application package." -Source ${CmdletName}
+						Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID -Name 'ProductGUID' -Value $ProductGUID
+						Exit-NxtScriptWithError -ErrorMessage "Uninstallation of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
 					}
 				}
-				else {
-					Write-Log -Message "No maintenance subfolder for assigned application package found!" -Severity 2 -Source ${CmdletName}
-					throw "No application maintenance subfolder found!"
-				}
-				Write-Log -Message "Save registered entries of found product member application package for undo and calling package uninstallation: '$assignedPackageUninstallString'." -Source ${CmdletName}
-				Copy-Item "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID" -Destination "Registry::HKLM\Software\$RegPackagesKey\${assignedPackageGUID}_UndoUnregister"
-				Set-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID -Name 'ProductGUID' -Value ([string]::Empty)
-				$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
-				#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$assignedPackageUninstallString`"" -PassThru -Wait)
-				$runUninstallString.WaitForExit()
-				if ($runUninstallString.ExitCode -ne 0) {
-					Exit-NxtScriptWithError -ErrorMessage "Uninstallation of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
-				}
 			}
-			else {
-				Write-Log -Message "No valid conditions present yet for removal of a found product member application package assigned to PackageGUID '$assignedPackageGUID'." -Source ${CmdletName}
-				[string]$assignedPackageGUID = [string]::Empty
-			}
+		}
+		else {
+			Write-Log -Message "No valid conditions for removal of a found application package assigned to a product." -Source ${CmdletName}
+			[string]$assignedPackageGUID = [string]::Empty
 		}
 		Write-Output $assignedPackageGUID
 	}

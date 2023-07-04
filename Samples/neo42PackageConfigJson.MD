@@ -332,7 +332,7 @@ application language of the packaged application
 note: basically only these values are valid and supported by neo42: "DEU", "ENG", "MUI"
 ```
 
-**"ProductGUID"** *optional string value*
+**"ProductGUID"** *mandatory string value*
 
 parent: /
 ```
@@ -341,16 +341,15 @@ note: the 3 very left digits inside of curly brackets are always "042"
 ```
 all application packages with same 'ProductGUID' are remain registered only and all product member package registrations will be removed first if the one appliction package which is registred and installed will be removed from the client
 
-**"HideInProductMemberSearch"** *optional bool value*
+**"RemovePackagesWithSameProductID"** *optional bool value*
 
 parent: /
 
-if no value 'ProductGUID' is defined this value has no functionality
 ```
 default value: false
-switch to hide an assignement of a ProductGUID (product membership) to the current application package when searching for product member application packages by other application packages
+uninstalles all found application packages with same ProductGUID (product membership) assigned, but leaves them registered during installation process of current application package
 (valid are only 'true' and 'false')
-note: the product assignment will be stored for the application package always, but if this value is set to '$true' during processing other product members it operates like an default independent application package only and the behavior on installation and uninstallation is like a product member (if a value 'ProductGUID' is defined)
+note: the product assignment will be stored for the application package always, but will be recognized for application management if this value is set to '$true' only (a value 'ProductGUID' has to be defined)
 ```
 
 **"PackageGUID"** *mandatory string value*
