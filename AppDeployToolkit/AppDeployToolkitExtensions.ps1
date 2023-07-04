@@ -397,6 +397,61 @@ function Add-NxtLocalUser {
 	}
 }
 #endregion
+#region Function Clear-UndoRegistryKeys
+function Clear-UndoRegistryKeys {
+	<#
+	.SYNOPSIS
+		Removes orphaned registry keys possibly left over from failed processing of product member application packages.
+	.DESCRIPTION
+		Removes all orphaned registry keys possibly left over from failed processing of product member application packages with the same ProductGUID of current package.
+		Runs a cleanup if parameter 'RemovePackagesWithSameProductGUID' is set to 'true' only.
+	.PARAMETER ProductGUID
+		Specifies a membership GUID for a product of an application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RemovePackagesWithSameProductGUID
+		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
+		The uninstalled application packages stay registered, when removed during installation process of current application package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Clear_UndoRegistryKeys
+	.EXAMPLE
+		Remove-NxtProductMember -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($true -eq $RemovePackagesWithSameProductGUID) {
+			Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {($_.Name -like "*_UndoUnregister") -and (Get-ItemProperty -Path $_.PSPath).ProductGUID -like "$ProductGUID"} | ForEach-Object {
+				Remove-RegistryKey -Key $_
+				Write-Log -message "Cleanup orphaned 'undo' registry entries of product member application packages with ProductGUID '$ProductGUID' done." -Source ${cmdletName}
+			}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Compare-NxtVersion
 function Compare-NxtVersion {
 	<#
@@ -5074,12 +5129,13 @@ function Remove-NxtProductMember {
 					[string]$assignedPackageGUID = $_
 					[string]$assignedPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Value 'UninstallString')
 					Write-Log -Message "Save registered entries of found product member application package for undo and remove application package with uninstall call: '$assignedPackageUninstallString'." -Source ${CmdletName}
-					Copy-Item "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID" -Destination "Registry::HKLM\Software\$RegPackagesKey\${assignedPackageGUID}_UndoUnregister"
+					Remove-RegistryKey HKLM\Software\$RegPackagesKey\$assignedPackageGUID$("_UndoUnregister")
+					Copy-Item "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID" -Destination "Registry::HKLM\Software\$RegPackagesKey\$assignedPackageGUID$("_UndoUnregister")"
 					$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
 					#$runUninstallString = (Start-Process -FilePath "$envSystemRoot\system32\cmd.exe " -ArgumentList "/c `"$assignedPackageUninstallString`"" -PassThru -Wait)
 					$runUninstallString.WaitForExit()
 					if ($runUninstallString.ExitCode -ne 0) {
-						Remove-RegistryKey HKLM\Software\$RegPackagesKey\$PackageGUID$("_UndoUnregister")
+						Remove-RegistryKey HKLM\Software\$RegPackagesKey\$assignedPackageGUID$("_UndoUnregister")
 						Exit-NxtScriptWithError -ErrorMessage "Removal of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
 					}
 					if ($false -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID")) {
@@ -5090,7 +5146,7 @@ function Remove-NxtProductMember {
 						Write-Log -message "Failed to restore registry path. Path 'HKLM:\Software\$RegPackagesKey\$assignedPackageGUID' still/already exist!" -Severity 3 -Source ${cmdletName}
 						throw "Registry path to restore still/already exists!"
 					}
-					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID -Name 'Installed' -Type 'Dword' -Value '0'
+					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID -Name 'Installed' -Type 'Dword' -Value '0'
 					Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID -Name 'SystemComponent' -Type 'Dword' -Value '1'
 					Write-Log -message "Uninstall entry for product member application package with PackageGUID '$assignedPackageGUID' hided." -Source ${cmdletName}
 					$removalCounter += 1
