@@ -145,6 +145,13 @@ namespace PSADTNXT
         public bool UninstallKeyExists { get; set; }
         public string DisplayVersion { get; set; }
     }
+
+    public class NxtRegisteredApplication
+    {
+        public string PackageGuid { get; set; }
+        public string ProductGuid { get; set; }
+        public bool Installed { get; set; }
+    }
     
     public class XmlNodeModel
     {
