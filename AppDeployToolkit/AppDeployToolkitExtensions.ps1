@@ -5222,13 +5222,23 @@ function Resolve-NxtDependentPackage {
 					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage)" -Severity 1 -Source ${CmdletName}
 					if ($dependentPackage.OnConflict -eq "Uninstall") {
 						## Trigger uninstallstring, throw exception if uninstall fails.
-						Write-Log -Message "Try to uninstall dependent package '$($dependentPackage.GUID)'." -Severity 1 -Source ${CmdletName}
-						## !!!Add uninstall call and uninstall check later!!!
+						Write-Log -Message "Retrieve uninstall string and try to uninstall dependent package '$($dependentPackage.GUID)', ..." -Severity 1 -Source ${CmdletName}
+						[string]$dependentPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -Value 'UninstallString')
+						$runUninstallString = (Start-Process -FilePath "$(($dependentPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($dependentPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
+						$runUninstallString.WaitForExit()
+						if ($runUninstallString.ExitCode -ne 0) {
+							Write-Log -Message "Removal of dependent application package failed with return code '$($runUninstallString.ExitCode)'." -Severity 3 -Source ${CmdletName}
+							throw "Removal of dependent application package failed."
+						}
+						if ( (![string]::IsNullOrEmpty($(Get-NxtRegisteredPackage -PackageGUID $dependentPackage.GUID))) -or (![string]::IsNullOrEmpty($(Get-NxtRegisteredPackage -PackageGUID $dependentPackage.GUID -InstalledState 1))) ) {
+							Write-Log -Message "Removal of dependent application package was not successful. The package is still detected!" -Severity 3 -Source ${CmdletName}
+							throw "Dependent application package still detected."
+						}
 					}
 					elseif ($dependentPackage.OnConflict -eq "Fail") {
 						## Throw exception
 						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. throwing exception. $($dependentPackage.ErrorMessage)" -Severity 3 -Source ${CmdletName}
-						Throw "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage)"
+						throw "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage)"
 					}
 					elseif ($dependentPackage.OnConflict -eq "Continue") {
 						## Do nothing
