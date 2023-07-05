@@ -332,22 +332,12 @@ application language of the packaged application
 note: basically only these values are valid and supported by neo42: "DEU", "ENG", "MUI"
 ```
 
-**"ProductGUID"** *optional string value*
+**"ProductGUID"** *mandatory string value*
 
 parent: /
 ```
 universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" for a single product (may be a collection of more than one package)
 note: the 3 very left digits inside of curly brackets are always "042"
-```
-
-**"ProductGUIDAware"** *optional bool value*
-
-parent: /
-```
-default value: false
-switch to recognize an assignement of a ProductGUID (product membership) for the current application package for management of it's un/installation behavior
-(valid are only 'true' and 'false')
-note: if a ProductGUID should be used, during (re)installation current package will be substitute an actual installed of same product group and leaf the other one registred on client, during uninstall it will remove all entries of each product member with active awareness if current package is really installed on client, otherwise the package just unregister itself
 ```
 
 **"PackageGUID"** *mandatory string value*
