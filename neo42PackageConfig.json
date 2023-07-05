@@ -24,6 +24,7 @@
   "AppVersion": "2.10.2",
   "AppRevision": "0",
   "AppLang": "DEU",
+  "ProductGUID": "{04200815-0000-0000-0000-000000000000}",
   "PackageGUID": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
   "RegPackagesKey": "neoPackages",
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
