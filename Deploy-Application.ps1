@@ -230,7 +230,7 @@ function Main {
 							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
 						}
 						else {
-						[string]$global:PackageConfig.ReinstallMode = $(Switch-NxtMSIReinstallMode)
+							[string]$global:PackageConfig.ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						}
 						Write-Log -Message "[$script:installPhase] selected Mode: $global:PackageConfig.ReinstallMode" -Source $deployAppScriptFriendlyName
 						switch ($global:PackageConfig.ReinstallMode) {
@@ -360,7 +360,7 @@ function CustomInstallAndReinstallBegin {
 	## Executes before any installation, reinstallation or softmigration tasks are performed
 }
 
-function CustomSoftMigrationBegin{
+function CustomSoftMigrationBegin {
 	[string]$script:installPhase = 'CustomSoftMigrationBegin'
 
 	## Executes before a default check of SoftMigration runs
