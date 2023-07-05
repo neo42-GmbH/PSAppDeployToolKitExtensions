@@ -16,8 +16,8 @@
         "Type": "System.Boolean"
     },
     "ProductGUID": {
-        "Mandatory": false,
-        "HelpText": "ProductGUID is optional and must be a string.",
+        "Mandatory": true,
+        "HelpText": "ProductGUID is mandatory and must be a string.",
         "Regex": {
             "Pattern": "^\\{[a-fA-F0-9]{8}-([a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}\\}$",
             "Operator": "match"
