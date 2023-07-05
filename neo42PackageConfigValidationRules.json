@@ -29,10 +29,10 @@
         "SubKeys": {
             "GUID": {
                 "Mandatory": false,
-                "HelpText": "DependentPackages.DirectValues is optional and must be a string with a valid GUID.",
+                "HelpText": "DependentPackages.GUID is optional and must be a string with a valid GUID.",
                 "Type": "System.String",
                 "Regex": {
-                    "Pattern": "^\\{[a-zA-Z0-9]{8}-([a-zA-Z0-9]{4}-){3}[a-zA-Z0-9]{12}\\}$",
+                    "Pattern": "^\\{[a-fA-F0-9]{8}-([a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}\\}$",
                     "Operator": "match"
                 }
             },
