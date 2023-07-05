@@ -409,12 +409,12 @@ function Clear-UndoRegistryKeys {
 		Specifies a membership GUID for a product of an application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RegPackagesKey
-		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
-		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RemovePackagesWithSameProductGUID
 		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
 		The uninstalled application packages stay registered, when removed during installation process of current application package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Clear_UndoRegistryKeys
@@ -429,11 +429,11 @@ function Clear-UndoRegistryKeys {
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
-		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-		[Parameter(Mandatory = $false)]
 		[bool]
-		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5084,15 +5084,15 @@ function Remove-NxtProductMember {
 		Specifies a membership GUID for a product of an application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RemovePackagesWithSameProductGUID
+		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
+		The uninstalled application packages stay registered, when removed during installation process of current application package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegPackagesKey
 		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RemovePackagesWithSameProductGUID
-		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
-		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Remove-NxtProductMember
@@ -5107,14 +5107,14 @@ function Remove-NxtProductMember {
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
+		[bool]
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
+		[Parameter(Mandatory = $false)]
 		[String]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -8447,7 +8447,7 @@ function Unregister-NxtPackage {
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$HideInProductMemberSearch = $global:PackageConfig.RemovePackagesWithSameProductGUID,
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,

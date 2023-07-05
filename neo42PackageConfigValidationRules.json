@@ -25,6 +25,11 @@
         "Type": "System.String",
         "AllowEmpty": true
     },
+    "RemovePackagesWithSameProductGUID": {
+        "Mandatory": true,
+        "HelpText": "RemovePackagesWithSameProductGUID is mandatory and must be a boolean.",
+        "Type": "System.Boolean"
+    },
     "PackageGUID": {
         "Mandatory": true,
         "HelpText": "PackageGUID is mandatory and must be a string.",

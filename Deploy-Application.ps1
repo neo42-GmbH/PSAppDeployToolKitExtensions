@@ -168,6 +168,10 @@ function Main {
 		Specifies a membership GUID for a product of an application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RemovePackagesWithSameProductGUID
+		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
+		The uninstalled application packages stay registered, when removed during installation process of current application package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
 		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
 		Defaults to the corresponding value from the PackageConfig object.
@@ -186,10 +190,6 @@ function Main {
 	.PARAMETER RegisterPackage
 		Specifies if package may be registered (maybe superseeded by deployment system!).
 		Defaults to the corresponding global value.
-	.PARAMETER RemovePackagesWithSameProductGUID
-		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
-		The uninstalled application packages stay registered, when removed during installation process of current application package.
-		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Main
 	.LINK
@@ -202,6 +202,9 @@ function Main {
 		[Parameter(Mandatory = $false)]
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
@@ -217,10 +220,7 @@ function Main {
 		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegisterPackage = $global:registerPackage,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
+		$RegisterPackage = $global:registerPackage
 	)
 	try {
 		CustomBegin
