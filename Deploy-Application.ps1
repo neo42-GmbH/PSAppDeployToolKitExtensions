@@ -120,6 +120,7 @@ Catch {
 	## Exit the script, returning the exit code to SCCM
 	If (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
 }
+Write-Log "Current running script depth: $($global:NxtScriptDepth)" -Source $deployAppScriptFriendlyName
 #endregion
 ##* Do not modify section above	=============================================================================================================================================
 
@@ -362,8 +363,9 @@ function Main {
 		}
 		[string]$script:installPhase = 'Package-Finish'
 		## Calculate exit code
-		If ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
-		If ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
+		if ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
+		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
+		if ($($global:NxtScriptDepth) -eq 0) {[int]$env:nxtScriptDepth = 0}
 		Exit-Script -ExitCode $mainExitCode
 	}
 	catch {
@@ -372,6 +374,7 @@ function Main {
 		[string]$mainErrorMessage = "$(Resolve-Error)"
 		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 		Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
+		if ($($global:NxtScriptDepth) -eq 0) {[int]$env:nxtScriptDepth = 0}
 		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	}
 }
