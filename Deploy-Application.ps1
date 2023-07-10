@@ -232,7 +232,7 @@ function Main {
 						else {
 						[string]$global:PackageConfig.ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						}
-						Write-Log -Message "[$script:installPhase] selected Mode: $($global:PackageConfig.ReinstallMode)" -Source $deployAppScriptFriendlyName
+						Write-Log -Message "[$script:installPhase] selected mode: $($global:PackageConfig.ReinstallMode)" -Source $deployAppScriptFriendlyName
 						switch ($global:PackageConfig.ReinstallMode) {
 							"Reinstall" {
 								CustomReinstallPreUninstall
