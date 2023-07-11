@@ -3207,32 +3207,42 @@ function Get-NxtProcessorArchiteW6432 {
 function Get-NxtRegisteredPackage {
 	<#
 	.SYNOPSIS
-	The Get-NxtRegisteredPackage function retrieves information about registered packages on a local machine.
+		Retrieves information about registered packages on a local machine.
 	.DESCRIPTION
-	The Get-NxtRegisteredPackage function gets details of the registered packages installed on a local machine by using registry keys. The function fetches details such as PackageGUID, ProductGUID, and InstalledState, and returns an object of type PSADTNXT.NxtRegisteredApplication.
-	.PARAMETER PackageGUID
-	The unique identifier of the package. This is optional and if not provided, the function will return information about all packages starting with '{042'.
+		Gets details of the registered application packages installed on a local machine by using registry keys.
+		The function fetches details such as PackageGUID, ProductGUID, and InstalledState, and returns an object of type PSADTNXT.NxtRegisteredApplication.
 	.PARAMETER ProductGUID
-	The unique identifier of the product. This is optional and if not provided, the function will return information about all products, filtered by the other FilterParameters.
+		Specifies a membership GUID for a product of an application package.
+		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageGUID
+		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstalledState
-	A binary string ("0" or "1") that represents the installation state of the package. "0" represents that the package is not installed, and "1" represents that the package is installed. If not provided, the function will return the installed state for all packages, filtered by the other FilterParameters.
+		Represents the installation state of the package in a binary string ("0" or "1"):
+		"0" represents that the package is not installed
+		"1" represents that the package is installed.
 	.PARAMETER RegPackagesKey
-	A registry key string where the packages are registered. If not provided, the function uses the value of the global variable $Global:PackageConfig.RegPackagesKey.
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
-	Get-NxtRegisteredPackage -PackageGUID "12345678-1234-1234-1234-123456789012"
+		Get-NxtRegisteredPackage -PackageGUID "12345678-1234-1234-1234-123456789012"
 	.EXAMPLE
-	Get-NxtRegisteredPackage -ProductGUID "12345678-1234-1234-1234-123456789012"
+		Get-NxtRegisteredPackage -ProductGUID "12345678-1234-1234-1234-123456789012"
 	.EXAMPLE
-	Get-NxtRegisteredPackage -InstalledState 1 -ProductGUID "12345678-1234-1234-1234-123456789012"
+		Get-NxtRegisteredPackage -ProductGUID "12345678-1234-1234-1234-123456789012" -InstalledState 1
 	.INPUTS
-	None.
+		None.
 	.OUTPUTS
-	PSADTNXT.NxtRegisteredApplication object with properties: PackageGUID, ProductGUID, Installed.
+		PSADTNXT.NxtRegisteredApplication object with properties: PackageGUID, ProductGUID, Installed.
 	.NOTES
-	- If the specified RegPackagesKey does not exist in the registry, the function writes a log message and stops execution.
-	- If the PackageGUID provided is not a valid GUID, it continues to the next registered package.
-	- If the InstalledState is provided, it converts "0" to False and "1" to True before comparison.
-	- The output of the function can be used as input to other functions that need information about installed packages.
+		- If the specified RegPackagesKey does not exist in the registry, the function writes a log message and stops execution.
+		- If the PackageGUID provided is not a valid GUID, it continues to the next registered package.
+		- If the InstalledState is provided, it converts "0" to False and "1" to True before comparison.
+		- If not provided the optional parameter ProductGUID, the function will return information about all products, filtered by the other FilterParameters.
+		- If not provided the optional parameter PackageGUID, the function will return information about all packages starting with '{042'.
+		- If not provided the optional parameter InstalledState, the function will return the installed state for all packages, filtered by the other FilterParameters.
+		- The output of the function can be used as input to other functions that need information about installed packages.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3250,18 +3260,18 @@ function Get-NxtRegisteredPackage {
 		$InstalledState,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegPackagesKey = $Global:PackageConfig.RegPackagesKey
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($false -eq (Test-Path -Path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey")) {
-			Write-Log -Message "Registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey' does not exist." -Severity 1 -Source ${cmdletName}
+		if ($false -eq (Test-Path -Path "HKLM:\SOFTWARE\$RegPackagesKey")) {
+			Write-Log -Message "Registry key 'HKLM:\SOFTWARE\$RegPackagesKey' does not exist." -Source ${cmdletName}
 			return
 		}
-		[Microsoft.Win32.RegistryKey[]]$neoPackages = Get-ChildItem "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey"
+		[Microsoft.Win32.RegistryKey[]]$neoPackages = Get-ChildItem "HKLM:\SOFTWARE\$RegPackagesKey"
 		foreach ($neoPackage in $neoPackages) {
 			[string]$neoPackageGUID = [string]::Empty
 			[string]$neoProductGUID = [string]::Empty
@@ -3282,14 +3292,14 @@ function Get-NxtRegisteredPackage {
 					continue
 				}
 			}
-			[string]$neoProductGUID = Get-RegistryKey -Key "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\$RegPackagesKey\$neoPackageGUID" -Value "ProductGUID"
+			[string]$neoProductGUID = Get-RegistryKey -Key "HKLM:\SOFTWARE\$RegPackagesKey\$neoPackageGUID" -Value "ProductGUID"
 			if ($false -eq [string]::IsNullOrEmpty($ProductGUID)) {
 				if ($neoProductGUID -ne $ProductGUID) {
 					continue
 				}
 			}
 			##cast 1 into true and 0 into false
-			[bool]$neoPackageIsInstalled = ( (Get-RegistryKey -Key "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$neoPackageGUID" -Value "Installed" ) -eq "1" )
+			[bool]$neoPackageIsInstalled = ( (Get-RegistryKey -Key "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$neoPackageGUID" -Value "Installed" ) -eq "1" )
 			if ($false -eq [string]::IsNullOrEmpty($InstalledState)) {
 				if ([System.Convert]::ToBoolean([System.Convert]::ToInt32($InstalledState)) -ne $neoPackageIsInstalled) {
 					continue
