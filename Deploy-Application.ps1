@@ -253,7 +253,7 @@ function Main {
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod) -or $true -eq $global:AppInstallDetectionCustomResult) {
+					if ( ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) -or ($true -eq $global:AppInstallDetectionCustomResult) ) {
 						if ($true -eq $global:AppInstallDetectionCustomResult) {
 							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
 						}
@@ -325,7 +325,7 @@ function Main {
 			"Uninstall" {
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
-				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($NxtScriptDepth = 0) ) {
+				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($NxtScriptDepth -eq 0) ) {
 					Remove-NxtProductMember
 				}
 				if ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1)) {
@@ -343,8 +343,13 @@ function Main {
 						Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
 					}
 				}
-				[string]$script:installPhase = 'Package-Unregistration'
-				Unregister-NxtPackage
+				if ($NxtScriptDepth -eq 0) {
+					[string]$script:installPhase = 'Package-Unregistration'
+					Unregister-NxtPackage
+				}
+				else {
+					Write-Log -Message "No need to unregister package(s) now..." -Source ${cmdletName}
+				}
 				## END OF UNINSTALL
 			}
 			"InstallUserPart" {
@@ -365,7 +370,7 @@ function Main {
 		## Calculate exit code
 		if ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
 		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
-		if ($($global:NxtScriptDepth) -eq 0) {[int]$env:nxtScriptDepth = 0}
+		if ($NxtScriptDepth -eq 0) {[int]$env:nxtScriptDepth = 0}
 		Exit-Script -ExitCode $mainExitCode
 	}
 	catch {
@@ -373,8 +378,8 @@ function Main {
 		[int32]$mainExitCode = 60001
 		[string]$mainErrorMessage = "$(Resolve-Error)"
 		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+		if ($NxtScriptDepth -eq 0) {[int]$env:nxtScriptDepth = 0}
 		Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
-		if ($($global:NxtScriptDepth) -eq 0) {[int]$env:nxtScriptDepth = 0}
 		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	}
 }

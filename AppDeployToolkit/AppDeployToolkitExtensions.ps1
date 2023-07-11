@@ -4370,9 +4370,9 @@ function New-NxtAppCleanupScript {
 		Defines the script file name to be generate.
 		Defaults to the script name 'Clean-Neo42AppFolder.ps1'.
 	.EXAMPLE
-		New-NxtAppCleanupScript -DestinationPath "$global:PackageConfig.App" -ScriptFileName "Clean-Neo42AppFolder.ps1"
+		New-NxtAppCleanupScript -DestinationPath "$($global:PackageConfig.App)" -ScriptFileName "Clean-Neo42AppFolder.ps1"
 	.NOTES
-		Has to be executed from inside the provided 'DestinationPath' only.
+		Generated script has to be executed from inside the provided 'DestinationPath' only.
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -4392,8 +4392,8 @@ function New-NxtAppCleanupScript {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ( ![string]::IsNullOrEmpty("$DestinationPath") -and (Test-Path -Path "$DestinationPath") ) {
-			[string]$scriptcontent = "<#
+		if ( ![string]::IsNullOrEmpty("$DestinationPath") -and ($true -eq (Test-Path -Path "$DestinationPath")) ) {
+			[string]$scriptContent = "<#
 .SYNOPSIS
 	This script cleans the `$app folder of a neo42 package installation
 .LINK
@@ -4416,9 +4416,15 @@ try {
 finally {
 	Remove-Item `$currentScript -Force
 }"
-			Set-Content -Path "$DestinationPath\$ScriptFileName" -Value "$scriptcontent"
-			Write-Log -Message "Cleanup script [$DestinationPath\$ScriptFileName] created." -Source ${cmdletName}
-			Write-Output $true
+			Set-Content -Path "$DestinationPath\$ScriptFileName" -Value "$scriptContent"
+			Write-Log -Message "Cleanup script [$DestinationPath\$ScriptFileName] generated." -Source ${cmdletName}
+			if ($true -eq (Test-Path -Path "$DestinationPath\$ScriptFileName")) {
+				Write-Output $true
+			}
+			else {
+				Write-Log -Message "Generating cleanup script file failed." -Severity 2 -Source ${cmdletName}
+				Write-Output $false
+			}
 		}
 		else {
 			Write-Log -Message "Expected destination folder [$DestinationPath] does not exist or was not defined. Could not create cleanup script." -Severity 2 -Source ${cmdletName}
@@ -5244,7 +5250,7 @@ function Remove-NxtProductMember {
 				}
 			}
 		}
-		if ($removalCounter = 0) {
+		if ($removalCounter -eq 0) {
 			Write-Log -Message "No valid conditions for removal of application packages assigned to a product." -Source ${CmdletName}
 		}
 	}
@@ -8558,65 +8564,60 @@ function Unregister-NxtPackage {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($NxtScriptDepth -eq 0) {
-			Write-Log -Message "Unregistering package(s)..." -Source ${cmdletName}
-			try {
-				if ($true -eq $RemovePackagesWithSameProductGUID) {
-					[int]$removalCounter = 0
-					if (![string]::IsNullOrEmpty($ProductGUID)) {
-						Write-Log -Message "Cleanup registry entries and folder of assigned product member application packages with 'ProductGUID' [$ProductGUID]..." -Source ${CmdletName}
-						(Get-NxtRegisteredPackage -ProductGUID $ProductGUID).PackageGUID | Where-Object {$null -ne $($_)} | ForEach-Object {
-							[string]$assignedPackageGUID = $_
-							Write-Log -message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
-							$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
-							if ($true -eq $(New-NxtAppCleanupScript -DestinationPath "$assignedPackageGUIDAppPath")) {
-								Start-Sleep -Seconds 1
-								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
-							}
-							else {
-								Write-Log -message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
-							}
-							Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID
-							Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
-						}
-						Write-Log -Message "All folder and registry entries of assigned product member application packages with 'ProductGUID' [$ProductGUID] are cleaned." -Source ${CmdletName}
-						if ($removalCounter = 0) {
-							Write-Log -Message "No application packages assigned to a product found for removal." -Source ${CmdletName}
-						}
-					}
-					else {
-						Write-Log -Message "No ProductGUID was provided. Cleanup for application packages assigned to a product skipped." -Severity 2 -Source ${CmdletName}
-					}
-				}
-				else {
-					if ($PackageGUID -ne $global:PackageConfig.PackageGUID) {
-						$App = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").AppPath
-					}
-					if ($null -eq $App) {
-						Write-Log -Message "Unregister of package with 'PackageGUID' [$PackageGUID] is not processable. There is no current 'AppPath' available." -Severity 2 -Source ${cmdletName}
-					}
-					else {
-						Write-Log -Message "No valid conditions for removal of assigned product member application packages. Unregistering package with 'PackageGUID' [$PackageGUID] only..." -Source ${cmdletName}
-						if ($true -eq $(New-NxtAppCleanupScript -DestinationPath "$App")) {
+		Write-Log -Message "Unregistering package(s)..." -Source ${cmdletName}
+		try {
+			if ($true -eq $RemovePackagesWithSameProductGUID) {
+				[int]$removalCounter = 0
+				if (![string]::IsNullOrEmpty($ProductGUID)) {
+					Write-Log -Message "Cleanup registry entries and folder of assigned product member application packages with 'ProductGUID' [$ProductGUID]..." -Source ${CmdletName}
+					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID).PackageGUID | Where-Object {$null -ne $($_)} | ForEach-Object {
+						[string]$assignedPackageGUID = $_
+						Write-Log -message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
+						$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
+						if ($true -eq $(New-NxtAppCleanupScript -DestinationPath "$assignedPackageGUIDAppPath")) {
 							Start-Sleep -Seconds 1
-							Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$App" -NoWait
+							Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
 						}
 						else {
 							Write-Log -message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
 						}
-						Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID
-						Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID
-						Write-Log -Message "Current package unregistration successful." -Source ${cmdletName}
+						Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID
+						Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
+					}
+					Write-Log -Message "All folder and registry entries of assigned product member application packages with 'ProductGUID' [$ProductGUID] are cleaned." -Source ${CmdletName}
+					if ($removalCounter = 0) {
+						Write-Log -Message "No application packages assigned to a product found for removal." -Source ${CmdletName}
 					}
 				}
+				else {
+					Write-Log -Message "No ProductGUID was provided. Cleanup for application packages assigned to a product skipped." -Severity 2 -Source ${CmdletName}
+				}
 			}
-			catch {
-				Write-Log -Message "Failed to unregister package. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			else {
+				if ($PackageGUID -ne $global:PackageConfig.PackageGUID) {
+					$App = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").AppPath
+				}
+				if ($null -eq $App) {
+					Write-Log -Message "Unregister of package with 'PackageGUID' [$PackageGUID] is not processable. There is no current 'AppPath' available." -Severity 2 -Source ${cmdletName}
+				}
+				else {
+					Write-Log -Message "No valid conditions for removal of assigned product member application packages. Unregistering package with 'PackageGUID' [$PackageGUID] only..." -Source ${cmdletName}
+					if ($true -eq $(New-NxtAppCleanupScript -DestinationPath "$App")) {
+						Start-Sleep -Seconds 1
+						Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$App" -NoWait
+					}
+					else {
+						Write-Log -message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
+					}
+					Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID
+					Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID
+					Write-Log -Message "Current package unregistration successful." -Source ${cmdletName}
+				}
 			}
 		}
-		else {
-			Write-Log -Message "No valid conditions for unregistering package(s)..." -Source ${cmdletName}
-		}	
+		catch {
+			Write-Log -Message "Failed to unregister package. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
