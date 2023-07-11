@@ -227,7 +227,7 @@ note: following sequence is proceeded for soft migration decision:
 
 note: the following sub-structure "File" is singular (by default it may be tested for only one file name/version)!
 
-***"File":*** *mandatory value sub-structure (children have to be surrounded by {})*
+***"File":*** *mandatory value sub-structure (children have to be surrounded by ***{}***)*
 
 parent: /SoftMigration/
 
@@ -717,7 +717,7 @@ parent: /
 
 value collection to control pre setup success checks for process items and/or registry items
 
-**"Install":** *mandatory value sub-structure (children have to be surrounded by {})*
+**"Install":** *mandatory value sub-structure (children have to be surrounded by ***{}***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/
 
@@ -809,7 +809,7 @@ parent: /TestConditionsPreSetupSuccessCheck/Install/RegKeysToWaitFor/
 value dependent of expected behavior for existence of the registry key (valid are only 'true' and 'false')
 ```
 
-**"Uninstall":** *optional value sub-structure (children have to be surrounded by {})*
+**"Uninstall":** *optional value sub-structure (children have to be surrounded by ***{}***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/
 
