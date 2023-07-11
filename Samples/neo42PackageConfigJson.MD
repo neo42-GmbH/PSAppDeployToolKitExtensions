@@ -347,8 +347,9 @@ parent: /
 
 ```
 default value: false
-uninstalles all found application packages with same ProductGUID (product membership) assigned, but leaves them registered during installation process of current application package
+uninstalls all found application packages with same ProductGUID (product membership) assigned, but leaves them registered during installation process of current application package
 (valid are only 'true' and 'false')
+to prevent circle proceeding this functionality is working in first instance of script running level (script depth = 0) only!
 note: the product assignment will be stored for the application package always, but will be recognized for application management if this value is set to '$true' only (a value 'ProductGUID' has to be defined)
 ```
 
