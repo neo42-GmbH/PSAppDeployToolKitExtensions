@@ -208,6 +208,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
+				Resolve-NxtDependentPackage
 				if ($true -eq $global:SetupCfg.Options.SoftMigration -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and ($true -eq $RegisterPackage)) {
 					CustomSoftMigrationBegin
 				}
