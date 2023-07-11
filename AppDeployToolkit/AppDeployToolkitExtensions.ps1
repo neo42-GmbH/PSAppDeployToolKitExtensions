@@ -5190,7 +5190,7 @@ function Resolve-NxtDependentPackage {
 	.PARAMETER DependentPackages
 		DependentPackages to check.
 	.EXAMPLE
-		Resolve-NxtDependentPackages -DependentPackages $Global:PackageConfig.DependentPackages
+		Resolve-NxtDependentPackages -DependentPackages "$($global:PackageConfig.DependentPackages)"
 	.OUTPUTS
 		PSADTNXT.ResolvedPackagesResult
 	.LINK
@@ -5201,7 +5201,7 @@ function Resolve-NxtDependentPackage {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[array]
-		$DependentPackages = $Global:PackageConfig.DependentPackages
+		$DependentPackages = $global:PackageConfig.DependentPackages
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5210,7 +5210,7 @@ function Resolve-NxtDependentPackage {
 	Process {
 		foreach ($dependentPackage in $DependentPackages) {
 			[PSADTNXT.NxtRegisteredApplication]$registeredPackage = Get-NxtRegisteredPackage -PackageGUID $dependentPackage.GUID
-			if ([string]::IsNullOrEmpty($registeredPackage)){
+			if ([string]::IsNullOrEmpty($registeredPackage)) {
 				Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not registered." -Severity 1 -Source ${CmdletName}
 				$registeredPackage.Installed = $false
 			}
@@ -5244,13 +5244,13 @@ function Resolve-NxtDependentPackage {
 						## Do nothing
 						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state'$($dependentPackage.DesiredState)', still trying to continue." -Severity 1 -Source ${CmdletName}
 					}
-					elseif($dependentPackage.OnConflict -eq "Warn"){
+					elseif ($dependentPackage.OnConflict -eq "Warn") {
 						## Write warning
 						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage), still trying to continue" -Severity 2 -Source ${CmdletName}
 					}
 				}
 			}
-			elseif($false -eq $registeredPackage.Installed) {
+			elseif ($false -eq $registeredPackage.Installed) {
 				if ($dependentPackage.DesiredState -eq "Present") {
 					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'." -Severity 1 -Source ${CmdletName}
 					if ($dependentPackage.OnConflict -eq "Fail") {

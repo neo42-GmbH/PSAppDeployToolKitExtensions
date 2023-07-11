@@ -358,6 +358,47 @@ universal unique identifier in regular GUID format with random hexadecimal numbe
 note: the 3 very left digits inside of curly brackets are always "042"
 ```
 
+**"DependentPackages"** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
+
+parent: /
+
+note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "GUID", "DesiredState" and "OnConflict" have to be provided for each item, but an empty list is allowed too (that means: "DependentPackages": [])!
+
+**"GUID"** *mandatory string value*
+
+parent: /DependentPackages/
+```
+universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" referencing to value "PackageGUID" of a single package
+note: the 3 very left digits inside of curly brackets are always "042"
+```
+
+**"DesiredState"** *mandatory string value*
+
+parent: /DependentPackages/
+```
+desired installation state of application package with provided 'PackageGUID' in value "GUID"
+```
+- absent: depending application package expected not to be installed on client
+- present: depending application package expected to be installed on client
+
+**"OnConflict"** *mandatory string value*
+
+parent: /DependentPackages/
+```
+defines an action has to be done if found installation state of installed application package don't match
+```
+- Fail: current running application package script should be stopped with failure
+- Warn: current running application package script should be continued with logging an optional defined warning message in value "ErrorMessage"
+- Continue: current running application package script should be continued with just logging the found depending application package state
+- Uninstall: current running application package script should be continued after succesful uninstall depending application package
+
+**"ErrorMessage"** *optional string value*
+
+parent: /DependentPackages/
+```
+defines an optional error message to log in case of 'Warn'-action defined by value "OnConflict"
+```
+
 **"RegPackagesKey"** *mandatory string value*
 
 parent: /
@@ -499,7 +540,7 @@ switch to control the interpretation of character '*' in a defined string of val
 - true : '\*' is interpreted as a wildcard
 - false: '\*' is interpreted as part of the defined string
 
-**"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by [])*
+**"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by ***[]***)*
 
 parent: /
 
@@ -638,7 +679,7 @@ comma separated list of exit codes to accept for successfull uninstallation exec
 note: '*' is allowed for all exit codes
 ```
 
-**"AppKillProcesses":** *optional value structure (possibly a collection) (children have to be surrounded by [])*
+**"AppKillProcesses":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
 
@@ -701,7 +742,7 @@ behavior of logical connection between more then one provided process item in su
 note: valid values are "And" and "Or"
 ```
 
-**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
+**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
 
@@ -731,7 +772,7 @@ behavior of logical connection between more then one provided registry item in s
 note: valid values are "And" and "Or"
 ```
 
-**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
+**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
 
@@ -793,7 +834,7 @@ behavior of logical connection between more then one provided process item in su
 note: valid values are "And" and "Or"
 ```
 
-**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
+**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 
@@ -823,7 +864,7 @@ behavior of logical connection between  more then one provided registry item in 
 note: valid values are "And" and "Or"
 ```
 
-**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
+**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 
@@ -860,7 +901,7 @@ parent: /TestConditionsPreSetupSuccessCheck/Uninstall/RegKeysToWaitFor/
 value dependent of expected behavior for existence of the registry key (valid are only 'true' and 'false')
 ```
 
-**"CommonDesktopShortcutsToDelete":** *optional string value list (has to be surrounded by [])*
+**"CommonDesktopShortcutsToDelete":** *optional string value list (has to be surrounded by ***[]***)*
 
 parent: /
 ```
@@ -868,7 +909,7 @@ comma separated list of public desktop shortcut names to delete
 note: an empty list is allowed (that means: "CommonDesktopShortcutsToDelete": [])!
 ```
 
-**"CommonStartMenuShortcutsToCopyToCommonDesktop":** *optional value structure (possibly a collection) (children have to be surrounded by [])*
+**"CommonStartMenuShortcutsToCopyToCommonDesktop":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
 
@@ -888,7 +929,7 @@ parent: /CommonStartMenuShortcutsToCopyToCommonDesktop/
 link file name on public desktop folder (necessary only if different name to Source)
 ```
 
-**"UninstallKeysToHide":** *optional value structure (possibly a collection) (children have to be surrounded by []*
+**"UninstallKeysToHide":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
 
@@ -936,7 +977,7 @@ switch to control the interpretation of character '\*' in a defined string of va
 - true : '\*' is interpreted as a wildcard
 - false: '\*' is interpreted as part of the defined string
 
-**"DisplayNamesToExcludeFromHiding":** *optional string value list (has to be surrounded by [])*
+**"DisplayNamesToExcludeFromHiding":** *optional string value list (has to be surrounded by ***[]***)*
 
 parent: /UninstallKeysToHide/
 
@@ -947,7 +988,7 @@ comma separated list of display names to exclude from hiding, where a character 
 note: an empty list is allowed that means: "DisplayNamesToExcludeFromHiding": []), but at least the value of the corresponding installed application package for a defined current "KeyName" is recommended to prevent hiding this package uninstall entry if current value of "KeyNameIsDisplayName" is set to 'true'!
 ```
 
-**"PackageSpecificVariablesRaw"** *optional value structure (children have to be surrounded by []*
+**"PackageSpecificVariablesRaw"** *optional value structure (children have to be surrounded by ***[]***)*
 
 parent: /
 
