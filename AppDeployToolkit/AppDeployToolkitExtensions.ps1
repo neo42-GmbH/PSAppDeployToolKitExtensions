@@ -5186,9 +5186,13 @@ function Repair-NxtApplication {
 function Resolve-NxtDependentPackage {
 	<#
 	.DESCRIPTION
-		Checks if depentent packages are (not) installed and updates the status of the package accordingly.
+		Checks if depentent packages are (not) installed and updates the status of the packages accordingly.
 	.PARAMETER DependentPackages
-		DependentPackages to check.
+		Defines a (list of) dependent package(s) to check.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Resolve-NxtDependentPackages -DependentPackages "$($global:PackageConfig.DependentPackages)"
 	.OUTPUTS
@@ -5201,7 +5205,10 @@ function Resolve-NxtDependentPackage {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[array]
-		$DependentPackages = $global:PackageConfig.DependentPackages
+		$DependentPackages = $global:PackageConfig.DependentPackages,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5211,64 +5218,66 @@ function Resolve-NxtDependentPackage {
 		foreach ($dependentPackage in $DependentPackages) {
 			[PSADTNXT.NxtRegisteredApplication]$registeredPackage = Get-NxtRegisteredPackage -PackageGUID $dependentPackage.GUID
 			if ([string]::IsNullOrEmpty($registeredPackage)) {
-				Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not registered." -Severity 1 -Source ${CmdletName}
+				Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not registered." -Source ${CmdletName}
 				$registeredPackage.Installed = $false
 			}
 			if ($true -eq $registeredPackage.Installed) {
 				if ($dependentPackage.DesiredState -eq "Installed") {
-					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is already in desired state '$($dependentPackage.DesiredState)'." -Severity 1 -Source ${CmdletName}
+					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is already in desired state '$($dependentPackage.DesiredState)'." -Source ${CmdletName}
 				}
 				elseif ($dependentPackage.DesiredState -eq "Absent") {
-					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage)" -Severity 1 -Source ${CmdletName}
+					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage)" -Source ${CmdletName}
 					if ($dependentPackage.OnConflict -eq "Uninstall") {
 						## Trigger uninstallstring, throw exception if uninstall fails.
-						Write-Log -Message "Retrieve uninstall string and try to uninstall dependent package '$($dependentPackage.GUID)', ..." -Severity 1 -Source ${CmdletName}
 						[string]$dependentPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -Value 'UninstallString')
+						Write-Log -Message "Removing dependent application package with uninstall call: '$($dependentPackage.GUID)'." -Source ${CmdletName}
 						$runUninstallString = (Start-Process -FilePath "$(($dependentPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($dependentPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
 						$runUninstallString.WaitForExit()
 						if ($runUninstallString.ExitCode -ne 0) {
 							Write-Log -Message "Removal of dependent application package failed with return code '$($runUninstallString.ExitCode)'." -Severity 3 -Source ${CmdletName}
 							throw "Removal of dependent application package failed."
 						}
-						if ( (![string]::IsNullOrEmpty($(Get-NxtRegisteredPackage -PackageGUID $dependentPackage.GUID))) -or (![string]::IsNullOrEmpty($(Get-NxtRegisteredPackage -PackageGUID $dependentPackage.GUID -InstalledState 1))) ) {
-							Write-Log -Message "Removal of dependent application package was not successful. The package is still detected!" -Severity 3 -Source ${CmdletName}
-							throw "Dependent application package still detected."
+						## !!! next line has to be activated after merging issue #303 -> afterwards unregister is working in newly introduced script depth 0 only!!!
+						#Unregister-NxtPackage -RemovePackagesWithSameProductGUID $false -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey "$RegPackagesKey"
+						if ( ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists)) -or ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists )) ) {
+							Write-Log -Message "Removal of dependent application package was done not successful." -Severity 3 -Source ${CmdletName}
+							throw "Removal of dependent application package not successful."
 						}
 					}
 					elseif ($dependentPackage.OnConflict -eq "Fail") {
 						## Throw exception
-						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. throwing exception. $($dependentPackage.ErrorMessage)" -Severity 3 -Source ${CmdletName}
+						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. Throwing exception. $($dependentPackage.ErrorMessage)" -Severity 3 -Source ${CmdletName}
 						throw "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage)"
-					}
-					elseif ($dependentPackage.OnConflict -eq "Continue") {
-						## Do nothing
-						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state'$($dependentPackage.DesiredState)', still trying to continue." -Severity 1 -Source ${CmdletName}
 					}
 					elseif ($dependentPackage.OnConflict -eq "Warn") {
 						## Write warning
 						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage), still trying to continue" -Severity 2 -Source ${CmdletName}
 					}
+					elseif ($dependentPackage.OnConflict -eq "Continue") {
+						## Do nothing
+						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state'$($dependentPackage.DesiredState)', still trying to continue." -Source ${CmdletName}
+					}
 				}
 			}
 			elseif ($false -eq $registeredPackage.Installed) {
 				if ($dependentPackage.DesiredState -eq "Present") {
-					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'." -Severity 1 -Source ${CmdletName}
+					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'." -Source ${CmdletName}
 					if ($dependentPackage.OnConflict -eq "Fail") {
 						## Throw exception
-						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. throwing exception $($dependentPackage.ErrorMessage)" -Severity 3 -Source ${CmdletName}
-						Throw "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)', $($dependentPackage.ErrorMessage)."
-					}
-					elseif ($dependentPackage.OnConflict -eq "Continue") {
-						## Do nothing
-						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state, still trying to continue'$($dependentPackage.DesiredState)'." -Severity 1 -Source ${CmdletName}
+						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. Throwing exception $($dependentPackage.ErrorMessage)" -Severity 3 -Source ${CmdletName}
+						throw "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)', $($dependentPackage.ErrorMessage)."
 					}
 					elseif ($dependentPackage.OnConflict -eq "Warn") {
 						## Write warning
 						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage), still trying to continue." -Severity 2 -Source ${CmdletName}
 					}
+					elseif ($dependentPackage.OnConflict -eq "Continue") {
+						## Do nothing
+						Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state, still trying to continue'$($dependentPackage.DesiredState)'." -Source ${CmdletName}
+					}
 				}
 				elseif ($dependentPackage.DesiredState -eq "Absent") {
-					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is already in desired state '$($dependentPackage.DesiredState)'." -Severity 1 -Source ${CmdletName}
+					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is already in desired state '$($dependentPackage.DesiredState)'." -Source ${CmdletName}
 				}
 			}
 		}

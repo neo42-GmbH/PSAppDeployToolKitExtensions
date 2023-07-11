@@ -387,7 +387,7 @@ parent: /DependentPackages/
 ```
 defines an action has to be done if found installation state of installed application package don't match
 ```
-- Fail: current running application package script should be stopped with failure
+- Fail: current running application package script should be stopped with failure and logging an optional defined warning message in value "ErrorMessage"
 - Warn: current running application package script should be continued with logging an optional defined warning message in value "ErrorMessage"
 - Continue: current running application package script should be continued with just logging the found depending application package state
 - Uninstall: current running application package script should be continued after succesful uninstall depending application package
