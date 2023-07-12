@@ -225,7 +225,6 @@ function Main {
 	)
 	try {
 		CustomBegin
-		Clear-UndoRegistryKeys
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
 				CustomInstallAndReinstallBegin
