@@ -592,7 +592,7 @@ function Complete-NxtPackageInstallation {
 				Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
 			}
 			else {
-				Write-Log -message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
+				Write-Log -Message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
 			}
 		}
 	}#
@@ -3949,11 +3949,11 @@ function Initialize-NxtEnvironment {
 		switch ($SetupCfg.Options.ShowBalloonNotifications) {
 			"0"	{
 				[bool]$script:configShowBalloonNotifications = $false
-				Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
+				Write-Log -Message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
 			}
 			"1" {
 				[bool]$script:configShowBalloonNotifications = $true
-				Write-Log -message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
+				Write-Log -Message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
 			}
 			"2" {
 				## Use ShowBalloonNotifications setting from XML config
@@ -5179,7 +5179,7 @@ function Remove-NxtProductMember {
 						}
 						Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID -Name 'Installed' -Type 'Dword' -Value '0'
 						Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID -Name 'SystemComponent' -Type 'Dword' -Value '1'
-						Write-Log -message "Set current install state and hided the uninstall entry for product member application package with PackageGUID '$assignedPackageGUID'." -Source ${cmdletName}
+						Write-Log -Message "Set current install state and hided the uninstall entry for product member application package with PackageGUID '$assignedPackageGUID'." -Source ${cmdletName}
 						$removalCounter += 1
 					}
 					else {
@@ -8510,14 +8510,14 @@ function Unregister-NxtPackage {
 					Write-Log -Message "Cleanup registry entries and folder of assigned product member application packages with 'ProductGUID' [$ProductGUID]..." -Source ${CmdletName}
 					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID).PackageGUID | Where-Object {$null -ne $($_)} | ForEach-Object {
 						[string]$assignedPackageGUID = $_
-						Write-Log -message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
+						Write-Log -Message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
 						$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
 						if ($true -eq $(New-NxtAppCleanupScript -DestinationPath "$assignedPackageGUIDAppPath")) {
 							Start-Sleep -Seconds 1
 							Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
 						}
 						else {
-							Write-Log -message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
+							Write-Log -Message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
 						}
 						Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID
 						Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$assignedPackageGUID
@@ -8545,7 +8545,7 @@ function Unregister-NxtPackage {
 						Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$App" -NoWait
 					}
 					else {
-						Write-Log -message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
+						Write-Log -Message "Cleanup script could not executed, orphaned files/folders could remain."  -Source ${CmdletName}
 					}
 					Remove-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID
 					Remove-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID
