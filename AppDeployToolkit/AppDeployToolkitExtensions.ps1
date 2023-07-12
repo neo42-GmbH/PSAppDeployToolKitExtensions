@@ -8458,7 +8458,7 @@ function Unregister-NxtPackage {
 					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID).PackageGUID | Where-Object {$null -ne $($_)} | ForEach-Object {
 						[string]$assignedPackageGUID = $_
 						Write-Log -Message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
-						$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
+						[string]$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
 						if ($true -eq $(New-NxtAppCleanupScript -DestinationPath "$assignedPackageGUIDAppPath")) {
 							Start-Sleep -Seconds 1
 							Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
@@ -8480,9 +8480,9 @@ function Unregister-NxtPackage {
 			}
 			else {
 				if ($PackageGUID -ne $global:PackageConfig.PackageGUID) {
-					$App = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").AppPath
+					[string]$App = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").AppPath
 				}
-				if ($null -eq $App) {
+				if (![string]::IsNullOrEmpty($App)) {
 					Write-Log -Message "Unregister of package with 'PackageGUID' [$PackageGUID] is not processable. There is no current 'AppPath' available." -Severity 2 -Source ${cmdletName}
 				}
 				else {
