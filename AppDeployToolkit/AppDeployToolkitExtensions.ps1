@@ -587,7 +587,7 @@ function Complete-NxtPackageInstallation {
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\neo42-Userpart\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 		}
 		foreach ($oldAppFolder in $((Get-ChildItem (get-item $App).Parent.FullName | Where-Object Name -ne (get-item $App).Name).FullName)) {
-			if ($true -eq $(New-NxtAppCleanupScript -DestinationPath "$ApoldAppFolderp")) {
+			if ($true -eq $(New-NxtAppCleanupScript -DestinationPath "$oldAppFolder")) {
 				Start-Sleep -Seconds 1
 				Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
 			}
