@@ -397,61 +397,6 @@ function Add-NxtLocalUser {
 	}
 }
 #endregion
-#region Function Clear-UndoRegistryKeys
-function Clear-UndoRegistryKeys {
-	<#
-	.SYNOPSIS
-		Removes orphaned registry keys possibly left over from failed processing of product member application packages.
-	.DESCRIPTION
-		Removes all orphaned registry keys possibly left over from failed processing of product member application packages with the same ProductGUID of current package.
-		Runs a cleanup if parameter 'RemovePackagesWithSameProductGUID' is set to 'true' only.
-	.PARAMETER ProductGUID
-		Specifies a membership GUID for a product of an application package.
-		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RemovePackagesWithSameProductGUID
-		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
-		The uninstalled application packages stay registered, when removed during installation process of current application package.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RegPackagesKey
-		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
-		Defaults to the corresponding value from the PackageConfig object.
-	.EXAMPLE
-		Clear_UndoRegistryKeys
-	.EXAMPLE
-		Remove-NxtProductMember -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $false)]
-		[String]
-		$ProductGUID = $global:PackageConfig.ProductGUID,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		if ($true -eq $RemovePackagesWithSameProductGUID) {
-			Get-ChildItem -Path "HKLM:\Software\$RegPackagesKey" | Where-Object {($_.Name -like "*_UndoUnregister") -and (Get-ItemProperty -Path $_.PSPath).ProductGUID -like "$ProductGUID"} | ForEach-Object {
-				Remove-RegistryKey -Key $_
-				Write-Log -message "Cleanup orphaned 'undo' registry entries of product member application packages with ProductGUID '$ProductGUID' done." -Source ${cmdletName}
-			}
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
 #region Function Compare-NxtVersion
 function Compare-NxtVersion {
 	<#
