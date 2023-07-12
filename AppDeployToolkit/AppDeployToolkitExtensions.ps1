@@ -7776,52 +7776,6 @@ function Test-NxtPackageConfig {
 	}
 }
 #endregion
-#region function Test-NxtPackageIsInstalled
-function Test-NxtPackageIsInstalled {
-	<#
-	.SYNOPSIS
-		Detects if the application package is installed.
-	.DESCRIPTION
-		Uses the registry uninstall key to detect if the application package is present.
-	.PARAMETER PackageGUID
-		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
-		Defaults to the corresponding value from the PackageConfig object.
-	.EXAMPLE
-		Test-NxtPackageIsInstalled
-	.EXAMPLE
-		Test-NxtPackageIsInstalled -PackageGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
-	.OUTPUTS
-		System.Boolean.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $false)]
-		[String]
-		$PackageGUID = $global:PackageConfig.PackageGUID
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		Write-Log -Message "Checking if application package is installed..." -Source ${CmdletName}
-		if ( ($(Get-RegistryKey -Key "HKLM:\Software\\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID").Installed) -eq '1' ) {
-			Write-Log -Message "Application package matching PackageGUID [$PackageGUID] is installed." -Source ${CmdletName}
-			Write-Output $true
-		}
-		else {
-			Write-Log -Message "Application package matching PackageGUID [$PackageGUID] is not installed." -Source ${CmdletName}
-			Write-Output $false
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-
-}
-#endregion
 #region Function Test-NxtPersonalizationLightTheme
 function Test-NxtPersonalizationLightTheme {
 	<#
