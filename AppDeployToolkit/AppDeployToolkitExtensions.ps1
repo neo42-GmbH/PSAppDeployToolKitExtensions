@@ -8394,10 +8394,6 @@ function Unregister-NxtPackage {
 	.DESCRIPTION
 		Removes the package files from "$APP\" and deletes the package's registry keys under "HKLM\Software\$regPackagesKey\$PackageGUID" and "HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID".
 		This function is valid on running script depth '0' only.
-	.PARAMETER NxtScriptDepth
-		Specifies which current call level of the script is running.
-		An unregister for assigned application packages to a product is done in level 0 only.
-		Defaults to the corresponding environment value.
 	.PARAMETER ProductGUID
 		Specifies a membership GUID for a product of an application package.
 		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
@@ -8429,9 +8425,6 @@ function Unregister-NxtPackage {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory = $false)]
-		[int]
-		$NxtScriptDepth=$global:NxtScriptDepth,
 		[Parameter(Mandatory = $false)]
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
