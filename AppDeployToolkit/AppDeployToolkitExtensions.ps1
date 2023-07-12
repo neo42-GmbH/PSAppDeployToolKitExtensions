@@ -8482,7 +8482,7 @@ function Unregister-NxtPackage {
 				if ($PackageGUID -ne $global:PackageConfig.PackageGUID) {
 					[string]$App = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").AppPath
 				}
-				if (![string]::IsNullOrEmpty($App)) {
+				if ([string]::IsNullOrEmpty($App)) {
 					Write-Log -Message "Unregister of package with 'PackageGUID' [$PackageGUID] is not processable. There is no current 'AppPath' available." -Severity 2 -Source ${cmdletName}
 				}
 				else {
