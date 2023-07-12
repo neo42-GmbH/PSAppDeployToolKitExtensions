@@ -5119,7 +5119,7 @@ function Remove-NxtProductMember {
 	.SYNOPSIS
 		Removes an installed and registered product member application package.
 	.DESCRIPTION
-		Removes an application package assigned to a product if the assigned pplication package is registered and installed only.
+		Removes an application package assigned to a product if the assigned application package is registered and installed only.
 		Uses the value 'ProductGUID' in registry sub keys (installed application packages) under 'RegPackagesKey' to detect if an application package is a product member.
 	.PARAMETER ProductGUID
 		Specifies a membership GUID for a product of an application package.
