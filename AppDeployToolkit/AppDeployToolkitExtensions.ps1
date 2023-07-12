@@ -5170,7 +5170,7 @@ function Remove-NxtProductMember {
 				if ($assignedPackageGUID -ne $PackageGUID) {
 					[string]$assignedPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Value 'UninstallString')
 					Write-Log -Message "Processing product member application package with 'PackageGUID' [$assignedPackageGUID]..." -Source ${CmdletName}
-					if ($null -ne $assignedPackageUninstallString) {
+					if (![string]::IsNullOrEmpty($assignedPackageUninstallString)) {
 						Write-Log -Message "Removing package with uninstall call: '$assignedPackageUninstallString'." -Source ${CmdletName}
 						$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
 						$runUninstallString.WaitForExit()
