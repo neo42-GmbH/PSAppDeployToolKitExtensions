@@ -5172,13 +5172,14 @@ function Remove-NxtProductMember {
 					Write-Log -Message "Processing product member application package with 'PackageGUID' [$assignedPackageGUID]..." -Source ${CmdletName}
 					if (![string]::IsNullOrEmpty($assignedPackageUninstallString)) {
 						Write-Log -Message "Removing package with uninstall call: '$assignedPackageUninstallString'." -Source ${CmdletName}
-						$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).replace('"','`"').trim())" -PassThru -Wait)
+						[Diagnostics.Process]$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).Replace('"','`"').Trim())" -PassThru -Wait)
 						$runUninstallString.WaitForExit()
 						if ($runUninstallString.ExitCode -ne 0) {
-							Exit-NxtScriptWithError -ErrorMessage "Removal of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $runUninstallString.ExitCode
+							Write-Log -Message "Removal of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -Severity 3 -Source ${CmdletName}
+							throw "Removal of found product member application package failed."
 						}
-						Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID -Name 'Installed' -Type 'Dword' -Value '0'
-						Set-RegistryKey -Key HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID -Name 'SystemComponent' -Type 'Dword' -Value '1'
+						Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Name 'Installed' -Type 'Dword' -Value '0'
+						Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Name 'SystemComponent' -Type 'Dword' -Value '1'
 						Write-Log -Message "Set current install state and hided the uninstall entry for product member application package with PackageGUID '$assignedPackageGUID'." -Source ${cmdletName}
 						$removalCounter += 1
 					}
