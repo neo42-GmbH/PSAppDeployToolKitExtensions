@@ -167,7 +167,7 @@ function Main {
 		Defaults to the corresponding environment value.
 	.PARAMETER ProductGUID
 		Specifies a membership GUID for a product of an application package.
-		Can be found under "HKLM\SOFTWARE\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
+		Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RemovePackagesWithSameProductGUID
 		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
