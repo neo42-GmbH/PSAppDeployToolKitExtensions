@@ -3942,9 +3942,6 @@ function Initialize-NxtEnvironment {
 		}
 		[string]$global:DeploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
-		if ( ($true -eq $($global:PackageConfig.RemovePackagesWithSameProductGUID)) -and ([string]::IsNullOrEmpty($($global:PackageConfig.ProductGUID))) ) {
-			throw "Error: A ProductGUID is missing for provided configuration."
-		}
 		Format-NxtPackageSpecificVariables
 		switch ($SetupCfg.Options.ShowBalloonNotifications) {
 			"0"	{
