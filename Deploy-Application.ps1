@@ -77,7 +77,7 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
-## Global default variables 
+## global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
@@ -93,7 +93,7 @@ Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | F
 }
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
-## Set the script execution policy for this process
+## set the script execution policy for this process
 Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop' } Catch {}
 ## Variables: Exit Code
 [int32]$mainExitCode = 0
@@ -106,18 +106,18 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
 [int]$env:nxtScriptDepth += 1
-## Dot source the required App Deploy Toolkit Functions
+## dot source the required AppDeploy Toolkit functions
 Try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
 	If (-not (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
 	If ($DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
-	## Add Custom Nxt Variables
+	## add custom 'Nxt' variables
 	[string]$appDeployLogoBannerDark = Join-Path -Path $scriptRoot -ChildPath $xmlBannerIconOptions.Banner_Filename_Dark
 }
 Catch {
 	If ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
 	Write-Error -Message "Module [$moduleAppDeployToolkitMain] failed to load: `n$($_.Exception.Message)`n `n$($_.InvocationInfo.PositionMessage)" -ErrorAction 'Continue'
-	## Exit the script, returning the exit code to SCCM
+	## exit the script, returning the exit code to SCCM
 	If (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
 }
 Write-Log "Current running script depth: $($global:NxtScriptDepth)" -Source $deployAppScriptFriendlyName
@@ -131,7 +131,7 @@ try {
 	##* VARIABLE DECLARATION
 	##*===============================================
 
-	## App Global Variables
+	## app global variables
 	[string]$global:DetectedDisplayVersion = (Get-NxtCurrentDisplayVersion).DisplayVersion
 
 	Get-NxtVariablesFromDeploymentSystem
@@ -139,7 +139,7 @@ try {
 	[bool]$global:SoftMigrationCustomResult = $false
 	[bool]$global:AppInstallDetectionCustomResult = $false
 	
-	## Validate Package Config Variables
+	## validate package config variables
 	Test-NxtPackageConfig
 
 	##*===============================================
@@ -157,7 +157,7 @@ catch {
 function Main {
 	<#
 	.SYNOPSIS
-		Defines the flow of the installation script
+		Defines the flow of the installation script.
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
@@ -174,10 +174,10 @@ function Main {
 		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
-		Specifies the Registry Key Name used for the Packages Wrapper Uninstall entry
+		Specifies the registry key name used for the packages wrapper uninstall entry.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegPackagesKey
-		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER Reboot
 		Defines if a reboot exitcode should be returned instead of the main Exitcode.
@@ -187,7 +187,7 @@ function Main {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
-		Defaults to the corresponding value from the PackageConfig object
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegisterPackage
 		Specifies if package may be registered (maybe superseeded by deployment system!).
 		Defaults to the corresponding global value.
@@ -297,7 +297,7 @@ function Main {
 						}
 					}
 					else {
-						## Default installation
+						## default installation
 						CustomInstallBegin
 						[string]$script:installPhase = 'Package-Installation'
 						[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication 
@@ -311,7 +311,7 @@ function Main {
 					[string]$script:installPhase = 'Package-Completition'
 					Complete-NxtPackageInstallation
 					if ($true -eq $RegisterPackage) {
-						## Register package for uninstall
+						## register package for uninstall
 						[string]$script:installPhase = 'Package-Registration'
 						Register-NxtPackage
 					}
@@ -366,14 +366,14 @@ function Main {
 			Default {}
 		}
 		[string]$script:installPhase = 'Package-Finish'
-		## Calculate exit code
+		## calculate exit code
 		if ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
 		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
 		if ($NxtScriptDepth -eq 0) {[int]$env:nxtScriptDepth = 0}
 		Exit-Script -ExitCode $mainExitCode
 	}
 	catch {
-		## Unhandled exception occured
+		## unhandled exception occured
 		[int32]$mainExitCode = 60001
 		[string]$mainErrorMessage = "$(Resolve-Error)"
 		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
@@ -383,9 +383,9 @@ function Main {
 	}
 }
 
-#region Entry point funtions to perform custom tasks during script run
-## Custom functions are sorted by occurence order in the main function.
-## Naming pattern: 
+#region entry point funtions to perform custom tasks during script run
+## custom functions are sorted by occurence order in the main function.
+## naming pattern: 
 ## {functionType}{Phase}{PrePosition}{SubPhase}
 function CustomBegin {
 	[string]$script:installPhase = 'CustomBegin'
@@ -396,13 +396,13 @@ function CustomBegin {
 function CustomInstallAndReinstallBegin {
 	[string]$script:installPhase = 'CustomInstallAndReinstallBegin'
 
-	## Executes before any installation, reinstallation or softmigration tasks are performed
+	## executes before any installation, reinstallation or soft migration tasks are performed
 }
 
 function CustomSoftMigrationBegin {
 	[string]$script:installPhase = 'CustomSoftMigrationBegin'
 
-	## Executes before a default check of SoftMigration runs
+	## executes before a default check of soft migration runs
 	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
 	## [bool]$global:SoftMigrationCustomResult = $true
 }
@@ -415,13 +415,13 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
 
-	## Executes after the completed install or reinstall process and on SoftMigration
+	## executes after the completed install or reinstall process and on soft migration
 }
 
 function CustomInstallAndReinstallPreInstallAndReinstall {
 	[string]$script:installPhase = 'CustomInstallAndReinstallPreInstallAndReinstall'
 
-	## Executes before any installation or reinstallation tasks are performed
+	## executes before any installation or reinstallation tasks are performed
 	## after successful individual checks for installed application state the following variable has to be set at the end of this section:
 	## [bool]$global:AppInstallDetectionCustomResult = $true
 }
@@ -429,7 +429,7 @@ function CustomInstallAndReinstallPreInstallAndReinstall {
 function CustomReinstallPreUninstall {
 	[string]$script:installPhase = 'CustomReinstallPreUninstall'
 
-	## Executes before the uninstallation in the reinstall process
+	## executes before the uninstallation in the reinstall process
 }
 
 function CustomReinstallPostUninstall {
@@ -440,13 +440,13 @@ function CustomReinstallPostUninstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstall'
 
-	## Executes at after the uninstallation in the reinstall process
+	## executes at after the uninstallation in the reinstall process
 }
 
 function CustomReinstallPreInstall {
 	[string]$script:installPhase = 'CustomReinstallPreInstall'
 
-	## Executes before the installation in the reinstall process
+	## executes before the installation in the reinstall process
 }
 
 function CustomReinstallPostInstall {
@@ -457,13 +457,13 @@ function CustomReinstallPostInstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstall'
 
-	## Executes after the installation in the reinstall process
+	## executes after the installation in the reinstall process
 }
 
 function CustomInstallBegin {
 	[string]$script:installPhase = 'CustomInstallBegin'
 
-	## Executes before the installation in the install process
+	## executes before the installation in the install process
 }
 
 function CustomInstallEnd {
@@ -474,7 +474,7 @@ function CustomInstallEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallEnd'
 
-	## Executes after the installation in the install process
+	## executes after the installation in the install process
 }
 
 function CustomInstallAndReinstallEnd {
@@ -485,13 +485,13 @@ function CustomInstallAndReinstallEnd {
 	)
 	[string]$script:installPhase = 'CustomPostInstallAndReinstall'
 
-	## Executes after the completed install or reinstall process
+	## executes after the completed install or reinstall process
 }
 
 function CustomUninstallBegin {
 	[string]$script:installPhase = 'CustomUninstallBegin'
 
-	## Executes before the uninstallation in the uninstall process
+	## executes before the uninstallation in the uninstall process
 }
 
 function CustomUninstallEnd {
@@ -502,34 +502,34 @@ function CustomUninstallEnd {
 	)
 	[string]$script:installPhase = 'CustomUninstallEnd'
 
-	## Executes after the uninstallation in the uninstall process
+	## executes after the uninstallation in the uninstall process
 }
 
 function CustomInstallUserPartBegin {
 	[string]$script:installPhase = 'CustomInstallUserPartBegin'
 
-	## Executes at the Beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	## executes at the beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
 }
 
 function CustomInstallUserPartEnd {
 	[string]$script:installPhase = 'CustomInstallUserPartEnd'
 
-	## Executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	## executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
 }
 
 function CustomUninstallUserPartBegin {
 	[string]$script:installPhase = 'CustomUninstallUserPartBegin'
 
-	## Executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
+	## executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
 }
 
 function CustomUninstallUserPartEnd {
 	[string]$script:installPhase = 'CustomUninstallUserPartEnd'
 
-	## Executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
+	## executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
 }
 
 #endregion
 
-## Execute the main function to start the process
+## execute the main function to start the process
 Main
