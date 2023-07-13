@@ -5551,12 +5551,14 @@ function Set-NxtSetupCfg {
 			"SOFTMIGRATION"            = '1'
 		}
 		[hashtable]$defaultSetupCfgValues['AskKillProcesses'] = @{
-			"TIMEOUT"          = '600'
-			"CONTINUETYPE"     = "Abort"
-			"USERCANCLOSEALL"  = '0'
-			"ALLOWABORTBYUSER" = '0'
-			"DEFERDAYS"        = '0'
-			"DEFERTIMES"       = '0'
+			"TIMEOUT"           = '600'
+			"CONTINUETYPE"      = "Abort"
+			"USERCANCLOSEALL"   = '0'
+			"ALLOWABORTBYUSER"  = '0'
+			"DEFERDAYS"         = '0'
+			"DEFERTIMES"        = '0'
+			"TOPMOSTWINDOW"     = '1'
+			"MINMIZEALLWINDOWS" = '1'
 		}
 		[hashtable]$defaultSetupCfgValues['CALL'] = @{
 			"HIDEWINDOWS" = '0'
@@ -5681,9 +5683,9 @@ Function Show-NxtInstallationWelcome {
 		If the script is intended for multiple cultures, specify the date in the universal sortable date/time format: "2013-08-22 11:51:52Z"
 		The deadline date will be displayed to the user in the format of their culture.
     .PARAMETER MinimizeWindows
-    	Specifies whether to minimize other windows when displaying prompt. Default: $true.
+    	Specifies whether to minimize other windows when displaying prompt. Defaults to the corresponding value 'MINIMIZEALLWINDOWS' from the Setup.cfg.
     .PARAMETER TopMost
-    	Specifies whether the windows is the topmost window. Default: $true.
+    	Specifies whether the windows is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
     .PARAMETER ForceCountdown
     	Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
     .PARAMETER CustomText
@@ -5774,11 +5776,11 @@ Function Show-NxtInstallationWelcome {
 		## Specify whether to minimize other windows when displaying prompt
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Boolean]$MinimizeWindows = $true,
+		[Boolean]$MinimizeWindows = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.MINMIZEALLWINDOWS)),
 		## Specifies whether the window is the topmost window
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Boolean]$TopMost = $true,
+		[Boolean]$TopMost = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.TOPMOSTWINDOW)),
 		## Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
@@ -5794,6 +5796,7 @@ Function Show-NxtInstallationWelcome {
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses),
 		## this window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
 		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[PSADTNXT.ContinueType]$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		## Specifies if the user can close all applications
 		[Parameter(Mandatory = $false)]
