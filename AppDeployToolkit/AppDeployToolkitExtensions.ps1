@@ -587,7 +587,7 @@ function Complete-NxtPackageInstallation {
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\neo42-Userpart\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 		}
 		foreach ($oldAppFolder in $((Get-ChildItem -Path (Get-Item -Path $App).Parent.FullName | Where-Object Name -ne (Get-Item -Path $App).Name).FullName)) {
-			## note: always we use the script from current application package source folder (it is basically identical in each package)
+			## note: we always use the script from current application package source folder (it is basically identical in each package)
 			Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
 			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
@@ -8373,7 +8373,7 @@ function Unregister-NxtPackage {
 						[string]$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
 						if (![string]::IsNullOrEmpty($assignedPackageGUIDAppPath)) {
 							if ($true -eq (Test-Path -Path "$assignedPackageGUIDAppPath")) {
-								## note: always we use the script from current application package source folder (it is basically identical in each package)
+								## note: we always use the script from current application package source folder (it is basically identical in each package)
 								Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
 								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
@@ -8404,7 +8404,7 @@ function Unregister-NxtPackage {
 				}
 				if (![string]::IsNullOrEmpty($App)) {
 					if ($true -eq (Test-Path -Path "$App")) {
-						## note: always we use the script from current application package source folder (it is basically identical in each package)
+						## note: we always use the script from current application package source folder (it is basically identical in each package)
 						Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
 						Start-Sleep -Seconds 1
 						Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$App" -NoWait

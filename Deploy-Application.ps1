@@ -390,7 +390,7 @@ function Main {
 function CustomBegin {
 	[string]$script:installPhase = 'CustomBegin'
 
-	## Always executes at the beginning of the script regardless of the DeploymentType ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart')
+	## executes always at the beginning of the script regardless of the DeploymentType ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart')
 }
 
 function CustomInstallAndReinstallBegin {
