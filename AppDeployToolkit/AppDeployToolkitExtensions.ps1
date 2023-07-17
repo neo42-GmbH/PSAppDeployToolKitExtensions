@@ -5563,7 +5563,7 @@ function Set-NxtSetupCfg {
 		[hashtable]$defaultSetupCfgValues['CALL'] = @{
 			"HIDEWINDOWS" = '0'
 		}
-		[string]$setupCfgFileName = Split-Path -path "$Path" -Leaf
+		[string]$setupCfgFileName = Split-Path -Path "$Path" -Leaf
 		Write-Log -Message "Checking for config file [$setupCfgFileName] under [$Path]..." -Source ${CmdletName}
 		if ([System.IO.File]::Exists($Path)) {
 			[hashtable]$global:SetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
@@ -5574,13 +5574,13 @@ function Set-NxtSetupCfg {
 			[hashtable]$global:SetupCfg = $null
 		}
 		## provide all expected predefined values if they are missing/undefined in a default file 'setup.cfg' only
-		If ($Path -eq $global:SetupCfgPath) {
-			If ($null -eq $global:SetupCfg) {
+		if ($Path -eq $global:SetupCfgPath) {
+			if ($null -eq $global:SetupCfg) {
 				[hashtable]$global:SetupCfg = @{}
 			}
 			foreach ($sectionKey in $($defaultSetupCfgValues.Keys)) {
 				foreach ($sectionKeySubkey in $($defaultSetupCfgValues.$sectionKey.Keys)) {
-					if ($null -eq $global:SetupCfg.$sectionKey.$sectionKeySubkey) {
+				if ($null -eq $global:SetupCfg.$sectionKey.$sectionKeySubkey) {
 						if ($null -eq $global:SetupCfg.$sectionKey) {
 							[hashtable]$global:SetupCfg.$sectionKey = @{}
 						}
