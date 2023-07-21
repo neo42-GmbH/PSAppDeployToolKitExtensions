@@ -13,8 +13,8 @@ try {
     Start-Sleep -Seconds 10
     $folderToRemove = @("$PSScriptRoot\neo42-Install","$PSScriptRoot\neo42-Source","$PSScriptRoot\neo42-Userpart" )
 
-    foreach($folder in $folderToRemove) {
-        if(Test-Path -Path $folder) {
+    foreach ($folder in $folderToRemove) {
+        if (Test-Path -Path $folder) {
             Remove-Item -Path $folder -Recurse -Force
         }
     }
