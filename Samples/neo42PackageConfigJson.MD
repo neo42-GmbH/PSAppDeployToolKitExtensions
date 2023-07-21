@@ -339,6 +339,19 @@ parent: /
 universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" for a single product (may be a collection of more than one package)
 note: the 3 very left digits inside of curly brackets are always "042"
 ```
+all application packages with same 'ProductGUID' are remain registered only and all product member package registrations will be removed first if the (one) appliction package which is registred and installed will be removed from the client
+
+**"RemovePackagesWithSameProductGUID"** *optional bool value*
+
+parent: /
+
+```
+default value: false
+uninstalls all found application packages with same ProductGUID (product membership) assigned, but leaves them registered during installation process of current application package
+(valid are only 'true' and 'false')
+to prevent circle proceeding this functionality is working in first instance of script running level (script depth = 0) only!
+note: the product assignment will be stored for the application package always, but will be recognized for application management if this value is set to '$true' only (a value 'ProductGUID' has to be defined)
+```
 
 **"PackageGUID"** *mandatory string value*
 
