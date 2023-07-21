@@ -339,7 +339,7 @@ parent: /
 universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" for a single product (may be a collection of more than one package)
 note: the 3 very left digits inside of curly brackets are always "042"
 ```
-all application packages with same 'ProductGUID' are remain registered only and all product member package registrations will be removed first if the one appliction package which is registred and installed will be removed from the client
+all application packages with same 'ProductGUID' are remain registered only and all product member package registrations will be removed first if the (one) appliction package which is registred and installed will be removed from the client
 
 **"RemovePackagesWithSameProductGUID"** *optional bool value*
 
@@ -436,7 +436,7 @@ parent: /
 note: this value is mandatory if the value "UserPartOnInstallation" and/or "UserPartOnUninstallation" is set to 'true'
 ```
 default value: ""
-uses a unique value for the user part of the package in comma separated format derived from value "ScriptDate" expanded by a counter starting with 0 like "2023,06,08,0"
+uses a unique value for the user part of the package in comma separated format derived from value "ScriptDate" expanded by a counter starting with 0 like "2023,06,08,00"
 note: to re-run the user part installation together with a package reinstallation the added counter has to be incremented
 ```
 
