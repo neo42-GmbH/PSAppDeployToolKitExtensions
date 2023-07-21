@@ -866,6 +866,7 @@ function Execute-NxtBitRockInstaller {
 					return
 				}
 				[string]$bitRockInstallerUninstallString = $installedAppResults.UninstallString
+				[string]$bitRockInstallerBackupSubfolderName = $installedAppResults.UninstallSubkey
     
 				## check for and remove quotation marks around the uninstall string
 				if ($bitRockInstallerUninstallString.StartsWith('"')) {
@@ -880,9 +881,9 @@ function Execute-NxtBitRockInstaller {
 				[string]$uninsFileName = Split-Path $bitRockInstallerSetupPath -Leaf
 
 				## If the uninstall file does not exist, restore it from $configNxtBitRockInstallerUninsBackupPath, if it exists there
-				if (![System.IO.File]::Exists($bitRockInstallerSetupPath) -and ($true -eq (Test-Path -Path "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\$uninsFileName"))) {
+				if (![System.IO.File]::Exists($bitRockInstallerSetupPath) -and ($true -eq (Test-Path -Path "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerBackupSubfolderName\$uninsFileName"))) {
 					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
-					Copy-File -Path "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerUninstallKey\unins*.*" -Destination "$uninsFolder\"	
+					Copy-File -Path "$configNxtBitRockInstallerUninsBackupPath\$bitRockInstallerBackupSubfolderName\unins*.*" -Destination "$uninsFolder\"	
 				}
 
 				## If $bitRockInstallerSetupPath is still unexistend, write Error to log and abort
@@ -1168,6 +1169,7 @@ function Execute-NxtInnoSetup {
 					return
 				}
 				[string]$innoUninstallString = $installedAppResults.UninstallString
+				[string]$innoSetupBackupSubfolderName = $installedAppResults.UninstallSubkey
     
 				## check for and remove quotation marks around the uninstall string
 				if ($innoUninstallString.StartsWith('"')) {
@@ -1181,10 +1183,10 @@ function Execute-NxtInnoSetup {
 				[string]$uninsFolder = Split-Path $innoSetupPath -Parent
 
 				## If the uninstall file does not exist, restore it from $configNxtInnoSetupUninsBackupPath, if it exists there
-				if ( (![System.IO.File]::Exists($innoSetupPath)) -and ($true -eq (Test-Path -Path "$configNxtInnoSetupUninsBackupPath\$innoUninstallKey\unins[0-9][0-9][0-9].exe")) ) {
+				if ( (![System.IO.File]::Exists($innoSetupPath)) -and ($true -eq (Test-Path -Path "$configNxtInnoSetupUninsBackupPath\$innoSetupBackupSubfolderName\unins[0-9][0-9][0-9].exe")) ) {
 					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
 					Remove-File -Path "$uninsFolder\unins*.*"
-					Copy-File -Path "$configNxtInnoSetupUninsBackupPath\$innoUninstallKey\unins[0-9][0-9][0-9].*" -Destination "$uninsFolder\"	
+					Copy-File -Path "$configNxtInnoSetupUninsBackupPath\$innoSetupBackupSubfolderName\unins[0-9][0-9][0-9].*" -Destination "$uninsFolder\"	
 				}
 
 				## If any "$uninsFolder\unins[0-9][0-9][0-9].exe" exists, use the one with the highest number
@@ -1722,6 +1724,7 @@ function Execute-NxtNullsoft {
 					return
 				}
 				[string]$nullsoftUninstallString = $installedAppResults.UninstallString
+				[string]$nullsoftBackupSubfolderName = $installedAppResults.UninstallSubkey
     
 				## check for and remove quotation marks around the uninstall string
 				if ($nullsoftUninstallString.StartsWith('"')) {
@@ -1736,9 +1739,9 @@ function Execute-NxtNullsoft {
 				[string]$uninsFileName = Split-Path $nullsoftSetupPath -Leaf
 
 				## If the uninstall file does not exist, restore it from $configNxtNullsoftUninsBackupPath, if it exists there
-				if (![System.IO.File]::Exists($nullsoftSetupPath) -and ($true -eq (Test-Path -Path "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\$uninsFileName"))) {
+				if (![System.IO.File]::Exists($nullsoftSetupPath) -and ($true -eq (Test-Path -Path "$configNxtNullsoftUninsBackupPath\$nullsoftBackupSubfolderName\$uninsFileName"))) {
 					Write-Log -Message "Uninstall file not found. Restoring it from backup..." -Source ${CmdletName}
-					Copy-File -Path "$configNxtNullsoftUninsBackupPath\$nullsoftUninstallKey\$uninsFileName" -Destination "$uninsFolder\"	
+					Copy-File -Path "$configNxtNullsoftUninsBackupPath\$nullsoftBackupSubfolderName\$uninsFileName" -Destination "$uninsFolder\"	
 				}
 
 				## If $nullsoftSetupPath is still unexistend, write Error to log and abort

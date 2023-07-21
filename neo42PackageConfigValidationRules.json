@@ -23,7 +23,7 @@
             "Operator": "match"
         },
         "Type": "System.String",
-        "AllowEmpty": true
+        "AllowEmpty": false
     },
     "RemovePackagesWithSameProductGUID": {
         "Mandatory": true,
