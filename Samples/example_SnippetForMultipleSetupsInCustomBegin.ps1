@@ -31,7 +31,7 @@ function CustomBegin {
 	}
 	else {
 		Write-Log -Message "No or invalid registry key/value for a custom setup file defined." -Severity 3 -Source $deployAppScriptFriendlyName
-		## Alternatively, if necessary you can stop script execution here: uncomment next line
+		## alternatively, if necessary you can stop script execution here: uncomment next line
 		#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid pre-configuration!" -MainExitCode '60001'
 	}
 
@@ -82,7 +82,7 @@ function CustomBegin {
 	}
 	else {
 		Write-Log -Message "Invalid decision for a custom setup file defined." -Severity 3 -Source $deployAppScriptFriendlyName
-		## Alternatively, if necessary you can stop script execution here: uncomment next line
+		## alternatively, if necessary you can stop script execution here: uncomment next line
 		#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid pre-configuration!" -MainExitCode '60001'
     }
 }
