@@ -8045,7 +8045,7 @@ function Uninstall-NxtApplication {
 function Uninstall-NxtOld {
 	<#
 	.SYNOPSIS
-		Uninstalls old package versions if "UninstallOld": true.
+		Uninstalls old package versions if corresponding value from the PackageConfig object "UninstallOld": true.
 	.DESCRIPTION
 		If $UninstallOld is set to true, the function checks for old versions of the same package / $PackageGUID and uninstalls them.
 	.PARAMETER AppName
@@ -8066,9 +8066,6 @@ function Uninstall-NxtOld {
 	.PARAMETER UninstallOld
 		Will uninstall previous Versions before Installation if set to $true.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER DeployAppScriptFriendlyName
-		The friendly name of the script used for deploying applications.
-		Defaults to $deployAppScriptFriendlyName definded in the DeployApplication.ps1.
 	.PARAMETER DeploymentSystem
 		Defines the deployment system used for the deployment.
 		Defaults to the corresponding value of the DeployApplication.ps1 parameter.
@@ -8101,9 +8098,6 @@ function Uninstall-NxtOld {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$DeployAppScriptFriendlyName = $deployAppScriptFriendlyName,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentSystem = $global:DeploymentSystem
@@ -8273,7 +8267,7 @@ function Uninstall-NxtOld {
 							$uninstallOldResult.ErrorMessage = "ERROR: Uninstallation of old package failed. Abort!"
 							$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallOldResult.Success = $false
-							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source $DeployAppScriptFriendlyName
+							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
 							Show-DialogBox -Text $($uninstallOldResult.ErrorMessage) -Icon 'Stop'
 						}
 						else {
@@ -8296,6 +8290,93 @@ function Uninstall-NxtOld {
 			}
 		}
 		Write-Output $uninstallOldResult
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Unregister-NxtOld
+function Unregister-NxtOld {
+	<#
+	.SYNOPSIS
+		Unregisters old package versions if corresponding value from the PackageConfig object "UninstallOld": false.
+	.DESCRIPTION
+		If $UninstallOld is set to false, the function checks for old versions of the same package ($ProductGUID is equal to former ProductFamilyGUID) and unregisters them.
+	.PARAMETER PackageGUID
+		Specifies the registry key name used for the packages wrapper uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallOld
+		Will uninstall previous Versions before Installation if set to $true.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Unregister-NxtOld
+	.NOTES
+		Should be executed during package Initialization only.
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageGUID = $global:PackageConfig.PackageGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallOld = $global:PackageConfig.UninstallOld
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($false -eq $UninstallOld) {
+			Write-Log -Message "Checking for old package registrations..." -Source ${cmdletName}
+			## retrieve AppPath for former VBS packages only
+			if (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -Value 'AppPath') {
+				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -Value 'AppPath')
+				if ($null -eq $currentAppPath) {
+					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -Value 'PackageApplicationDir')
+				}
+			}
+			else {
+				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID" -Value 'AppPath')
+				if ($null -eq $currentAppPath) {
+					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -Value 'PackageApplicationDir')
+				}
+			}
+			## only one package of the old package family can be installed at a time, so we may remove all found registry keys (only here old $PackageFamilyGUID is stored in $ProductGUID)
+			Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID"
+			Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID"
+			Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$RegPackagesKey\$ProductGUID"
+			Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$RegPackagesKey\$ProductGUID"
+			if ( ($true -eq (Test-Path -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$RegPackagesKey\$ProductGUID" -PathType 'Container')) ) {
+				Write-Log -Message "Unregister of old package was incomplete! Some orphaned registry keys remain on the client." -Severity 2 -Source ${cmdletName}
+			}
+			if ($null -ne $currentAppPath) {
+				if ($true -eq (Test-Path -Key "$currentAppPath")) {
+					Remove-Folder -Path "$currentAppPath\neoInstall"
+					Remove-Folder -Path "$currentAppPath\neoSource"
+					if ( ($true -eq (Test-Path -Key "$currentAppPath\neoInstall")) -or ($true -eq (Test-Path -Key "$currentAppPath\neoSource")) ) {
+						Write-Log -Message "Unregister of old package was incomplete! Some orphaned files and might remain on the client." -Severity 2 -Source ${cmdletName}
+					}
+				}
+			}
+			else {
+				Write-Log -Message "No need to cleanup old package cached app folder." -Source ${cmdletName}
+			}
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
