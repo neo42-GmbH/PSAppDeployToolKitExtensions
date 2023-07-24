@@ -5311,6 +5311,118 @@ function Repair-NxtApplication {
 	}
 }
 #endregion
+#region Function Resolve-NxtDependentPackage
+function Resolve-NxtDependentPackage {
+	<#
+	.DESCRIPTION
+		Checks if depentent packages are (not) installed and updates the status of the packages accordingly.
+	.PARAMETER DependentPackages
+		Defines a (list of) dependent package(s) to check.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Resolve-NxtDependentPackages -DependentPackages "$($global:PackageConfig.DependentPackages)"
+	.OUTPUTS
+		PSADTNXT.ResolvedPackagesResult
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[array]
+		$DependentPackages = $global:PackageConfig.DependentPackages,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		foreach ($dependentPackage in $DependentPackages) {
+			[PSADTNXT.NxtRegisteredApplication]$registeredDependentPackage = Get-NxtRegisteredPackage -PackageGUID "$($dependentPackage.GUID)"
+			Write-Log -message "Processing tasks for dependent application package with PackageGUID [$($dependentPackage.GUID)]..."  -Source ${CmdletName}
+			if ($true -eq $registeredDependentPackage.Installed) {
+				Write-Log -Message "...is installed." -Source ${CmdletName}
+				if ($dependentPackage.DesiredState -eq "Present") {
+					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is already in desired state '$($dependentPackage.DesiredState)'." -Source ${CmdletName}
+				}
+				elseif ($dependentPackage.DesiredState -eq "Absent") {
+					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'." -Source ${CmdletName}
+					if ($dependentPackage.OnConflict -eq "Uninstall") {
+						## Trigger uninstallstring, throw exception if uninstall fails.
+						[string]$dependentPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -Value 'UninstallString')
+						Write-Log -Message "Removing dependent application package with uninstall call: '$dependentPackageUninstallString'." -Source ${CmdletName}
+						[Diagnostics.Process]$runUninstallString = (Start-Process -FilePath "$(($dependentPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($dependentPackageUninstallString -split '"', 3)[2]).Replace('"','`"').Trim())" -PassThru -Wait)
+						$runUninstallString.WaitForExit()
+						if ($runUninstallString.ExitCode -ne 0) {
+							Write-Log -Message "Removal of dependent application package failed with return code '$($runUninstallString.ExitCode)'." -Severity 3 -Source ${CmdletName}
+							throw "Removal of dependent application package failed."
+						}
+						## !!! next line has to be activated after merging issue #303 -> afterwards unregister is working in newly introduced script depth 0 only!!!
+						#Unregister-NxtPackage -RemovePackagesWithSameProductGUID $false -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey "$RegPackagesKey"
+						if ( ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists)) -or ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists )) ) {
+							Write-Log -Message "Removal of dependent application package was done not successful." -Severity 3 -Source ${CmdletName}
+							throw "Removal of dependent application package not successful."
+						}
+					}
+					elseif ($dependentPackage.OnConflict -eq "Fail") {
+						## Throw exception
+						Write-Log -Message "Failure: throwing exception: $($dependentPackage.ErrorMessage)" -Severity 3 -Source ${CmdletName}
+						throw "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'. $($dependentPackage.ErrorMessage)"
+					}
+					elseif ($dependentPackage.OnConflict -eq "Warn") {
+						## Write warning
+						Write-Log -Message "$($dependentPackage.ErrorMessage), but still trying to continue" -Severity 2 -Source ${CmdletName}
+					}
+					elseif ($dependentPackage.OnConflict -eq "Continue") {
+						## Do nothing
+						Write-Log -Message "Due to the defined action '$($dependentPackage.OnConflict)' still trying to continue." -Source ${CmdletName}
+					}
+				}
+			}
+			else {
+				if ($false -eq $registeredDependentPackage.Installed) {
+					Write-Log -Message "...is not installed, but still registered as product member application package for ProductGUID '$($registeredDependentPackage.ProductGUID)'." -Severity 2 -Source ${CmdletName}
+				}
+				else {
+					Write-Log -Message "...is not registered and not installed." -Source ${CmdletName}
+				}
+				if ($dependentPackage.DesiredState -eq "Absent") {
+					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is already in desired state '$($dependentPackage.DesiredState)'." -Source ${CmdletName}
+				}
+				elseif ($dependentPackage.DesiredState -eq "Present") {
+					Write-Log -Message "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)'." -Source ${CmdletName}
+					if ($dependentPackage.OnConflict -eq "Uninstall") {
+						Write-Log -Message "Defined action '$($dependentPackage.OnConflict)' is not supported in this case, still trying to continue." -Severity 2 -Source ${CmdletName}
+					}
+					if ($dependentPackage.OnConflict -eq "Fail") {
+						## Throw exception
+						Write-Log -Message "Failure: throwing exception: $($dependentPackage.ErrorMessage)" -Severity 3 -Source ${CmdletName}
+						throw "Dependent package '$($dependentPackage.GUID)' is not in desired state '$($dependentPackage.DesiredState)', $($dependentPackage.ErrorMessage)."
+					}
+					elseif ($dependentPackage.OnConflict -eq "Warn") {
+						## Write warning
+						Write-Log -Message "$($dependentPackage.ErrorMessage), but still trying to continue." -Severity 2 -Source ${CmdletName}
+					}
+					elseif ($dependentPackage.OnConflict -eq "Continue") {
+						## Do nothing
+						Write-Log -Message "Due to the defined action '$($dependentPackage.OnConflict)' still trying to continue." -Source ${CmdletName}
+					}
+				}
+			}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Set-NxtIniValue
 function Set-NxtIniValue {
 	<#
@@ -7471,7 +7583,7 @@ function Test-NxtObjectValidation {
 				## check for allowed object types and trigger the validation function for sub objects
 				switch ($ValidationRule.$validationRuleKey.Type) {
 					"System.Array" {
-						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match $ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName))){
+						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match [Regex]::Escape($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)))){
 							Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)"
 						}
 						else{

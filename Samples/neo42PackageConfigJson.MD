@@ -227,7 +227,7 @@ note: following sequence is proceeded for soft migration decision:
 
 note: the following sub-structure "File" is singular (by default it may be tested for only one file name/version)!
 
-***"File":*** *mandatory value sub-structure (children have to be surrounded by {})*
+***"File":*** *mandatory value sub-structure (children have to be surrounded by ***{}***)*
 
 parent: /SoftMigration/
 
@@ -287,9 +287,9 @@ parent: /
 application architecture of the packaged application
 note: depends on installation location in file system and position in registry hive and these values are valid: "x86", "x64", "*" only
 ```
-- x86: it is a 32bit application
-- x64: it is a 64bit application
-- \*  : behavior of application on x86 and x64 platforms is different or package contains both application architectures
+- **x86**: it is a 32bit application
+- **x64**: it is a 64bit application
+- **\*** : behavior of application on x86 and x64 platforms is different or package contains both application architectures
 
 **"AppVendor"** *mandatory string value*
 
@@ -353,12 +353,47 @@ to prevent circle proceeding this functionality is working in first instance of 
 note: the product assignment will be stored for the application package always, but will be recognized for application management if this value is set to '$true' only (a value 'ProductGUID' has to be defined)
 ```
 
-**"PackageGUID"** *mandatory string value*
+**"DependentPackages"** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
+
+note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "GUID", "DesiredState" and "OnConflict" have to be provided for each item, but an empty list is allowed too (that means: "DependentPackages": [])!
+
+**"GUID"** *mandatory string value*
+
+parent: /DependentPackages/
 ```
-universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" for a single package
+universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" referencing to value "PackageGUID" of a single package
 note: the 3 very left digits inside of curly brackets are always "042"
+```
+
+**"DesiredState"** *mandatory string value*
+
+parent: /DependentPackages/
+```
+desired installation state of application package with provided 'PackageGUID' in value "GUID"
+```
+- **Absent**: depending application package expected not to be installed on client
+- **Present**: depending application package expected to be installed on client
+
+**"OnConflict"** *mandatory string value*
+
+parent: /DependentPackages/
+```
+defines an action has to be done if found installation state of installed application package don't match
+```
+- **Fail**: current running application package script should be stopped with failure and logging an optional defined warning message in value "ErrorMessage"
+- **Warn**: current running application package script should be continued with logging an optional defined warning message in value "ErrorMessage"
+- **Continue**: current running application package script should be continued with just logging the found depending application package state
+- **Uninstall**: current running application package script should be continued after succesful uninstall depending application package
+
+note: action 'Uninstall' can lead to unwanted re-installations by deployment system if the removed depending application package is still assigned to this client
+
+**"ErrorMessage"** *optional string value*
+
+parent: /DependentPackages/
+```
+defines an optional error message to log in case of 'Warn'-action defined by value "OnConflict"
 ```
 
 **"RegPackagesKey"** *mandatory string value*
@@ -407,9 +442,9 @@ default value: 0
 reboot behavior of package (only values '0', '1' and '2' are allowed)
 note: this value may be overwritten by deployment system (if variable '$env:Reboot' is set)
 ```
-- 0: no reboot required (don't overwrites main exit code inside script)
-- 1: reboot required (always overwrites main exit code inside script to exit code 3010)
-- 2: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
+- **0**: no reboot required (don't overwrites main exit code inside script)
+- **1**: reboot required (always overwrites main exit code inside script to exit code 3010)
+- **2**: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
 
 **"UserPartOnInstallation"** *optional bool value*
 
@@ -499,10 +534,10 @@ parent: /
 default value: false
 switch to control the interpretation of character '*' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
 ```
-- true : '\*' is interpreted as a wildcard
-- false: '\*' is interpreted as part of the defined string
+- **true** : '\*' is interpreted as a wildcard
+- **false**: '\*' is interpreted as part of the defined string
 
-**"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by [])*
+**"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by ***[]***)*
 
 parent: /
 
@@ -576,8 +611,8 @@ default value: false
 switch to control the behavior for using the defined parameters in value "InstPara" (valid are only 'true' and 'false')
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
 ```
-- true : appends the parameters to this one get from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
-- false: replaces the parameters got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
+- **true** : appends the parameters to this one get from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: replaces the parameters got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedInstallExitCodes"** *optional string value*
 
@@ -629,8 +664,8 @@ default value: false
 switch to control the behavior for using the defined parameters in value "UninstPara" (valid are only 'true' and 'false')
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
 ```
-- true : appends the parameters to these one got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
-- false: replaces the parameters got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
+- **true** : appends the parameters to these one got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: replaces the parameters got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedUninstallExitCodes"** *optional string value*
 
@@ -641,7 +676,7 @@ comma separated list of exit codes to accept for successfull uninstallation exec
 note: '*' is allowed for all exit codes
 ```
 
-**"AppKillProcesses":** *optional value structure (possibly a collection) (children have to be surrounded by [])*
+**"AppKillProcesses":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
 
@@ -679,7 +714,7 @@ parent: /
 
 value collection to control pre setup success checks for process items and/or registry items
 
-**"Install":** *mandatory value sub-structure (children have to be surrounded by {})*
+**"Install":** *mandatory value sub-structure (children have to be surrounded by ***{}***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/
 
@@ -704,7 +739,7 @@ behavior of logical connection between more then one provided process item in su
 note: valid values are "And" and "Or"
 ```
 
-**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
+**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
 
@@ -734,7 +769,7 @@ behavior of logical connection between more then one provided registry item in s
 note: valid values are "And" and "Or"
 ```
 
-**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
+**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
 
@@ -771,7 +806,7 @@ parent: /TestConditionsPreSetupSuccessCheck/Install/RegKeysToWaitFor/
 value dependent of expected behavior for existence of the registry key (valid are only 'true' and 'false')
 ```
 
-**"Uninstall":** *optional value sub-structure (children have to be surrounded by {})*
+**"Uninstall":** *optional value sub-structure (children have to be surrounded by ***{}***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/
 
@@ -796,7 +831,7 @@ behavior of logical connection between more then one provided process item in su
 note: valid values are "And" and "Or"
 ```
 
-**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
+**"ProcessesToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 
@@ -826,7 +861,7 @@ behavior of logical connection between  more then one provided registry item in 
 note: valid values are "And" and "Or"
 ```
 
-**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by [])*
+**"RegKeysToWaitFor":** *optional value sub-structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 
@@ -863,7 +898,7 @@ parent: /TestConditionsPreSetupSuccessCheck/Uninstall/RegKeysToWaitFor/
 value dependent of expected behavior for existence of the registry key (valid are only 'true' and 'false')
 ```
 
-**"CommonDesktopShortcutsToDelete":** *optional string value list (has to be surrounded by [])*
+**"CommonDesktopShortcutsToDelete":** *optional string value list (has to be surrounded by ***[]***)*
 
 parent: /
 ```
@@ -871,7 +906,7 @@ comma separated list of public desktop shortcut names to delete
 note: an empty list is allowed (that means: "CommonDesktopShortcutsToDelete": [])!
 ```
 
-**"CommonStartMenuShortcutsToCopyToCommonDesktop":** *optional value structure (possibly a collection) (children have to be surrounded by [])*
+**"CommonStartMenuShortcutsToCopyToCommonDesktop":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
 
@@ -891,7 +926,7 @@ parent: /CommonStartMenuShortcutsToCopyToCommonDesktop/
 link file name on public desktop folder (necessary only if different name to Source)
 ```
 
-**"UninstallKeysToHide":** *optional value structure (possibly a collection) (children have to be surrounded by []*
+**"UninstallKeysToHide":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
 
@@ -936,10 +971,10 @@ parent: /UninstallKeysToHide/
 default value: "$($global:PackageConfig.UninstallKeyContainsWildCards)"
 switch to control the interpretation of character '\*' in a defined string of value "KeyName" for current entry in "UninstallKeysToHide" (valid are only 'true' and 'false')
 ```
-- true : '\*' is interpreted as a wildcard
-- false: '\*' is interpreted as part of the defined string
+- **true** : '\*' is interpreted as a wildcard
+- **false**: '\*' is interpreted as part of the defined string
 
-**"DisplayNamesToExcludeFromHiding":** *optional string value list (has to be surrounded by [])*
+**"DisplayNamesToExcludeFromHiding":** *optional string value list (has to be surrounded by ***[]***)*
 
 parent: /UninstallKeysToHide/
 
@@ -950,7 +985,7 @@ comma separated list of display names to exclude from hiding, where a character 
 note: an empty list is allowed that means: "DisplayNamesToExcludeFromHiding": []), but at least the value of the corresponding installed application package for a defined current "KeyName" is recommended to prevent hiding this package uninstall entry if current value of "KeyNameIsDisplayName" is set to 'true'!
 ```
 
-**"PackageSpecificVariablesRaw"** *optional value structure (children have to be surrounded by []*
+**"PackageSpecificVariablesRaw"** *optional value structure (children have to be surrounded by ***[]***)*
 
 parent: /
 
