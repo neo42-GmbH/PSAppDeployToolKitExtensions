@@ -16,11 +16,35 @@
     with this program. If not, see <http://www.gnu.org/licenses/>.
     -->
 
-<!--Configuration File Details-->
+    <!--Configuration File Details-->
     <Config_File>
         <Config_Version>3.9.3</Config_Version>
         <Config_Date>02/05/2023</Config_Date>
     </Config_File>
+
+    <!--SetupCfg Parameters-->
+    <SetupCfg_Parameters>
+    <!-- Defines all necessary initial values just for case setup.cfg is missing or value is not set inside; for descriptions see default file 'setup.cfg'. -->
+		<Options>
+			<DESKTOPSHORTCUT>0</DESKTOPSHORTCUT>
+			<SHOWBALLOONNOTIFICATIONS>2</SHOWBALLOONNOTIFICATIONS>
+			<SOFTMIGRATION>1</SOFTMIGRATION>
+		</Options>
+		<AskKillProcesses>
+			<TIMEOUT>600</TIMEOUT>
+			<CONTINUETYPE>Abort</CONTINUETYPE>
+			<USERCANCLOSEALL>0</USERCANCLOSEALL>
+			<ALLOWABORTBYUSER>0</ALLOWABORTBYUSER>
+			<DEFERDAYS>0</DEFERDAYS>
+			<DEFERTIMES>0</DEFERTIMES>
+			<TOPMOSTWINDOW>1</TOPMOSTWINDOW>
+			<MINMIZEALLWINDOWS>1</MINMIZEALLWINDOWS>
+		</AskKillProcesses>
+		<CALL>
+			<HIDEWINDOWS>0</HIDEWINDOWS>
+		</CALL>
+    </SetupCfg_Parameters>
+    <!--SetupCfg Parameters-->
 
     <!--Toolkit Options-->
     <Toolkit_Options>
