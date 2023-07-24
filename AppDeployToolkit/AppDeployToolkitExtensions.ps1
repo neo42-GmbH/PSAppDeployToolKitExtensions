@@ -5662,27 +5662,6 @@ function Set-NxtSetupCfg {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		## necessary default configuration values if nothing is set inside 'Setup.cfg' or the file is missing at all
-		[hashtable]$defaultSetupCfgValues = $null
-		[hashtable]$defaultSetupCfgValues = @{}
-		[hashtable]$defaultSetupCfgValues['Options'] = @{
-			"DESKTOPSHORTCUT"          = '0'
-			"SHOWBALLOONNOTIFICATIONS" = '2'
-			"SOFTMIGRATION"            = '1'
-		}
-		[hashtable]$defaultSetupCfgValues['AskKillProcesses'] = @{
-			"TIMEOUT"           = '600'
-			"CONTINUETYPE"      = "Abort"
-			"USERCANCLOSEALL"   = '0'
-			"ALLOWABORTBYUSER"  = '0'
-			"DEFERDAYS"         = '0'
-			"DEFERTIMES"        = '0'
-			"TOPMOSTWINDOW"     = '1'
-			"MINMIZEALLWINDOWS" = '1'
-		}
-		[hashtable]$defaultSetupCfgValues['CALL'] = @{
-			"HIDEWINDOWS" = '0'
-		}
 		[string]$setupCfgFileName = Split-Path -Path "$Path" -Leaf
 		Write-Log -Message "Checking for config file [$setupCfgFileName] under [$Path]..." -Source ${CmdletName}
 		if ([System.IO.File]::Exists($Path)) {
@@ -5693,19 +5672,20 @@ function Set-NxtSetupCfg {
 			Write-Log -Message "No [$setupCfgFileName] found. Skipped parsing values." -Severity 2 -Source ${CmdletName}
 			[hashtable]$global:SetupCfg = $null
 		}
-		## provide all expected predefined values if they are missing/undefined in a default file 'setup.cfg' only
+		## provide all expected predefined values from ADT framework config file if they are missing/undefined in a default file 'setup.cfg' only
 		if ($Path -eq $global:SetupCfgPath) {
 			if ($null -eq $global:SetupCfg) {
 				[hashtable]$global:SetupCfg = @{}
 			}
-			foreach ($sectionKey in $($defaultSetupCfgValues.Keys)) {
-				foreach ($sectionKeySubkey in $($defaultSetupCfgValues.$sectionKey.Keys)) {
-				if ($null -eq $global:SetupCfg.$sectionKey.$sectionKeySubkey) {
-						if ($null -eq $global:SetupCfg.$sectionKey) {
-							[hashtable]$global:SetupCfg.$sectionKey = @{}
+			## note: xml nodes are case-sensitive
+			foreach ( $xmlSection in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.ChildNodes.Name | Where-Object { $_ -ne "#comment" }) ) {
+				foreach ( $xmlSectionSubValue in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.ChildNodes.Name | Where-Object { $_ -ne "#comment" }) ) {
+					if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
+						if ($null -eq $global:SetupCfg.$xmlSection) {
+							[hashtable]$global:SetupCfg.$xmlSection = @{}
 						}
-						[hashtable]$global:SetupCfg.$sectionKey.add("$($sectionKeySubkey)", "$($defaultSetupCfgValues.$sectionKey.$sectionKeySubkey)")
-						Write-Log -Message "Set undefined necessary global object value [`$global:SetupCfg.$sectionKey.$sectionKeySubkey] with predefined default content: [$($defaultSetupCfgValues.$sectionKey.$sectionKeySubkey)]" -Severity 2 -Source ${CmdletName}
+						[hashtable]$global:SetupCfg.$xmlSection.add("$($xmlSectionSubValue)", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
+						Write-Log -Message "Set undefined necessary global object value [`$global:SetupCfg.$($xmlSection).$($xmlSectionSubValue)] with predefined default content: [$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)]" -Severity 2 -Source ${CmdletName}
 					}
 				}
 			}
