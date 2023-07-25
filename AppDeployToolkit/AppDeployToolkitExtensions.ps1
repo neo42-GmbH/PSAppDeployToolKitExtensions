@@ -8530,7 +8530,7 @@ function Unregister-NxtOld {
 					[string]$currentGUID = $null
 				}
 			}
-			## process product group member
+			## process old product group member
 			elseif ( ($true -eq (Test-Path -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
 			($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
 			($true -eq (Test-Path -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) -or
@@ -8548,19 +8548,17 @@ function Unregister-NxtOld {
 					if ([string]::IsNullOrEmpty($currentAppPath)) {
 						[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUIDv" -Value 'PackageApplicationDir')
 					}
-					## for a product member we always remove these registry keys (in case of UninstallOld=$true we do it later anyway)
-					if ($false -eq $UninstallOld) {
-						Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID"
-						Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
-						[string]$currentGUID = $null
-					}
+					## for an old product member we always remove these registry keys (in case of x86 packages we do it later anyway)
+					Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID"
+					Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
+					[string]$currentGUID = $null
 				}
 				else {
 					[string]$currentGUID = $null
 				}
 			}
 			if (![string]::IsNullOrEmpty($currentGUID)) {
-				## note: the x64 uninstall registry keys are still the same as for old package and remains there if the old package should not to be uninstalled (not true for product member packages, see above!)
+				## note: the x64 uninstall registry keys are still the same as for old package and remains there if the old package should not to be uninstalled (not true for old product member packages, see above!)
 				Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID"
 				Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
 				if ( ($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
