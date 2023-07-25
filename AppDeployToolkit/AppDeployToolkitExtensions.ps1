@@ -4602,11 +4602,17 @@ function Register-NxtPackage {
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
-			if ($true -eq (Test-Path "$SetupCfgPathOverride\Setup.cfg")){
+			if ($true -eq (Test-Path "$SetupCfgPathOverride\Setup.cfg")) {
 				Move-NxtItem -Path "$SetupCfgPathOverride\Setup.cfg" -Destination "$App\neo42-Install\" -Force
 				Remove-Item -Recurse -Path "$SetupCfgPathOverride"
-			}else{
+			} elseif ($true -eq (Test-Path "$ScriptParentPath\Setup.cfg")) {
 				Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
+			} else {
+				Write-Log -Message "Could not copy default setup config file 'setup.cfg'. There is no such file provided with this package." -Severity 2 -Source ${cmdletName}
+			}
+			if ($true -eq (Test-Path "$ScriptParentPath\CustomSetup.cfg")) {
+				Copy-File -Path "$ScriptParentPath\CustomSetup.cfg" -Destination "$App\neo42-Install\"
+				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
 			}
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
 	
@@ -5717,13 +5723,17 @@ function Set-NxtCustomSetupCfg {
 			if ($true -eq (Test-Path $Path)) {
 				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
 				Write-Log -Message "[$customSetupCfgFileName] was found and successfully parsed into global:CustomSetupCfg object." -Source ${CmdletName}
+				foreach ($sectionKey in $($global:SetupCfg.Keys)) {
+					foreach ($sectionKeySubkey in $($global:SetupCfg.$sectionKey.Keys)) {
+						if ($null -ne $global:CustomSetupCfg.$sectionKey.$sectionKeySubkey) {
+							Write-Log -Message "Override global object value [`$global:SetupCfg.$sectionKey.$sectionKeySubkey] with content from global:CustomSetupCfg object: [$($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)]" -Source ${CmdletName}
+							[string]$global:SetupCfg.$sectionKey.$sectionKeySubkey = $($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)
+						}
+					}
+				}
 			}
 			else {
-				Write-Log -Message "No [$customSetupCfgFileName] found. Skipped parsing values and setting values for global:CustomSetupCfg object to defaults." -Source ${CmdletName}
-				[hashtable]$global:CustomSetupCfg = @{
-					UserCanAbort    = $false
-					UserCanCloseAll = $false
-				}
+				Write-Log -Message "No [$customSetupCfgFileName] found. Skipped parsing customized values." -Source ${CmdletName}
 			}
 		}
 		catch {
@@ -5764,7 +5774,7 @@ function Set-NxtSetupCfg {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[string]$setupCfgFileName = Split-Path -path "$Path" -Leaf
+		[string]$setupCfgFileName = Split-Path -Path "$Path" -Leaf
 		Write-Log -Message "Checking for config file [$setupCfgFileName] under [$Path]..." -Source ${CmdletName}
 		if ([System.IO.File]::Exists($Path)) {
 			[hashtable]$global:SetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
@@ -5772,6 +5782,25 @@ function Set-NxtSetupCfg {
 		}
 		else {
 			Write-Log -Message "No [$setupCfgFileName] found. Skipped parsing values." -Severity 2 -Source ${CmdletName}
+			[hashtable]$global:SetupCfg = $null
+		}
+		## provide all expected predefined values from ADT framework config file if they are missing/undefined in a default file 'setup.cfg' only
+		if ($Path -eq $global:SetupCfgPath) {
+			if ($null -eq $global:SetupCfg) {
+				[hashtable]$global:SetupCfg = @{}
+			}
+			## note: xml nodes are case-sensitive
+			foreach ( $xmlSection in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.ChildNodes.Name | Where-Object { $_ -ne "#comment" }) ) {
+				foreach ( $xmlSectionSubValue in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.ChildNodes.Name | Where-Object { $_ -ne "#comment" }) ) {
+					if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
+						if ($null -eq $global:SetupCfg.$xmlSection) {
+							[hashtable]$global:SetupCfg.$xmlSection = @{}
+						}
+						[hashtable]$global:SetupCfg.$xmlSection.add("$($xmlSectionSubValue)", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
+						Write-Log -Message "Set undefined necessary global object value [`$global:SetupCfg.$($xmlSection).$($xmlSectionSubValue)] with predefined default content: [$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)]" -Severity 2 -Source ${CmdletName}
+					}
+				}
+			}
 		}
 	}
 	End {
@@ -5866,9 +5895,9 @@ Function Show-NxtInstallationWelcome {
 		If the script is intended for multiple cultures, specify the date in the universal sortable date/time format: "2013-08-22 11:51:52Z"
 		The deadline date will be displayed to the user in the format of their culture.
     .PARAMETER MinimizeWindows
-    	Specifies whether to minimize other windows when displaying prompt. Default: $true.
+    	Specifies whether to minimize other windows when displaying prompt. Defaults to the corresponding value 'MINIMIZEALLWINDOWS' from the Setup.cfg.
     .PARAMETER TopMost
-    	Specifies whether the windows is the topmost window. Default: $true.
+    	Specifies whether the windows is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
     .PARAMETER ForceCountdown
     	Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
     .PARAMETER CustomText
@@ -5878,9 +5907,11 @@ Function Show-NxtInstallationWelcome {
     .PARAMETER ContinueType
     	Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
     .PARAMETER UserCanCloseAll
-    	Specifies if the user can close all applications. Default: $false.
+    	Specifies if the user can close all applications.
+		Defaults to the corresponding value from the $global:SetupCfg object.
     .PARAMETER UserCanAbort
-		Specifies if the user can abort the process. Default: $false.
+		Specifies if the user can abort the process.
+		Defaults to the corresponding value from the $global:SetupCfg object.
     .OUTPUTS
 		Exit code depending on the user's response or the timeout.
     .EXAMPLE
@@ -5957,11 +5988,11 @@ Function Show-NxtInstallationWelcome {
 		## Specify whether to minimize other windows when displaying prompt
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Boolean]$MinimizeWindows = $true,
+		[Boolean]$MinimizeWindows = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.MINMIZEALLWINDOWS)),
 		## Specifies whether the window is the topmost window
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Boolean]$TopMost = $true,
+		[Boolean]$TopMost = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.TOPMOSTWINDOW)),
 		## Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
@@ -5977,13 +6008,14 @@ Function Show-NxtInstallationWelcome {
 		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses),
 		## this window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
 		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[PSADTNXT.ContinueType]$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		## Specifies if the user can close all applications
 		[Parameter(Mandatory = $false)]
-		[Switch]$UserCanCloseAll = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:CustomSetupCfg.ASKKILLPROCESSES.USERCANCLOSEALL)),
+		[Switch]$UserCanCloseAll = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.USERCANCLOSEALL)),
 		## Specifies if the user can abort the process
 		[Parameter(Mandatory = $false)]
-		[Switch]$UserCanAbort = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:CustomSetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER))
+		[Switch]$UserCanAbort = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER))
 	)
 	Begin {
 		## Get the name of this function and write header
