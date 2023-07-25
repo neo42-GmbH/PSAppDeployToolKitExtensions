@@ -86,11 +86,11 @@ switch ($DeploymentType) {
 [string]$global:NeoForceLanguage = $NeoForceLanguage
 [int]$global:NxtScriptDepth = $env:nxtScriptDepth
 ## Several PSADT-functions do not work, if these variables are not set here.
-Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | ForEach-Object {
-	[string]$appVendor = $_.AppVendor
-	[string]$appName = $_.AppName
-	[string]$appVersion = $_.AppVersion
-}
+$tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
+[string]$appVendor = $tempLoadPackageConfig.AppVendor
+[string]$appName = $tempLoadPackageConfig.AppName
+[string]$appVersion = $tempLoadPackageConfig.AppVersion
+Remove-Variable -Name tempLoadPackageConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## set the script execution policy for this process
@@ -141,6 +141,21 @@ try {
 	
 	## validate package config variables
 	Test-NxtPackageConfig
+
+	## write variables to verbose channel to prevent warnings issued by PSScriptAnalyzer
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigValidationPath: $global:Neo42PackageConfigValidationPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigPath: $global:Neo42PackageConfigPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SetupCfgPath: $global:SetupCfgPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomSetupCfgPath: $global:CustomSetupCfgPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptVersion: $deployAppScriptVersion"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptDate: $deployAppScriptDate"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptParameters: $deployAppScriptParameters"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appDeployLogoBannerDark: $appDeployLogoBannerDark"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] DetectedDisplayVersion: $global:DetectedDisplayVersion"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SoftMigrationCustomResult (prefillvalue): $global:SoftMigrationCustomResult"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVendor: $appVendor"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appName: $appName"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVersion: $appVersion"
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -260,7 +275,7 @@ function Main {
 						else {
 							[string]$global:PackageConfig.ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						}
-						Write-Log -Message "[$script:installPhase] selected Mode: $($global:PackageConfig.ReinstallMode)" -Source $deployAppScriptFriendlyName
+						Write-Log -Message "[$script:installPhase] selected mode: $($global:PackageConfig.ReinstallMode)" -Source $deployAppScriptFriendlyName
 						switch ($global:PackageConfig.ReinstallMode) {
 							"Reinstall" {
 								CustomReinstallPreUninstall
