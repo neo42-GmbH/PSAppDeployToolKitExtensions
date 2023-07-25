@@ -90,7 +90,7 @@ Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | F
 	[string]$appVendor = $_.AppVendor
 	[string]$appName = $_.AppName
 	[string]$appVersion = $_.AppVersion
-	## write variables to log to prevent problems listed in script editors (must be within the declaration section because of the Foreach-Object loop)
+	## write variables to log to prevent problems issued by PSScriptAnalyzer
 	Write-Log -Message "appVendor: $appVendor" -Source $deployAppScriptFriendlyName
 	Write-Log -Message "appName: $appName" -Source $deployAppScriptFriendlyName
 	Write-Log -Message "appVersion: $appVersion" -Source $deployAppScriptFriendlyName
@@ -146,7 +146,7 @@ try {
 	## validate package config variables
 	Test-NxtPackageConfig
 
-	## write variables to log to prevent problems listed in script editors (some of those already within the declaration section)
+	## write variables to log to prevent problems issued by PSScriptAnalyzer
 	Write-Log -Message "Neo42PackageConfigValidationPath: $global:Neo42PackageConfigValidationPath" -Source $deployAppScriptFriendlyName
 	Write-Log -Message "Neo42PackageConfigPath: $global:Neo42PackageConfigPath" -Source $deployAppScriptFriendlyName
 	Write-Log -Message "SetupCfgPath: $global:SetupCfgPath" -Source $deployAppScriptFriendlyName
