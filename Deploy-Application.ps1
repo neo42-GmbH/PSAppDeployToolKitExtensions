@@ -90,6 +90,10 @@ Get-Content "$global:Neo42PackageConfigPath" | Out-String | ConvertFrom-Json | F
 	[string]$appVendor = $_.AppVendor
 	[string]$appName = $_.AppName
 	[string]$appVersion = $_.AppVersion
+	## write variables to log to prevent problems listed in script editors (must be within the declaration section because of the Foreach-Object loop)
+	Write-Log -Message "appVendor: $appVendor" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "appName: $appName" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "appVersion: $appVersion" -Source $deployAppScriptFriendlyName
 }
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
@@ -141,6 +145,18 @@ try {
 	
 	## validate package config variables
 	Test-NxtPackageConfig
+
+	## write variables to log to prevent problems listed in script editors (some of those already within the declaration section)
+	Write-Log -Message "Neo42PackageConfigValidationPath: $global:Neo42PackageConfigValidationPath" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "Neo42PackageConfigPath: $global:Neo42PackageConfigPath" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "SetupCfgPath: $global:SetupCfgPath" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "CustomSetupCfgPath: $global:CustomSetupCfgPath" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "deployAppScriptVersion: $deployAppScriptVersion" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "deployAppScriptDate: $deployAppScriptDate" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "deployAppScriptParameters: $deployAppScriptParameters" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "appDeployLogoBannerDark: $appDeployLogoBannerDark" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "DetectedDisplayVersion: $global:DetectedDisplayVersion" -Source $deployAppScriptFriendlyName
+	Write-Log -Message "SoftMigrationCustomResult (prefillvalue): $global:SoftMigrationCustomResult" -Source $deployAppScriptFriendlyName
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
