@@ -247,6 +247,7 @@ function Main {
 				[string]$script:installPhase = 'Package-PreCleanup'
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
 				if ($false -eq $mainNxtResult.Success) {
+					Close-BlockExecutionWindow
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
 				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
@@ -263,6 +264,7 @@ function Main {
 					Remove-NxtProductMember
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
 					if ($showInstallationWelcomeResult -ne 0) {
+						Close-BlockExecutionWindow
 						Exit-Script -ExitCode $showInstallationWelcomeResult
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
@@ -385,6 +387,7 @@ function Main {
 		if ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
 		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
 		if ($NxtScriptDepth -eq 0) {[int]$env:nxtScriptDepth = 0}
+		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $mainExitCode
 	}
 	catch {
