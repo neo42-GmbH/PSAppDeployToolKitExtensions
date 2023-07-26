@@ -8253,6 +8253,7 @@ function Uninstall-NxtOld {
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 		$uninstallOldResult.Success = $null
+		$uninstallOldResult.ApplicationExitCode = $null
 		if ($true -eq $UninstallOld) {
 			Write-Log -Message "Checking for old package installed..." -Source ${cmdletName}
 			try {
@@ -8282,13 +8283,14 @@ function Uninstall-NxtOld {
 											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
 											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
 											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
-											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`""
+											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
 										}
 										catch {
 										}
 										if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 											[int32]$mainExitCode = 70001
 											$uninstallOldResult.MainExitCode = $mainExitCode
+											$uninstallOldResult.ApplicationExitCode = $LastExitCode
 											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
 											$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 											$uninstallOldResult.Success = $false
@@ -8350,13 +8352,14 @@ function Uninstall-NxtOld {
 											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
 											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
 											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
-											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`""
+											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
 										}
 										catch {
 										}
 										if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 											[int32]$mainExitCode = 70001
 											$uninstallOldResult.MainExitCode = $mainExitCode
+											$uninstallOldResult.ApplicationExitCode = $LastExitCode
 											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
 											$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 											$uninstallOldResult.Success = $false
@@ -8416,7 +8419,7 @@ function Uninstall-NxtOld {
 							[string]$regPackageGUID = "HKLM:\Software\$RegPackagesKey\$ProductGUID"
 						}
 						if (![string]::IsNullOrEmpty($regPackageGUID)) {
-							Write-Log -Message "An former product member application package was found." -Source ${cmdletName}
+							Write-Log -Message "A former product member application package was found." -Source ${cmdletName}
 						}
 					}
 					## if the current package is a new ADT package, but is actually only registered because it is a product member package, we cannot uninstall it again now
@@ -8424,16 +8427,16 @@ function Uninstall-NxtOld {
 						[string]$regPackageGUID = $null
 					}
 					if (![string]::IsNullOrEmpty($regPackageGUID)) {
-						Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package with PackageGUID [$(Split-Path -Path "$regPackageGUID" -Leaf)]..." -Source ${cmdletName}
-						cmd /c (Get-RegistryKey -Key $regPackageGUID -Value 'UninstallString')
-						if (Test-RegistryValue -Key $regPackageGUID -Value 'UninstallString') {
+						Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package with PackageGUID [$(Split-Path -Path `"$regPackageGUID`" -Leaf)]..." -Source ${cmdletName}
+						cmd /c (Get-RegistryKey -Key "$regPackageGUID" -Value 'UninstallString') | Out-Null
+						if (Test-RegistryValue -Key "$regPackageGUID" -Value 'UninstallString') {
 							[int32]$mainExitCode = 70001
 							$uninstallOldResult.MainExitCode = $mainExitCode
+							$uninstallOldResult.ApplicationExitCode = $LastExitCode
 							$uninstallOldResult.ErrorMessage = "ERROR: Uninstallation of old package failed. Abort!"
 							$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallOldResult.Success = $false
 							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
-							Show-DialogBox -Text $($uninstallOldResult.ErrorMessage) -Icon 'Stop'
 						}
 						else {
 							$uninstallOldResult.ErrorMessage = "Uninstallation of old package successful."

@@ -246,10 +246,10 @@ function Main {
 				## START OF INSTALL
 				[string]$script:installPhase = 'Package-PreCleanup'
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
-				Unregister-NxtOld
 				if ($false -eq $mainNxtResult.Success) {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
+				Unregister-NxtOld
 				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
 					CustomSoftMigrationBegin
 				}
