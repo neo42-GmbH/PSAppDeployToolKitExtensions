@@ -8468,7 +8468,7 @@ function Uninstall-NxtOld {
 function Unregister-NxtOld {
 	<#
 	.SYNOPSIS
-		Unregisters old package versions if corresponding value from the PackageConfig object "UninstallOld": false.
+		Unregisters old package versions if UninstallOld from the PackageConfig object is false.
 	.DESCRIPTION
 		If $UninstallOld is set to false, the function checks for old versions of the same package ($ProductGUID is equal to former ProductFamilyGUID) and unregisters them.
 	.PARAMETER ProductGUID
