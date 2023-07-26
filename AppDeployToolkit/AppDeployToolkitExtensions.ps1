@@ -8269,10 +8269,10 @@ function Uninstall-NxtOld {
 						else {
 							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
 								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
-									[string]$appEmpirumPackageVersionNumer = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'Version'
+									[string]$appEmpirumPackageVersionNumber = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'Version'
 									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
 								}
-								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or (($appEmpirumPackageGUID -eq $PackageGUID) -and ($appEmpirumPackageVersionNumer -ne $AppVersion))) {
+								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or (($appEmpirumPackageGUID -eq $PackageGUID) -and (("$(Compare-NxtVersion -DetectedVersion "$appEmpirumPackageVersionNumber" -TargetVersion "$AppVersion")") -ne "Equal"))) {
 									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
 										try {
@@ -8338,10 +8338,10 @@ function Uninstall-NxtOld {
 						else {
 							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
 								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
-									[string]$appEmpirumPackageVersionNumer = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'Version'
+									[string]$appEmpirumPackageVersionNumber = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'Version'
 									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
 								}
-								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or (($appEmpirumPackageGUID -eq $PackageGUID) -and ($appEmpirumPackageVersionNumer -ne $AppVersion))) {
+								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or (($appEmpirumPackageGUID -eq $PackageGUID) -and (("$(Compare-NxtVersion -DetectedVersion "$appEmpirumPackageVersionNumber" -TargetVersion "$AppVersion")") -ne "Equal"))) {
 									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 									if (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') {
 										try {
@@ -8406,8 +8406,8 @@ function Uninstall-NxtOld {
 						[string]$regPackageGUID = "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID"
 					}
 					if (![string]::IsNullOrEmpty($regPackageGUID)) {
-						## Check if the installed package's version is lower than the current one's and if the UninstallString entry exists
-						if (-not (($(Get-RegistryKey -Key "$regPackageGUID" -Value 'Version') -lt $AppVersion) -and (Test-RegistryValue -Key $regPackageGUID -Value 'UninstallString')) ) {
+						## Check if the installed package's version is lower than the current one's (else we don't remove old package)
+						if ("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "$regPackageGUID" -Value 'Version')" -TargetVersion "$AppVersion")" -ne "Update") {
 							[string]$regPackageGUID = $null
 						}
 					} else {
@@ -8522,15 +8522,11 @@ function Unregister-NxtOld {
 			($true -eq (Test-Path -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) -or
 			($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) ) {
 				[string]$currentGUID = $PackageGUID
-				if ((Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'Version') -lt $AppVersion -and (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
+				if ((("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
 					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')
 				}
-				elseif ((Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'Version') -lt $AppVersion -and (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
+				elseif ((("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
 					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')
-				}
-				## Check if the installed package's version is lower than the current one's and if the UninstallString entry exists
-				if (-not (($(Get-RegistryKey -Key "$currentGUID" -Value 'Version') -lt $AppVersion) -and (Test-RegistryValue -Key $currentGUID -Value 'UninstallString')) ) {
-					[string]$currentGUID = $null
 				}
 			}
 			## process old product group member
@@ -8553,8 +8549,7 @@ function Unregister-NxtOld {
 					}
 					## for an old product member we always remove these registry keys (in case of x86 packages we do it later anyway)
 					Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID"
-					Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
-					[string]$currentGUID = $null
+					Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
 				}
 				else {
 					[string]$currentGUID = $null
