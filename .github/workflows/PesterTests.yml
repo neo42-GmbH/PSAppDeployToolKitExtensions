@@ -1,0 +1,30 @@
+name: Pester Tests
+
+on:
+  push:
+    branches: [ 336-implement-the-first-pester-tests ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        path: ./PSAppDeployToolkitExtensions
+
+    - name: Checkout Public Repo
+      uses: actions/checkout@v3
+      with:
+        repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
+        ref: ${{ vars.TARGET_ADT_VERSION }}
+        path: ./PSAppDeployToolkit
+
+    - name: PowerShell Script
+      run: ./PSAppDeployToolkitExtensions/.github/scripts/PesterHelper.ps1
+
+    - name: Run Pester Tests
+      shell: powershell
+      run: |
+        Invoke-Pester -Script .\runfolder\PesterTests.ps1
