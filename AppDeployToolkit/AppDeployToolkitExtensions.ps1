@@ -424,6 +424,7 @@ function Close-BlockExecutionWindow {
 		$blockexecutionWindowId = (Get-Process powershell | Where-Object {"$(($_).MainWindowTitle)" -eq "$installTitle"}).Id
 		if (-not [string]::IsNullOrEmpty($blockexecutionWindowId)) {
 			Write-Log "The informational window of BlockExecution functionality will be closed now ..."
+			## Stop-NxtProcess does not yet support Id as Parameter
 			Stop-Process -Id $blockexecutionWindowId -Force
 		}
 	}
