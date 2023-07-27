@@ -8731,7 +8731,7 @@ function Unregister-NxtPackage {
 				}
 			}
 			else {
-				Write-Log -Message "No valid conditions for removal of assigned product member application packages. Unregistering package with 'PackageGUID' [$PackageGUID] only..." -Source ${cmdletName}
+				Write-Log -Message "Cleanup registry entries and folder of package with 'PackageGUID' [$PackageGUID] only..." -Source ${cmdletName}
 				if ($PackageGUID -ne $global:PackageConfig.PackageGUID) {
 					[string]$App = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID").AppPath
 				}
@@ -8751,7 +8751,7 @@ function Unregister-NxtPackage {
 				}
 				Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID"
 				Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID"
-				Write-Log -Message "Current package unregistration successful." -Source ${cmdletName}
+				Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
 			}
 		}
 		catch {
