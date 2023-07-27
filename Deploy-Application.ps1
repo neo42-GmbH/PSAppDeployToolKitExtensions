@@ -251,6 +251,7 @@ function Main {
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
 				Unregister-NxtOld
+				Resolve-NxtDependentPackage
 				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
 					CustomSoftMigrationBegin
 				}
