@@ -5407,7 +5407,7 @@ function Resolve-NxtDependentPackage {
 						## Trigger uninstallstring, throw exception if uninstall fails.
 						[string]$dependentPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -Value 'UninstallString')
 						Write-Log -Message "Removing dependent application package with uninstall call: '$dependentPackageUninstallString -SkipUnregister'." -Source ${CmdletName}
-						cmd /c "$assignedPackageUninstallString -SkipUnregister"
+						cmd /c "$dependentPackageUninstallString -SkipUnregister"
 						if ($LASTEXITCODE -ne 0) {
 							Write-Log -Message "Removal of dependent application package failed with return code '$LASTEXITCODE'." -Severity 3 -Source ${CmdletName}
 							throw "Removal of dependent application package failed."
