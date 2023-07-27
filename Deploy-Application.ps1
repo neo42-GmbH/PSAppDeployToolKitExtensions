@@ -24,6 +24,9 @@
 	Changes to "user install mode" and back to "user execute mode" for installing/uninstalling applications for Remote Destkop Session Hosts/Citrix servers.
 .PARAMETER DisableLogging
 	Disables logging to file for the script. Default is: $false.
+.PARAMETER SkipUnregister
+	Skips unregister during uninstall of a package. Default is: $false.
+	Note: internally used to prevent unregister of assigned application packages to a product if called from another script only.
 .PARAMETER DeploymentSystem
 	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
 	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
@@ -61,6 +64,8 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[switch]$DisableLogging = $false,
 	[Parameter(Mandatory = $false)]
+	[switch]$SkipUnregister = $false,
+	[Parameter(Mandatory = $false)]
 	[string]$DeploymentSystem = [string]::Empty,
 	[Parameter(Mandatory = $false)]
 	[string]$NeoForceLanguage = [string]::Empty
@@ -77,6 +82,8 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
+## interanl variables 
+[string]$skipUnregister = $SkipUnregister
 ## global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
@@ -84,7 +91,6 @@ switch ($DeploymentType) {
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
 [string]$global:NeoForceLanguage = $NeoForceLanguage
-[int]$global:NxtScriptDepth = $env:nxtScriptDepth
 ## Several PSADT-functions do not work, if these variables are not set here.
 $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
@@ -105,7 +111,6 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 ## Variables: Environment
 If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
-[int]$env:nxtScriptDepth += 1
 ## dot source the required AppDeploy Toolkit functions
 Try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
@@ -120,7 +125,6 @@ Catch {
 	## exit the script, returning the exit code to SCCM
 	If (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
 }
-Write-Log "Current running script depth: $($global:NxtScriptDepth)" -Source $deployAppScriptFriendlyName
 #endregion
 ##* Do not modify section above	=============================================================================================================================================
 
@@ -176,10 +180,9 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
-	.PARAMETER NxtScriptDepth
-		Specifies which current call level of the script is running.
-		An unregister for assigned application packages to a product is done in level 0 only.
-		Defaults to the corresponding environment value.
+	.PARAMETER SkipUnregister
+		Skips unregister during uninstall of a package.
+		Defaults to the the corresponding call parameter of this script.
 	.PARAMETER ProductGUID
 		Specifies a membership GUID for a product of an application package.
 		Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership, by default the key 'RegPackagesKey' is 'neoPackages'.
@@ -213,8 +216,8 @@ function Main {
 	#>
 	param (
 		[Parameter(Mandatory = $false)]
-		[int]
-		$NxtScriptDepth = $global:NxtScriptDepth,
+		[bool]
+		$SkipUnregister = $skipUnregister,
 		[Parameter(Mandatory = $false)]
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
@@ -341,7 +344,7 @@ function Main {
 			"Uninstall" {
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
-				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($NxtScriptDepth -eq 0) ) {
+				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($false -eq $SkipUnregister) ) {
 					Remove-NxtProductMember
 				}
 				if ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1)) {
@@ -359,7 +362,7 @@ function Main {
 						Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
 					}
 				}
-				if ($NxtScriptDepth -eq 0) {
+				if ($false -eq $SkipUnregister) {
 					[string]$script:installPhase = 'Package-Unregistration'
 					Unregister-NxtPackage
 				}
@@ -386,7 +389,6 @@ function Main {
 		## calculate exit code
 		if ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
 		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
-		if ($NxtScriptDepth -eq 0) {[int]$env:nxtScriptDepth = 0}
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $mainExitCode
 	}
@@ -395,7 +397,6 @@ function Main {
 		[int32]$mainExitCode = 60001
 		[string]$mainErrorMessage = "$(Resolve-Error)"
 		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-		if ($NxtScriptDepth -eq 0) {[int]$env:nxtScriptDepth = 0}
 		Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	}
