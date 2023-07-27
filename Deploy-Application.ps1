@@ -82,7 +82,7 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
-## interanl variables 
+## internal variables 
 [string]$skipUnregister = $SkipUnregister
 ## global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
