@@ -9,3 +9,5 @@ SupportFiles/Setup.ico
 SupportFiles
 Files
 CustomSetup.cfg
+PesterTests.ps1
+shared.psm1

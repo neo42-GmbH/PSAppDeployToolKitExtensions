@@ -27,4 +27,4 @@ jobs:
     - name: Run Pester Tests
       shell: powershell
       run: |
-        Invoke-Pester -Script .\runfolder\PesterTests.ps1
+        Invoke-Pester -Script .\testrunfolder\PesterTests.ps1
