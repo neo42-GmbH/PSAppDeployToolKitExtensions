@@ -82,8 +82,6 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
-## internal variables 
-[bool]$skipUnregister = $SkipUnregister
 ## global default variables 
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
@@ -217,7 +215,7 @@ function Main {
 	param (
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$SkipUnregister = $skipUnregister,
+		$SkipUnregister = $SkipUnregister,
 		[Parameter(Mandatory = $false)]
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
