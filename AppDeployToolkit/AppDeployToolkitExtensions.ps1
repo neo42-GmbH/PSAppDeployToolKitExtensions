@@ -5136,11 +5136,10 @@ function Remove-NxtProductMember {
 					[string]$assignedPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Value 'UninstallString')
 					Write-Log -Message "Processing product member application package with 'PackageGUID' [$assignedPackageGUID]..." -Source ${CmdletName}
 					if (![string]::IsNullOrEmpty($assignedPackageUninstallString)) {
-						Write-Log -Message "Removing package with uninstall call: '$assignedPackageUninstallString'." -Source ${CmdletName}
-						[Diagnostics.Process]$runUninstallString = (Start-Process -FilePath "$(($assignedPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($assignedPackageUninstallString -split '"', 3)[2]).Replace('"','`"').Trim())" -PassThru -Wait)
-						$runUninstallString.WaitForExit()
-						if ($runUninstallString.ExitCode -ne 0) {
-							Write-Log -Message "Removal of found product member application package failed with return code '$($runUninstallString.ExitCode)'." -Severity 3 -Source ${CmdletName}
+						Write-Log -Message "Removing package with uninstall call: '$assignedPackageUninstallString -SkipUnregister'." -Source ${CmdletName}
+						cmd /c "$assignedPackageUninstallString -SkipUnregister"
+						if ($LASTEXITCODE -ne 0) {
+							Write-Log -Message "Removal of found product member application package failed with return code '$LASTEXITCODE'." -Severity 3 -Source ${CmdletName}
 							throw "Removal of found product member application package failed."
 						}
 						Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Name 'Installed' -Type 'Dword' -Value '0'
@@ -5407,15 +5406,14 @@ function Resolve-NxtDependentPackage {
 					if ($dependentPackage.OnConflict -eq "Uninstall") {
 						## Trigger uninstallstring, throw exception if uninstall fails.
 						[string]$dependentPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -Value 'UninstallString')
-						Write-Log -Message "Removing dependent application package with uninstall call: '$dependentPackageUninstallString'." -Source ${CmdletName}
-						[Diagnostics.Process]$runUninstallString = (Start-Process -FilePath "$(($dependentPackageUninstallString -split '"', 3)[1])" -ArgumentList "$((($dependentPackageUninstallString -split '"', 3)[2]).Replace('"','`"').Trim())" -PassThru -Wait)
-						$runUninstallString.WaitForExit()
-						if ($runUninstallString.ExitCode -ne 0) {
-							Write-Log -Message "Removal of dependent application package failed with return code '$($runUninstallString.ExitCode)'." -Severity 3 -Source ${CmdletName}
+						Write-Log -Message "Removing dependent application package with uninstall call: '$dependentPackageUninstallString -SkipUnregister'." -Source ${CmdletName}
+						cmd /c "$dependentPackageUninstallString -SkipUnregister"
+						if ($LASTEXITCODE -ne 0) {
+							Write-Log -Message "Removal of dependent application package failed with return code '$LASTEXITCODE'." -Severity 3 -Source ${CmdletName}
 							throw "Removal of dependent application package failed."
 						}
-						## !!! next line has to be activated after merging issue #303 -> afterwards unregister is working in newly introduced script depth 0 only!!!
-						#Unregister-NxtPackage -RemovePackagesWithSameProductGUID $false -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey "$RegPackagesKey"
+						## we must now explicitly unregister, because only an uninstall call with the '-SkipUnregister' parameter also prevents product member packages from being removed on recursive calls
+						Unregister-NxtPackage -RemovePackagesWithSameProductGUID $false -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey "$RegPackagesKey"
 						if ( ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists)) -or ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists )) ) {
 							Write-Log -Message "Removal of dependent application package was done not successful." -Severity 3 -Source ${CmdletName}
 							throw "Removal of dependent application package not successful."
