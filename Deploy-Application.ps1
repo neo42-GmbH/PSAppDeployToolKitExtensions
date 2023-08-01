@@ -84,6 +84,7 @@ switch ($DeploymentType) {
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeploymentSystem = $DeploymentSystem
+[string]$global:UserPartDir = "User"
 ## Several PSADT-functions do not work, if these variables are not set here.
 $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
