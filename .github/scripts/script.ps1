@@ -12,8 +12,8 @@ $dirname = "$($Env:GITHUB_RELEASE_VERSION)-$($Env:GITHUB_RUN_NUMBER)"
 New-Item -ItemType Directory -Name "$dirname" -Force
 Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/" -Recurse -Force -Exclude $exclude
 Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/"
-New-Item -ItemType Directory -Name "$dirname/SupportFiles/neo42-Userpart" -Force
-New-Item -ItemType File -Path "$dirname/SupportFiles/neo42-Userpart" -Name "place UserPart files here!!!"
+New-Item -ItemType Directory -Name "$dirname/SupportFiles/User" -Force
+New-Item -ItemType File -Path "$dirname/SupportFiles/User" -Name "place UserPart files here!!!"
 New-Item -ItemType Directory -Name "$dirname/Files" -Force
 New-Item -ItemType File -Path "$dirname/Files" -Name "place setup files here!!!"
 New-Item -ItemType File -Path "$dirname\" -Name "Add a Setup.ico here!!!"
