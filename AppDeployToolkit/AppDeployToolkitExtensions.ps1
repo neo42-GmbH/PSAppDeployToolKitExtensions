@@ -542,6 +542,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER DesktopShortcut
 		Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
 		Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
+	.PARAMETER $UserPartDir
+		Defines the subpath to the UserPart directory.
+		Defaults to $global:UserPartDir.
 	.PARAMETER Wow6432Node
 		Switches between 32/64 Bit Registry Keys.
 		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
@@ -572,7 +575,10 @@ function Complete-NxtPackageInstallation {
 		$DesktopShortcut = [bool]([int]$global:SetupCfg.Options.DesktopShortcut),
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Wow6432Node = $global:Wow6432Node
+		$Wow6432Node = $global:Wow6432Node,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UserPartDir = $global:UserPartDir
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -613,14 +619,14 @@ function Complete-NxtPackageInstallation {
 			}
 		}
 		if ($true -eq $UserPartOnInstallation) {
-			## Userpart-Installation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
+			## Userpart-Installation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID.uninstall"
-			Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
-			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Userpart\"
-			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
-			Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-			Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
-			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\neo42-Userpart\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
+			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
+			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
+			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
+			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
+			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 		}
 		foreach ($oldAppFolder in $((Get-ChildItem -Path (Get-Item -Path $App).Parent.FullName | Where-Object Name -ne (Get-Item -Path $App).Name).FullName)) {
 			## note: we always use the script from current application package source folder (it is basically identical in each package)
@@ -654,6 +660,9 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER UserPartRevision
 		Specifies the UserPartRevision for this installation.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER $UserPartDir
+		Defines the subpath to the UserPart directory.
+		Defaults to $global:UserPartDir.
 	.EXAMPLE
 		Complete-NxtPackageUninstallation
 	.LINK
@@ -672,7 +681,10 @@ function Complete-NxtPackageUninstallation {
 		$UserPartOnUninstallation = $global:PackageConfig.UserPartOnUninstallation,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$UserPartRevision = $global:PackageConfig.UserPartRevision
+		$UserPartRevision = $global:PackageConfig.UserPartRevision,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UserPartDir = $global:UserPartDir
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -682,13 +694,13 @@ function Complete-NxtPackageUninstallation {
 		Remove-NxtDesktopShortcuts
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID"
 		if ($true -eq $UserPartOnUninstallation) {
-			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\neo42-Userpart\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
-			Copy-File -Path "$dirSupportFiles\neo42-Userpart\*" -Destination "$App\neo42-Userpart\SupportFiles" -Recurse
-			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Userpart\"
-			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\neo42-Userpart\" -Recurse -Force -ErrorAction Continue
-			Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-			Write-NxtSingleXmlNode -XmlFilePath "$App\neo42-Userpart\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
-			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\neo42-Userpart\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
+			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
+			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
+			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
+			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
+			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
+			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
+			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 		}
 	}
 	End {
@@ -4529,6 +4541,9 @@ function Register-NxtPackage {
 	.PARAMETER SetupCfgPathOverride
 		Defines the SetupCfgPathOverride.
 		Defaults to $env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID).
+	.PARAMETER $UserPartDir
+		Defines the subpath to the UserPart directory.
+		Defaults to $global:UserPartDir.
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -4626,7 +4641,10 @@ function Register-NxtPackage {
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$LastErrorMessage = $global:LastErrorMessage
+		$LastErrorMessage = $global:LastErrorMessage,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UserPartDir = $global:UserPartDir
 	)
 	
 	Begin {
@@ -4678,7 +4696,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
 			if ($true -eq $UserPartOnInstallation) {
-				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartPath' -Value ('"' + $App + '\neo42-Userpart"')
+				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartPath' -Value ('"' + $App + "\$UserpartDir" + '"')
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartUninstPath' -Value ('"%AppData%\neoPackages\' + $PackageGUID + '"')
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartRevision' -Value $UserPartRevision
 			}
