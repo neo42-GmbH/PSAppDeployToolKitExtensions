@@ -64,7 +64,7 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[switch]$SkipUnregister = $false,
 	[Parameter(Mandatory = $false)]
-	[string]$DeploymentSystem = [string]::Empty,
+	[string]$DeploymentSystem = [string]::Empty
 )
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
