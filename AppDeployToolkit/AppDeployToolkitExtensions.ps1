@@ -624,6 +624,9 @@ function Complete-NxtPackageInstallation {
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
+			if ($true -eq (Test-Path -Path "$App\Setup.cfg")){
+				Copy-File -Path "$App\Setup.cfg" -Destination "$App\$UserpartDir\"
+			}
 			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
@@ -698,6 +701,7 @@ function Complete-NxtPackageUninstallation {
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
+			Copy-Item -Path "$setupcfgoverride\setupoverride.cfg" -Destination "$App\$UserpartDir\" -Force
 			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
@@ -2131,7 +2135,10 @@ function Exit-NxtScriptWithError {
 		$UserPartOnInstallation = $global:PackageConfig.UserPartOnInstallation,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation
+		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3945,6 +3952,9 @@ function Initialize-NxtEnvironment {
 	.PARAMETER SetupCfgPathOverride
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
 		Defaults to "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)".
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
 	.OUTPUTS
 		System.Int32.
 	.EXAMPLE
@@ -3965,7 +3975,10 @@ function Initialize-NxtEnvironment {
 		$CustomSetupCfgPath = "$global:CustomSetupCfgPath",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
+		[Parameter(Mandatory = $false)]
+		[string]
+		$App = $global:PackageConfig.App
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3974,18 +3987,14 @@ function Initialize-NxtEnvironment {
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
 		if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)) {
-			Move-NxtItem -Path $SetupCfgPathOverride\setupOverride.cfg -Destination $SetupCfgPathOverride\setup.cfg
-			Set-NxtSetupCfg -Path $SetupCfgPathOverride\setup.cfg
+			$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
+			Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg"
 		}
-		else {
-			if (
-				$true -eq (Test-path $SetupCfgPathOverride) -and
-				$SetupCfgPathOverride -like "$env:temp\$($global:Packageconfig.RegPackagesKey)\*"
-			) {
-				Remove-Item -Recurse $SetupCfgPathOverride
-			}
-			Set-NxtSetupCfg -Path $SetupCfgPath
+		elseif ($true -eq (Test-path $SetupCfgPath)) {
+			$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
+			Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
 		}
+		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
 		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
@@ -4658,13 +4667,12 @@ function Register-NxtPackage {
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
-			if ($true -eq (Test-Path "$SetupCfgPathOverride\Setup.cfg")) {
-				Move-NxtItem -Path "$SetupCfgPathOverride\Setup.cfg" -Destination "$App\neo42-Install\" -Force
-				Remove-Item -Recurse -Path "$SetupCfgPathOverride"
+			if ($true -eq (Test-Path "$SetupCfgPathOverride\setupoverride.cfg")) {
+				Copy-File -Path "$SetupCfgPathOverride\setupoverride.cfg" -Destination "$App\neo42-Install\setup.cfg"
 			} elseif ($true -eq (Test-Path "$ScriptParentPath\Setup.cfg")) {
 				Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
 			} else {
-				Write-Log -Message "Could not copy default setup config file 'setup.cfg'. There is no such file provided with this package." -Severity 2 -Source ${cmdletName}
+				Write-Log -Message "Could not copy setup config file 'setup.cfg'. There is no such file provided with this package." -Severity 2 -Source ${cmdletName}
 			}
 			if ($true -eq (Test-Path "$ScriptParentPath\CustomSetup.cfg")) {
 				Copy-File -Path "$ScriptParentPath\CustomSetup.cfg" -Destination "$App\neo42-Install\"
