@@ -701,7 +701,9 @@ function Complete-NxtPackageUninstallation {
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
-			Copy-Item -Path "$setupcfgoverride\setupoverride.cfg" -Destination "$App\$UserpartDir\" -Force
+			if ($true -eq (Test-Path -Path "$App\Setup.cfg")){
+				Copy-File -Path "$App\Setup.cfg" -Destination "$App\$UserpartDir\"
+			}
 			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
 			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
