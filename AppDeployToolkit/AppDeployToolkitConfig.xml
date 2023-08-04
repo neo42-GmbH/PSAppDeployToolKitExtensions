@@ -40,9 +40,6 @@
 			<TOPMOSTWINDOW>1</TOPMOSTWINDOW>
 			<MINMIZEALLWINDOWS>1</MINMIZEALLWINDOWS>
 		</AskKillProcesses>
-		<CALL>
-			<HIDEWINDOWS>0</HIDEWINDOWS>
-		</CALL>
     </SetupCfg_Parameters>
     <!--SetupCfg Parameters-->
 
