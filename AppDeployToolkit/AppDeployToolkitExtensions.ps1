@@ -430,6 +430,7 @@ function Add-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
+		[ValidatePattern("^(\/[a-zA-Z0-9]+)+\/[a-zA-Z0-9]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
@@ -8101,6 +8102,7 @@ function Test-NxtXmlNodeExists {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
+		[ValidatePattern("^(\/[a-zA-Z0-9]+)+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
@@ -9059,6 +9061,7 @@ function Update-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
+		[ValidatePattern("^(\/[a-zA-Z0-9]+)+\/[a-zA-Z0-9]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
