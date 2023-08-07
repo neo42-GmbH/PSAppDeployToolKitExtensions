@@ -50,13 +50,13 @@
   "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
   "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
   "InstFile": "!InstallerFilenameWithExtension!",
-  "InstPara": "!InstallerParameter!_i.e._for_INNO-Setup:/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART",
-  "AppendInstParaToDefaultParameters": false,
+  "InstPara": "",
+  "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
   "AcceptedRepairExitCodes": "",
   "UninstFile": "$($global:PackageConfig.installLocation)\\!Uninstallfile!",
-  "UninstPara": "!Uninstallparameter_i.e_for_INNO-Setup!/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART",
-  "AppendUninstParaToDefaultParameters": false,
+  "UninstPara": "",
+  "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
   "AppKillProcesses": [
     {

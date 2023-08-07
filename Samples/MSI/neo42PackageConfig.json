@@ -5,7 +5,7 @@
   "Description": "!DescriptionText!",
   "InstallMethod": "MSI",
   "UninstallMethod": "MSI",
-  "ReinstallMode": "MSIRepair",
+  "ReinstallMode": "Reinstall",
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
   "SoftMigration": {
@@ -51,12 +51,12 @@
   "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
   "InstFile": "!MSIFilenameWithExtension!",
   "InstPara": "",
-  "AppendInstParaToDefaultParameters": false,
+  "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
   "AcceptedRepairExitCodes": "",
   "UninstFile": "",
   "UninstPara": "",
-  "AppendUninstParaToDefaultParameters": false,
+  "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
   "AppKillProcesses": [
     {
