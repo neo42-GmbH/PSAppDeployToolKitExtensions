@@ -430,7 +430,7 @@ function Add-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9]+)+\/[a-zA-Z0-9]+$")]
+		[ValidatePattern("^(\/[a-zA-Z0-9_]+)+\/[a-zA-Z0-9_]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
@@ -712,8 +712,8 @@ function Complete-NxtPackageInstallation {
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
-			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
+			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_RequireAdmin" -InnerText "False"
+			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/UI_Options/ShowBalloonNotifications" -InnerText "False"
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 		}
 		foreach ($oldAppFolder in $((Get-ChildItem -Path (Get-Item -Path $App).Parent.FullName | Where-Object Name -ne (Get-Item -Path $App).Name).FullName)) {
@@ -789,8 +789,8 @@ function Complete-NxtPackageUninstallation {
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
-			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//Toolkit_RequireAdmin" -Value "False"
-			Write-NxtSingleXmlNode -XmlFilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -SingleNodeName "//ShowBalloonNotifications" -Value "False"
+			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_RequireAdmin" -InnerText "False"
+			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/UI_Options/ShowBalloonNotifications" -InnerText "False"
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 		}
 	}
@@ -6039,7 +6039,7 @@ function Set-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9]+)+\/[a-zA-Z0-9]+$")]
+		[ValidatePattern("^(\/[a-zA-Z0-9_]+)+\/[a-zA-Z0-9_]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
@@ -6626,7 +6626,7 @@ Function Show-NxtInstallationWelcome {
 			if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 				Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
-				Write-NxtSingleXmlNode -XmlFilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -SingleNodeName "//Icon_Filename" -Value "AppDeployToolkitLogo.ico"
+				Update-NxtXmlNode -FilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
 			}
 		}
 	}
@@ -8191,7 +8191,7 @@ function Test-NxtXmlNodeExists {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9]+)+$")]
+		[ValidatePattern("^(\/[a-zA-Z0-9_]+)+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
@@ -9159,7 +9159,7 @@ function Update-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9]+)+\/[a-zA-Z0-9]+$")]
+		[ValidatePattern("^(\/[a-zA-Z0-9_]+){2,}\/[a-zA-Z0-9_]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
@@ -9758,57 +9758,6 @@ function Watch-NxtRegistryKeyIsRemoved {
 		}
 		catch {
 			Write-Log -Message "Failed to wait until registry key '$RegistryKey' is removed. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
-#region Function Write-NxtSingleXmlNode
-function Write-NxtSingleXmlNode {
-	<#
-	.DESCRIPTION
-		Writes single node to xml file.
-	.PARAMETER XmlFilePath
-		Path to the xml file.
-	.PARAMETER SingleNodeName
-		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp).
-	.PARAMETER Value
-		Node value.
-	.EXAMPLE
-		Write-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -Value "müller"
-	.OUTPUTS
-		none.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $true)]
-		[string]
-		$XmlFilePath,
-		[Parameter(Mandatory = $true)]
-		[string]
-		$SingleNodeName,
-		[Parameter(Mandatory = $true)]
-		[string]
-		$Value
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		try {
-			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-			$xmlDoc.Load($XmlFilePath)
-			[string]$xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText = $Value
-			$xmlDoc.Save($XmlFilePath)
-			Write-Log -Message "Write value '$Value' to single node '$SingleNodeName' in xml file '$XmlFilePath'." -Source ${cmdletName}
-		}
-		catch {
-			Write-Log -Message "Failed to write value '$Value' to single node '$SingleNodeName' in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
