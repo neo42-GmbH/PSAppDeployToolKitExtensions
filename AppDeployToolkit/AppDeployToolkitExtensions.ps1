@@ -446,31 +446,34 @@ function Add-NxtXmlNode {
 	}
 	Process {
 		try {
-			
-		[xml]$xml = Get-Content $FilePath
-		[string]$parentNodePath = $NodePath.Substring(0, $NodePath.LastIndexOf("/"))
-		if ([string]::IsNullOrEmpty($parentNodePath)) {
-			throw "The provided node root path $NodePath does not exist"
-		}
-		[string]$lastNodeChild = $NodePath.Substring($NodePath.LastIndexOf("/") + 1)
-		# Test for Parent Node
-		if ($false -eq (Test-NxtXmlNodeExists -FilePath $FilePath -NodePath $parentNodePath)) {
-			Add-NxtXmlNode -FilePath $FilePath -NodePath $parentNodePath
-			[xml]$xml = Get-Content $FilePath
-		}
-		# Create New Node with the last part of the path
-		[System.Xml.XmlLinkedNode]$newNode = $xml.CreateElement( $LastNodeChild )
-		if ($false -eq [string]::IsNullOrEmpty($InnerText)) {
-			$newNode.InnerText = $InnerText
-		}
-		if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
-			foreach ($attributeKey in $Attributes.Keys) {
-				$newNode.SetAttribute($attributeKey, $Attributes[$attributeKey])
+			if ($false -eq (Test-Path $FilePath)) {
+				Write-Log -Message "File $FilePath does not exist" -Severity 3
+				throw "File $FilePath does not exist"
 			}
-		}
-		Write-Log -Message "Adding node $NodePath to $FilePath" -Source ${CmdletName}
-		$null = $xml.SelectSingleNode($parentNodePath).AppendChild($newNode)
-		$xml.Save("$FilePath")
+			[xml]$xml = Get-Content $FilePath
+			[string]$parentNodePath = $NodePath.Substring(0, $NodePath.LastIndexOf("/"))
+			if ([string]::IsNullOrEmpty($parentNodePath)) {
+				throw "The provided node root path $NodePath does not exist"
+			}
+			[string]$lastNodeChild = $NodePath.Substring($NodePath.LastIndexOf("/") + 1)
+			# Test for Parent Node
+			if ($false -eq (Test-NxtXmlNodeExists -FilePath $FilePath -NodePath $parentNodePath)) {
+				Add-NxtXmlNode -FilePath $FilePath -NodePath $parentNodePath
+				[xml]$xml = Get-Content $FilePath
+			}
+			# Create New Node with the last part of the path
+			[System.Xml.XmlLinkedNode]$newNode = $xml.CreateElement( $LastNodeChild )
+			if ($false -eq [string]::IsNullOrEmpty($InnerText)) {
+				$newNode.InnerText = $InnerText
+			}
+			if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
+				foreach ($attributeKey in $Attributes.Keys) {
+					$newNode.SetAttribute($attributeKey, $Attributes[$attributeKey])
+				}
+			}
+			Write-Log -Message "Adding node $NodePath to $FilePath" -Source ${CmdletName}
+			$null = $xml.SelectSingleNode($parentNodePath).AppendChild($newNode)
+			$xml.Save("$FilePath")
 		}
 		catch {
 			Write-Log -Message "Failed to add node $NodePath to $FilePath." -Severity 3 -Source ${CmdletName}
@@ -6061,6 +6064,10 @@ function Set-NxtXmlNode {
 		if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
 			$nxtXmlNodeParams.Add("Attributes", $Attributes)
 		}
+		if ($false -eq (Test-Path $FilePath)) {
+			Write-Log -Message "File $FilePath does not exist" -Severity 3
+			throw "File $FilePath does not exist"
+		}
 		# Test for Node
 		if ($true -eq (Test-NxtXmlNodeExists @nxtXmlNodeParams)) {
 			if ($false -eq [string]::IsNullOrEmpty($InnerText)) {
@@ -8203,24 +8210,28 @@ function Test-NxtXmlNodeExists {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-	[xml]$xml = Get-Content $FilePath
-	[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
-	if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
-		foreach ($attributeKey in $Attributes.Keys) {
-			if ([string]::IsNullOrEmpty(($nodes | Where-Object { $_.GetAttribute($attributeKey) -eq $Attributes[$attributeKey] } ))) {
-				return $false
-			}
+		if ($false -eq (Test-Path $FilePath)) {
+			Write-Log -Message "File $FilePath does not exist" -Severity 3
+			throw "File $FilePath does not exist"
 		}
-		return $true
-	}
-	else {
-		if ($false -eq [string]::IsNullOrEmpty($nodes)) {
+		[xml]$xml = Get-Content $FilePath
+		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
+		if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
+			foreach ($attributeKey in $Attributes.Keys) {
+				if ([string]::IsNullOrEmpty(($nodes | Where-Object { $_.GetAttribute($attributeKey) -eq $Attributes[$attributeKey] } ))) {
+					return $false
+				}
+			}
 			return $true
 		}
 		else {
-			return $false
+			if ($false -eq [string]::IsNullOrEmpty($nodes)) {
+				return $true
+			}
+			else {
+				return $false
+			}
 		}
-	}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -9159,7 +9170,7 @@ function Update-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9_]+){2,}\/[a-zA-Z0-9_]+$")]
+		[ValidatePattern("^(\/[a-zA-Z0-9_]+)+\/[a-zA-Z0-9_]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
@@ -9182,6 +9193,10 @@ function Update-NxtXmlNode {
 		}
 		if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
 			$testNxtXmlNodeExistsParams.Add("Attributes", $Attributes)
+		}
+		if ($false -eq (Test-Path $FilePath)) {
+			Write-Log -Message "File $FilePath does not exist" -Severity 3
+			throw "File $FilePath does not exist"
 		}
 		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeExistsParams)) {
 			[xml]$xml = Get-Content $FilePath
