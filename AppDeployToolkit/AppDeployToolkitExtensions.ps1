@@ -400,8 +400,10 @@ function Add-NxtLocalUser {
 #region Function Add-NxtXmlNode
 function Add-NxtXmlNode {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Adds a new node to an existing xml file
+	.DESCRIPTION
+		Adds a new node to an existing xml file. If the parent node does not exist, it will be created. Does not support adding multiple nodes at once. Does not support namespaces.
 	.PARAMETER FilePath
 		The path to the xml file
 	.PARAMETER NodePath
@@ -412,14 +414,19 @@ function Add-NxtXmlNode {
 		The value to add to the node
 	.EXAMPLE
 		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
+		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3 with the attribute name=NewNode2 and the value NewValue2.
 	.EXAMPLE
 		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"}
+		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3 with the attribute name=NewNode2.
 	.EXAMPLE
 		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
+		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3.
 	.EXAMPLE
 		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -InnerText "NewValue2"
+		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3 with the value NewValue2.
 	.EXAMPLE
-		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2";"other"=1232} -InnerText "NewValue2"
+		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2";"other"="1232"} -InnerText "NewValue2"
+		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3 with the attributes name=NewNode2 and other=1232 and the value NewValue2.
 	.OUTPUTS
 		none
 	.LINK
@@ -430,7 +437,6 @@ function Add-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9_]+)+\/[a-zA-Z0-9_]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
@@ -450,7 +456,8 @@ function Add-NxtXmlNode {
 				Write-Log -Message "File $FilePath does not exist" -Severity 3
 				throw "File $FilePath does not exist"
 			}
-			[xml]$xml = Get-Content $FilePath
+			[xml]$xml = [xml]::new()
+			$xml.Load($FilePath)
 			[string]$parentNodePath = $NodePath.Substring(0, $NodePath.LastIndexOf("/"))
 			if ([string]::IsNullOrEmpty($parentNodePath)) {
 				throw "The provided node root path $NodePath does not exist"
@@ -459,19 +466,24 @@ function Add-NxtXmlNode {
 			# Test for Parent Node
 			if ($false -eq (Test-NxtXmlNodeExists -FilePath $FilePath -NodePath $parentNodePath)) {
 				Add-NxtXmlNode -FilePath $FilePath -NodePath $parentNodePath
-				[xml]$xml = Get-Content $FilePath
+				[xml]$xml = [xml]::new()
+				$xml.Load($FilePath)
 			}
-			# Create New Node with the last part of the path
+			[string]$message = "Adding node $NodePath to $FilePath"
+			# Create new node with the last part of the path
 			[System.Xml.XmlLinkedNode]$newNode = $xml.CreateElement( $LastNodeChild )
 			if ($false -eq [string]::IsNullOrEmpty($InnerText)) {
 				$newNode.InnerText = $InnerText
+				$message += " with innerText [$InnerText]"
 			}
 			if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
-				foreach ($attributeKey in $Attributes.Keys) {
-					$newNode.SetAttribute($attributeKey, $Attributes[$attributeKey])
+				foreach ($attribute in $Attributes.GetEnumerator()) {
+					$newNode.SetAttribute($attribute.Key, $attribute.Value)
+					$message += " with attribute $($attribute.Key)=$($attribute.Value)"
 				}
 			}
-			Write-Log -Message "Adding node $NodePath to $FilePath" -Source ${CmdletName}
+			$message += "."
+			Write-Log -Message $message -Source ${CmdletName}
 			$null = $xml.SelectSingleNode($parentNodePath).AppendChild($newNode)
 			$xml.Save("$FilePath")
 		}
@@ -6012,26 +6024,38 @@ function Set-NxtSystemEnvironmentVariable {
 #region Function Set-NxtXmlNode
 function Set-NxtXmlNode {
 	<#
+	.SYNOPSIS
+		Sets an existing node or creates a new one.
 	.DESCRIPTION
-		Sets an existing node or creates a new one
+		Sets an existing node or creates a new one. If the node already exists, the value and attributes are updated. If the node does not exist, it is created. Does not support namespaces.
 	.PARAMETER FilePath
 		The path to the xml file
 	.PARAMETER NodePath
 		The path to the node to write to
-	.PARAMETER Attribute
+	.PARAMETER Attributes
 		The attributes to write to
+	.PARAMETER FilterAttributes
+		The attributes to filter on
 	.PARAMETER InnerText
 		The value to write to the node
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
+		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to NewValue2 and adds the attribute name="NewNode2".
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -InnerText "NewValue2"
+		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to NewValue2.
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -InnerText [string]::Empty
+		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to an empty string.
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"}
+		Adds the attribute name="NewNode2" to the node /RootNode/Settings/Settings2/SubSubSetting3.
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
+		Creates the node /RootNode/Settings/Settings2/SubSubSetting3 without any attributes or value.
+	.EXAMPLE
+		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{"name"="NewNode2"} -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
+		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to NewValue2 and adds the attribute name="NewNode2" if the node has the attribute name="NewNode2".
 	.OUTPUTS
 		none.
   	.LINK
@@ -6042,12 +6066,14 @@ function Set-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9_]+)+\/[a-zA-Z0-9_]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
 		[hashtable]
 		$Attributes,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$FilterAttributes,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InnerText
@@ -6057,29 +6083,56 @@ function Set-NxtXmlNode {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[hashtable]$nxtXmlNodeParams = @{
+		[hashtable]$testNxtXmlNodeParams = @{
 			FilePath = $FilePath
 			NodePath = $NodePath
 		}
-		if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
-			$nxtXmlNodeParams.Add("Attributes", $Attributes)
+		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
+			$testNxtXmlNodeParams.Add("FilterAttributes", $FilterAttributes)
 		}
 		if ($false -eq (Test-Path $FilePath)) {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
 		# Test for Node
-		if ($true -eq (Test-NxtXmlNodeExists @nxtXmlNodeParams)) {
-			if ($false -eq [string]::IsNullOrEmpty($InnerText)) {
-				$nxtXmlNodeParams.Add("InnerText", $InnerText)
+		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeParams)) {
+			[hashtable]$updateNxtXmlNodeParams = @{
+				FilePath = $FilePath
+				NodePath = $NodePath
 			}
-			Update-NxtXmlNode @nxtXmlNodeParams
+			if ($PSBoundParameters.Keys -contains "InnerText") {
+				$updateNxtXmlNodeParams.Add("InnerText", $InnerText)
+			}
+			if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
+				$updateNxtXmlNodeParams.Add("Attributes", $Attributes)
+			}
+			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
+				$updateNxtXmlNodeParams.Add("FilterAttributes", $FilterAttributes)
+			}
+			Update-NxtXmlNode @updateNxtXmlNodeParams
 		}
  	else {
-			if ($false -eq [string]::IsNullOrEmpty($InnerText)) {
-				$nxtXmlNodeParams.Add("InnerText", $InnerText)
+			[hashtable]$addNxtXmlNodeParams = @{
+				FilePath = $FilePath
+				NodePath = $NodePath
 			}
-			Add-NxtXmlNode @nxtXmlNodeParams
+			if ($PSBoundParameters.Keys -contains "InnerText") {
+				$addNxtXmlNodeParams.Add("InnerText", $InnerText)
+			}
+			## Merge attributes and filter attributes to 1 hashtable
+			[hashtable]$mergedAttributes = @{}
+			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
+				$mergedAttributes = $FilterAttributes
+			}
+			if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
+				foreach ($attribute in $Attributes.GetEnumerator()) {
+					$mergedAttributes[$attribute.Key] = $attribute.Value
+				}
+			}
+			if ($false -eq [string]::IsNullOrEmpty($mergedAttributes)) {
+				$addNxtXmlNodeParams.Add("Attributes", $mergedAttributes)
+			}
+			Add-NxtXmlNode @addNxtXmlNodeParams
 		}
 	}
 	End {
@@ -8174,20 +8227,22 @@ function Test-NxtProcessExists {
 #region Function Test-NxtXmlNodeExists
 function Test-NxtXmlNodeExists {
 	<#
-    .DESCRIPTION
-        Tests if a node exists in an xml file
+    .SYNOPSIS
+        Tests if a node exists in an xml file.
+	.DESCRIPTION
+		Tests if a node exists in an xml file, does not support xml namespaces.
     .PARAMETER FilePath
-        The path to the xml file
+        The path to the xml file.
     .PARAMETER NodePath
-        The path to the node to test
-    .PARAMETER Attributes
-        The attributes to test
+        The path to the node to test.
+    .PARAMETER FilterAttributes
+        The attributes to Filter the node.
     .EXAMPLE
-        Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @("name=NewNode2")
+        Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2")
     .EXAMPLE
         Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
     .EXAMPLE
-        Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @("name=NewNode2","other=1232")
+        Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2","other=1232")
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -8198,12 +8253,11 @@ function Test-NxtXmlNodeExists {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9_]+)+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
 		[hashtable]
-		$Attributes
+		$FilterAttributes
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -8214,11 +8268,12 @@ function Test-NxtXmlNodeExists {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
-		[xml]$xml = Get-Content $FilePath
+		[xml]$xml = [xml]::new()
+		$xml.Load($FilePath)
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
-		if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
-			foreach ($attributeKey in $Attributes.Keys) {
-				if ([string]::IsNullOrEmpty(($nodes | Where-Object { $_.GetAttribute($attributeKey) -eq $Attributes[$attributeKey] } ))) {
+		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
+			foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
+				if ([string]::IsNullOrEmpty(($nodes | Where-Object { $_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value } ))) {
 					return $false
 				}
 			}
@@ -9142,24 +9197,35 @@ function Update-NxtTextInFile {
 #region Function Update-NxtXmlNode
 function Update-NxtXmlNode {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Updates an existing node
+	.DESCRIPTION
+		Updates an existing node in an xml file. Fails if the node does not exist. Does not support namespaces.
 	.PARAMETER FilePath
 		The path to the xml file
 	.PARAMETER NodePath
 		The path to the node to update
+	.PARAMETER FilterAttributes
+		The attributes to Filter the node with
 	.PARAMETER Attributes
 		The attributes to update
 	.PARAMETER InnerText
 		The value to update the node with
 	.EXAMPLE
 		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
+		Sets the value of the node to "NewValue2" and the attribute "name" to "NewNode2".
 	.EXAMPLE
 		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"}
+		Sets the attribute "name" to "NewNode2".
 	.EXAMPLE
 		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText [string]::Empty
+		Sets the attribute "name" to "NewNode2" and the value of the node to an empty string.
 	.EXAMPLE
 		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
+		Does nothing.
+	.EXAMPLE
+		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{"name"="NewNode2"} -Attributes @{"name"="NewNode3"}
+		Updates the node with the attribute "name" set to "NewNode2" to the attribute "name" set to "NewNode3".
 	.OUTPUTS
 		none.
   	.LINK
@@ -9170,14 +9236,15 @@ function Update-NxtXmlNode {
 		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
-		[ValidatePattern("^(\/[a-zA-Z0-9_]+)+\/[a-zA-Z0-9_]+$")]
 		[string]
 		$NodePath,
 		[Parameter(Mandatory = $false)]
 		[hashtable]
 		$Attributes,
-		[Parameter(Mandatory = $true)]
-		[AllowEmptyString()]
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$FilterAttributes,
+		[Parameter(Mandatory = $false)]
 		[string]
 		$InnerText
 	)
@@ -9185,34 +9252,48 @@ function Update-NxtXmlNode {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
-	Process {	
+	Process {
 		# Test for Node
 		[hashtable]$testNxtXmlNodeExistsParams = @{
 			FilePath = $FilePath
 			NodePath = $NodePath
 		}
-		if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
-			$testNxtXmlNodeExistsParams.Add("Attributes", $Attributes)
+		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
+			$testNxtXmlNodeExistsParams.Add("FilterAttributes", $FilterAttributes)
 		}
 		if ($false -eq (Test-Path $FilePath)) {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
 		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeExistsParams)) {
-			[xml]$xml = Get-Content $FilePath
+			[xml]$xml = [xml]::new()
+			$xml.Load($FilePath)
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
-			if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
-				foreach ($attributeKey in $Attributes.Keys) {
-					$nodes = $nodes | Where-Object { $_.GetAttribute($attributeKey) -eq $Attributes[$attributeKey] }
+			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
+				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
+					$nodes = $nodes | Where-Object { $_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value }
 				}
-				Clear-Variable attributeKey
+				Clear-Variable filterAttribute
 			}
 			## Ensure we only have one node
-			[psobject]$node = $nodes | Select-Object -First 1
-			if ($null -ne $InnerText) {
-				Write-Log -Message "Updating node $NodePath with attributes $Attributes and innerText =$InnerText"
-				$node.InnerText = $InnerText
+			if ($nodes.count -gt 1) {
+				Write-Log -Message "More than one node found for $NodePath" -Severity 2
 			}
+			[psobject]$node = $nodes | Select-Object -First 1
+			## build message text
+			[string]$message = "Updating file [$FilePath] node [$NodePath]"
+			if ($PSBoundParameters.Keys -contains "InnerText") {
+				$node.InnerText = $InnerText
+				$message += " with innerText [$InnerText]"
+			}
+			if ($null -ne $Attributes) {
+				foreach ($attribute in $Attributes.GetEnumerator()) {
+					$node.SetAttribute($attribute.Key, $attribute.Value)
+					$message += " and attribute [$($attribute.Key)] with value [$($attribute.Value)]"
+				}
+			}
+			$message += "."
+			Write-Log -Message $message -Source ${cmdletName}
 			$xml.Save("$FilePath")
 		}
 		else {
