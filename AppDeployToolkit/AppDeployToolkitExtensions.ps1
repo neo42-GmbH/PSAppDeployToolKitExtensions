@@ -723,7 +723,7 @@ function Complete-NxtPackageInstallation {
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID.uninstall"
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
-			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
+			$null = Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
@@ -4080,7 +4080,10 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$App = $global:PackageConfig.App
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentType = $DeploymentType
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4088,22 +4091,23 @@ function Initialize-NxtEnvironment {
 	}
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
-		## $App is not set until now in the normal procedure. We have to preload it even before the Expand-NxtPackageConfig call.
-		if ([string]::IsNullOrEmpty($App)){
-			$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
+		## $App and $SetupCfgPathOverride are possibly not set at this point so we have to reset them after the Get-NxtPackageConfig.
+		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
+		## if $App still is not valid we have to throw an error.
+		if ($false -eq [System.IO.Path]::IsPathRooted($App)) {
+			Write-Log -Message "$App is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
-		## if its still empty we have to throw an error
-		if ([string]::IsNullOrEmpty($App)){
-			Write-Log -Message "$App is not set. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-			throw "App is not set. Please check your PackageConfig.json"
-		}
-		if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)) {
-			$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
-			Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg"
-		}
-		elseif ($true -eq (Test-path $SetupCfgPath)) {
-			$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
-			Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
+		if ($DeploymentType -notlike "*Userpart*") {
+			if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)) {
+				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
+				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg"
+			}
+			elseif ($true -eq (Test-path $SetupCfgPath)) {
+				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
+				Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
+			}
 		}
 		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
 		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
