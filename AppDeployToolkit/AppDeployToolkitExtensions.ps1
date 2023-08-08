@@ -6054,8 +6054,8 @@ function Set-NxtXmlNode {
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
 		Creates the node /RootNode/Settings/Settings2/SubSubSetting3 without any attributes or value.
 	.EXAMPLE
-		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{"name"="NewNode2"} -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
-		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to NewValue2 and adds the attribute name="NewNode2" if the node has the attribute name="NewNode2".
+		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{"name"="NewNode2"} -Attributes @{"Id"="NodeID"} -InnerText "NewValue2"
+		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to NewValue2 and adds the attribute Id="NodeID" if the node has the attribute name="NewNode2".
 	.OUTPUTS
 		none.
   	.LINK
@@ -6119,18 +6119,8 @@ function Set-NxtXmlNode {
 			if ($PSBoundParameters.Keys -contains "InnerText") {
 				$addNxtXmlNodeParams.Add("InnerText", $InnerText)
 			}
-			## Merge attributes and filter attributes to 1 hashtable
-			[hashtable]$mergedAttributes = @{}
-			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
-				$mergedAttributes = $FilterAttributes
-			}
 			if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
-				foreach ($attribute in $Attributes.GetEnumerator()) {
-					$mergedAttributes[$attribute.Key] = $attribute.Value
-				}
-			}
-			if ($false -eq [string]::IsNullOrEmpty($mergedAttributes)) {
-				$addNxtXmlNodeParams.Add("Attributes", $mergedAttributes)
+				$addNxtXmlNodeParams.Add("Attributes", $Attributes)
 			}
 			Add-NxtXmlNode @addNxtXmlNodeParams
 		}
