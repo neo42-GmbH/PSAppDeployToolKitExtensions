@@ -4088,6 +4088,15 @@ function Initialize-NxtEnvironment {
 	}
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
+		## $App is not set until now in the normal procedure. We have to preload it even before the Expand-NxtPackageConfig call.
+		if ([string]::IsNullOrEmpty($App)){
+			$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
+		}
+		## if its still empty we have to throw an error
+		if ([string]::IsNullOrEmpty($App)){
+			Write-Log -Message "$App is not set. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "App is not set. Please check your PackageConfig.json"
+		}
 		if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)) {
 			$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
 			Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg"
