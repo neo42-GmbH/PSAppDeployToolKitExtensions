@@ -9280,7 +9280,8 @@ function Update-NxtXmlNode {
 			}
 			## Ensure we only have one node
 			if ($nodes.count -gt 1) {
-				Write-Log -Message "More than one node found for $NodePath" -Severity 2
+				Write-Log -Message "More than one node found for $NodePath" -Severity 3
+				throw "More than one node found for $NodePath"
 			}
 			[psobject]$node = $nodes | Select-Object -First 1
 			## build message text
