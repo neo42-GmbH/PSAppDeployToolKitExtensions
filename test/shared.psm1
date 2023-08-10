@@ -46,51 +46,6 @@
 .LINK
 	http://psappdeploytoolkit.com
 #>
-[CmdletBinding()]
-Param (
-	[Parameter(Mandatory = $false)]
-	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
-	[string]$DeploymentType = 'Install',
-	[Parameter(Mandatory = $false)]
-	[ValidateSet('Interactive', 'Silent', 'NonInteractive')]
-	[string]$DeployMode = 'Interactive',
-	[Parameter(Mandatory = $false)]
-	[switch]$AllowRebootPassThru,
-	[Parameter(Mandatory = $false)]
-	[switch]$TerminalServerMode = $false,
-	[Parameter(Mandatory = $false)]
-	[switch]$DisableLogging = $false,
-	[Parameter(Mandatory = $false)]
-	[string]$DeploymentSystem = [string]::Empty,
-	[Parameter(Mandatory = $false)]
-	[string]$NeoForceLanguage = [string]::Empty
-)
-## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
-switch ($DeploymentType) {
-	TriggerInstallUserPart { 
-		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserpart"
-		Exit
-	}
-	TriggerUninstallUserPart { 
-		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserpart"
-		Exit
-	}
-	Default {}
-}
-## global default variables 
-[string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
-[string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
-[string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
-[string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
-[string]$global:DeploymentSystem = $DeploymentSystem
-[string]$global:NeoForceLanguage = $NeoForceLanguage
-[int]$global:NxtScriptDepth = $env:nxtScriptDepth
-## Several PSADT-functions do not work, if these variables are not set here.
-$tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
-[string]$appVendor = $tempLoadPackageConfig.AppVendor
-[string]$appName = $tempLoadPackageConfig.AppName
-[string]$appVersion = $tempLoadPackageConfig.AppVersion
-Remove-Variable -Name tempLoadPackageConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## set the script execution policy for this process
@@ -134,48 +89,3 @@ Catch {
 Write-Log "Current running script depth: $($global:NxtScriptDepth)" -Source $deployAppScriptFriendlyName
 #endregion
 ##* Do not modify section above	=============================================================================================================================================
-
-try {
-	[string]$script:installPhase = 'Initialize-Environment'
-	Initialize-NxtEnvironment
-	##*===============================================
-	##* VARIABLE DECLARATION
-	##*===============================================
-
-	## app global variables
-	[string]$global:DetectedDisplayVersion = (Get-NxtCurrentDisplayVersion).DisplayVersion
-
-	Get-NxtVariablesFromDeploymentSystem
-	
-	[bool]$global:SoftMigrationCustomResult = $false
-	[bool]$global:AppInstallDetectionCustomResult = $false
-	
-	## validate package config variables
-	Test-NxtPackageConfig
-
-	## write variables to verbose channel to prevent warnings issued by PSScriptAnalyzer
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigValidationPath: $global:Neo42PackageConfigValidationPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigPath: $global:Neo42PackageConfigPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SetupCfgPath: $global:SetupCfgPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomSetupCfgPath: $global:CustomSetupCfgPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptVersion: $deployAppScriptVersion"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptDate: $deployAppScriptDate"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptParameters: $deployAppScriptParameters"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appDeployLogoBannerDark: $appDeployLogoBannerDark"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] DetectedDisplayVersion: $global:DetectedDisplayVersion"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SoftMigrationCustomResult (prefillvalue): $global:SoftMigrationCustomResult"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVendor: $appVendor"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appName: $appName"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVersion: $appVersion"
-
-	##*===============================================
-	##* END VARIABLE DECLARATION
-	##*===============================================
-}
-catch {
-	[int32]$mainExitCode = 60001
-	[string]$mainErrorMessage = "$(Resolve-Error)"
-	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-	Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
-	Exit-Script -ExitCode $mainExitCode
-}
