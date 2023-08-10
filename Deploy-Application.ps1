@@ -406,12 +406,18 @@ function CustomBegin {
 	[string]$script:installPhase = 'CustomBegin'
 
 	## executes always at the beginning of the script regardless of the DeploymentType ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart')
+	#region CustomBegin content
+
+	#endregion CustomBegin content
 }
 
 function CustomInstallAndReinstallBegin {
 	[string]$script:installPhase = 'CustomInstallAndReinstallBegin'
 
 	## executes before any installation, reinstallation or soft migration tasks are performed
+	#region CustomInstallAndReinstallBegin content
+
+	#endregion CustomInstallAndReinstallBegin content
 }
 
 function CustomSoftMigrationBegin {
@@ -420,6 +426,9 @@ function CustomSoftMigrationBegin {
 	## executes before a default check of soft migration runs
 	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
 	## [bool]$global:SoftMigrationCustomResult = $true
+	#region CustomSoftMigrationBegin content
+
+	#endregion CustomSoftMigrationBegin content
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
@@ -431,6 +440,9 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
 
 	## executes after the completed install or reinstall process and on soft migration
+	#region CustomInstallAndReinstallAndSoftMigrationEnd content
+
+	#endregion CustomInstallAndReinstallAndSoftMigrationEnd content
 }
 
 function CustomInstallAndReinstallPreInstallAndReinstall {
@@ -439,12 +451,18 @@ function CustomInstallAndReinstallPreInstallAndReinstall {
 	## executes before any installation or reinstallation tasks are performed
 	## after successful individual checks for installed application state the following variable has to be set at the end of this section:
 	## [bool]$global:AppInstallDetectionCustomResult = $true
+	#region CustomInstallAndReinstallPreInstallAndReinstall content
+
+	#endregion CustomInstallAndReinstallPreInstallAndReinstall content
 }
 
 function CustomReinstallPreUninstall {
 	[string]$script:installPhase = 'CustomReinstallPreUninstall'
 
 	## executes before the uninstallation in the reinstall process
+	#region CustomReinstallPreUninstall content
+
+	#endregion CustomReinstallPreUninstall content
 }
 
 function CustomReinstallPostUninstall {
@@ -456,12 +474,18 @@ function CustomReinstallPostUninstall {
 	[string]$script:installPhase = 'CustomReinstallPostUninstall'
 
 	## executes at after the uninstallation in the reinstall process
+	#region CustomReinstallPostUninstall content
+
+	#endregion CustomReinstallPostUninstall content
 }
 
 function CustomReinstallPreInstall {
 	[string]$script:installPhase = 'CustomReinstallPreInstall'
 
 	## executes before the installation in the reinstall process
+	#region CustomReinstallPreInstall content
+
+	#endregion CustomReinstallPreInstall content
 }
 
 function CustomReinstallPostInstall {
@@ -473,12 +497,18 @@ function CustomReinstallPostInstall {
 	[string]$script:installPhase = 'CustomReinstallPostInstall'
 
 	## executes after the installation in the reinstall process
+	#region CustomReinstallPostInstall content
+
+	#endregion CustomReinstallPostInstall content
 }
 
 function CustomInstallBegin {
 	[string]$script:installPhase = 'CustomInstallBegin'
 
 	## executes before the installation in the install process
+	#region CustomInstallBegin content
+
+	#endregion CustomInstallBegin content
 }
 
 function CustomInstallEnd {
@@ -490,6 +520,9 @@ function CustomInstallEnd {
 	[string]$script:installPhase = 'CustomInstallEnd'
 
 	## executes after the installation in the install process
+	#region CustomInstallEnd content
+
+	#endregion CustomInstallEnd content
 }
 
 function CustomInstallAndReinstallEnd {
@@ -501,12 +534,18 @@ function CustomInstallAndReinstallEnd {
 	[string]$script:installPhase = 'CustomPostInstallAndReinstall'
 
 	## executes after the completed install or reinstall process
+	#region CustomInstallAndReinstallEnd content
+
+	#endregion CustomInstallAndReinstallEnd content
 }
 
 function CustomUninstallBegin {
 	[string]$script:installPhase = 'CustomUninstallBegin'
 
 	## executes before the uninstallation in the uninstall process
+	#region CustomUninstallBegin content
+
+	#endregion CustomUninstallBegin content
 }
 
 function CustomUninstallEnd {
@@ -518,30 +557,45 @@ function CustomUninstallEnd {
 	[string]$script:installPhase = 'CustomUninstallEnd'
 
 	## executes after the uninstallation in the uninstall process
+	#region CustomUninstallEnd content
+
+	#endregion CustomUninstallEnd content
 }
 
 function CustomInstallUserPartBegin {
 	[string]$script:installPhase = 'CustomInstallUserPartBegin'
 
 	## executes at the beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	#region CustomInstallUserPartBegin content
+
+	#endregion CustomInstallUserPartBegin content
 }
 
 function CustomInstallUserPartEnd {
 	[string]$script:installPhase = 'CustomInstallUserPartEnd'
 
 	## executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	#region CustomInstallUserPartEnd content
+
+	#endregion CustomInstallUserPartEnd content
 }
 
 function CustomUninstallUserPartBegin {
 	[string]$script:installPhase = 'CustomUninstallUserPartBegin'
 
 	## executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
+	#region CustomUninstallUserPartBegin content
+
+	#endregion CustomUninstallUserPartBegin content
 }
 
 function CustomUninstallUserPartEnd {
 	[string]$script:installPhase = 'CustomUninstallUserPartEnd'
 
 	## executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
+	#region CustomUninstallUserPartEnd content
+
+	#endregion CustomUninstallUserPartEnd content
 }
 
 #endregion
