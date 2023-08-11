@@ -21,7 +21,7 @@
 .PARAMETER AllowRebootPassThru
 	Allows the 3010 return code (requires restart) to be passed back to the parent process (e.g. SCCM) if detected from an installation. If 3010 is passed back to SCCM, a reboot prompt will be triggered.
 .PARAMETER TerminalServerMode
-	Changes to "user install mode" and back to "user execute mode" for installing/uninstalling applications for Remote Destkop Session Hosts/Citrix servers.
+	Changes to "user install mode" and back to "user execute mode" for installing/uninstalling applications for Remote Desktop Session Hosts/Citrix servers.
 .PARAMETER DisableLogging
 	Disables logging to file for the script. Default is: $false.
 .PARAMETER SkipUnregister
@@ -69,11 +69,11 @@ Param (
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
 	TriggerInstallUserPart { 
-		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserpart"
+		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart"
 		Exit
 	}
 	TriggerUninstallUserPart { 
-		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserpart"
+		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart"
 		Exit
 	}
 	Default {}
@@ -201,7 +201,7 @@ function Main {
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegisterPackage
-		Specifies if package may be registered (maybe superseeded by deployment system!).
+		Specifies if package may be registered (maybe superseded by deployment system!).
 		Defaults to the corresponding global value.
 	.EXAMPLE
 		Main
@@ -252,7 +252,7 @@ function Main {
 				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
 					CustomSoftMigrationBegin
 				}
-				[string]$script:installPhase = 'Check-Softmigration'
+				[string]$script:installPhase = 'Check-SoftMigration'
 				if ($true -eq $(Get-NxtRegisterOnly)) {
 					## soft migration = application is installed
 					$mainNxtResult.Success = $true
@@ -308,7 +308,7 @@ function Main {
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
 							Default {
-								Throw "Unsupported 'ReinstallMode' property: $global:PackageConfig.ReinstallMode"
+								Throw "Unsupported 'ReinstallMode' property: $($global:PackageConfig.ReinstallMode)"
 							}
 						}
 					}
@@ -321,10 +321,10 @@ function Main {
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
 				}
-				## here we continue if application is present and/or register package is necesary only.
+				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
 				If ($false -ne $mainNxtResult.Success) {
-					[string]$script:installPhase = 'Package-Completition'
+					[string]$script:installPhase = 'Package-Completion'
 					Complete-NxtPackageInstallation
 					if ($true -eq $RegisterPackage) {
 						## register package for uninstall
@@ -351,7 +351,7 @@ function Main {
 					[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
 					CustomUninstallEnd -ResultToCheck $mainNxtResult
 					if ($false -ne $mainNxtResult.Success) {
-						[string]$script:installPhase = 'Package-Completition'
+						[string]$script:installPhase = 'Package-Completion'
 						Complete-NxtPackageUninstallation
 					}
 					else {
@@ -398,8 +398,8 @@ function Main {
 	}
 }
 
-#region entry point funtions to perform custom tasks during script run
-## custom functions are sorted by occurence order in the main function.
+#region entry point functions to perform custom tasks during script run
+## custom functions are sorted by occurrence order in the main function.
 ## naming pattern: 
 ## {functionType}{Phase}{PrePosition}{SubPhase}
 function CustomBegin {
