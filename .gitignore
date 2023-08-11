@@ -9,5 +9,8 @@ SupportFiles/Setup.ico
 SupportFiles
 Files
 CustomSetup.cfg
-PesterTests.ps1
 shared.psm1
+test/PesterTestResults.xml
+test/NxtExtensions
+test/PSADT
+test/TestWorkFolder

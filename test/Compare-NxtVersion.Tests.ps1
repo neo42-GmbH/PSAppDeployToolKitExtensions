@@ -1,4 +1,3 @@
-Import-Module $PSScriptRoot\shared.psm1
 # Test the Compare-NxtVersion function
 Describe "Compare-NxtVersion" {
     Context "With two equal version numbers" {
