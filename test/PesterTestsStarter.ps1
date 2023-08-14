@@ -34,3 +34,4 @@ Copy-Item "$PSScriptRoot/RunPester.ps1" "$testWorkfolder/" -Force
 &"$testWorkfolder/RunPester.ps1"
 Remove-Item -Force -Recurse $PSScriptRoot/NxtExtensions -ea 0
 Remove-Item -Force -Recurse $PSScriptRoot/PSADT -ea 0
+
