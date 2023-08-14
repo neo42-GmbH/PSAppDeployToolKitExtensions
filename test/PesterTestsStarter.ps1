@@ -15,11 +15,11 @@ Remove-Item -Force -Recurse $PSScriptRoot/NxtExtensions/.git
 Remove-Item -Force -Recurse $PSScriptRoot/NxtExtensions/.github
 Remove-Item -Force -Recurse $PSScriptRoot/NxtExtensions/Tools
 Remove-Item -Force -Recurse $PSScriptRoot/NxtExtensions/test
-Remove-Item -force $PSScriptRoot/NxtExtensions/.gitignore
+Remove-Item -Force $PSScriptRoot/NxtExtensions/.gitignore
 Remove-Item $PSScriptRoot/NxtExtensions/README.MD
 Remove-Item -Force -Recurse $PSScriptRoot/PSADT/.git
 Remove-Item -Force -Recurse "$PSScriptRoot/PSADT/Toolkit/Deploy-Application.exe*"
-$TestWorkfolder = "$env:TEMP\NxtPSADTTests\$(Get-Random -Minimum 100000 -Maximum 999999)"
+[string]$testWorkfolder = "$env:TEMP\NxtPSADTTests\$(Get-Random -Minimum 100000 -Maximum 999999)"
 ## Copy files to new folder
 New-Item -ItemType Directory -Path $testWorkfolder -Force
 Copy-Item "$PSScriptRoot/PSADT/Toolkit/*" "$testWorkfolder/" -Recurse -Force -Exclude $exclude
@@ -34,3 +34,5 @@ Copy-Item "$PSScriptRoot/RunPester.ps1" "$testWorkfolder/" -Force
 &"$testWorkfolder/RunPester.ps1"
 Remove-Item -Force -Recurse $PSScriptRoot/NxtExtensions -ea 0
 Remove-Item -Force -Recurse $PSScriptRoot/PSADT -ea 0
+cd ..
+Remove-Item -Force -Recurse $testWorkfolder -ea 0

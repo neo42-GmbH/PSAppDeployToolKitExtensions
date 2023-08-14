@@ -1,5 +1,5 @@
 Import-Module Pester
-$config = [PesterConfiguration]::Default
+[PesterConfiguration]$config = [PesterConfiguration]::Default
 $config.TestResult.Enabled = $true
 $config.TestResult.OutputPath = "$PSScriptRoot\testresults.xml"
 $config.TestResult.OutputFormat = 'NUnitXml'
