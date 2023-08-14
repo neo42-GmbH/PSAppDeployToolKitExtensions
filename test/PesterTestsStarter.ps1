@@ -1,7 +1,8 @@
 
 ## get current selected branch
 cd $PSScriptRoot
-$branch = git rev-parse --abbrev-ref HEAD
+git log --oneline --decorate --graph
+$branch = git branch --show-current
     Write-Output "branch is: $branch"
 if ($false -eq (Test-Path "$PSScriptRoot\NxtExtensions")){
     git clone --depth 1 --branch $branch "file://$PSScriptRoot\..\.git\" $PSScriptRoot\NxtExtensions
@@ -35,3 +36,4 @@ Copy-Item "$PSScriptRoot/RunPester.ps1" "$testWorkfolder/" -Force
 Remove-Item -Force -Recurse $PSScriptRoot/NxtExtensions -ea 0
 Remove-Item -Force -Recurse $PSScriptRoot/PSADT -ea 0
 
+git log --oneline --decorate --graph
