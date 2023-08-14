@@ -32,7 +32,7 @@ Describe "Compare-NxtVersion" {
         It "Returns 3" {
             # Arrange
             $detectedVersion = "2.0.0"
-            $targetVersion = "3.0.0"
+            $targetVersion = "1.0.0"
 
             # Act
             $result = Compare-NxtVersion -DetectedVersion $detectedVersion -TargetVersion $targetVersion
