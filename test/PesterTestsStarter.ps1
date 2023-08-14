@@ -1,11 +1,10 @@
 
 ## get current selected branch
 cd $PSScriptRoot
-git log --oneline --decorate --graph
 $branch = git branch --show-current
     Write-Output "branch is: $branch"
 if ($false -eq (Test-Path "$PSScriptRoot\NxtExtensions")){
-    git clone --depth 1 --branch $branch "file://$PSScriptRoot\..\.git\" $PSScriptRoot\NxtExtensions
+    git clone "file://$PSScriptRoot\..\.git\" $PSScriptRoot\NxtExtensions
 }
 if ($false -eq (Test-Path "$PSScriptRoot\PSADT")){
     git clone --depth 1 --branch "3.9.3" "https://github.com/PSAppDeployToolkit/PSAppDeployToolkit.git" $PSScriptRoot\PSADT
