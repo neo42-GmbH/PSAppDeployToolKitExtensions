@@ -4,10 +4,10 @@ cd $PSScriptRoot
 $branch = git branch --show-current
     Write-Output "branch is: $branch"
 if ($false -eq (Test-Path "$PSScriptRoot\NxtExtensions")){
-    git clone "file://$PSScriptRoot\..\.git\" $PSScriptRoot\NxtExtensions
+    git clone --fetch-depth 1 "file://$PSScriptRoot\..\.git\" $PSScriptRoot\NxtExtensions
 }
 if ($false -eq (Test-Path "$PSScriptRoot\PSADT")){
-    git clone --depth 1 --branch "3.9.3" "https://github.com/PSAppDeployToolkit/PSAppDeployToolkit.git" $PSScriptRoot\PSADT
+    git clone --fetch-depth 1 --branch "3.9.3" "https://github.com/PSAppDeployToolkit/PSAppDeployToolkit.git" $PSScriptRoot\PSADT
 }
 ## Merge the PSADT and NxtExtensions folders
 ## Remove unneeded files from PSADT and Extensions
