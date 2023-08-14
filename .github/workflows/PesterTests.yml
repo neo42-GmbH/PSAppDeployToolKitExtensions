@@ -2,7 +2,9 @@ name: Pester Tests
 
 on:
   push:
-    branches: [ 336-implement-the-first-pester-tests ]
+  pull_request:
+    branches:
+      - develop
 
 jobs:
   test:
