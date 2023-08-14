@@ -29,6 +29,6 @@ Copy-Item "$PSScriptRoot/shared.psm1" "$testWorkfolder/" -Force
 Copy-Item "$PSScriptRoot/*.Tests.ps1" "$testWorkfolder/" -Force
 Copy-Item "$PSScriptRoot/RunPester.ps1" "$testWorkfolder/" -Force
 ## run tests
-powershell.exe -File "$testWorkfolder/RunPester.ps1" -WorkingDirectory "$testWorkfolder"
+&"$testWorkfolder/RunPester.ps1"
 Remove-Item -Force -Recurse $PSScriptRoot/NxtExtensions -ea 0
 Remove-Item -Force -Recurse $PSScriptRoot/PSADT -ea 0
