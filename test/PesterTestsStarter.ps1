@@ -1,7 +1,7 @@
 
 ## get current selected branch
+cd $PSScriptRoot
 $branch = git branch --show-current
-    (pwd).Path
     Write-Output "branch is: $branch"
 if ($false -eq (Test-Path "$PSScriptRoot\NxtExtensions")){
     git clone --depth 1 --branch $branch "file://$PSScriptRoot\..\.git\" $PSScriptRoot\NxtExtensions
