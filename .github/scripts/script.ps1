@@ -2,6 +2,7 @@
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.git
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.github
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/Tools
+Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/test
 Remove-Item -force ./PSAppDeployToolkitExtensions/.gitignore
 Remove-Item ./PSAppDeployToolkitExtensions/README.MD
 Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
