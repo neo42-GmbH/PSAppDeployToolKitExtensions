@@ -8467,8 +8467,13 @@ function Uninstall-NxtApplication {
 							[string]$executeNxtParams["Parameters"] = "$UninstPara"
 						}
 					}
-					if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-						[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+					if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+						if ($internalInstallerMethod -eq "MSI") {
+							[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+						}
+						elseif($internalInstallerMethod -match "Inno*|Nullsoft|BitRock*") {
+							[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedUninstallExitCodes"
+						}
 					}
 					if ([string]::IsNullOrEmpty($UninstallKey)) {
 						[string]$internalInstallerMethod = [string]::Empty
