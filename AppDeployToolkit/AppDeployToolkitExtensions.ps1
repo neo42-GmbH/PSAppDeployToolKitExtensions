@@ -585,6 +585,9 @@ function Compare-NxtVersion {
 	.EXAMPLE
 		Compare-NxtVersion -DetectedVersion "A.2" -TargetVersion "1A.2" -HexMode $true
 		Will return "Update" because "A" is smaller than "1A" in hexadecimal mode.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "1.2" -TargetVersion "1"
+		Will return "Downgrade" because "1.2" is greater than "1".
 	.OUTPUTS
 		PSADTNXT.VersionCompareResult.
 	.LINK
