@@ -4342,8 +4342,13 @@ function Install-NxtApplication {
 					[string]$executeNxtParams["Parameters"] = "$InstPara"
 				}
 			}
-			if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-				[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+			if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
+				if ($internalInstallerMethod -eq "MSI") {
+					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+				}
+				elseif($internalInstallerMethod -match "Inno*|Nullsoft|BitRock*") {
+					[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedInstallExitCodes"
+				}
 			}
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				[string]$internalInstallerMethod = [string]::Empty
