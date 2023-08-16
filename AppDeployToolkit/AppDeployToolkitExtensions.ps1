@@ -687,8 +687,14 @@ function Compare-NxtVersionPart {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		if ([string]::IsNullOrEmpty($DetectedVersionPart)) {
+			[string]$DetectedVersionPart = "0"
+		}
+		if ([string]::IsNullOrEmpty($TargetVersionPart)) {
+			[string]$TargetVersionPart = "0"
+		}
 		## Test if both VersionParts are numeric
-		if ($DetectedVersionPart -as [int] -and $TargetVersionPart -as [int]) {
+		if ( [int]::TryParse($DetectedVersionPart,[ref]$null) -and [int]::TryParse($TargetVersionPart,[ref]$null)) {
 			if ([int]$DetectedVersionPart -eq [int]$TargetVersionPart) {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
 			}
