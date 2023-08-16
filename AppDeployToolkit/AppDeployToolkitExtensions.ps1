@@ -608,7 +608,7 @@ function Compare-NxtVersion {
 	Process {
 		[string[]]$detectedVersionParts = $DetectedVersion -split "\." | Select-Object -First 4
 		[string[]]$targetVersionParts = $TargetVersion -split "\." | Select-Object -First 4
-		[int]$versionPartCount = [Math]::Min($DetectedVersionParts.Count, $targetVersionParts.Count)
+		[int]$versionPartCount = [Math]::Max([Math]::Max($DetectedVersionParts.Count, $targetVersionParts.Count),4)
 		[PSADTNXT.VersionCompareResult[]]$versionPartResult = (, [PSADTNXT.VersionCompareResult]::Equal) * 4
 		for ($i = 0; $i -lt $versionPartCount; $i++) {
 			[string]$detectedVersionPart = $DetectedVersionParts | Select-Object -Index $i
