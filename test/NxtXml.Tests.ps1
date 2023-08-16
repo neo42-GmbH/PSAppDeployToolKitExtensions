@@ -29,7 +29,7 @@ Describe "Test-NxtXmlNodeExists" {
             $filterAttributes = @{ "id" = "123" }
             Set-Content -Path $filePath -Value $xml
             [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
-            $result| Should -BeFalse
+            $result | Should -BeFalse
         }
     }
     Context "When the node does not exist with multiple attributes" {
@@ -44,12 +44,12 @@ Describe "Test-NxtXmlNodeExists" {
             $filterAttributes = @{ "id" = "123"; "name" = "test" }
             Set-Content -Path $filePath -Value $xml
             [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
-            $result| Should -BeFalse
+            $result | Should -BeFalse
         }
     }
     Context "When the node does exist with multiple attributes" {
         It "Returns true" {
-            $xml =@"
+            $xml = @"
 <Root>
     <Child id="324" name="test">Some text</Child>
 </Root>
@@ -59,12 +59,12 @@ Describe "Test-NxtXmlNodeExists" {
             $filterAttributes = @{ "id" = "324"; "name" = "test" }
             Set-Content -Path $filePath -Value $xml
             [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
-            $result| Should -BeTrue
+            $result | Should -BeTrue
         }
     }
     Context "When the node does exist with multiple attributes and the filter is not complete" {
         It "Returns true" {
-            $xml =@"
+            $xml = @"
 <Root>
     <Child id="324" name="test">Some text</Child>
 </Root>
@@ -74,7 +74,7 @@ Describe "Test-NxtXmlNodeExists" {
             $filterAttributes = @{ "id" = "324" }
             Set-Content -Path $filePath -Value $xml
             [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
-            $result| Should -BeTrue
+            $result | Should -BeTrue
         }
     }
 }
