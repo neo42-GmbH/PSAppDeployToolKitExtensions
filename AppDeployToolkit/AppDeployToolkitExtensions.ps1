@@ -4342,21 +4342,20 @@ function Install-NxtApplication {
 					[string]$executeNxtParams["Parameters"] = "$InstPara"
 				}
 			}
-			if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-				if ($internalInstallerMethod -eq "MSI") {
-					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
-				}
-				elseif($internalInstallerMethod -match "Inno*|Nullsoft|BitRock*") {
-					[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedInstallExitCodes"
-				}
-			}
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				[string]$internalInstallerMethod = [string]::Empty
 			}
 			else {
 				[string]$internalInstallerMethod = $InstallMethod
 			}
-
+			if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
+				if ($internalInstallerMethod -eq "MSI") {
+					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+				}
+				elseif($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$") {
+					[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedInstallExitCodes"
+				}
+			}
 			switch -Wildcard ($internalInstallerMethod) {
 				MSI {
 					Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
@@ -8467,19 +8466,19 @@ function Uninstall-NxtApplication {
 							[string]$executeNxtParams["Parameters"] = "$UninstPara"
 						}
 					}
-					if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-						if ($internalInstallerMethod -eq "MSI") {
-							[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
-						}
-						elseif($internalInstallerMethod -match "Inno*|Nullsoft|BitRock*") {
-							[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedUninstallExitCodes"
-						}
-					}
 					if ([string]::IsNullOrEmpty($UninstallKey)) {
 						[string]$internalInstallerMethod = [string]::Empty
 					}
 					else {
 						[string]$internalInstallerMethod = $UninstallMethod
+					}
+					if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+						if ($internalInstallerMethod -eq "MSI") {
+							[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+						}
+						elseif($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$") {
+							[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedUninstallExitCodes"
+						}
 					}
 					switch -Wildcard ($internalInstallerMethod) {
 						MSI {
