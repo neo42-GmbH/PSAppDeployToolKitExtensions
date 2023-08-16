@@ -627,6 +627,7 @@ function Compare-NxtVersion {
 				break
 			}
 		}
+		Write-Log -Message "Compare version $DetectedVersion with $TargetVersion. Result: $result" -Source ${cmdletName}
 		Write-Output $result
 	}
 	End {
