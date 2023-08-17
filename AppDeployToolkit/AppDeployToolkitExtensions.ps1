@@ -611,10 +611,10 @@ function Compare-NxtVersion {
 	Process {
 		[string[]]$detectedVersionParts = $DetectedVersion -split "\." | Select-Object -First 4
 		[string[]]$targetVersionParts = $TargetVersion -split "\." | Select-Object -First 4
-		[int]$versionPartCount = [Math]::Max([Math]::Max($DetectedVersionParts.Count, $targetVersionParts.Count),4)
+		[int]$versionPartCount = [Math]::Max([Math]::Max($detectedVersionParts.Count, $targetVersionParts.Count),4)
 		[PSADTNXT.VersionCompareResult[]]$versionPartResult = (, [PSADTNXT.VersionCompareResult]::Equal) * 4
 		for ($i = 0; $i -lt $versionPartCount; $i++) {
-			[string]$detectedVersionPart = $DetectedVersionParts | Select-Object -Index $i
+			[string]$detectedVersionPart = $detectedVersionParts | Select-Object -Index $i
 			[string]$targetVersionPart = $targetVersionParts | Select-Object -Index $i
 			$versionPartResult[$i] = Compare-NxtVersionPart -DetectedVersionPart $detectedVersionPart -TargetVersionPart $targetVersionPart -HexMode $HexMode
 		}
@@ -688,66 +688,56 @@ function Compare-NxtVersionPart {
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($DetectedVersionPart)) {
-			[string]$DetectedVersionPart = "0"
+			$DetectedVersionPart = "0"
 		}
 		if ([string]::IsNullOrEmpty($TargetVersionPart)) {
-			[string]$TargetVersionPart = "0"
+			$TargetVersionPart = "0"
 		}
+		[int]$detectedVersionPartInt = 0
+		[int]$targetVersionPartInt = 0
 		## Test if both VersionParts are numeric
-		if ( [int]::TryParse($DetectedVersionPart,[ref]$null) -and [int]::TryParse($TargetVersionPart,[ref]$null)) {
-			if ([int]$DetectedVersionPart -eq [int]$TargetVersionPart) {
+		if ( 
+			[int]::TryParse($DetectedVersionPart, [ref]$detectedVersionPartInt) -and
+			[int]::TryParse($TargetVersionPart, [ref]$targetVersionPartInt)
+			) {
+			if ($detectedVersionPartInt -eq $targetVersionPartInt) {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
 			}
-			elseif ([int]$DetectedVersionPart -gt [int]$TargetVersionPart) {
+			elseif ($detectedVersionPartInt -gt $targetVersionPartInt) {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade) 
 			}
-			elseif ([int]$DetectedVersionPart -lt [int]$TargetVersionPart) {
+			elseif ($detectedVersionPartInt -lt $targetVersionPartInt) {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Update) 
 			}
+			return
 		}
-		else {
-			## Test if any VersionParts contain non-numeric characters
-			if ($HexMode) {
-				try {
-					[int32]$DetectedVersionPartInt = [Convert]::ToInt32($DetectedVersionPart, 16)
-					[int32]$TargetVersionPartInt = [Convert]::ToInt32($TargetVersionPart, 16)
-				}
-				catch {
-					## do a string comparison
-					if ([string]$DetectedVersionPart -eq [string]$TargetVersionPart) {
-						Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
-					}
-					elseif ([string]$DetectedVersionPart -gt [string]$TargetVersionPart) {
-						Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade) 
-					}
-					elseif ([string]$DetectedVersionPart -lt [string]$TargetVersionPart) {
-						Write-Output ([PSADTNXT.VersionCompareResult]::Update) 
-					}
-					## to prevent more results from being returned we return here
-					return
-				}
-				if ([int32]$DetectedVersionPartInt -eq [int32]$TargetVersionPartInt) {
+		if ($true -eq $HexMode) {
+			## Test if any VersionParts contain non-hex parsable characters
+			if (
+				[int]::TryParse($DetectedVersionPart, [System.Globalization.NumberStyles]::HexNumber, $null, [ref]$detectedVersionPartInt) -and
+				[int]::TryParse($TargetVersionPart, [System.Globalization.NumberStyles]::HexNumber, $null, [ref]$targetVersionPartInt)
+			) {
+				if ($detectedVersionPartInt -eq $targetVersionPartInt) {
 					Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
 				}
-				if ([int32]$DetectedVersionPartInt -gt [int32]$TargetVersionPartInt) {
+				elseif ($detectedVersionPartInt -gt $targetVersionPartInt) {
 					Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade) 
 				}
-				if ([int32]$DetectedVersionPartInt -lt [int32]$TargetVersionPartInt) {
+				elseif ($detectedVersionPartInt -lt $targetVersionPartInt) {
 					Write-Output ([PSADTNXT.VersionCompareResult]::Update) 
 				}
+				return
 			}
-			else {
-				## do a string comparison
-				if ([string]$DetectedVersionPart -eq [string]$TargetVersionPart) {
-					Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
-				}
-				elseif ([string]$DetectedVersionPart -gt [string]$TargetVersionPart) {
-					Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade) 
-				}
-				elseif ([string]$DetectedVersionPart -lt [string]$TargetVersionPart) {
-					Write-Output ([PSADTNXT.VersionCompareResult]::Update) 
-				}
-			}
+		}
+		## do a string comparison if the VersionParts are not numeric or hex parsable
+		if ($DetectedVersionPart -eq $TargetVersionPart) {
+			Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
+		}
+		elseif ($DetectedVersionPart -gt $TargetVersionPart) {
+			Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade) 
+		}
+		elseif ($DetectedVersionPart -lt $TargetVersionPart) {
+			Write-Output ([PSADTNXT.VersionCompareResult]::Update) 
 		}
 	}
 	End {
