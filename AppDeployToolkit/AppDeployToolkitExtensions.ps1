@@ -452,7 +452,7 @@ function Add-NxtXmlNode {
 	}
 	Process {
 		try {
-			if ($false -eq (Test-Path $FilePath)) {
+			if ($false -eq (Test-Path -Path $FilePath)) {
 				Write-Log -Message "File $FilePath does not exist" -Severity 3
 				throw "File $FilePath does not exist"
 			}
@@ -4229,11 +4229,11 @@ function Initialize-NxtEnvironment {
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
-			if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)) {
+			if ($true -eq (Test-Path -Path $SetupCfgPathOverride\setupOverride.cfg)) {
 				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
 				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg"
 			}
-			elseif ($true -eq (Test-path $SetupCfgPath)) {
+			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
 				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
 				Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
 			}
@@ -4915,14 +4915,14 @@ function Register-NxtPackage {
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
-			if ($true -eq (Test-Path "$SetupCfgPathOverride\setupoverride.cfg")) {
+			if ($true -eq (Test-Path -Path "$SetupCfgPathOverride\setupoverride.cfg")) {
 				Copy-File -Path "$SetupCfgPathOverride\setupoverride.cfg" -Destination "$App\neo42-Install\setup.cfg"
-			} elseif ($true -eq (Test-Path "$ScriptParentPath\Setup.cfg")) {
+			} elseif ($true -eq (Test-Path -Path "$ScriptParentPath\Setup.cfg")) {
 				Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
 			} else {
 				Write-Log -Message "Could not copy setup config file 'setup.cfg'. There is no such file provided with this package." -Severity 2 -Source ${cmdletName}
 			}
-			if ($true -eq (Test-Path "$ScriptParentPath\CustomSetup.cfg")) {
+			if ($true -eq (Test-Path -Path "$ScriptParentPath\CustomSetup.cfg")) {
 				Copy-File -Path "$ScriptParentPath\CustomSetup.cfg" -Destination "$App\neo42-Install\"
 				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
 			}
@@ -6036,7 +6036,7 @@ function Set-NxtCustomSetupCfg {
 		try {
 			[string]$customSetupCfgFileName = Split-Path -path "$Path" -Leaf
 			Write-Log -Message "Checking for custom config file [$customSetupCfgFileName] under [$Path]..." -Source ${CmdletName}
-			if ($true -eq (Test-Path $Path)) {
+			if ($true -eq (Test-Path -Path $Path)) {
 				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
 				Write-Log -Message "[$customSetupCfgFileName] was found and successfully parsed into global:CustomSetupCfg object." -Source ${CmdletName}
 				foreach ($sectionKey in $($global:SetupCfg.Keys)) {
@@ -6236,7 +6236,7 @@ function Set-NxtXmlNode {
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			$testNxtXmlNodeParams.Add("FilterAttributes", $FilterAttributes)
 		}
-		if ($false -eq (Test-Path $FilePath)) {
+		if ($false -eq (Test-Path -Path $FilePath)) {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
@@ -8400,7 +8400,7 @@ function Test-NxtXmlNodeExists {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($false -eq (Test-Path $FilePath)) {
+		if ($false -eq (Test-Path -Path $FilePath)) {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
@@ -9274,10 +9274,10 @@ function Update-NxtTextInFile {
 	}
 	Process {
 		[String]$intEncoding = $Encoding
-		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+		if (!(Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			[string]$intEncoding = "UTF8"
 		}
-		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+		elseif ((Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			try {
 				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
@@ -9402,7 +9402,7 @@ function Update-NxtXmlNode {
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			$testNxtXmlNodeExistsParams.Add("FilterAttributes", $FilterAttributes)
 		}
-		if ($false -eq (Test-Path $FilePath)) {
+		if ($false -eq (Test-Path -Path $FilePath)) {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
