@@ -535,80 +535,209 @@ function Close-BlockExecutionWindow {
 #endregion
 #region Function Compare-NxtVersion
 function Compare-NxtVersion {
+	[CmdletBinding()]
 	<#
+	.SYNOPSIS
+		Compare two versions.
 	.DESCRIPTION
-		Compares two versions.
-
-	    Return values:
+		Compare two versions. A Version can contain up to 4 numbers separated by dots. If a version contains less than 4 numbers, the missing numbers are assumed to be 0. If a VersionPart contains non-numeric characters, the 	VersionPart is assumed to be a string. If there are more than 4 VersionParts, the subsequent VersionParts are ignored. HexMode can be used to compare VersionParts as hexadecimal numbers.
+		Return values:
 			Equal = 1
-   			Update = 2
-   			Downgrade = 3.
+			Update = 2
+			Downgrade = 3.
 	.PARAMETER DetectedVersion
-		Currently installed Version.
+		The version that was detected.
 	.PARAMETER TargetVersion
-		The new Version.
+		The version that is targeted.
+	.PARAMETER HexMode
+		If set to true, the VersionParts are compared as hexadecimal numbers if possible.
+		Default is false.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "1.2.3.4" -TargetVersion "1.2.4.4"
+		Will return "Update" because "3" is smaller than "4".
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "1.2.3" -TargetVersion "1.2.3"
+		Will return "Equal" because all VersionParts are equal to the referencing value.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "1.2.3" -TargetVersion "a.2.3"
+		Will return "Update" because "1" is smaller than "a" in string comparison.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "F43.1.A9" -TargetVersion "F43.1.A10" -HexMode $true
+		Will return "Update" because "A9" is smaller than "A10" in hexadecimal mode.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "F43.1.A9" -TargetVersion "F43.1.A10"
+		Will return "Downgrade" because "A9" is greater than "A10" in string mode.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "F43.1.a2" -TargetVersion "F43.1.A2"
+		Will return "Equal" because "a2" is equal to "A2".
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "x" -TargetVersion "y"
+		Will return "Update" because "x" is smaller than "y".
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "1.1.1.0.1" -TargetVersion "1.1.1.0.2"
+		Will return "Equal" because because only the first 4 VersionParts are compared.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "0001.2" -TargetVersion "1.2"
+		Will return "Equal" because "0001" is equal to "1".
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "A.2" -TargetVersion "1A.2"
+		Will return "Downgrade" because "A" is greater than "1A" in string mode.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "A.2" -TargetVersion "1A.2" -HexMode $true
+		Will return "Update" because "A" is smaller than "1A" in hexadecimal mode.
+	.EXAMPLE
+		Compare-NxtVersion -DetectedVersion "1.2" -TargetVersion "1"
+		Will return "Downgrade" because "1.2" is greater than "1".
 	.OUTPUTS
 		PSADTNXT.VersionCompareResult.
-	.EXAMPLE
-		Compare-NxtVersion -DetectedVersion "1.7" -TargetVersion "1.7.2"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $true)]
-		[AllowEmptyString()]
-		[string]
+	param (
+		[Parameter()]
+		[String]
 		$DetectedVersion,
-		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
-		[string]
-		$TargetVersion
+		[Parameter()]
+		[String]
+		$TargetVersion,
+		[Parameter()]
+		[bool]
+		$HexMode = $false
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ([string]::IsNullOrEmpty($DetectedVersion)) {
-			[string]$DetectedVersion = "0"
+		[string[]]$detectedVersionParts = $DetectedVersion -split "\." | Select-Object -First 4
+		[string[]]$targetVersionParts = $TargetVersion -split "\." | Select-Object -First 4
+		[int]$versionPartCount = [Math]::Max([Math]::Max($detectedVersionParts.Count, $targetVersionParts.Count),4)
+		[PSADTNXT.VersionCompareResult[]]$versionPartResult = (, [PSADTNXT.VersionCompareResult]::Equal) * 4
+		for ($i = 0; $i -lt $versionPartCount; $i++) {
+			[string]$detectedVersionPart = $detectedVersionParts | Select-Object -Index $i
+			[string]$targetVersionPart = $targetVersionParts | Select-Object -Index $i
+			$versionPartResult[$i] = Compare-NxtVersionPart -DetectedVersionPart $detectedVersionPart -TargetVersionPart $targetVersionPart -HexMode $HexMode
 		}
-		try {
-			[scriptblock]$parseVersion = { Param ($version) 	
-				[int[]]$result = 0, 0, 0, 0
-				[System.Array]$versionParts = [System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($Version.Split('.'), [Func[string, PSADTNXT.VersionKeyValuePair]] { Param ($x) New-Object PSADTNXT.VersionKeyValuePair -ArgumentList $x, ([System.Linq.Enumerable]::ToArray([System.Linq.Enumerable]::Select($x.ToCharArray(), [System.Func[char, PSADTNXT.VersionPartInfo]] { Param ($x) New-Object -TypeName "PSADTNXT.VersionPartInfo" -ArgumentList $x }))) }))
-				for ([int]$i = 0; $i -lt $versionParts.count; $i++) {
-					[int]$versionPartValue = 0
-					[System.Object]$pair = [System.Linq.Enumerable]::ElementAt($versionParts, $i)
-					if ([System.Linq.Enumerable]::All($pair.Value, [System.Func[PSADTNXT.VersionPartInfo, bool]] { Param ($x) [System.Char]::IsDigit($x.Value) })) {
-						[int]$versionPartValue = [int]::Parse($pair.Key)
-					}
-					else {
-						[PSADTNXT.VersionPartInfo]$value = [System.Linq.Enumerable]::FirstOrDefault($pair.Value)
-						if ($null -ne $value -and [System.Char]::IsLetter($value.Value)) {
-							#Important for compare (An upper 'A'==65 char must have the value 10) 
-							[int]$versionPartValue = $value.AsciiValue - 55
-						}
-					}
-					[int]$result[$i] = $versionPartValue
-				}
-				Write-Output (New-Object System.Version -ArgumentList $result[0], $result[1], $result[2], $result[3])
-				return }.GetNewClosure()
-
-			[System.Version]$instVersion = &$parseVersion -Version $DetectedVersion
-			[System.Version]$newVersion = &$parseVersion -Version $TargetVersion
-			if ($instVersion -eq $newVersion) {
+		[PSADTNXT.VersionCompareResult]$result = [PSADTNXT.VersionCompareResult]::Equal
+		## the first result that is not "Equal" is the result for the whole version
+		foreach ($versionPart in $versionPartResult) {
+			if ($versionPart -ne [PSADTNXT.VersionCompareResult]::Equal) {
+				$result = $versionPart
+				## stop the whole loop
+				break
+			}
+		}
+		Write-Log -Message "Compare version $DetectedVersion with $TargetVersion. Result: $result" -Source ${cmdletName}
+		Write-Output $result
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Compare-NxtVersionPart
+function Compare-NxtVersionPart {
+	[CmdletBinding()]
+	<#
+	.SYNOPSIS
+		Compare two version parts.
+	.DESCRIPTION
+		Compare two version parts. A VersionPart can be a number or a string. If a VersionPart contains non-numeric characters, the VersionPart is assumed to be a string.
+		Return values:
+		Equal = 1
+		Update = 2
+		Downgrade = 3
+	.PARAMETER DetectedVersionPart
+		The version part that was detected.
+	.PARAMETER TargetVersionPart
+		The version part that is targeted.
+	.PARAMETER HexMode
+		If set to true, the VersionParts are compared as hexadecimal numbers.
+		Default is false.
+	.EXAMPLE
+		Compare-NxtVersionPart -DetectedVersionPart "1" -TargetVersionPart "2"
+		Will return "Update" because "1" is smaller than "2".
+	.EXAMPLE
+		Compare-NxtVersionPart -DetectedVersionPart "1" -TargetVersionPart "1"
+		Will return "Equal" because "1" is equal to "1".
+	.EXAMPLE
+		Compare-NxtVersionPart -DetectedVersionPart "1" -TargetVersionPart "a"
+		Will return "Update" because "1" is smaller than "a" in string comparison.
+	.EXAMPLE
+		Compare-NxtVersionPart -DetectedVersionPart "1" -TargetVersionPart "b" -HexMode $true
+		Will return "Update" because "1" is smaller than "b" in hexadecimal mode.
+	.OUTPUTS
+		PSADTNXT.VersionCompareResult.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	param (
+		[Parameter()]
+		[string]
+		$DetectedVersionPart,
+		[Parameter()]
+		[string]
+		$TargetVersionPart,
+		[Parameter()]
+		[bool]
+		$HexMode
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ([string]::IsNullOrEmpty($DetectedVersionPart)) {
+			$DetectedVersionPart = "0"
+		}
+		if ([string]::IsNullOrEmpty($TargetVersionPart)) {
+			$TargetVersionPart = "0"
+		}
+		[int]$detectedVersionPartInt = 0
+		[int]$targetVersionPartInt = 0
+		## Test if both VersionParts are numeric
+		if ( 
+			[int]::TryParse($DetectedVersionPart, [ref]$detectedVersionPartInt) -and
+			[int]::TryParse($TargetVersionPart, [ref]$targetVersionPartInt)
+			) {
+			if ($detectedVersionPartInt -eq $targetVersionPartInt) {
 				Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
 			}
-			elseif ($newVersion -gt $instVersion) {
-				Write-Output ([PSADTNXT.VersionCompareResult]::Update)
+			elseif ($detectedVersionPartInt -gt $targetVersionPartInt) {
+				Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade) 
 			}
-			else {
-				Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade)
+			elseif ($detectedVersionPartInt -lt $targetVersionPartInt) {
+				Write-Output ([PSADTNXT.VersionCompareResult]::Update) 
+			}
+			return
+		}
+		if ($true -eq $HexMode) {
+			## Test if any VersionParts contain non-hex parsable characters
+			if (
+				[int]::TryParse($DetectedVersionPart, [System.Globalization.NumberStyles]::HexNumber, $null, [ref]$detectedVersionPartInt) -and
+				[int]::TryParse($TargetVersionPart, [System.Globalization.NumberStyles]::HexNumber, $null, [ref]$targetVersionPartInt)
+			) {
+				if ($detectedVersionPartInt -eq $targetVersionPartInt) {
+					Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
+				}
+				elseif ($detectedVersionPartInt -gt $targetVersionPartInt) {
+					Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade) 
+				}
+				elseif ($detectedVersionPartInt -lt $targetVersionPartInt) {
+					Write-Output ([PSADTNXT.VersionCompareResult]::Update) 
+				}
+				return
 			}
 		}
-		catch {
-			Write-Log -Message "Failed to get the owner for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		## do a string comparison if the VersionParts are not numeric or hex parsable
+		if ($DetectedVersionPart -eq $TargetVersionPart) {
+			Write-Output ([PSADTNXT.VersionCompareResult]::Equal)
+		}
+		elseif ($DetectedVersionPart -gt $TargetVersionPart) {
+			Write-Output ([PSADTNXT.VersionCompareResult]::Downgrade) 
+		}
+		elseif ($DetectedVersionPart -lt $TargetVersionPart) {
+			Write-Output ([PSADTNXT.VersionCompareResult]::Update) 
 		}
 	}
 	End {

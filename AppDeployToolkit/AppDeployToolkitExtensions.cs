@@ -95,30 +95,6 @@ namespace PSADTNXT
         Ram = 6
     }
 
-    public class VersionPartInfo
-    {
-        public VersionPartInfo(char value)
-        {
-            Value = value;
-            AsciiValue = System.Text.Encoding.ASCII.GetBytes(new char[] { value }).FirstOrDefault();
-        }
-
-        public char Value { get; private set; }
-        public byte AsciiValue { get; private set; }
-    }
-
-    public class VersionKeyValuePair
-    {
-        public VersionKeyValuePair(string key, VersionPartInfo[] value)
-        {
-            Key = key;
-            Value = value.ToList();
-        }
-
-        public string Key { get; private set; }
-        public List<VersionPartInfo> Value { get; private set; }
-    }
-
     public enum VersionCompareResult
     {
         Equal = 1,
