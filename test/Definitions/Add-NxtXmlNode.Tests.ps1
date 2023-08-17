@@ -1,80 +1,67 @@
 # Test the Add-NxtXmlNode Function
 
-# Test 1: Add the value of an existing node
 Describe "Add-NxtXmlNode" {
-    Context "When the node exists" {
-        It "Adds the node" {
+    Context "Add the node" {
+        It "Adds the node to Root" {
             $xml = @"
 <Root>
-    <Child id="123">Some text</Child>
 </Root>
 "@
             $filePath = "$PSScriptRoot\example1.xml"
             $nodePath = "/Root/Child"
-            $filterAttributes = @{ "id" = "123" }
+            $Attributes = @{ "id" = "123" }
             Set-Content -Path $filePath -Value $xml
-            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
+            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $Attributes
+            $result | Should -BeFalse
+            Add-NxtXmlNode -FilePath $filePath -NodePath $nodePath -Attributes $Attributes
+            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $Attributes
             $result | Should -BeTrue
+            Remove-Item $filePath
         }
     }
-    Context "When the node does not exist" {
-        It "Returns false" {
+    Context "Add the node with text" {
+        It "Adds the node to Level1" {
             $xml = @"
 <Root>
-    <Child id="456">Some text</Child>
+    <Level1/>
 </Root>
 "@
             $filePath = "$PSScriptRoot\example2.xml"
-            $nodePath = "/Root/Child"
-            $filterAttributes = @{ "id" = "123" }
+            $nodePath = "/Root/Level1/Child"
+            $Attributes = @{ "id" = "123" }
+            $text = "Some text"
             Set-Content -Path $filePath -Value $xml
-            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
+            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $Attributes
             $result | Should -BeFalse
+            Add-NxtXmlNode -FilePath $filePath -NodePath $nodePath -Attributes $Attributes -InnerText $text
+            [string]$result = ([xml](Get-Content -Path $filePath)).selectNodes($nodePath).innertext
+            $result | Should -Be $text
+            Remove-Item $filePath
         }
     }
-    Context "When the node does not exist with multiple attributes" {
-        It "Returns false" {
+    Context "Add the node with text and attributes" {
+        It "Adds another node Level2 to Level1" {
             $xml = @"
-<Root>
-    <Child id="456" name="test">Some text</Child>
-</Root>
+<Root123>
+    <Level1>
+        <Level2/>
+    </Level1>
+</Root123>
 "@
+
             $filePath = "$PSScriptRoot\example3.xml"
-            $nodePath = "/Root/Child"
-            $filterAttributes = @{ "id" = "123"; "name" = "test" }
+            $nodePath = "/Root123/Level1/Level2"
+            $Attributes = @{ "attribute1" = "22213" }
+            $text = "Some text2"
             Set-Content -Path $filePath -Value $xml
-            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
+            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $Attributes
             $result | Should -BeFalse
-        }
-    }
-    Context "When the node does exist with multiple attributes" {
-        It "Returns true" {
-            $xml = @"
-<Root>
-    <Child id="324" name="test">Some text</Child>
-</Root>
-"@
-            $filePath = "$PSScriptRoot\example4.xml"
-            $nodePath = "/Root/Child"
-            $filterAttributes = @{ "id" = "324"; "name" = "test" }
-            Set-Content -Path $filePath -Value $xml
-            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
-            $result | Should -BeTrue
-        }
-    }
-    Context "When the node does exist with multiple attributes and the filter is not complete" {
-        It "Returns true" {
-            $xml = @"
-<Root>
-    <Child id="324" name="test">Some text</Child>
-</Root>
-"@
-            $filePath = "$PSScriptRoot\example5.xml"
-            $nodePath = "/Root/Child"
-            $filterAttributes = @{ "id" = "324" }
-            Set-Content -Path $filePath -Value $xml
-            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
-            $result | Should -BeTrue
+            Add-NxtXmlNode -FilePath $filePath -NodePath $nodePath -Attributes $Attributes -InnerText $text
+            [string]$result = ([xml](Get-Content -Path $filePath)).selectNodes("$nodePath[@attribute1=22213]").InnerText
+            $result | Should -Be $text
+            [string]$result = ([xml](Get-Content -Path $filePath)).selectNodes($nodePath).count
+            $result | Should -Be 2
+            Remove-Item $filePath
         }
     }
 }
