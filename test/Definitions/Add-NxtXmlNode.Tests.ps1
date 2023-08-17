@@ -1,9 +1,9 @@
-# Test the Set-NxtXmlNode Function
+# Test the Add-NxtXmlNode Function
 
-# Test 1: Set the value of an existing node
+# Test 1: Add the value of an existing node
 Describe "Add-NxtXmlNode" {
     Context "When the node exists" {
-        It "Returns true" {
+        It "Adds the node" {
             $xml = @"
 <Root>
     <Child id="123">Some text</Child>
