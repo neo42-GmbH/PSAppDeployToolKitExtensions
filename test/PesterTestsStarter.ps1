@@ -28,7 +28,7 @@ Copy-Item "$PSScriptRoot/NxtExtensions/*" -Recurse -Force -Destination $testWork
 New-Item -ItemType Directory -path "$testWorkFolder/SupportFiles/User" -Force
 New-Item -ItemType Directory -Path "$testWorkFolder/Files" -Force
 Copy-Item "$PSScriptRoot/shared.psm1" "$testWorkFolder/" -Force
-Copy-Item "$PSScriptRoot/*.Tests.ps1" "$testWorkFolder/" -Force
+Copy-Item "$PSScriptRoot/Definitions/*.Tests.ps1" "$testWorkFolder/" -Force
 Copy-Item "$PSScriptRoot/RunPester.ps1" "$testWorkFolder/" -Force
 ## run tests
 &"$testWorkFolder/RunPester.ps1"
