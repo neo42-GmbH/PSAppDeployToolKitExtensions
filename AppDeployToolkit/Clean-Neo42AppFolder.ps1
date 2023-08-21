@@ -10,11 +10,10 @@ Param (
 $currentScript = $MyInvocation.MyCommand.Definition
 try {
     Start-Sleep -Seconds 10
-    ## read neo42PackageConfig.json to determine if user uninstall is enabled
     $packageConfig = Get-Content -Path "$PSScriptRoot\neo42-Install\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
     $folderToRemove = @("$PSScriptRoot\neo42-Install", "$PSScriptRoot\neo42-Source")
     if ($true -eq $packageConfig.UserPartOnUninstallation) {
-        ## due to an active user part on UnInstallation, we must keep the userpart folder.
+        ## due to an active UserPart on UnInstallation, we must keep userPartDir.
     }
     else {
         ## what is now "User" must be equal to $global:userPartDir in Deploy-Application.ps1
