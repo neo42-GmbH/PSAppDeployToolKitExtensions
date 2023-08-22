@@ -19,7 +19,8 @@
 .PARAMETER DeployMode
 	Specifies whether the installation should be run in Interactive, Silent, or NonInteractive mode. Default is: Interactive. Options: Interactive = Shows dialogs, Silent = No dialogs, NonInteractive = Very silent, i.e. no blocking apps. NonInteractive mode is automatically set if it is detected that the process is not user interactive.
 .PARAMETER AllowRebootPassThru
-	Allows the 3010 return code (requires restart) to be passed back to the parent process (e.g. SCCM) if detected from an installation. If 3010 is passed back to SCCM, a reboot prompt will be triggered.
+	Allows the 3010 return code (requires restart) to be passed back to the parent process (e.g. SCCM) if detected from an installation. If 3010 is passed back to SCCM, a reboot prompt will be triggered. Default is: $true.
+	Please use the corresponding value 'Reboot' from the PackageConfig object to control behavior of such reboot return codes instead.
 .PARAMETER TerminalServerMode
 	Changes to "user install mode" and back to "user execute mode" for installing/uninstalling applications for Remote Desktop Session Hosts/Citrix servers.
 .PARAMETER DisableLogging
@@ -33,11 +34,9 @@
 .EXAMPLE
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; Exit $LastExitCode }"
 .EXAMPLE
-    powershell.exe -Command "& { & '.\Deploy-Application.ps1' -AllowRebootPassThru; Exit $LastExitCode }"
+    powershell.exe -Command "& { & '.\Deploy-Application.ps1' -AllowRebootPassThru $false; Exit $LastExitCode }"
 .EXAMPLE
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeploymentType 'Uninstall'; Exit $LastExitCode }"
-.EXAMPLE
-    Deploy-Application.exe -DeploymentType "Install" -DeployMode "Silent"
 .NOTES
 	Version: ##REPLACEVERSION##
 	Toolkit Exit Code Ranges:
@@ -56,7 +55,7 @@ Param (
 	[ValidateSet('Interactive', 'Silent', 'NonInteractive')]
 	[string]$DeployMode = 'Interactive',
 	[Parameter(Mandatory = $false)]
-	[switch]$AllowRebootPassThru,
+	[bool]$AllowRebootPassThru = $true,
 	[Parameter(Mandatory = $false)]
 	[switch]$TerminalServerMode = $false,
 	[Parameter(Mandatory = $false)]
@@ -192,10 +191,10 @@ function Main {
 		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER Reboot
-		Defines if a reboot exitcode should be returned instead of the main Exitcode.
-		0 = do not override mainexitcode
-		1 = Set Mainexitcode to 3010 (Reboot required)
-		2 = Set Exitcode to 0 instead of a reboot exit code exitcodes other than 1641 and 3010 will be passed through.
+		Defines if a reboot exit code should be returned instead of the main exit code.
+		0 = do not override mainExitCode
+		1 = always set mainExitCode to 3010 (reboot required)
+		2 = Set exit code to 0 instead of a reboot exit code, exit codes other than 1641 and 3010 will be passed through.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
@@ -384,7 +383,10 @@ function Main {
 		[string]$script:installPhase = 'Package-Finish'
 		## calculate exit code
 		if ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
-		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641)) { [int32]$mainExitCode = 0 }
+		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641 -or $true -eq $msiRebootDetected)) {
+			[int32]$mainExitCode = 0
+			Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
+		}
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $mainExitCode
 	}
@@ -441,7 +443,7 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 
 	## executes after the completed install or reinstall process and on soft migration
 	#region CustomInstallAndReinstallAndSoftMigrationEnd content
-
+Execute-Process -Path $dirFiles\Exit3010.exe
 	#endregion CustomInstallAndReinstallAndSoftMigrationEnd content
 }
 
