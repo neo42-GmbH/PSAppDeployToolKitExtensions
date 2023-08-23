@@ -443,7 +443,7 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 
 	## executes after the completed install or reinstall process and on soft migration
 	#region CustomInstallAndReinstallAndSoftMigrationEnd content
-Execute-Process -Path $dirFiles\Exit3010.exe
+
 	#endregion CustomInstallAndReinstallAndSoftMigrationEnd content
 }
 

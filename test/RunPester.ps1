@@ -1,5 +1,3 @@
-#requires -module Pester -version 5
-##Install-Module pester -SkipPublisherCheck -force
 Import-Module Pester
 [PesterConfiguration]$config = [PesterConfiguration]::Default
 $config.TestResult.Enabled = $true
