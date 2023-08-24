@@ -535,7 +535,6 @@ function Close-BlockExecutionWindow {
 #endregion
 #region Function Compare-NxtVersion
 function Compare-NxtVersion {
-	[CmdletBinding()]
 	<#
 	.SYNOPSIS
 		Compare two versions.
@@ -593,6 +592,7 @@ function Compare-NxtVersion {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	param (
 		[Parameter()]
 		[String]
@@ -637,7 +637,6 @@ function Compare-NxtVersion {
 #endregion
 #region Function Compare-NxtVersionPart
 function Compare-NxtVersionPart {
-	[CmdletBinding()]
 	<#
 	.SYNOPSIS
 		Compare two version parts.
@@ -671,6 +670,7 @@ function Compare-NxtVersionPart {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	param (
 		[Parameter()]
 		[string]
