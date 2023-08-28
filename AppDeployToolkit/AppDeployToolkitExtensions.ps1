@@ -4210,7 +4210,7 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$App = $global:PackageConfig.App,
+		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentType = $DeploymentType
@@ -4239,7 +4239,7 @@ function Initialize-NxtEnvironment {
 				Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
 			}
 		}
-		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
+		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg" -App "$App"
 		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
@@ -6097,7 +6097,7 @@ function Set-NxtSetupCfg {
 		[String]$Path,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$App = $global:PackageConfig.App,
+		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$ContinueOnError = $true
@@ -6118,6 +6118,7 @@ function Set-NxtSetupCfg {
 			[hashtable]$global:SetupCfg = $null
 		}
 		## provide all expected predefined values from ADT framework config file if they are missing/undefined in a default file 'setup.cfg' only
+		## (note: at this point an existent setup.cfg file is already copied to $App folder)
 		if ("$Path" -eq "$App\neo42-Install\Setup.cfg") {
 			if ($null -eq $global:SetupCfg) {
 				[hashtable]$global:SetupCfg = @{}
