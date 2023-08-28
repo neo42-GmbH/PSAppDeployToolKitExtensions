@@ -5745,6 +5745,64 @@ function Resolve-NxtDependentPackage {
 	}
 }
 #endregion
+#region Function Set-NxtCustomSetupCfg
+function Set-NxtCustomSetupCfg {
+	<#
+	.SYNOPSIS
+		Set the contents from CustomSetup.cfg to $global:CustomSetupCfg.
+	.DESCRIPTION
+		Imports a CustomSetup.cfg file in INI format.
+	.PARAMETER Path
+		The path to the CustomSetup.cfg file (including file name).
+	.EXAMPLE
+		Set-NxtCustomSetupCfg -Path C:\path\to\customsetupcfg\CustomSetup.cfg -ContinueOnError $false
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+		[String]$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContinueOnError = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[string]$customSetupCfgFileName = Split-Path -path "$Path" -Leaf
+			Write-Log -Message "Checking for custom config file [$customSetupCfgFileName] under [$Path]..." -Source ${CmdletName}
+			if ($true -eq (Test-Path -Path $Path)) {
+				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+				Write-Log -Message "[$customSetupCfgFileName] was found and successfully parsed into global:CustomSetupCfg object." -Source ${CmdletName}
+				foreach ($sectionKey in $($global:SetupCfg.Keys)) {
+					foreach ($sectionKeySubkey in $($global:SetupCfg.$sectionKey.Keys)) {
+						if ($null -ne $global:CustomSetupCfg.$sectionKey.$sectionKeySubkey) {
+							Write-Log -Message "Override global object value [`$global:SetupCfg.$sectionKey.$sectionKeySubkey] with content from global:CustomSetupCfg object: [$($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)]" -Source ${CmdletName}
+							[string]$global:SetupCfg.$sectionKey.$sectionKeySubkey = $($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)
+						}
+					}
+				}
+			}
+			else {
+				Write-Log -Message "No [$customSetupCfgFileName] found. Skipped parsing customized values." -Source ${CmdletName}
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to set the CustomSetupCfg. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
 #region Function Set-NxtIniValue
 function Set-NxtIniValue {
 	<#
@@ -6000,64 +6058,6 @@ function Set-NxtProcessEnvironmentVariable {
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
-#region Function Set-NxtCustomSetupCfg
-function Set-NxtCustomSetupCfg {
-	<#
-	.SYNOPSIS
-		Set the contents from CustomSetup.cfg to $global:CustomSetupCfg.
-	.DESCRIPTION
-		Imports a CustomSetup.cfg file in INI format.
-	.PARAMETER Path
-		The path to the CustomSetup.cfg file (including file name).
-	.EXAMPLE
-		Set-NxtCustomSetupCfg -Path C:\path\to\customsetupcfg\CustomSetup.cfg -ContinueOnError $false
-	.NOTES
-		AppDeployToolkit is required in order to run this function.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-		[String]$Path,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$ContinueOnError = $true
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-	}
-	Process {
-		try {
-			[string]$customSetupCfgFileName = Split-Path -path "$Path" -Leaf
-			Write-Log -Message "Checking for custom config file [$customSetupCfgFileName] under [$Path]..." -Source ${CmdletName}
-			if ($true -eq (Test-Path -Path $Path)) {
-				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
-				Write-Log -Message "[$customSetupCfgFileName] was found and successfully parsed into global:CustomSetupCfg object." -Source ${CmdletName}
-				foreach ($sectionKey in $($global:SetupCfg.Keys)) {
-					foreach ($sectionKeySubkey in $($global:SetupCfg.$sectionKey.Keys)) {
-						if ($null -ne $global:CustomSetupCfg.$sectionKey.$sectionKeySubkey) {
-							Write-Log -Message "Override global object value [`$global:SetupCfg.$sectionKey.$sectionKeySubkey] with content from global:CustomSetupCfg object: [$($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)]" -Source ${CmdletName}
-							[string]$global:SetupCfg.$sectionKey.$sectionKeySubkey = $($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)
-						}
-					}
-				}
-			}
-			else {
-				Write-Log -Message "No [$customSetupCfgFileName] found. Skipped parsing customized values." -Source ${CmdletName}
-			}
-		}
-		catch {
-			Write-Log -Message "Failed to set the CustomSetupCfg. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
 #endregion
