@@ -5761,6 +5761,8 @@ function Set-NxtCustomSetupCfg {
 		Imports a CustomSetup.cfg file in INI format.
 	.PARAMETER Path
 		The path to the CustomSetup.cfg file (including file name).
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
 		Set-NxtCustomSetupCfg -Path C:\path\to\customsetupcfg\CustomSetup.cfg -ContinueOnError $false
 	.NOTES
@@ -6077,6 +6079,11 @@ function Set-NxtSetupCfg {
 		Imports a Setup.cfg file in INI format.
 	.PARAMETER Path
 		The path to the Setup.cfg file (including file name).
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
 		Set-NxtSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
 	.NOTES
@@ -6088,6 +6095,9 @@ function Set-NxtSetupCfg {
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
 		[String]$Path,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$App = $global:PackageConfig.App,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$ContinueOnError = $true
@@ -6108,7 +6118,7 @@ function Set-NxtSetupCfg {
 			[hashtable]$global:SetupCfg = $null
 		}
 		## provide all expected predefined values from ADT framework config file if they are missing/undefined in a default file 'setup.cfg' only
-		if ($Path -eq $global:SetupCfgPath) {
+		if ("$Path" -eq "$App\neo42-Install\Setup.cfg") {
 			if ($null -eq $global:SetupCfg) {
 				[hashtable]$global:SetupCfg = @{}
 			}
