@@ -4229,26 +4229,26 @@ function Initialize-NxtEnvironment {
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
-			if ($DeploymenType -eq "Install") {
-				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..."-Source ${cmdletName}
+			if ($DeploymentType -eq "Install") {
+				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
 				Remove-File -Path "$App\neo42-Install\Setup.cfg"
 				Remove-File -Path "$App\neo42-Install\CustomSetup.cfg"
 			}
 			if ($true -eq (Test-Path -Path $SetupCfgPathOverride\setupOverride.cfg)) {
-				## fwe need to generate non-existing destination folder/subfolder too (variable SetupCfgPathOverride contains file name only!)
+				Write-Log -Message "Found an externally provided custom setup configuration file..."-Source ${cmdletName}
+				## we need to generate non-existing destination folder/subfolder too (variable SetupCfgPathOverride contains file name only!)
 				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
 				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg" -Recurse
-				Write-Log -Message "Found an externally provided custom setup configuration file..."-Source ${cmdletName}
 			}
 			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
+				Write-Log -Message "Found a default setup config file 'Setup.cfg'..."-Source ${cmdletName}
 				## following command construct generates non-existing destination folder/subfolder too (variable SetupCfgPath contains path name and file name!)
 				Copy-File -Path "$SetupCfgPath" -Destination "$App\neo42-Install\"
-				Write-Log -Message "Found a default setup config file 'Setup.cfg'..."-Source ${cmdletName}
 			}
 			if ($true -eq (Test-Path -Path "$CustomSetupCfgPath")) {
+				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
 				## following command construct generates non-existing destination folder/subfolder too (variable CustomSetupCfgPath contains path name and file name!)
 				Copy-File -Path "$CustomSetupCfgPath" -Destination "$App\neo42-Install\"
-				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
 			}
 		}
 		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
