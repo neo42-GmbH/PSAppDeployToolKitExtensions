@@ -4765,6 +4765,9 @@ function Register-NxtPackage {
 	.PARAMETER HidePackageUninstallEntry
 		Specifies if the PackageUninstallEntry for this installation should be hidden.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ScriptRoot
+		Defines the parent directory of the script.
+		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
 	.PARAMETER ScriptParentPath
 		Specifies the ScriptParentPath.
 		Defaults to $scriptParentPath defined in the AppDeployToolkitMain.
@@ -4865,6 +4868,9 @@ function Register-NxtPackage {
 		$HidePackageUninstallEntry = $global:PackageConfig.HidePackageUninstallEntry,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$ScriptParentPath = $scriptParentPath,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -4911,7 +4917,7 @@ function Register-NxtPackage {
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
 		try {
-			Copy-File -Path "$scriptRoot" -Destination "$App\neo42-Install\" -Recurse
+			Copy-File -Path "$ScriptRoot" -Destination "$App\neo42-Install\" -Recurse
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
@@ -4926,7 +4932,7 @@ function Register-NxtPackage {
 				Copy-File -Path "$ScriptParentPath\CustomSetup.cfg" -Destination "$App\neo42-Install\"
 				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
 			}
-			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
 	
 			Write-Log -message "Re-write all management registry entries for the application package..." -Source ${cmdletName}
 			## to prevent obsolete entries from old VBS packages
@@ -4963,7 +4969,7 @@ function Register-NxtPackage {
 			Write-Log -message "Re-write all uninstall registry entries for the application package..." -Source ${cmdletName}
 			## to prevent obsolete entries from old VBS packages
 			Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID"
-			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
+			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayName' -Value $UninstallDisplayName
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayVersion' -Value $DisplayVersion
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'MachineKeyName' -Value $RegPackagesKey\$PackageGUID
@@ -9162,7 +9168,7 @@ function Unregister-NxtPackage {
 						if (![string]::IsNullOrEmpty($assignedPackageGUIDAppPath)) {
 							if ($true -eq (Test-Path -Path "$assignedPackageGUIDAppPath")) {
 								## note: we always use the script from current application package source folder (it is basically identical in each package)
-								Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
+								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
 								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
 							}
@@ -9193,7 +9199,7 @@ function Unregister-NxtPackage {
 				if (![string]::IsNullOrEmpty($App)) {
 					if ($true -eq (Test-Path -Path "$App")) {
 						## note: we always use the script from current application package source folder (it is basically identical in each package)
-						Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
+						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
 						Start-Sleep -Seconds 1
 						Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$App" -NoWait
 					}
