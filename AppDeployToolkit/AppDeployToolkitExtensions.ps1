@@ -4237,9 +4237,13 @@ function Initialize-NxtEnvironment {
 				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
 				Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
 			}
+			if ($true -eq (Test-Path -Path "$ScriptParentPath\CustomSetup.cfg")) {
+				Copy-File -Path "$ScriptParentPath\CustomSetup.cfg" -Destination "$App\neo42-Install\"
+				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
+			}
 		}
 		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
-		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
+		Set-NxtCustomSetupCfg -Path "$App\neo42-Install\CustomSetup.cfg"
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
 		}
@@ -4915,17 +4919,6 @@ function Register-NxtPackage {
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
-			if ($true -eq (Test-Path -Path "$SetupCfgPathOverride\setupoverride.cfg")) {
-				Copy-File -Path "$SetupCfgPathOverride\setupoverride.cfg" -Destination "$App\neo42-Install\setup.cfg"
-			} elseif ($true -eq (Test-Path -Path "$ScriptParentPath\Setup.cfg")) {
-				Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
-			} else {
-				Write-Log -Message "Could not copy setup config file 'setup.cfg'. There is no such file provided with this package." -Severity 2 -Source ${cmdletName}
-			}
-			if ($true -eq (Test-Path -Path "$ScriptParentPath\CustomSetup.cfg")) {
-				Copy-File -Path "$ScriptParentPath\CustomSetup.cfg" -Destination "$App\neo42-Install\"
-				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
-			}
 			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
 	
 			Write-Log -message "Re-write all management registry entries for the application package..." -Source ${cmdletName}
