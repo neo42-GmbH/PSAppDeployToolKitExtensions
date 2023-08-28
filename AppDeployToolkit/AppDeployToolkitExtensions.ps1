@@ -3913,8 +3913,6 @@ function Get-NxtVariablesFromDeploymentSystem {
 		Variables set by the deployment system overwrite the values from the neo42PackageConfig.json
 	.PARAMETER RegisterPackage
 		Value to set $global:RegisterPackage to. Defaults to $env:registerPackage
-	.PARAMETER UninstallOld
-		Value to set $global:UninstallOld to. Defaults to $env:uninstallOld
 	.EXAMPLE
 		Get-NxtVariablesFromDeploymentSystem
 	.LINK
@@ -3924,13 +3922,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegisterPackage = $env:registerPackage,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$UninstallOld = $env:uninstallOld,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$Reboot = $env:Reboot
+		$RegisterPackage = $env:registerPackage
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3944,13 +3936,6 @@ function Get-NxtVariablesFromDeploymentSystem {
 			} 
 			else { 
 				[bool]$global:RegisterPackage = $true
-			}
-			## actually this $global:UninstallOld is not be used, because no re-overriding in this way should be allowed yet
-			if ("false" -eq $UninstallOld) {
-				[bool]$global:UninstallOld = $false
-			}
-			if ($null -ne $Reboot) {
-				[int]$global:Reboot = $Reboot
 			}
 			Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
 		}
