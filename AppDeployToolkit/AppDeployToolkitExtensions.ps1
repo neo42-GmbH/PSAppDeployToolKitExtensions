@@ -4229,16 +4229,25 @@ function Initialize-NxtEnvironment {
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
+			if ($DeploymenType -eq "Install") {
+				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..."-Source ${cmdletName}
+				Remove-File -Path "$App\neo42-Install\Setup.cfg"
+				Remove-File -Path "$App\neo42-Install\CustomSetup.cfg"
+			}
 			if ($true -eq (Test-Path -Path $SetupCfgPathOverride\setupOverride.cfg)) {
+				## fwe need to generate non-existing destination folder/subfolder too (variable SetupCfgPathOverride contains file name only!)
 				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
-				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg"
+				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg" -Recurse
+				Write-Log -Message "Found an externally provided custom setup configuration file..."-Source ${cmdletName}
 			}
 			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
-				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
-				Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
+				## following command construct generates non-existing destination folder/subfolder too (variable SetupCfgPath contains path name and file name!)
+				Copy-File -Path "$SetupCfgPath" -Destination "$App\neo42-Install\"
+				Write-Log -Message "Found a default setup config file 'Setup.cfg' too..."-Source ${cmdletName}
 			}
-			if ($true -eq (Test-Path -Path "$ScriptParentPath\CustomSetup.cfg")) {
-				Copy-File -Path "$ScriptParentPath\CustomSetup.cfg" -Destination "$App\neo42-Install\"
+			if ($true -eq (Test-Path -Path "$CustomSetupCfgPath")) {
+				## following command construct generates non-existing destination folder/subfolder too (variable CustomSetupCfgPath contains path name and file name!)
+				Copy-File -Path "$CustomSetupCfgPath" -Destination "$App\neo42-Install\"
 				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
 			}
 		}
@@ -4799,9 +4808,6 @@ function Register-NxtPackage {
 	.PARAMETER LastErrorMessage
 		If set the message is written to the registry.
 		Defaults to the $global:LastErrorMessage.
-	.PARAMETER SetupCfgPathOverride
-		Defines the SetupCfgPathOverride.
-		Defaults to $env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID).
 	.PARAMETER $UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
@@ -4897,9 +4903,6 @@ function Register-NxtPackage {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
 		$LastErrorMessage = $global:LastErrorMessage,
