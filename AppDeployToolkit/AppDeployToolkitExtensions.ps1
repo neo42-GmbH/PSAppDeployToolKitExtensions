@@ -4243,7 +4243,7 @@ function Initialize-NxtEnvironment {
 			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
 				## following command construct generates non-existing destination folder/subfolder too (variable SetupCfgPath contains path name and file name!)
 				Copy-File -Path "$SetupCfgPath" -Destination "$App\neo42-Install\"
-				Write-Log -Message "Found a default setup config file 'Setup.cfg' too..."-Source ${cmdletName}
+				Write-Log -Message "Found a default setup config file 'Setup.cfg'..."-Source ${cmdletName}
 			}
 			if ($true -eq (Test-Path -Path "$CustomSetupCfgPath")) {
 				## following command construct generates non-existing destination folder/subfolder too (variable CustomSetupCfgPath contains path name and file name!)
