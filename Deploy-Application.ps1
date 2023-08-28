@@ -231,7 +231,7 @@ function Main {
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
-		[string]
+		[bool]
 		$RegisterPackage = $global:registerPackage
 	)
 	try {
@@ -329,6 +329,8 @@ function Main {
 						## register package for uninstall
 						[string]$script:installPhase = 'Package-Registration'
 						Register-NxtPackage
+					} else {
+						Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 					}
 				}
 				else {
