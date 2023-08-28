@@ -3913,6 +3913,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 		Variables set by the deployment system overwrite the values from the neo42PackageConfig.json
 	.PARAMETER RegisterPackage
 		Value to set $global:RegisterPackage to. Defaults to $env:registerPackage
+		Usually, packages are registered. A value of "false" for the $env:registerPackage environmental variable prevents this step.
 	.PARAMETER UninstallOld
 		Value to set $global:UninstallOld to. Defaults to $env:uninstallOld
 	.EXAMPLE
@@ -3941,6 +3942,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 		try {
 			if ("false" -eq $RegisterPackage) {
 				[bool]$global:RegisterPackage = $false 
+				Write-Log -Message "Package registration will be prevented because the environment variable '`$env:PackageRegister' is set to 'false'." -Severity 2 -Source ${cmdletName}
 			} 
 			else { 
 				[bool]$global:RegisterPackage = $true
