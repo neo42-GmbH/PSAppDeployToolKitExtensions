@@ -431,7 +431,6 @@ parent: /
 ```
 default value: true
 switch to instruct script to remove packages in former framework versions (especially Empirum setup.inf packages) and/or with same "PackageFamilyGUID" (especially packages in VBS style)
-note: this value may be overwritten by deployment system (if variable '$env:uninstallOld' is set)
 ```
 
 **"Reboot"** *mandatory integer value*
@@ -440,7 +439,6 @@ parent: /
 ```
 default value: 0
 reboot behavior of package (only values '0', '1' and '2' are allowed)
-note: this value may be overwritten by deployment system (if variable '$env:Reboot' is set)
 ```
 - **0**: no reboot required (don't overwrites main exit code inside script)
 - **1**: reboot required (always overwrites main exit code inside script to exit code 3010)

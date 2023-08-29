@@ -452,7 +452,7 @@ function Add-NxtXmlNode {
 	}
 	Process {
 		try {
-			if ($false -eq (Test-Path $FilePath)) {
+			if ($false -eq (Test-Path -Path $FilePath)) {
 				Write-Log -Message "File $FilePath does not exist" -Severity 3
 				throw "File $FilePath does not exist"
 			}
@@ -535,7 +535,6 @@ function Close-BlockExecutionWindow {
 #endregion
 #region Function Compare-NxtVersion
 function Compare-NxtVersion {
-	[CmdletBinding()]
 	<#
 	.SYNOPSIS
 		Compare two versions.
@@ -593,6 +592,7 @@ function Compare-NxtVersion {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	param (
 		[Parameter()]
 		[String]
@@ -637,7 +637,6 @@ function Compare-NxtVersion {
 #endregion
 #region Function Compare-NxtVersionPart
 function Compare-NxtVersionPart {
-	[CmdletBinding()]
 	<#
 	.SYNOPSIS
 		Compare two version parts.
@@ -671,6 +670,7 @@ function Compare-NxtVersionPart {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	[CmdletBinding()]
 	param (
 		[Parameter()]
 		[string]
@@ -777,6 +777,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER Wow6432Node
 		Switches between 32/64 Bit Registry Keys.
 		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
+	.PARAMETER ScriptRoot
+		Defines the parent directory of the script.
+		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.LINK
@@ -807,7 +810,10 @@ function Complete-NxtPackageInstallation {
 		$Wow6432Node = $global:Wow6432Node,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$UserPartDir = $global:UserPartDir
+		$UserPartDir = $global:UserPartDir,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptRoot = $scriptRoot
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -851,18 +857,18 @@ function Complete-NxtPackageInstallation {
 			## Userpart-Installation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID.uninstall"
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
-			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
+			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			$null = Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
-			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_RequireAdmin" -InnerText "False"
-			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/UI_Options/ShowBalloonNotifications" -InnerText "False"
+			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$ScriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_RequireAdmin" -InnerText "False"
+			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$ScriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/UI_Options/ShowBalloonNotifications" -InnerText "False"
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 		}
 		foreach ($oldAppFolder in $((Get-ChildItem -Path (Get-Item -Path $App).Parent.FullName | Where-Object Name -ne (Get-Item -Path $App).Name).FullName)) {
 			## note: we always use the script from current application package source folder (it is basically identical in each package)
-			Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
+			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
 			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
 		}
@@ -895,6 +901,9 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER $UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
+	.PARAMETER ScriptRoot
+		Defines the parent directory of the script.
+		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
 	.EXAMPLE
 		Complete-NxtPackageUninstallation
 	.LINK
@@ -916,7 +925,10 @@ function Complete-NxtPackageUninstallation {
 		$UserPartRevision = $global:PackageConfig.UserPartRevision,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$UserPartDir = $global:UserPartDir
+		$UserPartDir = $global:UserPartDir,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptRoot = $scriptRoot
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -928,13 +940,13 @@ function Complete-NxtPackageUninstallation {
 		if ($true -eq $UserPartOnUninstallation) {
 			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
-			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
+			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
-			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_RequireAdmin" -InnerText "False"
-			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$scriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/UI_Options/ShowBalloonNotifications" -InnerText "False"
+			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$ScriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_RequireAdmin" -InnerText "False"
+			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$ScriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/UI_Options/ShowBalloonNotifications" -InnerText "False"
 			Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 		}
 	}
@@ -3913,6 +3925,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 		Variables set by the deployment system overwrite the values from the neo42PackageConfig.json
 	.PARAMETER RegisterPackage
 		Value to set $global:RegisterPackage to. Defaults to $env:registerPackage
+		Usually, packages are registered. A value of "false" for the $env:registerPackage environmental variable prevents this step.
 	.PARAMETER UninstallOld
 		Value to set $global:UninstallOld to. Defaults to $env:uninstallOld
 	.EXAMPLE
@@ -3924,13 +3937,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegisterPackage = $env:registerPackage,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$UninstallOld = $env:uninstallOld,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$Reboot = $env:Reboot
+		$RegisterPackage = $env:registerPackage
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3941,16 +3948,10 @@ function Get-NxtVariablesFromDeploymentSystem {
 		try {
 			if ("false" -eq $RegisterPackage) {
 				[bool]$global:RegisterPackage = $false 
+				Write-Log -Message "Package registration will be prevented because the environment variable '`$env:PackageRegister' is set to 'false'." -Severity 2 -Source ${cmdletName}
 			} 
 			else { 
 				[bool]$global:RegisterPackage = $true
-			}
-			## actually this $global:UninstallOld is not be used, because no re-overriding in this way should be allowed yet
-			if ("false" -eq $UninstallOld) {
-				[bool]$global:UninstallOld = $false
-			}
-			if ($null -ne $Reboot) {
-				[int]$global:Reboot = $Reboot
 			}
 			Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
 		}
@@ -4209,7 +4210,7 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$App = $global:PackageConfig.App,
+		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentType = $DeploymentType
@@ -4229,17 +4230,27 @@ function Initialize-NxtEnvironment {
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
-			if ($true -eq (Test-path $SetupCfgPathOverride\setupOverride.cfg)) {
-				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
-				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg"
+			if ($DeploymentType -eq "Install") {
+				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
+				Remove-File -Path "$App\neo42-Install\Setup.cfg"
+				Remove-File -Path "$App\neo42-Install\CustomSetup.cfg"
 			}
-			elseif ($true -eq (Test-path $SetupCfgPath)) {
+			if ($true -eq (Test-Path -Path $SetupCfgPathOverride\setupOverride.cfg)) {
+				Write-Log -Message "Found an externally provided setup configuration file..."-Source ${cmdletName}
 				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
-				Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
+				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg" -Recurse
+			}
+			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
+				Write-Log -Message "Found a default setup config file 'Setup.cfg'..."-Source ${cmdletName}
+				Copy-File -Path "$SetupCfgPath" -Destination "$App\neo42-Install\"
+			}
+			if ($true -eq (Test-Path -Path "$CustomSetupCfgPath")) {
+				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
+				Copy-File -Path "$CustomSetupCfgPath" -Destination "$App\neo42-Install\"
 			}
 		}
 		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
-		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
+		Set-NxtCustomSetupCfg -Path "$App\neo42-Install\CustomSetup.cfg"
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
 		}
@@ -4765,6 +4776,9 @@ function Register-NxtPackage {
 	.PARAMETER HidePackageUninstallEntry
 		Specifies if the PackageUninstallEntry for this installation should be hidden.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ScriptRoot
+		Defines the parent directory of the script.
+		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
 	.PARAMETER ScriptParentPath
 		Specifies the ScriptParentPath.
 		Defaults to $scriptParentPath defined in the AppDeployToolkitMain.
@@ -4795,9 +4809,6 @@ function Register-NxtPackage {
 	.PARAMETER LastErrorMessage
 		If set the message is written to the registry.
 		Defaults to the $global:LastErrorMessage.
-	.PARAMETER SetupCfgPathOverride
-		Defines the SetupCfgPathOverride.
-		Defaults to $env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID).
 	.PARAMETER $UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
@@ -4865,6 +4876,9 @@ function Register-NxtPackage {
 		$HidePackageUninstallEntry = $global:PackageConfig.HidePackageUninstallEntry,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$ScriptParentPath = $scriptParentPath,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -4895,9 +4909,6 @@ function Register-NxtPackage {
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
-		[Parameter(Mandatory = $false)]
-		[string]
 		$LastErrorMessage = $global:LastErrorMessage,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -4911,22 +4922,11 @@ function Register-NxtPackage {
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
 		try {
-			Copy-File -Path "$scriptRoot" -Destination "$App\neo42-Install\" -Recurse
+			Copy-File -Path "$ScriptRoot" -Destination "$App\neo42-Install\" -Recurse
 			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
 			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
-			if ($true -eq (Test-Path "$SetupCfgPathOverride\setupoverride.cfg")) {
-				Copy-File -Path "$SetupCfgPathOverride\setupoverride.cfg" -Destination "$App\neo42-Install\setup.cfg"
-			} elseif ($true -eq (Test-Path "$ScriptParentPath\Setup.cfg")) {
-				Copy-File -Path "$ScriptParentPath\Setup.cfg" -Destination "$App\neo42-Install\"
-			} else {
-				Write-Log -Message "Could not copy setup config file 'setup.cfg'. There is no such file provided with this package." -Severity 2 -Source ${cmdletName}
-			}
-			if ($true -eq (Test-Path "$ScriptParentPath\CustomSetup.cfg")) {
-				Copy-File -Path "$ScriptParentPath\CustomSetup.cfg" -Destination "$App\neo42-Install\"
-				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
-			}
-			Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
+			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
 	
 			Write-Log -message "Re-write all management registry entries for the application package..." -Source ${cmdletName}
 			## to prevent obsolete entries from old VBS packages
@@ -4963,7 +4963,7 @@ function Register-NxtPackage {
 			Write-Log -message "Re-write all uninstall registry entries for the application package..." -Source ${cmdletName}
 			## to prevent obsolete entries from old VBS packages
 			Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID"
-			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
+			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayName' -Value $UninstallDisplayName
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayVersion' -Value $DisplayVersion
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'MachineKeyName' -Value $RegPackagesKey\$PackageGUID
@@ -5745,6 +5745,66 @@ function Resolve-NxtDependentPackage {
 	}
 }
 #endregion
+#region Function Set-NxtCustomSetupCfg
+function Set-NxtCustomSetupCfg {
+	<#
+	.SYNOPSIS
+		Set the contents from CustomSetup.cfg to $global:CustomSetupCfg.
+	.DESCRIPTION
+		Imports a CustomSetup.cfg file in INI format.
+	.PARAMETER Path
+		The path to the CustomSetup.cfg file (including file name).
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
+	.EXAMPLE
+		Set-NxtCustomSetupCfg -Path C:\path\to\customsetupcfg\CustomSetup.cfg -ContinueOnError $false
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+		[String]$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContinueOnError = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		try {
+			[string]$customSetupCfgFileName = Split-Path -path "$Path" -Leaf
+			Write-Log -Message "Checking for custom config file [$customSetupCfgFileName] under [$Path]..." -Source ${CmdletName}
+			if ($true -eq (Test-Path -Path $Path)) {
+				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
+				Write-Log -Message "[$customSetupCfgFileName] was found and successfully parsed into global:CustomSetupCfg object." -Source ${CmdletName}
+				foreach ($sectionKey in $($global:SetupCfg.Keys)) {
+					foreach ($sectionKeySubkey in $($global:SetupCfg.$sectionKey.Keys)) {
+						if ($null -ne $global:CustomSetupCfg.$sectionKey.$sectionKeySubkey) {
+							Write-Log -Message "Override global object value [`$global:SetupCfg.$sectionKey.$sectionKeySubkey] with content from global:CustomSetupCfg object: [$($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)]" -Source ${CmdletName}
+							[string]$global:SetupCfg.$sectionKey.$sectionKeySubkey = $($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)
+						}
+					}
+				}
+			}
+			else {
+				Write-Log -Message "No [$customSetupCfgFileName] found. Skipped parsing customized values." -Source ${CmdletName}
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to set the CustomSetupCfg. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
 #region Function Set-NxtIniValue
 function Set-NxtIniValue {
 	<#
@@ -6003,64 +6063,6 @@ function Set-NxtProcessEnvironmentVariable {
 	}
 }
 #endregion
-#region Function Set-NxtCustomSetupCfg
-function Set-NxtCustomSetupCfg {
-	<#
-	.SYNOPSIS
-		Set the contents from CustomSetup.cfg to $global:CustomSetupCfg.
-	.DESCRIPTION
-		Imports a CustomSetup.cfg file in INI format.
-	.PARAMETER Path
-		The path to the CustomSetup.cfg file (including file name).
-	.EXAMPLE
-		Set-NxtCustomSetupCfg -Path C:\path\to\customsetupcfg\CustomSetup.cfg -ContinueOnError $false
-	.NOTES
-		AppDeployToolkit is required in order to run this function.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-		[String]$Path,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$ContinueOnError = $true
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-	}
-	Process {
-		try {
-			[string]$customSetupCfgFileName = Split-Path -path "$Path" -Leaf
-			Write-Log -Message "Checking for custom config file [$customSetupCfgFileName] under [$Path]..." -Source ${CmdletName}
-			if ($true -eq (Test-Path $Path)) {
-				[hashtable]$global:CustomSetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
-				Write-Log -Message "[$customSetupCfgFileName] was found and successfully parsed into global:CustomSetupCfg object." -Source ${CmdletName}
-				foreach ($sectionKey in $($global:SetupCfg.Keys)) {
-					foreach ($sectionKeySubkey in $($global:SetupCfg.$sectionKey.Keys)) {
-						if ($null -ne $global:CustomSetupCfg.$sectionKey.$sectionKeySubkey) {
-							Write-Log -Message "Override global object value [`$global:SetupCfg.$sectionKey.$sectionKeySubkey] with content from global:CustomSetupCfg object: [$($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)]" -Source ${CmdletName}
-							[string]$global:SetupCfg.$sectionKey.$sectionKeySubkey = $($global:CustomSetupCfg.$sectionKey.$sectionKeySubkey)
-						}
-					}
-				}
-			}
-			else {
-				Write-Log -Message "No [$customSetupCfgFileName] found. Skipped parsing customized values." -Source ${CmdletName}
-			}
-		}
-		catch {
-			Write-Log -Message "Failed to set the CustomSetupCfg. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
-	}
-}
-#endregion
 #region Function Set-NxtSetupCfg
 function Set-NxtSetupCfg {
 	<#
@@ -6070,6 +6072,10 @@ function Set-NxtSetupCfg {
 		Imports a Setup.cfg file in INI format.
 	.PARAMETER Path
 		The path to the Setup.cfg file (including file name).
+	.PARAMETER AddDefaultOptions
+		Specifies to load all necessary option values from ADT framework config file if they are missing/undefined in provided config file in parameter 'Path'. Default is: $true.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
 		Set-NxtSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
 	.NOTES
@@ -6081,6 +6087,9 @@ function Set-NxtSetupCfg {
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
 		[String]$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AddDefaultOptions = $true,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$ContinueOnError = $true
@@ -6101,7 +6110,7 @@ function Set-NxtSetupCfg {
 			[hashtable]$global:SetupCfg = $null
 		}
 		## provide all expected predefined values from ADT framework config file if they are missing/undefined in a default file 'setup.cfg' only
-		if ($Path -eq $global:SetupCfgPath) {
+		if ($true -eq $AddDefaultOptions) {
 			if ($null -eq $global:SetupCfg) {
 				[hashtable]$global:SetupCfg = @{}
 			}
@@ -6236,7 +6245,7 @@ function Set-NxtXmlNode {
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			$testNxtXmlNodeParams.Add("FilterAttributes", $FilterAttributes)
 		}
-		if ($false -eq (Test-Path $FilePath)) {
+		if ($false -eq (Test-Path -Path $FilePath)) {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
@@ -6337,6 +6346,9 @@ Function Show-NxtInstallationWelcome {
     .PARAMETER UserCanAbort
 		Specifies if the user can abort the process.
 		Defaults to the corresponding value from the $global:SetupCfg object.
+	.PARAMETER ScriptRoot
+		Defines the parent directory of the script.
+		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
     .OUTPUTS
 		Exit code depending on the user's response or the timeout.
     .EXAMPLE
@@ -6440,7 +6452,10 @@ Function Show-NxtInstallationWelcome {
 		[Switch]$UserCanCloseAll = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.USERCANCLOSEALL)),
 		## Specifies if the user can abort the process
 		[Parameter(Mandatory = $false)]
-		[Switch]$UserCanAbort = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER))
+		[Switch]$UserCanAbort = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER)),
+		## Specifies the script root path
+		[Parameter(Mandatory = $false)]
+		[string]$ScriptRoot = $scriptRoot
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6821,7 +6836,7 @@ Function Show-NxtInstallationWelcome {
 			Block-AppExecution -ProcessName ($processObjects | Select-Object -ExpandProperty 'ProcessName')
 			if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
-				Copy-File -Path "$scriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
+				Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
 				Update-NxtXmlNode -FilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
 			}
 		}
@@ -8400,7 +8415,7 @@ function Test-NxtXmlNodeExists {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($false -eq (Test-Path $FilePath)) {
+		if ($false -eq (Test-Path -Path $FilePath)) {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
@@ -9016,10 +9031,10 @@ function Unregister-NxtOld {
 			Write-Log -Message "Checking for old package registered..." -Source ${cmdletName}
 			[string]$currentGUID = $null
 			## process an old application package
-			if ( ($true -eq (Test-Path -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) ) {
+			if ( ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) ) {
 				[string]$currentGUID = $PackageGUID
 				if ( (("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) ) {
 					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')
@@ -9029,10 +9044,10 @@ function Unregister-NxtOld {
 				}
 			}
 			## process old product group member
-			elseif ( ($true -eq (Test-Path -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) ) {
+			elseif ( ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) ) {
 				[string]$currentGUID = $ProductGUID
 				## retrieve AppPath for former VBS package (only here: old $PackageFamilyGUID is stored in $ProductGUID)
 				if ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
@@ -9058,10 +9073,10 @@ function Unregister-NxtOld {
 				## note: the x64 uninstall registry keys are still the same as for old package and remains there if the old package should not to be uninstalled (not true for old product member packages, see above!)
 				Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID"
 				Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
-				if ( ($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
-				($true -eq (Test-Path -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')) -or
-				($true -eq (Test-Path -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
-				($true -eq (Test-Path -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')) ) {
+				if ( ($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
+				($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')) -or
+				($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
+				($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')) ) {
 					Write-Log -Message "Unregister of old package was incomplete! Some orphaned registry keys remain on the client." -Severity 2 -Source ${cmdletName}
 				}
 			}
@@ -9069,10 +9084,10 @@ function Unregister-NxtOld {
 				Write-Log -Message "No need to cleanup old package registration." -Source ${cmdletName}
 			}
 			if ($false -eq [string]::IsNullOrEmpty($currentAppPath)) {
-				if ($true -eq (Test-Path -Key "$currentAppPath")) {
+				if ($true -eq (Test-Path -Path "$currentAppPath")) {
 					Remove-Folder -Path "$currentAppPath\neoInstall"
 					Remove-Folder -Path "$currentAppPath\neoSource"
-					if ( ($true -eq (Test-Path -Key "$currentAppPath\neoInstall")) -or ($true -eq (Test-Path -Key "$currentAppPath\neoSource")) ) {
+					if ( ($true -eq (Test-Path -Path "$currentAppPath\neoInstall")) -or ($true -eq (Test-Path -Path "$currentAppPath\neoSource")) ) {
 						Write-Log -Message "Unregister of old package was incomplete! Some orphaned files and might remain on the client." -Severity 2 -Source ${cmdletName}
 					}
 				}
@@ -9162,7 +9177,7 @@ function Unregister-NxtPackage {
 						if (![string]::IsNullOrEmpty($assignedPackageGUIDAppPath)) {
 							if ($true -eq (Test-Path -Path "$assignedPackageGUIDAppPath")) {
 								## note: we always use the script from current application package source folder (it is basically identical in each package)
-								Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
+								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
 								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
 							}
@@ -9193,7 +9208,7 @@ function Unregister-NxtPackage {
 				if (![string]::IsNullOrEmpty($App)) {
 					if ($true -eq (Test-Path -Path "$App")) {
 						## note: we always use the script from current application package source folder (it is basically identical in each package)
-						Copy-File -Path "$scriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
+						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
 						Start-Sleep -Seconds 1
 						Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$App" -NoWait
 					}
@@ -9274,10 +9289,10 @@ function Update-NxtTextInFile {
 	}
 	Process {
 		[String]$intEncoding = $Encoding
-		if (!(Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+		if (!(Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			[string]$intEncoding = "UTF8"
 		}
-		elseif ((Test-Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+		elseif ((Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			try {
 				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
@@ -9402,7 +9417,7 @@ function Update-NxtXmlNode {
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			$testNxtXmlNodeExistsParams.Add("FilterAttributes", $FilterAttributes)
 		}
-		if ($false -eq (Test-Path $FilePath)) {
+		if ($false -eq (Test-Path -Path $FilePath)) {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
