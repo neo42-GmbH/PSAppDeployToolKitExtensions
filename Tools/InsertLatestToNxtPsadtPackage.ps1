@@ -40,7 +40,9 @@ function Update-NxtPSAdtPackage {
         [Parameter(Mandatory=$true)]
         [string]$PackageToUpdatePath,
         [Parameter(Mandatory=$true)]
-        [string]$LatestVersionPath
+        [string]$LatestVersionPath,
+        [Parameter(Mandatory=$false)]
+        [string]$LogFileName
     )
     try {
     # test if both paths exist
@@ -68,7 +70,8 @@ function Update-NxtPSAdtPackage {
         $resultContent = Set-NxtContentBetweenTags -Content $resultContent -StartTag $startTag -EndTag $endTag -ContentBetweenTags $contentBetweenTags
     }
     Write-Output "Updating $PackageToUpdatePath"
-    Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $resultContent
+    Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $resultContent -NoNewline
+    Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "Updated $PackageToUpdatePath from $LatestVersionPath"
     # remove Appdeploytoolkit folder from package
     Remove-Item -Path "$PackageToUpdatePath\AppDeployToolkit" -Recurse -Force
     # copy Appdeploytoolkit folder from new version
@@ -77,10 +80,12 @@ function Update-NxtPSAdtPackage {
 
 }
 catch {
-    Write-Error "$PackageToUpdatePath does not have the same custom functions as $LatestVersionPath" 
+    Write-Error "$PackageToUpdatePath does not have the same custom functions as $LatestVersionPath"
+    Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "Failed to update $PackageToUpdatePath"
 }
 }
+[string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
-    Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath
+    Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName
 } 
-#Update-NxtPSAdtPackage
+Read-Host -Prompt "Press Enter to exit"
