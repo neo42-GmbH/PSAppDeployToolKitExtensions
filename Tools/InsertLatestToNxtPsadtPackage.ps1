@@ -80,7 +80,7 @@ catch {
     Write-Error "$PackageToUpdatePath does not have the same custom functions as $LatestVersionPath" 
 }
 }
-ls -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | % {
+Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
     Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath
 } 
 #Update-NxtPSAdtPackage
