@@ -4239,7 +4239,7 @@ function Initialize-NxtEnvironment {
 				Copy-File -Path $SetupCfgPath -Destination "$App\neo42-Install\setup.cfg"
 			}
 		}
-		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg" -App "$App"
+		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
 		Set-NxtCustomSetupCfg -Path $CustomSetupCfgPath
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
@@ -6079,9 +6079,8 @@ function Set-NxtSetupCfg {
 		Imports a Setup.cfg file in INI format.
 	.PARAMETER Path
 		The path to the Setup.cfg file (including file name).
-	.PARAMETER App
-		Defines the path to a local persistent cache for installation files.
-		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AddDefaultOptions
+		Specifies to load all necessary option values from ADT framework config file if they are missing/undefined in provided config file in parameter 'Path'. Default is: $true.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
@@ -6096,8 +6095,8 @@ function Set-NxtSetupCfg {
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
 		[String]$Path,
 		[Parameter(Mandatory = $false)]
-		[string]
-		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
+		[bool]
+		$AddDefaultOptions = $true,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$ContinueOnError = $true
@@ -6118,8 +6117,7 @@ function Set-NxtSetupCfg {
 			[hashtable]$global:SetupCfg = $null
 		}
 		## provide all expected predefined values from ADT framework config file if they are missing/undefined in a default file 'setup.cfg' only
-		## (note: at this point an existent setup.cfg file is already copied to $App folder)
-		if ("$Path" -eq "$App\neo42-Install\Setup.cfg") {
+		if ($true -eq $AddDefaultOptions) {
 			if ($null -eq $global:SetupCfg) {
 				[hashtable]$global:SetupCfg = @{}
 			}
