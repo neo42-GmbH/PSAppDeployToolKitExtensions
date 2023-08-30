@@ -3456,7 +3456,7 @@ function Get-NxtProcessName {
 	Process {
 		[string]$result = [string]::Empty
 		try {
-			[string]$result = (Get-Process -Id $ProcessId).Name
+			[string]$result = (Get-Process -Id $ProcessId -ErrorAction Stop).Name
 		}
 		catch {
 			Write-Log -Message "Failed to get the name for process with pid '$ProcessId'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
