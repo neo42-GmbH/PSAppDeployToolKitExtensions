@@ -70,6 +70,12 @@ function Update-NxtPSAdtPackage {
     }
     [string]$newVersionContent = Get-Content -raw -Path "$LatestVersionPath\Deploy-Application.ps1"
     [string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+    #check for Version -ge 2023.06.12.01-53
+    [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "
+	Toolkit Exit Code Ranges:"
+    if ([int]($version -split "-")[1] -lt 53) {
+        throw "Version of $PackageToUpdatePath is lower than 2023.06.12.01-53 and must be updated manually"
+    }
     [string[]]$customFunctionNames = foreach ($line in ($existingContent -split "`n")){
         if ($line -match "function Custom") {
             $line -split " " | Select-Object -Index 1
@@ -101,7 +107,7 @@ function Update-NxtPSAdtPackage {
             }
         }
         catch {
-            Write-Error "$PackageToUpdatePath does not have the same custom functions as $LatestVersionPath"
+            Write-Error "$PackageToUpdatePath could not be updated from $LatestVersionPath - $_"
             Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "Failed to update $PackageToUpdatePath"
         }
     }
