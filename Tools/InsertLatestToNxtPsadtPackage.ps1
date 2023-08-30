@@ -35,6 +35,22 @@ function Set-NxtContentBetweenTags {
     $Content = $Content.Insert($StartIndex, $ContentBetweenTags)
     return $Content
 }
+function Add-ContentBeforeTag {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Content,
+        [Parameter(Mandatory=$true)]
+        [string]$StartTag,
+        [Parameter(Mandatory=$true)]
+        [string]$ContentToInsert
+    )
+    $StartIndex = $Content.IndexOf($StartTag)
+    if ($StartIndex -eq -1) {
+        throw "StartIndex not found"
+    }
+    $content = $content.Insert($StartIndex, $ContentToInsert)
+    return $content
+}
 function Update-NxtPSAdtPackage {
     param(
         [Parameter(Mandatory=$true)]
@@ -72,18 +88,23 @@ function Update-NxtPSAdtPackage {
     Write-Output "Updating $PackageToUpdatePath"
     Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $resultContent -NoNewline
     Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "Updated $PackageToUpdatePath from $LatestVersionPath"
-    # remove Appdeploytoolkit folder from package
     Remove-Item -Path "$PackageToUpdatePath\AppDeployToolkit" -Recurse -Force
-    # copy Appdeploytoolkit folder from new version
     Copy-Item -Path "$LatestVersionPath\AppDeployToolkit" -Destination $PackageToUpdatePath -Recurse -Force
-    # update DeployApplication.ps1
 
-}
-catch {
-    Write-Error "$PackageToUpdatePath does not have the same custom functions as $LatestVersionPath"
-    Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "Failed to update $PackageToUpdatePath"
-}
-}
+            #also update packagecofig.json so it contains all default values
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+            if ($null -eq $jsonContent.UninstallKeyContainsExpandVariables){
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayNamesToExcludeFromAppSearches"' -ContentToInsert '  "UninstallKeyContainsExpandVariables": false,
+'
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            }
+        }
+        catch {
+            Write-Error "$PackageToUpdatePath does not have the same custom functions as $LatestVersionPath"
+            Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "Failed to update $PackageToUpdatePath"
+        }
+    }
 [string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
     Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName
