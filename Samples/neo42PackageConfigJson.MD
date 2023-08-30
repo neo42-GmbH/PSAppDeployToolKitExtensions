@@ -535,6 +535,16 @@ switch to control the interpretation of character '*' in a defined string of val
 - **true** : '\*' is interpreted as a wildcard
 - **false**: '\*' is interpreted as part of the defined string
 
+**"UninstallKeyContainsExpandVariables"** *optional bool value*
+
+parent: /
+```
+default value: false
+switch to control the interpretation of '$($variables)' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
+```
+- **true** : '$($var)' is interpreted as a PowerShell variable 
+- **false**: '$($var)' is interpreted as part of the defined string
+
 **"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by ***[]***)*
 
 parent: /

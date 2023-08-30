@@ -43,6 +43,7 @@
   "UninstallKey": "!MSIGUID!",
   "UninstallKeyIsDisplayName": false,
   "UninstallKeyContainsWildCards": false,
+  "UninstallKeyContainsExpandVariables": false,
   "DisplayNamesToExcludeFromAppSearches": [
     "$($global:PackageConfig.UninstallDisplayName)"
   ],

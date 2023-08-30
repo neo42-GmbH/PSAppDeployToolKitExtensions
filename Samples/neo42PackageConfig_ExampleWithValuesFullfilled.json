@@ -50,6 +50,7 @@
   "UninstallKey": "Scribble Papers_is1",
   "UninstallKeyIsDisplayName": false,
   "UninstallKeyContainsWildCards": false,
+  "UninstallKeyContainsExpandVariables": false,
   "DisplayNamesToExcludeFromAppSearches": [
     "$($global:PackageConfig.UninstallDisplayName)"
   ],

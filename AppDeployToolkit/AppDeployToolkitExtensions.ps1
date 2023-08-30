@@ -2461,6 +2461,9 @@ function Expand-NxtPackageConfig {
 		[string]$global:PackageConfig.InstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstPara)
 		[string]$global:PackageConfig.UninstFile = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstFile)
 		[string]$global:PackageConfig.UninstPara = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstPara)
+		if ($true -eq $global:PackageConfig.UninstallKeyContainsExpandVariables) {
+			[string]$global:PackageConfig.UninstallKey = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallKey)
+		}
 		[array]$global:PackageConfig.DisplayNamesToExcludeFromAppSearches = foreach ($displayNameToExcludeFromAppSearches in $global:PackageConfig.DisplayNamesToExcludeFromAppSearches) {
 			$ExecutionContext.InvokeCommand.ExpandString($displayNameToExcludeFromAppSearches)
 		}
