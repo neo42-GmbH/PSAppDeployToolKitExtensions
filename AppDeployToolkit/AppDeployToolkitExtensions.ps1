@@ -5863,7 +5863,7 @@ function Set-NxtIniValue {
 	Process {
 		try {
 			if (!(Test-Path -Path $FilePath) -and $Create) {
-				New-Item -ItemType File -Path $FilePath -Force
+				New-Item -ItemType File -Path $FilePath -Force | Out-Null
 			}
 
 			if (Test-Path -Path $FilePath) {
