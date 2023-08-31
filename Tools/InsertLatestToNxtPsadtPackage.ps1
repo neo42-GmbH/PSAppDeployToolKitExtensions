@@ -71,9 +71,8 @@ function Update-NxtPSAdtPackage {
     [string]$newVersionContent = Get-Content -raw -Path "$LatestVersionPath\Deploy-Application.ps1"
     [string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
     #check for Version -ge 2023.06.12.01-53
-    [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "
-	Toolkit Exit Code Ranges:"
-    if ([int]($version -split "-")[1] -lt 53) {
+    [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:"
+    if ([int]($version.TrimEnd("`n") -split "-")[1] -lt 53) {
         throw "Version of $PackageToUpdatePath is lower than 2023.06.12.01-53 and must be updated manually"
     }
     [string[]]$customFunctionNames = foreach ($line in ($existingContent -split "`n")){
