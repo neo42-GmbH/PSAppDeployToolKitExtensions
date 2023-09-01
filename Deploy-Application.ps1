@@ -71,11 +71,11 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
     Write-Host "OSArchitecture: $((Get-WmiObject Win32_OperatingSystem).OSArchitecture)"
     Write-Host $($MyInvocation.BoundParameters)
     Write-Host "Will ReSpawn in 64bit PowerShell"
-    $file = $MyInvocation.MyCommand.Path
+    [string]$file = $MyInvocation.MyCommand.Path
     # add all bound parameters to the argument list
-    $arguments = [string]::Empty
+    [string]$arguments = [string]::Empty
     foreach ($item in $MyInvocation.BoundParameters.Keys) {
-        $type = $($MyInvocation.BoundParameters[$item]).GetType()
+        [PsObject]$type = $($MyInvocation.BoundParameters[$item]).GetType()
         if ($type -eq [switch]) {
             if ($true -eq $MyInvocation.BoundParameters[$item]) {
                 $arguments += " -$item"
@@ -88,7 +88,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
             $arguments += " -$item $($MyInvocation.BoundParameters[$item])"
         }
     }
-    $process = Start-Process -FilePath "C:\Windows\SysNative\WindowsPowerShell\v1.0\powershell.exe" -PassThru -Wait -ArgumentList " -File `"$file`"$arguments"
+    [system.Diagnostics.Process]$process = Start-Process -FilePath "C:\Windows\SysNative\WindowsPowerShell\v1.0\powershell.exe" -PassThru -Wait -ArgumentList " -File `"$file`"$arguments"
     [int]$exitCode = $process.ExitCode
     exit $exitCode
 }
