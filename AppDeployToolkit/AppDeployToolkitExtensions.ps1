@@ -4387,6 +4387,9 @@ function Install-NxtApplication {
 	.PARAMETER AcceptedInstallExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedInstallRebootCodes
+		Defines a list of reboot codes that will be accepted for requested reboot by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -5532,6 +5535,9 @@ function Repair-NxtApplication {
 	.PARAMETER AcceptedRepairExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedMSIRepairRebootCodes
+		Defines a list of reboot codes that will be accepted for requested reboot by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Repair-NxtApplication
 	.LINK
@@ -5573,8 +5579,11 @@ function Repair-NxtApplication {
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes
-	)
+		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedMSIRepairRebootCodes = $global:PackageConfig.AcceptedMSIRepairRebootCodes
+		)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -8503,6 +8512,9 @@ function Uninstall-NxtApplication {
 	.PARAMETER AcceptedUninstallExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedUninstallRebootCodes
+		Defines a list of reboot codes that will be accepted for requested reboot by called setup execution.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallMethod
 		Defines the type of the uninstaller used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -8558,6 +8570,9 @@ function Uninstall-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AcceptedUninstallExitCodes = $global:PackageConfig.AcceptedUninstallExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedUninstallRebootCodes = $global:PackageConfig.AcceptedUninstallRebootCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallMethod = $global:PackageConfig.UninstallMethod,
