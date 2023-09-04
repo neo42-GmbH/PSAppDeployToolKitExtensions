@@ -345,7 +345,11 @@ function Main {
 					Remove-NxtProductMember
 				}
 				if ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1)) {
-					Show-NxtInstallationWelcome -IsInstall $false
+					[int]$showUnInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $false
+					if ($showUnInstallationWelcomeResult -ne 0) {
+						Close-BlockExecutionWindow
+						Exit-Script -ExitCode $showUnInstallationWelcomeResult
+					}
 					Initialize-NxtUninstallApplication
 					CustomUninstallBegin
 					[string]$script:installPhase = 'Package-Uninstallation'
