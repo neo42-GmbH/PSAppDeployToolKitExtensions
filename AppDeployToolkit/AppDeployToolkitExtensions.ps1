@@ -2389,7 +2389,6 @@ function Exit-NxtScriptWithError {
 	}
 	Process {
 		try {
-			Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'AppPath' -Value $App
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DebugLogFile' -Value $DebugLogFile
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DeploymentStartTime' -Value $DeploymentTimestamp
@@ -2410,6 +2409,7 @@ function Exit-NxtScriptWithError {
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'Version' -Value $AppVersion
+			Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
