@@ -173,6 +173,9 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.PARAMETER SkipUnregister
 		Skips unregister during uninstall of a package.
 		Defaults to the the corresponding call parameter of this script.
@@ -208,6 +211,9 @@ function Main {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentType = $DeploymentType,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$SkipUnregister = $SkipUnregister,
