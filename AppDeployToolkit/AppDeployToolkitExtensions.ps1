@@ -4349,6 +4349,9 @@ function Install-NxtApplication {
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER AppName
+        Specifies the Application Name used in the registry etc.
+        Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1").
 		Can be found under "HKLM:\Software\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
@@ -4409,6 +4412,9 @@ function Install-NxtApplication {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $global:PackageConfig.AppName,
 		[Parameter(Mandatory = $false)]
 		[String]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -4532,26 +4538,26 @@ function Install-NxtApplication {
 
 			## Test for successfull installation (if UninstallKey value is set)
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
-				$installResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull installation of '$appName' via registry."
+				$installResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull installation of '$AppName' via registry."
 				$installResult.Success = $null
 				[int]$logMessageSeverity = 2
 			}
 			else {
 				if ( $false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor) ) {
-					$installResult.ErrorMessage = "Installation RegistryAndProcessCondition of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
+					$installResult.ErrorMessage = "Installation RegistryAndProcessCondition of '$AppName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
 					$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					$installResult.Success = $false
 					[int]$logMessageSeverity = 3
 				}
 				else {
 					if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
-						$installResult.ErrorMessage = "Installation of '$appName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
+						$installResult.ErrorMessage = "Installation of '$AppName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
 						$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 						$installResult.Success = $false
 						[int]$logMessageSeverity = 3
 					}
 					else {
-						$installResult.ErrorMessage = "Installation of '$appName' was successful."
+						$installResult.ErrorMessage = "Installation of '$AppName' was successful."
 						$installResult.Success = $true
 						[int]$logMessageSeverity = 1
 					}
@@ -5485,6 +5491,9 @@ function Repair-NxtApplication {
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER AppName
+        Specifies the Application Name used in the registry etc.
+        Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegPackagesKey
 		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -5530,6 +5539,9 @@ function Repair-NxtApplication {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $global:PackageConfig.AppName,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
@@ -5617,13 +5629,13 @@ function Repair-NxtApplication {
 
 				if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
 					$repairResult.MainExitCode = $mainExitCode
-					$repairResult.ErrorMessage = "Repair of '$appName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
+					$repairResult.ErrorMessage = "Repair of '$AppName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 					$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					$repairResult.Success = $false
 					[int]$logMessageSeverity = 3
 				}
 				else {
-					$repairResult.ErrorMessage = "Repair of '$appName' was successful."
+					$repairResult.ErrorMessage = "Repair of '$AppName' was successful."
 					$repairResult.Success = $true
 					[int]$logMessageSeverity = 1
 				}
@@ -8454,6 +8466,9 @@ function Uninstall-NxtApplication {
 		Defines the required steps to uninstall the application based on the target installer type
 	.DESCRIPTION
 		Is only called in the Main function and should not be modified!
+	.PARAMETER AppName
+        Specifies the Application Name used in the registry etc.
+        Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -8513,6 +8528,9 @@ function Uninstall-NxtApplication {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $global:PackageConfig.AppName,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
@@ -8660,26 +8678,26 @@ function Uninstall-NxtApplication {
 
 					## Test successfull uninstallation
 					if ([string]::IsNullOrEmpty($UninstallKey)) {
-						$uninstallResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull uninstallation of '$appName' via registry."
+						$uninstallResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull uninstallation of '$AppName' via registry."
 						$uninstallResult.Success = $null
 						[int]$logMessageSeverity = 2
 					}
 					else {
 						if ($false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)) {
-							$uninstallResult.ErrorMessage = "Uninstallation RegistryAndProcessCondition of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+							$uninstallResult.ErrorMessage = "Uninstallation RegistryAndProcessCondition of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallResult.Success = $false
 							[int]$logMessageSeverity = 3
 						}
 						else {
 							if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
-								$uninstallResult.ErrorMessage = "Uninstallation of '$appName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+								$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 								$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 								$uninstallResult.Success = $false
 								[int]$logMessageSeverity = 3
 							}
 							else {
-								$uninstallResult.ErrorMessage = "Uninstallation of '$appName' was successful."
+								$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' was successful."
 								$uninstallResult.Success = $true
 								[int]$logMessageSeverity = 1
 							}
