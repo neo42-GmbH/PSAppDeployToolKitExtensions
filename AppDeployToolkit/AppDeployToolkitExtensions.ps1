@@ -3929,8 +3929,6 @@ function Get-NxtVariablesFromDeploymentSystem {
 	.PARAMETER RegisterPackage
 		Value to set $global:RegisterPackage to. Defaults to $env:registerPackage
 		Usually, packages are registered. A value of "false" for the $env:registerPackage environmental variable prevents this step.
-	.PARAMETER UninstallOld
-		Value to set $global:UninstallOld to. Defaults to $env:uninstallOld
 	.PARAMETER DeploymentType
 		The type of deployment that is performed.
 		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
