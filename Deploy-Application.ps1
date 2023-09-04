@@ -70,7 +70,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
     Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
     Write-Host "OSArchitecture: $((Get-WmiObject Win32_OperatingSystem).OSArchitecture)"
     Write-Host $($MyInvocation.BoundParameters)
-    Write-Host "Will ReSpawn in 64bit PowerShell"
+    Write-Host "Will restart script in 64bit PowerShell"
     [string]$file = $MyInvocation.MyCommand.Path
     # add all bound parameters to the argument list
     [string]$arguments = [string]::Empty
