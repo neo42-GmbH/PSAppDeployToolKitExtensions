@@ -3931,6 +3931,9 @@ function Get-NxtVariablesFromDeploymentSystem {
 		Usually, packages are registered. A value of "false" for the $env:registerPackage environmental variable prevents this step.
 	.PARAMETER UninstallOld
 		Value to set $global:UninstallOld to. Defaults to $env:uninstallOld
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.EXAMPLE
 		Get-NxtVariablesFromDeploymentSystem
 	.LINK
@@ -3940,7 +3943,10 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegisterPackage = $env:registerPackage
+		$RegisterPackage = $env:registerPackage,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentType = $DeploymentType
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3949,14 +3955,26 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Process {
 		Write-Log -Message "Getting environment variables set by the deployment system..." -Source ${cmdletName}
 		try {
-			if ("false" -eq $RegisterPackage) {
-				[bool]$global:RegisterPackage = $false 
-				Write-Log -Message "Package registration will be prevented because the environment variable '`$env:PackageRegister' is set to 'false'." -Severity 2 -Source ${cmdletName}
-			} 
-			else { 
-				[bool]$global:RegisterPackage = $true
+			switch ($DeploymentType) {
+				{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
+					if ("false" -eq $RegisterPackage) {
+						[bool]$global:RegisterPackage = $false 
+						Write-Log -Message "Package registration will be prevented because the environment variable '`$env:PackageRegister' is set to 'false'." -Severity 2 -Source ${cmdletName}
+					} 
+					else { 
+						[bool]$global:RegisterPackage = $true
+					}
+					Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
+				}
+				"Uninstall" {
+				}
+				{ ($_ -eq "InstallUserPart") -or ($_ -eq "TriggerInstallUserPart") } {
+				}
+				{ ($_ -eq "UninstallUserPart") -or ($_ -eq "TriggerUninstallUserPart") } {
+				}
+				Default {
+				}
 			}
-			Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to get environment variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
