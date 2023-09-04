@@ -4190,6 +4190,9 @@ function Initialize-NxtEnvironment {
 	.PARAMETER App
 		Defines the path to a local persistent cache for installation files.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.OUTPUTS
 		System.Int32.
 	.EXAMPLE
@@ -6886,6 +6889,9 @@ Function Show-NxtWelcomePrompt {
 		Specifies if the user can close all applications. Default: $false.
 	.PARAMETER UserCanAbort
 		Specifies if the user can abort the process. Default: $false.
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -6928,7 +6934,10 @@ Function Show-NxtWelcomePrompt {
         [Parameter(Mandatory = $false)]
         [Switch]$UserCanCloseAll = $false,
         [Parameter(Mandatory = $false)]
-        [Switch]$UserCanAbort = $false
+        [Switch]$UserCanAbort = $false,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentType = $DeploymentType
     )
 
     Begin {
@@ -7327,7 +7336,7 @@ Function Show-NxtWelcomePrompt {
         $control_PopupSureToCloseText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpSureToCloseText
         $control_PopupCloseApplication.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
         $control_PopupCancel.Content = $xmlUIMessages.NxtWelcomePrompt_Close
-        Switch ($deploymentType) {
+        Switch ($DeploymentType) {
             'Uninstall' {
 				if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
 					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Uninstall)
@@ -7702,6 +7711,9 @@ function Switch-NxtMSIReinstallMode {
 	.PARAMETER MSIDowngradeable
 		Defines the behavior of msi setup process in case of a downgrade.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.EXAMPLE
 		Switch-NxtMSIReinstallMode
 	.EXAMPLE
@@ -7739,7 +7751,10 @@ function Switch-NxtMSIReinstallMode {
 		$MSIInplaceUpgradeable = $global:PackageConfig.MSIInplaceUpgradeable,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable
+		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentType = $DeploymentType
 	)
 	Begin {
 		## Get the name of this function and write header
