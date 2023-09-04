@@ -369,6 +369,26 @@
         "Type": "System.String",
         "AllowEmpty": true
     },
+    "AcceptedInstallRebootCodes": {
+        "Mandatory": true,
+        "Regex": {
+            "Pattern": "^\\d+(,\\d+)*$",
+            "Operator": "match"
+        },
+        "ErrorMessage": "AcceptedInstallRebootCodes must be a comma separated list of numbers.",
+        "Type": "System.String",
+        "AllowEmpty": true
+    },
+    "AcceptedMSIRepairRebootCodes": {
+        "Mandatory": true,
+        "Regex": {
+            "Pattern": "^\\d+(,\\d+)*$",
+            "Operator": "match"
+        },
+        "ErrorMessage": "AcceptedRepairRebootCodes must be a comma separated list of numbers.",
+        "Type": "System.String",
+        "AllowEmpty": true
+    },
     "AcceptedUninstallExitCodes": {
         "Mandatory": true,
         "HelpText": "AcceptedUninstallExitCodes must be a comma separated list of numbers.",
@@ -376,6 +396,16 @@
             "Pattern": "^\\d+(,\\d+)*$",
             "Operator": "match"
         },
+        "Type": "System.String",
+        "AllowEmpty": true
+    },
+    "AcceptedUninstallRebootCodes": {
+        "Mandatory": true,
+        "Regex": {
+            "Pattern": "^\\d+(,\\d+)*$",
+            "Operator": "match"
+        },
+        "ErrorMessage": "AcceptedUninstallRebootCodes must be a comma separated list of numbers.",
         "Type": "System.String",
         "AllowEmpty": true
     }

@@ -632,6 +632,16 @@ comma separated list of exit codes to accept for successfull installation execut
 note: '*' is allowed for all exit codes
 ```
 
+**"AcceptedInstallRebootCodes"** *optional string value*
+
+parent: /
+
+```
+default value: ""
+comma separated list of exit codes to accept a requested reboot after installation execution of the used setup installer file
+note: '*' is allowed for all exit codes
+```
+
 **"AcceptedRepairExitCodes"** *optional string value (considered for MSI setups only!)*
 
 parent: /
@@ -640,6 +650,15 @@ parent: /
 default value: ""
 comma separated list of exit codes to accept for successfull repair execution of msi setup file
 note: '*' is allowed for all exit codes
+```
+
+**"AcceptedMSIRepairRebootCodes"** *optional string value (considered for MSI setups only!)*
+
+parent: /
+
+```
+default value: ""
+comma separated list of exit codes to accept a requested reboot after MSIRepair execution of msi setup installer file
 ```
 
 **"UninstFile"** *optional string value*
@@ -682,6 +701,15 @@ parent: /
 default value: ""
 comma separated list of exit codes to accept for successfull uninstallation execution of the used setup installer file
 note: '*' is allowed for all exit codes
+```
+
+**"AcceptedUninstallRebootCodes"** *optional string value*
+
+parent: /
+
+```
+default value: ""
+comma separated list of exit codes to accept a requested reboot after uninstallation execution of the used setup installer file
 ```
 
 **"AppKillProcesses":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
