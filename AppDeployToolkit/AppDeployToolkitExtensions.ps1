@@ -4499,8 +4499,11 @@ function Install-NxtApplication {
 				Action                        = 'Install'
 				Path                          = "$InstFile"
 				UninstallKeyIsDisplayName     = $UninstallKeyIsDisplayName
-				UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
+				UninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
 				DisplayNamesToExclude         = $DisplayNamesToExclude
+				## this allows to return all error codes for 'Execute-NxtMSI'/'Execute-Process' when -PassThru is active
+				ExitOnProcessFailure          = $false
+				PassThru                      = $true
 			}
 			if (![string]::IsNullOrEmpty($InstPara)) {
 				if ($AppendInstParaToDefaultParameters) {
@@ -4527,8 +4530,6 @@ function Install-NxtApplication {
 			## all calls need to 'PassThru' error codes
 			switch -Wildcard ($internalInstallerMethod) {
 				MSI {
-					## this allows to evaluate the errors after the return of 'Execute-NxtMSI' when -PassThru is active
-					[bool]$executeNxtParams["ExitOnProcessFailure"] = $false
 					[PsObject]$returnCode = Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
 				}
 				"Inno*" {
@@ -4542,7 +4543,10 @@ function Install-NxtApplication {
 				}
 				Default {
 					[hashtable]$executeParams = @{
-						Path	= "$InstFile"
+						Path	             = "$InstFile"
+						## this allows to return all error codes for 'Execute-Process' when -PassThru is active
+						ExitOnProcessFailure = $false
+						PassThru             = $true
 					}
 					if (![string]::IsNullOrEmpty($InstPara)) {
 						[string]$executeParams["Parameters"] = "$InstPara"
@@ -4550,9 +4554,7 @@ function Install-NxtApplication {
 					if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 						[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
 					}
-					## this allows to evaluate the errors after the return of 'Execute-Process' when -PassThru is active
-					[bool]$executeParams["ExitOnProcessFailure"] = $false
-					[PsObject]$returnCode = Execute-Process @executeParams -PassThru
+					[PsObject]$returnCode = Execute-Process @executeParams
 				}
 			}
 					
@@ -5627,7 +5629,10 @@ function Repair-NxtApplication {
 		$repairResult.Success = $false
 		[int]$logMessageSeverity = 1
 		[hashtable]$executeNxtParams = @{
-			Action	= 'Repair'
+			Action	             = 'Repair'
+			## this allows to return all error codes for 'Execute-NxtMSI' when -PassThru is active
+			ExitOnProcessFailure = $false
+			PassThru             = $true
 		}
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
 			$repairResult.MainExitCode = $mainExitCode
@@ -5659,10 +5664,8 @@ function Repair-NxtApplication {
 					## now set default path and name including retrieved ProductCode
 					[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$DeploymentTimestamp.log")
 				}
-				## this allows to evaluate the errors after the return of 'Execute-NxtMSI' when -PassThru is active
-				[bool]$executeNxtParams["ExitOnProcessFailure"] = $false
-				## need to 'PassThru' error codes; parameter -RepairFromSource $true runs 'msiexec /fvomus ...'
-				[PsObject]$returnCode = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru
+				## parameter -RepairFromSource $true runs 'msiexec /fvomus ...'
+				[PsObject]$returnCode = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
 					
 				if ($AcceptedMSIRepairRebootCodes.split(",").contains("$($returnCode.ExitCode)")) {
 					Write-Log -Message "A custom reboot return code was detected '$($returnCode.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
@@ -8689,10 +8692,13 @@ function Uninstall-NxtApplication {
 				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod)) {
 
 					[hashtable]$executeNxtParams = @{
-						Action							= 'Uninstall'
-						UninstallKeyIsDisplayName		= $UninstallKeyIsDisplayName
-						UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
-						DisplayNamesToExclude			= $DisplayNamesToExclude
+						Action                        = 'Uninstall'
+						UninstallKeyIsDisplayName     = $UninstallKeyIsDisplayName
+						UninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
+						DisplayNamesToExclude         = $DisplayNamesToExclude
+						## this allows to return all error codes for 'Execute-NxtMSI'/'Execute-Process' when -PassThru is active
+						ExitOnProcessFailure          = $false
+						PassThru                      = $true
 					}
 					if ($false -eq [string]::IsNullOrEmpty($UninstPara)) {
 						if ($AppendUninstParaToDefaultParameters) {
@@ -8719,9 +8725,7 @@ function Uninstall-NxtApplication {
 					## all calls need to 'PassThru' error codes
 					switch -Wildcard ($internalInstallerMethod) {
 						MSI {
-							## this allows to evaluate the errors after the return of 'Execute-NxtMSI' when -PassThru is active
-							[bool]$executeNxtParams["ExitOnProcessFailure"] = $false
-							[PsObject]$returnCode = Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile" -PassThru
+							[PsObject]$returnCode = Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
 						}
 						"Inno*" {
 							[PsObject]$returnCode = Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile" -PassThru
@@ -8734,7 +8738,10 @@ function Uninstall-NxtApplication {
 						}
 						default {
 							[hashtable]$executeParams = @{
-								Path	= "$UninstFile"
+								Path	             = "$UninstFile"
+								## this allows to return all error codes for for 'Execute-Process' when -PassThru is active
+								ExitOnProcessFailure = $false
+								PassThru             = $true
 							}
 							if (![string]::IsNullOrEmpty($UninstPara)) {
 								[string]$executeParams["Parameters"] = "$UninstPara"
@@ -8742,9 +8749,7 @@ function Uninstall-NxtApplication {
 							if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 								[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 							}
-							## this allows to evaluate the errors after the return of 'Execute-Process' when -PassThru is active
-							[bool]$executeParams["ExitOnProcessFailure"] = $false
-							[PsObject]$returnCode = Execute-Process @executeParams -PassThru
+							[PsObject]$returnCode = Execute-Process @executeParams
 						}
 					}
 
