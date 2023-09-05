@@ -3953,26 +3953,14 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Process {
 		Write-Log -Message "Getting environment variables set by the deployment system..." -Source ${cmdletName}
 		try {
-			switch ($DeploymentType) {
-				{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
-					if ("false" -eq $RegisterPackage) {
-						[bool]$global:RegisterPackage = $false 
-						Write-Log -Message "Package registration will be prevented because the environment variable '`$env:PackageRegister' is set to 'false'." -Severity 2 -Source ${cmdletName}
-					} 
-					else { 
-						[bool]$global:RegisterPackage = $true
-					}
-					Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
-				}
-				"Uninstall" {
-				}
-				{ ($_ -eq "InstallUserPart") -or ($_ -eq "TriggerInstallUserPart") } {
-				}
-				{ ($_ -eq "UninstallUserPart") -or ($_ -eq "TriggerUninstallUserPart") } {
-				}
-				Default {
-				}
+			if ("false" -eq $RegisterPackage) {
+				[bool]$global:RegisterPackage = $false 
+				Write-Log -Message "Package registration on installation will be prevented because the environment variable '`$env:PackageRegister' is set to 'false'." -Severity 2 -Source ${cmdletName}
+			} 
+			else { 
+				[bool]$global:RegisterPackage = $true
 			}
+			Write-Log -Message "Environment variables successfully read." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to get environment variables. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -6951,9 +6939,9 @@ Function Show-NxtWelcomePrompt {
         [Switch]$UserCanCloseAll = $false,
         [Parameter(Mandatory = $false)]
         [Switch]$UserCanAbort = $false,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$DeploymentType = $DeploymentType
+        [Parameter(Mandatory = $false)]
+        [string]
+        $DeploymentType = $DeploymentType
     )
 
     Begin {
@@ -8723,7 +8711,7 @@ function Uninstall-NxtApplication {
 					[int]$logMessageSeverity = 1
 				}
 			}
-}
+		}
 
 		Write-Log -Message $($uninstallResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 		Write-Output $uninstallResult
