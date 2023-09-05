@@ -54,11 +54,14 @@
   "InstPara": "",
   "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
+  "AcceptedInstallRebootCodes": "",
   "AcceptedRepairExitCodes": "",
+  "AcceptedMSIRepairRebootCodes": "",
   "UninstFile": "$($global:PackageConfig.installLocation)\\!Uninstallfile!",
   "UninstPara": "",
   "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
+  "AcceptedUninstallRebootCodes": "",
   "AppKillProcesses": [
     {
       "Name": "!ProcessnameWithOrWithoutExtension!",

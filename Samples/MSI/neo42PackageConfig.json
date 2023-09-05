@@ -28,7 +28,7 @@
   "RemovePackagesWithSameProductGUID": false,
   "PackageGUID": "!Neo42PackageGUID!",
   "DependentPackages": [],
-    "RegPackagesKey": "neoPackages",
+  "RegPackagesKey": "neoPackages",
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
   "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
   "UninstallOld": true,
@@ -54,11 +54,14 @@
   "InstPara": "",
   "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
+  "AcceptedInstallRebootCodes": "",
   "AcceptedRepairExitCodes": "",
+  "AcceptedMSIRepairRebootCodes": "",
   "UninstFile": "",
   "UninstPara": "",
   "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
+  "AcceptedUninstallRebootCodes": "",
   "AppKillProcesses": [
     {
       "Name": "!ProcessnameWithOrWithoutExtension!",

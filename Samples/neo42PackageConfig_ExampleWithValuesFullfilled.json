@@ -61,11 +61,14 @@
   "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
   "AppendInstParaToDefaultParameters": false,
   "AcceptedInstallExitCodes": "",
+  "AcceptedInstallRebootCodes": "129,130",
   "AcceptedRepairExitCodes": "",
+  "AcceptedMSIRepairRebootCodes": "129,130",
   "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
   "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
   "AppendUninstParaToDefaultParameters": false,
   "AcceptedUninstallExitCodes": "",
+  "AcceptedUninstallRebootCodes": "129,130",
   "AppKillProcesses": [
     {
       "Name": "ScPapers",
