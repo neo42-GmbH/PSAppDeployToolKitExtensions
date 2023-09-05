@@ -235,6 +235,7 @@ function Main {
 		$RegisterPackage = $global:registerPackage
 	)
 	try {
+		[int32]$mainExitCode = 0
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
@@ -242,9 +243,10 @@ function Main {
 				## START OF INSTALL
 				[string]$script:installPhase = 'Package-PreCleanup'
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
+				[int32]$mainExitCode = $mainNxtResult.MainExitCode
 				if ($false -eq $mainNxtResult.Success) {
 					Close-BlockExecutionWindow
-					Exit-Script -ExitCode $mainNxtResult.MainExitCode
+					Exit-Script -ExitCode $mainExitCode
 				}
 				Unregister-NxtOld
 				Resolve-NxtDependentPackage
@@ -280,13 +282,15 @@ function Main {
 								CustomReinstallPreUninstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
+								[int32]$mainExitCode = $mainNxtResult.MainExitCode
 								CustomReinstallPostUninstall -ResultToCheck $mainNxtResult
 								if ($false -eq $mainNxtResult.Success) {
-									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainExitCode
 								}
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
+								[int32]$mainExitCode = $mainNxtResult.MainExitCode
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
 							"MSIRepair" {
@@ -294,6 +298,7 @@ function Main {
 									CustomReinstallPreInstall
 									[string]$script:installPhase = 'Package-Reinstallation'
 									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Repair-NxtApplication
+									[int32]$mainExitCode = $mainNxtResult.MainExitCode
 									CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 								}
 								else {
@@ -304,6 +309,7 @@ function Main {
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
+								[int32]$mainExitCode = $mainNxtResult.MainExitCode
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
 							Default {
@@ -316,6 +322,7 @@ function Main {
 						CustomInstallBegin
 						[string]$script:installPhase = 'Package-Installation'
 						[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication 
+						[int32]$mainExitCode = $mainNxtResult.MainExitCode
 						CustomInstallEnd -ResultToCheck $mainNxtResult
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
@@ -334,7 +341,7 @@ function Main {
 					}
 				}
 				else {
-					Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+					Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainExitCode
 				}
 				## END OF INSTALL
 			}
@@ -354,13 +361,14 @@ function Main {
 					CustomUninstallBegin
 					[string]$script:installPhase = 'Package-Uninstallation'
 					[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
+					[int32]$mainExitCode = $mainNxtResult.MainExitCode
 					CustomUninstallEnd -ResultToCheck $mainNxtResult
 					if ($false -ne $mainNxtResult.Success) {
 						[string]$script:installPhase = 'Package-Completion'
 						Complete-NxtPackageUninstallation
 					}
 					else {
-						Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+						Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainExitCode
 					}
 				}
 				if ($false -eq $SkipUnregister) {
@@ -368,7 +376,7 @@ function Main {
 					Unregister-NxtPackage
 				}
 				else {
-					Write-Log -Message "No need to unregister package(s) now..." -Source ${cmdletName}
+					Write-Log -Message "No need to unregister package(s) now..." -Source $deployAppScriptFriendlyName
 				}
 				## END OF UNINSTALL
 			}
