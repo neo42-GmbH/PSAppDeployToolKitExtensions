@@ -1044,7 +1044,9 @@ function Execute-NxtBitRockInstaller {
 		Install default is: "--mode unattended --unattendedmodeui minimal".
 		Uninstall default is: "--mode unattended".
 	.PARAMETER PassThru
-		Returns ExitCode, STDOut, and STDErr output from the process.
+		Returns ExitCode, STDOut, and STDErr output from the process. Default: $true
+	.PARAMETER ExitOnProcessFailure
+		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $false
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
@@ -1099,7 +1101,10 @@ function Execute-NxtBitRockInstaller {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[switch]
-		$PassThru = $false,
+		$PassThru,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[boolean]$ExitOnProcessFailure = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]
@@ -1223,10 +1228,11 @@ function Execute-NxtBitRockInstaller {
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
+		if ($false -eq $ExitOnProcessFailure) {
+			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $ExitOnProcessFailure)
+		}
     
 		if ($PassThru) {
-			## this enables the evaluation of the errors after the return of 'Execute-Process
-			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $false)
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
 		}
 		else {
@@ -1338,7 +1344,9 @@ function Execute-NxtInnoSetup {
 		If only a name is specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
-		Returns ExitCode, STDOut, and STDErr output from the process.
+		Returns ExitCode, STDOut, and STDErr output from the process. Default: $true
+	.PARAMETER ExitOnProcessFailure
+		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $false
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
@@ -1401,7 +1409,10 @@ function Execute-NxtInnoSetup {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[switch]
-		$PassThru = $false,
+		$PassThru,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[boolean]$ExitOnProcessFailure = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]
@@ -1569,10 +1580,11 @@ function Execute-NxtInnoSetup {
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
- 
+		if ($false -eq $ExitOnProcessFailure) {
+			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $ExitOnProcessFailure)
+		}
+    
 		if ($PassThru) {
-			## this enables the evaluation of the errors after the return of 'Execute-Process
-			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $false)
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
 		}
 		else {
@@ -1675,7 +1687,7 @@ function Execute-NxtMSI {
 	.PARAMETER NoWait
 		Immediately continue after executing the process.
 	.PARAMETER PassThru
-		Returns ExitCode, STDOut, and STDErr output from the process.
+		Returns ExitCode, STDOut, and STDErr output from the process. Default: $true
 	.PARAMETER IgnoreExitCodes
 		List the exit codes to ignore or * to ignore all exit codes.
 	.PARAMETER AcceptedExitCodes
@@ -1683,7 +1695,7 @@ function Execute-NxtMSI {
 	.PARAMETER PriorityClass	
 		Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
 	.PARAMETER ExitOnProcessFailure
-		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $true
+		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $false
 	.PARAMETER RepairFromSource
 		Specifies whether we should repair from source. Also rewrites local cache. Default: $false
 	.PARAMETER ContinueOnError
@@ -1762,7 +1774,7 @@ function Execute-NxtMSI {
 		[switch]$NoWait = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]$PassThru = $false,
+		[switch]$PassThru,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]$AcceptedExitCodes,
@@ -1774,7 +1786,7 @@ function Execute-NxtMSI {
 		[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[boolean]$ExitOnProcessFailure = $true,
+		[boolean]$ExitOnProcessFailure = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[boolean]$RepairFromSource = $false,
@@ -1908,7 +1920,9 @@ function Execute-NxtNullsoft {
 		Install default is: "/AllUsers /S".
 		Uninstall default is: "/AllUsers /S".
 	.PARAMETER PassThru
-		Returns ExitCode, STDOut, and STDErr output from the process.
+		Returns ExitCode, STDOut, and STDErr output from the process. Default: $true
+	.PARAMETER ExitOnProcessFailure
+		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $false
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
@@ -1963,7 +1977,10 @@ function Execute-NxtNullsoft {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[switch]
-		$PassThru = $false,
+		$PassThru,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[boolean]$ExitOnProcessFailure = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]
@@ -2085,10 +2102,11 @@ function Execute-NxtNullsoft {
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
+		if ($false -eq $ExitOnProcessFailure) {
+			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $ExitOnProcessFailure)
+		}
     
 		if ($PassThru) {
-			## this enables the evaluation of the errors after the return of 'Execute-Process
-			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $false)
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
 		}
 		else {
