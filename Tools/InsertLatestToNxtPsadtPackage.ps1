@@ -109,7 +109,7 @@ function Update-NxtPSAdtPackage {
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($null -eq $jsonContent.AcceptedInstallRebootCodes){
-                $content = Add-ContentBeforeTag -Content $content -StartTag '  "AcceptedRepairExitCodes"' -ContentToInsert '  "AcceptedInstallRebootCodes": false,
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "AcceptedRepairExitCodes"' -ContentToInsert '  "AcceptedInstallRebootCodes": "",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
@@ -117,7 +117,7 @@ function Update-NxtPSAdtPackage {
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($null -eq $jsonContent.AcceptedMSIRepairRebootCodes){
-                $content = Add-ContentBeforeTag -Content $content -StartTag '  "UninstFile"' -ContentToInsert '  "AcceptedMSIRepairRebootCodes": false,
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "UninstFile"' -ContentToInsert '  "AcceptedMSIRepairRebootCodes": "",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
@@ -125,7 +125,7 @@ function Update-NxtPSAdtPackage {
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($null -eq $jsonContent.AcceptedUninstallRebootCodes){
-                $content = Add-ContentBeforeTag -Content $content -StartTag '  "AppKillProcesses"' -ContentToInsert '  "AcceptedUninstallRebootCodes": false,
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "AppKillProcesses"' -ContentToInsert '  "AcceptedUninstallRebootCodes": "",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
