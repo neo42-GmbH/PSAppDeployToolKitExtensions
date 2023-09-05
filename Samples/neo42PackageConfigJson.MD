@@ -82,6 +82,7 @@ following VariableSets of config files are useable (in order of availability):
 - InstPara
 - UninstFile
 - UninstPara
+- UninstallKey (if value "UninstallKeyContainsExpandVariable" is set to 'true'' only!)
 - UninstallKeysToHide.KeyNameIsDisplayName
 - UninstallKeysToHide.KeyNameContainsWildCards
 - UninstallKeysToHide.DisplayNamesToExcludeFromHiding
@@ -509,6 +510,8 @@ note: this variable is not used by default in any function of AppDeployToolkitEx
 **"UninstallKey"** *optional string value*
 
 parent: /
+
+*(note: may contain reference to other defined variables, content will be expanded, if value "UninstallKeyContainsExpandVariables" is set to 'true')*
 ```
 default value: name of registry subkey in uninstall registry entry of installed application setup ('...\CurrentVersion\Uninstall\"UninstallKey"'), especially for MSI setups generally this is the MSI-GUID
 used for application detection as search string (for an uninstall registry subkey or a display name) of installed application
