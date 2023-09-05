@@ -632,7 +632,7 @@ comma separated list of exit codes to accept for successfull installation execut
 note: '*' is allowed for all exit codes
 ```
 
-**"AcceptedRepairExitCodes"** *optional string value (considered for MSI setups only!)*
+**"AcceptedMSIRepairExitCodes"** *optional string value (considered for MSI setups only!)*
 
 parent: /
 

@@ -104,6 +104,13 @@ function Update-NxtPSAdtPackage {
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
+            ## rename AcceptedRepairExitCodes to AcceptedMSIRepairExitCodes
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+            if ($null -ne $jsonContent.AcceptedRepairExitCodes){
+                $content = $content.Replace("AcceptedRepairExitCodes","AcceptedMSIRepairExitCodes")
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            }
         }
         catch {
             Write-Error "$PackageToUpdatePath could not be updated from $LatestVersionPath - $_"
