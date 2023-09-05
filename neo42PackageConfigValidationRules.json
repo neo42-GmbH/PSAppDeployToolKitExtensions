@@ -379,13 +379,23 @@
         "Type": "System.String",
         "AllowEmpty": true
     },
+    "AcceptedMSIRepairExitCodes": {
+        "Mandatory": true,
+        "Regex": {
+            "Pattern": "^\\d+(,\\d+)*$",
+            "Operator": "match"
+        },
+        "ErrorMessage": "AcceptedMSIRepairExitCodes must be a comma separated list of numbers.",
+        "Type": "System.String",
+        "AllowEmpty": true
+    },
     "AcceptedMSIRepairRebootCodes": {
         "Mandatory": true,
         "Regex": {
             "Pattern": "^\\d+(,\\d+)*$",
             "Operator": "match"
         },
-        "ErrorMessage": "AcceptedRepairRebootCodes must be a comma separated list of numbers.",
+        "ErrorMessage": "AcceptedMSIRepairRebootCodes must be a comma separated list of numbers.",
         "Type": "System.String",
         "AllowEmpty": true
     },

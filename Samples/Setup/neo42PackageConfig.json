@@ -55,7 +55,7 @@
   "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
   "AcceptedInstallRebootCodes": "",
-  "AcceptedRepairExitCodes": "",
+  "AcceptedMSIRepairExitCodes": "",
   "AcceptedMSIRepairRebootCodes": "",
   "UninstFile": "$($global:PackageConfig.installLocation)\\!Uninstallfile!",
   "UninstPara": "",

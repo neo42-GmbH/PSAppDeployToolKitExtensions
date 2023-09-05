@@ -55,7 +55,7 @@
   "AppendInstParaToDefaultParameters": false,
   "AcceptedInstallExitCodes": "",
   "AcceptedInstallRebootCodes": "",
-  "AcceptedRepairExitCodes": "",
+  "AcceptedMSIRepairExitCodes": "",
   "AcceptedMSIRepairRebootCodes": "",
   "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
   "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",

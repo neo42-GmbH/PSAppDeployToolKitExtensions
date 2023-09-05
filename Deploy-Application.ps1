@@ -173,6 +173,9 @@ function Main {
 	.DESCRIPTION
 		Do not modify to ensure correct script flow!
 		To customize the script always use the "CustomXXXX" entry points.
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.PARAMETER SkipUnregister
 		Skips unregister during uninstall of a package.
 		Defaults to the the corresponding call parameter of this script.
@@ -208,6 +211,9 @@ function Main {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentType = $DeploymentType,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$SkipUnregister = $SkipUnregister,
@@ -351,7 +357,7 @@ function Main {
 				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($false -eq $SkipUnregister) ) {
 					Remove-NxtProductMember
 				}
-				if ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1)) {
+				if ( ($false -eq $SkipUnregister) -or (($true -eq $SkipUnregister) -and ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1))) ) {
 					[int]$showUnInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $false
 					if ($showUnInstallationWelcomeResult -ne 0) {
 						Close-BlockExecutionWindow
