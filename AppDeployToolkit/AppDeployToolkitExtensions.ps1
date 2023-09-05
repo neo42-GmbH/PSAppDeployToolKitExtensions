@@ -3929,8 +3929,9 @@ function Get-NxtVariablesFromDeploymentSystem {
 	.PARAMETER RegisterPackage
 		Value to set $global:RegisterPackage to. Defaults to $env:registerPackage
 		Usually, packages are registered. A value of "false" for the $env:registerPackage environmental variable prevents this step.
-	.PARAMETER UninstallOld
-		Value to set $global:UninstallOld to. Defaults to $env:uninstallOld
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.EXAMPLE
 		Get-NxtVariablesFromDeploymentSystem
 	.LINK
@@ -3940,7 +3941,10 @@ function Get-NxtVariablesFromDeploymentSystem {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegisterPackage = $env:registerPackage
+		$RegisterPackage = $env:registerPackage,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentType = $DeploymentType
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3951,7 +3955,7 @@ function Get-NxtVariablesFromDeploymentSystem {
 		try {
 			if ("false" -eq $RegisterPackage) {
 				[bool]$global:RegisterPackage = $false 
-				Write-Log -Message "Package registration will be prevented because the environment variable '`$env:PackageRegister' is set to 'false'." -Severity 2 -Source ${cmdletName}
+				Write-Log -Message "Package registration on installation will be prevented because the environment variable '`$env:PackageRegister' is set to 'false'." -Severity 2 -Source ${cmdletName}
 			} 
 			else { 
 				[bool]$global:RegisterPackage = $true
@@ -4190,6 +4194,9 @@ function Initialize-NxtEnvironment {
 	.PARAMETER App
 		Defines the path to a local persistent cache for installation files.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.OUTPUTS
 		System.Int32.
 	.EXAMPLE
@@ -6898,6 +6905,9 @@ Function Show-NxtWelcomePrompt {
 		Specifies if the user can close all applications. Default: $false.
 	.PARAMETER UserCanAbort
 		Specifies if the user can abort the process. Default: $false.
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -6940,7 +6950,10 @@ Function Show-NxtWelcomePrompt {
         [Parameter(Mandatory = $false)]
         [Switch]$UserCanCloseAll = $false,
         [Parameter(Mandatory = $false)]
-        [Switch]$UserCanAbort = $false
+        [Switch]$UserCanAbort = $false,
+        [Parameter(Mandatory = $false)]
+        [string]
+        $DeploymentType = $DeploymentType
     )
 
     Begin {
@@ -7339,7 +7352,7 @@ Function Show-NxtWelcomePrompt {
         $control_PopupSureToCloseText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpSureToCloseText
         $control_PopupCloseApplication.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
         $control_PopupCancel.Content = $xmlUIMessages.NxtWelcomePrompt_Close
-        Switch ($deploymentType) {
+        Switch ($DeploymentType) {
             'Uninstall' {
 				if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
 					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Uninstall)
@@ -7714,6 +7727,9 @@ function Switch-NxtMSIReinstallMode {
 	.PARAMETER MSIDowngradeable
 		Defines the behavior of msi setup process in case of a downgrade.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentType
+		The type of deployment that is performed.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.EXAMPLE
 		Switch-NxtMSIReinstallMode
 	.EXAMPLE
@@ -7751,7 +7767,10 @@ function Switch-NxtMSIReinstallMode {
 		$MSIInplaceUpgradeable = $global:PackageConfig.MSIInplaceUpgradeable,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable
+		$MSIDowngradeable = $global:PackageConfig.MSIDowngradeable,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentType = $DeploymentType
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -8710,7 +8729,7 @@ function Uninstall-NxtApplication {
 					[int]$logMessageSeverity = 1
 				}
 			}
-}
+		}
 
 		Write-Log -Message $($uninstallResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 		Write-Output $uninstallResult
