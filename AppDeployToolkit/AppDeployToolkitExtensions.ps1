@@ -1848,7 +1848,7 @@ function Execute-NxtMSI {
 			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
-		Execute-MSI @PSBoundParameters
+		[PSObject]$ExecuteResults = Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
 		if ([System.IO.Path]::IsPathRooted($Log)) {
 			[string]$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
