@@ -5529,7 +5529,7 @@ function Repair-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
-	.PARAMETER AcceptedRepairExitCodes
+	.PARAMETER AcceptedMSIRepairExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
@@ -5573,7 +5573,7 @@ function Repair-NxtApplication {
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedRepairExitCodes
+		$AcceptedMSIRepairExitCodes = $global:PackageConfig.AcceptedMSIRepairExitCodes
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5609,8 +5609,8 @@ function Repair-NxtApplication {
 						[string]$executeNxtParams["Parameters"] = "$RepairPara"
 					}
 				}
-				if (![string]::IsNullOrEmpty($AcceptedRepairExitCodes)) {
-					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedRepairExitCodes"
+				if (![string]::IsNullOrEmpty($AcceptedMSIRepairExitCodes)) {
+					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedMSIRepairExitCodes"
 				}
 				if ([string]::IsNullOrEmpty($RepairLogFile)) {
 					## now set default path and name including retrieved ProductCode

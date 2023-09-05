@@ -369,6 +369,16 @@
         "Type": "System.String",
         "AllowEmpty": true
     },
+    "AcceptedMSIRepairExitCodes": {
+        "Mandatory": true,
+        "Regex": {
+            "Pattern": "^\\d+(,\\d+)*$",
+            "Operator": "match"
+        },
+        "ErrorMessage": "AcceptedMSIRepairExitCodes must be a comma separated list of numbers.",
+        "Type": "System.String",
+        "AllowEmpty": true
+    },
     "AcceptedUninstallExitCodes": {
         "Mandatory": true,
         "HelpText": "AcceptedUninstallExitCodes must be a comma separated list of numbers.",
