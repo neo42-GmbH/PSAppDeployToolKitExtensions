@@ -65,6 +65,36 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[string]$DeploymentSystem = [string]::Empty
 )
+## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
+if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
+    Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
+    Write-Host "OSArchitecture: $((Get-WmiObject Win32_OperatingSystem).OSArchitecture)"
+    Write-Host $($MyInvocation.BoundParameters)
+    Write-Host "Will restart script in 64bit PowerShell"
+    [string]$file = $MyInvocation.MyCommand.Path
+    # add all bound parameters to the argument list
+    [string]$arguments = [string]::Empty
+    foreach ($item in $MyInvocation.BoundParameters.Keys) {
+        [PsObject]$type = $($MyInvocation.BoundParameters[$item]).GetType()
+        if ($type -eq [switch]) {
+            if ($true -eq $MyInvocation.BoundParameters[$item]) {
+                $arguments += " -$item"
+            }
+        }
+        elseif ($type -eq [string]) {
+            $arguments += " -$item `"$($MyInvocation.BoundParameters[$item])`""
+        }
+        elseif ($type -eq [int]) {
+            $arguments += " -$item $($MyInvocation.BoundParameters[$item])"
+        }
+		elseif ($type -eq [bool]) {
+			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
+		}
+	}
+    [system.Diagnostics.Process]$process = Start-Process -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -PassThru -Wait -ArgumentList " -File `"$file`"$arguments"
+    [int]$exitCode = $process.ExitCode
+    exit $exitCode
+}
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
 	TriggerInstallUserPart { 
