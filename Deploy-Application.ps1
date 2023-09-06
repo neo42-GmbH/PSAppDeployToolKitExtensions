@@ -162,7 +162,6 @@ catch {
 	[int32]$mainExitCode = 60001
 	[string]$mainErrorMessage = "$(Resolve-Error)"
 	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-	Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 	Exit-Script -ExitCode $mainExitCode
 }
 
@@ -407,7 +406,6 @@ function Main {
 		[int32]$mainExitCode = 60001
 		[string]$mainErrorMessage = "$(Resolve-Error)"
 		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-		Show-DialogBox -Text $mainErrorMessage -Icon 'Stop'
 		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	}
 }
