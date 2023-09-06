@@ -252,17 +252,16 @@ function Main {
 					Close-BlockExecutionWindow
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
+				if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
+					[int32]$mainExitCode = $mainNxtResult.MainExitCode
+				}
 				Unregister-NxtOld
 				Resolve-NxtDependentPackage
 				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-SoftMigration'
-				if ($true -eq $(Get-NxtRegisterOnly)) {
-					## soft migration = application is installed
-					$mainNxtResult.Success = $true
-				}
-				else {
+				if ($false -eq $(Get-NxtRegisterOnly)) {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
 					Remove-NxtProductMember
@@ -286,13 +285,24 @@ function Main {
 								CustomReinstallPreUninstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
-								CustomReinstallPostUninstall -ResultToCheck $mainNxtResult
 								if ($false -eq $mainNxtResult.Success) {
+									CustomReinstallPostUninstallOnError -ResultToCheck $mainNxtResult
 									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
 								}
+								if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
+									[int32]$mainExitCode = $mainNxtResult.MainExitCode
+								}
+								CustomReinstallPostUninstall -ResultToCheck $mainNxtResult
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
+								if ($false -eq $mainNxtResult.Success) {
+									CustomReinstallPostInstallOnError -ResultToCheck $mainNxtResult
+									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+								}
+								if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
+									[int32]$mainExitCode = $mainNxtResult.MainExitCode
+								}
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
 							"MSIRepair" {
@@ -300,6 +310,13 @@ function Main {
 									CustomReinstallPreInstall
 									[string]$script:installPhase = 'Package-Reinstallation'
 									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Repair-NxtApplication
+									if ($false -eq $mainNxtResult.Success) {
+										CustomReinstallPostInstallOnError -ResultToCheck $mainNxtResult
+										Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+									}
+									if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
+										[int32]$mainExitCode = $mainNxtResult.MainExitCode
+									}
 									CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 								}
 								else {
@@ -310,6 +327,13 @@ function Main {
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
+								if ($false -eq $mainNxtResult.Success) {
+									CustomReinstallPostInstallOnError -ResultToCheck $mainNxtResult
+									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+								}
+								if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
+									[int32]$mainExitCode = $mainNxtResult.MainExitCode
+								}
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
 							Default {
@@ -322,25 +346,27 @@ function Main {
 						CustomInstallBegin
 						[string]$script:installPhase = 'Package-Installation'
 						[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication 
+						if ($false -eq $mainNxtResult.Success) {
+							CustomInstallEndOnError -ResultToCheck $mainNxtResult
+							Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+						}
+						if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
+							[int32]$mainExitCode = $mainNxtResult.MainExitCode
+						}
 						CustomInstallEnd -ResultToCheck $mainNxtResult
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
 				}
 				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
-				If ($false -ne $mainNxtResult.Success) {
-					[string]$script:installPhase = 'Package-Completion'
-					Complete-NxtPackageInstallation
-					if ($true -eq $RegisterPackage) {
-						## register package for uninstall
-						[string]$script:installPhase = 'Package-Registration'
-						Register-NxtPackage
-					} else {
-						Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
-					}
-				}
-				else {
-					Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+				[string]$script:installPhase = 'Package-Completion'
+				Complete-NxtPackageInstallation
+				if ($true -eq $RegisterPackage) {
+					## register package for uninstall
+					[string]$script:installPhase = 'Package-Registration'
+					Register-NxtPackage
+				} else {
+					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 				}
 				## END OF INSTALL
 			}
@@ -360,14 +386,16 @@ function Main {
 					CustomUninstallBegin
 					[string]$script:installPhase = 'Package-Uninstallation'
 					[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
-					CustomUninstallEnd -ResultToCheck $mainNxtResult
-					if ($false -ne $mainNxtResult.Success) {
-						[string]$script:installPhase = 'Package-Completion'
-						Complete-NxtPackageUninstallation
-					}
-					else {
+					if ($false -eq $mainNxtResult.Success) {
+						CustomUninstallEndOnError -ResultToCheck $mainNxtResult
 						Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
 					}
+					if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
+						[int32]$mainExitCode = $mainNxtResult.MainExitCode
+					}
+					CustomUninstallEnd -ResultToCheck $mainNxtResult
+					[string]$script:installPhase = 'Package-Completion'
+					Complete-NxtPackageUninstallation
 				}
 				if ($false -eq $SkipUnregister) {
 					[string]$script:installPhase = 'Package-Unregistration'
@@ -479,6 +507,20 @@ function CustomReinstallPreUninstall {
 	#endregion CustomReinstallPreUninstall content
 }
 
+function CustomReinstallPostUninstallOnError {
+	param (
+		[Parameter(Mandatory = $true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
+	[string]$script:installPhase = 'CustomReinstallPostUninstallOnError'
+
+	## executes right after the uninstallation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+	#region CustomReinstallPostUninstallOnError content
+
+	#endregion CustomReinstallPostUninstallOnError content
+}
+
 function CustomReinstallPostUninstall {
 	param (
 		[Parameter(Mandatory = $true)]
@@ -487,7 +529,7 @@ function CustomReinstallPostUninstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstall'
 
-	## executes at after the uninstallation in the reinstall process
+	## executes after the succesful uninstallation in the reinstall process
 	#region CustomReinstallPostUninstall content
 
 	#endregion CustomReinstallPostUninstall content
@@ -502,6 +544,20 @@ function CustomReinstallPreInstall {
 	#endregion CustomReinstallPreInstall content
 }
 
+function CustomReinstallPostInstallOnError {
+	param (
+		[Parameter(Mandatory = $true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
+	[string]$script:installPhase = 'CustomReinstallPostInstallOnError'
+
+	## executes right after the installation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+	#region CustomReinstallPostInstallOnError content
+
+	#endregion CustomReinstallPostInstallOnError content
+}
+
 function CustomReinstallPostInstall {
 	param (
 		[Parameter(Mandatory = $true)]
@@ -510,7 +566,7 @@ function CustomReinstallPostInstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstall'
 
-	## executes after the installation in the reinstall process
+	## executes after the succesful installation in the reinstall process
 	#region CustomReinstallPostInstall content
 
 	#endregion CustomReinstallPostInstall content
@@ -525,6 +581,20 @@ function CustomInstallBegin {
 	#endregion CustomInstallBegin content
 }
 
+function CustomInstallEndOnError {
+	param (
+		[Parameter(Mandatory = $true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
+	[string]$script:installPhase = 'CustomInstallEndOnError'
+
+	## executes right after the installation in the install process (just add possible cleanup steps here, because scripts exits right after this function!)
+	#region CustomInstallEndOnError content
+
+	#endregion CustomInstallEndOnError content
+}
+
 function CustomInstallEnd {
 	param (
 		[Parameter(Mandatory = $true)]
@@ -533,7 +603,7 @@ function CustomInstallEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallEnd'
 
-	## executes after the installation in the install process
+	## executes after the succesful installation in the install process
 	#region CustomInstallEnd content
 
 	#endregion CustomInstallEnd content
@@ -562,6 +632,20 @@ function CustomUninstallBegin {
 	#endregion CustomUninstallBegin content
 }
 
+function CustomUninstallEndOnError {
+	param (
+		[Parameter(Mandatory = $true)]
+		[PSADTNXT.NxtApplicationResult]
+		$ResultToCheck
+	)
+	[string]$script:installPhase = 'CustomUninstallEndOnError'
+
+	## executes right after the uninstallation in the uninstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+	#region CustomUninstallEndOnError content
+
+	#endregion CustomUninstallEndOnError content
+}
+
 function CustomUninstallEnd {
 	param (
 		[Parameter(Mandatory = $true)]
@@ -570,7 +654,7 @@ function CustomUninstallEnd {
 	)
 	[string]$script:installPhase = 'CustomUninstallEnd'
 
-	## executes after the uninstallation in the uninstall process
+	## executes after the succesful uninstallation in the uninstall process
 	#region CustomUninstallEnd content
 
 	#endregion CustomUninstallEnd content

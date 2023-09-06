@@ -75,6 +75,13 @@ function Update-NxtPSAdtPackage {
     if ([int]($version.TrimEnd("`n") -split "-")[1] -lt 53) {
         throw "Version of $PackageToUpdatePath is lower than 2023.06.12.01-53 and must be updated manually"
     }
+    [string]$newVersion = Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:"
+    if ($version.TrimEnd("`n") -eq $newVersion.TrimEnd("`n")) {
+        $versionInfo = " ... but seems already up-to-date (same version tag!)"
+    }
+    else {
+        $versionInfo = [string]::Empty
+    }
     [string[]]$customFunctionNames = foreach ($line in ($existingContent -split "`n")){
         if ($line -match "function Custom") {
             $line -split " " | Select-Object -Index 1
@@ -84,15 +91,105 @@ function Update-NxtPSAdtPackage {
     if ($null -eq $customFunctionNames){
         throw "No custom functions found in $PackageToUpdatePath"
     }
+    #add new custom sections
+    [array]$newCustomFunctions = "CustomReinstallPostUninstallOnError","CustomReinstallPostInstallOnError","CustomInstallEndOnError","CustomUninstallEndOnError"
+    foreach ($newcustomFunctionName in $newCustomFunctions) {
+        if (-not ($customFunctionNames.contains($newcustomFunctionName))) {
+            [string]$content = $existingContent
+            $resultContent = $null
+            switch ($newcustomFunctionName) {
+                "CustomReinstallPostUninstallOnError" {
+                    $resultContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomReinstallPostUninstall {" -ContentToInsert "function CustomReinstallPostUninstallOnError {
+    param (
+        [Parameter(Mandatory = `$true)]
+        [PSADTNXT.NxtApplicationResult]
+        `$ResultToCheck
+    )
+    [string]`$script:installPhase = 'CustomReinstallPostUninstallOnError'
+
+    ## executes right after the uninstallation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+    #region CustomReinstallPostUninstallOnError content
+
+    #endregion CustomReinstallPostUninstallOnError content
+}
+
+"
+                }
+                "CustomReinstallPostInstallOnError" {
+                    $resultContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomReinstallPostInstall {" -ContentToInsert "function CustomReinstallPostInstallOnError {
+    param (
+        [Parameter(Mandatory = `$true)]
+        [PSADTNXT.NxtApplicationResult]
+        `$ResultToCheck
+    )
+    [string]`$script:installPhase = 'CustomReinstallPostInstallOnError'
+
+    ## executes right after the installation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+    #region CustomReinstallPostInstallOnError content
+
+    #endregion CustomReinstallPostInstallOnError content
+}
+
+"
+                }
+                "CustomInstallEndOnError" {
+                    $resultContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomInstallEnd {" -ContentToInsert "function CustomInstallEndOnError {
+    param (
+        [Parameter(Mandatory = `$true)]
+        [PSADTNXT.NxtApplicationResult]
+        `$ResultToCheck
+    )
+    [string]`$script:installPhase = 'CustomInstallEndOnError'
+
+    ## executes right after the installation in the install process (just add possible cleanup steps here, because scripts exits right after this function!)
+    #region CustomInstallEndOnError content
+
+    #endregion CustomInstallEndOnError content
+}
+
+"
+                }
+                "CustomUninstallEndOnError" {
+                    $resultContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomUninstallEnd {" -ContentToInsert "function CustomUninstallEndOnError {
+    param (
+        [Parameter(Mandatory = `$true)]
+        [PSADTNXT.NxtApplicationResult]
+        `$ResultToCheck
+    )
+    [string]`$script:installPhase = 'CustomUninstallEndOnError'
+
+    ## executes right after the uninstallation in the uninstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+    #region CustomUninstallEndOnError content
+
+    #endregion CustomUninstallEndOnError content
+}
+
+"
+                }
+            }
+            if (-not [string]::IsNullOrEmpty($resultContent)) {
+                Write-Output "... adding custom function: $newcustomFunctionName"
+                Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $resultContent -NoNewline
+                #re-read content
+                [string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+            }
+        }
+    }
+    #also change comments of some custom sections
+    [string]$existingContent = $existingContent.Replace("## executes at after the uninstallation in the reinstall process","## executes after the succesful uninstallation in the reinstall process")
+    [string]$existingContent = $existingContent.Replace("## executes after the installation in the reinstall process","## executes after the succesful installation in the reinstall process")
+    [string]$existingContent = $existingContent.Replace("## executes after the installation in the install process","## executes after the succesful installation in the install process")
+    [string]$existingContent = $existingContent.Replace("## executes after the uninstallation in the uninstall process","## executes after the succesful uninstallation in the uninstall process")
+
     foreach ($customFunctionName in $customFunctionNames) {
         [string]$startTag = "#region $customFunctionName content"
         [string]$endTag = "#endregion $customFunctionName content"
         [string]$contentBetweenTags = Get-NxtContentBetweenTags -Content $existingContent -StartTag $startTag -EndTag $endTag
         $resultContent = Set-NxtContentBetweenTags -Content $resultContent -StartTag $startTag -EndTag $endTag -ContentBetweenTags $contentBetweenTags
     }
-    Write-Output "Updating $PackageToUpdatePath"
+    Write-Output "Updating $PackageToUpdatePath$versionInfo"
     Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $resultContent -NoNewline
-    Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "Updated $PackageToUpdatePath from $LatestVersionPath"
+    Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "Updated $PackageToUpdatePath from $LatestVersionPath$versionInfo"
     Remove-Item -Path "$PackageToUpdatePath\AppDeployToolkit" -Recurse -Force
     Copy-Item -Path "$LatestVersionPath\AppDeployToolkit" -Destination $PackageToUpdatePath -Recurse -Force
 
@@ -119,6 +216,6 @@ function Update-NxtPSAdtPackage {
     }
 [string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
-    Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName
+   Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName
 } 
 Read-Host -Prompt "Press Enter to exit"
