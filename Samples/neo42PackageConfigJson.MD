@@ -82,7 +82,7 @@ following VariableSets of config files are useable (in order of availability):
 - InstPara
 - UninstFile
 - UninstPara
-- UninstallKey (if value "UninstallKeyContainsExpandVariable" is set to 'true'' only!)
+- UninstallKey (if value "UninstallKeyContainsExpandVariables" is set to 'true'' only!)
 - UninstallKeysToHide.KeyNameIsDisplayName
 - UninstallKeysToHide.KeyNameContainsWildCards
 - UninstallKeysToHide.DisplayNamesToExcludeFromHiding
