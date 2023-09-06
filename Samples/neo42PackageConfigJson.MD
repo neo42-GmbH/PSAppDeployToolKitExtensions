@@ -433,13 +433,12 @@ default value: true
 switch to instruct script to remove packages in former framework versions (especially Empirum setup.inf packages) and/or with same "PackageFamilyGUID" (especially packages in VBS style)
 ```
 
-**"Reboot"** *mandatory integer value*
+**"Reboot"** *mandatory string value*
 
 parent: /
 ```
-default value: 0
-reboot behavior of package (only values '0', '1' and '2' are allowed)
-```
+default value: "0"
+reboot behavior of package (only values "0", "1" and "2" are allowed, in general it is a numeric value as type 'string')
 - **0**: no reboot required (don't overwrites main exit code inside script)
 - **1**: reboot required (always overwrites main exit code inside script to exit code 3010)
 - **2**: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
@@ -730,12 +729,12 @@ value sub-collection provides an optional custom opportunity for checking condit
 
 note: empty lists for process items and/or registry items are allowed!
  
-**"TotalSecondsToWaitFor"** *mandatory integer value*
+**"TotalSecondsToWaitFor"** *mandatory string value*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
 ```
-default value: 30
-total time in seconds to wait for (all) process items/registry items to be completed
+default value: "30"
+total time in seconds to wait for (all) process items/registry items to be completed (in general it is a numeric value as type 'string')
 ```
 
 **"ProcessOperator"** *mandatory string value*
@@ -822,12 +821,12 @@ sub-collection provides an optional custom opportunity for checking conditions a
 
 note: empty lists for process items and/or registry items are allowed!
 
-**"TotalSecondsToWaitFor"** *mandatory integer value*
+**"TotalSecondsToWaitFor"** *mandatory string value*
 
 parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 ```
-default value: 30
-total time in seconds to wait for (all) process items/registry items to be completed
+default value: "30"
+total time in seconds to wait for (all) process items/registry items to be completed (in general it is a numeric value as type 'string')
 ```
 
 **"ProcessOperator"** *mandatory string value*
