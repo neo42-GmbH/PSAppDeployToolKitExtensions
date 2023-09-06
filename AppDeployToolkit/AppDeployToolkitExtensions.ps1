@@ -1045,6 +1045,7 @@ function Execute-NxtBitRockInstaller {
 		Uninstall default is: "--mode unattended".
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process. Default: $true
+		Different to default ADT CMDlets parameter 'PassThru' here is not a switch parameter but a boolean parameter. 
 	.PARAMETER ExitOnProcessFailure
 		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $false
 	.PARAMETER AcceptedExitCodes
@@ -1100,8 +1101,8 @@ function Execute-NxtBitRockInstaller {
 		$AddParameters,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]
-		$PassThru,
+		[boolean]
+		$PassThru = $true,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[boolean]$ExitOnProcessFailure = $false,
@@ -1214,22 +1215,19 @@ function Execute-NxtBitRockInstaller {
 		}
  
 		[hashtable]$ExecuteProcessSplat = @{
-			Path        = $bitRockInstallerSetupPath
-			Parameters  = $argsBitRockInstaller
-			WindowStyle = 'Normal'
+			Path                 = $bitRockInstallerSetupPath
+			Parameters           = $argsBitRockInstaller
+			WindowStyle          = 'Normal'
+			## this allows to return all error codes for 'Execute-Process' when -PassThru is active
+			ExitOnProcessFailure = $ExitOnProcessFailure
+			PassThru             = $PassThru
 		}
         
 		if ($ContinueOnError) {
 			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if ($PassThru) {
-			$ExecuteProcessSplat.Add('PassThru', $PassThru)
-		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
-		}
-		if ($false -eq $ExitOnProcessFailure) {
-			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $ExitOnProcessFailure)
 		}
     
 		if ($PassThru) {
@@ -1345,6 +1343,7 @@ function Execute-NxtInnoSetup {
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process. Default: $true
+		Different to default ADT CMDlets parameter 'PassThru' here is not a switch parameter but a boolean parameter. 
 	.PARAMETER ExitOnProcessFailure
 		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $false
 	.PARAMETER AcceptedExitCodes
@@ -1408,11 +1407,12 @@ function Execute-NxtInnoSetup {
 		$Log,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]
-		$PassThru,
+		[boolean]
+		$PassThru = $true,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[boolean]$ExitOnProcessFailure = $false,
+		[boolean]
+		$ExitOnProcessFailure = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]
@@ -1566,22 +1566,19 @@ function Execute-NxtInnoSetup {
 		[string]$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
     
 		[hashtable]$ExecuteProcessSplat = @{
-			Path        = $innoSetupPath
-			Parameters  = $argsInnoSetup
-			WindowStyle = 'Normal'
+			Path                 = $innoSetupPath
+			Parameters           = $argsInnoSetup
+			WindowStyle          = 'Normal'
+			## this allows to return all error codes for 'Execute-Process' when -PassThru is active
+			ExitOnProcessFailure = $ExitOnProcessFailure
+			PassThru             = $PassThru
 		}
         
 		if ($ContinueOnError) {
 			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if ($PassThru) {
-			$ExecuteProcessSplat.Add('PassThru', $PassThru)
-		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
-		}
-		if ($false -eq $ExitOnProcessFailure) {
-			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $ExitOnProcessFailure)
 		}
     
 		if ($PassThru) {
@@ -1688,6 +1685,7 @@ function Execute-NxtMSI {
 		Immediately continue after executing the process.
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process. Default: $true
+		Different to default ADT CMDlets parameter 'PassThru' here is not a switch parameter but a boolean parameter. 
 	.PARAMETER IgnoreExitCodes
 		List the exit codes to ignore or * to ignore all exit codes.
 	.PARAMETER AcceptedExitCodes
@@ -1774,7 +1772,7 @@ function Execute-NxtMSI {
 		[switch]$NoWait = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]$PassThru,
+		[boolean]$PassThru=$true,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]$AcceptedExitCodes,
@@ -1921,6 +1919,7 @@ function Execute-NxtNullsoft {
 		Uninstall default is: "/AllUsers /S".
 	.PARAMETER PassThru
 		Returns ExitCode, STDOut, and STDErr output from the process. Default: $true
+		Different to default ADT CMDlets parameter 'PassThru' here is not a switch parameter but a boolean parameter. 
 	.PARAMETER ExitOnProcessFailure
 		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $false
 	.PARAMETER AcceptedExitCodes
@@ -1976,8 +1975,8 @@ function Execute-NxtNullsoft {
 		$AddParameters,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]
-		$PassThru,
+		[boolean]
+		$PassThru=$true,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[boolean]$ExitOnProcessFailure = $false,
@@ -2088,22 +2087,19 @@ function Execute-NxtNullsoft {
 		}
  
 		[hashtable]$ExecuteProcessSplat = @{
-			Path        = $nullsoftSetupPath
-			Parameters  = $argsnullsoft
-			WindowStyle = 'Normal'
+			Path                 = $nullsoftSetupPath
+			Parameters           = $argsnullsoft
+			WindowStyle          = 'Normal'
+			## this allows to return all error codes for 'Execute-Process' when -PassThru is active
+			ExitOnProcessFailure = $ExitOnProcessFailure
+			PassThru             = $PassThru
 		}
         
 		if ($ContinueOnError) {
 			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if ($PassThru) {
-			$ExecuteProcessSplat.Add('PassThru', $PassThru)
-		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
-		}
-		if ($false -eq $ExitOnProcessFailure) {
-			$ExecuteProcessSplat.Add('ExitOnProcessFailure', $ExitOnProcessFailure)
 		}
     
 		if ($PassThru) {
