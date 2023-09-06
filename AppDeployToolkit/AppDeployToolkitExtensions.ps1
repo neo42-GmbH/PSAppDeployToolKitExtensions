@@ -841,7 +841,13 @@ function Complete-NxtPackageInstallation {
 				[bool]$thisUninstallKeyToHideIs64Bit = $false
 			}
 			else {
-				[bool]$thisUninstallKeyToHideIs64Bit = $true
+				if ($true -eq $Is64Bit) {
+                    [bool]$thisUninstallKeyToHideIs64Bit = $true
+                }
+                ## in case of $AppArch="*" and running on x86 system
+                else {
+                    [bool]$thisUninstallKeyToHideIs64Bit = $false
+                }
 			}
 			Write-Log -Message "Hiding uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$thisUninstallKeyToHideIs64Bit], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
 			[array]$installedAppResults = Get-NxtInstalledApplication @hideNxtParams | Where-Object Is64BitApplication -eq $thisUninstallKeyToHideIs64Bit
