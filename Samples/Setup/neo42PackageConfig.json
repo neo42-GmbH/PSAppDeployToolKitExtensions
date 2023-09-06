@@ -32,7 +32,7 @@
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
   "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
   "UninstallOld": true,
-  "Reboot": 0,
+  "Reboot": "0",
   "UserPartOnInstallation": false,
   "UserPartOnUninstallation": false,
   "UserPartRevision": "!4SectionCommaSeparatedNumberDerivedFromScriptDate!",
@@ -68,14 +68,14 @@
   "BlockExecution": true,
   "TestConditionsPreSetupSuccessCheck": {
     "Install": {
-      "TotalSecondsToWaitFor": 30,
+      "TotalSecondsToWaitFor": "30",
       "ProcessOperator": "And",
       "ProcessesToWaitFor": [],
       "RegKeyOperator": "And",
       "RegKeysToWaitFor": []
     },
     "Uninstall": {
-      "TotalSecondsToWaitFor": 30,
+      "TotalSecondsToWaitFor": "30",
       "ProcessOperator": "And",
       "ProcessesToWaitFor": [],
       "RegKeyOperator": "And",
