@@ -8977,7 +8977,7 @@ function Uninstall-NxtOld {
 						}
 					}
 					## if the current package is a new ADT package, but is actually only registered because it is a product member package, we cannot uninstall it again now
-					if ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" -InstalledState 1).PackageGUID -contains "$PackageGUID") {
+					if ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" -InstalledState 0).PackageGUID -contains "$PackageGUID") {
 						[string]$regPackageGUID = $null
 					}
 					if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
