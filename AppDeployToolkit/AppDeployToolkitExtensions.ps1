@@ -2330,8 +2330,6 @@ function Exit-NxtScriptWithError {
 		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
-	.EXAMPLE
-		Exit-NxtScriptWithError -ErrorMessage "Script execution failed!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -4573,18 +4571,18 @@ function Install-NxtApplication {
 					
 			if ($AcceptedInstallRebootCodes.split(",").contains("$($executionResult.ExitCode)")) {
 				Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
-				[int]$mainExitCode = 3010
+				Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+				$installResult.MainExitCode =  = 3010
 				$installResult.ApplicationExitCode = $($executionResult.ExitCode)
 				$installResult.ErrorMessage = "Installation done with custom reboot return code '$($executionResult.ExitCode)'."
 			} else {
-				[int]$mainExitCode = $executionResult.ExitCode
+				$installResult.MainExitCode =  = $executionResult.ExitCode
 				$installResult.ApplicationExitCode = $executionResult.ExitCode
 				$installResult.ErrorMessage = "Installation done with return code '$($executionResult.ExitCode)'."
 			}
 			if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
 				$installResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
 			}
-			$installResult.MainExitCode = $mainExitCode
 			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
 
@@ -5681,18 +5679,18 @@ function Repair-NxtApplication {
 					
 				if ($AcceptedMSIRepairRebootCodes.split(",").contains("$($executionResult.ExitCode)")) {
 					Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
-					[int]$mainExitCode = 3010
+					Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+					$repairResult.MainExitCode =  = 3010
 					$repairResult.ApplicationExitCode = $($executionResult.ExitCode)
 					$repairResult.ErrorMessage = "Uninstallation done with custom reboot return code '$($executionResult.ExitCode)'."
 				} else {
-					[int]$mainExitCode = $executionResult.ExitCode
+					$repairResult.MainExitCode = $executionResult.ExitCode
 					$repairResult.ApplicationExitCode = $executionResult.ExitCode
 					$repairResult.ErrorMessage = "Uninstallation done with return code '$($executionResult.ExitCode)'."
 				}
 				if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
 					$repairResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
 				}
-				$repairResult.MainExitCode = $mainExitCode
 				## Delay for filehandle release etc. to occur.
 				Start-Sleep -Seconds 5
 
@@ -8764,18 +8762,18 @@ function Uninstall-NxtApplication {
 
 					if ($AcceptedUninstallRebootCodes.split(",").contains("$($executionResult.ExitCode)")) {
 						Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
-						[int]$mainExitCode = 3010
+						Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+						$uninstallResult.MainExitCode = 3010
 						$uninstallResult.ApplicationExitCode = $($executionResult.ExitCode)
 						$uninstallResult.ErrorMessage = "Uninstallation done with custom reboot return code '$($executionResult.ExitCode)'."
 					} else {
-						[int]$mainExitCode = $executionResult.ExitCode
+						$uninstallResult.MainExitCode = $executionResult.ExitCode
 						$uninstallResult.ApplicationExitCode = $executionResult.ExitCode
 						$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($executionResult.ExitCode)'."
 					}
 					if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
 						$uninstallResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
 					}
-					$uninstallResult.MainExitCode = $mainExitCode
 					## Delay for filehandle release etc. to occur.
 					Start-Sleep -Seconds 5
 
