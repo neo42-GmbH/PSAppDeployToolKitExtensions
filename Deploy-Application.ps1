@@ -422,21 +422,33 @@ function Main {
 			Default {}
 		}
 		[string]$script:installPhase = 'Package-Finish'
-		## calculate exit code
-		if ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
-		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641 -or $true -eq $msiRebootDetected)) {
-			[int32]$mainExitCode = 0
-			Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
+		## calculate exit code (at this point we always have a non-error case or a reboot request)
+		switch ($Reboot) {
+			'0' {
+				if ($true -eq $msiRebootDetected) {
+					[int32]$returnExitCode = 3010
+				}
+				else {
+					[int32]$returnExitCode = 0
+				}
+			}
+			'1' {
+				[int32]$returnExitCode = 3010
+			}
+			'2' {
+				Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
+				[int32]$returnExitCode = 0
+			}
 		}
 		Close-BlockExecutionWindow
-		Exit-Script -ExitCode $mainExitCode
+		Exit-Script -ExitCode $returnExitCode
 	}
 	catch {
 		## unhandled exception occured
-		[int32]$mainExitCode = 60001
-		[string]$mainErrorMessage = "$(Resolve-Error)"
-		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+		[int32]$returnExitCode = 60001
+		[string]$returnErrorMessage = "$(Resolve-Error)"
+		Write-Log -Message $returnErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $returnExitCode
 	}
 }
 
