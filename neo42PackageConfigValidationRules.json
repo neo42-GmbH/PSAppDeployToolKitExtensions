@@ -146,16 +146,6 @@
         "Type": "System.Array",
         "AllowEmpty": true
     },
-    "AcceptedMSIRepairExitCodes": {
-        "Mandatory": true,
-        "HelpText": "AcceptedMSIRepairExitCodes must be a comma separated list of numbers.",
-        "Regex": {
-            "Pattern": "^\\d+(,\\d+)*$",
-            "Operator": "match"
-        },
-        "Type": "System.String",
-        "AllowEmpty": true
-    },
     "TestConditionsPreSetupSuccessCheck": {
         "Mandatory": true,
         "HelpText": "TestConditionsPreSetupSuccessCheck is mandatory and must be a PSCustomObject.",
