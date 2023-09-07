@@ -650,7 +650,7 @@ parent: /
 
 ```
 default value: ""
-comma separated list of exit codes to accept for successfull repair execution of msi setup installer file
+comma separated list of exit codes to accept for successful repair execution of msi setup installer file
 note: '*' is allowed for all exit codes
 ```
 
