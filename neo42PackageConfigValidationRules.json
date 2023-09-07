@@ -83,6 +83,17 @@
         "Type": "System.Array",
         "Mandatory": true
     },
+    "Reboot": {
+        "Mandatory": true,
+        "AllowEmpty": false,
+        "HelpText": "Reboot is mandatory and must be an integer of 0, 1 or 2.",
+        "Type": "System.Int32",
+        "Validateset": [
+            0,
+            1,
+            2
+        ]
+    },
     "UserPartRevision": {
         "Mandatory": true,
         "HelpText": "UserPartRevision is mandatory and must be a string.",
