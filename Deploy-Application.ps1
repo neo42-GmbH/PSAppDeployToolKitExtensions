@@ -357,13 +357,35 @@ function Main {
 				}
 				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
+				## calculate exit code (at this point we always should have a non-error case or a reboot request)
+				switch ($Reboot) {
+					'0' {
+						if ($true -eq $msiRebootDetected) {
+							[int32]$returnExitCode = 3010
+							[string]$returnErrorMessage = "Package processed successfully. Reboot necessary!"
+						}
+						else {
+							[int32]$returnExitCode = 0
+							[string]$returnErrorMessage = "Package processed successfully."
+						}
+					}
+					'1' {
+						[int32]$returnExitCode = 3010
+						[string]$returnErrorMessage = "Package processed successfully. Reboot necessary!"
+					}
+					'2' {
+						Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
+						[int32]$returnExitCode = 0
+						[string]$returnErrorMessage = "Package processed successfully."
+					}
+				}
 				If ($false -ne $mainNxtResult.Success) {
 					[string]$script:installPhase = 'Package-Completion'
 					Complete-NxtPackageInstallation
 					if ($true -eq $RegisterPackage) {
 						## register package for uninstall
 						[string]$script:installPhase = 'Package-Registration'
-						Register-NxtPackage
+						Register-NxtPackage -MainExitCode $returnExitCode -LastErrorMessage $returnErrorMessage
 					} else {
 						Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 					}
@@ -422,33 +444,13 @@ function Main {
 			Default {}
 		}
 		[string]$script:installPhase = 'Package-Finish'
-		## calculate exit code (at this point we always have a non-error case or a reboot request)
-		switch ($Reboot) {
-			'0' {
-				if ($true -eq $msiRebootDetected) {
-					[int32]$returnExitCode = 3010
-				}
-				else {
-					[int32]$returnExitCode = 0
-				}
-			}
-			'1' {
-				[int32]$returnExitCode = 3010
-			}
-			'2' {
-				Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
-				[int32]$returnExitCode = 0
-			}
-		}
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $returnExitCode
 	}
 	catch {
 		## unhandled exception occured
-		[int32]$returnExitCode = 60001
-		[string]$returnErrorMessage = "$(Resolve-Error)"
-		Write-Log -Message $returnErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $returnExitCode
+		Write-Log -Message "$(Resolve-Error)" -Severity 3 -Source $deployAppScriptFriendlyName
+		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
 	}
 }
 

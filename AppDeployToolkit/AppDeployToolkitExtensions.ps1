@@ -4849,7 +4849,6 @@ function Register-NxtPackage {
 		Defaults to $logname defined in the AppDeployToolkitMain.
 	.PARAMETER MainExitCode
 		The value, the script returns to the deployment system and that will be written as LastExitCode to the package entry in the the registry.
-		Defaults to the variable $mainExitCode.
 	.PARAMETER PackageStatus
 		The value, that will be written as PackageStatus to the package entry in the the registry.
 		Defaults to "Success".
@@ -4867,7 +4866,6 @@ function Register-NxtPackage {
 		Defaults to $ProcessNTAccountSID defined in the PSADT Main script.
 	.PARAMETER LastErrorMessage
 		If set the message is written to the registry.
-		Defaults to the $global:LastErrorMessage.
 	.PARAMETER $UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
