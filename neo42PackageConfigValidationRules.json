@@ -146,9 +146,9 @@
         "Type": "System.Array",
         "AllowEmpty": true
     },
-    "AcceptedRepairExitCodes": {
+    "AcceptedMSIRepairExitCodes": {
         "Mandatory": true,
-        "HelpText": "AcceptedRepairExitCodes must be a comma separated list of numbers.",
+        "HelpText": "AcceptedMSIRepairExitCodes must be a comma separated list of numbers.",
         "Regex": {
             "Pattern": "^\\d+(,\\d+)*$",
             "Operator": "match"
