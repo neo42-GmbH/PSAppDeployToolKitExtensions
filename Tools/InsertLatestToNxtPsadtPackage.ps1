@@ -181,6 +181,9 @@ function Update-NxtPSAdtPackage {
     [string]$existingContent = $existingContent.Replace("## executes after the installation in the install process","## executes after the succesful installation in the install process")
     [string]$existingContent = $existingContent.Replace("## executes after the uninstallation in the uninstall process","## executes after the succesful uninstallation in the uninstall process")
 
+    #also change wrong installphase nams of some custom sections
+    [string]$existingContent = $existingContent.Replace("installPhase = 'CustomPostInstallAndReinstall'","installPhase = 'CustomInstallAndReinstallEnd'")
+
     foreach ($customFunctionName in $customFunctionNames) {
         [string]$startTag = "#region $customFunctionName content"
         [string]$endTag = "#endregion $customFunctionName content"
