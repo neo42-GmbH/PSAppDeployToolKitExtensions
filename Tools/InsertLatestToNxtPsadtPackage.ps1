@@ -84,6 +84,9 @@ function Update-NxtPSAdtPackage {
     if ($null -eq $customFunctionNames){
         throw "No custom functions found in $PackageToUpdatePath"
     }
+    #also change wrong installphase nams of some custom sections
+    [string]$existingContent = $existingContent.Replace("installPhase = 'CustomPostInstallAndReinstall'","installPhase = 'CustomInstallAndReinstallEnd'")
+
     foreach ($customFunctionName in $customFunctionNames) {
         [string]$startTag = "#region $customFunctionName content"
         [string]$endTag = "#endregion $customFunctionName content"
