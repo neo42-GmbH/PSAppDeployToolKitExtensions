@@ -573,7 +573,7 @@ function CustomInstallAndReinstallEnd {
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
-	[string]$script:installPhase = 'CustomPostInstallAndReinstall'
+	[string]$script:installPhase = 'CustomInstallAndReinstallEnd'
 
 	## executes after the completed install or reinstall process
 	#region CustomInstallAndReinstallEnd content
