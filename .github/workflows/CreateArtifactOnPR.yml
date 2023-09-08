@@ -1,0 +1,32 @@
+## Allow Action
+on:
+  pull_request:
+    branches:
+      - develop
+name: Create Artifacts
+env:
+  GITHUB_RUN_NUMBER: ${{ github.run_number }}
+  GITHUB_RELEASE_VERSION: ${{ vars.RELEASE_VERSION }}
+jobs:
+  build:
+    name: Create Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          path: ./PSAppDeployToolkitExtensions
+      - name: Checkout Public Repo
+        uses: actions/checkout@v3
+        with:
+          repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
+          ref: ${{ vars.TARGET_ADT_VERSION }}
+          path: ./PSAppDeployToolkit
+      - name: PowerShell Script
+        shell: pwsh
+        run: ./PSAppDeployToolkitExtensions/.github/scripts/script.ps1
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: PSAppDeployToolKitExtensions-${{ vars.RELEASE_VERSION }}unstable-${{ github.run_number }}
+          path: ${{ vars.RELEASE_VERSION }}-${{ github.run_number }}
