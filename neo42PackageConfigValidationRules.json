@@ -92,6 +92,17 @@
         "Type": "System.Array",
         "Mandatory": true
     },
+    "Reboot": {
+        "Mandatory": true,
+        "AllowEmpty": false,
+        "HelpText": "Reboot is mandatory and must be an integer of 0, 1 or 2.",
+        "Type": "System.Int32",
+        "Validateset": [
+            0,
+            1,
+            2
+        ]
+    },
     "UserPartRevision": {
         "Mandatory": true,
         "HelpText": "UserPartRevision is mandatory and must be a string.",
@@ -165,8 +176,12 @@
                 "Subkeys": {
                     "TotalSecondsToWaitFor": {
                         "Mandatory": true,
-                        "HelpText": "TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor is mandatory and must be an integer.",
-                        "Type": "System.Int32"
+                        "HelpText": "TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor is mandatory and must be an integer in the range of 1 and 3600.",
+                        "Type": "System.Int32",
+                        "Regex": {
+                            "Pattern": "\\b([1-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-2][0-9][0-9][0-9]|3[0-5][0-9][0-9]|3600)\\b" ,
+                            "Operator": "match"
+                        }
                     },
                     "ProcessesToWaitFor": {
                         "Mandatory": true,
@@ -247,8 +262,12 @@
                 "Subkeys": {
                     "TotalSecondsToWaitFor": {
                         "Mandatory": true,
-                        "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor is mandatory and must be an integer.",
-                        "Type": "System.Int32"
+                        "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor is mandatory and must be an integer in the range of 1 and 3600.",
+                        "Type": "System.Int32",
+                        "Regex": {
+                            "Pattern": "\\b([1-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-2][0-9][0-9][0-9]|3[0-5][0-9][0-9]|3600)\\b" ,
+                            "Operator": "match"
+                        }
                     },
                     "ProcessesToWaitFor": {
                         "Mandatory": true,

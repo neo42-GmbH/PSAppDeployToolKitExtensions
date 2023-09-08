@@ -8130,8 +8130,8 @@ function Test-NxtObjectValidation {
 							}
 						}
 						## check for sub objects
-						foreach ($subkey in $ValidationRule.$validationRuleKey.SubKeys.Keys){
-							Test-NxtObjectValidation -ValidationRule $ValidationRule.$validationRuleKey.SubKeys[$subkey].SubKeys -ObjectToValidate $ObjectToValidate.$validationRuleKey.$Subkey -ParentObjectName $validationRuleKey -ContinueOnError $ContinueOnError
+						foreach ($subkey in $ValidationRule.$validationRuleKey.SubKeys.PSObject.Properties.Name){
+							Test-NxtObjectValidation -ValidationRule $ValidationRule.$validationRuleKey.SubKeys.$subkey.SubKeys -ObjectToValidate $ObjectToValidate.$validationRuleKey.$subkey -ParentObjectName $validationRuleKey -ContinueOnError $ContinueOnError
 						}
 					}
 					{$true -eq $ContainsDirectValues}{
