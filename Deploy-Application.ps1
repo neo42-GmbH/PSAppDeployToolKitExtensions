@@ -281,9 +281,6 @@ function Main {
 					Close-BlockExecutionWindow
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
-				if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
-					[int32]$mainExitCode = $mainNxtResult.MainExitCode
-				}
 				Unregister-NxtOld
 				Resolve-NxtDependentPackage
 				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
@@ -318,9 +315,6 @@ function Main {
 									CustomReinstallPostUninstallOnError -ResultToCheck $mainNxtResult
 									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
 								}
-								if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
-									[int32]$mainExitCode = $mainNxtResult.MainExitCode
-								}
 								CustomReinstallPostUninstall -ResultToCheck $mainNxtResult
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
@@ -328,9 +322,6 @@ function Main {
 								if ($false -eq $mainNxtResult.Success) {
 									CustomReinstallPostInstallOnError -ResultToCheck $mainNxtResult
 									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
-								}
-								if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
-									[int32]$mainExitCode = $mainNxtResult.MainExitCode
 								}
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
@@ -342,9 +333,6 @@ function Main {
 									if ($false -eq $mainNxtResult.Success) {
 										CustomReinstallPostInstallOnError -ResultToCheck $mainNxtResult
 										Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
-									}
-									if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
-										[int32]$mainExitCode = $mainNxtResult.MainExitCode
 									}
 									CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 								}
@@ -359,9 +347,6 @@ function Main {
 								if ($false -eq $mainNxtResult.Success) {
 									CustomReinstallPostInstallOnError -ResultToCheck $mainNxtResult
 									Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
-								}
-								if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
-									[int32]$mainExitCode = $mainNxtResult.MainExitCode
 								}
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
@@ -378,9 +363,6 @@ function Main {
 						if ($false -eq $mainNxtResult.Success) {
 							CustomInstallEndOnError -ResultToCheck $mainNxtResult
 							Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
-						}
-						if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
-							[int32]$mainExitCode = $mainNxtResult.MainExitCode
 						}
 						CustomInstallEnd -ResultToCheck $mainNxtResult
 					}
@@ -418,9 +400,6 @@ function Main {
 					if ($false -eq $mainNxtResult.Success) {
 						CustomUninstallEndOnError -ResultToCheck $mainNxtResult
 						Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
-					}
-					if (($mainExitCode -eq 0) -or ($mainNxtResult.MainExitCode -ne 0) ) {
-						[int32]$mainExitCode = $mainNxtResult.MainExitCode
 					}
 					CustomUninstallEnd -ResultToCheck $mainNxtResult
 					[string]$script:installPhase = 'Package-Completion'
@@ -557,7 +536,7 @@ function CustomReinstallPostUninstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstall'
 
-	## executes after the succesful uninstallation in the reinstall process
+	## executes after the successful uninstallation in the reinstall process
 	#region CustomReinstallPostUninstall content
 
 	#endregion CustomReinstallPostUninstall content
@@ -594,7 +573,7 @@ function CustomReinstallPostInstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstall'
 
-	## executes after the succesful installation in the reinstall process
+	## executes after the successful installation in the reinstall process
 	#region CustomReinstallPostInstall content
 
 	#endregion CustomReinstallPostInstall content
@@ -631,7 +610,7 @@ function CustomInstallEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallEnd'
 
-	## executes after the succesful installation in the install process
+	## executes after the successful installation in the install process
 	#region CustomInstallEnd content
 
 	#endregion CustomInstallEnd content
@@ -682,7 +661,7 @@ function CustomUninstallEnd {
 	)
 	[string]$script:installPhase = 'CustomUninstallEnd'
 
-	## executes after the succesful uninstallation in the uninstall process
+	## executes after the successful uninstallation in the uninstall process
 	#region CustomUninstallEnd content
 
 	#endregion CustomUninstallEnd content

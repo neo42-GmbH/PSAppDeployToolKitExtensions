@@ -176,10 +176,10 @@ function Update-NxtPSAdtPackage {
         }
     }
     #also change comments of some custom sections
-    [string]$existingContent = $existingContent.Replace("## executes at after the uninstallation in the reinstall process","## executes after the succesful uninstallation in the reinstall process")
-    [string]$existingContent = $existingContent.Replace("## executes after the installation in the reinstall process","## executes after the succesful installation in the reinstall process")
-    [string]$existingContent = $existingContent.Replace("## executes after the installation in the install process","## executes after the succesful installation in the install process")
-    [string]$existingContent = $existingContent.Replace("## executes after the uninstallation in the uninstall process","## executes after the succesful uninstallation in the uninstall process")
+    [string]$existingContent = $existingContent.Replace("## executes at after the uninstallation in the reinstall process","## executes after the successful uninstallation in the reinstall process")
+    [string]$existingContent = $existingContent.Replace("## executes after the installation in the reinstall process","## executes after the successful installation in the reinstall process")
+    [string]$existingContent = $existingContent.Replace("## executes after the installation in the install process","## executes after the successful installation in the install process")
+    [string]$existingContent = $existingContent.Replace("## executes after the uninstallation in the uninstall process","## executes after the successful uninstallation in the uninstall process")
 
     #also change wrong installphase nams of some custom sections
     [string]$existingContent = $existingContent.Replace("installPhase = 'CustomPostInstallAndReinstall'","installPhase = 'CustomInstallAndReinstallEnd'")
