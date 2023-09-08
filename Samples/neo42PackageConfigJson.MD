@@ -434,13 +434,13 @@ default value: true
 switch to instruct script to remove packages in former framework versions (especially Empirum setup.inf packages) and/or with same "PackageFamilyGUID" (especially packages in VBS style)
 ```
 
-**"Reboot"** *mandatory string value*
+**"Reboot"** *mandatory integer value*
 
 parent: /
 ```
-default value: "0"
-reboot behavior of package (only values "0", "1" and "2" are allowed, in general it is a numeric value as type 'string')
-- **0**: no reboot required (don't overwrites main exit code inside script)
+default value: 0
+reboot behavior of package (only values 0, 1 and 2 are allowed, in general it is a numeric value as type int)
+- **0**: no reboot required (doesn't overwrite main exit code inside script)
 - **1**: reboot required (always overwrites main exit code inside script to exit code 3010)
 - **2**: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
 
