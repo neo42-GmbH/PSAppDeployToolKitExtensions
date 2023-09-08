@@ -3,7 +3,7 @@ on:
   pull_request:
     branches:
       - develop
-name: Create Artifacts
+name: Create unstable Artifacts
 env:
   GITHUB_RUN_NUMBER: ${{ github.run_number }}
   GITHUB_RELEASE_VERSION: ${{ vars.RELEASE_VERSION }}
