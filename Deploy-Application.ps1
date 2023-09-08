@@ -451,6 +451,28 @@ function Main {
 			Default {}
 		}
 		[string]$script:installPhase = 'Package-Finish'
+		## calculate exit code (at this point we always should have a non-error case or a reboot request)
+		switch ($Reboot) {
+			'0' {
+				if ($true -eq $msiRebootDetected) {
+					[int32]$returnExitCode = 3010
+					[string]$returnErrorMessage = "Package processed successfully. Reboot necessary!"
+				}
+				else {
+					[int32]$returnExitCode = 0
+					[string]$returnErrorMessage = "Package processed successfully."
+				}
+			}
+			'1' {
+				[int32]$returnExitCode = 3010
+				[string]$returnErrorMessage = "Package processed successfully. Reboot necessary!"
+			}
+			'2' {
+				Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
+				[int32]$returnExitCode = 0
+				[string]$returnErrorMessage = "Package processed successfully."
+			}
+		}
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $returnExitCode
 	}
