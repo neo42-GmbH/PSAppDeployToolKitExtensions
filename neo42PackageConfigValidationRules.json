@@ -1,5 +1,13 @@
 {
-    "AppArch": {
+    "ConfigVersion": {
+        "Mandatory": true,
+        "HelpText": "ConfigVersion is mandatory and must be a string with a Config Version number.",
+        "Type": "System.String",
+        "Validateset": [
+            "1.0"
+        ],
+        "AllowEmpty": false
+    },"AppArch": {
         "Mandatory": true,
         "HelpText": "AppArch is mandatory and must be a string with a value of x86, x64 or *.",
         "Validateset": [
