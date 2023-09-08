@@ -732,12 +732,12 @@ value sub-collection provides an optional custom opportunity for checking condit
 
 note: empty lists for process items and/or registry items are allowed!
  
-**"TotalSecondsToWaitFor"** *mandatory string value*
+**"TotalSecondsToWaitFor"** *mandatory integer value*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
 ```
-default value: "30"
-total time in seconds to wait for (all) process items/registry items to be completed (in general it is a numeric value as type 'string')
+default value: 30
+total time in seconds to wait for (all) process items/registry items to be completed
 ```
 
 **"ProcessOperator"** *mandatory string value*
@@ -824,12 +824,12 @@ sub-collection provides an optional custom opportunity for checking conditions a
 
 note: empty lists for process items and/or registry items are allowed!
 
-**"TotalSecondsToWaitFor"** *mandatory string value*
+**"TotalSecondsToWaitFor"** *mandatory integer value*
 
 parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 ```
-default value: "30"
-total time in seconds to wait for (all) process items/registry items to be completed (in general it is a numeric value as type 'string')
+default value: 30
+total time in seconds to wait for (all) process items/registry items to be completed
 ```
 
 **"ProcessOperator"** *mandatory string value*
