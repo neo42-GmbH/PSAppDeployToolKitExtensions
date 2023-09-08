@@ -439,7 +439,7 @@ switch to instruct script to remove packages in former framework versions (espec
 parent: /
 ```
 default value: 0
-reboot behavior of package (only values 0, 1 and 2 are allowed, in general it is a numeric value as type int)
+reboot behavior of package (only values 0, 1 and 2 are allowed)
 - **0**: no reboot required (doesn't overwrite main exit code inside script)
 - **1**: reboot required (always overwrites main exit code inside script to exit code 3010)
 - **2**: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
