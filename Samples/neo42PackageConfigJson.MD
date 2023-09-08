@@ -434,16 +434,16 @@ default value: true
 switch to instruct script to remove packages in former framework versions (especially Empirum setup.inf packages) and/or with same "PackageFamilyGUID" (especially packages in VBS style)
 ```
 
-**"Reboot"** *mandatory string value*
+**"Reboot"** *mandatory integer value*
 
 parent: /
 
 note: an explicite script call parameter -AllowRebootPassThru $false will ignore this setting on script exit
 ```
-default value: "0"
-reboot behavior of package (only values "0", "1" and "2" are allowed, in general it is a numeric value as type 'string')
+default value: 0
+reboot behavior of package (only values 0, 1 and 2 are allowed)
 ```
-- **0**: no reboot required (don't overwrites main exit code inside script)
+- **0**: no reboot required (doesn't overwrite main exit code inside script)
 - **1**: reboot required (always overwrites main exit code inside script to exit code 3010)
 - **2**: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
 
@@ -763,12 +763,12 @@ value sub-collection provides an optional custom opportunity for checking condit
 
 note: empty lists for process items and/or registry items are allowed!
  
-**"TotalSecondsToWaitFor"** *mandatory string value*
+**"TotalSecondsToWaitFor"** *mandatory integer value*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
 ```
-default value: "30"
-total time in seconds to wait for (all) process items/registry items to be completed (in general it is a numeric value as type 'string')
+default value: 30
+total time in seconds to wait for (all) process items/registry items to be completed
 ```
 
 **"ProcessOperator"** *mandatory string value*
@@ -855,12 +855,12 @@ sub-collection provides an optional custom opportunity for checking conditions a
 
 note: empty lists for process items and/or registry items are allowed!
 
-**"TotalSecondsToWaitFor"** *mandatory string value*
+**"TotalSecondsToWaitFor"** *mandatory integer value*
 
 parent: /TestConditionsPreSetupSuccessCheck/Uninstall/
 ```
-default value: "30"
-total time in seconds to wait for (all) process items/registry items to be completed (in general it is a numeric value as type 'string')
+default value: 30
+total time in seconds to wait for (all) process items/registry items to be completed
 ```
 
 **"ProcessOperator"** *mandatory string value*
