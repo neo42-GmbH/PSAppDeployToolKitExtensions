@@ -7942,6 +7942,71 @@ function Test-NxtAppIsInstalled {
 	}
 }
 #endregion
+#region Function Test-NxtConfigVersionCompatibility
+function Test-NxtConfigVersionCompatibility {
+	<#
+	.SYNOPSIS
+		Tests if the ConfigVersion of the PackageConfig.json is equal to Deploy-Application.ps1 and AppDeployToolkitExtensions.ps1.
+	.DESCRIPTION
+		Tests if the ConfigVersion of the PackageConfig.json is equal to Deploy-Application.ps1 and AppDeployToolkitExtensions.ps1. Throws an error if the versions are not equal.
+	.PARAMETER ConfigVersion
+		Version of the config file.
+		Defaults to $global:PackageConfig.ConfigVersion.
+	.PARAMETER DeployApplicationPath
+		Path to the Deploy-Application.ps1 file.
+		Defaults to $global:DeployApplicationPath.
+	.PARAMETER AppDeployToolkitExtensionsPath
+		Path to the AppDeployToolkitExtensionsPath.ps1 file.
+		Defaults to $global:AppDeployToolkitExtensionsPath.
+	.OUTPUTS
+		none.
+	.EXAMPLE
+		Test-NxtConfigVersionCompatibility
+		Use the default values to test the version compatibility.
+	.EXAMPLE
+		Test-NxtConfigVersionCompatibility -ConfigVersion 2023.12.31.1 -DeployApplicationPath "C:\temp\packagepath\Deploy-Application.ps1" -AppDeployToolkitExtensionsPath "C:\temp\packagepath\AppDeploymentToolkit\AppDeployToolkitExtensions.ps1"
+		Use custom values to test the version compatibility.
+	.NOTES
+		This is an internal function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ConfigVersion = $global:PackageConfig.ConfigVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeployApplicationPath = $global:DeployApplicationPath,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppDeployToolkitExtensionsPath = $global:AppDeployToolkitExtensionsPath
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		$deployApplicationContent = Get-Content -Path $DeployApplicationPath
+		$deployApplicationConfigVersion = $deployApplicationContent | Select-String -Pattern "ConfigVersion: $ConfigVersion$"
+		if ([string]::IsNullOrEmpty($deployApplicationConfigVersion)) {
+			Write-Log -Message "ConfigVersion: $ConfigVersion not found in $DeployApplicationPath. Please use A DeployApplication.ps1 that matches the ConfigVersion from Packageconfig" -Severity 3 -Source ${cmdletName}
+			throw "ConfigVersion: $ConfigVersion not found in $DeployApplicationPath. Please use A DeployApplication.ps1 that matches the ConfigVersion from Packageconfig"
+		}
+		$appDeployToolkitExtensionsContent = Get-Content -Path $AppDeployToolkitExtensionsPath
+		$appDeployToolkitExtensionsConfigVersion = $appDeployToolkitExtensionsContent | Select-String -Pattern "ConfigVersion: $ConfigVersion$"
+		if ([string]::IsNullOrEmpty($appDeployToolkitExtensionsConfigVersion)) {
+			Write-Log -Message "ConfigVersion: $ConfigVersion not found in $AppDeployToolkitExtensionsPath. Please use an AppDeployToolkit Folder that matches the ConfigVersion from Packageconfig" -Severity 3 -Source ${cmdletName}
+			throw "ConfigVersion: $ConfigVersion not found in $AppDeployToolkitExtensionsPath. Please use an AppDeployToolkit Folder that matches the ConfigVersion from Packageconfig"
+		}
+		Write-Log -Message "ConfigVersion: $ConfigVersion" -Severity 1 -Source ${cmdletName}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Test-NxtLocalGroupExists
 function Test-NxtLocalGroupExists {
 	<#
