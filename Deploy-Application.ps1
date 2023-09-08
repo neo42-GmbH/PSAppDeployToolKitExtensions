@@ -392,19 +392,14 @@ function Main {
 						[string]$returnErrorMessage = "Package processed successfully."
 					}
 				}
-				If ($false -ne $mainNxtResult.Success) {
-					[string]$script:installPhase = 'Package-Completion'
-					Complete-NxtPackageInstallation
-					if ($true -eq $RegisterPackage) {
-						## register package for uninstall
-						[string]$script:installPhase = 'Package-Registration'
-						Register-NxtPackage -MainExitCode $returnExitCode -LastErrorMessage $returnErrorMessage
-					} else {
-						Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
-					}
-				}
-				else {
-					Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
+				[string]$script:installPhase = 'Package-Completion'
+				Complete-NxtPackageInstallation
+				if ($true -eq $RegisterPackage) {
+					## register package for uninstall
+					[string]$script:installPhase = 'Package-Registration'
+					Register-NxtPackage -MainExitCode $returnExitCode -LastErrorMessage $returnErrorMessage
+				} else {
+					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 				}
 				## END OF INSTALL
 			}
