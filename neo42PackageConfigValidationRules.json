@@ -1,11 +1,12 @@
 {
     "ConfigVersion": {
         "Mandatory": true,
-        "HelpText": "ConfigVersion is mandatory and must be a string with a Config Version number.",
+        "HelpText": "ConfigVersion is mandatory and must be a string with a Config Version number in the format of 4digits.2digits.2digits.variableDigit (e.g. 2023.01.01.1).",
         "Type": "System.String",
-        "Validateset": [
-            "1.0"
-        ],
+        "Regex": {
+            "Pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}\\.[0-9]+$",
+            "Operator": "match"
+        },
         "AllowEmpty": false
     },"AppArch": {
         "Mandatory": true,
