@@ -2437,6 +2437,7 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -eq 0) {
 			[int32]$MainExitCode = 70000
 		}
+		$null = Set-NxtRebootRequirement -ApplyDecision
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $MainExitCode
 	}
