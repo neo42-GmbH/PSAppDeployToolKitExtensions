@@ -6154,6 +6154,7 @@ function Set-NxtRebootRequirement {
 		Defaults to $script:msiRebootDetected.
 	.PARAMETER Reboot
 		Indicates if a reboot is required by the script. 0 = Decide based on $msiRebootDetected, 1 = Reboot required, 2 = Reboot not required.
+		Default to $global:PackageConfig.Reboot.
 	.PARAMETER ApplyDecision
 		Indicates if $msiRebootDetected should be updated.
 		Defaults to $true.
@@ -6161,10 +6162,10 @@ function Set-NxtRebootRequirement {
 		PSADTNXT.NxtRebootResult.
 	.EXAMPLE
 		Set-NxtRebootRequirement
-		Tests and sets RebootRequirement based on $msiRebootDetected and $Reboot and sets $script:msiRebootDetected to the resulting value.
+		Tests RebootRequirement based on $msiRebootDetected and $Reboot. Does not set $script:msiRebootDetected.
 	.EXAMPLE
-		Set-NxtRebootRequirement -MsiRebootDetected $true -Reboot 0 -UpdateMsiRebootDetected $true
-		Sets RebootRequirement to $true and sets $script:msiRebootDetected to $true.
+		Set-NxtRebootRequirement -MsiRebootDetected $true -Reboot 0 -ApplyDecision
+		Sets MainExitCode to 3010 and sets $script:msiRebootDetected to $true.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -6176,7 +6177,7 @@ function Set-NxtRebootRequirement {
 		[Parameter(Mandatory = $true)]
 		[ValidateSet(0,1,2)]
 		[int]
-		$Reboot,
+		$Reboot = $global:PackageConfig.Reboot,
 		[Parameter(Mandatory = $false)]
 		[switch]
 		$ApplyDecision
@@ -6191,23 +6192,23 @@ function Set-NxtRebootRequirement {
 			0 { 
 				if ($MsiRebootDetected) {
 					Write-Log -Message "Detected Reboot required by an (un)installation" -Severity 1 -Source ${CmdletName}
-					$rebootResult.ExitCode = 3010
+					$rebootResult.MainExitCode = 3010
 					$rebootResult.Message = "Found reboot required by an (un)installation"
 				}
 				else {
 					Write-Log -Message "Found no reboot required by an (un)installation" -Severity 1 -Source ${CmdletName}
-					$rebootResult.ExitCode = 0
+					$rebootResult.MainExitCode = 0
 					$rebootResult.Message = "Found no reboot required by an (un)installation"
 				}
 			}
 			1 {
 				Write-Log -Message "Reboot required by script" -Severity 1 -Source ${CmdletName}
-				$rebootResult.ExitCode = 3010
+				$rebootResult.MainExitCode = 3010
 				$rebootResult.Message = "Reboot required by script"
 			}
 			2 {
 				Write-Log -Message "Reboot not required by script" -Severity 1 -Source ${CmdletName}
-				$rebootResult.ExitCode = 0
+				$rebootResult.MainExitCode = 0
 				$rebootResult.Message = "Reboot not required by script"
 			}
 			default {
@@ -6216,7 +6217,7 @@ function Set-NxtRebootRequirement {
 			}
 		}
 		if ($ApplyDecision) {
-			switch ($rebootResult.ExitCode) {
+			switch ($rebootResult.MainExitCode) {
 				0 { 
 					Write-Log -Message "Setting `$msiRebootDetected from $script:msiRebootDetected to $false" -Severity 1 -Source ${CmdletName}
 					$script:msiRebootDetected = $false

@@ -124,7 +124,7 @@ namespace PSADTNXT
 
         public class NxtRebootResult
     {
-        public int ExitCode { get; set; }
+        public int MainExitCode { get; set; }
         public string Message { get; set; }
     }
 

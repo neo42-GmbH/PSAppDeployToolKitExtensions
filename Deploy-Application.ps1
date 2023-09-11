@@ -259,10 +259,6 @@ function Main {
 		[string]
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
 		[Parameter(Mandatory = $false)]
-		[int]
-		[ValidateSet(0, 1, 2)]
-		$Reboot = $global:PackageConfig.reboot,
-		[Parameter(Mandatory = $false)]
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
@@ -372,12 +368,12 @@ function Main {
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
 				## calculate exit code (at this point we always should have a non-error case or a reboot request)
 				[string]$script:installPhase = 'Package-Completion'
-				[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootRequirement -Reboot $Reboot
+				[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootRequirement
 				Complete-NxtPackageInstallation
 				if ($true -eq $RegisterPackage) {
 					## register package for uninstall
 					[string]$script:installPhase = 'Package-Registration'
-					Register-NxtPackage -MainExitCode $rebootRequirementResult.ExitCode -LastErrorMessage $returnErrorMessage
+					Register-NxtPackage -MainExitCode $rebootRequirementResult.MainExitCode -LastErrorMessage $returnErrorMessage
 				} else {
 					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 				}
@@ -432,8 +428,8 @@ function Main {
 		}
 		[string]$script:installPhase = 'Package-Finish'
 		Close-BlockExecutionWindow
-		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootRequirement -ApplyDecision -Reboot $Reboot
-		Exit-Script -ExitCode $rebootRequirementResult.ExitCode
+		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootRequirement -ApplyDecision
+		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {
 		## unhandled exception occured
