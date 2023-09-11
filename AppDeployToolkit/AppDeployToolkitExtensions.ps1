@@ -5123,6 +5123,74 @@ function Remove-NxtEmptyFolder {
 	}
 }
 #endregion
+#region Function Remove-NxtIniValue
+Function Remove-NxtIniValue {
+	<#
+	.SYNOPSIS
+		Removes a specified key-value pair from a given section in an INI file.
+	.DESCRIPTION
+		The Remove-NxtIniValue function is designed to remove a specified key-value pair from a given section within an INI file located at the specified file path. The function logs the process and will either continue or terminate based on the value of the ContinueOnError parameter.
+	.PARAMETER FilePath
+		The full path of the INI file from which to remove the key-value pair.
+		This parameter is mandatory.
+	.PARAMETER Section
+		The name of the section within the INI file from which to remove the key-value pair.
+		This parameter is mandatory.
+	.PARAMETER Key
+		The key name within the section that needs to be removed from the INI file.
+	This parameter is mandatory.
+	.PARAMETER ContinueOnError
+		When set to $true, the function will continue executing even if an error occurs. Default is $true.
+	.EXAMPLE
+		Remove-NxtIniValue -FilePath "C:\Config.ini" -Section "Settings" -Key "Username"
+		Removes the key "Username" from the "Settings" section in the INI file located at "C:\Config.ini".
+	.EXAMPLE
+		Remove-NxtIniValue -FilePath "C:\Config.ini" -Section "Settings" -Key "Username" -ContinueOnError $false
+		Removes the key "Username" from the "Settings" section in the INI file located at "C:\Config.ini" and stops execution if an error occurs.
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [String]$FilePath,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [String]$Section,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [String]$Key,
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [Boolean]$ContinueOnError = $true
+    )
+    Begin {
+        ## Get the name of this function and write header
+        [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+    }
+    Process {
+        Try {
+            Write-Log -Message "Removing INI Key: [Section = $Section] [Key = $Key]." -Source ${CmdletName}
+            If (-not (Test-Path -LiteralPath $FilePath -PathType 'Leaf')) {
+                Throw "File [$filePath] could not be found."
+            }
+            [PSADTNXT.NxtIniFile]::RemoveIniValue($Section, $Key, $FilePath)
+        }
+        Catch {
+            Write-Log -Message "Failed to remove INI file key value. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+            If (-not $ContinueOnError) {
+                Throw "Failed to remove INI file key value: $($_.Exception.Message)"
+            }
+        }
+    }
+    End {
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+    }
+}
+#endregion
 #region Function Remove-NxtLocalGroup
 function Remove-NxtLocalGroup {
 	<#
