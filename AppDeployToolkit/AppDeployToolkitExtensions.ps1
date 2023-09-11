@@ -6148,8 +6148,8 @@ function Set-NxtRebootRequirement {
 	.SYNOPSIS
 		Sets $script:msiRebootDetected if a reboot is required.
 	.DESCRIPTION
-		Tests if a reboot is required based on $msiRebootDetected.
-		Indicates if a reboot is required by an (un)installation. Also sets $script:msiRebootDetected to the resulting value. This can affect errormessages in case of multiple uses of this function. To actually apply the decisíon use the -ApplyDecision switch.
+		Tests if a reboot is required based on $msiRebootDetected and Reboot from the packageconfig.
+		To automatically apply the decision to the any call of Exit-Script use the -ApplyDecision switch.
 	.PARAMETER MsiRebootDetected
 		Defaults to $script:msiRebootDetected.
 	.PARAMETER Reboot
