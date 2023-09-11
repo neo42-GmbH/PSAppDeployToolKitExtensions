@@ -6166,6 +6166,8 @@ function Set-NxtRebootRequirement {
 	.EXAMPLE
 		Set-NxtRebootRequirement -MsiRebootDetected $true -Reboot 0 -ApplyDecision
 		Sets MainExitCode to 3010 and sets $script:msiRebootDetected to $true.
+	.NOTES
+		This is an internal script function and should typically not be called directly.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
