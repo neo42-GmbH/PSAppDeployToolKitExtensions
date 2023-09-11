@@ -438,7 +438,7 @@ switch to instruct script to remove packages in former framework versions (espec
 
 parent: /
 
-note: an explicite script call parameter -AllowRebootPassThru $false will ignore this setting on script exit
+note: an explicit script call parameter -AllowRebootPassThru $false will ignore this setting on script exit
 ```
 default value: 0
 reboot behavior of package (only values 0, 1 and 2 are allowed)
