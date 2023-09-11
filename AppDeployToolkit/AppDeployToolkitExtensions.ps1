@@ -6146,16 +6146,15 @@ function Set-NxtProcessEnvironmentVariable {
 function Set-NxtRebootRequirement {
 	<#
 	.SYNOPSIS
-		Tests if a reboot is required.
+		Sets $script:msiRebootDetected if a reboot is required.
 	.DESCRIPTION
-		Tests if a reboot is required based on $msiRebootDetected and $Reboot.
-		Indicates if a reboot is required by an MSI installation. Also sets $script:msiRebootDetected to the resulting value. This can affect errormessages in case of multiple uses of this function.
+		Tests if a reboot is required based on $msiRebootDetected.
+		Indicates if a reboot is required by an (un)installation. Also sets $script:msiRebootDetected to the resulting value. This can affect errormessages in case of multiple uses of this function. To actually apply the decisíon use the -ApplyDecision switch.
 	.PARAMETER MsiRebootDetected
 		Defaults to $script:msiRebootDetected.
 	.PARAMETER Reboot
 		Indicates if a reboot is required by the script. 0 = Decide based on $msiRebootDetected, 1 = Reboot required, 2 = Reboot not required.
-		Defaults to $Reboot.
-	.PARAMETER UpdateMsiRebootDetected
+	.PARAMETER ApplyDecision
 		Indicates if $msiRebootDetected should be updated.
 		Defaults to $true.
 	.OUTPUTS
@@ -6174,12 +6173,13 @@ function Set-NxtRebootRequirement {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$MsiRebootDetected = $script:msiRebootDetected,
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
+		[ValidateSet(0,1,2)]
 		[int]
-		$Reboot = $Reboot,
+		$Reboot,
 		[Parameter(Mandatory = $false)]
-		[bool]
-		$UpdateMsiRebootDetected = $true
+		[switch]
+		$ApplyDecision
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6215,21 +6215,23 @@ function Set-NxtRebootRequirement {
 				throw "Invalid value for parameter Reboot: $Reboot"
 			}
 		}
-		if ($UpdateMsiRebootDetected) {
-			switch ($MsiRebootDetected) {
-				$false { 
+		if ($ApplyDecision) {
+			switch ($rebootResult.ExitCode) {
+				0 { 
 					Write-Log -Message "Setting `$msiRebootDetected from $script:msiRebootDetected to $false" -Severity 1 -Source ${CmdletName}
 					$script:msiRebootDetected = $false
 				}
-				$true {
+				3010 {
 					Write-Log -Message "Setting `$msiRebootDetected from $script:msiRebootDetected to $true" -Severity 1 -Source ${CmdletName}
 					$script:msiRebootDetected = $true
 				}
 				Default {
-					Write-Log -Message "Setting `$msiRebootDetected to $false" -Severity 1 -Source ${CmdletName}
-					[bool]$script:msiRebootDetected = $false
+					Write-Log -Message "Not Setting `$msiRebootDetected, ExitCode is not 0 or 3010" -Severity 1 -Source ${CmdletName}
 				}
 			}
+		}
+		else {
+			Write-Log -Message "Not Setting `$msiRebootDetected because `$ApplyDecision is not set"
 		}
 		Write-Output $rebootResult
 	}
