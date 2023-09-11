@@ -371,33 +371,13 @@ function Main {
 				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
 				## calculate exit code (at this point we always should have a non-error case or a reboot request)
-				switch ($Reboot) {
-					'0' {
-						if ($true -eq $msiRebootDetected) {
-							[int32]$returnExitCode = 3010
-							[string]$returnErrorMessage = "Package processed successfully. Reboot necessary!"
-						}
-						else {
-							[int32]$returnExitCode = 0
-							[string]$returnErrorMessage = "Package processed successfully."
-						}
-					}
-					'1' {
-						[int32]$returnExitCode = 3010
-						[string]$returnErrorMessage = "Package processed successfully. Reboot necessary!"
-					}
-					'2' {
-						Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
-						[int32]$returnExitCode = 0
-						[string]$returnErrorMessage = "Package processed successfully."
-					}
-				}
 				[string]$script:installPhase = 'Package-Completion'
+				[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootRequirement -UpdateMsiRebootDetected $false
 				Complete-NxtPackageInstallation
 				if ($true -eq $RegisterPackage) {
 					## register package for uninstall
 					[string]$script:installPhase = 'Package-Registration'
-					Register-NxtPackage -MainExitCode $returnExitCode -LastErrorMessage $returnErrorMessage
+					Register-NxtPackage -MainExitCode $rebootRequirementResult.ExitCode -LastErrorMessage $returnErrorMessage
 				} else {
 					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 				}
@@ -451,30 +431,9 @@ function Main {
 			Default {}
 		}
 		[string]$script:installPhase = 'Package-Finish'
-		## calculate exit code (at this point we always should have a non-error case or a reboot request)
-		switch ($Reboot) {
-			'0' {
-				if ($true -eq $msiRebootDetected) {
-					[int32]$returnExitCode = 3010
-					[string]$returnErrorMessage = "Package processed successfully. Reboot necessary!"
-				}
-				else {
-					[int32]$returnExitCode = 0
-					[string]$returnErrorMessage = "Package processed successfully."
-				}
-			}
-			'1' {
-				[int32]$returnExitCode = 3010
-				[string]$returnErrorMessage = "Package processed successfully. Reboot necessary!"
-			}
-			'2' {
-				Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
-				[int32]$returnExitCode = 0
-				[string]$returnErrorMessage = "Package processed successfully."
-			}
-		}
 		Close-BlockExecutionWindow
-		Exit-Script -ExitCode $returnExitCode
+		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootRequirement
+		Exit-Script -ExitCode $rebootRequirementResult.ExitCode
 	}
 	catch {
 		## unhandled exception occured
