@@ -1225,7 +1225,7 @@ function Execute-NxtBitRockInstaller {
 			[string]$argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
 		}
  
-		[hashtable]$ExecuteProcessSplat = @{
+		[hashtable]$executeProcessSplat = @{
 			Path                 = $bitRockInstallerSetupPath
 			Parameters           = $argsBitRockInstaller
 			WindowStyle          = 'Normal'
@@ -1234,14 +1234,14 @@ function Execute-NxtBitRockInstaller {
 		}
         
 		if ($ContinueOnError) {
-			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
     
 		if ($PassThru) {
-			[psobject]$executeResult = Execute-Process @ExecuteProcessSplat
+			[psobject]$executeResult = Execute-Process @executeProcessSplat
 			if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
 				Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
 				$executeResult.ExitCode = 3010
@@ -1249,7 +1249,7 @@ function Execute-NxtBitRockInstaller {
 			}
 		}
 		else {
-			Execute-Process @ExecuteProcessSplat
+			Execute-Process @executeProcessSplat
 		}
 
 		if ($Action -eq 'Uninstall') {
@@ -1371,6 +1371,8 @@ function Execute-NxtInnoSetup {
 	.PARAMETER XmlConfigNxtInnoSetup
 		Contains the Default Settings for Innosetup.
 		Defaults to $xmlConfig.NxtInnoSetup_Options.
+	.PARAMETER DirFiles
+		The Files directory specified in AppDeployToolkitMain.ps1, Defaults to $dirfiles.
 	.PARAMETER AcceptedRebootCodes
 		Defines a string with a comma separated list of exit codes that will be accepted for reboot by called setup execution.
 	.EXAMPLE
@@ -1585,7 +1587,7 @@ function Execute-NxtInnoSetup {
 
 		[string]$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
     
-		[hashtable]$ExecuteProcessSplat = @{
+		[hashtable]$executeProcessSplat = @{
 			Path                 = $innoSetupPath
 			Parameters           = $argsInnoSetup
 			WindowStyle          = 'Normal'
@@ -1594,13 +1596,13 @@ function Execute-NxtInnoSetup {
 		}
         
 		if ($ContinueOnError) {
-			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
 		if ($PassThru) {
-			[psobject]$executeResult = Execute-Process @ExecuteProcessSplat
+			[psobject]$executeResult = Execute-Process @executeProcessSplat
 			if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
 				Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
 				$executeResult.ExitCode = 3010
@@ -1608,7 +1610,7 @@ function Execute-NxtInnoSetup {
 			}
 		}
 		else {
-			Execute-Process @ExecuteProcessSplat
+			Execute-Process @executeProcessSplat
 		}
     
 		## Update the desktop (in case of changed or added enviroment variables)
@@ -2114,7 +2116,7 @@ function Execute-NxtNullsoft {
 			[string]$argsnullsoft = "$argsnullsoft $AddParameters"
 		}
  
-		[hashtable]$ExecuteProcessSplat = @{
+		[hashtable]$executeProcessSplat = @{
 			Path                 = $nullsoftSetupPath
 			Parameters           = $argsnullsoft
 			WindowStyle          = 'Normal'
@@ -2123,14 +2125,14 @@ function Execute-NxtNullsoft {
 		}
         
 		if ($ContinueOnError) {
-			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
+			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
     
 		if ($PassThru) {
-			[psobject]$executeResult = Execute-Process @ExecuteProcessSplat
+			[psobject]$executeResult = Execute-Process @executeProcessSplat
 			if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
 				Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
 				$executeResult.ExitCode = 3010
@@ -2138,7 +2140,7 @@ function Execute-NxtNullsoft {
 			}
 		}
 		else {
-			Execute-Process @ExecuteProcessSplat
+			Execute-Process @executeProcessSplat
 		}
 
 		if ($Action -eq 'Uninstall') {
