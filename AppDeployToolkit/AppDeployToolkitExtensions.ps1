@@ -2497,6 +2497,15 @@ function Expand-NxtPackageConfig {
 				}
 			}
 		}
+		[array]$global:PackageConfig.CommonDesktopShortcutsToDelete = foreach ($CommonDesktopShortcutToDelete in $global:PackageConfig.CommonDesktopShortcutsToDelete) {
+			$ExecutionContext.InvokeCommand.ExpandString($CommonDesktopShortcutToDelete)
+		}
+		foreach ($CommonStartMenuShortcutToCopyToCommonDesktop in $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop) {
+			$CommonStartMenuShortcutToCopyToCommonDesktop.Source = $ExecutionContext.InvokeCommand.ExpandString($CommonStartMenuShortcutToCopyToCommonDesktop.Source)
+			if ($false -eq [string]::IsNullOrEmpty($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)){
+				$CommonStartMenuShortcutToCopyToCommonDesktop.TargetName = $ExecutionContext.InvokeCommand.ExpandString($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)
+			}
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
