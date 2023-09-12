@@ -1063,6 +1063,8 @@ function Execute-NxtBitRockInstaller {
 		Defaults to $xmlConfig.NxtBitRockInstaller_Options.
 	.PARAMETER DirFiles
 		The Files directory specified in AppDeployToolkitMain.ps1, Defaults to $dirfiles.
+	.PARAMETER AcceptedRebootCodes
+		Defines a string with a comma separated list of exit codes that will be accepted for reboot by called setup execution.
 	.EXAMPLE
 		Execute-NxtBitRockInstaller -UninstallKey "ThisApplication" -Path "ThisApp-1.0.exe" -Parameters "--mode unattended --installer-language en"
 	.EXAMPLE
@@ -1125,7 +1127,10 @@ function Execute-NxtBitRockInstaller {
 		$XmlConfigNxtBitRockInstaller = $xmlConfig.NxtBitRockInstaller_Options,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DirFiles = $dirFiles
+		$DirFiles = $dirFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRebootCodes
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
@@ -1237,6 +1242,11 @@ function Execute-NxtBitRockInstaller {
     
 		if ($PassThru) {
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+			if ($ExecuteResults.ExitCode -in ($AcceptedRebootCodes -split ',')){
+				Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+				$ExecuteResults.ExitCode = 3010
+				Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+			}
 		}
 		else {
 			Execute-Process @ExecuteProcessSplat
@@ -1361,6 +1371,8 @@ function Execute-NxtInnoSetup {
 	.PARAMETER XmlConfigNxtInnoSetup
 		Contains the Default Settings for Innosetup.
 		Defaults to $xmlConfig.NxtInnoSetup_Options.
+	.PARAMETER AcceptedRebootCodes
+		Defines a string with a comma separated list of exit codes that will be accepted for reboot by called setup execution.
 	.EXAMPLE
 		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "ThisAppSetup.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
 	.EXAMPLE
@@ -1434,7 +1446,10 @@ function Execute-NxtInnoSetup {
 		$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DirFiles = $dirFiles
+		$DirFiles = $dirFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRebootCodes
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
@@ -1586,6 +1601,11 @@ function Execute-NxtInnoSetup {
 		}
 		if ($PassThru) {
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+			if ($ExecuteResults.ExitCode -in ($AcceptedRebootCodes -split ',')){
+				Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+				$ExecuteResults.ExitCode = 3010
+				Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+			}
 		}
 		else {
 			Execute-Process @ExecuteProcessSplat
@@ -1934,6 +1954,8 @@ function Execute-NxtNullsoft {
 		Defaults to $xmlConfig.NxtNullsoft_Options.
 	.PARAMETER DirFiles
 		The Files directory specified in AppDeployToolkitMain.ps1, Defaults to $dirfiles.
+	.PARAMETER AcceptedRebootCodes
+		Defines a string with a comma separated list of exit codes that will be accepted for reboot by called setup execution.
 	.EXAMPLE
 		Execute-NxtNullsoft -UninstallKey "ThisApplication" -Path "ThisApp.1.0.Installer.exe" -Parameters "SILENT=1"
 	.EXAMPLE
@@ -1995,7 +2017,10 @@ function Execute-NxtNullsoft {
 		$XmlConfigNxtNullsoft = $xmlConfig.NxtNullsoft_Options,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DirFiles = $dirFiles
+		$DirFiles = $dirFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRebootCodes
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
@@ -2106,6 +2131,11 @@ function Execute-NxtNullsoft {
     
 		if ($PassThru) {
 			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+			if ($ExecuteResults.ExitCode -in ($AcceptedRebootCodes -split ',')){
+				Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+				$ExecuteResults.ExitCode = 3010
+				Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+			}
 		}
 		else {
 			Execute-Process @ExecuteProcessSplat
