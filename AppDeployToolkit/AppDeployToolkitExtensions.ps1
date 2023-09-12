@@ -1241,10 +1241,10 @@ function Execute-NxtBitRockInstaller {
 		}
     
 		if ($PassThru) {
-			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
-			if ($ExecuteResults.ExitCode -in ($AcceptedRebootCodes -split ',')){
-				Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
-				$ExecuteResults.ExitCode = 3010
+			[psobject]$executeResult = Execute-Process @ExecuteProcessSplat
+			if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+				Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+				$executeResult.ExitCode = 3010
 				Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
 			}
 		}
@@ -1306,7 +1306,7 @@ function Execute-NxtBitRockInstaller {
 	}
 	End {
 		if ($PassThru) {
-			Write-Output -InputObject $ExecuteResults
+			Write-Output -InputObject $executeResult
 		}
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -1600,10 +1600,10 @@ function Execute-NxtInnoSetup {
 			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
 		if ($PassThru) {
-			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
-			if ($ExecuteResults.ExitCode -in ($AcceptedRebootCodes -split ',')){
-				Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
-				$ExecuteResults.ExitCode = 3010
+			[psobject]$executeResult = Execute-Process @ExecuteProcessSplat
+			if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+				Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+				$executeResult.ExitCode = 3010
 				Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
 			}
 		}
@@ -1650,7 +1650,7 @@ function Execute-NxtInnoSetup {
 	}
 	End {
 		if ($PassThru) {
-			Write-Output -InputObject $ExecuteResults
+			Write-Output -InputObject $executeResult
 		}
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -1885,7 +1885,7 @@ function Execute-NxtMSI {
 			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
-		[PSObject]$ExecuteResults = Execute-MSI @PSBoundParameters
+		[PSObject]$executeResult = Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
 		if ([System.IO.Path]::IsPathRooted($Log)) {
 			[string]$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
@@ -1900,7 +1900,7 @@ function Execute-NxtMSI {
 	}
 	End {
 		if ($PassThru) {
-			Write-Output -InputObject $ExecuteResults
+			Write-Output -InputObject $executeResult
 		}
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
@@ -2130,10 +2130,10 @@ function Execute-NxtNullsoft {
 		}
     
 		if ($PassThru) {
-			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
-			if ($ExecuteResults.ExitCode -in ($AcceptedRebootCodes -split ',')){
-				Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
-				$ExecuteResults.ExitCode = 3010
+			[psobject]$executeResult = Execute-Process @ExecuteProcessSplat
+			if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+				Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+				$executeResult.ExitCode = 3010
 				Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
 			}
 		}
@@ -2189,7 +2189,7 @@ function Execute-NxtNullsoft {
 	}
 	End {
 		if ($PassThru) {
-			Write-Output -InputObject $ExecuteResults
+			Write-Output -InputObject $executeResult
 		}
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
