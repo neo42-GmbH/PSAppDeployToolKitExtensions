@@ -6207,7 +6207,7 @@ function Set-NxtRebootRequirement {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$MsiRebootDetected = $script:msiRebootDetected,
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet(0,1,2)]
 		[int]
 		$Reboot = $global:PackageConfig.Reboot,
