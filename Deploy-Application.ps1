@@ -368,7 +368,7 @@ function Main {
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
 				## calculate exit code (at this point we always should have a non-error case or a reboot request)
 				[string]$script:installPhase = 'Package-Completion'
-				[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootRequirement
+				[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Get-NxtRebootRequirement
 				Complete-NxtPackageInstallation
 				if ($true -eq $RegisterPackage) {
 					## register package for uninstall
@@ -428,7 +428,7 @@ function Main {
 		}
 		[string]$script:installPhase = 'Package-Finish'
 		Close-BlockExecutionWindow
-		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootRequirement -ApplyDecision
+		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
 		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {
