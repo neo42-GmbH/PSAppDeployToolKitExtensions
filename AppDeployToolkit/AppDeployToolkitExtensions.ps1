@@ -5533,9 +5533,12 @@ function Repair-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
-	.PARAMETER AcceptedExitCodes
+	.PARAMETER AcceptedRepairExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defaults to $global:PackageConfig.AcceptedInstallExitCodes.
+	.PARAMETER AcceptedRepairRebootCodes
+		Defines a list of reboot exit codes for all exit codes that will be accepted for reboot by called setup execution.
+		Defaults to $global:PackageConfig.AcceptedInstallRebootCodes.
 	.EXAMPLE
 		Repair-NxtApplication
 	.LINK
@@ -5577,7 +5580,10 @@ function Repair-NxtApplication {
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AcceptedExitCodes = $global:PackageConfig.AcceptedInstallExitCodes
+		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRepairRebootCodes = $global:PackageConfig.AcceptedInstallRebootCodes
 		)
 	Begin {
 		## Get the name of this function and write header
@@ -5627,13 +5633,18 @@ function Repair-NxtApplication {
 				if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
 					$repairResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
 				}
-				$repairResult.MainExitCode = $executionResult.ExitCode
 				$repairResult.ApplicationExitCode = $executionResult.ExitCode
-				$repairResult.ErrorMessage = "Uninstallation done with return code '$($executionResult.ExitCode)'."
+				if ($($executionResult.ExitCode) -in ($AcceptedRepairRebootCodes -split ",")) {
+					$repairResult.MainExitCode = 3010
+					$repairResult.ErrorMessage = "Repair done with custom reboot return code '$($executionResult.ExitCode)'."
+				}
+				else {
+					$repairResult.MainExitCode = $executionResult.ExitCode
+					$repairResult.ErrorMessage = "Repair done with return code '$($executionResult.ExitCode)'."
+				}
 				## Delay for filehandle release etc. to occur.
 				Start-Sleep -Seconds 5
-
-				if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
+				if ( ($repairResult.MainExitCode -notin 0,1641,3010) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
 					$repairResult.ErrorMessage = "Repair of '$AppName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 					$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					$repairResult.Success = $false
@@ -8679,6 +8690,9 @@ function Uninstall-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AcceptedUninstallExitCodes = $global:PackageConfig.AcceptedUninstallExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedUninstallRebootCodes = $global:PackageConfig.AcceptedUninstallRebootCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$UninstallMethod = $global:PackageConfig.UninstallMethod,
