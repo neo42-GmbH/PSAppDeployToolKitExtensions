@@ -62,8 +62,6 @@
   "AppendInstParaToDefaultParameters": false,
   "AcceptedInstallExitCodes": "",
   "AcceptedInstallRebootCodes": "129,130",
-  "AcceptedMSIRepairExitCodes": "",
-  "AcceptedMSIRepairRebootCodes": "129,130",
   "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
   "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
   "AppendUninstParaToDefaultParameters": false,

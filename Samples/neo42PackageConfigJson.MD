@@ -647,25 +647,6 @@ comma separated list of exit codes to accept a requested reboot after installati
 note: '*' is allowed for all exit codes
 ```
 
-**"AcceptedMSIRepairExitCodes"** *optional string value (considered for MSI setups only!)*
-
-parent: /
-
-```
-default value: ""
-comma separated list of exit codes to accept for successful repair execution of msi setup installer file
-note: '*' is allowed for all exit codes
-```
-
-**"AcceptedMSIRepairRebootCodes"** *optional string value (considered for MSI setups only!)*
-
-parent: /
-
-```
-default value: ""
-comma separated list of exit codes to accept a requested reboot after repair execution of msi setup installer file
-```
-
 **"UninstFile"** *optional string value*
 
 parent: /

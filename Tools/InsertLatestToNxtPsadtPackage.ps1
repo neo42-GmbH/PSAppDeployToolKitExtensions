@@ -213,27 +213,12 @@ function Update-NxtPSAdtPackage {
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
-            ## new entry: "AcceptedMSIRepairRebootCodes"
-            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
-            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
-            if ($null -eq $jsonContent.AcceptedMSIRepairRebootCodes){
-                $content = Add-ContentBeforeTag -Content $content -StartTag '  "UninstFile"' -ContentToInsert '  "AcceptedMSIRepairRebootCodes": "",
-'
-                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
-            }
             ## new entry: "AcceptedUninstallRebootCodes"
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($null -eq $jsonContent.AcceptedUninstallRebootCodes){
                 $content = Add-ContentBeforeTag -Content $content -StartTag '  "AppKillProcesses"' -ContentToInsert '  "AcceptedUninstallRebootCodes": "",
 '
-                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
-            }
-            ## rename AcceptedRepairExitCodes to AcceptedMSIRepairExitCodes
-            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
-            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
-            if ($null -ne $jsonContent.AcceptedRepairExitCodes){
-                $content = $content.Replace("AcceptedRepairExitCodes","AcceptedMSIRepairExitCodes")
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
         }

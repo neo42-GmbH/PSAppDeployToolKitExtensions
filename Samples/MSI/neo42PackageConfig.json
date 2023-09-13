@@ -55,8 +55,6 @@
   "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
   "AcceptedInstallRebootCodes": "",
-  "AcceptedMSIRepairExitCodes": "",
-  "AcceptedMSIRepairRebootCodes": "",
   "UninstFile": "",
   "UninstPara": "",
   "AppendUninstParaToDefaultParameters": true,
