@@ -1752,9 +1752,6 @@ function Execute-NxtMSI {
 		[ValidateNotNullOrEmpty()]
 		[string]$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
-		[string]$IgnoreExitCodes,
-		[Parameter(Mandatory = $false)]
 		[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
 		[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
 		[Parameter(Mandatory = $false)]
@@ -1765,7 +1762,10 @@ function Execute-NxtMSI {
 		[boolean]$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ConfigMSILogDir = $configMSILogDir
+		$ConfigMSILogDir = $configMSILogDir,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRebootCodes
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1845,6 +1845,11 @@ function Execute-NxtMSI {
 			else {
 				Write-Log -Message "MSI log [$logPath] not found. Skipped moving it to [$Log]." -Severity 2 -Source ${CmdletName}
 			}
+		}
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+			$executeResult.ExitCode = 3010
+			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
 		}
 	}
 	End {
@@ -4566,12 +4571,12 @@ function Install-NxtApplication {
 			else {
 				[string]$internalInstallerMethod = $InstallMethod
 			}
-			if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-				if ($internalInstallerMethod -eq "MSI") {
-					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
-				}
-				elseif($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$") {
+			if($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
+				if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
 					[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedInstallExitCodes"
+				}
+				if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallRebootCodes))  {
+					[string]$executeNxtParams["AcceptedRebootCodes"] = "$AcceptedInstallRebootCodes"
 				}
 			}
 			switch -Wildcard ($internalInstallerMethod) {
@@ -4647,6 +4652,15 @@ function Install-NxtApplication {
 						[int]$logMessageSeverity = 1
 					}
 				}
+			}
+			if (
+				($executionResult.ExitCode -notin ($AcceptedInstallExitCodes -split ",")) -and
+				($executionResult.ExitCode -notin ($AcceptedInstallRebootCodes -split ",")) -and
+				($executionResult.ExitCode -notin 0,1641,3010)
+			) {
+				$installResult.ErrorMessage = "Installation of '$AppName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
+				$installResult.Success = $false
+				[int]$logMessageSeverity = 3
 			}
 		}
 		Write-Log -Message $($installResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
@@ -5700,8 +5714,11 @@ function Repair-NxtApplication {
 						[string]$executeNxtParams["Parameters"] = "$RepairPara"
 					}
 				}
-				if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
+				if (![string]::IsNullOrEmpty($AcceptedRepairExitCodes)) {
+					[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedRepairExitCodes"
+				}
+				if ($false -eq [string]::IsNullOrEmpty($AcceptedRepairRebootCodes))  {
+					[string]$executeNxtParams["AcceptedRebootCodes"] = "$AcceptedRepairRebootCodes"
 				}
 				if ([string]::IsNullOrEmpty($RepairLogFile)) {
 					## now set default path and name including retrieved ProductCode
@@ -5723,7 +5740,13 @@ function Repair-NxtApplication {
 				}
 				## Delay for filehandle release etc. to occur.
 				Start-Sleep -Seconds 5
-				if ( ($repairResult.MainExitCode -notin 0,1641,3010) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
+				if (
+					(
+						($executionResult.ExitCode -notin ($AcceptedInstallExitCodes -split ",")) -and
+						($executionResult.ExitCode -notin ($AcceptedInstallRebootCodes -split ",")) -and
+						($repairResult.MainExitCode -notin 0,1641,3010)
+					) -or 
+					($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
 					$repairResult.ErrorMessage = "Repair of '$AppName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 					$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					$repairResult.Success = $false
@@ -8814,12 +8837,12 @@ function Uninstall-NxtApplication {
 					else {
 						[string]$internalInstallerMethod = $UninstallMethod
 					}
-					if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-						if ($internalInstallerMethod -eq "MSI") {
-							[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
-						}
-						elseif($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$") {
+					if($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
+						if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 							[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedUninstallExitCodes"
+						}
+						if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallRebootCodes))  {
+							[string]$executeNxtParams["AcceptedRebootCodes"] = "$AcceptedUninstallRebootCodes"
 						}
 					}
 					switch -Wildcard ($internalInstallerMethod) {
@@ -8895,6 +8918,15 @@ function Uninstall-NxtApplication {
 								[int]$logMessageSeverity = 1
 							}
 						}
+					}
+					if (
+						($executionResult.ExitCode -notin ($AcceptedUninstallExitCodes -split ",")) -and
+						($executionResult.ExitCode -notin ($AcceptedUninstallRebootCodes -split ",")) -and
+						($executionResult.ExitCode -notin 0, 1641, 3010)
+					) {
+						$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+						$uninstallResult.Success = $false
+						[int]$logMessageSeverity = 3
 					}
 				}
 				else {
