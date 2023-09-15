@@ -2253,6 +2253,9 @@ function Exit-NxtScriptWithError {
 	.DESCRIPTION
 		Exits the Script writing information about the installation attempt to the registry below the RegPackagesKey
 		defined in the neo42PackageConfig.json.
+	.PARAMETER RegisterPackage
+		Specifies if package may be registered.
+		Defaults to the corresponding global value.
 	.PARAMETER ErrorMessage
 		The message that should be written to the registry key to leave a hint of what went wrong with the installation.
 	.PARAMETER ErrorMessagePSADT
@@ -2323,6 +2326,9 @@ function Exit-NxtScriptWithError {
 	#>
 	[CmdletBinding()]
 	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegisterPackage = $global:registerPackage,
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[string]
@@ -2394,6 +2400,10 @@ function Exit-NxtScriptWithError {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		if ($false -eq $RegisterPackage) {
+			Write-Log -Message 'Package registration is be prevented because the environment variable '`$env:PackageRegister' is set to 'false'. Exit without writing error key in registry...' -Source ${cmdletName}
+		}
+		Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
 		try {
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'AppPath' -Value $App
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DebugLogFile' -Value $DebugLogFile
@@ -2415,7 +2425,6 @@ function Exit-NxtScriptWithError {
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'Version' -Value $AppVersion
-			Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
