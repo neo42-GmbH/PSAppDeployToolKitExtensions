@@ -1534,7 +1534,7 @@ function Execute-NxtInnoSetup {
 		if ([string]::IsNullOrWhiteSpace($Log)) {
 			## create Log file name if non is specified
 			if ($Action -eq 'Install') {
-				[string]$Log = "Install_$($Path -replace ' ',[string]::Empty)_$DeploymentTimestamp"
+				[string]$Log = "Install_$(((get-item "$Path").Basename) -replace ' ',[string]::Empty)_$DeploymentTimestamp"
 			}
 			else {
 				[string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$DeploymentTimestamp"
