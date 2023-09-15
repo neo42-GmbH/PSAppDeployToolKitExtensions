@@ -86,18 +86,52 @@ Param (
 
 #region Function ConvertFrom-NxtEncodedObject
 function ConvertFrom-NxtEncodedObject {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$Base64String
-    )
-    $decodedBytes = [Convert]::FromBase64String($Base64String)
-    $inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
-    $gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
-    $reader = New-Object System.IO.StreamReader($gzipStream)
-    $decompressedString = $reader.ReadToEnd()
-    $reader.Close()
-    $psObject = $decompressedString | ConvertFrom-Json
-    return $psObject
+	<#
+	.SYNOPSIS
+		Converts a Base64-encoded and gzip-compressed JSON object string into a PowerShell object.
+	.DESCRIPTION
+		The ConvertFrom-NxtEncodedObject function decodes a given Base64-encoded and gzip-compressed string that represents a JSON-serialized object. It returns the decompressed and deserialized PowerShell object. This function is particularly useful in data transport scenarios where JSON objects have been serialized, compressed, and then encoded for safe transmission.
+	.PARAMETER EncodedObject
+		The Base64-encoded and gzip-compressed string that you want to convert back into a PowerShell object. This parameter is mandatory.
+	.EXAMPLE
+		$encodedObj = "H4sIAAAAAAAEAIuuVnLPLEvN80vMTVWyUvLKz8hT0lEKLi2CCrjkpyrV6qAq8k2sQFHjW1pcklqUm5iXp1QbCwCmtj3MUQAAAA=="
+		$decodedObj = ConvertFrom-NxtEncodedObject -EncodedObject $encodedObj
+		This example demonstrates how to decode a Base64-encoded and gzip-compressed JSON string into a PowerShell object.
+	.OUTPUTS
+		System.Object
+	.NOTES
+		Ensure that the EncodedObject parameter contains a valid, gzip-compressed and Base64-encoded string. Invalid or malformed input can result in errors.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$EncodedObject
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			$decodedBytes = [Convert]::FromBase64String($EncodedObject)
+			$inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
+			$gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
+			$reader = New-Object System.IO.StreamReader($gzipStream)
+			$decompressedString = $reader.ReadToEnd()
+			$reader.Close()
+			$psObject = $decompressedString | ConvertFrom-Json
+			return $psObject
+		}
+		catch {
+			Write-Log -Message "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+			throw "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
 }
 #endregion
 #region Function Convert-RegistryPath
@@ -1259,7 +1293,7 @@ https://psappdeploytoolkit.com
     }
 }
 #endregion
-[PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -Base64String $ProcessObjectsEncoded
+[PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -EncodedObject $ProcessObjectsEncoded
 
 [String]$scriptPath = $MyInvocation.MyCommand.Definition
 [String]$scriptRoot = Split-Path -Path $scriptPath -Parent

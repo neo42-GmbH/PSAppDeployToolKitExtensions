@@ -534,38 +534,45 @@ function Close-BlockExecutionWindow {
 }
 #endregion
 
-#region
-<#
-.DESCRIPTION
-	Add a switch command as parameter.
-.PARAMETER Command
-	Full command that will be returned.
-.PARAMETER CommandName
-	Name of the switch parameter.
-.PARAMETER SwitchParam
-	Switch parameter value.
-.OUTPUTS
-	Full command as string.
-.EXAMPLE
-	Add-SwitchParameterToCommand -Command "$command" -CommandName "AllowDefer" -SwitchParam -$true
-.LINK
-	https://neo42.de/psappdeploytoolkit
-#>
-function Add-SwitchParameterToCommand {
+#region Add-NxtSwitchParameterToCommand
+function Add-NxtSwitchParameterToCommand {
+	<#
+	.DESCRIPTION
+		Add a switch command as parameter.
+	.PARAMETER Command
+		Full command that will be returned.
+	.PARAMETER ParameterName
+		Name of the switch parameter.
+	.PARAMETER SwitchParam
+		Switch parameter value.
+	.OUTPUTS
+		Full command as string.
+	.EXAMPLE
+		Add-NxtSwitchParameterToCommand -Command "$command" -ParameterName "AllowDefer" -SwitchParam -$true
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
     param (
         [string]$Command,
-        [string]$CommandName,
+        [string]$ParameterName,
         [bool]$SwitchParam
     )
-
-    if ($SwitchParam) {
-        $Command += " -$CommandName"
-    }
-
-    return $Command
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($SwitchParam) {
+			$Command += " -$ParameterName"
+		}
+		return $Command
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
 }
 #endregion
-
 #region Function Compare-NxtVersion
 function Compare-NxtVersion {
 	<#
@@ -996,36 +1003,127 @@ function Complete-NxtPackageUninstallation {
 #endregion
 #region Function ConvertFrom-NxtEncodedObject
 function ConvertFrom-NxtEncodedObject {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$Base64String
-    )
-    $decodedBytes = [Convert]::FromBase64String($Base64String)
-    $inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
-    $gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
-    $reader = New-Object System.IO.StreamReader($gzipStream)
-    $decompressedString = $reader.ReadToEnd()
-    $reader.Close()
-    $psObject = $decompressedString | ConvertFrom-Json
-    return $psObject
+	<#
+	.SYNOPSIS
+		Converts a Base64-encoded and gzip-compressed JSON object string into a PowerShell object.
+	.DESCRIPTION
+		The ConvertFrom-NxtEncodedObject function decodes a given Base64-encoded and gzip-compressed string that represents a JSON-serialized object. It returns the decompressed and deserialized PowerShell object. This function is particularly useful in data transport scenarios where JSON objects have been serialized, compressed, and then encoded for safe transmission.
+	.PARAMETER EncodedObject
+		The Base64-encoded and gzip-compressed string that you want to convert back into a PowerShell object. This parameter is mandatory.
+	.EXAMPLE
+		$encodedObj = "H4sIAAAAAAAEAIuuVnLPLEvN80vMTVWyUvLKz8hT0lEKLi2CCrjkpyrV6qAq8k2sQFHjW1pcklqUm5iXp1QbCwCmtj3MUQAAAA=="
+		$decodedObj = ConvertFrom-NxtEncodedObject -EncodedObject $encodedObj
+		This example demonstrates how to decode a Base64-encoded and gzip-compressed JSON string into a PowerShell object.
+	.OUTPUTS
+		System.Object
+	.NOTES
+		Ensure that the EncodedObject parameter contains a valid, gzip-compressed and Base64-encoded string. Invalid or malformed input can result in errors.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$EncodedObject
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			$decodedBytes = [Convert]::FromBase64String($EncodedObject)
+			$inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
+			$gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
+			$reader = New-Object System.IO.StreamReader($gzipStream)
+			$decompressedString = $reader.ReadToEnd()
+			$reader.Close()
+			$psObject = $decompressedString | ConvertFrom-Json
+			return $psObject
+		}
+		catch {
+			Write-Log -Message "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+			throw "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
 }
 #endregion
 #region Function ConvertTo-NxtEncodedObject
 function ConvertTo-NxtEncodedObject {
+	<#
+	.SYNOPSIS
+		Converts a PowerShell object into a Base64-encoded and gzip-compressed JSON object string.
+	.DESCRIPTION
+		The ConvertTo-NxtEncodedObject function takes a PowerShell object as input and performs three main operations:
+		1. Serializes the object into a JSON string.
+		2. Compresses the JSON string using gzip.
+		3. Encodes the compressed data into a Base64 string.
+		This function is useful for securely and efficiently transmitting PowerShell objects over a network or storing them.
+		It is not as exact as Export-clixml but the output is much smaller and safe to transfer on a command line.
+		It is not required to write the resulting string to a file as long as it does not exceed the maximum command line length. 
+	.PARAMETER Object
+		The PowerShell object that you want to convert into a Base64-encoded and gzip-compressed string.
+		This parameter is mandatory.
+	.PARAMETER Depth
+		The depth of object hierarchy to include in the JSON serialization. By default, this is set to 2.
+		This parameter is optional.
+	.EXAMPLE
+		$psObject = [PSCustomObject]@{ Name = 'John'; Age = 30; }
+		$encodedObj = ConvertTo-NxtEncodedObject -Object $psObject
+		This example shows how to convert a simple PowerShell object into a Base64-encoded and gzip-compressed string.
+	.EXAMPLE
+		$nestedObject = @{
+			Name = 'Jane';
+			Details = @{
+				Age = 25;
+				Occupation = 'Engineer';
+			}
+		}
+		$encodedObj = ConvertTo-NxtEncodedObject -Object $nestedObject -Depth 3
+		This example demonstrates how to convert a nested PowerShell object into a Base64-encoded and gzip-compressed string by specifying the depth parameter.
+
+	.OUTPUTS
+		System.String
+
+	.NOTES
+		The "Depth" parameter controls the depth of object hierarchy to include in JSON serialization. Be cautious when setting this to a large value as it may result in large strings.
+
+	.LINK
+		For more information, refer to [System.IO.Compression.GZipStream] and [ConvertTo-Json].
+	#>
+	[CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)]
         [PSObject]$Object,
 		[Parameter(Mandatory=$false)]
 		[int]$Depth = 2
     )
-    $jsonString = $Object | ConvertTo-Json -Compress -Depth $Depth
-    $compressedData = New-Object System.IO.MemoryStream
-    $gzipStream = New-Object System.IO.Compression.GZipStream($compressedData, [System.IO.Compression.CompressionMode]::Compress)
-    $writer = New-Object System.IO.StreamWriter($gzipStream)
-    $writer.Write($jsonString)
-    $writer.Close()
-    $base64String = [Convert]::ToBase64String($compressedData.ToArray())
-    return $base64String
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			$jsonString = $Object | ConvertTo-Json -Compress -Depth $Depth
+			$compressedData = New-Object System.IO.MemoryStream
+			$gzipStream = New-Object System.IO.Compression.GZipStream($compressedData, [System.IO.Compression.CompressionMode]::Compress)
+			$writer = New-Object System.IO.StreamWriter($gzipStream)
+			$writer.Write($jsonString)
+			$writer.Close()
+			$encodedObject = [Convert]::ToBase64String($compressedData.ToArray())
+			return $EncodedObject
+		}
+		catch {
+			Write-Log -Message "Failed to convert PowerShell object to Base64-encoded string. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+			throw "Failed to convert PowerShell object to Base64-encoded string. `n$(Resolve-Error)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
 }
 #endregion
 #region Function Copy-NxtDesktopShortcuts
@@ -6989,15 +7087,15 @@ Function Show-NxtWelcomePrompt {
 		# Convert to JSON in compressed form
 		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects
 		$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1";
-		$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -DeferTimes `"$DeferTimes`" -DeferDeadline `"$DeferDeadline`" -ContinueType $contiuneTypeValue -ProcessObjectsEncoded `"$processObjectsEncoded`""
+		$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -DeferTimes `"$DeferTimes`" -DeferDeadline `"$DeferDeadline`" -ContinueType $contiuneTypeValue -CloseAppsCountdown $CloseAppsCountdown -ProcessObjectsEncoded `"$processObjectsEncoded`""
 
-		$powershellCommand = Add-SwitchParameterToCommand -Command $powershellCommand -CommandName "PersistPrompt" -SwitchParam $PersistPrompt;
-		$powershellCommand = Add-SwitchParameterToCommand -Command $powershellCommand -CommandName "AllowDefer" -SwitchParam $AllowDefer;
-		$powershellCommand = Add-SwitchParameterToCommand -Command $powershellCommand -CommandName "MinimizeWindows" -SwitchParam $MinimizeWindows;
-		$powershellCommand = Add-SwitchParameterToCommand -Command $powershellCommand -CommandName "TopMost" -SwitchParam $TopMost;
-		$powershellCommand = Add-SwitchParameterToCommand -Command $powershellCommand -CommandName "CustomText" -SwitchParam $CustomText;
-		$powershellCommand = Add-SwitchParameterToCommand -Command $powershellCommand -CommandName "UserCanCloseAll" -SwitchParam $UserCanCloseAll;
-		$powershellCommand = Add-SwitchParameterToCommand -Command $powershellCommand -CommandName "UserCanAbort" -SwitchParam $UserCanAbort;
+		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "PersistPrompt" -SwitchParam $PersistPrompt;
+		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "AllowDefer" -SwitchParam $AllowDefer;
+		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "MinimizeWindows" -SwitchParam $MinimizeWindows;
+		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "TopMost" -SwitchParam $TopMost;
+		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "CustomText" -SwitchParam $CustomText;
+		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "UserCanCloseAll" -SwitchParam $UserCanCloseAll;
+		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "UserCanAbort" -SwitchParam $UserCanAbort;
 		Write-Log "Looking for Sessions..."
 		[int]$welcomeExitCode = 1618;
 		if((Get-Process -Id $PID).SessionId -eq 0)
@@ -7016,36 +7114,36 @@ Function Show-NxtWelcomePrompt {
 			$welcomeExitCode = [PSADTNXT.Extensions]::StartPowershellScriptAndWaitForExitCode($powershellCommand);
 		}
 
-		[string]$retrunCode
+		[string]$returnCode = [string]::Empty
 
 		switch ($welcomeExitCode)
 		{
 			1001
 			{
-				$retrunCode = 'Close'
+				$returnCode = 'Close'
 			}
 			1002
 			{
-				$retrunCode = 'Cancel'
+				$returnCode = 'Cancel'
 			}
 			1003
 			{
-				$retrunCode = 'Defer'
+				$returnCode = 'Defer'
 			}
 			1004
 			{
-				$retrunCode = 'Timeout'
+				$returnCode = 'Timeout'
 			}
 			1005
 			{
-				$retrunCode = 'Continue'
+				$returnCode = 'Continue'
 			}
 			default
 			{
-				$retrunCode = 'Continue'
+				$returnCode = 'Continue'
 			}
 		}
-		Write-Output -InputObject ($retrunCode)   
+		Write-Output -InputObject ($returnCode)   
     }
     End {
         Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
