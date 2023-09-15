@@ -293,8 +293,18 @@ function Main {
 					Remove-NxtProductMember
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
 					if ($showInstallationWelcomeResult -ne 0) {
-						Close-BlockExecutionWindow
-						Exit-Script -ExitCode $showInstallationWelcomeResult
+						switch ($showInstallationWelcomeResult) {
+							'1618' {
+								[string]$currentSIWMessageInstall = "Aborted by dialog window action or timeout of waiting for processes."
+							}
+							'60012' {
+								[string]$currentSIWMessageInstall = "User deferred installation request."
+							}
+							default {
+								[string]$currentSIWMessageInstall = "Dialog window action aborted unexpected."
+							}
+						}
+						Exit-NxtScriptWithError -ErrorMessage $currentSIWMessageInstall -MainExitCode $showInstallationWelcomeResult
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
@@ -390,8 +400,18 @@ function Main {
 				if ( ($false -eq $SkipUnregister) -or (($true -eq $SkipUnregister) -and ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1))) ) {
 					[int]$showUnInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $false
 					if ($showUnInstallationWelcomeResult -ne 0) {
-						Close-BlockExecutionWindow
-						Exit-Script -ExitCode $showUnInstallationWelcomeResult
+						switch ($showUnInstallationWelcomeResult) {
+							'1618' {
+								[string]$currentSIWMessageUninstall = "Aborted by dialog window action or timeout of waiting for processes."
+							}
+							'60012' {
+								[string]$currentSIWMessageUninstall = "User deferred installation request."
+							}
+							default {
+								[string]$currentSIWMessageUninstall = "Dialog window action aborted unexpected."
+							}
+						}
+						Exit-NxtScriptWithError -ErrorMessage $currentSIWMessageUninstall -MainExitCode $showUnInstallationWelcomeResult
 					}
 					Initialize-NxtUninstallApplication
 					CustomUninstallBegin
