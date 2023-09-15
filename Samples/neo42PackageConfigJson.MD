@@ -82,6 +82,7 @@ following VariableSets of config files are useable (in order of availability):
 - InstPara
 - UninstFile
 - UninstPara
+- UninstallKey (if value "UninstallKeyContainsExpandVariables" is set to 'true'' only!)
 - UninstallKeysToHide.KeyNameIsDisplayName
 - UninstallKeysToHide.KeyNameContainsWildCards
 - UninstallKeysToHide.DisplayNamesToExcludeFromHiding
@@ -431,7 +432,6 @@ parent: /
 ```
 default value: true
 switch to instruct script to remove packages in former framework versions (especially Empirum setup.inf packages) and/or with same "PackageFamilyGUID" (especially packages in VBS style)
-note: this value may be overwritten by deployment system (if variable '$env:uninstallOld' is set)
 ```
 
 **"Reboot"** *mandatory integer value*
@@ -439,10 +439,8 @@ note: this value may be overwritten by deployment system (if variable '$env:unin
 parent: /
 ```
 default value: 0
-reboot behavior of package (only values '0', '1' and '2' are allowed)
-note: this value may be overwritten by deployment system (if variable '$env:Reboot' is set)
-```
-- **0**: no reboot required (don't overwrites main exit code inside script)
+reboot behavior of package (only values 0, 1 and 2 are allowed)
+- **0**: no reboot required (doesn't overwrite main exit code inside script)
 - **1**: reboot required (always overwrites main exit code inside script to exit code 3010)
 - **2**: hide reboot (overwrites exit codes 1641 and 3010 inside script to exit code 0 only, all other exit codes will be passed through
 
@@ -511,6 +509,8 @@ note: this variable is not used by default in any function of AppDeployToolkitEx
 **"UninstallKey"** *optional string value*
 
 parent: /
+
+*(note: may contain reference to other defined variables, content will be expanded, if value "UninstallKeyContainsExpandVariables" is set to 'true')*
 ```
 default value: name of registry subkey in uninstall registry entry of installed application setup ('...\CurrentVersion\Uninstall\"UninstallKey"'), especially for MSI setups generally this is the MSI-GUID
 used for application detection as search string (for an uninstall registry subkey or a display name) of installed application
@@ -536,6 +536,16 @@ switch to control the interpretation of character '*' in a defined string of val
 ```
 - **true** : '\*' is interpreted as a wildcard
 - **false**: '\*' is interpreted as part of the defined string
+
+**"UninstallKeyContainsExpandVariables"** *optional bool value*
+
+parent: /
+```
+default value: false
+switch to control the interpretation of '$($variables)' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
+```
+- **true** : '$($var)' is interpreted as a PowerShell variable 
+- **false**: '$($var)' is interpreted as part of the defined string
 
 **"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by ***[]***)*
 
@@ -624,7 +634,7 @@ comma separated list of exit codes to accept for successfull installation execut
 note: '*' is allowed for all exit codes
 ```
 
-**"AcceptedRepairExitCodes"** *optional string value (considered for MSI setups only!)*
+**"AcceptedMSIRepairExitCodes"** *optional string value (considered for MSI setups only!)*
 
 parent: /
 
