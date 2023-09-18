@@ -1,4 +1,5 @@
 {
+  "ConfigVersion": "2023.09.18.1",
   "ScriptAuthor": "neo42 GmbH",
   "ScriptDate": "22/09/2022",
   "InventoryID": "hjt632C168F",
@@ -43,6 +44,7 @@
   "UninstallKey": "Scribble Papers_is1",
   "UninstallKeyIsDisplayName": false,
   "UninstallKeyContainsWildCards": false,
+  "UninstallKeyContainsExpandVariables": false,
   "DisplayNamesToExcludeFromAppSearches": [
     "$($global:PackageConfig.UninstallDisplayName)"
   ],
@@ -53,11 +55,12 @@
   "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
   "AppendInstParaToDefaultParameters": false,
   "AcceptedInstallExitCodes": "",
-  "AcceptedRepairExitCodes": "",
+  "AcceptedInstallRebootCodes": "",
   "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
   "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
   "AppendUninstParaToDefaultParameters": false,
   "AcceptedUninstallExitCodes": "",
+  "AcceptedUninstallRebootCodes": "",
   "AppKillProcesses": [
     {
       "Name": "ScPapers",

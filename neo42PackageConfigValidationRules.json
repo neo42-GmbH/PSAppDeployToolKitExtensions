@@ -1,5 +1,14 @@
 {
-    "AppArch": {
+    "ConfigVersion": {
+        "Mandatory": true,
+        "HelpText": "ConfigVersion is mandatory and must be a string with a Config Version number in the format of 4digits.2digits.2digits.variableDigit (e.g. 2023.01.01.1).",
+        "Type": "System.String",
+        "Regex": {
+            "Pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}\\.[0-9]+$",
+            "Operator": "match"
+        },
+        "AllowEmpty": false
+    },"AppArch": {
         "Mandatory": true,
         "HelpText": "AppArch is mandatory and must be a string with a value of x86, x64 or *.",
         "Validateset": [
@@ -83,6 +92,17 @@
         "Type": "System.Array",
         "Mandatory": true
     },
+    "Reboot": {
+        "Mandatory": true,
+        "AllowEmpty": false,
+        "HelpText": "Reboot is mandatory and must be an integer of 0, 1 or 2.",
+        "Type": "System.Int32",
+        "Validateset": [
+            0,
+            1,
+            2
+        ]
+    },
     "UserPartRevision": {
         "Mandatory": true,
         "HelpText": "UserPartRevision is mandatory and must be a string.",
@@ -146,16 +166,6 @@
         "Type": "System.Array",
         "AllowEmpty": true
     },
-    "AcceptedRepairExitCodes": {
-        "Mandatory": true,
-        "HelpText": "AcceptedRepairExitCodes must be a comma separated list of numbers.",
-        "Regex": {
-            "Pattern": "^\\d+(,\\d+)*$",
-            "Operator": "match"
-        },
-        "Type": "System.String",
-        "AllowEmpty": true
-    },
     "TestConditionsPreSetupSuccessCheck": {
         "Mandatory": true,
         "HelpText": "TestConditionsPreSetupSuccessCheck is mandatory and must be a PSCustomObject.",
@@ -166,8 +176,12 @@
                 "Subkeys": {
                     "TotalSecondsToWaitFor": {
                         "Mandatory": true,
-                        "HelpText": "TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor is mandatory and must be an integer.",
-                        "Type": "System.Int32"
+                        "HelpText": "TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor is mandatory and must be an integer in the range of 1 and 3600.",
+                        "Type": "System.Int32",
+                        "Regex": {
+                            "Pattern": "\\b([1-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-2][0-9][0-9][0-9]|3[0-5][0-9][0-9]|3600)\\b" ,
+                            "Operator": "match"
+                        }
                     },
                     "ProcessesToWaitFor": {
                         "Mandatory": true,
@@ -248,8 +262,12 @@
                 "Subkeys": {
                     "TotalSecondsToWaitFor": {
                         "Mandatory": true,
-                        "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor is mandatory and must be an integer.",
-                        "Type": "System.Int32"
+                        "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.TotalSecondsToWaitFor is mandatory and must be an integer in the range of 1 and 3600.",
+                        "Type": "System.Int32",
+                        "Regex": {
+                            "Pattern": "\\b([1-9]|[1-9][0-9]|[1-9][0-9][0-9]|[1-2][0-9][0-9][0-9]|3[0-5][0-9][0-9]|3600)\\b" ,
+                            "Operator": "match"
+                        }
                     },
                     "ProcessesToWaitFor": {
                         "Mandatory": true,
@@ -369,6 +387,16 @@
         "Type": "System.String",
         "AllowEmpty": true
     },
+    "AcceptedInstallRebootCodes": {
+        "Mandatory": true,
+        "Regex": {
+            "Pattern": "^\\d+(,\\d+)*$",
+            "Operator": "match"
+        },
+        "ErrorMessage": "AcceptedInstallRebootCodes must be a comma separated list of numbers.",
+        "Type": "System.String",
+        "AllowEmpty": true
+    },
     "AcceptedUninstallExitCodes": {
         "Mandatory": true,
         "HelpText": "AcceptedUninstallExitCodes must be a comma separated list of numbers.",
@@ -376,6 +404,16 @@
             "Pattern": "^\\d+(,\\d+)*$",
             "Operator": "match"
         },
+        "Type": "System.String",
+        "AllowEmpty": true
+    },
+    "AcceptedUninstallRebootCodes": {
+        "Mandatory": true,
+        "Regex": {
+            "Pattern": "^\\d+(,\\d+)*$",
+            "Operator": "match"
+        },
+        "ErrorMessage": "AcceptedUninstallRebootCodes must be a comma separated list of numbers.",
         "Type": "System.String",
         "AllowEmpty": true
     }
