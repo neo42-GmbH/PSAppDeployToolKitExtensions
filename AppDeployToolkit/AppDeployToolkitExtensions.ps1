@@ -7991,11 +7991,11 @@ function Test-NxtConfigVersionCompatibility {
 		$deployApplicationContent = Get-Content -Path $DeployApplicationPath
 		$deployApplicationConfigVersion = $deployApplicationContent | Select-String -Pattern "ConfigVersion: $ConfigVersion$"
 		if ([string]::IsNullOrEmpty($deployApplicationConfigVersion)) {
-			Write-Log -Message "ConfigVersion: $ConfigVersion not found in $DeployApplicationPath. Please use A DeployApplication.ps1 that matches the ConfigVersion from Packageconfig" -Severity 3 -Source ${cmdletName}
-			throw "ConfigVersion: $ConfigVersion not found in $DeployApplicationPath. Please use A DeployApplication.ps1 that matches the ConfigVersion from Packageconfig"
+			Write-Log -Message "ConfigVersion: $ConfigVersion not found in $DeployApplicationPath. Please use a Deploy-Application.ps1 that matches the ConfigVersion from Packageconfig" -Severity 3 -Source ${cmdletName}
+			throw "ConfigVersion: $ConfigVersion not found in $DeployApplicationPath. Please use a Deploy-Application.ps1 that matches the ConfigVersion from Packageconfig"
 		}
 		$appDeployToolkitExtensionsContent = Get-Content -Path $AppDeployToolkitExtensionsPath
-		$appDeployToolkitExtensionsConfigVersion = $appDeployToolkitExtensionsContent | Select-String -Pattern "ConfigVersion: $ConfigVersion$"
+		$appDeployToolkitExtensionsConfigVersion = $appDeployToolkitExtensionsContent | Select-String -Pattern "ConfigVersion: $ConfigVersion`$"
 		if ([string]::IsNullOrEmpty($appDeployToolkitExtensionsConfigVersion)) {
 			Write-Log -Message "ConfigVersion: $ConfigVersion not found in $AppDeployToolkitExtensionsPath. Please use an AppDeployToolkit Folder that matches the ConfigVersion from Packageconfig" -Severity 3 -Source ${cmdletName}
 			throw "ConfigVersion: $ConfigVersion not found in $AppDeployToolkitExtensionsPath. Please use an AppDeployToolkit Folder that matches the ConfigVersion from Packageconfig"

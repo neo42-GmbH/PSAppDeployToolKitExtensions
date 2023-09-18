@@ -113,6 +113,8 @@ switch ($DeploymentType) {
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
+[string]$global:DeployApplicationPath = "$PSScriptRoot\Deploy-Application.ps1"
+[string]$global:AppDeployToolkitExtensionsPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitExtensions.ps1"
 [string]$global:DeploymentSystem = $DeploymentSystem
 [string]$global:UserPartDir = "User"
 ## Several PSADT-functions do not work, if these variables are not set here.
@@ -271,6 +273,7 @@ function Main {
 		$RegisterPackage = $global:registerPackage
 	)
 	try {
+		Test-NxtConfigVersionCompatibility
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
