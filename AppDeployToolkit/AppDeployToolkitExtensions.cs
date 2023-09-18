@@ -122,13 +122,34 @@ namespace PSADTNXT
         public string DisplayVersion { get; set; }
     }
 
+        public class NxtRebootResult
+    {
+        public int MainExitCode { get; set; }
+        public string Message { get; set; }
+    }
+
     public class NxtRegisteredApplication
     {
         public string PackageGuid { get; set; }
         public string ProductGuid { get; set; }
         public bool Installed { get; set; }
     }
-    
+
+    public class NxtIniFile
+    {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = false)]
+        public static extern int GetPrivateProfileString(string lpAppName, string lpKeyName, string lpDefault, StringBuilder lpReturnedString, int nSize, string lpFileName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = false)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool WritePrivateProfileString(string lpAppName, string lpKeyName, string lpString, string lpFileName);
+
+        public static void RemoveIniValue(string section, string key, string filepath)
+        {
+            WritePrivateProfileString(section, key, null, filepath);
+        }
+    }
+
     public class XmlNodeModel
     {
         private readonly Dictionary<string, string> _attributes;
