@@ -33,10 +33,6 @@
 		Specifies if the user can close all applications. Default: $false.
 	.PARAMETER UserCanAbort
 		Specifies if the user can abort the process. Default: $false.
-    .PARAMETER ProcessObjectsNames
-        Specifies the name of the process to be close
-    .Parameter ProcessObjectsDescriptions
-        Specifies the description of the process to be close
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -137,56 +133,31 @@ function ConvertFrom-NxtEncodedObject {
 #region Function Convert-RegistryPath
 Function Convert-RegistryPath {
     <#
-.SYNOPSIS
-
-Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
-
-.DESCRIPTION
-
-Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
-
-Converts registry key hives to their full paths. Example: HKLM is converted to "Registry::HKEY_LOCAL_MACHINE".
-
-.PARAMETER Key
-
-Path to the registry key to convert (can be a registry hive or fully qualified path)
-
-.PARAMETER SID
-
-The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
-
-Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
-
-.PARAMETER DisableFunctionLogging
-
-Disables logging of this function. Default: $true
-
-.INPUTS
-
-None
-
-You cannot pipe objects to this function.
-
-.OUTPUTS
-
-System.String
-
-Returns the converted registry key path.
-
-.EXAMPLE
-
-Convert-RegistryPath -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
-
-.EXAMPLE
-
-Convert-RegistryPath -Key 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
-
-.NOTES
-
-.LINK
-
-https://psappdeploytoolkit.com
-#>
+    .SYNOPSIS
+        Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
+    .DESCRIPTION
+        Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
+        Converts registry key hives to their full paths. Example: HKLM is converted to "Registry::HKEY_LOCAL_MACHINE".
+    .PARAMETER Key
+        Path to the registry key to convert (can be a registry hive or fully qualified path)
+    .PARAMETER SID
+        The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
+        Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
+    .PARAMETER DisableFunctionLogging
+        Disables logging of this function. Default: $true
+    .INPUTS
+        None
+        You cannot pipe objects to this function.
+    .OUTPUTS
+        System.String
+        Returns the converted registry key path.
+    .EXAMPLE
+        Convert-RegistryPath -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
+    .EXAMPLE
+        Convert-RegistryPath -Key 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
+    .LINK
+        https://psappdeploytoolkit.com
+    #>
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $true)]
@@ -258,86 +229,47 @@ https://psappdeploytoolkit.com
     }
 }
 #endregion
-
 #region Function Get-RegistryKey
 Function Get-RegistryKey {
     <#
-.SYNOPSIS
-
-Retrieves value names and value data for a specified registry key or optionally, a specific value.
-
-.DESCRIPTION
-
-Retrieves value names and value data for a specified registry key or optionally, a specific value.
-
-If the registry key does not exist or contain any values, the function will return $null by default. To test for existence of a registry key path, use built-in Test-Path cmdlet.
-
-.PARAMETER Key
-
-Path of the registry key.
-
-.PARAMETER Value
-
-Value to retrieve (optional).
-
-.PARAMETER SID
-
-The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
-
-Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
-
-.PARAMETER ReturnEmptyKeyIfExists
-
-Return the registry key if it exists but it has no property/value pairs underneath it. Default is: $false.
-
-.PARAMETER DoNotExpandEnvironmentNames
-
-Return unexpanded REG_EXPAND_SZ values. Default is: $false.
-
-.PARAMETER ContinueOnError
-
-Continue if an error is encountered. Default is: $true.
-
-.INPUTS
-
-None
-
-You cannot pipe objects to this function.
-
-.OUTPUTS
-
-System.String
-
-Returns the value of the registry key or value.
-
-.EXAMPLE
-
-Get-RegistryKey -Key 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
-
-.EXAMPLE
-
-Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\iexplore.exe'
-
-.EXAMPLE
-
-Get-RegistryKey -Key 'HKLM:Software\Wow6432Node\Microsoft\Microsoft SQL Server Compact Edition\v3.5' -Value 'Version'
-
-.EXAMPLE
-
-Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Value 'Path' -DoNotExpandEnvironmentNames
-
-Returns %ProgramFiles%\Java instead of C:\Program Files\Java
-
-.EXAMPLE
-
-Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Example' -Value '(Default)'
-
-.NOTES
-
-.LINK
-
-https://psappdeploytoolkit.com
-#>
+    .SYNOPSIS
+        Retrieves value names and value data for a specified registry key or optionally, a specific value.
+    .DESCRIPTION
+        Retrieves value names and value data for a specified registry key or optionally, a specific value.
+        If the registry key does not exist or contain any values, the function will return $null by default. To test for existence of a registry key path, use built-in Test-Path cmdlet.
+    .PARAMETER Key
+        Path of the registry key.
+    .PARAMETER Value
+        Value to retrieve (optional).
+    .PARAMETER SID
+        The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
+        Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
+    .PARAMETER ReturnEmptyKeyIfExists
+        Return the registry key if it exists but it has no property/value pairs underneath it. Default is: $false.
+    .PARAMETER DoNotExpandEnvironmentNames
+        Return unexpanded REG_EXPAND_SZ values. Default is: $false.
+    .PARAMETER ContinueOnError
+        Continue if an error is encountered. Default is: $true.
+    .INPUTS
+        None
+        You cannot pipe objects to this function.
+    .OUTPUTS
+        System.String
+        Returns the value of the registry key or value.
+    .EXAMPLE
+        Get-RegistryKey -Key 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
+    .EXAMPLE
+        Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\iexplore.exe'
+    .EXAMPLE
+        Get-RegistryKey -Key 'HKLM:Software\Wow6432Node\Microsoft\Microsoft SQL Server Compact Edition\v3.5' -Value 'Version'
+    .EXAMPLE
+        Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Value 'Path' -DoNotExpandEnvironmentNames
+        Returns %ProgramFiles%\Java instead of C:\Program Files\Java
+    .EXAMPLE
+        Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Example' -Value '(Default)'
+    .LINK
+        https://psappdeploytoolkit.com
+    #>
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $true)]
@@ -466,50 +398,30 @@ https://psappdeploytoolkit.com
     }
 }
 #endregion
-
 #region Function Get-RunningProcesses
 Function Get-RunningProcesses {
     <#
-.SYNOPSIS
-
-Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
-
-.DESCRIPTION
-
-Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
-
-.PARAMETER ProcessObjects
-
-Custom object containing the process objects to search for. If not supplied, the function just returns $null
-
-.PARAMETER DisableLogging
-
-Disables function logging
-
-.INPUTS
-
-None
-
-You cannot pipe objects to this function.
-
-.OUTPUTS
-
-Syste.Boolean.
-
-Rettuns $true if the process is running, otherwise $false.
-
-.EXAMPLE
-
-Get-RunningProcesses -ProcessObjects $ProcessObjects
-
-.NOTES
-
-This is an internal script function and should typically not be called directly.
-
-.LINK
-
-https://psappdeploytoolkit.com
-#>
+    .SYNOPSIS
+        Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
+    .DESCRIPTION
+        Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
+    .PARAMETER ProcessObjects
+        Custom object containing the process objects to search for. If not supplied, the function just returns $null
+    .PARAMETER DisableLogging
+        Disables function logging
+    .INPUTS
+        None
+        You cannot pipe objects to this function.
+    .OUTPUTS
+        Syste.Boolean.
+        Rettuns $true if the process is running, otherwise $false.
+    .EXAMPLE
+        Get-RunningProcesses -ProcessObjects $ProcessObjects
+    .NOTES
+        This is an internal script function and should typically not be called directly.
+    .LINK
+        https://psappdeploytoolkit.com
+    #>
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $false, Position = 0)]
@@ -576,70 +488,39 @@ https://psappdeploytoolkit.com
     }
 }
 #endregion
-
 #region Function Get-WindowTitle
 Function Get-WindowTitle {
     <#
-.SYNOPSIS
-
-Search for an open window title and return details about the window.
-
-.DESCRIPTION
-
-Search for a window title. If window title searched for returns more than one result, then details for each window will be displayed.
-
-Returns the following properties for each window: WindowTitle, WindowHandle, ParentProcess, ParentProcessMainWindowHandle, ParentProcessId.
-
-Function does not work in SYSTEM context unless launched with "psexec.exe -s -i" to run it as an interactive process under the SYSTEM account.
-
-.PARAMETER WindowTitle
-
-The title of the application window to search for using regex matching.
-
-.PARAMETER GetAllWindowTitles
-
-Get titles for all open windows on the system.
-
-.PARAMETER DisableFunctionLogging
-
-Disables logging messages to the script log file.
-
-.INPUTS
-
-None
-
-You cannot pipe objects to this function.
-
-.OUTPUTS
-
-System.Management.Automation.PSObject
-
-Returns a PSObject with the following properties: WindowTitle, WindowHandle, ParentProcess, ParentProcessMainWindowHandle, ParentProcessId.
-
-.EXAMPLE
-
-Get-WindowTitle -WindowTitle 'Microsoft Word'
-
-Gets details for each window that has the words "Microsoft Word" in the title.
-
-.EXAMPLE
-
-Get-WindowTitle -GetAllWindowTitles
-
-Gets details for all windows with a title.
-
-.EXAMPLE
-
-Get-WindowTitle -GetAllWindowTitles | Where-Object { $_.ParentProcess -eq 'WINWORD' }
-
-Get details for all windows belonging to Microsoft Word process with name "WINWORD".
-
-.NOTES
-
-.LINK
-
-https://psappdeploytoolkit.com
-#>
+    .SYNOPSIS
+        Search for an open window title and return details about the window.
+    .DESCRIPTION
+        Search for a window title. If window title searched for returns more than one result, then details for each window will be displayed.
+        Returns the following properties for each window: WindowTitle, WindowHandle, ParentProcess, ParentProcessMainWindowHandle, ParentProcessId.
+        Function does not work in SYSTEM context unless launched with "psexec.exe -s -i" to run it as an interactive process under the SYSTEM account.
+    .PARAMETER WindowTitle
+        The title of the application window to search for using regex matching.
+    .PARAMETER GetAllWindowTitles
+        Get titles for all open windows on the system.
+    .PARAMETER DisableFunctionLogging
+        Disables logging messages to the script log file.
+    .INPUTS
+        None
+        You cannot pipe objects to this function.
+    .OUTPUTS
+        System.Management.Automation.PSObject
+        Returns a PSObject with the following properties: WindowTitle, WindowHandle, ParentProcess, ParentProcessMainWindowHandle, ParentProcessId.
+    .EXAMPLE
+        Get-WindowTitle -WindowTitle 'Microsoft Word'
+        Gets details for each window that has the words "Microsoft Word" in the title.
+    .EXAMPLE
+        Get-WindowTitle -GetAllWindowTitles
+        Gets details for all windows with a title.
+    .EXAMPLE
+        Get-WindowTitle -GetAllWindowTitles | Where-Object { $_.ParentProcess -eq 'WINWORD' }
+        Get details for all windows belonging to Microsoft Word process with name "WINWORD".
+    .LINK
+        https://psappdeploytoolkit.com
+    #>
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $true, ParameterSetName = 'SearchWinTitle')]
@@ -717,7 +598,6 @@ https://psappdeploytoolkit.com
     }
 }
 #endregion
-
 #region Function New-NxtWpfControl
 function New-NxtWpfControl() {
     <#
@@ -763,9 +643,218 @@ function New-NxtWpfControl() {
         Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
     }
 }
-
 #endregion
+#region Function Resolve-Error
+Function Resolve-Error {
+    <#
+    .SYNOPSIS
+        Enumerate error record details.
+    .DESCRIPTION
+        Enumerate an error record, or a collection of error record, properties. By default, the details for the last error will be enumerated.
+    .PARAMETER ErrorRecord
+        The error record to resolve. The default error record is the latest one: $global:Error[0]. This parameter will also accept an array of error records.
+    .PARAMETER Property
+        The list of properties to display from the error record. Use "*" to display all properties.
+    D   efault list of error properties is: Message, FullyQualifiedErrorId, ScriptStackTrace, PositionMessage, InnerException
+    .PARAMETER GetErrorRecord
+        Get error record details as represented by $_.
+    .PARAMETER GetErrorInvocation
+        Get error record invocation information as represented by $_.InvocationInfo.
+    .PARAMETER GetErrorException
+        Get error record exception details as represented by $_.Exception.
+    .PARAMETER GetErrorInnerException
+        Get error record inner exception details as represented by $_.Exception.InnerException. Will retrieve all inner exceptions if there is more than one.
+    .INPUTS
+        System.Array.
+        Accepts an array of error records.
+       .OUTPUTS
+        System.String
+        Displays the error record details.
+    .EXAMPLE
+        Resolve-Error
+    .EXAMPLE
+        Resolve-Error -Property *
+    .EXAMPLE
+        Resolve-Error -Property InnerException
+    .EXAMPLE
+        Resolve-Error -GetErrorInvocation:$false
+    .LINK
+        https://psappdeploytoolkit.com
+    #>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $false, Position = 0, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+        [AllowEmptyCollection()]
+        [Array]$ErrorRecord,
+        [Parameter(Mandatory = $false, Position = 1)]
+        [ValidateNotNullorEmpty()]
+        [String[]]$Property = ('Message', 'InnerException', 'FullyQualifiedErrorId', 'ScriptStackTrace', 'PositionMessage'),
+        [Parameter(Mandatory = $false, Position = 2)]
+        [Switch]$GetErrorRecord = $true,
+        [Parameter(Mandatory = $false, Position = 3)]
+        [Switch]$GetErrorInvocation = $true,
+        [Parameter(Mandatory = $false, Position = 4)]
+        [Switch]$GetErrorException = $true,
+        [Parameter(Mandatory = $false, Position = 5)]
+        [Switch]$GetErrorInnerException = $true
+    )
 
+    Begin {
+        ## If function was called without specifying an error record, then choose the latest error that occurred
+        If (-not $ErrorRecord) {
+            If ($global:Error.Count -eq 0) {
+                #Write-Warning -Message "The `$Error collection is empty"
+                Return
+            }
+            Else {
+                [Array]$ErrorRecord = $global:Error[0]
+            }
+        }
+
+        ## Allows selecting and filtering the properties on the error object if they exist
+        [ScriptBlock]$SelectProperty = {
+            Param (
+                [Parameter(Mandatory = $true)]
+                [ValidateNotNullorEmpty()]
+                $InputObject,
+                [Parameter(Mandatory = $true)]
+                [ValidateNotNullorEmpty()]
+                [String[]]$Property
+            )
+
+            [String[]]$ObjectProperty = $InputObject | Get-Member -MemberType '*Property' | Select-Object -ExpandProperty 'Name'
+            ForEach ($Prop in $Property) {
+                If ($Prop -eq '*') {
+                    [String[]]$PropertySelection = $ObjectProperty
+                    Break
+                }
+                ElseIf ($ObjectProperty -contains $Prop) {
+                    [String[]]$PropertySelection += $Prop
+                }
+            }
+            Write-Output -InputObject ($PropertySelection)
+        }
+
+        #  Initialize variables to avoid error if 'Set-StrictMode' is set
+        $LogErrorRecordMsg = $null
+        $LogErrorInvocationMsg = $null
+        $LogErrorExceptionMsg = $null
+        $LogErrorMessageTmp = $null
+        $LogInnerMessage = $null
+    }
+    Process {
+        If (-not $ErrorRecord) {
+            Return
+        }
+        ForEach ($ErrRecord in $ErrorRecord) {
+            ## Capture Error Record
+            If ($GetErrorRecord) {
+                [String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrRecord -Property $Property
+                $LogErrorRecordMsg = $ErrRecord | Select-Object -Property $SelectedProperties
+            }
+
+            ## Error Invocation Information
+            If ($GetErrorInvocation) {
+                If ($ErrRecord.InvocationInfo) {
+                    [String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrRecord.InvocationInfo -Property $Property
+                    $LogErrorInvocationMsg = $ErrRecord.InvocationInfo | Select-Object -Property $SelectedProperties
+                }
+            }
+
+            ## Capture Error Exception
+            If ($GetErrorException) {
+                If ($ErrRecord.Exception) {
+                    [String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrRecord.Exception -Property $Property
+                    $LogErrorExceptionMsg = $ErrRecord.Exception | Select-Object -Property $SelectedProperties
+                }
+            }
+
+            ## Display properties in the correct order
+            If ($Property -eq '*') {
+                #  If all properties were chosen for display, then arrange them in the order the error object displays them by default.
+                If ($LogErrorRecordMsg) {
+                    [Array]$LogErrorMessageTmp += $LogErrorRecordMsg
+                }
+                If ($LogErrorInvocationMsg) {
+                    [Array]$LogErrorMessageTmp += $LogErrorInvocationMsg
+                }
+                If ($LogErrorExceptionMsg) {
+                    [Array]$LogErrorMessageTmp += $LogErrorExceptionMsg
+                }
+            }
+            Else {
+                #  Display selected properties in our custom order
+                If ($LogErrorExceptionMsg) {
+                    [Array]$LogErrorMessageTmp += $LogErrorExceptionMsg
+                }
+                If ($LogErrorRecordMsg) {
+                    [Array]$LogErrorMessageTmp += $LogErrorRecordMsg
+                }
+                If ($LogErrorInvocationMsg) {
+                    [Array]$LogErrorMessageTmp += $LogErrorInvocationMsg
+                }
+            }
+
+            If ($LogErrorMessageTmp) {
+                $LogErrorMessage = 'Error Record:'
+                $LogErrorMessage += "`n-------------"
+                $LogErrorMsg = $LogErrorMessageTmp | Format-List | Out-String
+                $LogErrorMessage += $LogErrorMsg
+            }
+
+            ## Capture Error Inner Exception(s)
+            If ($GetErrorInnerException) {
+                If ($ErrRecord.Exception -and $ErrRecord.Exception.InnerException) {
+                    $LogInnerMessage = 'Error Inner Exception(s):'
+                    $LogInnerMessage += "`n-------------------------"
+
+                    $ErrorInnerException = $ErrRecord.Exception.InnerException
+                    $Count = 0
+
+                    While ($ErrorInnerException) {
+                        [String]$InnerExceptionSeperator = '~' * 40
+
+                        [String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrorInnerException -Property $Property
+                        $LogErrorInnerExceptionMsg = $ErrorInnerException | Select-Object -Property $SelectedProperties | Format-List | Out-String
+
+                        If ($Count -gt 0) {
+                            $LogInnerMessage += $InnerExceptionSeperator
+                        }
+                        $LogInnerMessage += $LogErrorInnerExceptionMsg
+
+                        $Count++
+                        $ErrorInnerException = $ErrorInnerException.InnerException
+                    }
+                }
+            }
+
+            If ($LogErrorMessage) {
+                $Output = $LogErrorMessage
+            }
+            If ($LogInnerMessage) {
+                $Output += $LogInnerMessage
+            }
+
+            Write-Output -InputObject $Output
+
+            If (Test-Path -LiteralPath 'variable:Output') {
+                Clear-Variable -Name 'Output'
+            }
+            If (Test-Path -LiteralPath 'variable:LogErrorMessage') {
+                Clear-Variable -Name 'LogErrorMessage'
+            }
+            If (Test-Path -LiteralPath 'variable:LogInnerMessage') {
+                Clear-Variable -Name 'LogInnerMessage'
+            }
+            If (Test-Path -LiteralPath 'variable:LogErrorMessageTmp') {
+                Clear-Variable -Name 'LogErrorMessageTmp'
+            }
+        }
+    }
+    End {
+    }
+}
+#endregion
 #region Function Test-NxtPersonalizationLightTheme
 function Test-NxtPersonalizationLightTheme {
     <#
@@ -809,64 +898,37 @@ function Test-NxtPersonalizationLightTheme {
     }
 }
 #endregion
-
-#region functions
+#region function Write-FunctionHeaderOrFooter
 Function Write-FunctionHeaderOrFooter {
     <#
-.SYNOPSIS
-
-Write the function header or footer to the log upon first entering or exiting a function.
-
-.DESCRIPTION
-
-Write the "Function Start" message, the bound parameters the function was invoked with, or the "Function End" message when entering or exiting a function.
-
-Messages are debug messages so will only be logged if LogDebugMessage option is enabled in XML config file.
-
-.PARAMETER CmdletName
-
-The name of the function this function is invoked from.
-
-.PARAMETER CmdletBoundParameters
-
-The bound parameters of the function this function is invoked from.
-
-.PARAMETER Header
-
-Write the function header.
-
-.PARAMETER Footer
-
-Write the function footer.
-
-.INPUTS
-
-None
-
-You cannot pipe objects to this function.
-
-.OUTPUTS
-
-None
-
-This function does not generate any output.
-
-.EXAMPLE
-
-Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-
-.EXAMPLE
-
-Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
-
-.NOTES
-
-This is an internal script function and should typically not be called directly.
-
-.LINK
-
-https://psappdeploytoolkit.com
-#>
+    .SYNOPSIS
+        Write the function header or footer to the log upon first entering or exiting a function.
+    .DESCRIPTION
+        Write the "Function Start" message, the bound parameters the function was invoked with, or the "Function End" message when entering or exiting a function.
+        Messages are debug messages so will only be logged if LogDebugMessage option is enabled in XML config file.
+    .PARAMETER CmdletName
+        The name of the function this function is invoked from.
+    .PARAMETER CmdletBoundParameters
+        The bound parameters of the function this function is invoked from.
+    .PARAMETER Header
+        Write the function header.
+    .PARAMETER Footer
+        Write the function footer.
+    .INPUTS
+        None
+        You cannot pipe objects to this function.
+    .OUTPUTS
+        None
+    This function does not generate any output.
+    .EXAMPLE
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+    .EXAMPLE
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+    .NOTES
+        This is an internal script function and should typically not be called directly.
+    .LINK
+        https://psappdeploytoolkit.com
+    #>
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $true)]
@@ -898,27 +960,18 @@ https://psappdeploytoolkit.com
     }
 }
 #endregion
-
-
 #region Function Write-Log
 function Write-Log {
     <#
-.SYNOPSIS
-
-Write messages to a log file in CMTrace.exe compatible format or Legacy text file format.
-
-.DESCRIPTION
-
-Write messages to a log file in CMTrace.exe compatible format or Legacy text file format and optionally display in the console.
-
-.PARAMETER Message
-
-The message to write to the log file or output to the console.
-
-.PARAMETER Source
-
-The source of the message being logged.
-#>
+    .SYNOPSIS
+        Write messages to a log file in CMTrace.exe compatible format or Legacy text file format.
+    .DESCRIPTION
+        Write messages to a log file in CMTrace.exe compatible format or Legacy text file format and optionally display in the console.
+    .PARAMETER Message
+        The message to write to the log file or output to the console.
+    .PARAMETER Source
+        The source of the message being logged.
+    #>
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
@@ -1192,54 +1245,31 @@ The source of the message being logged.
 #region Function Test-RegistryValue
 Function Test-RegistryValue {
     <#
-.SYNOPSIS
-
-Test if a registry value exists.
-
-.DESCRIPTION
-
-Checks a registry key path to see if it has a value with a given name. Can correctly handle cases where a value simply has an empty or null value.
-
-.PARAMETER Key
-
-Path of the registry key.
-
-.PARAMETER Value
-
-Specify the registry key value to check the existence of.
-
-.PARAMETER SID
-
-The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
-
-Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
-
-.INPUTS
-
-System.String
-
-Accepts a string value for the registry key path.
-
-.OUTPUTS
-
-System.String
-
-Returns $true if the registry value exists, $false if it does not.
-
-.EXAMPLE
-
-Test-RegistryValue -Key 'HKLM:SYSTEM\CurrentControlSet\Control\Session Manager' -Value 'PendingFileRenameOperations'
-
-.NOTES
-
-To test if registry key exists, use Test-Path function like so:
-
-Test-Path -Path $Key -PathType 'Container'
-
-.LINK
-
-https://psappdeploytoolkit.com
-#>
+        .SYNOPSIS
+        Test if a registry value exists.
+        .DESCRIPTION
+        Checks a registry key path to see if it has a value with a given name. Can correctly handle cases where a value simply has an empty or null value.
+        .PARAMETER Key
+        Path of the registry key.
+        .PARAMETER Value
+        Specify the registry key value to check the existence of.
+        .PARAMETER SID
+        The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
+        Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
+        .INPUTS
+        System.String
+        Accepts a string value for the registry key path.
+        .OUTPUTS
+        System.String
+        Returns $true if the registry value exists, $false if it does not.
+        .EXAMPLE
+        Test-RegistryValue -Key 'HKLM:SYSTEM\CurrentControlSet\Control\Session Manager' -Value 'PendingFileRenameOperations'
+        .NOTES
+        To test if registry key exists, use Test-Path function like so:
+        Test-Path -Path $Key -PathType 'Container'
+        .LINK
+        https://psappdeploytoolkit.com
+    #>
     Param (
         [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
         [ValidateNotNullOrEmpty()]$Key,

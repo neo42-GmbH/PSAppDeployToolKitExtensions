@@ -7155,7 +7155,7 @@ Function Show-NxtWelcomePrompt {
 		$contiuneTypeValue = [int]$ContinueType;
 		# Convert to JSON in compressed form
 		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects
-		$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1";
+		$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
 		$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -DeferTimes `"$DeferTimes`" -DeferDeadline `"$DeferDeadline`" -ContinueType $contiuneTypeValue -CloseAppsCountdown $CloseAppsCountdown -ProcessObjectsEncoded `"$processObjectsEncoded`""
 
 		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "PersistPrompt" -SwitchParam $PersistPrompt;
