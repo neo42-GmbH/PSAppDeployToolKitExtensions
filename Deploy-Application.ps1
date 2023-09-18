@@ -184,6 +184,7 @@ try {
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVendor: $appVendor"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appName: $appName"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVersion: $appVersion"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] UserPartDir: $global:UserPartDir"
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
