@@ -1852,7 +1852,7 @@ function Execute-NxtMSI {
 			[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
 		}
 		if (![string]::IsNullOrEmpty($Log)) {
-			[String]$msiLogName = ($Log | Split-Path -Leaf).TrimEnd(".log")
+			[string]$msiLogName = ($Log | Split-Path -Leaf) -replace '\.log$',[string]::Empty
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
 		[PSObject]$ExecuteResults = Execute-MSI @PSBoundParameters
