@@ -2401,7 +2401,7 @@ function Exit-NxtScriptWithError {
 	}
 	Process {
 		if ($false -eq $RegisterPackage) {
-			Write-Log -Message 'Package registration is be prevented because the environment variable '`$env:PackageRegister' is set to 'false'. Exit without writing error key in registry...' -Source ${cmdletName}
+			Write-Log -Message "RegisterPackage is set to 'false', skip writing '_Error' key in registry..." -Source ${cmdletName}
 		}
 		Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
 		try {
