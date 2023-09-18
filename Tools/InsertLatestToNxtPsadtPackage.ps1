@@ -71,11 +71,15 @@ function Update-NxtPSAdtPackage {
     [string]$newVersionContent = Get-Content -raw -Path "$LatestVersionPath\Deploy-Application.ps1"
     [string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
     #check for Version -ge 2023.06.12.01-53
-    [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:"
+    if ($existingContent -match "ConfigVersion:") {
+        [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "Version: " -EndTag "	ConfigVersion:"
+    }else{
+        [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:"
+    }
     if ([int]($version.TrimEnd("`n") -split "-")[1] -lt 53) {
         throw "Version of $PackageToUpdatePath is lower than 2023.06.12.01-53 and must be updated manually"
     }
-    [string]$newVersion = Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:"
+    [string]$newVersion = Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:"
     if ($version.TrimEnd("`n") -eq $newVersion.TrimEnd("`n")) {
         $versionInfo = " ... but seems already up-to-date (same version tag!)"
     }
