@@ -295,16 +295,16 @@ function Main {
 					if ($showInstallationWelcomeResult -ne 0) {
 						switch ($showInstallationWelcomeResult) {
 							'1618' {
-								[string]$currentSIWMessageInstall = "Aborted by dialog window action or timeout of waiting for processes."
+								[string]$currentShowInstallationWelcomeMessageInstall = "Aborted by dialog window action or timeout of waiting for processes."
 							}
 							'60012' {
-								[string]$currentSIWMessageInstall = "User deferred installation request."
+								[string]$currentShowInstallationWelcomeMessageInstall = "User deferred installation request."
 							}
 							default {
-								[string]$currentSIWMessageInstall = "Dialog window action aborted unexpected."
+								[string]$currentShowInstallationWelcomeMessageInstall = "Show installation welcome window exit code: $showInstallationWelcomeResult"
 							}
 						}
-						Exit-NxtScriptWithError -ErrorMessage $currentSIWMessageInstall -MainExitCode $showInstallationWelcomeResult
+						Exit-NxtScriptWithError -ErrorMessage $currentShowInstallationWelcomeMessageInstall -MainExitCode $showInstallationWelcomeResult
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
@@ -402,16 +402,16 @@ function Main {
 					if ($showUnInstallationWelcomeResult -ne 0) {
 						switch ($showUnInstallationWelcomeResult) {
 							'1618' {
-								[string]$currentSIWMessageUninstall = "Aborted by dialog window action or timeout of waiting for processes."
+								[string]$currentShowInstallationWelcomeMessageUninstall = "Aborted by dialog window action or timeout of waiting for processes."
 							}
 							'60012' {
-								[string]$currentSIWMessageUninstall = "User deferred installation request."
+								[string]$currentShowInstallationWelcomeMessageUninstall = "User deferred installation request."
 							}
 							default {
-								[string]$currentSIWMessageUninstall = "Dialog window action aborted unexpected."
+								[string]$currentShowInstallationWelcomeMessageUninstall = "Show installation welcome window exit code: $showInstallationWelcomeResult"
 							}
 						}
-						Exit-NxtScriptWithError -ErrorMessage $currentSIWMessageUninstall -MainExitCode $showUnInstallationWelcomeResult
+						Exit-NxtScriptWithError -ErrorMessage $currentShowInstallationWelcomeMessageUninstall -MainExitCode $showUnInstallationWelcomeResult
 					}
 					Initialize-NxtUninstallApplication
 					CustomUninstallBegin
