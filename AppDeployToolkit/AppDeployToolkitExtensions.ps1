@@ -11,7 +11,7 @@
 	The script is automatically dot-sourced by the AppDeployToolkitMain.ps1 script.
 .NOTES
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2023.09.08.1
+	ConfigVersion: 2023.09.18.1
     Toolkit Exit Code Ranges:
     60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
     69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -1050,8 +1050,6 @@ function Execute-NxtBitRockInstaller {
 		Adds to the default parameters specified in the XML configuration file.
 		Install default is: "--mode unattended --unattendedmodeui minimal".
 		Uninstall default is: "--mode unattended".
-	.PARAMETER PassThru
-		Returns ExitCode, STDOut, and STDErr output from the process.
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
@@ -1061,6 +1059,8 @@ function Execute-NxtBitRockInstaller {
 		Defaults to $xmlConfig.NxtBitRockInstaller_Options.
 	.PARAMETER DirFiles
 		The Files directory specified in AppDeployToolkitMain.ps1, Defaults to $dirfiles.
+	.PARAMETER AcceptedRebootCodes
+		Defines a string with a comma separated list of exit codes that will be accepted for reboot by called setup execution.
 	.EXAMPLE
 		Execute-NxtBitRockInstaller -UninstallKey "ThisApplication" -Path "ThisApp-1.0.exe" -Parameters "--mode unattended --installer-language en"
 	.EXAMPLE
@@ -1105,10 +1105,6 @@ function Execute-NxtBitRockInstaller {
 		$AddParameters,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]
-		$PassThru = $false,
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
 		[string]
 		$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
@@ -1120,7 +1116,10 @@ function Execute-NxtBitRockInstaller {
 		$XmlConfigNxtBitRockInstaller = $xmlConfig.NxtBitRockInstaller_Options,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DirFiles = $dirFiles
+		$DirFiles = $dirFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRebootCodes
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
@@ -1215,29 +1214,26 @@ function Execute-NxtBitRockInstaller {
 			[string]$argsBitRockInstaller = "$argsBitRockInstaller $AddParameters"
 		}
  
-		[hashtable]$ExecuteProcessSplat = @{
-			Path        = $bitRockInstallerSetupPath
-			Parameters  = $argsBitRockInstaller
-			WindowStyle = 'Normal'
+		[hashtable]$executeProcessSplat = @{
+			Path                 = $bitRockInstallerSetupPath
+			Parameters           = $argsBitRockInstaller
+			WindowStyle          = 'Normal'
+			ExitOnProcessFailure = $false
+			PassThru             = $true
 		}
         
 		if ($ContinueOnError) {
-			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
-		}
-		if ($PassThru) {
-			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
-    
-		if ($PassThru) {
-			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+		[psobject]$executeResult = Execute-Process @executeProcessSplat
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+			$executeResult.ExitCode = 3010
+			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
 		}
-		else {
-			Execute-Process @ExecuteProcessSplat
-		}
-
 		if ($Action -eq 'Uninstall') {
 			## Wait until all uninstallation processes are terminated or write a warning to the log if the waiting period is exceeded
 			Write-Log -Message "Wait while an uninstallation process is still running..." -Source ${CmdletName}
@@ -1291,9 +1287,7 @@ function Execute-NxtBitRockInstaller {
 		}
 	}
 	End {
-		if ($PassThru) {
-			Write-Output -InputObject $ExecuteResults
-		}
+		Write-Output -InputObject $executeResult
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
@@ -1342,8 +1336,6 @@ function Execute-NxtInnoSetup {
 		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$($global:DeploymentTimestamp).log"')
 		If only a name is specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
-	.PARAMETER PassThru
-		Returns ExitCode, STDOut, and STDErr output from the process.
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
@@ -1354,6 +1346,10 @@ function Execute-NxtInnoSetup {
 	.PARAMETER XmlConfigNxtInnoSetup
 		Contains the Default Settings for Innosetup.
 		Defaults to $xmlConfig.NxtInnoSetup_Options.
+	.PARAMETER DirFiles
+		The Files directory specified in AppDeployToolkitMain.ps1, Defaults to $dirfiles.
+	.PARAMETER AcceptedRebootCodes
+		Defines a string with a comma separated list of exit codes that will be accepted for reboot by called setup execution.
 	.EXAMPLE
 		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "ThisAppSetup.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
 	.EXAMPLE
@@ -1405,10 +1401,6 @@ function Execute-NxtInnoSetup {
 		$Log,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]
-		$PassThru = $false,
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
 		[string]
 		$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
@@ -1423,7 +1415,10 @@ function Execute-NxtInnoSetup {
 		$XmlConfigNxtInnoSetup = $xmlConfig.NxtInnoSetup_Options,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DirFiles = $dirFiles
+		$DirFiles = $dirFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRebootCodes
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
@@ -1559,29 +1554,26 @@ function Execute-NxtInnoSetup {
 
 		[string]$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
     
-		[hashtable]$ExecuteProcessSplat = @{
-			Path        = $innoSetupPath
-			Parameters  = $argsInnoSetup
-			WindowStyle = 'Normal'
+		[hashtable]$executeProcessSplat = @{
+			Path                 = $innoSetupPath
+			Parameters           = $argsInnoSetup
+			WindowStyle          = 'Normal'
+			ExitOnProcessFailure = $false
+			PassThru             = $true
 		}
         
 		if ($ContinueOnError) {
-			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
-		}
-		if ($PassThru) {
-			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
- 
-		if ($PassThru) {
-			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+		[psobject]$executeResult = Execute-Process @executeProcessSplat
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+			$executeResult.ExitCode = 3010
+			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
 		}
-		else {
-			Execute-Process @ExecuteProcessSplat
-		}
-    
 		## Update the desktop (in case of changed or added enviroment variables)
 		Update-Desktop
 
@@ -1620,9 +1612,7 @@ function Execute-NxtInnoSetup {
 		}
 	}
 	End {
-		if ($PassThru) {
-			Write-Output -InputObject $ExecuteResults
-		}
+		Write-Output -InputObject $executeResult
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
@@ -1677,16 +1667,12 @@ function Execute-NxtMSI {
 		Include matches against updates and hotfixes in results.
 	.PARAMETER NoWait
 		Immediately continue after executing the process.
-	.PARAMETER PassThru
-		Returns ExitCode, STDOut, and STDErr output from the process.
 	.PARAMETER IgnoreExitCodes
 		List the exit codes to ignore or * to ignore all exit codes.
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER PriorityClass	
 		Specifies priority class for the process. Options: Idle, Normal, High, AboveNormal, BelowNormal, RealTime. Default: Normal
-	.PARAMETER ExitOnProcessFailure
-		Specifies whether the function should call Exit-Script when the process returns an exit code that is considered an error/failure. Default: $true
 	.PARAMETER RepairFromSource
 		Specifies whether we should repair from source. Also rewrites local cache. Default: $false
 	.PARAMETER ContinueOnError
@@ -1701,8 +1687,8 @@ function Execute-NxtMSI {
 		Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -Transform 'Adobe_FlashPlayer_11.2.202.233_x64_EN_01.mst' -Parameters '/QN'
 		Installs an MSI, applying a transform and overriding the default MSI toolkit parameters
 	.EXAMPLE
-		[psobject]$ExecuteMSIResult = Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi' -PassThru
-		Installs an MSI and stores the result of the execution into a variable by using the -PassThru option
+		[psobject]$ExecuteMSIResult = Execute-NxtMSI -Action 'Install' -Path 'Adobe_FlashPlayer_11.2.202.233_x64_EN.msi'
+		Installs an MSI and stores the result of the execution into a variable.
 	.EXAMPLE
 		Execute-NxtMSI -Action 'Uninstall' -Path '{26923b43-4d38-484f-9b9e-de460746276c}'
 		Uninstalls an MSI using a product code
@@ -1765,19 +1751,10 @@ function Execute-NxtMSI {
 		[switch]$NoWait = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]$PassThru = $false,
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
 		[string]$AcceptedExitCodes,
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
-		[string]$IgnoreExitCodes,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Idle', 'Normal', 'High', 'AboveNormal', 'BelowNormal', 'RealTime')]
 		[Diagnostics.ProcessPriorityClass]$PriorityClass = 'Normal',
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
-		[boolean]$ExitOnProcessFailure = $true,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[boolean]$RepairFromSource = $false,
@@ -1786,7 +1763,10 @@ function Execute-NxtMSI {
 		[boolean]$ContinueOnError = $false,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ConfigMSILogDir = $configMSILogDir
+		$ConfigMSILogDir = $configMSILogDir,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRebootCodes
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1799,9 +1779,7 @@ function Execute-NxtMSI {
 			"SkipMSIAlreadyInstalledCheck",
 			"IncludeUpdatesAndHotfixes",
 			"NoWait",
-			"PassThru",
 			"PriorityClass",
-			"ExitOnProcessFailure",
 			"RepairFromSource",
 			"ContinueOnError",
 			"ConfigMSILogDir"
@@ -1842,6 +1820,8 @@ function Execute-NxtMSI {
 				$PSBoundParameters["Path"] = $installedAppResults.ProductCode
 			}
 		}
+		[string]$PSBoundParameters["PassThru"] = $true
+		[string]$PSBoundParameters["ExitOnProcessFailure"] = $false
 		if ([string]::IsNullOrEmpty($Parameters)) {
 			$null = $PSBoundParameters.Remove('Parameters')
 		}
@@ -1855,7 +1835,7 @@ function Execute-NxtMSI {
 			[string]$msiLogName = ($Log | Split-Path -Leaf) -replace '\.log$',[string]::Empty
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
-		[PSObject]$ExecuteResults = Execute-MSI @PSBoundParameters
+		[PSObject]$executeResult = Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
 		if ([System.IO.Path]::IsPathRooted($Log)) {
 			[string]$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
@@ -1867,11 +1847,14 @@ function Execute-NxtMSI {
 				Write-Log -Message "MSI log [$logPath] not found. Skipped moving it to [$Log]." -Severity 2 -Source ${CmdletName}
 			}
 		}
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+			$executeResult.ExitCode = 3010
+			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+		}
 	}
 	End {
-		if ($PassThru) {
-			Write-Output -InputObject $ExecuteResults
-		}
+		Write-Output -InputObject $executeResult
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
@@ -1910,8 +1893,6 @@ function Execute-NxtNullsoft {
 		Adds to the default parameters specified in the XML configuration file.
 		Install default is: "/AllUsers /S".
 		Uninstall default is: "/AllUsers /S".
-	.PARAMETER PassThru
-		Returns ExitCode, STDOut, and STDErr output from the process.
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER ContinueOnError
@@ -1921,6 +1902,8 @@ function Execute-NxtNullsoft {
 		Defaults to $xmlConfig.NxtNullsoft_Options.
 	.PARAMETER DirFiles
 		The Files directory specified in AppDeployToolkitMain.ps1, Defaults to $dirfiles.
+	.PARAMETER AcceptedRebootCodes
+		Defines a string with a comma separated list of exit codes that will be accepted for reboot by called setup execution.
 	.EXAMPLE
 		Execute-NxtNullsoft -UninstallKey "ThisApplication" -Path "ThisApp.1.0.Installer.exe" -Parameters "SILENT=1"
 	.EXAMPLE
@@ -1965,10 +1948,6 @@ function Execute-NxtNullsoft {
 		$AddParameters,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[switch]
-		$PassThru = $false,
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
 		[string]
 		$AcceptedExitCodes,
 		[Parameter(Mandatory = $false)]
@@ -1979,7 +1958,10 @@ function Execute-NxtNullsoft {
 		$XmlConfigNxtNullsoft = $xmlConfig.NxtNullsoft_Options,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DirFiles = $dirFiles
+		$DirFiles = $dirFiles,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRebootCodes
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
@@ -2073,29 +2055,26 @@ function Execute-NxtNullsoft {
 			[string]$argsnullsoft = "$argsnullsoft $AddParameters"
 		}
  
-		[hashtable]$ExecuteProcessSplat = @{
-			Path        = $nullsoftSetupPath
-			Parameters  = $argsnullsoft
-			WindowStyle = 'Normal'
+		[hashtable]$executeProcessSplat = @{
+			Path                 = $nullsoftSetupPath
+			Parameters           = $argsnullsoft
+			WindowStyle          = 'Normal'
+			ExitOnProcessFailure = $false
+			PassThru             = $true
 		}
         
 		if ($ContinueOnError) {
-			$ExecuteProcessSplat.Add('ContinueOnError', $ContinueOnError)
-		}
-		if ($PassThru) {
-			$ExecuteProcessSplat.Add('PassThru', $PassThru)
+			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
 		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$ExecuteProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
 		}
-    
-		if ($PassThru) {
-			[psobject]$ExecuteResults = Execute-Process @ExecuteProcessSplat
+		[psobject]$executeResult = Execute-Process @executeProcessSplat
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+			$executeResult.ExitCode = 3010
+			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
 		}
-		else {
-			Execute-Process @ExecuteProcessSplat
-		}
-
 		if ($Action -eq 'Uninstall') {
 			## Wait until all uninstallation processes hopefully terminated
 			Write-Log -Message "Wait while one of the possible uninstallation processes is still running..." -Source ${CmdletName}
@@ -2143,9 +2122,7 @@ function Execute-NxtNullsoft {
 		}
 	}
 	End {
-		if ($PassThru) {
-			Write-Output -InputObject $ExecuteResults
-		}
+		Write-Output -InputObject $executeResult
 
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
@@ -2315,8 +2292,6 @@ function Exit-NxtScriptWithError {
 		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
-	.EXAMPLE
-		Exit-NxtScriptWithError -ErrorMessage "Script execution failed!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -2421,7 +2396,7 @@ function Exit-NxtScriptWithError {
 		catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
-		if ($MainExitCode -eq 0) {
+		if ($MainExitCode -in 0,1641,3010) {
 			[int32]$MainExitCode = 70000
 		}
 		Close-BlockExecutionWindow
@@ -3517,6 +3492,86 @@ function Get-NxtProcessorArchiteW6432 {
 	}
 }
 #endregion
+#region Function Get-NxtRebootRequirement
+function Get-NxtRebootRequirement {
+	<#
+	.SYNOPSIS
+		Sets $script:msiRebootDetected if a reboot is required.
+	.DESCRIPTION
+		Tests if a reboot is required based on $msiRebootDetected and Reboot from the packageconfig.
+		To automatically apply the decision to the any call of Exit-Script use the -ApplyDecision switch.
+	.PARAMETER MsiRebootDetected
+		Defaults to $script:msiRebootDetected.
+	.PARAMETER Reboot
+		Indicates if a reboot is required by the script.
+		0 = Decide based on $msiRebootDetected
+		1 = Reboot required
+		2 = Reboot not required.
+		Defaults to $global:PackageConfig.Reboot.
+	.OUTPUTS
+		PSADTNXT.NxtRebootResult.
+	.EXAMPLE
+		Get-NxtRebootRequirement
+		Tests RebootRequirement based on $msiRebootDetected and $Reboot.
+	.EXAMPLE
+		Get-NxtRebootRequirement -MsiRebootDetected $true -Reboot 0
+		Gets MainExitCode 3010.
+	.NOTES
+		This is an internal script function and should typically not be called directly.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MsiRebootDetected = $script:msiRebootDetected,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet(0,1,2)]
+		[int]
+		$Reboot = $global:PackageConfig.Reboot
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[PSADTNXT.NxtRebootResult]$rebootResult = New-Object -TypeName PSADTNXT.NxtRebootResult 
+		switch ($Reboot) {
+			0 { 
+				if ($MsiRebootDetected) {
+					Write-Log -Message "Detected Reboot required by an (un)installation" -Severity 1 -Source ${CmdletName}
+					$rebootResult.MainExitCode = 3010
+					$rebootResult.Message = "Found reboot required by an (un)installation"
+				}
+				else {
+					Write-Log -Message "Found no reboot required by an (un)installation" -Severity 1 -Source ${CmdletName}
+					$rebootResult.MainExitCode = 0
+					$rebootResult.Message = "Found no reboot required by an (un)installation"
+				}
+			}
+			1 {
+				Write-Log -Message "Reboot required by script" -Severity 1 -Source ${CmdletName}
+				$rebootResult.MainExitCode = 3010
+				$rebootResult.Message = "Reboot required by script"
+			}
+			2 {
+				Write-Log -Message "Reboot not required by script" -Severity 1 -Source ${CmdletName}
+				$rebootResult.MainExitCode = 0
+				$rebootResult.Message = "Reboot not required by script"
+			}
+			default {
+				Write-Log -Message "Invalid value for parameter Reboot: $Reboot" -Severity 3 -Source ${CmdletName}
+				throw "Invalid value for parameter Reboot: $Reboot"
+			}
+		}
+		Write-Output $rebootResult
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Get-NxtRegisteredPackage
 function Get-NxtRegisteredPackage {
 	<#
@@ -4401,6 +4456,9 @@ function Install-NxtApplication {
 	.PARAMETER AcceptedInstallExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedInstallRebootCodes
+		Defines a list of reboot codes that will be accepted for requested reboot by called setup execution. A matching code will be translated to code '3010'.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -4458,6 +4516,9 @@ function Install-NxtApplication {
 		$AcceptedInstallExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$AcceptedInstallRebootCodes = $global:PackageConfig.AcceptedInstallRebootCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
 		[int]
@@ -4494,7 +4555,7 @@ function Install-NxtApplication {
 				Action                        = 'Install'
 				Path                          = "$InstFile"
 				UninstallKeyIsDisplayName     = $UninstallKeyIsDisplayName
-				UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
+				UninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
 				DisplayNamesToExclude         = $DisplayNamesToExclude
 			}
 			if (![string]::IsNullOrEmpty($InstPara)) {
@@ -4511,30 +4572,32 @@ function Install-NxtApplication {
 			else {
 				[string]$internalInstallerMethod = $InstallMethod
 			}
-			if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-				if ($internalInstallerMethod -eq "MSI") {
-					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
-				}
-				elseif($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$") {
+			if($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
+				if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
 					[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedInstallExitCodes"
+				}
+				if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallRebootCodes))  {
+					[string]$executeNxtParams["AcceptedRebootCodes"] = "$AcceptedInstallRebootCodes"
 				}
 			}
 			switch -Wildcard ($internalInstallerMethod) {
 				MSI {
-					Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
+					[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$InstLogFile"
 				}
 				"Inno*" {
-					Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
+					[PsObject]$executionResult = Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$InstLogFile"
 				}
 				Nullsoft {
-					Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+					[PsObject]$executionResult = Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
 				}
 				"BitRock*" {
-					Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+					[PsObject]$executionResult = Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 				}
 				Default {
 					[hashtable]$executeParams = @{
-						Path	= "$InstFile"
+						Path	             = "$InstFile"
+						ExitOnProcessFailure = $false
+						PassThru             = $true
 					}
 					if (![string]::IsNullOrEmpty($InstPara)) {
 						[string]$executeParams["Parameters"] = "$InstPara"
@@ -4542,11 +4605,25 @@ function Install-NxtApplication {
 					if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
 						[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
 					}
-					Execute-Process @executeParams
+					[PsObject]$executionResult = Execute-Process @executeParams
+					if ($($executionResult.ExitCode) -in ($AcceptedInstallRebootCodes -split ",")) {
+						Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+						Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+					}
 				}
 			}
-			$installResult.MainExitCode = $mainExitCode
-			$installResult.ApplicationExitCode = $LastExitCode
+			$installResult.ApplicationExitCode = $($executionResult.ExitCode)
+			if ($executionResult.ExitCode -in ($AcceptedInstallRebootCodes -split ",")) {
+				$installResult.MainExitCode = 3010
+				$installResult.ErrorMessage = "Installation done with custom reboot return code '$($executionResult.ExitCode)'."
+			}
+			else {
+				$installResult.MainExitCode = $executionResult.ExitCode
+				$installResult.ErrorMessage = "Installation done with return code '$($executionResult.ExitCode)'."
+			}
+			if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
+				$installResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
+			}
 			## Delay for filehandle release etc. to occur.
 			Start-Sleep -Seconds 5
 
@@ -4576,6 +4653,15 @@ function Install-NxtApplication {
 						[int]$logMessageSeverity = 1
 					}
 				}
+			}
+			if (
+				($executionResult.ExitCode -notin ($AcceptedInstallExitCodes -split ",")) -and
+				($executionResult.ExitCode -notin ($AcceptedInstallRebootCodes -split ",")) -and
+				($executionResult.ExitCode -notin 0,1641,3010)
+			) {
+				$installResult.ErrorMessage = "Installation of '$AppName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
+				$installResult.Success = $false
+				[int]$logMessageSeverity = 3
 			}
 		}
 		Write-Log -Message $($installResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
@@ -4813,7 +4899,6 @@ function Register-NxtPackage {
 		Defaults to $logname defined in the AppDeployToolkitMain.
 	.PARAMETER MainExitCode
 		The value, the script returns to the deployment system and that will be written as LastExitCode to the package entry in the the registry.
-		Defaults to the variable $mainExitCode.
 	.PARAMETER PackageStatus
 		The value, that will be written as PackageStatus to the package entry in the the registry.
 		Defaults to "Success".
@@ -4831,7 +4916,6 @@ function Register-NxtPackage {
 		Defaults to $ProcessNTAccountSID defined in the PSADT Main script.
 	.PARAMETER LastErrorMessage
 		If set the message is written to the registry.
-		Defaults to the $global:LastErrorMessage.
 	.PARAMETER $UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
@@ -5611,9 +5695,12 @@ function Repair-NxtApplication {
 		If set to $true the parameters specified with InstPara are added to the default parameters specified in the XML configuration file.
 		If set to $false the parameters specified with InstPara overwrite the default parameters specified in the XML configuration file.
 		Defaults to the value "AppendInstParaToDefaultParameters" from the PackageConfig object.
-	.PARAMETER AcceptedMSIRepairExitCodes
+	.PARAMETER AcceptedRepairExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defaults to $global:PackageConfig.AcceptedInstallExitCodes.
+	.PARAMETER AcceptedRepairRebootCodes
+		Defines a list of reboot exit codes for all exit codes that will be accepted for reboot by called setup execution.
+		Defaults to $global:PackageConfig.AcceptedInstallRebootCodes.
 	.EXAMPLE
 		Repair-NxtApplication
 	.LINK
@@ -5655,8 +5742,11 @@ function Repair-NxtApplication {
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AcceptedMSIRepairExitCodes = $global:PackageConfig.AcceptedMSIRepairExitCodes
-	)
+		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedRepairRebootCodes = $global:PackageConfig.AcceptedInstallRebootCodes
+		)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -5666,7 +5756,9 @@ function Repair-NxtApplication {
 		$repairResult.Success = $false
 		[int]$logMessageSeverity = 1
 		[hashtable]$executeNxtParams = @{
-			Action	= 'Repair'
+			Action	             = 'Repair'
+			ExitOnProcessFailure = $false
+			PassThru             = $true
 		}
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
 			$repairResult.MainExitCode = $mainExitCode
@@ -5691,26 +5783,39 @@ function Repair-NxtApplication {
 						[string]$executeNxtParams["Parameters"] = "$RepairPara"
 					}
 				}
-				if (![string]::IsNullOrEmpty($AcceptedMSIRepairExitCodes)) {
-					[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedMSIRepairExitCodes"
+				if (![string]::IsNullOrEmpty($AcceptedRepairExitCodes)) {
+					[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedRepairExitCodes"
+				}
+				if ($false -eq [string]::IsNullOrEmpty($AcceptedRepairRebootCodes))  {
+					[string]$executeNxtParams["AcceptedRebootCodes"] = "$AcceptedRepairRebootCodes"
 				}
 				if ([string]::IsNullOrEmpty($RepairLogFile)) {
 					## now set default path and name including retrieved ProductCode
 					[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$DeploymentTimestamp.log")
 				}
-
-				## running with parameter -PassThru to get always a valid return code (needed here for validation later) from underlying Execute-MSI
-				$repairResult.ApplicationExitCode = (Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true -PassThru).ExitCode
-
-				## transferred exitcodes requesting reboot must be set to 0 for this function to return success, for compatibility with the Execute-NxtMSI -PassThru parameter.
-				if ( (3010 -eq $repairResult.ApplicationExitCode) -or (1641 -eq $repairResult.ApplicationExitCode) ) {
-					$repairResult.ApplicationExitCode = 0
+				## parameter -RepairFromSource $true runs 'msiexec /fvomus ...'
+				[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
+				if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
+					$repairResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
+				}
+				$repairResult.ApplicationExitCode = $executionResult.ExitCode
+				if ($($executionResult.ExitCode) -in ($AcceptedRepairRebootCodes -split ",")) {
+					$repairResult.MainExitCode = 3010
+					$repairResult.ErrorMessage = "Repair done with custom reboot return code '$($executionResult.ExitCode)'."
+				}
+				else {
+					$repairResult.MainExitCode = $executionResult.ExitCode
+					$repairResult.ErrorMessage = "Repair done with return code '$($executionResult.ExitCode)'."
 				}
 				## Delay for filehandle release etc. to occur.
 				Start-Sleep -Seconds 5
-
-				if ( (0 -ne $repairResult.ApplicationExitCode) -or ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
-					$repairResult.MainExitCode = $mainExitCode
+				if (
+					(
+						($executionResult.ExitCode -notin ($AcceptedInstallExitCodes -split ",")) -and
+						($executionResult.ExitCode -notin ($AcceptedInstallRebootCodes -split ",")) -and
+						($repairResult.MainExitCode -notin 0,1641,3010)
+					) -or 
+					($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
 					$repairResult.ErrorMessage = "Repair of '$AppName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 					$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					$repairResult.Success = $false
@@ -6154,6 +6259,70 @@ function Set-NxtProcessEnvironmentVariable {
 		catch {
 			Write-Log -Message "Failed to set the process environment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Set-NxtRebootVariable
+function Set-NxtRebootVariable {
+	<#
+	.SYNOPSIS
+		Sets $script:msiRebootDetected if a reboot is required.
+	.DESCRIPTION
+		Tests if a reboot is required based on $msiRebootDetected and Reboot from the packageconfig.
+		To automatically apply the decision to the any call of Exit-Script use the -ApplyDecision switch.
+	.PARAMETER MsiRebootDetected
+		Defaults to $script:msiRebootDetected.
+	.PARAMETER Reboot
+		Indicates if a reboot is required by the script.
+		0 = Decide based on $msiRebootDetected,
+		1 = Reboot required,
+		2 = Reboot not required.
+		Default to $global:PackageConfig.Reboot.
+	.OUTPUTS
+		PSADTNXT.NxtRebootResult.
+	.EXAMPLE
+		Set-NxtRebootVariable
+	.EXAMPLE
+		Set-NxtRebootVariable -MsiRebootDetected $true -Reboot 0
+		Sets $script:msiRebootDetected to $true.
+	.NOTES
+		This is an internal script function and should typically not be called directly.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$MsiRebootDetected = $script:msiRebootDetected,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet(0,1,2)]
+		[int]
+		$Reboot = $global:PackageConfig.Reboot
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[PSADTNXT.NxtRebootResult]$rebootResult = Get-NxtRebootRequirement -MsiRebootDetected $MsiRebootDetected -Reboot $Reboot
+		switch ($rebootResult.MainExitCode) {
+			0 { 
+				Write-Log -Message "Setting `$msiRebootDetected from $script:msiRebootDetected to $false" -Severity 1 -Source ${CmdletName}
+				$script:msiRebootDetected = $false
+			}
+			3010 {
+				Write-Log -Message "Setting `$msiRebootDetected from $script:msiRebootDetected to $true" -Severity 1 -Source ${CmdletName}
+				$script:msiRebootDetected = $true
+			}
+			Default {
+				Write-Log -Message "Not Setting `$msiRebootDetected, ExitCode is not 0 or 3010" -Severity 1 -Source ${CmdletName}
+			}
+		}
+		Write-Output $rebootResult
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -8597,6 +8766,9 @@ function Uninstall-NxtApplication {
 	.PARAMETER AcceptedUninstallExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AcceptedUninstallRebootCodes
+		Defines a list of reboot codes that will be accepted for requested reboot by called setup execution. A matching code will be translated to code '3010'.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallMethod
 		Defines the type of the uninstaller used in this package.
 		Defaults to the corresponding value from the PackageConfig object
@@ -8654,6 +8826,9 @@ function Uninstall-NxtApplication {
 		$AcceptedUninstallExitCodes = $global:PackageConfig.AcceptedUninstallExitCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$AcceptedUninstallRebootCodes = $global:PackageConfig.AcceptedUninstallRebootCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$UninstallMethod = $global:PackageConfig.UninstallMethod,
 		[Parameter(Mandatory = $false)]
 		[int]
@@ -8703,7 +8878,7 @@ function Uninstall-NxtApplication {
 						[int]$logMessageSeverity = 1
 					}
 					else {
-						$uninstallResult.ErrorMessage = "Excpected file for running an uninstallation NOT found: '$UninstFile'. Uninstallation NOT executed. Possibly the expected application is not installed on system anymore!"
+						$uninstallResult.ErrorMessage = "Expected file for running an uninstallation NOT found: '$UninstFile'. Uninstallation NOT executed. Possibly the expected application is not installed on system anymore!"
 						[int]$logMessageSeverity = 2
 					}
 				}
@@ -8712,10 +8887,10 @@ function Uninstall-NxtApplication {
 				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod)) {
 
 					[hashtable]$executeNxtParams = @{
-						Action							= 'Uninstall'
-						UninstallKeyIsDisplayName		= $UninstallKeyIsDisplayName
-						UninstallKeyContainsWildCards	= $UninstallKeyContainsWildCards
-						DisplayNamesToExclude			= $DisplayNamesToExclude
+						Action                        = 'Uninstall'
+						UninstallKeyIsDisplayName     = $UninstallKeyIsDisplayName
+						UninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
+						DisplayNamesToExclude         = $DisplayNamesToExclude
 					}
 					if ($false -eq [string]::IsNullOrEmpty($UninstPara)) {
 						if ($AppendUninstParaToDefaultParameters) {
@@ -8731,30 +8906,32 @@ function Uninstall-NxtApplication {
 					else {
 						[string]$internalInstallerMethod = $UninstallMethod
 					}
-					if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-						if ($internalInstallerMethod -eq "MSI") {
-							[string]$executeNxtParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
-						}
-						elseif($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$") {
+					if($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
+						if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 							[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedUninstallExitCodes"
+						}
+						if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallRebootCodes))  {
+							[string]$executeNxtParams["AcceptedRebootCodes"] = "$AcceptedUninstallRebootCodes"
 						}
 					}
 					switch -Wildcard ($internalInstallerMethod) {
 						MSI {
-							Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
+							[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
 						}
 						"Inno*" {
-							Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+							[PsObject]$executionResult = Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
 						}
 						Nullsoft {
-							Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+							[PsObject]$executionResult = Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
 						}
 						"BitRock*" {
-							Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+							[PsObject]$executionResult = Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
 						}
 						default {
 							[hashtable]$executeParams = @{
-								Path	= "$UninstFile"
+								Path	             = "$UninstFile"
+								ExitOnProcessFailure = $false
+								PassThru             = $true
 							}
 							if (![string]::IsNullOrEmpty($UninstPara)) {
 								[string]$executeParams["Parameters"] = "$UninstPara"
@@ -8762,11 +8939,25 @@ function Uninstall-NxtApplication {
 							if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 								[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
 							}
-							Execute-Process @executeParams
+							[PsObject]$executionResult = Execute-Process @executeParams
+							if ($($executionResult.ExitCode) -in ($AcceptedUninstallRebootCodes -split ",")) {
+								Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+								Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+							}
 						}
 					}
-					$uninstallResult.MainExitCode = $mainExitCode
-					$uninstallResult.ApplicationExitCode = $LastExitCode
+					$uninstallResult.ApplicationExitCode = $executionResult.ExitCode
+					if ($($executionResult.ExitCode) -in ($AcceptedUninstallRebootCodes -split ",")) {
+						$uninstallResult.MainExitCode = 3010
+						$uninstallResult.ErrorMessage = "Uninstallation done with custom reboot return code '$($executionResult.ExitCode)'."
+					}
+					else {
+						$uninstallResult.MainExitCode = $executionResult.ExitCode
+						$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($executionResult.ExitCode)'."
+					}
+					if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
+						$uninstallResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
+					}
 					## Delay for filehandle release etc. to occur.
 					Start-Sleep -Seconds 5
 
@@ -8796,6 +8987,15 @@ function Uninstall-NxtApplication {
 								[int]$logMessageSeverity = 1
 							}
 						}
+					}
+					if (
+						($executionResult.ExitCode -notin ($AcceptedUninstallExitCodes -split ",")) -and
+						($executionResult.ExitCode -notin ($AcceptedUninstallRebootCodes -split ",")) -and
+						($executionResult.ExitCode -notin 0, 1641, 3010)
+					) {
+						$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+						$uninstallResult.Success = $false
+						[int]$logMessageSeverity = 3
 					}
 				}
 				else {
