@@ -4611,8 +4611,8 @@ function Install-NxtApplication {
 					if (![string]::IsNullOrEmpty($InstPara)) {
 						[string]$executeParams["Parameters"] = "$InstPara"
 					}
-					if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-						[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedExitCodes"
+					if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
+						[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
 					}
 					[PsObject]$executionResult = Execute-Process @executeParams
 					if ($($executionResult.ExitCode) -in ($AcceptedInstallRebootCodes -split ",")) {
