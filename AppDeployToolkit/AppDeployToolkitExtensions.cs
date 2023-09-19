@@ -516,7 +516,8 @@ public class SessionHelper
 
  
 
-
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
     internal static int CreateProcessAndWaitForExit(List<IntPtr> hTokens, string arguments)
     {
         var processes = new List<IntPtr>();
@@ -569,12 +570,20 @@ public class SessionHelper
 
         int exitCode = 1618;
 
-        if (index >= 0 && index < hTokens.Count)
-        {
-            GetExitCodeProcess(processes[index], out exitCode);
-        }
-        
-        return exitCode;
+            if (index >= 0 && index < hTokens.Count)
+            {
+                GetExitCodeProcess(processes[index], out exitCode);
+            }
+
+            for (int i = 0; i < processes.Count; i++)
+            {
+                if (i != index)
+                {
+                    TerminateProcess(processes[i], (uint)exitCode);
+                }
+            }
+
+            return exitCode;
 
     }
 
