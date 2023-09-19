@@ -15,6 +15,10 @@ Describe "CheckPackageConfigCriticalInterfaceParameters." {
                     Type = "String"
                 },
                 [PSCustomObject]@{
+                    Name = "DisplayVersion"
+                    Type = "String"
+                },
+                [PSCustomObject]@{
                     Name = "InstallMethod"
                     Type = "String"
                 },
@@ -37,6 +41,34 @@ Describe "CheckPackageConfigCriticalInterfaceParameters." {
                 [PSCustomObject]@{
                     Name = "UserPartOnUninstallation"
                     Type = "Bool"
+                },
+                [PSCustomObject]@{
+                    Name = "ScriptDate"
+                    Type = "String"
+                },
+                [PSCustomObject]@{
+                    Name = "InventoryID"
+                    Type = "String"
+                },
+                [PSCustomObject]@{
+                    Name = "TestedOn"
+                    Type = "String"
+                },
+                [PSCustomObject]@{
+                    Name = "Dependencies"
+                    Type = "String"
+                },
+                [PSCustomObject]@{
+                    Name = "RegPackagesKey"
+                    Type = "String"
+                },
+                [PSCustomObject]@{
+                    Name = "UninstallOld"
+                    Type = "Bool"
+                },
+                [PSCustomObject]@{
+                    Name = "AppArch"
+                    Type = "String"
                 }
             )
             $packageConfig = Get-Content .\neo42PackageConfig.json | Out-String | ConvertFrom-Json
