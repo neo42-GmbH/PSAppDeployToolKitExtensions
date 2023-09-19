@@ -573,12 +573,7 @@ public class SessionHelper
         {
             GetExitCodeProcess(processes[index], out exitCode);
         }
-
-        // Aufräumen und Ressourcen freigeben
-        foreach (var handle in processes)
-        {
-            CloseHandle(handle);
-        }
+        
         return exitCode;
 
     }
