@@ -535,39 +535,49 @@ function Close-BlockExecutionWindow {
 }
 #endregion
 
-#region Add-NxtSwitchParameterToCommand
-function Add-NxtSwitchParameterToCommand {
+#region Add-NxtParameterToCommand
+function Add-NxtParameterToCommand {
 	<#
+	.SYNOPSIS
+		Adds a parameter to a command.
 	.DESCRIPTION
-		Add a switch command as parameter.
+		Adds a parameter to a command. If Switch is set to true, only the switch parameter is added. If Switch is set to false, the parameter is added with the given value if the value is not empty.
 	.PARAMETER Command
 		Full command that will be returned.
-	.PARAMETER ParameterName
+	.PARAMETER Name
 		Name of the switch parameter.
-	.PARAMETER SwitchParam
+	.PARAMETER Switch
 		Switch parameter value.
+	.PARAMETER Value
+		Value of the parameter.
 	.OUTPUTS
 		Full command as string.
 	.EXAMPLE
-		Add-NxtSwitchParameterToCommand -Command "$command" -ParameterName "AllowDefer" -SwitchParam -$true
+		$command = Add-NxtParameterToCommand -Command $command -Name "AllowDefer" -Switch $true
+	.EXAMPLE
+		$command = Add-NxtParameterToCommand -Command $command -Name "AllowDefer" -Value "text"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
     param (
         [string]$Command,
-        [string]$ParameterName,
-        [bool]$SwitchParam
-    )
+        [string]$Name,
+        [bool]$Switch,
+		[string]$Value
+		)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($SwitchParam) {
-			$Command += " -$ParameterName"
+		if ($Switch) {
+			$Command += " -$Name"
 		}
-		return $Command
+		elseif ($false -eq [string]::IsNullOrEmpty($Value)) {
+			$Command += " -$Name $Value"
+		}
+		Write-Output $Command
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -7156,15 +7166,18 @@ Function Show-NxtWelcomePrompt {
 		# Convert to JSON in compressed form
 		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects
 		$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
-		$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -DeferTimes `"$DeferTimes`" -DeferDeadline `"$DeferDeadline`" -ContinueType $contiuneTypeValue -CloseAppsCountdown $CloseAppsCountdown -ProcessObjectsEncoded `"$processObjectsEncoded`""
-
-		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "PersistPrompt" -SwitchParam $PersistPrompt;
-		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "AllowDefer" -SwitchParam $AllowDefer;
-		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "MinimizeWindows" -SwitchParam $MinimizeWindows;
-		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "TopMost" -SwitchParam $TopMost;
-		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "CustomText" -SwitchParam $CustomText;
-		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "UserCanCloseAll" -SwitchParam $UserCanCloseAll;
-		$powershellCommand = Add-NxtSwitchParameterToCommand -Command $powershellCommand -ParameterName "UserCanAbort" -SwitchParam $UserCanAbort;
+		$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferTimes" -Value $DeferTimes
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferDeadline" -Value $DeferDeadline
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ContinueType" -Value $contiuneTypeValue
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CloseAppsCountdown" -Value $CloseAppsCountdown
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "PersistPrompt" -Switch $PersistPrompt
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AllowDefer" -Switch $AllowDefer
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "MinimizeWindows" -Switch $MinimizeWindows
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "TopMost" -Switch $TopMost
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CustomText" -Switch $CustomText
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanCloseAll" -Switch $UserCanCloseAll
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanAbort" -Switch $UserCanAbort
 		Write-Log "Looking for Sessions..."
 		[int]$welcomeExitCode = 1618;
 		if((Get-Process -Id $PID).SessionId -eq 0)
