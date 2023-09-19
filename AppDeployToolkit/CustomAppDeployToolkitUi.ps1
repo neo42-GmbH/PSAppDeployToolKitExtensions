@@ -1323,8 +1323,6 @@ Function Test-RegistryValue {
     }
 }
 #endregion
-[PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -EncodedObject $ProcessObjectsEncoded
-
 [String]$scriptPath = $MyInvocation.MyCommand.Definition
 [String]$scriptRoot = Split-Path -Path $scriptPath -Parent
 [String]$appDeployConfigFile = Join-Path -Path $scriptRoot -ChildPath 'AppDeployToolkitConfig.xml'
@@ -1362,11 +1360,12 @@ If (-not ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 [bool]$showCloseApps = $false
 [bool]$showDefer = $false
 
+Set-Variable -Name 'closeAppsCountdownGlobal' -Value $CloseAppsCountdown -Scope 'Script'
 ## Check if the countdown was specified
 If ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeout)) {
     Throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
 }
-
+[PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -EncodedObject $ProcessObjectsEncoded
 ## Initial form layout: Close Applications / Allow Deferral
 If ($ProcessDescriptions) {
     Write-Log -Message "Prompting the user to close application(s) [$ProcessDescriptions]..." -Source ${CmdletName}
@@ -1809,7 +1808,7 @@ $control_TitleText.Text = $installTitle
                         Name      = $runningProcessItem.ProcessDescription
                         StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
                     }
-                    $control_CloseApplicationList.Items.Add($item)
+                    $control_CloseApplicationList.Items.Add($item) | Out-Null
                 }
             }
         }
