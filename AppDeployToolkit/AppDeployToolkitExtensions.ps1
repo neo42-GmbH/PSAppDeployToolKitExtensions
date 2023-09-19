@@ -1820,8 +1820,8 @@ function Execute-NxtMSI {
 				$PSBoundParameters["Path"] = $installedAppResults.ProductCode
 			}
 		}
-		[string]$PSBoundParameters["PassThru"] = $true
-		[string]$PSBoundParameters["ExitOnProcessFailure"] = $false
+		[bool]$PSBoundParameters["PassThru"] = $true
+		[bool]$PSBoundParameters["ExitOnProcessFailure"] = $false
 		if ([string]::IsNullOrEmpty($Parameters)) {
 			$null = $PSBoundParameters.Remove('Parameters')
 		}
