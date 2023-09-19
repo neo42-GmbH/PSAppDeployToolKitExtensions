@@ -102,6 +102,9 @@ Write-Output "Apply the input data to '$infPath'"
 foreach ($property in $jsonContent.PSObject.Properties) {
     $placeholder = "!" + $property.Name + "!"
     $value = [string]$property.Value
+    if($property.Name -ieq "apparch" -and $value -ine "x64"){
+        $value = "*"
+    }
     $pattern = [regex]::Escape($placeholder)
     $textContent = [regex]::Replace($textContent, $pattern, $value, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 }
