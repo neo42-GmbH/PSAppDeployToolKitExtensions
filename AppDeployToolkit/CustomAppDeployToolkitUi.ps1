@@ -1798,23 +1798,19 @@ $control_TitleText.Text = $installTitle
 }
 [ScriptBlock]$FillCloseApplicationList = {
     param($runningProcessesParam)
+    $control_CloseApplicationList.Items.Clear()
     ForEach ($runningProcessItem in $runningProcessesParam) {
-        [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles | Where-Object { $_.ParentProcessID -eq $runningProcessItem.Id }
-        ## actually don't add processes without a viewable window to the list yet
-        if ($AllOpenWindowsForRunningProcess.count -gt 0) {		
-            foreach ($WindowForRunningProcess in $AllOpenWindowsForRunningProcess) {
-                Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($WindowForRunningProcess.ParentProcessId)'" | ForEach-Object {
-                    $item = New-Object PSObject -Property @{
-                        Name      = $runningProcessItem.ProcessDescription
-                        StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
-                    }
-                    $control_CloseApplicationList.Items.Add($item) | Out-Null
-                }
+        Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($runningProcessItem.Id)'" | ForEach-Object {
+            $item = New-Object PSObject -Property @{
+                Name      = $runningProcessItem.ProcessDescription
+                StartedBy = $null
             }
-        }
-        else {
-            $runningProcessesParam = $runningProcessesParam | Where-Object { $_ -ne $runningProcessItem }
-            Write-Log -Message "The Process $($runningProcessItem.ProcessName) with id $($runningProcessItem.Id) has no Window and will not be shown in the ui." -Severity 2 -Source ${cmdletName}
+            if ($_.GetOwner().User -eq $null) {
+                $item.StartedBy = "N/A"
+            }else{
+                $item.StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
+            }
+            $control_CloseApplicationList.Items.Add($item) | Out-Null
         }
     }
 }
