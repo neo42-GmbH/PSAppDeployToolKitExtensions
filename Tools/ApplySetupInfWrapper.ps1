@@ -44,6 +44,18 @@ $files | ForEach-Object {
     }
 }
 
+## Download the latest wrapper from neo42
+try {
+    Write-Output "Download latest wrapper from '$wrapperUrl'"
+    [PsObject]$latestWrapper = Invoke-RestMethod -Uri $wrapperUrl -Method Get
+}
+catch {
+    Write-Warning "Failed to download the wrapper. Check your internet connection. Abort!"
+    Start-Sleep -Seconds 5
+    Exit
+}
+$wrapperPath = $wrapperPath -Replace "{VERSION}", $latestWrapper.Version
+
 ## Create the PSADT folder if it doesn't exist
 if (-not (Test-Path $adtSubFolder)) {
     New-Item -ItemType Directory -Path $adtSubFolder | Out-Null
@@ -56,11 +68,6 @@ Get-ChildItem -Path $workingDir | ForEach-Object {
         Move-Item -Path $_.FullName -Destination $adtSubFolder -ErrorAction SilentlyContinue
     }
 }
-
-## Download the latest wrapper from neo42
-Write-Output "Download latest wrapper from '$wrapperUrl'"
-[PsObject]$latestWrapper = Invoke-RestMethod -Uri $wrapperUrl -Method Get
-$wrapperPath = $wrapperPath -Replace "{VERSION}", $latestWrapper.Version
 
 ## Write wrapper to disk as zip file
 Write-Output "Write wrapper to disk as zip file '$wrapperPath'"
