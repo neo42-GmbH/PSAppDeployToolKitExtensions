@@ -77,7 +77,19 @@ Param (
     [Parameter(Mandatory = $false)]
     [Switch]$UserCanAbort = $false,
     [Parameter(Mandatory = $true)]
-    [string]$ProcessObjectsEncoded
+    [string]$ProcessObjectsEncoded,
+    [Parameter(Mandatory = $false)]
+    [string]
+    $DeploymentType,
+    [Parameter(Mandatory = $false)]
+    [string]
+    $InstallTitle,
+    [Parameter(Mandatory = $false)]
+    [string]
+    $AppDeployLogoBanner,
+    [Parameter(Mandatory = $false)]
+    [string]
+    $AppDeployLogoBannerDark
 )
 
 #region Function ConvertFrom-NxtEncodedObject
@@ -1715,7 +1727,7 @@ if ($IsLightTheme) {
     $control.Resources['MouseHoverColor'] = $mouseHoverColor
     $control.Resources['PressedColor'] = $pressedColor  
 
-    $control_Banner.Source = $appDeployLogoBanner
+    $control_Banner.Source = $AppDeployLogoBanner
 }
 else {
     $control_Banner.Source = $appDeployLogoBannerDark

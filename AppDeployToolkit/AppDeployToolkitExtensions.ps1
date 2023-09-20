@@ -560,11 +560,20 @@ function Add-NxtParameterToCommand {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-    param (
-        [string]$Command,
-        [string]$Name,
-        [bool]$Switch,
-		[string]$Value
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Command,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Name,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Switch,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[string]
+		$Value
 		)
 	Begin {
 		## Get the name of this function and write header
@@ -575,7 +584,7 @@ function Add-NxtParameterToCommand {
 			$Command += " -$Name"
 		}
 		elseif ($false -eq [string]::IsNullOrEmpty($Value)) {
-			$Command += " -$Name $Value"
+			$Command += " -$Name `"$Value`""
 		}
 		Write-Output $Command
 	}
@@ -7152,7 +7161,16 @@ Function Show-NxtWelcomePrompt {
         [Switch]$UserCanAbort = $false,
         [Parameter(Mandatory = $false)]
         [string]
-        $DeploymentType = $DeploymentType
+        $DeploymentType = $DeploymentType,
+        [Parameter(Mandatory = $false)]
+        [string]
+        $InstallTitle = $installTitle,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppDeployLogoBanner = $appDeployLogoBanner,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppDeployLogoBannerDark = $appDeployLogoBannerDark
     )
 
     Begin {
@@ -7178,6 +7196,10 @@ Function Show-NxtWelcomePrompt {
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CustomText" -Switch $CustomText
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanCloseAll" -Switch $UserCanCloseAll
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanAbort" -Switch $UserCanAbort
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeploymentType" -Value $DeploymentType
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "InstallTitle" -Value $InstallTitle
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBanner" -Value $AppDeployLogoBanner
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBannerDark" -Value $AppDeployLogoBannerDark
 		Write-Log "Looking for Sessions..."
 		[int]$welcomeExitCode = 1618;
 		if((Get-Process -Id $PID).SessionId -eq 0)
