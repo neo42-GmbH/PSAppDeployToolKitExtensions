@@ -7170,7 +7170,22 @@ Function Show-NxtWelcomePrompt {
 		$AppDeployLogoBanner = $appDeployLogoBanner,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AppDeployLogoBannerDark = $appDeployLogoBannerDark
+		$AppDeployLogoBannerDark = $appDeployLogoBannerDark,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvProgramData = $envProgramData,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVendor = $appVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $appName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVersion = $appVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Logname = $logName
     )
 
     Begin {
@@ -7200,22 +7215,31 @@ Function Show-NxtWelcomePrompt {
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "InstallTitle" -Value $InstallTitle
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBanner" -Value $AppDeployLogoBanner
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBannerDark" -Value $AppDeployLogoBannerDark
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "EnvProgramData" -Value $envProgramData
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVendor" -Value $appVendor
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppName" -Value $appName
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVersion" -Value $appVersion
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
 		Write-Log "Looking for Sessions..."
 		[int]$welcomeExitCode = 1618;
+		$activeSessions = Get-LoggedOnUser
 		if((Get-Process -Id $PID).SessionId -eq 0)
 		{
-			$activeSessions = Get-LoggedOnUser
 			if ($activeSessions.Count -gt 0)
 			{
 				$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
-				Write-Log "Start for sessions $sessionIds"
-				$welcomeExitCode = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
-				Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode"
+				Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
+				[PSADTNXT.AskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
+				$welcomeExitCode = $askKillProcessesResult.ExitCode
+				$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
+				$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
+				Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logUserName\$logDomainName"
 			}
 		}
 		else
 		{
 			$welcomeExitCode = [PSADTNXT.Extensions]::StartPowershellScriptAndWaitForExitCode($powershellCommand);
+			Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $env:USERNAME\$env:USERDOMAIN"
 		}
 
 		[string]$returnCode = [string]::Empty

@@ -89,9 +89,23 @@ Param (
     $AppDeployLogoBanner,
     [Parameter(Mandatory = $false)]
     [string]
-    $AppDeployLogoBannerDark
+    $AppDeployLogoBannerDark,
+    [Parameter(Mandatory = $true)]
+    [string]
+    $AppVendor,
+    [Parameter(Mandatory = $true)]
+    [string]
+    $AppName,
+    [Parameter(Mandatory = $true)]
+    [string]
+    $AppVersion,
+    [Parameter(Mandatory = $true)]
+    [string]
+    $EnvProgramData,
+    [Parameter(Mandatory = $true)]
+    [string]
+    $LogName
 )
-
 #region Function ConvertFrom-NxtEncodedObject
 function ConvertFrom-NxtEncodedObject {
 	<#
@@ -1335,6 +1349,8 @@ Function Test-RegistryValue {
     }
 }
 #endregion
+[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+$script:installPhase = "AskKillProcesses"
 [String]$scriptPath = $MyInvocation.MyCommand.Definition
 [String]$scriptRoot = Split-Path -Path $scriptPath -Parent
 [String]$appDeployConfigFile = Join-Path -Path $scriptRoot -ChildPath 'AppDeployToolkitConfig.xml'
@@ -1342,7 +1358,7 @@ Function Test-RegistryValue {
 [Xml.XmlElement]$xmlConfig = $xmlConfigFile.AppDeployToolkit_Config
 #  Get Toolkit Options
 [Xml.XmlElement]$xmlToolkitOptions = $xmlConfig.Toolkit_Options
-[String]$configToolkitLogDir = $ExecutionContext.InvokeCommand.ExpandString($xmlToolkitOptions.Toolkit_LogPath)
+[String]$configToolkitLogDir = $ExecutionContext.InvokeCommand.ExpandString($xmlToolkitOptions.Toolkit_LogPathNoAdminRights)
 [Boolean]$configToolkitCompressLogs = [Boolean]::Parse($xmlToolkitOptions.Toolkit_CompressLogs)
 [String]$configToolkitLogStyle = $xmlToolkitOptions.Toolkit_LogStyle
 [Double]$configToolkitLogMaxSize = $xmlToolkitOptions.Toolkit_LogMaxSize
@@ -2019,18 +2035,23 @@ If ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 }
 switch ($control_MainWindow.Tag) {
     'Close' {
+        Write-Log -Message 'The user chose to close the applications.' -Source ${CmdletName} -Severity 1
         Exit 1001
     }
     'Cancel' {
+        Write-Log -Message 'The user chose to cancel the installation.' -Source ${CmdletName} -Severity 1
         Exit 1002
     }
     'Defer' {
+        Write-Log -Message 'The user chose to defer the installation.' -Source ${CmdletName} -Severity 1
         Exit 1003
     }
     'Timeout' {
+        Write-Log -Message 'The installation timed out.' -Source ${CmdletName} -Severity 1
         Exit 1004
     }
     'Continue' {
+        Write-Log -Message 'The user chose to continue the installation.' -Source ${CmdletName} -Severity 1
         Exit 1005
     }
     default {

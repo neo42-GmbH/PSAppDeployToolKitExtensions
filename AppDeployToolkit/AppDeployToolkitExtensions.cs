@@ -79,7 +79,7 @@ namespace PSADTNXT
         {
             var startInfo = new ProcessStartInfo
             {
-                FileName = "powershell.exe",
+                FileName = @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
                 Arguments = arguments,
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,
@@ -383,22 +383,26 @@ public class SessionHelper
         return primaryToken;
     }
 
-    public static int StartProcessAndWaitForExitCode(string arguments, List<uint> sessionIds)
+   public static NxtAskKillProcessesResult StartProcessAndWaitForExitCode(string arguments, List<uint> sessionIds)
    {
-       List<IntPtr> primaryTokens = new List<IntPtr>();
+       List<CreateProcessRequest> requests = new List<CreateProcessRequest>();
        foreach (var sessionId in sessionIds)
        {
-           primaryTokens.Add(Elevate(QueryAndDuplicateUserToken(sessionId)));
+            requests.Add(new CreateProcessRequest()
+            {
+                Token = Elevate(QueryAndDuplicateUserToken(sessionId)),
+                SessionId = sessionId
+            });
        }
        try
        {
-           return CreateProcessAndWaitForExit(primaryTokens, arguments);
+           return CreateProcessAndWaitForExit(requests, arguments);
        }
        finally
        {
-           foreach (var primaryToken in primaryTokens)
+           foreach (var request in requests)
            {
-               CloseHandle(primaryToken);
+               CloseHandle(request.Token);
            }
        }
    }
@@ -498,6 +502,12 @@ public class SessionHelper
         return pToken;
     }
 
+    internal class CreateProcessRequest
+    {
+        public uint SessionId {get; set; }
+        public IntPtr Token { get; set; }
+    }
+
     [DllImport("kernel32.dll")]
     internal static extern bool GetExitCodeProcess(IntPtr hProcess, out int lpExitCode);
 
@@ -505,28 +515,27 @@ public class SessionHelper
     internal static extern IntPtr GetStdHandle(int nStdHandle);
 
      [DllImport("kernel32.dll")]
-   internal static extern int WaitForMultipleObjects(int nCount, IntPtr[] lpHandles, bool bWaitAll, uint dwMilliseconds);
+    internal static extern int WaitForMultipleObjects(int nCount, IntPtr[] lpHandles, bool bWaitAll, uint dwMilliseconds);
 
     [DllImport("advapi32.dll", SetLastError = true)]
     internal static extern bool LookupPrivilegeValue(IntPtr lpSystemName, string lpname,
       [MarshalAs(UnmanagedType.Struct)] ref LUID lpLuid);
 
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
     [DllImport("Wtsapi32.dll", SetLastError = true)]
     internal static extern bool WTSQueryUserToken(uint sessionId, out IntPtr phToken);
 
- 
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
-    internal static int CreateProcessAndWaitForExit(List<IntPtr> hTokens, string arguments)
+    internal static NxtAskKillProcessesResult CreateProcessAndWaitForExit(List<CreateProcessRequest> requests, string arguments)
     {
         var processes = new List<IntPtr>();
-        foreach (var hToken in hTokens)
+        foreach (var request in requests)
         {
             SECURITY_ATTRIBUTES securityAttributes = SECURITY_ATTRIBUTES.Default;
             var processStartInfo = new ProcessStartInfo
             {
-                FileName = "powershell.exe",
+                FileName = @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
                 Arguments = arguments,
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,
@@ -536,9 +545,9 @@ public class SessionHelper
 
             PROCESS_INFORMATION pi;
             // Launch the process in the client's logon session.
-            var bResult = CreateProcessAsUser(hToken, // client's access token
+            var bResult = CreateProcessAsUser(request.Token, // client's access token
                 null, // file to execute
-                CreateCommandLine("powershell.exe", arguments), // command line
+                CreateCommandLine(@"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", arguments), // command line
                 securityAttributes, // pointer to process SECURITY_ATTRIBUTES
                 securityAttributes, // pointer to thread SECURITY_ATTRIBUTES
                 true, // handles inheritable ?
@@ -566,25 +575,29 @@ public class SessionHelper
 
             processes.Add(pi.hProcess);
         }
-        int index = WaitForMultipleObjects(hTokens.Count, processes.ToArray(), false, INFINITE);
+
+        int index = WaitForMultipleObjects(requests.Count, processes.ToArray(), false, INFINITE);
 
         int exitCode = 1618;
 
-            if (index >= 0 && index < hTokens.Count)
+        if (index >= 0 && index < requests.Count)
+        {
+            GetExitCodeProcess(processes[index], out exitCode);
+        }
+        
+        for (int i = 0; i < processes.Count; i++)
+        {
+            if (i != index)
             {
-                GetExitCodeProcess(processes[index], out exitCode);
+                TerminateProcess(processes[i], (uint)exitCode);
             }
-
-            for (int i = 0; i < processes.Count; i++)
-            {
-                if (i != index)
-                {
-                    TerminateProcess(processes[i], (uint)exitCode);
-                }
-            }
-
-            return exitCode;
-
+        }
+        
+        return new NxtAskKillProcessesResult()
+        {
+           SessionId = requests[index].SessionId,
+           ExitCode = exitCode
+        };
     }
 
     internal static uint CreationFlags(ProcessCreationFlags flags)
@@ -760,6 +773,12 @@ public class SessionHelper
         public int MainExitCode { get; set; }
         public string ErrorMessage { get; set; }
         public string ErrorMessagePsadt { get; set; }
+    }
+
+    public class NxtAskKillProcessesResult
+    {
+        public int ExitCode { get; set; }
+        public uint SessionId { get; set; }
     }
 
     public class NxtDisplayVersionResult
