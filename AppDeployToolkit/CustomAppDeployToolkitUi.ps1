@@ -137,13 +137,13 @@ function ConvertFrom-NxtEncodedObject {
 	}
 	Process {
 		try {
-			$decodedBytes = [Convert]::FromBase64String($EncodedObject)
-			$inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
-			$gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
-			$reader = New-Object System.IO.StreamReader($gzipStream)
-			$decompressedString = $reader.ReadToEnd()
+            [byte[]]$decodedBytes = [Convert]::FromBase64String($EncodedObject)
+			[System.IO.MemoryStream]$inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
+			[System.IO.Compression.GZipStream]$gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
+			[System.IO.StreamReader]$reader = New-Object System.IO.StreamReader($gzipStream)
+			[string]$decompressedString = $reader.ReadToEnd()
 			$reader.Close()
-			$psObject = $decompressedString | ConvertFrom-Json
+			[System.Object]$psObject = $decompressedString | ConvertFrom-Json
 			return $psObject
 		}
 		catch {
@@ -1023,15 +1023,10 @@ function Write-Log {
         [String]$LogType = $configToolkitLogStyle,
         [Parameter(Mandatory = $false, Position = 5)]
         [ValidateNotNullorEmpty()]
-        [String]$LogFileDirectory = $(If ($configToolkitCompressLogs) {
-                $logTempFolder
-            }
-            Else {
-                $configToolkitLogDir
-            }),
+        [String]$LogFileDirectory = $configToolkitLogDir,
         [Parameter(Mandatory = $false, Position = 6)]
         [ValidateNotNullorEmpty()]
-        [String]$LogFileName = $logName,
+        [String]$LogFileName = $LogName,
         [Parameter(Mandatory = $false, Position = 7)]
         [ValidateNotNullorEmpty()]
         [Decimal]$MaxLogFileSizeMB = $configToolkitLogMaxSize,
@@ -1359,7 +1354,6 @@ $script:installPhase = "AskKillProcesses"
 #  Get Toolkit Options
 [Xml.XmlElement]$xmlToolkitOptions = $xmlConfig.Toolkit_Options
 [String]$configToolkitLogDir = $ExecutionContext.InvokeCommand.ExpandString($xmlToolkitOptions.Toolkit_LogPathNoAdminRights)
-[Boolean]$configToolkitCompressLogs = [Boolean]::Parse($xmlToolkitOptions.Toolkit_CompressLogs)
 [String]$configToolkitLogStyle = $xmlToolkitOptions.Toolkit_LogStyle
 [Double]$configToolkitLogMaxSize = $xmlToolkitOptions.Toolkit_LogMaxSize
 [Boolean]$configToolkitLogWriteToHost = [Boolean]::Parse($xmlToolkitOptions.Toolkit_LogWriteToHost)

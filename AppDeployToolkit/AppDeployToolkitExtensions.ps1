@@ -1052,13 +1052,13 @@ function ConvertFrom-NxtEncodedObject {
 	}
 	Process {
 		try {
-			$decodedBytes = [Convert]::FromBase64String($EncodedObject)
-			$inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
-			$gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
-			$reader = New-Object System.IO.StreamReader($gzipStream)
-			$decompressedString = $reader.ReadToEnd()
+			[byte[]]$decodedBytes = [Convert]::FromBase64String($EncodedObject)
+			[System.IO.MemoryStream]$inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
+			[System.IO.Compression.GZipStream]$gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
+			[System.IO.StreamReader]$reader = New-Object System.IO.StreamReader($gzipStream)
+			[string]$decompressedString = $reader.ReadToEnd()
 			$reader.Close()
-			$psObject = $decompressedString | ConvertFrom-Json
+			[System.Object]$psObject = $decompressedString | ConvertFrom-Json
 			return $psObject
 		}
 		catch {
@@ -1127,13 +1127,13 @@ function ConvertTo-NxtEncodedObject {
 	}
 	Process {
 		try {
-			$jsonString = $Object | ConvertTo-Json -Compress -Depth $Depth
-			$compressedData = New-Object System.IO.MemoryStream
-			$gzipStream = New-Object System.IO.Compression.GZipStream($compressedData, [System.IO.Compression.CompressionMode]::Compress)
-			$writer = New-Object System.IO.StreamWriter($gzipStream)
+			[string]$jsonString = $Object | ConvertTo-Json -Compress -Depth $Depth
+			[System.IO.MemoryStream]$compressedData = New-Object System.IO.MemoryStream
+			[System.IO.Compression.GZipStream]$gzipStream = New-Object System.IO.Compression.GZipStream($compressedData, [System.IO.Compression.CompressionMode]::Compress)
+			[System.IO.StreamWriter]$writer = New-Object System.IO.StreamWriter($gzipStream)
 			$writer.Write($jsonString)
 			$writer.Close()
-			$encodedObject = [Convert]::ToBase64String($compressedData.ToArray())
+			[string]$encodedObject = [Convert]::ToBase64String($compressedData.ToArray())
 			return $EncodedObject
 		}
 		catch {
