@@ -385,15 +385,12 @@ namespace PSADTNXT
 
         private static IntPtr EnviromentBlock(ProcessStartInfo processStartInfo)
         {
-            if (!_enviromentBlock.IsAllocated)
-            {
-                byte[] envBlock = ToByteArray(
-                    processStartInfo.EnvironmentVariables,
-                    Environment.OSVersion.Platform == PlatformID.Win32NT
-                );
-                _enviromentBlock = GCHandle.Alloc(envBlock, GCHandleType.Pinned);
-            }
-            return _enviromentBlock.AddrOfPinnedObject();
+            byte[] envBlock = ToByteArray(
+                processStartInfo.EnvironmentVariables,
+                Environment.OSVersion.Platform == PlatformID.Win32NT
+            );
+            var enviromentBlock = GCHandle.Alloc(envBlock, GCHandleType.Pinned);
+            return enviromentBlock.AddrOfPinnedObject();
         }
 
         private static IntPtr QueryAndDuplicateUserToken(uint sessionId)
