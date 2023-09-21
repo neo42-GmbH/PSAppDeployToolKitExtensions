@@ -203,12 +203,17 @@ function Update-NxtPSAdtPackage {
     ## insert an updated validation file to destination
     Copy-Item -Path "$LatestVersionPath\neo42PackageConfigValidationRules.json" -Destination "$PackageToUpdatePath\neo42PackageConfigValidationRules.json" -Force
 
-            #also update packageconfig.json so it contains all default values
+            ## also update neo42PackageConfig.json so it contains all default values
+            Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "   -> list if additional update tasks had to be done in 'neo42PackageConfig.json':"
             ## remove entries: "AcceptedRepairExitCodes" and "AcceptedMSIRepairExitCodes" (just to be sure!)
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
-            $content = $content -Replace ('  "AcceptedRepairExitCodes": "",'+"`n"),''
-            $content = $content -Replace ('  "AcceptedMSIRepairExitCodes": "",'+"`n"),''
-            Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+            if (($null -ne $jsonContent.AcceptedRepairExitCodes) -or ($null -ne $jsonContent.AcceptedMSIRepairExitCodes)) {
+                $content = $content.Replace(('  "AcceptedRepairExitCodes":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "AcceptedRepairExitCodes":' -EndTag '  "UninstFile":')),'')
+                $content = $content.Replace(('  "AcceptedMSIRepairExitCodes":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "AcceptedMSIRepairExitCodes":' -EndTag '  "UninstFile":')),'')
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+                Add-Content -Path "$PSscriptRoot\$LogFileName" -Value '      * removed "Accepted*RepairExitCodes"'
+            }
             ## new entry: UninstallKeyContainsExpandVariables
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
@@ -216,6 +221,7 @@ function Update-NxtPSAdtPackage {
                 $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayNamesToExcludeFromAppSearches"' -ContentToInsert '  "UninstallKeyContainsExpandVariables": false,
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+                Add-Content -Path "$PSscriptRoot\$LogFileName" -Value '      * removed "UninstallKeyContainsExpandVariables"'
             }
             ## new entry: "ConfigVersion"
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
@@ -224,6 +230,7 @@ function Update-NxtPSAdtPackage {
                 $content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2023.09.18.1",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+                Add-Content -Path "$PSscriptRoot\$LogFileName" -Value '      * added "ConfigVersion"'
             }
             ## new entry: "AcceptedInstallRebootCodes"
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
@@ -232,6 +239,7 @@ function Update-NxtPSAdtPackage {
                 $content = Add-ContentBeforeTag -Content $content -StartTag '  "UninstFile"' -ContentToInsert '  "AcceptedInstallRebootCodes": "",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+                Add-Content -Path "$PSscriptRoot\$LogFileName" -Value '      * added "AcceptedInstallRebootCodes"'
             }
             ## new entry: "AcceptedUninstallRebootCodes"
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
@@ -240,6 +248,81 @@ function Update-NxtPSAdtPackage {
                 $content = Add-ContentBeforeTag -Content $content -StartTag '  "AppKillProcesses"' -ContentToInsert '  "AcceptedUninstallRebootCodes": "",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+                Add-Content -Path "$PSscriptRoot\$LogFileName" -Value '      * added "AcceptedUninstallRebootCodes"'
+            }
+            ## re-sort entries by topic
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            ## check, if already sorted -> then "LastChange" is placed after "ScriptDate"!
+            if ($(Get-NxtContentBetweenTags -Content $content -StartTag '  "ScriptDate":' -EndTag '  "InventoryID":') -notmatch '"LastChange":') {
+                [string]$blockInventoryID = '  "InventoryID":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "InventoryID":' -EndTag '  "Description":')
+                [string]$blockDescription = '  "Description":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "Description":' -EndTag '  "InstallMethod":')
+                [string]$blockInstallMethod = '  "InstallMethod":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "InstallMethod":' -EndTag '  "UninstallMethod":')
+                [string]$blockUninstallMethod = '  "UninstallMethod":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "UninstallMethod":' -EndTag '  "ReinstallMode":')
+                [string]$blockReinstallMode = '  "ReinstallMode":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "ReinstallMode":' -EndTag '  "MSIInplaceUpgradeable":')
+                [string]$blockMSIInplaceUpgradeable = '  "MSIInplaceUpgradeable":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "MSIInplaceUpgradeable":' -EndTag '  "MSIDowngradeable":')
+                [string]$blockMSIDowngradeable = '  "MSIDowngradeable":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "MSIDowngradeable":' -EndTag '  "SoftMigration":')
+                [string]$blockSoftMigration = '  "SoftMigration":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "SoftMigration":' -EndTag '  "TestedOn":')
+                [string]$blockTestedOn = '  "TestedOn":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "TestedOn":' -EndTag '  "Dependencies":')
+                [string]$blockDependencies = '  "Dependencies":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "Dependencies":' -EndTag '  "LastChange":')
+                [string]$blockLastChange = '  "LastChange":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "LastChange":' -EndTag '  "Build":')
+                [string]$blockBuild = '  "Build":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "Build":' -EndTag '  "AppArch":')
+                [string]$blockAppArch = '  "AppArch":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "AppArch":' -EndTag '  "AppVendor":')
+                [string]$blockAppVendor = '  "AppVendor":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "AppVendor":' -EndTag '  "AppName":')
+                [string]$blockAppName = '  "AppName":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "AppName":' -EndTag '  "AppVersion":')
+                [string]$blockAppVersion = '  "AppVersion":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "AppVersion":' -EndTag '  "AppRevision":')
+                [string]$blockAppRevision = '  "AppRevision":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "AppRevision":' -EndTag '  "AppLang":')
+                [string]$blockAppLang = '  "AppLang":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "AppLang":' -EndTag '  "ProductGUID":')
+                [string]$blockProductGUID = '  "ProductGUID":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "ProductGUID":' -EndTag '  "RemovePackagesWithSameProductGUID":')
+                [string]$blockRemovePackagesWithSameProductGUID = '  "RemovePackagesWithSameProductGUID":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "RemovePackagesWithSameProductGUID":' -EndTag '  "PackageGUID":')
+                [string]$blockPackageGUID = '  "PackageGUID":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "PackageGUID":' -EndTag '  "DependentPackages":')
+                [string]$blockDependentPackages = '  "DependentPackages":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "DependentPackages":' -EndTag '  "RegPackagesKey":')
+                [string]$blockRegPackagesKey = '  "RegPackagesKey":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "RegPackagesKey":' -EndTag '  "UninstallDisplayName":')
+                [string]$blockUninstallDisplayName = '  "UninstallDisplayName":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "UninstallDisplayName":' -EndTag '  "App":')
+                [string]$blockApp = '  "App":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "App":' -EndTag '  "UninstallOld":')
+                [string]$blockUninstallOld = '  "UninstallOld":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "UninstallOld":' -EndTag '  "Reboot":')
+                [string]$blockReboot = '  "Reboot":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "Reboot":' -EndTag '  "UserPartOnInstallation":')
+                [string]$blockUserPartOnInstallation = '  "UserPartOnInstallation":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "UserPartOnInstallation":' -EndTag '  "UserPartOnUninstallation":')
+                [string]$blockUserPartOnUninstallation = '  "UserPartOnUninstallation":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "UserPartOnUninstallation":' -EndTag '  "UserPartRevision":')
+                [string]$blockUserPartRevision = '  "UserPartRevision":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "UserPartRevision":' -EndTag '  "HidePackageUninstallButton":')
+                [string]$blockHidePackageUninstallButton = '  "HidePackageUninstallButton":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "HidePackageUninstallButton":' -EndTag '  "HidePackageUninstallEntry":')
+                [string]$blockHidePackageUninstallEntry = '  "HidePackageUninstallEntry":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "HidePackageUninstallEntry":' -EndTag '  "DisplayVersion":') 
+                ## remove complete old block between ScriptDate and DisplayVersion
+                $content = $content.Replace(('  "InventoryID":' + $(Get-NxtContentBetweenTags -Content $content -StartTag '  "InventoryID":' -EndTag '  "DisplayVersion":')),'')
+                ## lines re-sorted above DisplayVersion
+				$content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockLastChange
+				$content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockBuild
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockInventoryID
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockDescription
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockDependencies
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockTestedOn
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockAppArch
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockAppVendor
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockAppName
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockAppVersion
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockAppRevision
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockAppLang
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockProductGUID
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockRemovePackagesWithSameProductGUID
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockPackageGUID
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockDependentPackages
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockApp
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockRegPackagesKey
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockUninstallDisplayName
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockHidePackageUninstallButton
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockHidePackageUninstallEntry
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockReboot
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockUninstallOld
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockSoftMigration
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockInstallMethod
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockUninstallMethod
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockReinstallMode
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockMSIInplaceUpgradeable
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockMSIDowngradeable
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockUserPartOnInstallation
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockUserPartOnUninstallation
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "DisplayVersion":' -ContentToInsert $blockUserPartRevision
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+                Add-Content -Path "$PSscriptRoot\$LogFileName" -Value "      * re-sorted parameters by topic"
             }
         }
         catch {
