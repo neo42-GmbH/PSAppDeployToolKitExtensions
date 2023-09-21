@@ -241,6 +241,19 @@ function Update-NxtPSAdtPackage {
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
+            ## rename : "-Ignore-ExitCodes to -AcceptedExitCodes in case it is in the same line as Execute-NxtMSI"
+            [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+            foreach ($line in ($content -split "`n")){
+                if ($line -match "Execute-NxtMSI" -and $line -match "-IgnoreExitCodes") {
+                    [bool]$contentChanged = $true
+                    $content = $content.Replace($line, $line.Replace("-IgnoreExitCodes","-AcceptedExitCodes"))
+                    Write-Warning "Replaced -IgnoreExitCodes with -AcceptedExitCodes in $PackageToUpdatePath in line: $line"
+                }
+            }
+            if ($true -eq $contentChanged) {
+                Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
+                [bool]$contentChanged = $false
+            }
         }
         catch {
             Write-Error "$PackageToUpdatePath could not be updated from $LatestVersionPath - $_"
