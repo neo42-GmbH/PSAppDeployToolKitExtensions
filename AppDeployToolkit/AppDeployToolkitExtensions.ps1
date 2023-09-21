@@ -1792,7 +1792,9 @@ function Execute-NxtMSI {
 			"UninstallKeyIsDisplayName",
 			"UninstallKeyContainsWildCards",
 			"DisplayNamesToExclude",
-			"ConfigMSILogDir"
+			"ConfigMSILogDir",
+			"AcceptedExitCodes",
+			"AcceptedRebootCodes"
 		)
 		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved) {
 			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
@@ -1828,8 +1830,17 @@ function Execute-NxtMSI {
 		if ([string]::IsNullOrEmpty($AddParameters)) {
 			$null = $PSBoundParameters.Remove('AddParameters')
 		}
-		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
+		if ($false -eq [string]::IsNullOrEmpty($AcceptedExitCodes)) {
+			if ($false -eq [string]::IsNullOrEmpty($AcceptedRebootCodes)){
+				## * as a wildcard for all exit codes could be applied in a future version, but are not supported right now.
+				[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes,$AcceptedRebootCodes"
+			}
+			else {
+				[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
+			}
+		}
+		elseif ($false -eq [string]::IsNullOrEmpty($AcceptedRebootCodes)){
+			[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedRebootCodes"
 		}
 		if (![string]::IsNullOrEmpty($Log)) {
 			[string]$msiLogName = ($Log | Split-Path -Leaf) -replace '\.log$',[string]::Empty
