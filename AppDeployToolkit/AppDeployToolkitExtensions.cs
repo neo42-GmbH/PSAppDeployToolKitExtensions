@@ -79,14 +79,14 @@ namespace PSADTNXT
         {
             var startInfo = new ProcessStartInfo
             {
-                FileName = @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+                FileName = Path.Combine(Environment.GetEnvironmentVariable("windir"),@"system32\WindowsPowerShell\v1.0\powershell.exe"),
                 Arguments = arguments,
                 WindowStyle = ProcessWindowStyle.Hidden,
                 CreateNoWindow = true,
                 UseShellExecute = false
             };
 
-            Process process = new Process();
+            var process = new Process();
             process.StartInfo = startInfo;
             process.Start();
             process.WaitForExit();
@@ -303,12 +303,12 @@ namespace PSADTNXT
 
         private static byte[] ToByteArray(StringDictionary sd, bool unicode)
         {
-            string[] array = new string[sd.Count];
+            var array = new string[sd.Count];
             sd.Keys.CopyTo(array, 0);
-            string[] array2 = new string[sd.Count];
+            var array2 = new string[sd.Count];
             sd.Values.CopyTo(array2, 0);
             Array.Sort(array, array2, StringComparer.OrdinalIgnoreCase);
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             for (int i = 0; i < sd.Count; i++)
             {
                 stringBuilder.Append(array[i]);
@@ -338,7 +338,7 @@ namespace PSADTNXT
             IntPtr lpEnvironment = IntPtr.Zero;
             try
             {
-                bool resultEnv = CreateEnvironmentBlock(out lpEnvironment, primaryToken, false);
+                var resultEnv = CreateEnvironmentBlock(out lpEnvironment, primaryToken, false);
                 if (!resultEnv)
                 {
                     var err = Marshal.GetLastWin32Error();
@@ -385,12 +385,12 @@ namespace PSADTNXT
 
         private static IntPtr EnviromentBlock(ProcessStartInfo processStartInfo)
         {
-            byte[] envBlock = ToByteArray(
+            var envBlock = ToByteArray(
                 processStartInfo.EnvironmentVariables,
                 Environment.OSVersion.Platform == PlatformID.Win32NT
             );
-            var enviromentBlock = GCHandle.Alloc(envBlock, GCHandleType.Pinned);
-            return enviromentBlock.AddrOfPinnedObject();
+            var environmentBlock = GCHandle.Alloc(envBlock, GCHandleType.Pinned);
+            return environmentBlock.AddrOfPinnedObject();
         }
 
         private static IntPtr QueryAndDuplicateUserToken(uint sessionId)
@@ -430,7 +430,7 @@ namespace PSADTNXT
 
         public static NxtAskKillProcessesResult StartProcessAndWaitForExitCode(string arguments, List<uint> sessionIds)
         {
-            List<CreateProcessRequest> requests = new List<CreateProcessRequest>();
+            var requests = new List<CreateProcessRequest>();
             foreach (var sessionId in sessionIds)
             {
                 requests.Add(new CreateProcessRequest()
@@ -521,8 +521,8 @@ namespace PSADTNXT
                 CloseHandle(hToken);
             }
 
-            TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES();
-            LUID luid = new LUID();
+            var tp = new TOKEN_PRIVILEGES();
+            var luid = new LUID();
 
             if (!LookupPrivilegeValue(IntPtr.Zero, SE_TCB_NAME, ref luid))
                 throw SessionHelper.CreateWin32Exception("LookupPrivilegeValue");
@@ -623,7 +623,7 @@ namespace PSADTNXT
 
             int index = WaitForMultipleObjects(requests.Count, processes.ToArray(), false, INFINITE);
 
-            int exitCode = 1618;
+            var exitCode = 1618;
 
             if (index >= 0 && index < requests.Count)
             {
@@ -661,7 +661,7 @@ namespace PSADTNXT
 
         private static string CreateCommandLine(string processPath, string arguments)
         {
-            string command = processPath.StartsWith("\"") ? processPath : "\"" + processPath + "\"";
+            var command = processPath.StartsWith("\"") ? processPath : "\"" + processPath + "\"";
             if (!string.IsNullOrEmpty(arguments))
             {
                 command += " " + arguments;
