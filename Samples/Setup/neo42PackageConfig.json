@@ -1,4 +1,5 @@
 {
+  "ConfigVersion": "2023.09.18.1",
   "ScriptAuthor": "neo42 GmbH",
   "ScriptDate": "!CreationDate!",
   "InventoryID": "!11DigitNeo42InventoryID!",
@@ -54,11 +55,12 @@
   "InstPara": "",
   "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
-  "AcceptedMSIRepairExitCodes": "",
+  "AcceptedInstallRebootCodes": "",
   "UninstFile": "$($global:PackageConfig.installLocation)\\!Uninstallfile!",
   "UninstPara": "",
   "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
+  "AcceptedUninstallRebootCodes": "",
   "AppKillProcesses": [
     {
       "Name": "!ProcessnameWithOrWithoutExtension!",

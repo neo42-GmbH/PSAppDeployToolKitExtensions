@@ -1,4 +1,5 @@
 {
+  "ConfigVersion": "2023.09.18.1",
   "ScriptAuthor": "neo42 GmbH",
   "ScriptDate": "!CreationDate!",
   "InventoryID": "!11DigitNeo42InventoryID!",
@@ -28,7 +29,7 @@
   "RemovePackagesWithSameProductGUID": false,
   "PackageGUID": "!Neo42PackageGUID!",
   "DependentPackages": [],
-    "RegPackagesKey": "neoPackages",
+  "RegPackagesKey": "neoPackages",
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
   "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
   "UninstallOld": true,
@@ -54,11 +55,12 @@
   "InstPara": "",
   "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
-  "AcceptedMSIRepairExitCodes": "",
+  "AcceptedInstallRebootCodes": "",
   "UninstFile": "",
   "UninstPara": "",
   "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
+  "AcceptedUninstallRebootCodes": "",
   "AppKillProcesses": [
     {
       "Name": "!ProcessnameWithOrWithoutExtension!",

@@ -832,6 +832,12 @@ namespace PSADTNXT
         public string DisplayVersion { get; set; }
     }
 
+        public class NxtRebootResult
+    {
+        public int MainExitCode { get; set; }
+        public string Message { get; set; }
+    }
+
     public class NxtRegisteredApplication
     {
         public string PackageGuid { get; set; }

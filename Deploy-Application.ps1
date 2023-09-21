@@ -39,7 +39,7 @@
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeploymentType 'Uninstall'; Exit $LastExitCode }"
 .NOTES
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2023.09.08.1
+	ConfigVersion: 2023.09.18.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -113,6 +113,8 @@ switch ($DeploymentType) {
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
+[string]$global:DeployApplicationPath = "$PSScriptRoot\Deploy-Application.ps1"
+[string]$global:AppDeployToolkitExtensionsPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitExtensions.ps1"
 [string]$global:DeploymentSystem = $DeploymentSystem
 [string]$global:UserPartDir = "User"
 ## Several PSADT-functions do not work, if these variables are not set here.
@@ -175,12 +177,15 @@ try {
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigPath: $global:Neo42PackageConfigPath"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SetupCfgPath: $global:SetupCfgPath"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomSetupCfgPath: $global:CustomSetupCfgPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] DeployApplicationPath: $global:DeployApplicationPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] AppDeployToolkitExtensionsPath: $global:AppDeployToolkitExtensionsPath"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptVersion: $deployAppScriptVersion"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptDate: $deployAppScriptDate"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptParameters: $deployAppScriptParameters"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appDeployLogoBannerDark: $appDeployLogoBannerDark"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] DetectedDisplayVersion: $global:DetectedDisplayVersion"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SoftMigrationCustomResult (prefillvalue): $global:SoftMigrationCustomResult"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] UserPartDir: $global:UserPartDir"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVendor: $appVendor"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appName: $appName"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVersion: $appVersion"
@@ -261,10 +266,6 @@ function Main {
 		[string]
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
 		[Parameter(Mandatory = $false)]
-		[int]
-		[ValidateSet(0, 1, 2)]
-		$Reboot = $global:PackageConfig.reboot,
-		[Parameter(Mandatory = $false)]
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
@@ -272,6 +273,7 @@ function Main {
 		$RegisterPackage = $global:registerPackage
 	)
 	try {
+		Test-NxtConfigVersionCompatibility
 		CustomBegin
 		switch ($DeploymentType) {
 			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
@@ -382,12 +384,14 @@ function Main {
 				}
 				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
+				## calculate exit code (at this point we always should have a non-error case or a reboot request)
 				[string]$script:installPhase = 'Package-Completion'
+				[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Get-NxtRebootRequirement
 				Complete-NxtPackageInstallation
 				if ($true -eq $RegisterPackage) {
 					## register package for uninstall
 					[string]$script:installPhase = 'Package-Registration'
-					Register-NxtPackage
+					Register-NxtPackage -MainExitCode $rebootRequirementResult.MainExitCode -LastErrorMessage $returnErrorMessage
 				} else {
 					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 				}
@@ -432,7 +436,7 @@ function Main {
 					Unregister-NxtPackage
 				}
 				else {
-					Write-Log -Message "No need to unregister package(s) now..." -Source ${cmdletName}
+					Write-Log -Message "No need to unregister package(s) now..." -Source $deployAppScriptFriendlyName
 				}
 				## END OF UNINSTALL
 			}
@@ -451,21 +455,14 @@ function Main {
 			Default {}
 		}
 		[string]$script:installPhase = 'Package-Finish'
-		## calculate exit code
-		if ($Reboot -eq 1) { [int32]$mainExitCode = 3010 }
-		if ($Reboot -eq 2 -and ($mainExitCode -eq 3010 -or $mainExitCode -eq 1641 -or $true -eq $msiRebootDetected)) {
-			[int32]$mainExitCode = 0
-			Set-Variable -Name 'msiRebootDetected' -Value $false -Scope 'Script'
-		}
 		Close-BlockExecutionWindow
-		Exit-Script -ExitCode $mainExitCode
+		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
+		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {
 		## unhandled exception occured
-		[int32]$mainExitCode = 60001
-		[string]$mainErrorMessage = "$(Resolve-Error)"
-		Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode $mainExitCode
+		Write-Log -Message "$(Resolve-Error)" -Severity 3 -Source $deployAppScriptFriendlyName
+		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
 	}
 }
 

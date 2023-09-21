@@ -1,6 +1,4 @@
-# Test the Set-NxtXmlNode Function
-
-# Test 1: Set the value of an existing node
+# Test the Test-NxtXmlNodeExists Function
 Describe "Test-NxtXmlNodeExists" {
     Context "When the node exists" {
         It "Returns true" {
