@@ -1134,7 +1134,7 @@ function ConvertTo-NxtEncodedObject {
 			$writer.Write($jsonString)
 			$writer.Close()
 			[string]$encodedObject = [Convert]::ToBase64String($compressedData.ToArray())
-			return $EncodedObject
+			return $encodedObject
 		}
 		catch {
 			Write-Log -Message "Failed to convert PowerShell object to Base64-encoded string. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -7222,17 +7222,17 @@ Function Show-NxtWelcomePrompt {
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
 		Write-Log "Looking for Sessions..."
 		[int]$welcomeExitCode = 1618;
-		$activeSessions = Get-LoggedOnUser
+		[PsObject]$activeSessions = Get-LoggedOnUser
 		if((Get-Process -Id $PID).SessionId -eq 0)
 		{
 			if ($activeSessions.Count -gt 0)
 			{
-				$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
+				[int[]]$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
 				Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
 				[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
 				$welcomeExitCode = $askKillProcessesResult.ExitCode
-				$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
-				$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
+				[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
+				[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
 				Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName"
 			}
 		}
@@ -7278,6 +7278,7 @@ Function Show-NxtWelcomePrompt {
     }
 }
 #endregion
+
 #region Function Stop-NxtProcess
 function Stop-NxtProcess {
 	<#
