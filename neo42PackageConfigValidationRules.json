@@ -380,7 +380,7 @@
     "AcceptedInstallExitCodes": {
         "Mandatory": true,
         "Regex": {
-            "Pattern": "^\\d+(,\\d+)*$",
+            "Pattern": "^(\\*|\\d+(,\\d+)*)$",
             "Operator": "match"
         },
         "ErrorMessage": "AcceptedInstallExitCodes must be a comma separated list of numbers.",
@@ -401,7 +401,7 @@
         "Mandatory": true,
         "HelpText": "AcceptedUninstallExitCodes must be a comma separated list of numbers.",
         "Regex": {
-            "Pattern": "^\\d+(,\\d+)*$",
+            "Pattern": "^(\\*|\\d+(,\\d+)*)$",
             "Operator": "match"
         },
         "Type": "System.String",
