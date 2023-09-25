@@ -7425,7 +7425,7 @@ Function Show-NxtWelcomePrompt {
 		{
 			if ($activeSessions.Count -gt 0)
 			{
-				[int[]]$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
+				[UInt32[]]$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
 				Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
 				[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
 				$welcomeExitCode = $askKillProcessesResult.ExitCode
