@@ -1225,8 +1225,9 @@ function Execute-NxtBitRockInstaller {
 		if ($ContinueOnError) {
 			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
+		if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
 		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
@@ -1565,8 +1566,9 @@ function Execute-NxtInnoSetup {
 		if ($ContinueOnError) {
 			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
+		if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
 		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
@@ -1667,8 +1669,6 @@ function Execute-NxtMSI {
 		Include matches against updates and hotfixes in results.
 	.PARAMETER NoWait
 		Immediately continue after executing the process.
-	.PARAMETER IgnoreExitCodes
-		List the exit codes to ignore or * to ignore all exit codes.
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER PriorityClass	
@@ -1830,17 +1830,9 @@ function Execute-NxtMSI {
 		if ([string]::IsNullOrEmpty($AddParameters)) {
 			$null = $PSBoundParameters.Remove('AddParameters')
 		}
-		if ($false -eq [string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			if ($false -eq [string]::IsNullOrEmpty($AcceptedRebootCodes)){
-				## * as a wildcard for all exit codes could be applied in a future version, but are not supported right now.
-				[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes,$AcceptedRebootCodes"
-			}
-			else {
-				[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
-			}
-		}
-		elseif ($false -eq [string]::IsNullOrEmpty($AcceptedRebootCodes)){
-			[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedRebootCodes"
+		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
+		if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+			[string]$PSBoundParameters["IgnoreExitCodes"] = "$ignoreExitCodes"
 		}
 		if (![string]::IsNullOrEmpty($Log)) {
 			[string]$msiLogName = ($Log | Split-Path -Leaf) -replace '\.log$',[string]::Empty
@@ -2077,8 +2069,9 @@ function Execute-NxtNullsoft {
 		if ($ContinueOnError) {
 			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
+		if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
 		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
@@ -4632,8 +4625,9 @@ function Install-NxtApplication {
 					if (![string]::IsNullOrEmpty($InstPara)) {
 						[string]$executeParams["Parameters"] = "$InstPara"
 					}
-					if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-						[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+					[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedInstallExitCodes -ExitCodeString2 $AcceptedInstallRebootCodes
+					if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+						[string]$ExecuteParams["IgnoreExitCodes"] = "$ignoreExitCodes"
 					}
 					[PsObject]$executionResult = Execute-Process @executeParams
 					if ($($executionResult.ExitCode) -in ($AcceptedInstallRebootCodes -split ",")) {
@@ -4697,6 +4691,63 @@ function Install-NxtApplication {
 		}
 		Write-Log -Message $($installResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 		Write-Output $installResult
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Move-NxtItem
+function Merge-NxtExitCodes {
+	<#
+	.SYNOPSIS
+		Merges two exit code strings.
+	.DESCRIPTION
+		Merges two exit code strings. If one of the strings is "*" the result will be "*".
+	.PARAMETER ExitCodeString1
+		First exit code string.
+	.PARAMETER ExitCodeString2
+		Second exit code string.
+	.EXAMPLE
+		Merge-NxtExitCodes -ExitCodeString1 "129,1256" -ExitCodeString2 "129,34,55"
+		Merges the two exit code strings to "129,1256,34,55".
+	.EXAMPLE
+		Merge-NxtExitCodes -ExitCodeString1 "129,1256" -ExitCodeString2 "*"
+		Combines the two exit code strings to "*".
+	.OUTPUTS
+		System.String.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
+		[string]$ExitCodeString1,
+		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
+		[string]$ExitCodeString2
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[array]$ExitCodeObj = @()
+		if ($ExitCodeString1 -eq "*" -or $ExitCodeString2 -eq "*") {
+			$ExitCodeObj = "*"
+		}
+		else {
+			if (-not [string]::IsNullOrEmpty($ExitCodeString1)) { 
+				$ExitCodeObj += $ExitCodeString1 -split ","
+			}
+			if (-not [string]::IsNullOrEmpty($ExitCodeString2)) { 
+				$ExitCodeObj += $ExitCodeString2 -split ","
+			}
+			$ExitCodeObj = $ExitCodeObj | Select-Object -Unique
+			[string]$IgnoreExitCodes = $ExitCodeObj -join ","
+		}
+		return $IgnoreExitCodes
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -9051,8 +9102,9 @@ function Uninstall-NxtApplication {
 						if (![string]::IsNullOrEmpty($UninstPara)) {
 							[string]$executeParams["Parameters"] = "$UninstPara"
 						}
-						if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-							[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+							[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedUninstallExitCodes -ExitCodeString2 $AcceptedUninstallRebootCodes
+						if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+							[string]$executeParams["IgnoreExitCodes"] = "$ignoreExitCodes"
 						}
 						[PsObject]$executionResult = Execute-Process @executeParams
 						if ($($executionResult.ExitCode) -in ($AcceptedUninstallRebootCodes -split ",")) {
