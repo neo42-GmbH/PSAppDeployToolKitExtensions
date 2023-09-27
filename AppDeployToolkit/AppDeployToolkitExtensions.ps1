@@ -4870,8 +4870,15 @@ function Read-NxtSingleXmlNode {
 		Path to the xml file.
 	.PARAMETER SingleNodeName
 		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp).
+	.PARAMETER AttributeName
+		Attribute name to be read from the node.
+		Default is "Innertext".
 	.EXAMPLE
 		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
+		Will return the inner text of the node.
+	.EXAMPLE
+		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -AttributeName "UserName"
+		Will return the value of the attribute "UserName" of the node.
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -4884,7 +4891,10 @@ function Read-NxtSingleXmlNode {
 		$XmlFilePath,
 		[Parameter(Mandatory = $true)]
 		[string]
-		$SingleNodeName
+		$SingleNodeName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AttributeName = "Innertext"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4894,9 +4904,9 @@ function Read-NxtSingleXmlNode {
 		try {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
-			Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText)
+			Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).$AttributeName)
 		}
-		finally {
+		catch {
 			Write-Log -Message "Failed to read single node '$SingleNodeName' from xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
