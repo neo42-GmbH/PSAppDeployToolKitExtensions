@@ -3742,6 +3742,15 @@ function Get-NxtRegisterOnly {
 		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
 		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Defines if the UninstallKey is the DisplayName of the application package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyContainsWildCards
+		Defines if the UninstallKey contains wildcards.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DisplayNamesToExclude
+		Defines an array of DisplayNames to exclude from the search.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 	.LINK
@@ -3775,7 +3784,16 @@ function Get-NxtRegisterOnly {
 		$RegisterPackage = $global:registerPackage,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExclude
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
@@ -3812,7 +3830,9 @@ function Get-NxtRegisterOnly {
 			}
 		}
 		else {
-			[string]$currentlyDetectedDisplayVersion = (Get-NxtCurrentDisplayVersion).DisplayVersion
+			[string]$currentlyDetectedDisplayVersion = (
+					Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+				).DisplayVersion
 			if ($true -eq [string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
 				Write-Output $false
@@ -8106,7 +8126,7 @@ function Switch-NxtMSIReinstallMode {
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check ReinstallMode for an expected msi display version!. Returning [$ReinstallMode]." -Severity 2 -Source ${cmdletName}
 			}
 			else {
-				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion
+				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
 				If ($false -eq $displayVersionResult.UninstallKeyExists) {
 					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
 					throw "No repair function executable under current conditions!"
