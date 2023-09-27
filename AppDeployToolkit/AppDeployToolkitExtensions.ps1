@@ -5793,7 +5793,7 @@ function Repair-NxtApplication {
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
 			$repairResult.MainExitCode = 70001
 			$repairResult.ErrorMessage = "No repair function executable - missing value for parameter 'UninstallKey'!"
-			$repairResult.ErrorMessagePSADT = "expected function parameter 'UninstallKey' may not be empty"
+			$repairResult.ErrorMessagePSADT = "expected function parameter 'UninstallKey' must not be empty"
 			$repairResult.Success = $false
 			[int]$logMessageSeverity = 3
 		}
