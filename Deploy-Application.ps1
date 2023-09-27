@@ -379,7 +379,13 @@ function Main {
 						}
 						CustomInstallEnd -ResultToCheck $mainNxtResult
 					}
+					if ($true -eq $global:SetupCfg.Options.SoftMigration) {
+						[string]$softMigrationOccurred = "No"
+					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
+				}
+				else {
+					[string]$softMigrationOccurred = "Yes"
 				}
 				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
@@ -390,7 +396,7 @@ function Main {
 				if ($true -eq $RegisterPackage) {
 					## register package for uninstall
 					[string]$script:installPhase = 'Package-Registration'
-					Register-NxtPackage -MainExitCode $rebootRequirementResult.MainExitCode -LastErrorMessage $returnErrorMessage
+					Register-NxtPackage -MainExitCode $rebootRequirementResult.MainExitCode -LastErrorMessage $returnErrorMessage -SoftMigrationOccurred $softMigrationOccurred
 				} else {
 					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 				}

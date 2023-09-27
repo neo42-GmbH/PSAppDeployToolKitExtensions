@@ -4999,6 +4999,9 @@ function Register-NxtPackage {
 	.PARAMETER $UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
+	.PARAMETER SoftMigrationOccurred
+		Defines if a SoftMigration occurred.
+		Defaults to [string]::Empty.
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -5099,7 +5102,10 @@ function Register-NxtPackage {
 		$LastErrorMessage = $global:LastErrorMessage,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$UserPartDir = $global:UserPartDir
+		$UserPartDir = $global:UserPartDir,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SoftMigrationOccurred = [string]::Empty
 	)
 	
 	Begin {
@@ -5165,6 +5171,9 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'Installed' -Type 'Dword' -Value '1'
+			if ($false -eq [string]::IsNullOrEmpty($SoftMigrationOccurred)) {
+				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'SoftMigrationOccurred' -Value $SoftMigrationOccurred
+			}
 			Remove-RegistryKey "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")"
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
