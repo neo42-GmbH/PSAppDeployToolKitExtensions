@@ -4565,10 +4565,8 @@ function Install-NxtApplication {
 	Process {
 		[PSADTNXT.NxtApplicationResult]$installResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 		if ($InstallMethod -eq "none") {
-			$installResult.MainExitCode = $null
 			$installResult.ApplicationExitCode = $null
 			$installResult.ErrorMessage = "An installation method was not set. Skipping a default process execution."
-			$installResult.ErrorMessagePSADT = $null
 			$installResult.Success = $null
 			[int]$logMessageSeverity = 1
 		}
@@ -4673,7 +4671,6 @@ function Install-NxtApplication {
 					}
 					else {
 						$installResult.ErrorMessage = "Installation of '$AppName' was successful."
-						$installResult.ErrorMessagePSADT = $null
 						$installResult.Success = $true
 						[int]$logMessageSeverity = 1
 					}
@@ -5851,10 +5848,7 @@ function Repair-NxtApplication {
 		else {
 			$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
 			if ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
-				$repairResult.MainExitCode = 0
-				$repairResult.ApplicationExitCode = $null
 				$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
-				$repairResult.ErrorMessagePSADT = $null
 				$repairResult.Success = $null
 				[int]$logMessageSeverity = 1
 			}
@@ -5906,7 +5900,6 @@ function Repair-NxtApplication {
 				}
 				else {
 					$repairResult.ErrorMessage = "Repair of '$AppName' was successful."
-					$repairResult.ErrorMessagePSADT = $null
 					$repairResult.Success = $true
 					[int]$logMessageSeverity = 1
 				}
@@ -9002,10 +8995,7 @@ function Uninstall-NxtApplication {
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 		if ($UninstallMethod -eq "none") {
-			$uninstallResult.MainExitCode = $null
-			$uninstallResult.ApplicationExitCode = $null
 			$uninstallResult.ErrorMessage = "An uninstallation method was NOT set. Skipping a default process execution."
-			$uninstallResult.ErrorMessagePSADT = $null
 			$uninstallResult.Success = $null
 			[int]$logMessageSeverity = 1
 		}
@@ -9014,11 +9004,8 @@ function Uninstall-NxtApplication {
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
 				if ([string]::IsNullOrEmpty($UninstFile)) {
-					$uninstallResult.MainExitCode = $null
 					$uninstallResult.ApplicationExitCode = $null
 					$uninstallResult.ErrorMessage = "Value 'UninstFile' NOT set. Uninstallation NOT executed."
-					$uninstallResult.ErrorMessagePSADT = $null
-					$uninstallResult.Success = $null
 					[int]$logMessageSeverity = 2
 				}
 				else {
@@ -9042,10 +9029,7 @@ function Uninstall-NxtApplication {
 				}
 				else {
 					[bool]$appIsInstalled=$false
-					$uninstallResult.MainExitCode = 0
-					$uninstallResult.ApplicationExitCode = $null
 					$uninstallResult.ErrorMessage = "Uninstall function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected application seems not to be installed on system!"
-					$uninstallResult.ErrorMessagePSADT = $null
 					$uninstallResult.Success = $null
 					[int]$logMessageSeverity = 1
 				}
@@ -9150,7 +9134,7 @@ function Uninstall-NxtApplication {
 						}
 						else {
 							$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' was successful."
-							$uninstallResult.ErrorMessagePSADT = $null
+							$uninstallResult.ErrorMessagePSADT = [string]::Empty
 							$uninstallResult.Success = $true
 							[int]$logMessageSeverity = 1
 						}
@@ -9288,7 +9272,7 @@ function Uninstall-NxtOld {
 										else {
 											$uninstallOldResult.MainExitCode = 0
 											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
-											$uninstallOldResult.ErrorMessagePSADT = $null
+											$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 											$uninstallOldResult.Success = $true
 											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 										}
@@ -9296,9 +9280,9 @@ function Uninstall-NxtOld {
 									else {
 										$appEmpirumPackageVersion | Remove-Item -Recurse
 										$uninstallOldResult.MainExitCode = 0
-										$uninstallOldResult.ApplicationExitCode = $null
+										$uninstallOldResult.ApplicationExitCode = 0
 										$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
-										$uninstallOldResult.ErrorMessagePSADT = $null
+										$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 										$uninstallOldResult.Success = $null
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 									}
@@ -9307,9 +9291,9 @@ function Uninstall-NxtOld {
 							if ( ($false -eq $ReturnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName")) ) {
 								Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
 								$uninstallOldResult.MainExitCode = 0
-								$uninstallOldResult.ApplicationExitCode = $null
+								$uninstallOldResult.ApplicationExitCode = 0
 								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
-								$uninstallOldResult.ErrorMessagePSADT = $null
+								$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 								$uninstallOldResult.Success = $null
 								Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 							}
@@ -9318,9 +9302,9 @@ function Uninstall-NxtOld {
 					if ( ($false -eq $ReturnWithError) -and ((Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
 						Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.MainExitCode = 0
-						$uninstallOldResult.ApplicationExitCode = $null
+						$uninstallOldResult.ApplicationExitCode = 0
 						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor"
-						$uninstallOldResult.ErrorMessagePSADT = $null
+						$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 						$uninstallOldResult.Success = $null
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
@@ -9367,7 +9351,7 @@ function Uninstall-NxtOld {
 										else {
 											$uninstallOldResult.MainExitCode = 0
 											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
-											$uninstallOldResult.ErrorMessagePSADT = $null
+											$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 											$uninstallOldResult.Success = $true
 											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 										}
@@ -9376,7 +9360,7 @@ function Uninstall-NxtOld {
 										$appEmpirumPackageVersion | Remove-Item -Recurse
 										$uninstallOldResult.MainExitCode = 0
 										$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
-										$uninstallOldResult.ErrorMessagePSADT = $null
+										$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 										$uninstallOldResult.Success = $null
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 									}
@@ -9386,7 +9370,7 @@ function Uninstall-NxtOld {
 								Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName"
 								$uninstallOldResult.MainExitCode = 0
 								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName"
-								$uninstallOldResult.ErrorMessagePSADT = $null
+								$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 								$uninstallOldResult.Success = $null
 								Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 							}
@@ -9396,7 +9380,7 @@ function Uninstall-NxtOld {
 						Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.MainExitCode = 0
 						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:\Software\$RegPackagesKey\$AppVendor"
-						$uninstallOldResult.ErrorMessagePSADT = $null
+						$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 						$uninstallOldResult.Success = $null
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
@@ -9445,15 +9429,15 @@ function Uninstall-NxtOld {
 						else {
 							$uninstallOldResult.MainExitCode = 0
 							$uninstallOldResult.ErrorMessage = "Uninstallation of old package successful."
-							$uninstallOldResult.ErrorMessagePSADT = $null
+							$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 							$uninstallOldResult.Success = $true
 							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 						}
 					}
 					else {
-						$uninstallOldResult.MainExitCode = $null
+						$uninstallOldResult.MainExitCode = 0
 						$uninstallOldResult.ErrorMessage = "No need to uninstall old package."
-						$uninstallOldResult.ErrorMessagePSADT = $null
+						$uninstallOldResult.ErrorMessagePSADT = [string]::Empty
 						$uninstallOldResult.Success = $null
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
