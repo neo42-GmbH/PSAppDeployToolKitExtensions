@@ -9026,9 +9026,9 @@ function Uninstall-NxtApplication {
 						Write-Log -Message "File for running an uninstallation found: '$UninstFile'. Executing the uninstallation..." -Source ${CmdletName}
 					}
 					else {
-						## ApplicationExitCode and ErrorMessagePSADT taken from: https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-
-						$uninstallResult.MainExitCode = 2
-						$uninstallResult.ApplicationExitCode = $($uninstallResult.MainExitCode)
+						$uninstallResult.MainExitCode = 70001
+						## 2 for ERROR_FILE_NOT_FOUND
+						$uninstallResult.ApplicationExitCode = 2
 						$uninstallResult.ErrorMessage = "Expected file for running an uninstallation NOT found: '$UninstFile'. Uninstallation NOT executed. Possibly the expected application is not installed on system anymore!"
 						$uninstallResult.ErrorMessagePSADT = "ERROR_FILE_NOT_FOUND: The system cannot find the file specified."
 						$uninstallResult.Success = $false
