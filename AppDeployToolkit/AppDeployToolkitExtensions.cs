@@ -541,7 +541,7 @@ namespace PSADTNXT
                 var securityAttributes = SECURITY_ATTRIBUTES.Default;
                 var processStartInfo = new ProcessStartInfo
                 {
-                    FileName = @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+                    FileName = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"system32\WindowsPowerShell\v1.0\powershell.exe"),
                     Arguments = arguments,
                     WindowStyle = ProcessWindowStyle.Hidden,
                     CreateNoWindow = true,
@@ -554,7 +554,7 @@ namespace PSADTNXT
                 // Launch the process in the client's logon session.
                 var bResult = CreateProcessAsUser(hTokenDup, // client's access token
                       null, // file to execute
-                      CreateCommandLine(@"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", arguments), // command line
+                      CreateCommandLine(Path.Combine(Environment.GetEnvironmentVariable("windir"), @"system32\WindowsPowerShell\v1.0\powershell.exe"), arguments), // command line
                       IntPtr.Zero, // pointer to process SECURITY_ATTRIBUTES
                       IntPtr.Zero, // pointer to thread SECURITY_ATTRIBUTES
                       false, // handles inheritable ?
