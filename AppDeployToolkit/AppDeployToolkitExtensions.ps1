@@ -9004,7 +9004,6 @@ function Uninstall-NxtApplication {
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
 				if ([string]::IsNullOrEmpty($UninstFile)) {
-					$uninstallResult.ApplicationExitCode = $null
 					$uninstallResult.ErrorMessage = "Value 'UninstFile' NOT set. Uninstallation NOT executed."
 					[int]$logMessageSeverity = 2
 				}
