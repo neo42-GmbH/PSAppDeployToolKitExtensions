@@ -4276,8 +4276,9 @@ function Initialize-NxtEnvironment {
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
 		Defaults to "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)".
 	.PARAMETER App
+		This parameter can not be set manually for this function!
 		Defines the path to a local persistent cache for installation files.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defaults to the corresponding value from the PackageConfig object after it has been set within this function.
 	.PARAMETER DeploymentType
 		The type of deployment that is performed.
 		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
