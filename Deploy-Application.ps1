@@ -380,12 +380,12 @@ function Main {
 						CustomInstallEnd -ResultToCheck $mainNxtResult
 					}
 					if ($true -eq $global:SetupCfg.Options.SoftMigration) {
-						[string]$softMigrationOccurred = "No"
+						[string]$softMigrationOccurred = "false"
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
 				}
 				else {
-					[string]$softMigrationOccurred = "Yes"
+					[string]$softMigrationOccurred = "true"
 				}
 				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
