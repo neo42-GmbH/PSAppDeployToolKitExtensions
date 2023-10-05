@@ -5877,8 +5877,6 @@ function Repair-NxtApplication {
 		[int]$logMessageSeverity = 1
 		[hashtable]$executeNxtParams = @{
 			Action	             = 'Repair'
-			ExitOnProcessFailure = $false
-			PassThru             = $true
 		}
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
 			$repairResult.MainExitCode = $mainExitCode
