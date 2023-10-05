@@ -10503,7 +10503,7 @@ function Watch-NxtRegistryKeyIsRemoved {
 				}
 				$waited += 1
 				[string]$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
-				if ($null -eq $key) {
+				if ($true -eq [string]::IsNullOrEmpty($key)) {
 					Write-Output $true
 					return
 				}
