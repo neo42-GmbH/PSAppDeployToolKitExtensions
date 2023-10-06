@@ -10448,7 +10448,7 @@ function Watch-NxtRegistryKey {
 				}
 				$waited += 1
 				[string]$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
-				if ($null -ne $key) {
+				if ($false -eq [string]::IsNullOrEmpty($key)) {
 					Write-Output $true
 					return
 				}
