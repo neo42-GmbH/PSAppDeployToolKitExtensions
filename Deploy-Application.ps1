@@ -140,7 +140,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
 			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
 		}
 	}
-	[system.Diagnostics.Process]$process = Start-Process -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -PassThru -Wait -ArgumentList " -File `"$file`"$arguments"
+	[system.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -PassThru -Wait -ArgumentList " -File `"$file`"$arguments"
 	$process.WaitForExit()
     [int]$exitCode = $process.ExitCode
     exit $exitCode
