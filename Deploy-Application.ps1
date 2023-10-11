@@ -66,6 +66,54 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[string]$DeploymentSystem = [string]::Empty
 )
+#region Function Start-NxtProcess
+function Start-NxtProcess {
+	<#
+	.SYNOPSIS
+		Start a process by filename.
+	.DESCRIPTION
+		Replacement for the native Start-Process cmdlet using .NET Process Object.
+	.PARAMETER FilePath
+		Path for the filename that should be called.
+	.PARAMETER Arguments
+		Arguments for the process.
+	.PARAMETER UseShellExecute
+		Specifies the UseShellExecute parameter. Default: $false.
+	.EXAMPLE
+		Start-NxtProcess -FileName "C:\Windows\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-File "C:\Users\labadmin\PSAppDeployToolKitExtensions\Deploy-Application.ps1""
+	.OUTPUTS
+		System.Diagnostics.Process
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]$FilePath,
+		[Parameter(Mandatory = $false)]
+		[string]$Arguments,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[Switch]$UseShellExecute = $false
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[System.Diagnostics.ProcessStartInfo]$processStartInfo = New-Object System.Diagnostics.ProcessStartInfo;
+		$processStartInfo.FileName = $FilePath
+		$processStartInfo.Arguments = $Arguments
+		$processStartInfo.UseShellExecute = $UseShellExecute;
+		$process = [System.Diagnostics.Process]::Start($processStartInfo);
+		Write-Output -InputObject $process
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
 if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
     Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
@@ -92,18 +140,19 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
 			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
 		}
 	}
-    [system.Diagnostics.Process]$process = Start-Process -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -PassThru -Wait -ArgumentList " -File `"$file`"$arguments"
+	[system.Diagnostics.Process]$process = Start-Process -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -PassThru -Wait -ArgumentList " -File `"$file`"$arguments"
+	$process.WaitForExit()
     [int]$exitCode = $process.ExitCode
     exit $exitCode
 }
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
 	TriggerInstallUserPart { 
-		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart"
+		Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart"
 		Exit
 	}
 	TriggerUninstallUserPart { 
-		Start-Process -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart"
+		Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart"
 		Exit
 	}
 	Default {}
