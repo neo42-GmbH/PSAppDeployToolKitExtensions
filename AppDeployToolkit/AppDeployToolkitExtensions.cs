@@ -1,15 +1,12 @@
 // Version: 2023.04.05.01
 
-using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
@@ -183,55 +180,26 @@ namespace PSADTNXT
 
     public class SessionHelper
     {
-        private const int ERROR_NOT_ALL_ASSIGNED = 1300;
-
+        private const uint GENERIC_ALL = 0x10000000;
         private const uint INFINITE = 0xFFFFFFFF;
-
         private const uint MAXIMUM_ALLOWED = 0x2000000;
-
+        private const string SE_ASSIGNPRIMARYTOKEN_NAME = "SeAssignPrimaryTokenPrivilege";
         private const string SE_DEBUG_NAME = "SeDebugPrivilege";
-
+        private const string SE_INCREASE_QUOTA_NAME = "SeIncreaseQuotaPrivilege";
         private const int SE_PRIVILEGE_ENABLED = 0x0002;
-
-        private const string SE_TCB_NAME = "SeTcbPrivilege";
-
         private const int STANDARD_RIGHTS_REQUIRED = 0x000F0000;
-
         private const uint TH32CS_SNAPPROCESS = 0x00000002;
-
         private const int TOKEN_ADJUST_DEFAULT = 0x0080;
-
         private const int TOKEN_ADJUST_GROUPS = 0x0040;
-
         private const int TOKEN_ADJUST_PRIVILEGES = 0x0020;
-
         private const int TOKEN_ADJUST_SESSIONID = 0x0100;
-
         private const int TOKEN_ASSIGN_PRIMARY = 0x0001;
-
         private const int TOKEN_DUPLICATE = 0x0002;
-
         private const int TOKEN_IMPERSONATE = 0x0004;
-
         private const int TOKEN_QUERY = 0x0008;
-
         private const int TOKEN_QUERY_SOURCE = 0x0010;
-
         private const uint TokenSessionId = 24;
-
-        private static readonly FieldInfo ErrorField = typeof(Process).GetField("standardError",
-                            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        private static readonly FieldInfo InputField = typeof(Process).GetField("standardInput",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        private static readonly FieldInfo OutputField = typeof(Process).GetField("standardOutput",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        private static AnonymousPipeServerStream _errorStream;
-        private static AnonymousPipeServerStream _inputStream;
-        private static AnonymousPipeServerStream _outputStream;
-        private static STARTUPINFO StartupInfo;
+        private static List<string> SE_PRIVILEGES = new List<string>() { SE_DEBUG_NAME, SE_ASSIGNPRIMARYTOKEN_NAME, SE_INCREASE_QUOTA_NAME };
         private static uint TOKEN_ALL_ACCESS = (STANDARD_RIGHTS_REQUIRED | TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE | TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_SESSIONID);
 
         [Flags]
@@ -253,7 +221,6 @@ namespace PSADTNXT
             DETACHED_PROCESS = 0x00000008,
             EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
             INHERIT_PARENT_AFFINITY = 0x00010000,
-
             IDLE_PRIORITY_CLASS = 0x40,
             NORMAL_PRIORITY_CLASS = 0x20,
             HIGH_PRIORITY_CLASS = 0x80,
@@ -268,182 +235,207 @@ namespace PSADTNXT
             SecurityDelegation = 3
         }
 
-        private enum TOKEN_ELEVATION_TYPE
-        {
-            TokenElevationTypeDefault = 1,
-            TokenElevationTypeFull,
-            TokenElevationTypeLimited
-        }
-
-        private enum TOKEN_INFORMATION_CLASS
-        {
-            TokenUser = 1,
-            TokenGroups,
-            TokenPrivileges,
-            TokenOwner,
-            TokenPrimaryGroup,
-            TokenDefaultDacl,
-            TokenSource,
-            TokenType,
-            TokenImpersonationLevel,
-            TokenStatistics,
-            TokenRestrictedSids,
-            TokenSessionId,
-            TokenGroupsAndPrivileges,
-            TokenSessionReference,
-            TokenSandBoxInert,
-            TokenAuditPolicy,
-            TokenOrigin,
-            TokenElevationType,
-            TokenLinkedToken,
-            TokenElevation,
-            TokenHasRestrictions,
-            TokenAccessInformation,
-            TokenVirtualizationAllowed,
-            TokenVirtualizationEnabled,
-            TokenIntegrityLevel,
-            TokenUIAccess,
-            TokenMandatoryPolicy,
-            TokenLogonSid,
-            MaxTokenInfoClass  // MaxTokenInfoClass should always be the last enum
-        }
-
         private enum TOKEN_TYPE
         {
             TokenPrimary = 1,
             TokenImpersonation = 2
         }
 
-        private enum TokenInformationClass
-        {
-            TokenPrivileges = 13,
-            TokenElevation = 20,
-        }
-
-        private enum WTSQueryUserTokenErrors
-        {
-            /// <summary>
-            /// The caller does not have the SE_TCB_NAME privilege.
-            /// </summary>
-            ERROR_PRIVILEGE_NOT_HELD = 1314,
-
-            /// <summary>
-            /// One of the parameters to the function was incorrect; for example, the phToken parameter was passed a NULL parameter.
-            /// </summary>
-            ERROR_INVALID_PARAMETER = 87,
-
-            /// <summary>
-            /// The caller does not have the appropriate permissions to call this function.The caller must be running within the context of the LocalSystem account and have the SE_TCB_NAME privilege.
-            /// </summary>
-            ERROR_ACCESS_DENIED = 5,
-
-            /// <summary>
-            /// The token query is for a session that does not exist.
-            /// </summary>
-            ERROR_FILE_NOT_FOUND = 2,
-
-            /// <summary>
-            /// The token query is for a session in which no user is logged-on. This occurs, for example, when the session is in the idle state or SessionId is zero.
-            /// </summary>
-            ERROR_NO_TOKEN = 1008
-        }
-
         public static NxtAskKillProcessesResult StartProcessAndWaitForExitCode(string arguments, List<uint> sessionIds)
         {
-            List<CreateProcessRequest> requests = new List<CreateProcessRequest>();
-            foreach (var sessionId in sessionIds)
-            {
-                requests.Add(new CreateProcessRequest()
-                {
-                    Token = Elevate(QueryAndDuplicateUserToken(sessionId)),
-                    SessionId = sessionId
-                });
-            }
+            var processToken = IntPtr.Zero;
+            var handlerToClose = new List<HandlerToClose>();
             try
             {
-                return CreateProcessAndWaitForExit(requests, arguments);
+                var processHandleToken = Process.GetCurrentProcess().Handle;
+                if (!OpenProcessToken(processHandleToken, TOKEN_ALL_ACCESS, out processToken))
+                {
+                    throw CreateWin32Exception("OpenProcessToken");
+                }
+                AdjustPrivileges(processToken, SE_PRIVILEGES, true);
+                var processes = new List<IntPtr>();
+                foreach (var sessionId in sessionIds)
+                {
+                    var hToken = IntPtr.Zero;
+                    var hTokenDup = IntPtr.Zero;
+                    var hProcess = IntPtr.Zero;
+                    var lpEnvironment = IntPtr.Zero;
+                    var processIDWL = 0;
+                    uint sessionIDProcess = 0;
+
+                    if (!FindProcessInSession("winlogon.exe", sessionId, out processIDWL))
+                    {
+                        throw CreateWin32Exception("winlogon.exe not found in session " + sessionId);
+                    }
+
+                    if (!ProcessIdToSessionId((uint)processIDWL, out sessionIDProcess))
+                    {
+                        throw CreateWin32Exception("ProcessIdToSessionId");
+                    }
+
+                    hProcess = OpenProcess(MAXIMUM_ALLOWED, false, processIDWL);
+
+                    if (hProcess == IntPtr.Zero)
+                    {
+                        throw CreateWin32Exception("OpenProcess");
+                    }
+
+                    // Open the process token
+                    if (!OpenProcessToken(hProcess, TOKEN_ALL_ACCESS, out hToken))
+                    {
+                        CloseHandleIfExists(hProcess);
+                        throw CreateWin32Exception("OpenProcessToken");
+                    }
+
+                    // Duplicate the token
+                    if (!DuplicateTokenEx(hToken, GENERIC_ALL, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out hTokenDup))
+                    {
+                        CloseHandleIfExists(hProcess);
+                        CloseHandleIfExists(hToken);
+                        throw CreateWin32Exception("DuplicateTokenEx");
+                    }
+
+                    // Set the session ID on the duplicated token
+                    if (!SetTokenInformation(hTokenDup, TokenSessionId, ref sessionIDProcess, sizeof(uint)))
+                    {
+                        CloseHandleIfExists(hProcess);
+                        CloseHandleIfExists(hToken);
+                        CloseHandleIfExists(hTokenDup);
+                        throw CreateWin32Exception("SetTokenInformation");
+                    }
+
+                    AdjustPrivileges(hTokenDup, SE_PRIVILEGES, true);
+
+                    var environmentDict = GetEnvironmentVariables(hTokenDup);
+                    var environmentBlock = EnviromentBlock(environmentDict);
+                    var startupInfo = new STARTUPINFO
+                    {
+                        cb = Marshal.SizeOf(typeof(STARTUPINFO)),
+                        lpDesktop = ""
+                    };
+                    var pi = new PROCESS_INFORMATION();
+                    // Launch the process in the client's logon session.
+                    var bResult = CreateProcessAsUser(hTokenDup, // client's access token
+                          null, // file to execute
+                          CreateCommandLine(@"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", arguments), // command line
+                          IntPtr.Zero, // pointer to process SECURITY_ATTRIBUTES
+                          IntPtr.Zero, // pointer to thread SECURITY_ATTRIBUTES
+                          false, // handles inheritable ?
+                          (uint)(ProcessCreationFlags.CREATE_NO_WINDOW | ProcessCreationFlags.CREATE_BREAKAWAY_FROM_JOB | ProcessCreationFlags.CREATE_UNICODE_ENVIRONMENT),
+                          environmentBlock, // pointer to new environment block
+                          null, // name of current directory
+                          ref startupInfo, // pointer to STARTUPINFO structure
+                          out pi // receives information about new process
+                      );
+                    // End impersonation of client.
+                    if (!bResult)
+                    {
+                        CloseHandleIfExists(hProcess);
+                        CloseHandleIfExists(hToken);
+                        CloseHandleIfExists(hTokenDup);
+                        CloseHandleIfExists(pi.hProcess);
+                        CloseHandleIfExists(pi.hThread);
+                        throw CreateWin32Exception("CreateProcessAsUser");
+                    }
+
+                    processes.Add(pi.hProcess);
+                    handlerToClose.Add(new HandlerToClose()
+                    {
+                        PiProcess = pi.hProcess,
+                        PihThread = pi.hThread,
+                        Process = hProcess,
+                        Token = hToken,
+                        TokenDup = hTokenDup,
+                    });
+                }
+
+                int index = WaitForMultipleObjects(sessionIds.Count, processes.ToArray(), false, INFINITE);
+
+                int exitCode = 1618;
+
+                if (index >= 0 && index < processes.Count)
+                {
+                    GetExitCodeProcess(processes[index], out exitCode);
+                }
+
+                // Terminate other processes
+                TerminateOtherProcesses(processes, index, (uint)exitCode);
+
+                return new NxtAskKillProcessesResult()
+                {
+                    SessionId = sessionIds[index],
+                    ExitCode = exitCode
+                };
             }
             finally
             {
-                foreach (var request in requests)
-                {
-                    CloseHandle(request.Token);
-                }
+                // Close handles and adjust privileges
+                CloseHandlesAndAdjustPrivileges(handlerToClose, processToken, false);
             }
         }
 
-        // Hinzufügen eines Privilegs zum Token
-        private static bool AddPrivilege(IntPtr tokenHandle, string privilegeName)
+        private static void AdjustPrivilege(string privilegeName, bool enabled, IntPtr token)
         {
             var luid = new LUID();
-            if (LookupPrivilegeValue(IntPtr.Zero, privilegeName, ref luid))
-            {
-                var newPrivileges = new TOKEN_PRIVILEGES();
-                newPrivileges.PrivilegeCount = 1;
-                newPrivileges.Privileges[0].Luid = luid;
-                newPrivileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+            var tkp = new TOKEN_PRIVILEGES();
 
-                if (AdjustTokenPrivileges(
-                    tokenHandle,
-                    false,
-                    ref newPrivileges,
-                    0,
-                    IntPtr.Zero,
-                    IntPtr.Zero))
-                {
-                    return Marshal.GetLastWin32Error() != 0;
-                }
+            if (!LookupPrivilegeValue(IntPtr.Zero, privilegeName, ref luid))
+            {
+                CloseHandleIfExists(token);
+                throw CreateWin32Exception("LookupPrivilegeValue");
             }
-            return false;
+
+            tkp.PrivilegeCount = 1;
+            tkp.Privileges = new LUID_AND_ATTRIBUTES[1];
+            tkp.Privileges[0] = new LUID_AND_ATTRIBUTES();
+            tkp.Privileges[0].Luid = luid;
+            tkp.Privileges[0].Attributes = enabled ? SE_PRIVILEGE_ENABLED : (uint)0;
+
+            if (!AdjustTokenPrivileges(token, false, ref tkp, Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)), IntPtr.Zero, IntPtr.Zero))
+            {
+                CloseHandleIfExists(token);
+                throw CreateWin32Exception("AdjustTokenPrivileges");
+            }
+        }
+
+        private static void AdjustPrivileges(IntPtr token, IEnumerable<string> privilegeNames, bool enable)
+        {
+            foreach (var privilegeName in privilegeNames)
+            {
+                AdjustPrivilege(privilegeName, enable, token);
+            }
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool AdjustTokenPrivileges(IntPtr TokenHandle, bool DisableAllPrivileges,
             ref TOKEN_PRIVILEGES NewState, int BufferLength, IntPtr PreviousState, IntPtr ReturnLength);
 
-        private static STARTUPINFO BuildStartupInfo(ProcessStartInfo startInfo)
+        [DllImport("kernel32.dll")]
+        private static extern bool CloseHandle(IntPtr hSnapshot);
+
+        private static void CloseHandleIfExists(IntPtr intPtr)
         {
-            StartupInfo = new STARTUPINFO
+            if (intPtr != IntPtr.Zero)
             {
-                cb = Marshal.SizeOf(typeof(STARTUPINFO)),
-                hStdInput = new SafeFileHandle(IntPtr.Zero, false),
-                hStdOutput = new SafeFileHandle(IntPtr.Zero, false),
-                hStdError = new SafeFileHandle(IntPtr.Zero, false),
-                lpDesktop = "Winsta0\\default"
-            };
-
-            if (startInfo.RedirectStandardInput || startInfo.RedirectStandardOutput || startInfo.RedirectStandardError)
-            {
-                if (startInfo.RedirectStandardInput)
-                {
-                    _inputStream = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.Inheritable);
-                    StartupInfo.hStdInput = _inputStream.ClientSafePipeHandle;
-                }
-                else
-                    StartupInfo.hStdInput = new SafeFileHandle(GetStdHandle(-10), false);
-
-                if (startInfo.RedirectStandardOutput)
-                {
-                    _outputStream = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
-                    StartupInfo.hStdOutput = _outputStream.ClientSafePipeHandle;
-                }
-                else
-                    StartupInfo.hStdOutput = new SafeFileHandle(GetStdHandle(-11), false);
-
-                if (startInfo.RedirectStandardError)
-                {
-                    _errorStream = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
-                    StartupInfo.hStdError = _errorStream.ClientSafePipeHandle;
-                }
-                else
-                    StartupInfo.hStdError = new SafeFileHandle(GetStdHandle(-12), false);
-                StartupInfo.dwFlags = 256;
+                CloseHandle(intPtr);
             }
-            return StartupInfo;
         }
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool CloseHandle(IntPtr hSnapshot);
+        private static void CloseHandlesAndAdjustPrivileges(List<HandlerToClose> handlers, IntPtr processToken, bool enable)
+        {
+            foreach (var handler in handlers)
+            {
+                CloseHandleIfExists(handler.PiProcess);
+                CloseHandleIfExists(handler.PihThread);
+                CloseHandleIfExists(handler.Process);
+                CloseHandleIfExists(handler.Token);
+                CloseHandleIfExists(handler.TokenDup);
+            }
+
+            // Adjust privileges for the process token
+            AdjustPrivileges(processToken, SE_PRIVILEGES, enable);
+            CloseHandleIfExists(processToken);
+        }
 
         private static string CreateCommandLine(string processPath, string arguments)
         {
@@ -457,174 +449,6 @@ namespace PSADTNXT
 
         [DllImport("userenv.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern bool CreateEnvironmentBlock(out IntPtr lpEnvironment, IntPtr hToken, bool bInherit);
-
-        private static NxtAskKillProcessesResult CreateProcessAndWaitForExit(List<CreateProcessRequest> requests, string arguments)
-        {
-            if (!SetDebugPrivilege(true))
-            {
-                throw CreateWin32Exception("SetDebugPrivilege");
-            }
-            var handlerToClose = new List<HandlerToClose>();
-            var processes = new List<IntPtr>();
-            foreach (var request in requests)
-            {
-                var hToken = IntPtr.Zero;
-                var hTokenDup = IntPtr.Zero;
-                var hProcess = IntPtr.Zero;
-                var lpEnvironment = IntPtr.Zero;
-                var dwSessionID = (uint)request.SessionId;
-                var ProcessIDWL = 0;
-                // Find the winlogon.exe process in the current user's session
-                if (!FindProcessInSession("winlogon.exe", dwSessionID, out ProcessIDWL))
-                {
-                    throw CreateWin32Exception("winlogon.exe not found in session " + dwSessionID);
-                }
-
-                // Open the winlogon.exe process
-                hProcess = OpenProcess(MAXIMUM_ALLOWED, false, ProcessIDWL);
-                if (hProcess == IntPtr.Zero)
-                {
-                    throw CreateWin32Exception("OpenProcess");
-                }
-
-                // Open the process token
-                if (!OpenProcessToken(hProcess, TOKEN_ALL_ACCESS, out hToken))
-                {
-                    CloseHandle(hProcess);
-                    throw CreateWin32Exception("OpenProcessToken");
-                }
-
-                var luid = new LUID();
-                // Lookup the privilege value for SE_DEBUG_NAME
-                if (!LookupPrivilegeValue(IntPtr.Zero, SE_DEBUG_NAME, ref luid))
-                {
-                    if (!AddPrivilege(request.Token, SE_DEBUG_NAME))
-                    {
-                        CloseHandle(hProcess);
-                        CloseHandle(hToken);
-                        throw CreateWin32Exception("LookupPrivilegeValue");
-                    }
-                }
-
-                // Duplicate the token
-                if (!DuplicateTokenEx(hToken, TOKEN_ASSIGN_PRIMARY | TOKEN_ALL_ACCESS, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out hTokenDup))
-                {
-                    CloseHandle(hProcess);
-                    CloseHandle(hToken);
-                    throw CreateWin32Exception("DuplicateTokenEx");
-                }
-
-                // Set the session ID on the duplicated token
-                if (!SetTokenInformation(hTokenDup, TokenSessionId, ref dwSessionID, sizeof(uint)))
-                {
-                    CloseHandle(hProcess);
-                    CloseHandle(hToken);
-                    CloseHandle(hTokenDup);
-                    throw CreateWin32Exception("SetTokenInformation");
-                }
-
-                // Enable the SE_DEBUG_NAME privilege
-                var tp = new TOKEN_PRIVILEGES
-                {
-                    PrivilegeCount = 1,
-                    Privileges = new LUID_AND_ATTRIBUTES[1]
-                };
-                tp.Privileges[0] = new LUID_AND_ATTRIBUTES { Luid = luid, Attributes = SE_PRIVILEGE_ENABLED };
-                if (!AdjustTokenPrivileges(hTokenDup, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero))
-                {
-                    CloseHandle(hProcess);
-                    CloseHandle(hToken);
-                    CloseHandle(hTokenDup);
-                    throw CreateWin32Exception("AdjustTokenPrivileges");
-                }
-
-                var securityAttributes = SECURITY_ATTRIBUTES.Default;
-                var processStartInfo = new ProcessStartInfo
-                {
-                    FileName = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"system32\WindowsPowerShell\v1.0\powershell.exe"),
-                    Arguments = arguments,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                };
-                SetEnviromentPrivate(processStartInfo, request.Token);
-                StartupInfo = BuildStartupInfo(processStartInfo);
-                var environmentBlock = EnviromentBlock(processStartInfo);
-                var pi = new PROCESS_INFORMATION();
-                // Launch the process in the client's logon session.
-                var bResult = CreateProcessAsUser(hTokenDup, // client's access token
-                      null, // file to execute
-                      CreateCommandLine(Path.Combine(Environment.GetEnvironmentVariable("windir"), @"system32\WindowsPowerShell\v1.0\powershell.exe"), arguments), // command line
-                      IntPtr.Zero, // pointer to process SECURITY_ATTRIBUTES
-                      IntPtr.Zero, // pointer to thread SECURITY_ATTRIBUTES
-                      false, // handles inheritable ?
-                      CreationFlags(ProcessCreationFlags.CREATE_NO_WINDOW | ProcessCreationFlags.CREATE_BREAKAWAY_FROM_JOB),
-                      environmentBlock, // pointer to new environment block
-                      null, // name of current directory
-                      ref StartupInfo, // pointer to STARTUPINFO structure
-                      out pi // receives information about new process
-                  );
-                // End impersonation of client.
-                if (!bResult)
-                {
-                    throw CreateWin32Exception("CreateProcessAsUser");
-                }
-
-                var pr = Process.GetProcessById((int)pi.dwProcessId);
-                if (processStartInfo.RedirectStandardInput)
-                {
-                    InputField.SetValue(pr, new StreamWriter(_inputStream, Console.InputEncoding, 4096) { AutoFlush = true });
-                }
-                if (processStartInfo.RedirectStandardOutput)
-                    OutputField.SetValue(pr, new StreamReader(_outputStream, processStartInfo.StandardOutputEncoding ?? Console.OutputEncoding, true, 4096));
-                if (processStartInfo.RedirectStandardError)
-                    ErrorField.SetValue(pr, new StreamReader(_errorStream, processStartInfo.StandardErrorEncoding ?? Console.OutputEncoding, true, 4096));
-
-                processes.Add(pi.hProcess);
-                handlerToClose.Add(new HandlerToClose()
-                {
-                    PiProcess = pi.hProcess,
-                    PihThread = pi.hThread,
-                    Process = hProcess,
-                    Token = hToken,
-                    TokenDup = hTokenDup,
-                });
-            }
-
-            int index = WaitForMultipleObjects(requests.Count, processes.ToArray(), false, INFINITE);
-
-            int exitCode = 1618;
-
-            if (index >= 0 && index < requests.Count)
-            {
-                GetExitCodeProcess(processes[index], out exitCode);
-            }
-
-            for (int i = 0; i < processes.Count; i++)
-            {
-                if (i != index)
-                {
-                    TerminateProcess(processes[i], (uint)exitCode);
-                }
-            }
-
-            foreach (var closehandler in handlerToClose)
-            {
-                CloseHandle(closehandler.PiProcess);
-                CloseHandle(closehandler.PihThread);
-                CloseHandle(closehandler.Process);
-                CloseHandle(closehandler.Token);
-                CloseHandle(closehandler.TokenDup);
-            }
-
-            SetDebugPrivilege(false);
-
-            return new NxtAskKillProcessesResult()
-            {
-                SessionId = requests[index].SessionId,
-                ExitCode = exitCode
-            };
-        }
 
         [DllImport("advapi32.dll", EntryPoint = "CreateProcessAsUser", SetLastError = true, CharSet = CharSet.Ansi,
            CallingConvention = CallingConvention.StdCall)]
@@ -643,20 +467,6 @@ namespace PSADTNXT
             throw new Win32Exception("Error " + err + " from " + nativeFunction + " called by " + callerFunction, new Win32Exception(err));
         }
 
-        private static Win32Exception CreateWin32ExceptionWithDescription(string nativeFunction, string description,
-          [CallerMemberName] string callerFunction = null)
-        {
-            var err = Marshal.GetLastWin32Error();
-            throw new Win32Exception("Error " + err + ": " + description + " from " + nativeFunction + " called by " + callerFunction, new Win32Exception(err));
-        }
-
-        private static uint CreationFlags(ProcessCreationFlags flags)
-        {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                flags |= ProcessCreationFlags.CREATE_UNICODE_ENVIRONMENT;
-            return (uint)flags;
-        }
-
         [DllImport("userenv.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool DestroyEnvironmentBlock(IntPtr lpEnvironment);
@@ -664,81 +474,10 @@ namespace PSADTNXT
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern bool DuplicateTokenEx(IntPtr existingToken, uint desiredAccess, IntPtr tokenAttributes, SECURITY_IMPERSONATION_LEVEL impersonationLevel, TOKEN_TYPE tokenType, out IntPtr newToken);
 
-        private static IntPtr Elevate(IntPtr hToken)
-        {
-            if (hToken == IntPtr.Zero)
-                throw new ArgumentOutOfRangeException("hToken");
-
-            var pToken = hToken;
-            var pElevationType = IntPtr.Zero;
-            int cbSize = sizeof(TOKEN_ELEVATION_TYPE);
-            pElevationType = Marshal.AllocHGlobal(cbSize);
-            if (pElevationType == IntPtr.Zero)
-                throw new Win32Exception();
-
-            if (!GetTokenInformation(hToken,
-                TOKEN_INFORMATION_CLASS.TokenElevationType, pElevationType,
-                cbSize, out cbSize))
-                throw new Win32Exception();
-
-            var elevType = (TOKEN_ELEVATION_TYPE)
-                Marshal.ReadInt32(pElevationType);
-
-            if (elevType == TOKEN_ELEVATION_TYPE.TokenElevationTypeLimited)
-            {
-                var pLinkedToken = IntPtr.Zero;
-                cbSize = IntPtr.Size;
-                pLinkedToken = Marshal.AllocHGlobal(cbSize);
-
-                if (pLinkedToken == IntPtr.Zero)
-                    throw new Win32Exception();
-
-                if (!GetTokenInformation(hToken,
-                    TOKEN_INFORMATION_CLASS.TokenLinkedToken, pLinkedToken,
-                    cbSize, out cbSize))
-                    throw new Win32Exception();
-
-                pToken = Marshal.ReadIntPtr(pLinkedToken);
-                CloseHandle(hToken);
-            }
-
-            var luid = new LUID();
-
-            if (!LookupPrivilegeValue(IntPtr.Zero, SE_TCB_NAME, ref luid))
-                throw CreateWin32Exception("LookupPrivilegeValue");
-
-            var tp = new TOKEN_PRIVILEGES
-            {
-                PrivilegeCount = 1,
-                Privileges = new LUID_AND_ATTRIBUTES[1]
-            };
-            tp.Privileges[0] = new LUID_AND_ATTRIBUTES
-            {
-                Luid = new LUID
-                {
-                    LowPart = luid.LowPart,
-                    HighPart = luid.HighPart
-                },
-                Attributes = SE_PRIVILEGE_ENABLED
-            };
-
-            if (!AdjustTokenPrivileges(pToken, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero))
-            {
-                int err = Marshal.GetLastWin32Error();
-
-                var errStr = string.Format((err == ERROR_NOT_ALL_ASSIGNED)
-                    ? "CreateProcessInConsoleSession AdjustTokenPrivileges error: {0} Token does not have the privilege."
-                    : "CreateProcessInConsoleSession AdjustTokenPrivileges error: {0}", err);
-                throw new Win32Exception(err, errStr);
-            }
-
-            return pToken;
-        }
-
-        private static IntPtr EnviromentBlock(ProcessStartInfo processStartInfo)
+        private static IntPtr EnviromentBlock(StringDictionary dict)
         {
             byte[] envBlock = ToByteArray(
-                processStartInfo.EnvironmentVariables,
+                dict,
                 Environment.OSVersion.Platform == PlatformID.Win32NT
             );
             var enviromentBlock = GCHandle.Alloc(envBlock, GCHandleType.Pinned);
@@ -794,25 +533,38 @@ namespace PSADTNXT
             {
                 if (hSnapshot != IntPtr.Zero)
                 {
-                    CloseHandle(hSnapshot);
+                    CloseHandleIfExists(hSnapshot);
                 }
+            }
+        }
+
+        private static StringDictionary GetEnvironmentVariables(IntPtr primaryToken)
+        {
+            var lpEnvironment = IntPtr.Zero;
+            try
+            {
+                if (!CreateEnvironmentBlock(out lpEnvironment, primaryToken, false))
+                {
+                    throw CreateWin32Exception("CreateEnvironmentBlock");
+                }
+
+                if (lpEnvironment == IntPtr.Zero)
+                {
+                    return null;
+                }
+
+                var dic = new StringDictionary();
+                EnvironmentBlockToStringDictionary(dic, lpEnvironment);
+                return dic;
+            }
+            finally
+            {
+                DestroyEnvironmentBlock(lpEnvironment);
             }
         }
 
         [DllImport("kernel32.dll")]
         private static extern bool GetExitCodeProcess(IntPtr hProcess, out int lpExitCode);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr GetStdHandle(int nStdHandle);
-
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool GetTokenInformation(
-          IntPtr hToken,
-          TOKEN_INFORMATION_CLASS tokenInfoClass,
-          IntPtr pTokenInfo,
-          Int32 tokenInfoLength,
-          out Int32 returnLength);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool LookupPrivilegeValue(IntPtr lpSystemName, string lpname,
@@ -822,10 +574,7 @@ namespace PSADTNXT
         private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        private static extern bool OpenProcessToken(
-       IntPtr ProcessHandle,
-       uint DesiredAccess,
-       out IntPtr TokenHandle);
+        private static extern bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out IntPtr TokenHandle);
 
         [DllImport("kernel32", EntryPoint = "Process32First", SetLastError = true, CharSet = CharSet.Auto)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -838,119 +587,20 @@ namespace PSADTNXT
         [DllImport("kernel32.dll")]
         private static extern bool ProcessIdToSessionId(uint dwProcessId, out uint pSessionId);
 
-        private static IntPtr QueryAndDuplicateUserToken(uint sessionId)
-        {
-            IntPtr currentToken;
-            if (!WTSQueryUserToken(sessionId, out currentToken))
-            {
-                int err = Marshal.GetLastWin32Error();
-                switch ((WTSQueryUserTokenErrors)err)
-                {
-                    case WTSQueryUserTokenErrors.ERROR_FILE_NOT_FOUND:
-                        throw CreateWin32ExceptionWithDescription("WTSQueryUserToken", "'Session does not exist'");
-                    case WTSQueryUserTokenErrors.ERROR_ACCESS_DENIED:
-                        throw CreateWin32ExceptionWithDescription("WTSQueryUserToken", "'Must be running as LocalSystem account and must have the SE_TCB_NAME privilege.'");
-
-                    case WTSQueryUserTokenErrors.ERROR_INVALID_PARAMETER:
-                        throw CreateWin32ExceptionWithDescription("WTSQueryUserToken", "'Invalid parameter'");
-                    case WTSQueryUserTokenErrors.ERROR_PRIVILEGE_NOT_HELD:
-                        throw CreateWin32ExceptionWithDescription("WTSQueryUserToken", "'SE_TCB_NAME privilege missing'");
-
-                    case WTSQueryUserTokenErrors.ERROR_NO_TOKEN:
-                        throw CreateWin32ExceptionWithDescription("WTSQueryUserToken", "'No user logged-on for this session id'");
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-
-            IntPtr primaryToken;
-            if (!DuplicateTokenEx(currentToken, TOKEN_ASSIGN_PRIMARY | TOKEN_ALL_ACCESS, IntPtr.Zero,
-                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out primaryToken))
-            {
-                throw CreateWin32Exception("DuplicateTokenEx");
-            }
-
-            return primaryToken;
-        }
-
-        private static bool SetDebugPrivilege(bool bEnable)
-        {
-            // Enable or disable the SeDebugPrivilege
-            var hToken = IntPtr.Zero;
-            var sedebugnameValue = new LUID();
-            var tkp = new TOKEN_PRIVILEGES();
-            uint LastError = 0;
-
-            // Open the process token with TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY access
-            if (!OpenProcessToken(Process.GetCurrentProcess().Handle, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, out hToken))
-            {
-                return false;
-            }
-
-            // Lookup the LUID for SeDebugPrivilege
-            if (!LookupPrivilegeValue(IntPtr.Zero, SE_DEBUG_NAME, ref sedebugnameValue))
-            {
-                LastError = (uint)Marshal.GetLastWin32Error();
-                CloseHandle(hToken);
-                return false;
-            }
-
-            tkp.PrivilegeCount = 1;
-            tkp.Privileges = new LUID_AND_ATTRIBUTES[1];
-            tkp.Privileges[0] = new LUID_AND_ATTRIBUTES();
-            tkp.Privileges[0].Luid = sedebugnameValue;
-            tkp.Privileges[0].Attributes = bEnable ? SE_PRIVILEGE_ENABLED : (uint)0;
-
-            // Adjust the token privileges
-            if (!AdjustTokenPrivileges(hToken, false, ref tkp, Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)), IntPtr.Zero, IntPtr.Zero))
-            {
-                LastError = (uint)Marshal.GetLastWin32Error();
-                CloseHandle(hToken);
-                return false;
-            }
-
-            // Check the result of AdjustTokenPrivileges
-            LastError = (uint)Marshal.GetLastWin32Error();
-            if (LastError == 0x514) // ERROR_NOT_ALL_ASSIGNED
-            {
-                CloseHandle(hToken);
-                return false;
-            }
-
-            // Close the token handle
-            CloseHandle(hToken);
-
-            return true;
-        }
-
-        private static void SetEnviromentPrivate(ProcessStartInfo processStartInfo, IntPtr primaryToken)
-        {
-            var lpEnvironment = IntPtr.Zero;
-            try
-            {
-                if (!CreateEnvironmentBlock(out lpEnvironment, primaryToken, false))
-                {
-                    throw CreateWin32Exception("CreateEnvironmentBlock");
-                }
-
-                if (lpEnvironment == IntPtr.Zero)
-                {
-                    return;
-                }
-
-                var dic = processStartInfo.EnvironmentVariables;
-                dic.Clear();
-                EnvironmentBlockToStringDictionary(dic, lpEnvironment);
-            }
-            finally
-            {
-                DestroyEnvironmentBlock(lpEnvironment);
-            }
-        }
-
         [DllImport("advapi32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool SetTokenInformation(IntPtr TokenHandle, uint TokenInformationClass, ref uint TokenInformation, uint TokenInformationLength);
+
+        private static void TerminateOtherProcesses(List<IntPtr> processes, int currentIndex, uint exitCode)
+        {
+            for (int i = 0; i < processes.Count; i++)
+            {
+                if (i != currentIndex)
+                {
+                    TerminateProcess(processes[i], exitCode);
+                }
+            }
+        }
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
@@ -990,21 +640,18 @@ namespace PSADTNXT
         [DllImport("kernel32.dll")]
         private static extern int WaitForMultipleObjects(int nCount, IntPtr[] lpHandles, bool bWaitAll, uint dwMilliseconds);
 
-        [DllImport("Wtsapi32.dll", SetLastError = true)]
-        private static extern bool WTSQueryUserToken(uint sessionId, out IntPtr phToken);
-
         [StructLayout(LayoutKind.Sequential)]
         private struct LUID
         {
-            public int LowPart;
-            public int HighPart;
+            public UInt32 LowPart;
+            public UInt32 HighPart;
         }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct LUID_AND_ATTRIBUTES
         {
             public LUID Luid;
-            public uint Attributes;
+            public UInt32 Attributes;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -1012,22 +659,22 @@ namespace PSADTNXT
         {
             public IntPtr hProcess;
             public IntPtr hThread;
-            public uint dwProcessId;
-            public uint dwThreadId;
+            public UInt32 dwProcessId;
+            public UInt32 dwThreadId;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
         private struct PROCESSENTRY32
         {
-            public uint dwSize;
-            public uint cntUsage;
-            public uint th32ProcessID;
+            public UInt32 dwSize;
+            public UInt32 cntUsage;
+            public UInt32 th32ProcessID;
             public IntPtr th32DefaultHeapID;
-            public uint th32ModuleID;
-            public uint cntThreads;
-            public uint th32ParentProcessID;
+            public UInt32 th32ModuleID;
+            public UInt32 cntThreads;
+            public UInt32 th32ParentProcessID;
             public int pcPriClassBase;
-            public uint dwFlags;
+            public UInt32 dwFlags;
 
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
             public string szExeFile;
@@ -1040,35 +687,29 @@ namespace PSADTNXT
             public String lpReserved;
             public String lpDesktop;
             public String lpTitle;
-            public uint dwX;
-            public uint dwY;
-            public uint dwXSize;
-            public uint dwYSize;
-            public uint dwXCountChars;
-            public uint dwYCountChars;
-            public uint dwFillAttribute;
-            public uint dwFlags;
+            public UInt32 dwX;
+            public UInt32 dwY;
+            public UInt32 dwXSize;
+            public UInt32 dwYSize;
+            public UInt32 dwXCountChars;
+            public UInt32 dwYCountChars;
+            public UInt32 dwFillAttribute;
+            public UInt32 dwFlags;
             public short wShowWindow;
             public short cbReserved2;
             public IntPtr lpReserved2;
-            public SafeHandleZeroOrMinusOneIsInvalid hStdInput;
-            public SafeHandleZeroOrMinusOneIsInvalid hStdOutput;
-            public SafeHandleZeroOrMinusOneIsInvalid hStdError;
+            public IntPtr hStdInput;
+            public IntPtr hStdOutput;
+            public IntPtr hStdError;
         }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct TOKEN_PRIVILEGES
         {
-            public uint PrivilegeCount;
+            public UInt32 PrivilegeCount;
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
             public LUID_AND_ATTRIBUTES[] Privileges;
-        }
-
-        private class CreateProcessRequest
-        {
-            public uint SessionId { get; set; }
-            public IntPtr Token { get; set; }
         }
 
         private class HandlerToClose
