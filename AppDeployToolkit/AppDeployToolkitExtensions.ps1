@@ -6852,7 +6852,7 @@ Function Show-NxtInstallationWelcome {
     .PARAMETER MinimizeWindows
     	Specifies whether to minimize other windows when displaying prompt. Defaults to the corresponding value 'MINIMIZEALLWINDOWS' from the Setup.cfg.
     .PARAMETER TopMost
-    	Specifies whether the windows is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
+    	Specifies whether the window is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
     .PARAMETER ForceCountdown
     	Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
     .PARAMETER CustomText
@@ -6979,7 +6979,7 @@ Function Show-NxtInstallationWelcome {
 		[Switch]$UserCanAbort = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER)),
 		## Specifies if the ContinueType should be applied on error
 		[Parameter(Mandatory = $false)]
-		[Switch]$APPLYCONTINUETYPEONERROR = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.APPLYCONTINUETYPEONERROR)),
+		[Switch]$ApplyContinueTypeOnError = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.APPLYCONTINUETYPEONERROR)),
 		## Specifies the script root path
 		[Parameter(Mandatory = $false)]
 		[string]$ScriptRoot = $scriptRoot
@@ -7161,12 +7161,12 @@ Function Show-NxtInstallationWelcome {
 					}
 					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
 					ElseIf ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$APPLYCONTINUETYPEONERROR
+						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError
 					}
 				}
 				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
 				ElseIf (($runningProcessDescriptions) -or ($forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$APPLYCONTINUETYPEONERROR
+					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError
 				}
 				#  If there is no deferral and no processes running, break the while loop
 				Else {
@@ -7397,7 +7397,7 @@ Function Show-NxtWelcomePrompt {
 	.PARAMETER MinimizeWindows
 		Specifies whether to minimize other windows when displaying prompt. Default: $true.
 	.PARAMETER TopMost
-		Specifies whether the windows is the topmost window. Default: $true.
+		Specifies whether the window is the topmost window. Default: $true.
 	.PARAMETER CustomText
 		Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
 	.PARAMETER ContinueType
@@ -7517,7 +7517,7 @@ Function Show-NxtWelcomePrompt {
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppName" -Value $appName
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVersion" -Value $appVersion
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
-		Write-Log "Looking for Sessions..."
+		Write-Log "Searching for Sessions..." -Source ${CmdletName}
 		[int]$welcomeExitCode = 1618;
 		[PsObject]$activeSessions = Get-LoggedOnUser
 		if((Get-Process -Id $PID).SessionId -eq 0)

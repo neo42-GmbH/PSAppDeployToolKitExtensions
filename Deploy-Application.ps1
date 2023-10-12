@@ -72,7 +72,7 @@ function Start-NxtProcess {
 	.SYNOPSIS
 		Start a process by filename.
 	.DESCRIPTION
-		Replacement for the native Start-Process cmdlet using .NET Process Object.
+		Replacement for the native Start-Process cmdlet using .NET process Object.
 	.PARAMETER FilePath
 		Path for the filename that should be called.
 	.PARAMETER Arguments
@@ -133,7 +133,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
 			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
 		}
 	}
-	[system.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -File `"$file`"$arguments"
+	[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -File `"$file`"$arguments"
 	$process.WaitForExit()
     [int]$exitCode = $process.ExitCode
     exit $exitCode
