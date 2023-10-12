@@ -1409,8 +1409,9 @@ function Execute-NxtBitRockInstaller {
 		if ($ContinueOnError) {
 			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
+		if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
 		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
@@ -1749,8 +1750,9 @@ function Execute-NxtInnoSetup {
 		if ($ContinueOnError) {
 			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
+		if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
 		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
@@ -1851,8 +1853,6 @@ function Execute-NxtMSI {
 		Include matches against updates and hotfixes in results.
 	.PARAMETER NoWait
 		Immediately continue after executing the process.
-	.PARAMETER IgnoreExitCodes
-		List the exit codes to ignore or * to ignore all exit codes.
 	.PARAMETER AcceptedExitCodes
 		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
 	.PARAMETER PriorityClass	
@@ -2014,17 +2014,9 @@ function Execute-NxtMSI {
 		if ([string]::IsNullOrEmpty($AddParameters)) {
 			$null = $PSBoundParameters.Remove('AddParameters')
 		}
-		if ($false -eq [string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			if ($false -eq [string]::IsNullOrEmpty($AcceptedRebootCodes)){
-				## * as a wildcard for all exit codes could be applied in a future version, but are not supported right now.
-				[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes,$AcceptedRebootCodes"
-			}
-			else {
-				[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedExitCodes"
-			}
-		}
-		elseif ($false -eq [string]::IsNullOrEmpty($AcceptedRebootCodes)){
-			[string]$PSBoundParameters["IgnoreExitCodes"] = "$AcceptedRebootCodes"
+		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
+		if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+			[string]$PSBoundParameters["IgnoreExitCodes"] = "$ignoreExitCodes"
 		}
 		if (![string]::IsNullOrEmpty($Log)) {
 			[string]$msiLogName = ($Log | Split-Path -Leaf) -replace '\.log$',[string]::Empty
@@ -2261,8 +2253,9 @@ function Execute-NxtNullsoft {
 		if ($ContinueOnError) {
 			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
-		if (![string]::IsNullOrEmpty($AcceptedExitCodes)) {
-			$executeProcessSplat.Add('IgnoreExitCodes', $AcceptedExitCodes)
+		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
+		if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
 		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
@@ -3933,6 +3926,15 @@ function Get-NxtRegisterOnly {
 		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
 		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyIsDisplayName
+		Defines if the UninstallKey is the DisplayName of the application package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallKeyContainsWildCards
+		Defines if the UninstallKey contains wildcards.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DisplayNamesToExclude
+		Defines an array of DisplayNames to exclude from the search.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 	.LINK
@@ -3966,7 +3968,16 @@ function Get-NxtRegisterOnly {
 		$RegisterPackage = $global:registerPackage,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyIsDisplayName = $global:PackageConfig.UninstallKeyIsDisplayName,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
+		[Parameter(Mandatory = $false)]
+		[array]
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExclude
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
@@ -4003,7 +4014,9 @@ function Get-NxtRegisterOnly {
 			}
 		}
 		else {
-			[string]$currentlyDetectedDisplayVersion = (Get-NxtCurrentDisplayVersion).DisplayVersion
+			[string]$currentlyDetectedDisplayVersion = (
+					Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+				).DisplayVersion
 			if ($true -eq [string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
 				Write-Output $false
@@ -4467,8 +4480,9 @@ function Initialize-NxtEnvironment {
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
 		Defaults to "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)".
 	.PARAMETER App
+		This parameter can not be set manually for this function!
 		Defines the path to a local persistent cache for installation files.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defaults to the corresponding value from the PackageConfig object after it has been set within this function.
 	.PARAMETER DeploymentType
 		The type of deployment that is performed.
 		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
@@ -4815,8 +4829,9 @@ function Install-NxtApplication {
 					if (![string]::IsNullOrEmpty($InstPara)) {
 						[string]$executeParams["Parameters"] = "$InstPara"
 					}
-					if (![string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
-						[string]$ExecuteParams["IgnoreExitCodes"] = "$AcceptedInstallExitCodes"
+					[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedInstallExitCodes -ExitCodeString2 $AcceptedInstallRebootCodes
+					if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+						[string]$ExecuteParams["IgnoreExitCodes"] = "$ignoreExitCodes"
 					}
 					[PsObject]$executionResult = Execute-Process @executeParams
 					if ($($executionResult.ExitCode) -in ($AcceptedInstallRebootCodes -split ",")) {
@@ -4879,6 +4894,63 @@ function Install-NxtApplication {
 		}
 		Write-Log -Message $($installResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 		Write-Output $installResult
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Move-NxtItem
+function Merge-NxtExitCodes {
+	<#
+	.SYNOPSIS
+		Merges two exit code strings.
+	.DESCRIPTION
+		Merges two exit code strings. If one of the strings is "*" the result will be "*".
+	.PARAMETER ExitCodeString1
+		First exit code string.
+	.PARAMETER ExitCodeString2
+		Second exit code string.
+	.EXAMPLE
+		Merge-NxtExitCodes -ExitCodeString1 "129,1256" -ExitCodeString2 "129,34,55"
+		Merges the two exit code strings to "129,1256,34,55".
+	.EXAMPLE
+		Merge-NxtExitCodes -ExitCodeString1 "129,1256" -ExitCodeString2 "*"
+		Combines the two exit code strings to "*".
+	.OUTPUTS
+		System.String.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
+		[string]$ExitCodeString1,
+		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
+		[string]$ExitCodeString2
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[array]$ExitCodeObj = @()
+		if ($ExitCodeString1 -eq "*" -or $ExitCodeString2 -eq "*") {
+			$ExitCodeObj = "*"
+		}
+		else {
+			if (-not [string]::IsNullOrEmpty($ExitCodeString1)) { 
+				$ExitCodeObj += $ExitCodeString1 -split ","
+			}
+			if (-not [string]::IsNullOrEmpty($ExitCodeString2)) { 
+				$ExitCodeObj += $ExitCodeString2 -split ","
+			}
+			$ExitCodeObj = $ExitCodeObj | Select-Object -Unique
+			[string]$IgnoreExitCodes = $ExitCodeObj -join ","
+		}
+		return $IgnoreExitCodes
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -4956,8 +5028,15 @@ function Read-NxtSingleXmlNode {
 		Path to the xml file.
 	.PARAMETER SingleNodeName
 		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp).
+	.PARAMETER AttributeName
+		Attribute name to be read from the node.
+		Default is "Innertext".
 	.EXAMPLE
 		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
+		Will return the inner text of the node.
+	.EXAMPLE
+		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -AttributeName "UserName"
+		Will return the value of the attribute "UserName" of the node.
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -4970,7 +5049,10 @@ function Read-NxtSingleXmlNode {
 		$XmlFilePath,
 		[Parameter(Mandatory = $true)]
 		[string]
-		$SingleNodeName
+		$SingleNodeName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AttributeName = "Innertext"
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4980,9 +5062,9 @@ function Read-NxtSingleXmlNode {
 		try {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
-			Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).InnerText)
+			Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).$AttributeName)
 		}
-		finally {
+		catch {
 			Write-Log -Message "Failed to read single node '$SingleNodeName' from xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
@@ -5085,6 +5167,9 @@ function Register-NxtPackage {
 	.PARAMETER $UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
+	.PARAMETER SoftMigrationOccurred
+		Defines if a SoftMigration occurred.
+		Defaults to [string]::Empty.
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -5185,7 +5270,10 @@ function Register-NxtPackage {
 		$LastErrorMessage = $global:LastErrorMessage,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$UserPartDir = $global:UserPartDir
+		$UserPartDir = $global:UserPartDir,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SoftMigrationOccurred = [string]::Empty
 	)
 	
 	Begin {
@@ -5251,6 +5339,9 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'Installed' -Type 'Dword' -Value '1'
+			if ($false -eq [string]::IsNullOrEmpty($SoftMigrationOccurred)) {
+				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'SoftMigrationOccurred' -Value $SoftMigrationOccurred
+			}
 			Remove-RegistryKey "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")"
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
@@ -5923,8 +6014,6 @@ function Repair-NxtApplication {
 		[int]$logMessageSeverity = 1
 		[hashtable]$executeNxtParams = @{
 			Action	             = 'Repair'
-			ExitOnProcessFailure = $false
-			PassThru             = $true
 		}
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
 			$repairResult.MainExitCode = $mainExitCode
@@ -7653,7 +7742,7 @@ function Switch-NxtMSIReinstallMode {
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check ReinstallMode for an expected msi display version!. Returning [$ReinstallMode]." -Severity 2 -Source ${cmdletName}
 			}
 			else {
-				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion
+				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
 				If ($false -eq $displayVersionResult.UninstallKeyExists) {
 					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
 					throw "No repair function executable under current conditions!"
@@ -8586,8 +8675,9 @@ function Uninstall-NxtApplication {
 							if (![string]::IsNullOrEmpty($UninstPara)) {
 								[string]$executeParams["Parameters"] = "$UninstPara"
 							}
-							if (![string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-								[string]$executeParams["IgnoreExitCodes"] = "$AcceptedUninstallExitCodes"
+							[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedUninstallExitCodes -ExitCodeString2 $AcceptedUninstallRebootCodes
+							if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+								[string]$executeParams["IgnoreExitCodes"] = "$ignoreExitCodes"
 							}
 							[PsObject]$executionResult = Execute-Process @executeParams
 							if ($($executionResult.ExitCode) -in ($AcceptedUninstallRebootCodes -split ",")) {
@@ -9914,7 +10004,7 @@ function Watch-NxtRegistryKey {
 				}
 				$waited += 1
 				[string]$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
-				if ($null -ne $key) {
+				if ($false -eq [string]::IsNullOrEmpty($key)) {
 					Write-Output $true
 					return
 				}
@@ -9967,7 +10057,7 @@ function Watch-NxtRegistryKeyIsRemoved {
 				}
 				$waited += 1
 				[string]$key = Get-RegistryKey -Key $RegistryKey -ReturnEmptyKeyIfExists
-				if ($null -eq $key) {
+				if ($true -eq [string]::IsNullOrEmpty($key)) {
 					Write-Output $true
 					return
 				}

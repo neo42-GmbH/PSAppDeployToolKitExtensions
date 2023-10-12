@@ -68,12 +68,12 @@ function Update-NxtPSAdtPackage {
     if (-not (Test-Path -Path $LatestVersionPath)) {
         throw "LatestVersionPath does not exist"
     }
-    [string]$newVersionContent = Get-Content -raw -Path "$LatestVersionPath\Deploy-Application.ps1"
+    [string]$newVersionContent = Get-Content -Raw -Path "$LatestVersionPath\Deploy-Application.ps1"
     [string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
     #check for Version -ge 2023.06.12.01-53
     if ($existingContent -match "ConfigVersion:") {
-        [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "Version: " -EndTag "	ConfigVersion:"
-    }else{
+        [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	ConfigVersion:"
+    } else {
         [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:"
     }
     if ([int]($version.TrimEnd("`n") -split "-")[1] -lt 53) {
@@ -82,8 +82,7 @@ function Update-NxtPSAdtPackage {
     [string]$newVersion = Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:"
     if ($version.TrimEnd("`n") -eq $newVersion.TrimEnd("`n")) {
         $versionInfo = " ... but seems already up-to-date (same version tag!)"
-    }
-    else {
+    } else {
         $versionInfo = [string]::Empty
     }
     [string[]]$customFunctionNames = foreach ($line in ($existingContent -split "`n")){
@@ -99,11 +98,10 @@ function Update-NxtPSAdtPackage {
     [array]$newCustomFunctions = "CustomReinstallPostUninstallOnError","CustomReinstallPostInstallOnError","CustomInstallEndOnError","CustomUninstallEndOnError"
     foreach ($newcustomFunctionName in $newCustomFunctions) {
         if (-not ($customFunctionNames.contains($newcustomFunctionName))) {
-            [string]$content = $existingContent
-            $resultContent = $null
+            [string]$addContent = $null
             switch ($newcustomFunctionName) {
                 "CustomReinstallPostUninstallOnError" {
-                    $resultContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomReinstallPostUninstall {" -ContentToInsert "function CustomReinstallPostUninstallOnError {
+                    $addContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomReinstallPostUninstall {" -ContentToInsert "function CustomReinstallPostUninstallOnError {
     param (
         [Parameter(Mandatory = `$true)]
         [PSADTNXT.NxtApplicationResult]
@@ -120,7 +118,7 @@ function Update-NxtPSAdtPackage {
 "
                 }
                 "CustomReinstallPostInstallOnError" {
-                    $resultContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomReinstallPostInstall {" -ContentToInsert "function CustomReinstallPostInstallOnError {
+                    $addContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomReinstallPostInstall {" -ContentToInsert "function CustomReinstallPostInstallOnError {
     param (
         [Parameter(Mandatory = `$true)]
         [PSADTNXT.NxtApplicationResult]
@@ -137,7 +135,7 @@ function Update-NxtPSAdtPackage {
 "
                 }
                 "CustomInstallEndOnError" {
-                    $resultContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomInstallEnd {" -ContentToInsert "function CustomInstallEndOnError {
+                    $addContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomInstallEnd {" -ContentToInsert "function CustomInstallEndOnError {
     param (
         [Parameter(Mandatory = `$true)]
         [PSADTNXT.NxtApplicationResult]
@@ -154,7 +152,7 @@ function Update-NxtPSAdtPackage {
 "
                 }
                 "CustomUninstallEndOnError" {
-                    $resultContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomUninstallEnd {" -ContentToInsert "function CustomUninstallEndOnError {
+                    $addContent = Add-ContentBeforeTag -Content $existingContent -StartTag "function CustomUninstallEnd {" -ContentToInsert "function CustomUninstallEndOnError {
     param (
         [Parameter(Mandatory = `$true)]
         [PSADTNXT.NxtApplicationResult]
@@ -171,9 +169,9 @@ function Update-NxtPSAdtPackage {
 "
                 }
             }
-            if (-not [string]::IsNullOrEmpty($resultContent)) {
+            if (-not [string]::IsNullOrEmpty($addContent)) {
                 Write-Output "... adding custom function: $newcustomFunctionName"
-                Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $resultContent -NoNewline
+                Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $addContent -NoNewline
                 #re-read content
                 [string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
             }
@@ -187,6 +185,13 @@ function Update-NxtPSAdtPackage {
 
     #also change wrong installphase names of some custom sections
     [string]$existingContent = $existingContent.Replace("installPhase = 'CustomPostInstallAndReinstall'","installPhase = 'CustomInstallAndReinstallEnd'")
+
+    ## re-read custom function names
+    [string[]]$customFunctionNames = foreach ($line in ($existingContent -split "`n")){
+        if ($line -match "function Custom") {
+            $line -split " " | Select-Object -Index 1
+        }
+    }
 
     foreach ($customFunctionName in $customFunctionNames) {
         [string]$startTag = "#region $customFunctionName content"
