@@ -4592,7 +4592,6 @@ function Install-NxtApplication {
 			[int]$logMessageSeverity = 1
 		}
 		else {
-			$installResult.Success = $false
 			[int]$logMessageSeverity = 1
 			[hashtable]$executeNxtParams = @{
 				Action                        = 'Install'
@@ -5873,15 +5872,14 @@ function Repair-NxtApplication {
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$repairResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		$repairResult.Success = $false
 		[int]$logMessageSeverity = 1
 		[hashtable]$executeNxtParams = @{
 			Action	             = 'Repair'
 		}
 		if ([string]::IsNullOrEmpty($UninstallKey)) {
-			$repairResult.MainExitCode = $mainExitCode
+			$repairResult.MainExitCode = 70001
 			$repairResult.ErrorMessage = "No repair function executable - missing value for parameter 'UninstallKey'!"
-			$repairResult.ErrorMessagePSADT = "expected function parameter 'UninstallKey' is empty"
+			$repairResult.ErrorMessagePSADT = "expected function parameter 'UninstallKey' must not be empty"
 			$repairResult.Success = $false
 			[int]$logMessageSeverity = 3
 		}
@@ -5890,7 +5888,7 @@ function Repair-NxtApplication {
 			if ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
 				$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
 				$repairResult.Success = $null
-				[int]$logMessageSeverity = 2
+				[int]$logMessageSeverity = 1
 			}
 			else {
 				if (![string]::IsNullOrEmpty($RepairPara)) {
@@ -5913,9 +5911,6 @@ function Repair-NxtApplication {
 				}
 				## parameter -RepairFromSource $true runs 'msiexec /fvomus ...'
 				[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
-				if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
-					$repairResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
-				}
 				$repairResult.ApplicationExitCode = $executionResult.ExitCode
 				if ($($executionResult.ExitCode) -in ($AcceptedRepairRebootCodes -split ",")) {
 					$repairResult.MainExitCode = 3010
@@ -5924,6 +5919,9 @@ function Repair-NxtApplication {
 				else {
 					$repairResult.MainExitCode = $executionResult.ExitCode
 					$repairResult.ErrorMessage = "Repair done with return code '$($executionResult.ExitCode)'."
+				}
+				if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
+					$repairResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
 				}
 				## Delay for filehandle release etc. to occur.
 				Start-Sleep -Seconds 5
@@ -5935,7 +5933,6 @@ function Repair-NxtApplication {
 					) -or 
 					($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
 					$repairResult.ErrorMessage = "Repair of '$AppName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
-					$repairResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 					$repairResult.Success = $false
 					[int]$logMessageSeverity = 3
 				}
@@ -9036,160 +9033,161 @@ function Uninstall-NxtApplication {
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
 		if ($UninstallMethod -eq "none") {
-			$uninstallResult.ApplicationExitCode = $null
 			$uninstallResult.ErrorMessage = "An uninstallation method was NOT set. Skipping a default process execution."
 			$uninstallResult.Success = $null
 			[int]$logMessageSeverity = 1
 		}
 		else {
-			$uninstallResult.Success = $false
 			[int]$logMessageSeverity = 1
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				Write-Log -Message "UninstallKey value NOT set. Skipping test for installed application via registry. Checking for UninstFile instead..." -Source ${CmdletName}
-				$uninstallResult.Success = $null
 				if ([string]::IsNullOrEmpty($UninstFile)) {
-					$uninstallResult.ApplicationExitCode = $null
 					$uninstallResult.ErrorMessage = "Value 'UninstFile' NOT set. Uninstallation NOT executed."
 					[int]$logMessageSeverity = 2
 				}
 				else {
 					if ([System.IO.File]::Exists($UninstFile)) {
 						Write-Log -Message "File for running an uninstallation found: '$UninstFile'. Executing the uninstallation..." -Source ${CmdletName}
-						Execute-Process -Path "$UninstFile" -Parameters "$UninstPara"
-						$uninstallResult.ApplicationExitCode = $LastExitCode
-						$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($uninstallResult.ApplicationExitCode)'."
-						[int]$logMessageSeverity = 1
 					}
 					else {
+						$uninstallResult.MainExitCode = 70001
+						## 2 for ERROR_FILE_NOT_FOUND
+						$uninstallResult.ApplicationExitCode = 2
 						$uninstallResult.ErrorMessage = "Expected file for running an uninstallation NOT found: '$UninstFile'. Uninstallation NOT executed. Possibly the expected application is not installed on system anymore!"
+						$uninstallResult.ErrorMessagePSADT = "ERROR_FILE_NOT_FOUND: The system cannot find the file specified."
+						$uninstallResult.Success = $false
 						[int]$logMessageSeverity = 2
 					}
 				}
 			}
 			else {
-				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod)) {
-
-					[hashtable]$executeNxtParams = @{
-						Action                        = 'Uninstall'
-						UninstallKeyIsDisplayName     = $UninstallKeyIsDisplayName
-						UninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
-						DisplayNamesToExclude         = $DisplayNamesToExclude
-					}
-					if ($false -eq [string]::IsNullOrEmpty($UninstPara)) {
-						if ($AppendUninstParaToDefaultParameters) {
-							[string]$executeNxtParams["AddParameters"] = "$UninstPara"
-						}
-						else {
-							[string]$executeNxtParams["Parameters"] = "$UninstPara"
-						}
-					}
-					if ([string]::IsNullOrEmpty($UninstallKey)) {
-						[string]$internalInstallerMethod = [string]::Empty
-					}
-					else {
-						[string]$internalInstallerMethod = $UninstallMethod
-					}
-					if($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
-						if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
-							[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedUninstallExitCodes"
-						}
-						if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallRebootCodes))  {
-							[string]$executeNxtParams["AcceptedRebootCodes"] = "$AcceptedUninstallRebootCodes"
-						}
-					}
-					switch -Wildcard ($internalInstallerMethod) {
-						MSI {
-							[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
-						}
-						"Inno*" {
-							[PsObject]$executionResult = Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
-						}
-						Nullsoft {
-							[PsObject]$executionResult = Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
-						}
-						"BitRock*" {
-							[PsObject]$executionResult = Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
-						}
-						default {
-							[hashtable]$executeParams = @{
-								Path	             = "$UninstFile"
-								ExitOnProcessFailure = $false
-								PassThru             = $true
-							}
-							if (![string]::IsNullOrEmpty($UninstPara)) {
-								[string]$executeParams["Parameters"] = "$UninstPara"
-							}
-							[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedUninstallExitCodes -ExitCodeString2 $AcceptedUninstallRebootCodes
-							if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
-								[string]$executeParams["IgnoreExitCodes"] = "$ignoreExitCodes"
-							}
-							[PsObject]$executionResult = Execute-Process @executeParams
-							if ($($executionResult.ExitCode) -in ($AcceptedUninstallRebootCodes -split ",")) {
-								Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
-								Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
-							}
-						}
-					}
-					$uninstallResult.ApplicationExitCode = $executionResult.ExitCode
-					if ($($executionResult.ExitCode) -in ($AcceptedUninstallRebootCodes -split ",")) {
-						$uninstallResult.MainExitCode = 3010
-						$uninstallResult.ErrorMessage = "Uninstallation done with custom reboot return code '$($executionResult.ExitCode)'."
-					}
-					else {
-						$uninstallResult.MainExitCode = $executionResult.ExitCode
-						$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($executionResult.ExitCode)'."
-					}
-					if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
-						$uninstallResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
-					}
-					## Delay for filehandle release etc. to occur.
-					Start-Sleep -Seconds 5
-
-					## Test successfull uninstallation
-					if ([string]::IsNullOrEmpty($UninstallKey)) {
-						$uninstallResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull uninstallation of '$AppName' via registry."
-						$uninstallResult.Success = $null
-						[int]$logMessageSeverity = 2
-					}
-					else {
-						if ($false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)) {
-							$uninstallResult.ErrorMessage = "Uninstallation RegistryAndProcessCondition of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
-							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-							$uninstallResult.Success = $false
-							[int]$logMessageSeverity = 3
-						}
-						else {
-							if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
-								$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
-								$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-								$uninstallResult.Success = $false
-								[int]$logMessageSeverity = 3
-							}
-							else {
-								$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' was successful."
-								$uninstallResult.Success = $true
-								[int]$logMessageSeverity = 1
-							}
-						}
-					}
-					if (
-						($executionResult.ExitCode -notin ($AcceptedUninstallExitCodes -split ",")) -and
-						($executionResult.ExitCode -notin ($AcceptedUninstallRebootCodes -split ",")) -and
-						($executionResult.ExitCode -notin 0, 1641, 3010)
-					) {
-						$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
-						$uninstallResult.Success = $false
-						[int]$logMessageSeverity = 3
-					}
+				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod) ) {
+					[bool]$appIsInstalled=$true
 				}
 				else {
+					[bool]$appIsInstalled=$false
 					$uninstallResult.ErrorMessage = "Uninstall function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected application seems not to be installed on system!"
 					$uninstallResult.Success = $null
 					[int]$logMessageSeverity = 1
 				}
 			}
-		}
+			if ( ([System.IO.File]::Exists($UninstFile)) -or ($true -eq $appIsInstalled) ) {
 
+				[hashtable]$executeNxtParams = @{
+					Action                        = 'Uninstall'
+					UninstallKeyIsDisplayName     = $UninstallKeyIsDisplayName
+					UninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
+					DisplayNamesToExclude         = $DisplayNamesToExclude
+				}
+				if ($false -eq [string]::IsNullOrEmpty($UninstPara)) {
+					if ($AppendUninstParaToDefaultParameters) {
+						[string]$executeNxtParams["AddParameters"] = "$UninstPara"
+					}
+					else {
+						[string]$executeNxtParams["Parameters"] = "$UninstPara"
+					}
+				}
+				if ([string]::IsNullOrEmpty($UninstallKey)) {
+					[string]$internalInstallerMethod = [string]::Empty
+				}
+				else {
+					[string]$internalInstallerMethod = $UninstallMethod
+				}
+				if($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
+					if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
+						[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedUninstallExitCodes"
+					}
+					if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallRebootCodes))  {
+						[string]$executeNxtParams["AcceptedRebootCodes"] = "$AcceptedUninstallRebootCodes"
+					}
+				}
+				switch -Wildcard ($internalInstallerMethod) {
+					MSI {
+						[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Path "$UninstallKey" -Log "$UninstLogFile"
+					}
+					"Inno*" {
+						[PsObject]$executionResult = Execute-NxtInnoSetup @executeNxtParams -UninstallKey "$UninstallKey" -Log "$UninstLogFile"
+					}
+					Nullsoft {
+						[PsObject]$executionResult = Execute-NxtNullsoft @executeNxtParams -UninstallKey "$UninstallKey"
+					}
+					"BitRock*" {
+						[PsObject]$executionResult = Execute-NxtBitRockInstaller @executeNxtParams -UninstallKey "$UninstallKey"
+					}
+					default {
+						[hashtable]$executeParams = @{
+							Path	             = "$UninstFile"
+							ExitOnProcessFailure = $false
+							PassThru             = $true
+						}
+						if (![string]::IsNullOrEmpty($UninstPara)) {
+							[string]$executeParams["Parameters"] = "$UninstPara"
+						}
+							[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedUninstallExitCodes -ExitCodeString2 $AcceptedUninstallRebootCodes
+						if (![string]::IsNullOrEmpty($ignoreExitCodes)) {
+							[string]$executeParams["IgnoreExitCodes"] = "$ignoreExitCodes"
+						}
+						[PsObject]$executionResult = Execute-Process @executeParams
+						if ($($executionResult.ExitCode) -in ($AcceptedUninstallRebootCodes -split ",")) {
+							Write-Log -Message "A custom reboot return code was detected '$($executionResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
+							Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
+						}
+					}
+				}
+				$uninstallResult.ApplicationExitCode = $executionResult.ExitCode
+				if ($($executionResult.ExitCode) -in ($AcceptedUninstallRebootCodes -split ",")) {
+					$uninstallResult.MainExitCode = 3010
+					$uninstallResult.ErrorMessage = "Uninstallation done with custom reboot return code '$($executionResult.ExitCode)'."
+				}
+				else {
+					$uninstallResult.MainExitCode = $executionResult.ExitCode
+					$uninstallResult.ErrorMessage = "Uninstallation done with return code '$($executionResult.ExitCode)'."
+				}
+				if ($false -eq [string]::IsNullOrEmpty($executionResult.StdErr)) {
+					$uninstallResult.ErrorMessagePSADT = "$($executionResult.StdErr)"
+				}
+				## Delay for filehandle release etc. to occur.
+				Start-Sleep -Seconds 5
+
+				## Test successfull uninstallation
+				if ([string]::IsNullOrEmpty($UninstallKey)) {
+					$uninstallResult.ErrorMessage = "UninstallKey value NOT set. Skipping test for successfull uninstallation of '$AppName' via registry."
+					$uninstallResult.Success = $null
+					[int]$logMessageSeverity = 2
+				}
+				else {
+					if ($false -eq (Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $PreSuccessCheckTotalSecondsToWaitFor -ProcessOperator $PreSuccessCheckProcessOperator -ProcessesToWaitFor $PreSuccessCheckProcessesToWaitFor -RegKeyOperator $PreSuccessCheckRegKeyOperator -RegkeysToWaitFor $PreSuccessCheckRegkeysToWaitFor)) {
+						$uninstallResult.ErrorMessage = "Uninstallation RegistryAndProcessCondition of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+						$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+						$uninstallResult.Success = $false
+						[int]$logMessageSeverity = 3
+					}
+					else {
+						if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
+							$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+							$uninstallResult.Success = $false
+							[int]$logMessageSeverity = 3
+						}
+						else {
+							$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' was successful."
+							$uninstallResult.ErrorMessagePSADT = [string]::Empty
+							$uninstallResult.Success = $true
+							[int]$logMessageSeverity = 1
+						}
+					}
+				}
+				if (
+					($executionResult.ExitCode -notin ($AcceptedUninstallExitCodes -split ",")) -and
+					($executionResult.ExitCode -notin ($AcceptedUninstallRebootCodes -split ",")) -and
+					($executionResult.ExitCode -notin 0, 1641, 3010)
+				) {
+					$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
+					$uninstallResult.Success = $false
+					[int]$logMessageSeverity = 3
+				}
+			}
+		}
 		Write-Log -Message $($uninstallResult.ErrorMessage) -Severity $logMessageSeverity -Source ${CmdletName}
 		Write-Output $uninstallResult
 	}
@@ -9265,8 +9263,6 @@ function Uninstall-NxtOld {
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		$uninstallOldResult.Success = $null
-		$uninstallOldResult.ApplicationExitCode = $null
 		if ($true -eq $UninstallOld) {
 			Write-Log -Message "Checking for old package installed..." -Source ${cmdletName}
 			try {
@@ -9297,13 +9293,12 @@ function Uninstall-NxtOld {
 											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
 											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
 											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
+											$uninstallOldResult.ApplicationExitCode = $LastExitCode
 										}
 										catch {
 										}
 										if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
-											[int32]$mainExitCode = 70001
-											$uninstallOldResult.MainExitCode = $mainExitCode
-											$uninstallOldResult.ApplicationExitCode = $LastExitCode
+											$uninstallOldResult.MainExitCode = 70001
 											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
 											$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 											$uninstallOldResult.Success = $false
@@ -9366,13 +9361,12 @@ function Uninstall-NxtOld {
 											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
 											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
 											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
+											$uninstallOldResult.ApplicationExitCode = $LastExitCode
 										}
 										catch {
 										}
 										if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
-											[int32]$mainExitCode = 70001
-											$uninstallOldResult.MainExitCode = $mainExitCode
-											$uninstallOldResult.ApplicationExitCode = $LastExitCode
+											$uninstallOldResult.MainExitCode = 70001
 											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
 											$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 											$uninstallOldResult.Success = $false
@@ -9442,10 +9436,9 @@ function Uninstall-NxtOld {
 					if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
 						Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package with PackageGUID [$(Split-Path -Path `"$regPackageGUID`" -Leaf)]..." -Source ${cmdletName}
 						cmd /c (Get-RegistryKey -Key "$regPackageGUID" -Value 'UninstallString') | Out-Null
+						$uninstallOldResult.ApplicationExitCode = $LastExitCode
 						if ($true -eq (Test-RegistryValue -Key "$regPackageGUID" -Value 'UninstallString')) {
-							[int32]$mainExitCode = 70001
-							$uninstallOldResult.MainExitCode = $mainExitCode
-							$uninstallOldResult.ApplicationExitCode = $LastExitCode
+							$uninstallOldResult.MainExitCode = 70001
 							$uninstallOldResult.ErrorMessage = "ERROR: Uninstallation of old package failed. Abort!"
 							$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallOldResult.Success = $false
@@ -9465,7 +9458,9 @@ function Uninstall-NxtOld {
 				}
 			}
 			catch {
+				$uninstallOldResult.MainExitCode = 70001
 				$uninstallOldResult.ErrorMessage = "The function '${cmdletName}' threw an error."
+				$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 				$uninstallOldResult.Success = $false
 				Write-Log -Message "$($uninstallOldResult.ErrorMessage)`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			}
