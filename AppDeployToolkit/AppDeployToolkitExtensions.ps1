@@ -6778,6 +6778,9 @@ Function Show-NxtInstallationWelcome {
     .PARAMETER UserCanAbort
 		Specifies if the user can abort the process.
 		Defaults to the corresponding value from the $global:SetupCfg object.
+	.PARAMETER ApplyContinueTypeOnError
+		Specifies if the ContinueType should be applied on error.
+		Defaults to the corresponding value from the $global:SetupCfg object.
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
@@ -6885,6 +6888,9 @@ Function Show-NxtInstallationWelcome {
 		## Specifies if the user can abort the process
 		[Parameter(Mandatory = $false)]
 		[Switch]$UserCanAbort = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER)),
+		## Specifies if the ContinueType should be applied on error
+		[Parameter(Mandatory = $false)]
+		[Switch]$APPLYCONTINUETYPEONERROR = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.APPLYCONTINUETYPEONERROR)),
 		## Specifies the script root path
 		[Parameter(Mandatory = $false)]
 		[string]$ScriptRoot = $scriptRoot
@@ -7066,12 +7072,12 @@ Function Show-NxtInstallationWelcome {
 					}
 					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
 					ElseIf ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
+						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$APPLYCONTINUETYPEONERROR
 					}
 				}
 				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
 				ElseIf (($runningProcessDescriptions) -or ($forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
+					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$APPLYCONTINUETYPEONERROR
 				}
 				#  If there is no deferral and no processes running, break the while loop
 				Else {
@@ -7314,6 +7320,8 @@ Function Show-NxtWelcomePrompt {
 	.PARAMETER DeploymentType
 		The type of deployment that is performed.
 		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER ApplyContinueTypeOnError
+		Specifies if the ContinueType should be applied in case of an error. Default: $false.
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -7353,6 +7361,8 @@ Function Show-NxtWelcomePrompt {
         [Switch]$CustomText = $false,
         [Parameter(Mandatory = $false)]
         [PSADTNXT.ContinueType]$ContinueType = [PSADTNXT.ContinueType]::Abort,
+		[Parameter(Mandatory = $false)]
+		[Switch]$ApplyContinueTypeOnError = $false,
         [Parameter(Mandatory = $false)]
         [Switch]$UserCanCloseAll = $false,
         [Parameter(Mandatory = $false)]
@@ -7425,13 +7435,30 @@ Function Show-NxtWelcomePrompt {
 		{
 			if ($activeSessions.Count -gt 0)
 			{
-				[UInt32[]]$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
-				Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
-				[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
-				$welcomeExitCode = $askKillProcessesResult.ExitCode
-				[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
-				[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
-				Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName"
+				try {
+					[UInt32[]]$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
+					Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
+					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
+					$welcomeExitCode = $askKillProcessesResult.ExitCode
+					[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
+					[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
+					Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName"
+				}
+				catch {
+					if ($true -eq $ApplyContinueTypeOnError) {
+						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Applying ContinueType $contiuneTypeValue" -Severity 3 -Source ${CmdletName}
+						if ($contiuneTypeValue -eq [PSADTNXT.ContinueType]::Abort) {
+							$welcomeExitCode = 1002
+						}
+						elseif ($contiuneTypeValue -eq [PSADTNXT.ContinueType]::Continue) {
+							$welcomeExitCode = 1001
+						}
+					}
+					else {
+						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Not Applying ContinueType $contiuneTypeValue `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+						Throw $_
+					}
+				}
 			}
 		}
 		else

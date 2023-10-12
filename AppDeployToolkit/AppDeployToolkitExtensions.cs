@@ -71,9 +71,9 @@ namespace PSADTNXT
                 wi = new WindowsIdentity(processHandle);
                 return new ProcessIdentity(wi);
             }
-            catch
+            catch (Exception ex)
             {
-                throw;
+                throw ex;
             }
             finally
             {
@@ -366,6 +366,10 @@ namespace PSADTNXT
                     SessionId = sessionIds[index],
                     ExitCode = exitCode
                 };
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
             finally
             {
