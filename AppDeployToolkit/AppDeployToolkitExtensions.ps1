@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 	This script is a template that allows you to extend the toolkit with your own custom functions.
 	The "*-Nxt*" function name pattern is used by "neo42 GmbH" to avoid naming conflicts with the built-in functions of the toolkit.
@@ -534,6 +534,65 @@ function Close-BlockExecutionWindow {
 	}
 }
 #endregion
+
+#region Add-NxtParameterToCommand
+function Add-NxtParameterToCommand {
+	<#
+	.SYNOPSIS
+		Adds a parameter to a command.
+	.DESCRIPTION
+		Adds a parameter to a command. If Switch is set to true, only the switch parameter is added. If Switch is set to false, the parameter is added with the given value if the value is not empty.
+	.PARAMETER Command
+		Full command that will be returned.
+	.PARAMETER Name
+		Name of the switch parameter.
+	.PARAMETER Switch
+		Switch parameter value.
+	.PARAMETER Value
+		Value of the parameter.
+	.OUTPUTS
+		Full command as string.
+	.EXAMPLE
+		$command = Add-NxtParameterToCommand -Command $command -Name "AllowDefer" -Switch $true
+	.EXAMPLE
+		$command = Add-NxtParameterToCommand -Command $command -Name "AllowDefer" -Value "text"
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Command,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Name,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Switch,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[string]
+		$Value
+		)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($Switch) {
+			$Command += " -$Name"
+		}
+		elseif ($false -eq [string]::IsNullOrEmpty($Value)) {
+			$Command += " -$Name `"$Value`""
+		}
+		Write-Output $Command
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Compare-NxtVersion
 function Compare-NxtVersion {
 	<#
@@ -959,6 +1018,131 @@ function Complete-NxtPackageUninstallation {
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function ConvertFrom-NxtEncodedObject
+function ConvertFrom-NxtEncodedObject {
+	<#
+	.SYNOPSIS
+		Converts a Base64-encoded and gzip-compressed JSON object string into a PowerShell object.
+	.DESCRIPTION
+		The ConvertFrom-NxtEncodedObject function decodes a given Base64-encoded and gzip-compressed string that represents a JSON-serialized object. It returns the decompressed and deserialized PowerShell object. This function is particularly useful in data transport scenarios where JSON objects have been serialized, compressed, and then encoded for safe transmission.
+	.PARAMETER EncodedObject
+		The Base64-encoded and gzip-compressed string that you want to convert back into a PowerShell object. This parameter is mandatory.
+	.EXAMPLE
+		$encodedObj = "H4sIAAAAAAAEAIuuVnLPLEvN80vMTVWyUvLKz8hT0lEKLi2CCrjkpyrV6qAq8k2sQFHjW1pcklqUm5iXp1QbCwCmtj3MUQAAAA=="
+		$decodedObj = ConvertFrom-NxtEncodedObject -EncodedObject $encodedObj
+		This example demonstrates how to decode a Base64-encoded and gzip-compressed JSON string into a PowerShell object.
+	.OUTPUTS
+		System.Object
+	.NOTES
+		Ensure that the EncodedObject parameter contains a valid, gzip-compressed and Base64-encoded string. Invalid or malformed input can result in errors.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$EncodedObject
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			[byte[]]$decodedBytes = [Convert]::FromBase64String($EncodedObject)
+			[System.IO.MemoryStream]$inputStream = New-Object System.IO.MemoryStream($decodedBytes, 0, $decodedBytes.Length)
+			[System.IO.Compression.GZipStream]$gzipStream = New-Object System.IO.Compression.GZipStream($inputStream, [System.IO.Compression.CompressionMode]::Decompress)
+			[System.IO.StreamReader]$reader = New-Object System.IO.StreamReader($gzipStream)
+			[string]$decompressedString = $reader.ReadToEnd()
+			$reader.Close()
+			[System.Object]$psObject = $decompressedString | ConvertFrom-Json
+			return $psObject
+		}
+		catch {
+			Write-Log -Message "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+			throw "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+#region Function ConvertTo-NxtEncodedObject
+function ConvertTo-NxtEncodedObject {
+	<#
+	.SYNOPSIS
+		Converts a PowerShell object into a Base64-encoded and gzip-compressed JSON object string.
+	.DESCRIPTION
+		The ConvertTo-NxtEncodedObject function takes a PowerShell object as input and performs three main operations:
+		1. Serializes the object into a JSON string.
+		2. Compresses the JSON string using gzip.
+		3. Encodes the compressed data into a Base64 string.
+		This function is useful for securely and efficiently transmitting PowerShell objects over a network or storing them.
+		It is not as exact as Export-clixml but the output is much smaller and safe to transfer on a command line.
+		It is not required to write the resulting string to a file as long as it does not exceed the maximum command line length. 
+	.PARAMETER Object
+		The PowerShell object that you want to convert into a Base64-encoded and gzip-compressed string.
+		This parameter is mandatory.
+	.PARAMETER Depth
+		The depth of object hierarchy to include in the JSON serialization. By default, this is set to 2.
+		This parameter is optional.
+	.EXAMPLE
+		$psObject = [PSCustomObject]@{ Name = 'John'; Age = 30; }
+		$encodedObj = ConvertTo-NxtEncodedObject -Object $psObject
+		This example shows how to convert a simple PowerShell object into a Base64-encoded and gzip-compressed string.
+	.EXAMPLE
+		$nestedObject = @{
+			Name = 'Jane';
+			Details = @{
+				Age = 25;
+				Occupation = 'Engineer';
+			}
+		}
+		$encodedObj = ConvertTo-NxtEncodedObject -Object $nestedObject -Depth 3
+		This example demonstrates how to convert a nested PowerShell object into a Base64-encoded and gzip-compressed string by specifying the depth parameter.
+
+	.OUTPUTS
+		System.String
+
+	.NOTES
+		The "Depth" parameter controls the depth of object hierarchy to include in JSON serialization. Be cautious when setting this to a large value as it may result in large strings.
+
+	.LINK
+		For more information, refer to [System.IO.Compression.GZipStream] and [ConvertTo-Json].
+	#>
+	[CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [PSObject]$Object,
+		[Parameter(Mandatory=$false)]
+		[int]$Depth = 2
+    )
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			[string]$jsonString = $Object | ConvertTo-Json -Compress -Depth $Depth
+			[System.IO.MemoryStream]$compressedData = New-Object System.IO.MemoryStream
+			[System.IO.Compression.GZipStream]$gzipStream = New-Object System.IO.Compression.GZipStream($compressedData, [System.IO.Compression.CompressionMode]::Compress)
+			[System.IO.StreamWriter]$writer = New-Object System.IO.StreamWriter($gzipStream)
+			$writer.Write($jsonString)
+			$writer.Close()
+			[string]$encodedObject = [Convert]::ToBase64String($compressedData.ToArray())
+			return $encodedObject
+		}
+		catch {
+			Write-Log -Message "Failed to convert PowerShell object to Base64-encoded string. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+			throw "Failed to convert PowerShell object to Base64-encoded string. `n$(Resolve-Error)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
 #endregion
@@ -4834,53 +5018,6 @@ function Move-NxtItem {
 	}
 }
 #endregion
-#region Function New-NxtWpfControl
-function New-NxtWpfControl() {
-	<#
-	.DESCRIPTION
-		Creates a WPF control.
-	.PARAMETER InputXml
-		Xml input that is converted to a WPF control.
-	.EXAMPLE
-		New-NxtWpfControl -InputXml $inputXml
-	.OUTPUTS
-		none.
-	.NOTES
-		This is an internal script function and should typically not be called directly. It is used by the Show-NxtWelcomePrompt to create the WPF control.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	Param(
-		[Parameter(Mandatory = $True)]
-		[string]
-		$InputXml
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-	}
-	Process {
-		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-		$InputXml = $InputXml -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
-		#Read XAML
-		[xml]$xaml = $InputXml
-		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
-		try {
-			[System.Windows.Window]$control = [Windows.Markup.XamlReader]::Load($reader)
-		}
-		catch {  
-			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
-			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
-		}
-		return $control
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-
-#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
@@ -6712,7 +6849,7 @@ Function Show-NxtInstallationWelcome {
     .PARAMETER MinimizeWindows
     	Specifies whether to minimize other windows when displaying prompt. Defaults to the corresponding value 'MINIMIZEALLWINDOWS' from the Setup.cfg.
     .PARAMETER TopMost
-    	Specifies whether the windows is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
+    	Specifies whether the window is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
     .PARAMETER ForceCountdown
     	Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
     .PARAMETER CustomText
@@ -6726,6 +6863,9 @@ Function Show-NxtInstallationWelcome {
 		Defaults to the corresponding value from the $global:SetupCfg object.
     .PARAMETER UserCanAbort
 		Specifies if the user can abort the process.
+		Defaults to the corresponding value from the $global:SetupCfg object.
+	.PARAMETER ApplyContinueTypeOnError
+		Specifies if the ContinueType should be applied on error.
 		Defaults to the corresponding value from the $global:SetupCfg object.
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
@@ -6834,6 +6974,9 @@ Function Show-NxtInstallationWelcome {
 		## Specifies if the user can abort the process
 		[Parameter(Mandatory = $false)]
 		[Switch]$UserCanAbort = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.ALLOWABORTBYUSER)),
+		## Specifies if the ContinueType should be applied on error
+		[Parameter(Mandatory = $false)]
+		[Switch]$ApplyContinueTypeOnError = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.APPLYCONTINUETYPEONERROR)),
 		## Specifies the script root path
 		[Parameter(Mandatory = $false)]
 		[string]$ScriptRoot = $scriptRoot
@@ -6849,10 +6992,6 @@ Function Show-NxtInstallationWelcome {
 		## override $DeferDays with 0 in Case of Uninstall
 		if (!$IsInstall) {
 			[int]$DeferDays = 0
-		}
-		## If running in NonInteractive mode, force the processes to close silently
-		If ($deployModeNonInteractive) {
-			$Silent = $true
 		}
         
 		[string]$fileExtension = ".exe"
@@ -6991,7 +7130,7 @@ Function Show-NxtInstallationWelcome {
 
 		[string]$promptResult = [string]::Empty
 		## Prompt the user to close running applications and optionally defer if enabled
-		If ((-not $deployModeSilent) -and (-not $silent)) {
+		If (-not $silent) {
 			If ($forceCloseAppsCountdown -gt 0) {
 				#  Keep the same variable for countdown to simplify the code:
 				$closeAppsCountdown = $forceCloseAppsCountdown
@@ -7019,12 +7158,12 @@ Function Show-NxtInstallationWelcome {
 					}
 					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
 					ElseIf ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
+						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError
 					}
 				}
 				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
 				ElseIf (($runningProcessDescriptions) -or ($forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort
+					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError
 				}
 				#  If there is no deferral and no processes running, break the while loop
 				Else {
@@ -7063,7 +7202,7 @@ Function Show-NxtInstallationWelcome {
 					ForEach ($runningProcess in $runningProcesses) {
 						[PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
 						#  If the PromptToSave parameter was specified and the process has a window open, then prompt the user to save work if there is work to be saved when closing window
-						If (($PromptToSave) -and (-not ($SessionZero -and (-not $IsProcessUserInteractive))) -and ($AllOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
+						If (($PromptToSave) -and (-not ((-not $IsProcessUserInteractive))) -and ($AllOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
 							[Timespan]$PromptToSaveTimeout = New-TimeSpan -Seconds $configInstallationPromptToSave
 							[Diagnostics.StopWatch]$PromptToSaveStopWatch = [Diagnostics.StopWatch]::StartNew()
 							$PromptToSaveStopWatch.Reset()
@@ -7255,7 +7394,7 @@ Function Show-NxtWelcomePrompt {
 	.PARAMETER MinimizeWindows
 		Specifies whether to minimize other windows when displaying prompt. Default: $true.
 	.PARAMETER TopMost
-		Specifies whether the windows is the topmost window. Default: $true.
+		Specifies whether the window is the topmost window. Default: $true.
 	.PARAMETER CustomText
 		Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
 	.PARAMETER ContinueType
@@ -7267,6 +7406,8 @@ Function Show-NxtWelcomePrompt {
 	.PARAMETER DeploymentType
 		The type of deployment that is performed.
 		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER ApplyContinueTypeOnError
+		Specifies if the ContinueType should be applied in case of an error. Default: $false.
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -7306,13 +7447,39 @@ Function Show-NxtWelcomePrompt {
         [Switch]$CustomText = $false,
         [Parameter(Mandatory = $false)]
         [PSADTNXT.ContinueType]$ContinueType = [PSADTNXT.ContinueType]::Abort,
+		[Parameter(Mandatory = $false)]
+		[Switch]$ApplyContinueTypeOnError = $false,
         [Parameter(Mandatory = $false)]
         [Switch]$UserCanCloseAll = $false,
         [Parameter(Mandatory = $false)]
         [Switch]$UserCanAbort = $false,
         [Parameter(Mandatory = $false)]
         [string]
-        $DeploymentType = $DeploymentType
+        $DeploymentType = $DeploymentType,
+        [Parameter(Mandatory = $false)]
+        [string]
+        $InstallTitle = $installTitle,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppDeployLogoBanner = $appDeployLogoBanner,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppDeployLogoBannerDark = $appDeployLogoBannerDark,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$EnvProgramData = $envProgramData,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVendor = $appVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $appName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVersion = $appVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Logname = $logName
     )
 
     Begin {
@@ -7321,677 +7488,108 @@ Function Show-NxtWelcomePrompt {
         Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
     }
     Process {
-        ## Reset switches
-        [bool]$showCloseApps = $false
-        [bool]$showDefer = $false
-
-        ## Check if the countdown was specified
-        If ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeout)) {
-            Throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
-        }
-
-        ## Initial form layout: Close Applications / Allow Deferral
-        If ($ProcessDescriptions) {
-            Write-Log -Message "Prompting the user to close application(s) [$ProcessDescriptions]..." -Source ${CmdletName}
-            $showCloseApps = $true
-        }
-        If (($AllowDefer) -and (($DeferTimes -ge 0) -or ($DeferDeadline))) {
-            Write-Log -Message 'The user has the option to defer.' -Source ${CmdletName}
-            $showDefer = $true
-            If ($DeferDeadline) {
-                #  Remove the Z from universal sortable date time format, otherwise it could be converted to a different time zone
-                $DeferDeadline = $DeferDeadline -replace 'Z', ''
-                #  Convert the deadline date to a string
-                $DeferDeadline = (Get-Date -Date $DeferDeadline).ToString()
-            }
-        }
-
-        ## If deferral is being shown and 'close apps countdown' or 'persist prompt' was specified, enable those features.
-        If (-not $showDefer) {
-            If ($CloseAppsCountdown -gt 0) {
-                Write-Log -Message "Close applications countdown has [$CloseAppsCountdown] seconds remaining." -Source ${CmdletName}
-            }
-        }
-        if ($CloseAppsCountdown -gt 0)
-        {
-            [bool]$showCountdown = $true
-            Write-Log -Message "Close applications countdown has [$CloseAppsCountdown] seconds remaining." -Source ${CmdletName}
-        }
-
-[string]$inputXML = @'
-<Window x:Class="InstallationWelcome.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" Background="Red"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStartupLocation="CenterScreen"
-        xmlns:local="clr-namespace:InstallationWelcome" ResizeMode="NoResize" WindowStyle="None"
-        mc:Ignorable="d" SizeToContent="Height" x:Name="InstallationWelcomeMainWindow"
-        Width="450">
-    <Window.Resources>
-        <Color x:Key="ErrorColor" A="255" R="236" G="105" B="53" ></Color>
-        <SolidColorBrush x:Key="ErrorColorBrush" Color="{DynamicResource ErrorColor}"></SolidColorBrush>
-        <Color x:Key="MainColor" A="255" R="227" G="0" B="15" ></Color>
-        <SolidColorBrush x:Key="MainColorBrush" Color="{DynamicResource MainColor}"></SolidColorBrush>
-        <Color x:Key="BackColor" A="255" R="40" G="40" B="39"/>
-        <SolidColorBrush x:Key="BackColorBrush" Color="{DynamicResource BackColor}"></SolidColorBrush>
-        <Color x:Key="BackLightColor" A="255" R="87" G="86" B="86"/>
-        <SolidColorBrush x:Key="BackLightColorBrush" Color="{DynamicResource BackLightColor}"></SolidColorBrush>
-        <Color x:Key="ForeColor" A="255" R="255" G="255" B="255"/>
-        <SolidColorBrush x:Key="ForeColorBrush" Color="{DynamicResource ForeColor}"></SolidColorBrush>
-        <Color x:Key="MouseHoverColor" A="255" R="200" G="200" B="200"/>
-        <SolidColorBrush x:Key="MouseHoverColorBrush" Color="{DynamicResource MouseHoverColor}"></SolidColorBrush>
-        <Color x:Key="PressedColor" A="255" R="87" G="86" B="86"/>
-        <SolidColorBrush x:Key="PressedBrush" Color="{DynamicResource PressedColor}"></SolidColorBrush>
-        <Style TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"></Setter>
-            <Setter Property="Foreground" Value="{DynamicResource ForeColorBrush}"></Setter>
-            <Style.Triggers>
-                <Trigger Property="Text" Value="">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style TargetType="ToolTip">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToolTip">
-                        <Border Background="{DynamicResource BackLightColorBrush}">
-                            <StackPanel>
-                                <TextBlock Text="{TemplateBinding Content}" Foreground="{DynamicResource ForeColorBrush}" Padding="5"/>
-                            </StackPanel>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="TextBlockListStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"></Setter>
-            <Setter Property="Foreground" Value="{DynamicResource ForeColorBrush}"></Setter>
-        </Style>
-        <Style TargetType="Button">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Button}">
-                        <Border Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Width" Value="140"/>
-            <Setter Property="Foreground" Value="{DynamicResource ForeColorBrush}"/>
-            <Setter Property="Background" Value="{DynamicResource BackLightColorBrush}"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource MouseHoverColorBrush}"/>
-                </Trigger>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource PressedBrush}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </Window.Resources>
-    <DockPanel HorizontalAlignment="Stretch"
-           VerticalAlignment="Stretch"
-           LastChildFill="True">
-           <Popup Placement="Center" x:Name="Popup">
-           <Border Background="{DynamicResource BackColorBrush}" BorderBrush="{DynamicResource ForeColorBrush}" BorderThickness="1">
-               <StackPanel Margin="10">
-                   <TextBlock x:Name="PopupCloseWithoutSavingText" Margin="0,0,0,10" Text="[will be replaced later]" VerticalAlignment="Center" TextAlignment="Center" Background="{DynamicResource BackColorBrush}" Foreground="{DynamicResource ForeColorBrush}"></TextBlock>
-                   <TextBlock x:Name="PopupListText" Text="[will be replaced later]" Foreground="{DynamicResource ErrorColorBrush}" VerticalAlignment="Center" FontSize="14" TextAlignment="Center" Background="{DynamicResource BackColorBrush}"></TextBlock>
-                   <TextBlock x:Name="PopupSureToCloseText" Text="[will be replaced later]" Margin="0,10,0,0" VerticalAlignment="Center" TextAlignment="Center" Background="{DynamicResource BackColorBrush}" Foreground="{DynamicResource ForeColorBrush}"></TextBlock>
-                   <DockPanel VerticalAlignment="Bottom"  DockPanel.Dock="Bottom" Margin="0,10,0,0">
-                       <Button x:Name="PopupCloseApplication" DockPanel.Dock="Left" Content="Close"></Button>
-                       <Button x:Name="PopupCancel" Content="back" HorizontalAlignment="Right" DockPanel.Dock="Right"/>
-                   </DockPanel>
-               </StackPanel>
-           </Border>
-       </Popup>
-        <DockPanel x:Name="HeaderPanel" HorizontalAlignment="Stretch" Height="30" DockPanel.Dock="Top" Background="{DynamicResource BackColorBrush}">
-            <TextBlock DockPanel.Dock="Left" x:Name="TitleText" VerticalAlignment="Center" Text="[will be replaced later]" Margin="5,0,0,0" FontWeight="Bold" FontSize="14" />
-            <Button OverridesDefaultStyle="True" BorderThickness="0" DockPanel.Dock="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="WindowCloseButton" Background="Transparent" Content="X" Margin="0,0,0,0" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource ForeColorBrush}" Height="20" Width="20">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="{x:Type Button}">
-                                    <Border x:Name="controlBorder" Margin="0,-5,0,0" Background="{TemplateBinding Background}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger  Property="IsMouseOver" Value="true">
-                                            <Setter TargetName="controlBorder" Property="Background"  Value="{DynamicResource MainColorBrush}"/>
-                                        </Trigger>
-                                        <Trigger Property="IsPressed" Value="True">
-                                            <Setter TargetName="controlBorder" Property="BorderBrush" Value="{DynamicResource PressedBrush}"/>
-                                            <Setter TargetName="controlBorder" Property="BorderThickness" Value="1"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </Button.Style>
-            </Button>
-        </DockPanel>
-        <DockPanel x:Name="MainPanel" Background="{DynamicResource BackColorBrush}">
-            <Image x:Name="Banner" DockPanel.Dock="Top" Source="[will be replaced later]" MaxHeight="100"></Image>
-            <StackPanel DockPanel.Dock="Top" Margin="0,10,0,0">
-                <TextBlock x:Name="FollowApplicationText" TextAlignment="Center" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="AppNameText" Foreground="{DynamicResource MainColorBrush}" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" FontWeight="Bold" FontSize="14" ></TextBlock>
-                <TextBlock x:Name="CustomTextBlock" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="ApplicationCloseText" TextAlignment="Center" TextWrapping="Wrap" Margin="0,10,0,0" Text="[will be replaced later]" HorizontalAlignment="Center"></TextBlock>
-                <TextBlock x:Name="SaveWorkText" TextWrapping="Wrap" Margin="10,10,10,0" Text="[will be replaced later]"  HorizontalAlignment="Center" TextAlignment="Center"></TextBlock>
-                <ListView BorderThickness="0" Margin="10" HorizontalAlignment="center" x:Name="CloseApplicationList" Grid.Column="0" Width="Auto" Background="{DynamicResource BackColorBrush}">
-                    <ListView.View>
-                        <GridView  AllowsColumnReorder="False">
-                            <GridView.ColumnHeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
-                                                <TextBlock FontWeight="Bold" Foreground="{DynamicResource ErrorColorBrush}" Style="{DynamicResource TextBlockListStyle}" TextAlignment="Left" x:Name="ContentHeader" Text="{TemplateBinding Content}" Padding="5,5,5,0" Width="{TemplateBinding Width}"  />
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </GridView.ColumnHeaderContainerStyle>
-                            <GridViewColumn  Header="Name" DisplayMemberBinding="{Binding Name}" />
-                            <GridViewColumn  Header="StartedBy" DisplayMemberBinding="{Binding StartedBy}" />
-                        </GridView>
-                    </ListView.View>
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="{x:Type ListViewItem}">
-                            <Setter Property="Background" Value="Transparent" />
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type ListViewItem}">
-                                        <Border
-                                            BorderBrush="Transparent"
-                                            BorderThickness="0"
-                                            Background="{TemplateBinding Background}">
-                                            <GridViewRowPresenter HorizontalAlignment="Stretch" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Width="Auto" Margin="0" Content="{TemplateBinding Content}">
-                                                <GridViewRowPresenter.Resources>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Setter Property="Foreground" Value="{DynamicResource ErrorColorBrush}"/>
-                                                    </Style>
-                                                </GridViewRowPresenter.Resources>
-                                            </GridViewRowPresenter>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                </ListView>
-
-                <TextBlock x:Name="DeferTextOne" TextAlignment="Center"  Margin="0,0,0,10" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="DeferTimerText" TextAlignment="Center" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="DeferDeadlineText" TextAlignment="Center" TextWrapping="Wrap" Text="" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="DeferTextTwo"  Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock x:Name="TimerText" Margin="20,10,20,0" TextAlignment="Center" TextWrapping="Wrap" Text="[will be replaced later]" HorizontalAlignment="Center" ></TextBlock>
-                <Grid x:Name="ProgressGrid"  Margin="0,10,0,5">
-                    <ProgressBar x:Name="Progress" Value="5" Minimum="0" Maximum="10" Height="30">
-                        <ProgressBar.Template>
-                            <ControlTemplate TargetType="ProgressBar">
-                                <Grid>
-                                    <Border Margin="5,0,5,0" CornerRadius="2">
-                                        <Grid>
-                                            <Rectangle x:Name="PART_Track"  Fill="{DynamicResource PressedBrush}" RadiusX="2" RadiusY="2"/>
-                                            <Rectangle x:Name="PART_Indicator" HorizontalAlignment="Left" Fill="{DynamicResource MainColorBrush}" RadiusX="2" RadiusY="2"/>
-                                        </Grid>
-                                    </Border>
-                                </Grid>
-                            </ControlTemplate>
-                        </ProgressBar.Template>
-                    </ProgressBar>
-                    <TextBlock x:Name="TimerBlock" Text="[will be replaced later]"  Background="Transparent" FontWeight="Bold" Style="{DynamicResource TextBlockListStyle}" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Center"/>
-                </Grid>
-            </StackPanel>
-            <DockPanel DockPanel.Dock="Bottom">
-                <Button x:Name="CloseButton" Margin="5,5,0,5" DockPanel.Dock="Left" Width="140" Height="30" Content="Close applications"></Button>
-                <Button x:Name="CancelButton" DockPanel.Dock="Right"  Margin="0,5,5,5"  Width="140" Height="30" Content="Cancel"></Button>
-                <Button x:Name="DeferButton" Width="140" Margin="0,5,0,5" Height="30" Content="Defer"></Button>
-            </DockPanel>
-        </DockPanel>
-    </DockPanel>
-</Window>
-'@
-        [bool]$IsLightTheme = Test-NxtPersonalizationLightTheme
-
-        [System.Windows.Window]$control = New-NxtWpfControl $inputXML
-
-        [System.Windows.Media.Color]$backColor = $control.Resources['BackColor']
-        [System.Windows.Media.Color]$backLightColor = $control.Resources['BackLightColor']
-        [System.Windows.Media.Color]$foreColor = $control.Resources['ForeColor']
-        [System.Windows.Media.Color]$mouseHoverColor = $control.Resources['MouseHoverColor']
-        [System.Windows.Media.Color]$pressedColor = $control.Resources['PressedColor']
-        
-        [System.Windows.Window]$control_MainWindow = $control.FindName('InstallationWelcomeMainWindow')
-        [System.Windows.Controls.TextBlock]$control_FollowApplicationText = $control.FindName('FollowApplicationText')
-        [System.Windows.Controls.TextBlock]$control_AppNameText = $control.FindName('AppNameText')
-        [System.Windows.Controls.TextBlock]$control_ApplicationCloseText = $control.FindName('ApplicationCloseText')
-        [System.Windows.Controls.TextBlock]$control_SaveWorkText = $control.FindName('SaveWorkText')
-        [System.Windows.Controls.ListView]$control_CloseApplicationList = $control.FindName('CloseApplicationList')
-        [System.Windows.Controls.TextBlock]$control_DeferTextOne = $control.FindName('DeferTextOne')
-        [System.Windows.Controls.TextBlock] $control_DeferTimerText = $control.FindName('DeferTimerText')
-        [System.Windows.Controls.TextBlock] $control_DeferTextTwo = $control.FindName('DeferTextTwo')
-        [System.Windows.Controls.TextBlock]$control_TimerText = $control.FindName('TimerText')
-        [System.Windows.Controls.Button]$control_CloseButton = $control.FindName('CloseButton')
-        [System.Windows.Controls.Button]$control_CancelButton = $control.FindName('CancelButton')
-        [System.Windows.Controls.Button]$control_DeferButton = $control.FindName('DeferButton')
-        [System.Windows.Controls.Button]$control_WindowCloseButton = $control.FindName('WindowCloseButton')
-        [System.Windows.Controls.ProgressBar]$control_Progress = $control.FindName('Progress')
-        [System.Windows.Controls.TextBlock]$control_TimerBlock = $control_Progress.FindName('TimerBlock')
-        [System.Windows.Controls.Image]$control_Banner = $control.FindName('Banner')
-        [System.Windows.Controls.TextBlock]$control_TitleText = $control.FindName('TitleText')
-        [System.Windows.Controls.TextBlock]$control_DeferDeadlineText = $control.FindName('DeferDeadlineText')
-        [System.Windows.Controls.TextBlock]$control_CustomText = $control.FindName('CustomTextBlock')
-        [System.Windows.Controls.TextBlock]$control_PopupCloseWithoutSavingText = $control.FindName('PopupCloseWithoutSavingText')
-        [System.Windows.Controls.TextBlock]$control_PopupListText = $control.FindName('PopupListText')
-        [System.Windows.Controls.TextBlock]$control_PopupSureToCloseText = $control.FindName('PopupSureToCloseText')
-        [System.Windows.Controls.DockPanel]$control_HeaderPanel = $control.FindName('HeaderPanel')
-        [System.Windows.Controls.DockPanel]$control_MainPanel = $control.FindName('MainPanel')
-        [System.Windows.Controls.Primitives.Popup]$control_Popup = $control.FindName('Popup')
-        [System.Windows.Controls.Button]$control_PopupCloseApplication = $control.FindName('PopupCloseApplication')
-        [System.Windows.Controls.Button]$control_PopupCancel = $control.FindName('PopupCancel')
-
-        $control_MainWindow.TopMost = $TopMost
-
-		[ScriptBlock]$windowLeftButtonDownHandler = {
-            # Check if the left mouse button is pressed
-            if ($_.ChangedButton -eq [System.Windows.Input.MouseButton]::Left) {
-                # Call the DragMove method to allow the user to move the window
-                $control_MainWindow.DragMove()
-            }
-        }
-
-        [ScriptBlock]$windowsCloseButtonClickHandler = {
-            $control_MainWindow.Tag = "Cancel"
-            $control_MainWindow.Close()
-        }
-
-        [ScriptBlock]$closeButtonClickHandler = {
-            $control_Popup.IsOpen = $true
-            $control_HeaderPanel.IsEnabled = $false
-            $control_HeaderPanel.Opacity = 0.8
-            $control_MainPanel.IsEnabled = $false
-            $control_MainPanel.Opacity = 0.8
-        }
-
-        [ScriptBlock]$deferbuttonClickHandler = {
-            $control_MainWindow.Tag = "Defer"
-            $control_MainWindow.Close()
-        }
-
-        [ScriptBlock]$cancelButtonClickHandler = {
-            $control_MainWindow.Tag = "Cancel"
-            $control_MainWindow.Close()
-        }
-
-        [ScriptBlock]$popupCloseApplicationClickHandler = {
-            $control_Popup.IsOpen = $false
-            $control_HeaderPanel.IsEnabled = $true
-            $control_HeaderPanel.Opacity = 1
-            $control_MainPanel.IsEnabled = $true
-            $control_MainPanel.Opacity = 1
-            $control_MainWindow.Tag = "Close"
-            $control_MainWindow.Close()
-        }
-
-        [ScriptBlock]$popupCancelClickHandler = {
-            $control_Popup.IsOpen = $false
-            $control_HeaderPanel.IsEnabled = $true
-            $control_HeaderPanel.Opacity = 1
-            $control_MainPanel.IsEnabled = $true
-            $control_MainPanel.Opacity = 1
-        }
-
-
-		$control_HeaderPanel.add_MouseLeftButtonDown($windowLeftButtonDownHandler)
-        $control_WindowCloseButton.add_Click($windowsCloseButtonClickHandler)
-        $control_CloseButton.add_Click($closeButtonClickHandler)
-        $control_DeferButton.add_Click($deferbuttonClickHandler)
-        $control_CancelButton.add_Click($cancelButtonClickHandler)
-        $control_PopupCloseApplication.add_Click($popupCloseApplicationClickHandler)
-        $control_PopupCancel.add_Click($popupCancelClickHandler)
-            
-        if ($IsLightTheme)
-        {
-            $backColor.r = 246
-            $backColor.g = 246
-            $backColor.b = 246
-            $backLightColor.r = 218
-            $backLightColor.g = 218
-            $backLightColor.b = 218
-            $foreColor.r = 0
-            $foreColor.g = 0
-            $foreColor.b = 0
-            $mouseHoverColor.r = 255
-            $mouseHoverColor.g = 255
-            $mouseHoverColor.b = 255
-            $pressedColor.r = 218
-            $pressedColor.g = 218
-            $pressedColor.b = 218
-            $control.Resources['BackColor'] = $backColor
-            $control.Resources['BackLightColor'] = $backLightColor
-            $control.Resources['ForeColor'] = $foreColor
-            $control.Resources['MouseHoverColor'] = $mouseHoverColor
-            $control.Resources['PressedColor'] = $pressedColor  
-
-            $control_Banner.Source =  $appDeployLogoBanner
-        }
-        else
-        {
-            $control_Banner.Source =  $appDeployLogoBannerDark
-        }
-
-		if ($xmlUIMessageLanguage -ne "UI_Messages_EN" -and $xmlUIMessageLanguage -ne "UI_Messages_DE") {
-			## until we not support same languages in dialogues like ADT, we switch to english as default
-			[Xml.XmlElement]$xmlUIMessages = $xmlConfig."UI_Messages_EN"
-		}
-		else {
-			[Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
-		}
-		if ($true -eq $UserCanCloseAll) {
-			$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWork
-		}
-		else {
-			$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWorkWithoutCloseButton
-		}
-        $control_DeferTextTwo.Text = $xmlUIMessages.NxtWelcomePrompt_DeferalExpired
-        $control_CloseButton.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
-        $control_CancelButton.Content = $xmlUIMessages.NxtWelcomePrompt_Close
-        $control_DeferButton.Content = $xmlUIMessages.NxtWelcomePrompt_Defer
-        $control_CloseApplicationList.View.Columns[0].Header = $xmlUIMessages.NxtWelcomePrompt_ApplicationName
-        $control_CloseApplicationList.View.Columns[1].Header = $xmlUIMessages.NxtWelcomePrompt_StartedBy
-        $control_PopupCloseWithoutSavingText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpCloseApplicationText
-        $control_PopupSureToCloseText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpSureToCloseText
-        $control_PopupCloseApplication.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
-        $control_PopupCancel.Content = $xmlUIMessages.NxtWelcomePrompt_Close
-        Switch ($DeploymentType) {
-            'Uninstall' {
-				if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
-					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Uninstall)
+		
+		$contiuneTypeValue = [int]$ContinueType;
+		# Convert to JSON in compressed form
+		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects
+		$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
+		$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferTimes" -Value $DeferTimes
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferDeadline" -Value $DeferDeadline
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ContinueType" -Value $contiuneTypeValue
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CloseAppsCountdown" -Value $CloseAppsCountdown
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "PersistPrompt" -Switch $PersistPrompt
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AllowDefer" -Switch $AllowDefer
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "MinimizeWindows" -Switch $MinimizeWindows
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "TopMost" -Switch $TopMost
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CustomText" -Switch $CustomText
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanCloseAll" -Switch $UserCanCloseAll
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanAbort" -Switch $UserCanAbort
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeploymentType" -Value $DeploymentType
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "InstallTitle" -Value $InstallTitle
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBanner" -Value $AppDeployLogoBanner
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBannerDark" -Value $AppDeployLogoBannerDark
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "EnvProgramData" -Value $envProgramData
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVendor" -Value $appVendor
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppName" -Value $appName
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVersion" -Value $appVersion
+		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
+		Write-Log "Searching for Sessions..." -Source ${CmdletName}
+		[int]$welcomeExitCode = 1618;
+		[PsObject]$activeSessions = Get-LoggedOnUser
+		if((Get-Process -Id $PID).SessionId -eq 0)
+		{
+			if ($activeSessions.Count -gt 0)
+			{
+				try {
+					[UInt32[]]$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
+					Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
+					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
+					$welcomeExitCode = $askKillProcessesResult.ExitCode
+					[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
+					[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
+					Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName"
 				}
-				else {
-					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Uninstall)
-				};
-                $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_UninstallVerb);
-                $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Uninstall);
-                $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Uninstall);
-                Break
-            }
-            'Repair' {
-				if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
-					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Repair)
-				}
-				else {
-					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Repair)
-				};
-                $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_RepairVerb);
-                $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Repair);
-                $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Repair);
-                Break
-            }
-            Default {
-				if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
-					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Install)
-				}
-				else {
-					$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Install)
-				};
-                $control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_InstallVerb);
-                $control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Install);
-                $control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Install);
-                Break
-            }
-        }
-        If ($CustomText -and $configWelcomePromptCustomMessage) {
-            $control_CustomText.Text = $configWelcomePromptCustomMessage
-            $control_CustomText.Visibility = "Visible"
-        }
-        else {
-            $control_CustomText.Visibility = "Collapsed"
-        }
-
-        $control_AppNameText.Text = $installTitle
-        $control_TitleText.Text = $installTitle
-                
-        [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects){
-			Get-RunningProcesses -ProcessObjects $processObject | Where-Object {$false -eq [string]::IsNullOrEmpty($_.id)}
-		}
-		[ScriptBlock]$FillCloseApplicationList = {
-            param($runningProcessesParam)
-            ForEach ($runningProcessItem in $runningProcessesParam) {
-                [PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcessID -eq $runningProcessItem.Id }
-				## actually don't add processes without a viewable window to the list yet
-				if ($AllOpenWindowsForRunningProcess.count -gt 0) {		
-					foreach ($WindowForRunningProcess in $AllOpenWindowsForRunningProcess){
-						Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($WindowForRunningProcess.ParentProcessId)'" | ForEach-Object {
-							$item = New-Object PSObject -Property @{
-								Name = $runningProcessItem.ProcessDescription
-								StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
-							}
-							$control_CloseApplicationList.Items.Add($item)
+				catch {
+					if ($true -eq $ApplyContinueTypeOnError) {
+						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Applying ContinueType $contiuneTypeValue" -Severity 3 -Source ${CmdletName}
+						if ($contiuneTypeValue -eq [PSADTNXT.ContinueType]::Abort) {
+							$welcomeExitCode = 1002
+						}
+						elseif ($contiuneTypeValue -eq [PSADTNXT.ContinueType]::Continue) {
+							$welcomeExitCode = 1001
 						}
 					}
-                }
-				else {
-					$runningProcessesParam = $runningProcessesParam | Where-Object { $_ -ne $runningProcessItem }
-					Write-Log -Message "The Process $($runningProcessItem.ProcessName) with id $($runningProcessItem.Id) has no Window and will not be shown in the ui." -Severity 2 -Source ${cmdletName}
+					else {
+						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Not Applying ContinueType $contiuneTypeValue `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+						Throw $_
+					}
 				}
-            }
-        }
-		& $FillCloseApplicationList $runningProcesses
+			}
+		}
+		else
+		{
+			$welcomeExitCode = [PSADTNXT.Extensions]::StartPowershellScriptAndWaitForExitCode($powershellCommand);
+			Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $env:USERNAME\$env:USERDOMAIN"
+		}
 
-        [string]$names = $runningProcesses | Select-Object -ExpandProperty Name
-        $control_PopupListText.Text = $names.Trim()
-        
-        [Int32]$OutNumber = $null
+		[string]$returnCode = [string]::Empty
 
-        If ([Int32]::TryParse($DeferTimes,[ref]$OutNumber) -and $DeferTimes -ge 0) {
-            $control_DeferTimerText.Text =  $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
-        }
-        If ($DeferDeadline) {
-            $control_DeferDeadlineText.Text = $xmlUIMessages.DeferPrompt_Deadline + " " + $DeferDeadline
-        }
-
-        if ($true -eq [string]::IsNullOrEmpty($control_DeferTimerText.Text))
-        {
-           $control_DeferTextOne.Visibility = "Collapsed"
-           $control_DeferTextTwo.Visibility = "Collapsed"
-           $control_DeferButton.Visibility = "Collapsed"
-           $control_DeferDeadlineText.Visibility = "Collapsed"         
-        }
-        else
-        {  
-          $control_DeferTextOne.Visibility = "Visible"
-          $control_DeferTextTwo.Visibility = "Visible"
-          $control_DeferButton.Visibility = "Visible"
-            If ($DeferDeadline)
-            {
-                $control_DeferDeadlineText.Visibility = "Visible"
-            }
-            else
-            {
-                $control_DeferDeadlineText.Visibility = "Collapsed"
-            }
-        }
-
-        if (-not $UserCanCloseAll)
-        {
-            $control_CloseButton.Visibility = "Collapsed"
-        }
-
-        if (-not $UserCanAbort)
-        {
-            $control_CancelButton.Visibility = "Collapsed"
-            $control_WindowCloseButton.Visibility = "Collapsed"
-        }
-
-        If ($showCloseApps) {
-            $control_CloseButton.ToolTip = $xmlUIMessages.ClosePrompt_ButtonContinueTooltip
-        }
-      
-        ## Add the timer if it doesn't already exist - this avoids the timer being reset if the continue button is clicked
-        If (-not $script:welcomeTimer) {
-            [System.Windows.Threading.DispatcherTimer]$script:welcomeTimer = New-Object System.Windows.Threading.DispatcherTimer
-        }
-
-        [ScriptBlock]$mainWindowLoaded = {
-            If ($showCountdown)
-            {
-                $control_Progress.Maximum = $CloseAppsCountdown
-                $control_Progress.Value = $CloseAppsCountdown
-                [Timespan]$tmpTime = [timespan]::fromseconds($CloseAppsCountdown)
-            }
-            else {
-                $control_Progress.Maximum = $configInstallationUITimeout
-                $control_Progress.Value = $configInstallationUITimeout
-                [Timespan]$tmpTime = [timespan]::fromseconds($configInstallationUITimeout)
-                Set-Variable -Name 'closeAppsCountdownGlobal' -Value $configInstallationUITimeout -Scope 'Script'
-            }
-            $control_TimerBlock.Text = [String]::Format('{0}:{1:d2}:{2:d2}', $tmpTime.Days * 24 + $tmpTime.Hours, $tmpTime.Minutes, $tmpTime.Seconds)
-            $script:welcomeTimer.Start()
-        }
-
-        [ScriptBlock]$mainWindowClosed = {
-            Try {
-                $control_WindowCloseButton.remove_Click($windowsCloseButtonClickHandler)
-                $control_CloseButton.remove_Click($closeButtonClickHandler)
-                $control_DeferButton.remove_Click($deferbuttonClickHandler)
-                $control_CancelButton.remove_Click($cancelButtonClickHandler)
-                $control_PopupCloseApplication.remove_Click($popupCloseApplicationClickHandler)
-                $control_PopupCancel.remove_Click($popupCancelClickHandler)
-				$control_HeaderPanel.remove_MouseLeftButtonDown($windowLeftButtonDownHandler)
-				if ($null -ne $welcomeTimerPersist.IsEnabled -eq $true) {
-                    $welcomeTimerPersist.remove_Tick($welcomeTimerPersist_Tick)
-                }
-                if ($null -ne $timerRunningProcesses.IsEnabled -eq $true) {
-                    $timerRunningProcesses.remove_Tick($timerRunningProcesses_Tick)
-                }
-                if ($script:welcomeTimer.IsEnabled -eq $true) {
-                    $script:welcomeTimer.remove_Tick($welcomeTimer_Tick)
-                }
-                $control_MainWindow.remove_Loaded($mainWindowLoaded)
-                $control_MainWindow.remove_Closed($mainWindowClosed)
-            }
-            Catch {
-            }
-        }
-
-        $control_MainWindow.Add_Loaded($mainWindowLoaded)
-
-        $control_MainWindow.Add_Closed($mainWindowClosed)
-     
-        $script:welcomeTimer.Interval = [timespan]::fromseconds(1)
-        [ScriptBlock]$welcomeTimer_Tick = {
-        # Your code to be executed every second goes here
-        Try {
-                [Int32]$progressValue = $closeAppsCountdownGlobal - 1
-                Set-Variable -Name 'closeAppsCountdownGlobal' -Value $progressValue -Scope 'Script'
-                ## If the countdown is complete, close the application(s) or continue
-                If ($progressValue -lt 0) {
-                    if ($showCountdown)
-                    {
-                        if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
-                            $control_MainWindow.Tag = "Cancel"
-                        }
-                        else {
-                            $control_MainWindow.Tag = "Close"
-                        }
-                    }   
-                    else {
-                        $control_MainWindow.Tag = "Timeout"
-                    }
-                    $control_MainWindow.Close()
-                }
-                Else {
-                    $control_Progress.Value = $progressValue
-                    [timespan]$progressTime = [timespan]::fromseconds($progressValue)
-                    $control_TimerBlock.Text = [String]::Format('{0}:{1:d2}:{2:d2}', $progressTime.Days * 24 + $progressTime.Hours, $progressTime.Minutes, $progressTime.Seconds)
-            
-                }
-            }
-            Catch {
-            }
-        }
-        
-        $script:welcomeTimer.add_Tick($welcomeTimer_Tick)
-
-        ## Persistence Timer
-        If ($PersistPrompt) {
-            [System.Windows.Threading.DispatcherTimer]$welcomeTimerPersist = New-Object System.Windows.Threading.DispatcherTimer
-            $welcomeTimerPersist.Interval = [timespan]::fromseconds($configInstallationPersistInterval)
-            [ScriptBlock]$welcomeTimerPersist_Tick = {
-                $control_MainWindow.Topmost = $true;  
-                $control_MainWindow.Topmost = $TopMost;
-            }
-            $welcomeTimerPersist.add_Tick($welcomeTimerPersist_Tick)
-            $welcomeTimerPersist.Start()
-        }
-        ## Process Re-Enumeration Timer
-        If ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
-            [System.Windows.Threading.DispatcherTimer]$timerRunningProcesses = New-Object System.Windows.Threading.DispatcherTimer
-            $timerRunningProcesses.Interval = [timespan]::fromseconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
-            [ScriptBlock]$timerRunningProcesses_Tick = {
-                Try {
-                    [PSObject[]]$dynamicRunningProcesses = $null
-                    $dynamicRunningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging
-                    [String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
-                    If ($dynamicRunningProcessDescriptions -ne $script:runningProcessDescriptions) {
-                        # Update the runningProcessDescriptions variable for the next time this function runs
-                        Set-Variable -Name 'runningProcessDescriptions' -Value $dynamicRunningProcessDescriptions -Force -Scope 'Script'
-                        If ($dynamicRunningProcesses) {
-                            Write-Log -Message "The running processes have changed. Updating the apps to close: [$script:runningProcessDescriptions]..." -Source ${CmdletName}
-                        }
-                        # Update the list box with the processes to close
-                        $control_CloseApplicationList.Items.Clear()
-                        & $FillCloseApplicationList $dynamicRunningProcesses
-                    }
-                    # If CloseApps processes were running when the prompt was shown, and they are subsequently detected to be closed while the form is showing, then close the form. The deferral and CloseApps conditions will be re-evaluated.
-                    If ($ProcessDescriptions) {
-                        If (-not $dynamicRunningProcesses) {
-                            Write-Log -Message 'Previously detected running processes are no longer running.' -Source ${CmdletName}
-                            $control_MainWindow.Close()
-                        }
-                    }
-                    # If CloseApps processes were not running when the prompt was shown, and they are subsequently detected to be running while the form is showing, then close the form for relaunch. The deferral and CloseApps conditions will be re-evaluated.
-                    Else {
-                        If ($dynamicRunningProcesses) {
-                            Write-Log -Message 'New running processes detected. Updating the form to prompt to close the running applications.' -Source ${CmdletName}
-                            $control_MainWindow.Close()
-                        }
-                    }
-                }
-                Catch {
-                }
-            }
-            $timerRunningProcesses.add_Tick($timerRunningProcesses_Tick)
-            $timerRunningProcesses.Start()
-        }
-
-        If ($MinimizeWindows) {
-            $shellApp.MinimizeAll()
-        }
-
-        # Open dialog and Wait
-        $control_MainWindow.ShowDialog() | Out-Null
-              
-        If ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
-            $timerRunningProcesses.Stop()
-        }
-
-        Write-Output -InputObject ($control_MainWindow.Tag)
+		switch ($welcomeExitCode)
+		{
+			1001
+			{
+				$returnCode = 'Close'
+			}
+			1002
+			{
+				$returnCode = 'Cancel'
+			}
+			1003
+			{
+				$returnCode = 'Defer'
+			}
+			1004
+			{
+				$returnCode = 'Timeout'
+			}
+			1005
+			{
+				$returnCode = 'Continue'
+			}
+			default
+			{
+				$returnCode = 'Continue'
+			}
+		}
+		Write-Output -InputObject ($returnCode)   
     }
     End {
         Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
     }
 }
 #endregion
+
 #region Function Stop-NxtProcess
 function Stop-NxtProcess {
 	<#
@@ -8734,49 +8332,7 @@ function Test-NxtPackageConfig {
 	}
 }
 #endregion
-#region Function Test-NxtPersonalizationLightTheme
-function Test-NxtPersonalizationLightTheme {
-	<#
-	.DESCRIPTION
-		Tests if a user has the light theme enabled.
-	.OUTPUTS
-		System.Boolean.
-	.EXAMPLE
-		Test-NxtPersonalizationLightTheme
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		[bool]$lightThemeResult = $true
-		if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
-			if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
-				[bool]$lightThemeResult = $true
-			} 
-			else {
-				[bool]$lightThemeResult = $false
-			}
-		} 
-		else {
-			if ($true -eq (Test-RegistryValue -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
-				if ((Get-RegistryKey -Key "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
-					[bool]$lightThemeResult = $true
-				} 
-				else {
-					[bool]$lightThemeResult = $false
-				}
-			} 
-		}
-		Write-Output $lightThemeResult
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
-	}
-}
-#endregion
+
 #region Function Test-NxtProcessExists
 function Test-NxtProcessExists {
 	<#
