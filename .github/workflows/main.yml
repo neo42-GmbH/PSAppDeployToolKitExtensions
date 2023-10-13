@@ -1,7 +1,7 @@
 ## Allow Action
 on: 
     push:
-      branches: [ develop, 546* ]
+      branches: [ develop]
 name: Create Artifacts
 env:
   GITHUB_RUN_NUMBER: ${{ github.run_number }}
