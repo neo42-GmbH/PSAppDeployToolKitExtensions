@@ -2,7 +2,9 @@ param(
         [Parameter(Mandatory=$true)]
         [string]$PackagesToUpdatePath,
         [Parameter(Mandatory=$true)]
-        [string]$LatestVersionPath
+        [string]$LatestVersionPath,
+        [Parameter(Mandatory=$false)]
+        [string]$CompatibleVersion = "##REPLACEVERSION##"
     )
 function Get-NxtContentBetweenTags {
     param(
