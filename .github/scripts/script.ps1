@@ -19,8 +19,8 @@ Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$di
 New-Item -ItemType Directory -Name "$dirname/$dirname/SupportFiles/User" -Force
 New-Item -ItemType File -Path "$dirname/$dirname/SupportFiles/User" -Name "place UserPart files here!!!"
 New-Item -ItemType Directory -Name "$dirname/$dirname/Files" -Force
-New-Item -ItemType File -Path "$dirname/Files" -Name "place setup files here!!!"
-New-Item -ItemType File -Path "$dirname\" -Name "Add a Setup.ico here!!!"
+New-Item -ItemType File -Path "$dirname/$dirname/Files" -Name "place setup files here!!!"
+New-Item -ItemType File -Path "$dirname/$dirname/" -Name "Add a Setup.ico here!!!"
 Move-Item ./$dirname/$dirname/Tools ./$dirname/ -Force
 Move-Item ./$dirname/$dirname/Samples ./$dirname/ -Force
 New-Item -ItemType Directory -Name Artifacts
