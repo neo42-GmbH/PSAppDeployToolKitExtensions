@@ -26,4 +26,5 @@ Move-Item ./$dirname/$dirname/Samples ./$dirname/ -Force
 New-Item -ItemType Directory -Name Artifacts
 sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/$dirname/Deploy-Application.ps1
 sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/$dirname/AppDeployToolkit/AppDeployToolkitExtensions.ps1
+sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/$dirname/AppDeployToolkit/AppDeployToolkitExtensions.cs
 sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/Tools/InsertLatestToNxtPsadtPackage.ps1
