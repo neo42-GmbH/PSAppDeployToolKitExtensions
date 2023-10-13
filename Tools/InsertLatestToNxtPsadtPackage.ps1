@@ -4,7 +4,7 @@ param(
         [Parameter(Mandatory=$true)]
         [string]$LatestVersionPath,
         [Parameter(Mandatory=$false)]
-        [string]$CompatibleVersion = "2023.06.12.01-125"
+        [string]$CompatibleVersion = "##REPLACEVERSION##"
     )
 function Get-NxtContentBetweenTags {
     param(
