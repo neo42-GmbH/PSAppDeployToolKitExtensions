@@ -278,6 +278,8 @@ function Update-NxtPSAdtPackage {
         }
     }
 [string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
+$PackagesToUpdatePath = $PackagesToUpdatePath.Trim("`"`'")
+$LatestVersionPath = $LatestVersionPath.Trim("`"`'")
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
    Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName -CompatibleVersion $CompatibleVersion
 } 
