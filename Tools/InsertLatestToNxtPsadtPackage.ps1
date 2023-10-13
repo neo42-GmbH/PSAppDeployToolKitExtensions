@@ -74,7 +74,7 @@ function Update-NxtPSAdtPackage {
     }
     [string]$newVersionContent = Get-Content -Raw -Path "$LatestVersionPath\Deploy-Application.ps1"
     [string]$newVersion = (Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
-    if ($CompatibleVersion -eq "##REPLACEVERSION##") {
+    if ($CompatibleVersion -eq "`#`#`R`E`P`L`A`C`E`V`E`R`S`I`O`N`#`#") {
         Write-Warning "CompatibleVersion is $CompatibleVersion, you are probably using a development version, skipping UpdateToolVersionCompatibilityCheck!"
         Write-Warning "Using $CompatibleVersion as CompatibleVersion might render the resulting package unfunctional, please use a properly built version instead!"
         Read-Host -Prompt "Press Enter to continue or CTRL+C to exit"
