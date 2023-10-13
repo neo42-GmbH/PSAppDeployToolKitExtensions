@@ -15,7 +15,7 @@
       "VersionToCheck": ""
     }
   },
-  "TestedOn": "Win x86, Win10 x64, Win11 x64",
+  "TestedOn": "Win10 x86, Win10 x64, Win11 x64",
   "Dependencies": "",
   "LastChange": "!LastChangeDate!",
   "Build": "0",
