@@ -331,7 +331,7 @@ note: increment this value if script/package content is changed AND package has 
 parent: /
 ```
 application language of the packaged application
-note: basically only these values are valid and supported by neo42: "DEU", "ENG", "MUI"
+note: basically only these values are valid and supported by neo42: "DEU", "ENU", "MUI"
 ```
 
 **"ProductGUID"** *mandatory string value*

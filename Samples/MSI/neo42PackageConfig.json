@@ -24,7 +24,7 @@
   "AppName": "!AppNameString!",
   "AppVersion": "!AppVersionString!",
   "AppRevision": "0",
-  "AppLang": "DEU|ENG|MUI",
+  "AppLang": "DEU|ENU|MUI",
   "ProductGUID": "!Neo42ProductGUID!",
   "RemovePackagesWithSameProductGUID": false,
   "PackageGUID": "!Neo42PackageGUID!",
