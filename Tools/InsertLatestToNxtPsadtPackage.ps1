@@ -4,7 +4,7 @@ param(
         [Parameter(Mandatory=$true)]
         [string]$LatestVersionPath,
         [Parameter(Mandatory=$false)]
-        [string]$CompatibleVersion = "##REPLACEVERSION##"
+        [string]$CompatibleVersion = "2023.06.12.01-125"
     )
 function Get-NxtContentBetweenTags {
     param(
@@ -60,7 +60,9 @@ function Update-NxtPSAdtPackage {
         [Parameter(Mandatory=$true)]
         [string]$LatestVersionPath,
         [Parameter(Mandatory=$false)]
-        [string]$LogFileName
+        [string]$LogFileName,
+        [Parameter(Mandatory=$true)]
+        [string]$CompatibleVersion
     )
     try {
     # test if both paths exist
@@ -71,18 +73,26 @@ function Update-NxtPSAdtPackage {
         throw "LatestVersionPath does not exist"
     }
     [string]$newVersionContent = Get-Content -Raw -Path "$LatestVersionPath\Deploy-Application.ps1"
+    [string]$newVersion = (Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
+    if ($CompatibleVersion -eq "##REPLACEVERSION##") {
+        Write-Warning "CompatibleVersion is $CompatibleVersion, you are probably using a development version, skipping UpdateToolVersionCompatibilityCheck!"
+        Write-Warning "Using $CompatibleVersion as CompatibleVersion might render the resulting package unfunctional, please use a properly built version instead!"
+        Read-Host -Prompt "Press Enter to continue or CTRL+C to exit"
+    }
+    elseif ($newVersion -ne $CompatibleVersion) {
+        throw "LatestVersion $newVersion is not compatible with $CompatibleVersion"
+    }
     [string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
     #check for Version -ge 2023.06.12.01-53
     if ($existingContent -match "ConfigVersion:") {
-        [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	ConfigVersion:"
+        [string]$version =(Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
     } else {
-        [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:"
+        [string]$version = (Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:").TrimEnd("`n")
     }
-    if ([int]($version.TrimEnd("`n") -split "-")[1] -lt 53) {
+    if ([int]($version -split "-")[1] -lt 53) {
         throw "Version of $PackageToUpdatePath is lower than 2023.06.12.01-53 and must be updated manually"
     }
-    [string]$newVersion = Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:"
-    if ($version.TrimEnd("`n") -eq $newVersion.TrimEnd("`n")) {
+    if ($version -eq $newVersion) {
         $versionInfo = " ... but seems already up-to-date (same version tag!)"
     } else {
         $versionInfo = [string]::Empty
@@ -269,6 +279,6 @@ function Update-NxtPSAdtPackage {
     }
 [string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
-   Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName
+   Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName -CompatibleVersion $CompatibleVersion
 } 
 Read-Host -Prompt "Press Enter to exit"
