@@ -508,8 +508,8 @@ Function Get-RegistryKey {
     }
 }
 #endregion
-#region Function Get-RunningProcesses
-Function Get-RunningProcesses {
+#region Function Get-NxtRunningProcesses
+Function Get-NxtRunningProcesses {
     <#
     .SYNOPSIS
         Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
@@ -526,7 +526,7 @@ Function Get-RunningProcesses {
         Syste.Boolean.
         Rettuns $true if the process is running, otherwise $false.
     .EXAMPLE
-        Get-RunningProcesses -ProcessObjects $ProcessObjects
+        Get-NxtRunningProcesses -ProcessObjects $ProcessObjects
     .NOTES
         This is an internal script function and should typically not be called directly.
     .LINK
@@ -554,7 +554,19 @@ Function Get-RunningProcesses {
             ## Prepare a filter for Where-Object
             [ScriptBlock]$whereObjectFilter = {
                 ForEach ($processObject in $processObjects) {
-                    If ($_.ProcessName -ieq $processObject.ProcessName) {
+					[bool]$processFound = $false
+					if ($processObject.IsWql) {
+						[int]$processId = $_.Id
+						if ((Get-WmiObject -Class Win32_Process -Filter $processObject.ProcessName | Where-Object {
+							$_.ProcessId -eq $processId}).count -ne 0
+							){
+							$processFound = $true
+						}
+					}
+                    elseIf ($_.ProcessName -ieq $processObject.ProcessName) {
+						$processFound = $true
+					}
+					if ($true -eq $processFound) {
                         If ($processObject.ProcessDescription) {
                             #  The description of the process provided as a Parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
                             Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $processObject.ProcessDescription -Force -PassThru -ErrorAction 'SilentlyContinue'
@@ -1903,7 +1915,7 @@ $control_AppNameText.Text = $installTitle
 $control_TitleText.Text = $installTitle
                 
 [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects) {
-    Get-RunningProcesses -ProcessObjects $processObject | Where-Object { $false -eq [string]::IsNullOrEmpty($_.id) }
+    Get-NxtRunningProcesses -ProcessObjects $processObject | Where-Object { $false -eq [string]::IsNullOrEmpty($_.id) }
 }
 [ScriptBlock]$FillCloseApplicationList = {
     param($runningProcessesParam)
@@ -2070,7 +2082,7 @@ If ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
     [ScriptBlock]$timerRunningProcesses_Tick = {
         Try {
             [PSObject[]]$dynamicRunningProcesses = $null
-            $dynamicRunningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging
+            $dynamicRunningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging
             [String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
             If ($dynamicRunningProcessDescriptions -ne $script:runningProcessDescriptions) {
                 # Update the runningProcessDescriptions variable for the next time this function runs

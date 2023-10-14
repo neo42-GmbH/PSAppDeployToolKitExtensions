@@ -4045,6 +4045,108 @@ function Get-NxtRegisterOnly {
 	}
 }
 #endregion
+#region Function Get-NxtRunningProcesses
+Function Get-NxtRunningProcesses {
+    <#
+    .SYNOPSIS
+        Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
+    .DESCRIPTION
+        Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
+    .PARAMETER ProcessObjects
+        Custom object containing the process objects to search for. If not supplied, the function just returns $null
+    .PARAMETER DisableLogging
+        Disables function logging
+    .INPUTS
+        None
+        You cannot pipe objects to this function.
+    .OUTPUTS
+        Syste.Boolean.
+        Rettuns $true if the process is running, otherwise $false.
+    .EXAMPLE
+        Get-NxtRunningProcesses -ProcessObjects $ProcessObjects
+    .NOTES
+        This is an internal script function and should typically not be called directly.
+    .LINK
+        https://psappdeploytoolkit.com
+    #>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $false, Position = 0)]
+        [PSObject[]]$ProcessObjects,
+        [Parameter(Mandatory = $false, Position = 1)]
+        [Switch]$DisableLogging
+    )
+
+    Begin {
+        ## Get the name of this function and write header
+        [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+    }
+    Process {
+        If ($processObjects -and $processObjects[0].ProcessName) {
+            [String]$runningAppsCheck = $processObjects.ProcessName -join ','
+            If (-not $DisableLogging) {
+                Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
+            }
+            ## Prepare a filter for Where-Object
+            [ScriptBlock]$whereObjectFilter = {
+                ForEach ($processObject in $processObjects) {
+					[bool]$processFound = $false
+					if ($processObject.IsWql) {
+						[int]$processId = $_.Id
+						if ((Get-WmiObject -Class Win32_Process -Filter $processObject.ProcessName | Where-Object {
+							$_.ProcessId -eq $processId}).count -ne 0
+							){
+							$processFound = $true
+						}
+					}
+                    elseIf ($_.ProcessName -ieq $processObject.ProcessName) {
+						$processFound = $true
+					}
+					if ($true -eq $processFound) {
+                        If ($processObject.ProcessDescription) {
+                            #  The description of the process provided as a Parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
+                            Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $processObject.ProcessDescription -Force -PassThru -ErrorAction 'SilentlyContinue'
+                        }
+                        ElseIf ($_.Description) {
+                            #  If the process already has a description field specified, then use it
+                            Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.Description -Force -PassThru -ErrorAction 'SilentlyContinue'
+                        }
+                        Else {
+                            #  Fall back on the process name if no description is provided by the process or as a parameter to the function
+                            Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.ProcessName -Force -PassThru -ErrorAction 'SilentlyContinue'
+                        }
+                        Write-Output -InputObject ($true)
+                        Return
+                    }
+                }
+
+                Write-Output -InputObject ($false)
+                Return
+            }
+            ## Get all running processes and escape special characters. Match against the process names to search for to find running processes.
+            [Diagnostics.Process[]]$runningProcesses = Get-Process | Where-Object -FilterScript $whereObjectFilter | Sort-Object -Property 'ProcessName'
+
+            If (-not $DisableLogging) {
+                If ($runningProcesses) {
+                    [String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
+                    Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
+                }
+                Else {
+                    Write-Log -Message 'Specified applications are not running.' -Source ${CmdletName}
+                }
+            }
+            Write-Output -InputObject ($runningProcesses)
+        }
+        Else {
+            Write-Output -InputObject ($null)
+        }
+    }
+    End {
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+    }
+}
+#endregion
 #region Function Get-NxtServiceState
 function Get-NxtServiceState {
 	<#
@@ -7017,44 +7119,50 @@ Function Show-NxtInstallationWelcome {
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
 				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", ""
-				if (![String]::IsNullOrEmpty($processAppsItem.Description)) {
-					[string]$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
-				}
 			}
 		}
-		[string]$closeApps = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
-
-		## If using Zero-Config MSI Deployment, append any executables found in the MSI to the CloseApps list
-		If ($useDefaultMsi) {
-			[string]$closeApps = "$closeApps,$defaultMsiExecutablesList"
-		}
-
-		if ($true -eq [string]::IsNullOrEmpty($closeApps)) {
+		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
 			## prevent BlockExecution function if there is no process to kill
 			$BlockExecution = $false
 		}
 		else {
 			## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
 			[PSObject[]]$processObjects = @()
-			#  Split multiple processes on a comma, then split on equal sign, then create custom object with process name and description
-			ForEach ($process in ($closeApps -split ',' | Where-Object { $_ })) {
-				If ($process.Contains('=')) {
-					[String[]]$ProcessSplit = $process -split '='
+			ForEach ($AskKillProcessApp in $AskKillProcessApps) {
+				if ($AskKillProcessApp.IsWQL) {
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName        = $ProcessSplit[0]
-						ProcessDescription = $ProcessSplit[1]
+						ProcessName			= $AskKillProcessApp.Name
+						ProcessDescription	= $AskKillProcessApp.Description
+						IsWql				= $true
+					}
+				}
+				elseIf ($AskKillProcessApp.Name.Contains('=')) {
+					[String[]]$ProcessSplit = $AskKillProcessApp.Name -split '='
+					$processObjects += New-Object -TypeName 'PSObject' -Property @{
+						ProcessName			= $ProcessSplit[0]
+						ProcessDescription	= $ProcessSplit[1]
+						IsWql				= $false
 					}
 				}
 				Else {
-					[String]$ProcessInfo = $process
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName        = $process
+						ProcessName        = $AskKillProcessApp.Name
 						ProcessDescription = ''
+						IsWql				= $false
 					}
 				}
 			}
+			if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)){
+				ForEach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ",")) {
+					$processObjects += New-Object -TypeName 'PSObject' -Property @{
+						ProcessName        = $defaultMsiExecutable
+						ProcessDescription = ''
+						IsWql				= $false
+					}
+				}
+			}
+			
 		}
-
 		## Check Deferral history and calculate remaining deferrals
 		If (($allowDefer) -or ($AllowDeferCloseApps)) {
 			#  Set $allowDefer to true if $AllowDeferCloseApps is true
@@ -7144,7 +7252,7 @@ Function Show-NxtInstallationWelcome {
 				[Boolean]$forceCountdown = $true
 			}
 			Set-Variable -Name 'closeAppsCountdownGlobal' -Value $closeAppsCountdown -Scope 'Script'
-			While ((Get-RunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses') -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
+			While ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses') -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				#  If no proccesses are running close
 				if ([string]::IsNullOrEmpty($runningProcessDescriptions)) {
@@ -7197,7 +7305,7 @@ Function Show-NxtInstallationWelcome {
 						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
 					}
 					# Update the process list right before closing, in case it changed
-					$runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects
+					$runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects
 					# Close running processes
 					ForEach ($runningProcess in $runningProcesses) {
 						[PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
@@ -7247,7 +7355,7 @@ Function Show-NxtInstallationWelcome {
 						}
 					}
 
-					If ($runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging) {
+					If ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
 						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
 						Start-Sleep -Seconds 2
@@ -7294,9 +7402,9 @@ Function Show-NxtInstallationWelcome {
 		}
 
 		## Force the processes to close silently, without prompting the user
-		If (($Silent -or $deployModeSilent) -and $closeApps) {
+		If ( ($Silent -or $deployModeSilent) -and ($processObjects.Count -ne 0) ) {
 			[Array]$runningProcesses = $null
-			[Array]$runningProcesses = Get-RunningProcesses $processObjects
+			[Array]$runningProcesses = Get-NxtRunningProcesses $processObjects
 			If ($runningProcesses) {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
@@ -7353,11 +7461,14 @@ Function Show-NxtInstallationWelcome {
 			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
-			Block-AppExecution -ProcessName ($processObjects | Select-Object -ExpandProperty 'ProcessName')
-			if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
-				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
-				Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
-				Update-NxtXmlNode -FilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+			if (($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
+				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
+				Block-AppExecution -ProcessName ($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName')
+				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
+					## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
+					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
+					Update-NxtXmlNode -FilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+				}
 			}
 		}
 	}

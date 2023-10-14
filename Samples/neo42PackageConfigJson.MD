@@ -711,7 +711,7 @@ parent: /AppKillProcesses/
 
 ```
 a type 'exe' process file name for check to kill (with or without file extension)
-note: there are wildcards allowed, but just wildcards only will be prevented for usage
+note: there are wildcards allowed, but just wildcards only will be prevented for usage. Also WQL filter queries like "commandline like '%ScPapers.exe%'" are supported in combination with IsWql: true
 ```
 
 **"Description"** *optional string value*
@@ -720,6 +720,14 @@ parent: /AppKillProcesses/
 ```
 default value: ""
 text will be shown instead of default file description value of the process file in process close list of user information window (for better 'human understanding')
+```
+
+**"IsWql"** *optional bool value*
+
+parent: /AppKillProcesses/
+```
+default value: false
+set to true to use "Name" as a wql query towards wmi
 ```
 
 **"BlockExecution"** *optional bool value*
