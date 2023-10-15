@@ -2390,12 +2390,18 @@ function Exit-NxtAbortReboot {
 	Process {
 		Write-Log -Message "Initiating AbortReboot..." -Source ${CmdletName}
 		try {
+			foreach ($varThatMustNotBeEmpty in @("PackageMachineKey", "PackageUninstallKey")){
+				if ([string]::IsNullOrEmpty((Get-Variable -Name $varThatMustNotBeEmpty -ValueOnly))) {
+					Write-Log -Message "$varThatMustNotBeEmpty is empty. Skipping AbortReboot. Throwing error" -Severity 3 -Source ${CmdletName}
+					throw "$varThatMustNotBeEmpty is empty. Skipping AbortReboot. Throwing error"
+				}
+			}
 			Remove-RegistryKey -Key "HKLM:\Software\$PackageMachineKey" -Recurse
 			Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageUninstallKey" -Recurse
-			if (Test-Path -Path "HKLM:Software\$EmpirumMachineKey") {
+			if (Test-Path -Path "HKLM:Software\$EmpirumMachineKey" -and -not [string]::IsNullOrEmpty($EmpirumMachineKey)) {
 				Remove-RegistryKey -Key "HKLM:\Software\$EmpirumMachineKey" -Recurse
 			}
-			if (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") {
+			if (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -and -not [string]::IsNullOrEmpty($EmpirumUninstallKey)) {
 				Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
 			}
 			Close-BlockExecutionWindow

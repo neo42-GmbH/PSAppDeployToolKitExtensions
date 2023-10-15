@@ -92,6 +92,18 @@
         "Type": "System.Array",
         "Mandatory": true
     },
+    "RegPackagesKey": {
+        "Mandatory": true,
+        "HelpText": "RegPackagesKey is mandatory and must be a string.",
+        "Type": "System.String",
+        "AllowEmpty": false
+    },
+    "UninstallDisplayName": {
+        "Mandatory": true,
+        "HelpText": "UninstallDisplayName is mandatory and must be a string.",
+        "Type": "System.String",
+        "AllowEmpty": false
+    },
     "Reboot": {
         "Mandatory": true,
         "AllowEmpty": false,
