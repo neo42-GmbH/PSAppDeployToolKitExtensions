@@ -3935,6 +3935,9 @@ function Get-NxtRegisterOnly {
 	.PARAMETER DisplayNamesToExclude
 		Defines an array of DisplayNames to exclude from the search.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUID
+		Specifies the ProductGUID of the Software Package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 	.LINK
@@ -3977,13 +3980,23 @@ function Get-NxtRegisterOnly {
 		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
 		[Parameter(Mandatory = $false)]
 		[array]
-		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExclude
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExclude,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProductGUID = $global:PackageConfig.ProductGUID
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
 		Write-Output $false
 	}
-	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and ((Get-NxtRegisteredPackage -ProductGUID "PackageGUID").count -eq 0) -and -not $RemovePackagesWithSameProductGUID ) {
+	elseif ( 
+		($true -eq $SoftMigration) -and
+		-not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
+			(
+				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID).count -eq 0) -or
+				-not $RemovePackagesWithSameProductGUID
+			)
+		) {
 		if ($true -eq $SoftMigrationCustomResult) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
