@@ -551,14 +551,26 @@ Function Get-NxtRunningProcesses {
             If (-not $DisableLogging) {
                 Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
             }
+			[array]$wqlProcessObjects = $processObjects | Where-Object { $_.IsWql -eq $true }
+			[array]$processesFromWmi = $(
+				foreach ($wqlProcessObject in $wqlProcessObjects) {
+					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
+						n = "QueryUsed"
+						e = { $wqlProcessObject.ProcessName }
+					}
+				}
+			)
             ## Prepare a filter for Where-Object
             [ScriptBlock]$whereObjectFilter = {
                 ForEach ($processObject in $processObjects) {
 					[bool]$processFound = $false
 					if ($processObject.IsWql) {
 						[int]$processId = $_.Id
-						if ((Get-WmiObject -Class Win32_Process -Filter $processObject.ProcessName | Where-Object {
-							$_.ProcessId -eq $processId}).count -ne 0
+						[string]$queryUsed = $processObject.ProcessName
+						if (($processesFromWmi | Where-Object {
+							$_.ProcessId -eq $processId -and
+							$_.QueryUsed -eq $queryUsed
+						}).count -ne 0
 							){
 							$processFound = $true
 						}
