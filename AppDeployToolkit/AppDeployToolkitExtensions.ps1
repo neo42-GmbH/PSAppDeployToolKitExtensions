@@ -920,6 +920,10 @@ function Complete-NxtPackageInstallation {
 			}
 		}
 		if ($true -eq $UserPartOnInstallation) {
+			if ([string]::IsNullOrEmpty($UserPartRevision)) {
+				Write-Log -Message "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion." -Source ${CmdletName}
+				Throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
+			}
 			## Userpart-Installation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID.uninstall"
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
@@ -1004,6 +1008,10 @@ function Complete-NxtPackageUninstallation {
 		Remove-NxtDesktopShortcuts
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID"
 		if ($true -eq $UserPartOnUninstallation) {
+			if ([string]::IsNullOrEmpty($UserPartRevision)) {
+				Write-Log -Message "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion." -Source ${CmdletName}
+				Throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
+			}
 			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
