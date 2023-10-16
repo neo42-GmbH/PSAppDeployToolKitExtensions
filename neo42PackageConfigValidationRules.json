@@ -193,11 +193,11 @@
                                 "Type": "System.String",
                                 "AllowEmpty": false
                             },
-                            "Description": {
+                            "ShouldExist": {
                                 "Mandatory": true,
-                                "HelpText": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.Description is mandatory and must be a string. If empty, the name will be used.",
-                                "Type": "System.String",
-                                "AllowEmpty": true
+                                "HelpText": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.ShouldExist is mandatory and must be boolean.",
+                                "Type": "System.Boolean",
+                                "AllowEmpty": false
                             }
                         },
                         "Type": "System.Array",
@@ -279,11 +279,11 @@
                                 "Type": "System.String",
                                 "AllowEmpty": false
                             },
-                            "Description": {
+                            "ShouldExist": {
                                 "Mandatory": true,
-                                "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.Description is mandatory and must be a string. If empty, the name will be used.",
-                                "Type": "System.String",
-                                "AllowEmpty": true
+                                "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.ShouldExist is mandatory and must be boolean.",
+                                "Type": "System.Boolean",
+                                "AllowEmpty": false
                             }
                         },
                         "Type": "System.Array",
