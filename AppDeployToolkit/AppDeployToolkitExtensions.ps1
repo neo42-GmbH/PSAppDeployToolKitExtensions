@@ -3913,19 +3913,19 @@ function Get-NxtRegisterOnly {
 		Specifies if a Software should be registered only if it already exists through a different installation.
 		Defaults to the corresponding value from the Setup.cfg.
 	.PARAMETER DisplayVersion
-		Specifies the DisplayVersion of the Software Package.
+		Specifies the DisplayVersion of the software package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER SoftMigrationFileName
-		Specifies a file name (instead of DisplayVersion) depending a SoftMigration of the Software Package.
+		Specifies a file name (instead of DisplayVersion) depending a SoftMigration of the software package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.FullNameToCheck.
 	.PARAMETER SoftMigrationFileVersion
-		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the Software Package.
+		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the software package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.VersionToCheck.
 	.PARAMETER SoftMigrationCustomResult
-		Specifies the result of a custom check routine for a SoftMigration of the Software Package.
+		Specifies the result of a custom check routine for a SoftMigration of the software package.
 		Defaults to the corresponding value from the Deploy-Aplication.ps1 object $global:SoftMigrationCustomResult.
 	.PARAMETER RegisterPackage
 		Specifies if package may be registered.
@@ -3942,6 +3942,9 @@ function Get-NxtRegisterOnly {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayNamesToExclude
 		Defines an array of DisplayNames to exclude from the search.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUID
+		Specifies the ProductGUID of the software package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
@@ -3985,13 +3988,23 @@ function Get-NxtRegisterOnly {
 		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
 		[Parameter(Mandatory = $false)]
 		[array]
-		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExclude
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExclude,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProductGUID = $global:PackageConfig.ProductGUID
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
 		Write-Output $false
 	}
-	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and ((Get-NxtRegisteredPackage -ProductGUID "PackageGUID").count -eq 0) -and -not $RemovePackagesWithSameProductGUID ) {
+	elseif ( 
+		($true -eq $SoftMigration) -and
+		-not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
+			(
+				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID).count -eq 0) -or
+				-not $RemovePackagesWithSameProductGUID
+			)
+		) {
 		if ($true -eq $SoftMigrationCustomResult) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
