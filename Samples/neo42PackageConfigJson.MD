@@ -254,7 +254,7 @@ file version to check for soft migration decision (if file version of existing f
 parent: /
 ```
 comma separated list of tested Windows platforms in one string
-note: generally it would be like this "Win x86, Win10 x64, Win11 x64"
+note: generally it would be like this "Win10 x86, Win10 x64, Win11 x64"
 ```
 
 **"Dependencies"** *mandatory informational string value*
