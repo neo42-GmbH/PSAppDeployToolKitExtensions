@@ -3905,19 +3905,19 @@ function Get-NxtRegisterOnly {
 		Specifies if a Software should be registered only if it already exists through a different installation.
 		Defaults to the corresponding value from the Setup.cfg.
 	.PARAMETER DisplayVersion
-		Specifies the DisplayVersion of the Software Package.
+		Specifies the DisplayVersion of the software package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER SoftMigrationFileName
-		Specifies a file name (instead of DisplayVersion) depending a SoftMigration of the Software Package.
+		Specifies a file name (instead of DisplayVersion) depending a SoftMigration of the software package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.FullNameToCheck.
 	.PARAMETER SoftMigrationFileVersion
-		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the Software Package.
+		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the software package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.VersionToCheck.
 	.PARAMETER SoftMigrationCustomResult
-		Specifies the result of a custom check routine for a SoftMigration of the Software Package.
+		Specifies the result of a custom check routine for a SoftMigration of the software package.
 		Defaults to the corresponding value from the Deploy-Aplication.ps1 object $global:SoftMigrationCustomResult.
 	.PARAMETER RegisterPackage
 		Specifies if package may be registered.
@@ -3936,7 +3936,7 @@ function Get-NxtRegisterOnly {
 		Defines an array of DisplayNames to exclude from the search.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProductGUID
-		Specifies the ProductGUID of the Software Package.
+		Specifies the ProductGUID of the software package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
