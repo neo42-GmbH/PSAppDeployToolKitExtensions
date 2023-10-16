@@ -9337,6 +9337,7 @@ function Update-NxtTextInFile {
 		[String]
 		$SearchString,
 		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
 		[String]
 		$ReplaceString,
 		[Parameter()]
