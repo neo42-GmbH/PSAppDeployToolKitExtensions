@@ -8389,6 +8389,99 @@ function Test-NxtProcessExists {
 	}
 }
 #endregion
+#region Function Test-NxtTextInFile
+function Test-NxtTextInFile {
+	<#
+    .SYNOPSIS
+        Tests if a text exists in a file.
+	.DESCRIPTION
+		Tests if a text exists in a file. Returns true if the text is found, false if not.
+    .PARAMETER Path
+		The path to the file.
+	.PARAMETER Text
+		The text to search for.
+	.OUTPUTS
+		System.Boolean.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+    #>
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SearchString,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContainsRegex = $false,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$Encoding,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$DefaultEncoding,
+		[Parameter()]
+		[Bool]
+		$AddBOMIfUTF8 = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[String]$intEncoding = $Encoding
+		if (!(Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			[string]$intEncoding = "UTF8"
+		}
+		elseif ((Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			try {
+				[hashtable]$getFileEncodingParams = @{
+					Path = $Path
+				}
+				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+				}
+				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				if ($intEncoding -eq "UTF8") {
+					[bool]$noBOMDetected = $true
+				}
+				elseif ($intEncoding -eq "UTF8withBom") {
+					[bool]$noBOMDetected = $false
+					[string]$intEncoding = "UTF8"
+				}
+			}
+			catch {
+				[string]$intEncoding = "UTF8"
+			}
+		}
+		[bool]$textFound = $false
+		[hashtable]$contentParams = @{
+			Path = $Path
+		}
+		if (![string]::IsNullOrEmpty($intEncoding)) {
+			[string]$contentParams['Encoding'] = $intEncoding
+		}
+		[string]$Content = Get-Content @contentParams -Raw
+		[regex]$pattern = if ($true -eq $ContainsRegex) {
+			[regex]::new($SearchString)
+		}
+		else {
+			[regex]::new([regex]::Escape($SearchString))
+		}
+		[array]$regexMatches = $pattern.Matches($Content)
+		if ($regexMatches.Count -gt 0) {
+			[bool]$textFound = $true
+		}
+		Write-Output $textFound
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Test-NxtXmlNodeExists
 function Test-NxtXmlNodeExists {
 	<#
