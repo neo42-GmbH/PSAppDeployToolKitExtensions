@@ -2398,10 +2398,10 @@ function Exit-NxtAbortReboot {
 			}
 			Remove-RegistryKey -Key "HKLM:\Software\$PackageMachineKey" -Recurse
 			Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageUninstallKey" -Recurse
-			if (Test-Path -Path "HKLM:Software\$EmpirumMachineKey" -and -not [string]::IsNullOrEmpty($EmpirumMachineKey)) {
+			if ((Test-Path -Path "HKLM:Software\$EmpirumMachineKey") -and -not [string]::IsNullOrEmpty($EmpirumMachineKey)) {
 				Remove-RegistryKey -Key "HKLM:\Software\$EmpirumMachineKey" -Recurse
 			}
-			if (Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -and -not [string]::IsNullOrEmpty($EmpirumUninstallKey)) {
+			if ((Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") -and -not [string]::IsNullOrEmpty($EmpirumUninstallKey)) {
 				Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
 			}
 			Close-BlockExecutionWindow
