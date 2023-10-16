@@ -111,7 +111,7 @@
             "Operator": "match"
         },
         "Type": "System.String",
-        "AllowEmpty": false
+        "AllowEmpty": true
     },
     "AppLang": {
         "Mandatory": true,
