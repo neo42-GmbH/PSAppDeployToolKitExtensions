@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 	This script is a template that allows you to extend the toolkit with your own custom functions.
 	The "*-Nxt*" function name pattern is used by "neo42 GmbH" to avoid naming conflicts with the built-in functions of the toolkit.
@@ -8430,6 +8430,126 @@ function Test-NxtProcessExists {
 		catch {
 			Write-Log -Message "Failed to get processes for '$ProcessName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Test-NxtStringInFile
+function Test-NxtStringInFile {
+	<#
+    .SYNOPSIS
+        Tests if a string exists in a file.
+	.DESCRIPTION
+		Tests if a string exists in a file. Returns $true if the string is found, $false if not.
+    .PARAMETER Path
+		The path to the file.
+	.PARAMETER SearchString
+		The string to search for. May contain a regex if ContainsRegex is set to $true.
+	.PARAMETER ContainsRegex
+		Indicates if the string is a regex.
+		Defaults to $false.
+	.PARAMETER IgnoreCase
+		Indicates if the search should be case insensitive.
+		Defaults to $true.
+	.PARAMETER Encoding
+		The encoding of the file can explicitly be set here.
+	.PARAMETER DefaultEncoding
+		The default encoding of the file if auto detection fails.
+	.OUTPUTS
+		System.Boolean.
+	.EXAMPLE
+		Test-NxtStringInFile -Path "C:\temp\test.txt" -SearchString "test"
+		Searches for a string.
+	.EXAMPLE
+		Test-NxtStringInFile -Path "C:\temp\test.txt" -ContainsRegex $true -SearchString "test.*"
+		Searches for a regex.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+    #>
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SearchString,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContainsRegex = $false,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IgnoreCase = $true,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$Encoding,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$DefaultEncoding
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		#return false if the file does not exist
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Severity 3 -Message "File $Path does not exist" -Source ${cmdletName}
+			throw "File $Path does not exist"
+		}
+		[string]$intEncoding = $Encoding
+		if (!(Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			[string]$intEncoding = "UTF8"
+		}
+		elseif ((Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			try {
+				[hashtable]$getFileEncodingParams = @{
+					Path = $Path
+				}
+				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+				}
+				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				if ($intEncoding -eq "UTF8") {
+					[bool]$noBOMDetected = $true
+				}
+				elseif ($intEncoding -eq "UTF8withBom") {
+					[bool]$noBOMDetected = $false
+					[string]$intEncoding = "UTF8"
+				}
+			}
+			catch {
+				[string]$intEncoding = "UTF8"
+			}
+		}
+		[bool]$textFound = $false
+		[hashtable]$contentParams = @{
+			Path = $Path
+		}
+		if (![string]::IsNullOrEmpty($intEncoding)) {
+			[string]$contentParams['Encoding'] = $intEncoding
+		}
+		[string]$content = Get-Content @contentParams -Raw
+		[regex]$pattern = if ($true -eq $ContainsRegex) {
+			[regex]::new($SearchString)
+		}
+		else {
+			[regex]::new([regex]::Escape($SearchString))
+		}
+		if ($true -eq $IgnoreCase){
+			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+		}
+		else {
+			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::None
+		}
+		[array]$regexMatches = [regex]::Matches($content, $pattern, $options)
+		if ($regexMatches.Count -gt 0) {
+			[bool]$textFound = $true
+		}
+		Write-Output $textFound
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
