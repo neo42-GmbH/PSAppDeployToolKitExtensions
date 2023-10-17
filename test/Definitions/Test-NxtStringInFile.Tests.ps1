@@ -32,9 +32,8 @@ Describe "Test-NxtStringInFile" {
             $result | Should -BeFalse
             Remove-Item -Path $tempFile.FullName
         }
-        It "Returns false if the file does not exist" {
-            $result = Test-NxtStringInFile -Path "C:\DOES_NOT_EXIST" -SearchString "text that we Will search"
-            $result | Should -BeFalse
+        It "Throws if the file does not exist" {
+            { Test-NxtStringInFile -Path "C:\DOES_NOT_EXIST" -SearchString "text that we Will search" } | Should -Throw "File C:\DOES_NOT_EXIST does not exist"
         }
     }
 }
