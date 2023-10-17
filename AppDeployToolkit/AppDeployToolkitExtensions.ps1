@@ -8396,7 +8396,6 @@ function Test-NxtStringInFile {
         Tests if a string exists in a file.
 	.DESCRIPTION
 		Tests if a string exists in a file. Returns $true if the string is found, $false if not.
-		Also returns $false if the file does not exist.
     .PARAMETER Path
 		The path to the file.
 	.PARAMETER SearchString
@@ -8451,11 +8450,10 @@ function Test-NxtStringInFile {
 	Process {
 		#return false if the file does not exist
 		if ($false -eq (Test-Path -Path $Path)) {
-			Write-Log -Severity 2 -Message "File $Path does not exist" -Source ${cmdletName}
-			Write-Output $false
-			return
+			Write-Log -Severity 3 -Message "File $Path does not exist" -Source ${cmdletName}
+			throw "File $Path does not exist"
 		}
-		[String]$intEncoding = $Encoding
+		[string]$intEncoding = $Encoding
 		if (!(Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			[string]$intEncoding = "UTF8"
 		}
@@ -8487,7 +8485,7 @@ function Test-NxtStringInFile {
 		if (![string]::IsNullOrEmpty($intEncoding)) {
 			[string]$contentParams['Encoding'] = $intEncoding
 		}
-		[string]$Content = Get-Content @contentParams -Raw
+		[string]$content = Get-Content @contentParams -Raw
 		[regex]$pattern = if ($true -eq $ContainsRegex) {
 			[regex]::new($SearchString)
 		}
@@ -8495,12 +8493,12 @@ function Test-NxtStringInFile {
 			[regex]::new([regex]::Escape($SearchString))
 		}
 		if ($true -eq $IgnoreCase){
-			$Options = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
 		}
 		else {
-			$Options = [System.Text.RegularExpressions.RegexOptions]::None
+			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::None
 		}
-		[array]$regexMatches = [regex]::Matches($Content, $Pattern, $Options)
+		[array]$regexMatches = [regex]::Matches($content, $pattern, $options)
 		if ($regexMatches.Count -gt 0) {
 			[bool]$textFound = $true
 		}
