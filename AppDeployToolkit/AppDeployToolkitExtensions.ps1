@@ -8389,17 +8389,28 @@ function Test-NxtProcessExists {
 	}
 }
 #endregion
-#region Function Test-NxtTextInFile
-function Test-NxtTextInFile {
+#region Function Test-NxtStringInFile
+function Test-NxtStringInFile {
 	<#
     .SYNOPSIS
-        Tests if a text exists in a file.
+        Tests if a string exists in a file.
 	.DESCRIPTION
-		Tests if a text exists in a file. Returns true if the text is found, false if not.
+		Tests if a string exists in a file. Returns $true if the string is found, $false if not.
+		Also returns $false if the file does not exist.
     .PARAMETER Path
 		The path to the file.
-	.PARAMETER Text
-		The text to search for.
+	.PARAMETER SearchString
+		The string to search for.
+	.PARAMETER ContainsRegex
+		Indicates if the string is a regex.
+		Defaults to $false.
+	.PARAMETER IgnoreCase
+		Indicates if the search should be case insensitive.
+		Defaults to $true.
+	.PARAMETER Encoding
+		The encoding of the file can explicitly be set here.
+	.PARAMETER DefaultEncoding
+		The default encoding of the file if auto detection fails.
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -8415,6 +8426,9 @@ function Test-NxtTextInFile {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$ContainsRegex = $false,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IgnoreCase = $true,
 		[Parameter()]
 		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
@@ -8422,16 +8436,19 @@ function Test-NxtTextInFile {
 		[Parameter()]
 		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
-		$DefaultEncoding,
-		[Parameter()]
-		[Bool]
-		$AddBOMIfUTF8 = $true
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		#return false if the file does not exist
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Severity 2 -Message "File $Path does not exist" -Source ${cmdletName}
+			Write-Output $false
+			return
+		}
 		[String]$intEncoding = $Encoding
 		if (!(Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
 			[string]$intEncoding = "UTF8"
@@ -8471,7 +8488,13 @@ function Test-NxtTextInFile {
 		else {
 			[regex]::new([regex]::Escape($SearchString))
 		}
-		[array]$regexMatches = $pattern.Matches($Content)
+		if ($true -eq $IgnoreCase){
+			$Options = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+		}
+		else {
+			$Options = [System.Text.RegularExpressions.RegexOptions]::None
+		}
+		[array]$regexMatches = [regex]::Matches($Content, $Pattern, $Options)
 		if ($regexMatches.Count -gt 0) {
 			[bool]$textFound = $true
 		}
