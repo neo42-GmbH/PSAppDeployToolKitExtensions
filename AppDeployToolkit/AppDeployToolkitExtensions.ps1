@@ -4552,8 +4552,18 @@ function Initialize-NxtEnvironment {
 		if ($DeploymentType -notlike "*Userpart*") {
 			if ($DeploymentType -eq "Install") {
 				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
-				Remove-File -Path "$App\neo42-Install\Setup.cfg"
-				Remove-File -Path "$App\neo42-Install\CustomSetup.cfg"
+				if (
+					[System.IO.Path]::GetFullPath($SetupCfgPath) -ne
+					[System.IO.Path]::GetFullPath("$App\neo42-Install\Setup.cfg")
+				) {
+					Remove-File -Path "$App\neo42-Install\Setup.cfg"
+				}
+				if (
+					[System.IO.Path]::GetFullPath($CustomSetupCfgPath) -ne
+					[System.IO.Path]::GetFullPath("$App\neo42-Install\CustomSetup.cfg")
+				) {
+					Remove-File -Path "$App\neo42-Install\CustomSetup.cfg"
+				}
 			}
 			if ($true -eq (Test-Path -Path $SetupCfgPathOverride\setupOverride.cfg)) {
 				Write-Log -Message "Found an externally provided setup configuration file..."-Source ${cmdletName}
@@ -4562,11 +4572,27 @@ function Initialize-NxtEnvironment {
 			}
 			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
 				Write-Log -Message "Found a default setup config file 'Setup.cfg'..."-Source ${cmdletName}
-				Copy-File -Path "$SetupCfgPath" -Destination "$App\neo42-Install\"
+				if (
+					[System.IO.Path]::GetFullPath($SetupCfgPath) -ne
+					[System.IO.Path]::GetFullPath("$App\neo42-Install\Setup.cfg")
+				) {
+						Copy-File -Path "$SetupCfgPath" -Destination "$App\neo42-Install\"
+				}
+				else {
+					Write-Log -Message "The setup config file is already at its correct location." -Source ${cmdletName}
+				}
 			}
 			if ($true -eq (Test-Path -Path "$CustomSetupCfgPath")) {
 				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
-				Copy-File -Path "$CustomSetupCfgPath" -Destination "$App\neo42-Install\"
+				if (
+					[System.IO.Path]::GetFullPath($CustomSetupCfgPath) -ne
+					[System.IO.Path]::GetFullPath("$App\neo42-Install\CustomSetup.cfg")
+				) {
+						Copy-File -Path "$CustomSetupCfgPath" -Destination "$App\neo42-Install\"
+				}
+				else {
+					Write-Log -Message "The custom setup config file is already at its correct location." -Source ${cmdletName}
+				}
 			}
 		}
 		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
