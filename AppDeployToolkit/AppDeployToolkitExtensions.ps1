@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 	This script is a template that allows you to extend the toolkit with your own custom functions.
 	The "*-Nxt*" function name pattern is used by "neo42 GmbH" to avoid naming conflicts with the built-in functions of the toolkit.
@@ -8400,7 +8400,7 @@ function Test-NxtStringInFile {
     .PARAMETER Path
 		The path to the file.
 	.PARAMETER SearchString
-		The string to search for.
+		The string to search for. May contain a regex if ContainsRegex is set to $true.
 	.PARAMETER ContainsRegex
 		Indicates if the string is a regex.
 		Defaults to $false.
@@ -8413,6 +8413,12 @@ function Test-NxtStringInFile {
 		The default encoding of the file if auto detection fails.
 	.OUTPUTS
 		System.Boolean.
+	.EXAMPLE
+		Test-NxtStringInFile -Path "C:\temp\test.txt" -SearchString "test"
+		Searches for a string.
+	.EXAMPLE
+		Test-NxtStringInFile -Path "C:\temp\test.txt" -ContainsRegex $true -SearchString "test.*"
+		Searches for a regex.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
     #>
