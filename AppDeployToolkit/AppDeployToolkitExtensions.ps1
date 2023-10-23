@@ -3732,9 +3732,9 @@ function Get-NxtProcessTree {
         [Parameter(Mandatory=$false)]
         [bool]$IncludeParentProcesses = $true
     )
-    [System.Management.ManagementObject]$process = $process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
+    [System.Management.ManagementObject]$process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
     if ($null -ne $process) {
-        $process | Select-Object ProcessId, ParentProcessId, CommandLine
+        Write-Output $process
         if ($IncludeChildProcesses) {
             $childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
             foreach ($child in $childProcesses) {
