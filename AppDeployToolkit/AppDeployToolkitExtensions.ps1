@@ -4088,10 +4088,13 @@ Function Get-NxtRunningProcesses {
             If (-not $DisableLogging) {
                 Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
             }
+			[string]$currentProcessCommandLine = (Get-WmiObject -Class Win32_Process -Filter "ProcessId = $PID").CommandLine
 			[array]$wqlProcessObjects = $processObjects | Where-Object { $_.IsWql -eq $true }
 			[array]$processesFromWmi = $(
 				foreach ($wqlProcessObject in $wqlProcessObjects) {
-					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
+					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Where-Object {
+                        $_.CommandLine -ne $currentProcessCommandLine
+                    } | Select-Object name,ProcessId,@{
 						n = "QueryUsed"
 						e = { $wqlProcessObject.ProcessName }
 					}
