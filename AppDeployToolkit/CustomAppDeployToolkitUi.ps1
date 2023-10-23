@@ -554,7 +554,9 @@ Function Get-NxtRunningProcesses {
 			[array]$wqlProcessObjects = $processObjects | Where-Object { $_.IsWql -eq $true }
 			[array]$processesFromWmi = $(
 				foreach ($wqlProcessObject in $wqlProcessObjects) {
-					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
+					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Where-Object {
+                        $_.commandline -NotLike "*powershell.exe*CustomAppDeployToolkitUi.ps1*"
+                    } | Select-Object name,ProcessId,@{
 						n = "QueryUsed"
 						e = { $wqlProcessObject.ProcessName }
 					}
