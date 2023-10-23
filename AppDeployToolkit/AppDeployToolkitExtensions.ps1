@@ -3698,6 +3698,55 @@ function Get-NxtProcessorArchiteW6432 {
 	}
 }
 #endregion
+#region Function Get-NxtProcessTree
+function Get-NxtProcessTree {
+    <#
+    .SYNOPSIS
+        Get the process tree for a given process ID
+    .DESCRIPTION
+        This function gets the process tree for a given process ID. It uses WMI to get the process, its child processes and the parent processes.
+    .PARAMETER ProcessId
+        The process ID for which to get the process tree
+	.PARAMETER IncludeChildProcesses
+		Indicates if child processes should be included in the result.
+		Defaults to $true.
+	.PARAMETER IncludeParentProcesses
+		Indicates if parent processes should be included in the result.
+		Defaults to $true.
+	.OUTPUTS
+		System.Management.ManagementObject
+	.EXAMPLE
+		Get-NxtProcessTree -ProcessId 1234
+		Gets the process tree for process with ID 1234 including child and parent processes.
+	.EXAMPLE
+		Get-NxtProcessTree -ProcessId 1234 -IncludeChildProcesses $false -IncludeParentProcesses $false
+		Gets the process tree for process with ID 1234 without child nor parent processes.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    param (
+        [Parameter(Mandatory=$true)]
+        [int]$ProcessId,
+        [Parameter(Mandatory=$false)]
+        [bool]$IncludeChildProcesses = $true,
+        [Parameter(Mandatory=$false)]
+        [bool]$IncludeParentProcesses = $true
+    )
+    [System.Management.ManagementObject]$process = $process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
+    if ($null -ne $process) {
+        $process | Select-Object ProcessId, ParentProcessId, CommandLine
+        if ($IncludeChildProcesses) {
+            $childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
+            foreach ($child in $childProcesses) {
+                Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses
+            }
+        }
+        if ($process.ParentProcessId -gt 0 -and $IncludeParentProcesses) {
+            Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses
+        }
+    }
+}
+#endregion
 #region Function Get-NxtRebootRequirement
 function Get-NxtRebootRequirement {
 	<#
@@ -4056,6 +4105,8 @@ Function Get-NxtRunningProcesses {
         Custom object containing the process objects to search for. If not supplied, the function just returns $null
     .PARAMETER DisableLogging
         Disables function logging
+	.PARAMETER ProcessIdToIgnore
+        The process ID to ignore the complete tree for.
     .INPUTS
         None
         You cannot pipe objects to this function.
@@ -4074,9 +4125,10 @@ Function Get-NxtRunningProcesses {
         [Parameter(Mandatory = $false, Position = 0)]
         [PSObject[]]$ProcessObjects,
         [Parameter(Mandatory = $false, Position = 1)]
-        [Switch]$DisableLogging
+        [Switch]$DisableLogging,
+        [Parameter(Mandatory = $false)]
+        [int[]]$ProcessIdsToIgnore
     )
-
     Begin {
         ## Get the name of this function and write header
         [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -4088,13 +4140,10 @@ Function Get-NxtRunningProcesses {
             If (-not $DisableLogging) {
                 Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
             }
-			[string]$currentProcessCommandLine = (Get-WmiObject -Class Win32_Process -Filter "ProcessId = $PID").CommandLine
 			[array]$wqlProcessObjects = $processObjects | Where-Object { $_.IsWql -eq $true }
 			[array]$processesFromWmi = $(
 				foreach ($wqlProcessObject in $wqlProcessObjects) {
-					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Where-Object {
-                        $_.CommandLine -ne $currentProcessCommandLine
-                    } | Select-Object name,ProcessId,@{
+					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
 						n = "QueryUsed"
 						e = { $wqlProcessObject.ProcessName }
 					}
@@ -4103,6 +4152,9 @@ Function Get-NxtRunningProcesses {
             ## Prepare a filter for Where-Object
             [ScriptBlock]$whereObjectFilter = {
                 ForEach ($processObject in $processObjects) {
+					if ($ProcessIdsToIgnore -contains $_.Id) {
+						continue
+					}
 					[bool]$processFound = $false
 					if ($processObject.IsWql) {
 						[int]$processId = $_.Id
@@ -7534,6 +7586,33 @@ Function Show-NxtWelcomePrompt {
 		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.PARAMETER ApplyContinueTypeOnError
 		Specifies if the ContinueType should be applied in case of an error. Default: $false.
+	.PARAMETER InstallTitle
+		The title of the installation.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppDeployLogoBanner
+		The logo banner to display in the prompt.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppDeployLogoBannerDark
+		The dark logo banner to display in the prompt.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER EnvProgramData
+		The path to the ProgramData folder.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppVendor
+		The vendor of the application.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppName
+		The name of the application.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppVersion
+		The version of the application.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER Logname
+		The name of the log file.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER ProcessIdToIgnore
+		The process ID to ignore.
+		Defaults to the ID of the current process $PID.
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -7605,7 +7684,10 @@ Function Show-NxtWelcomePrompt {
 		$AppVersion = $appVersion,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Logname = $logName
+		$Logname = $logName,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$ProcessIdToIgnore = $PID
     )
 
     Begin {
@@ -7640,6 +7722,9 @@ Function Show-NxtWelcomePrompt {
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppName" -Value $appName
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVersion" -Value $appVersion
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
+		if ($ProcessIdToIgnore -gt 0){
+			$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ProcessIdToIgnore" -Value $ProcessIdToIgnore
+		}
 		Write-Log "Searching for Sessions..." -Source ${CmdletName}
 		[int]$welcomeExitCode = 1618;
 		[PsObject]$activeSessions = Get-LoggedOnUser
