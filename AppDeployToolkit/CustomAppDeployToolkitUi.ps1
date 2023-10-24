@@ -2007,7 +2007,6 @@ else {
 
 $control_AppNameText.Text = $installTitle
 $control_TitleText.Text = $installTitle
-## As this can cause resource usage spikes, we only run it once in every 10s and on startup.
 if ($ProcessIdToIgnore -gt 0){
     [int[]]$ProcessIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
 }else{
@@ -2183,11 +2182,11 @@ If ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
         Try {
             if ([math]::DivRem($tickCounter,10,[ref]$null) -eq 1){
                 # As this is performance intensive, only run it every 10 Ticks
-                [int[]]$ProcessIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
+                [int[]]$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
             }
             $tickCounter++
             [PSObject[]]$dynamicRunningProcesses = $null
-            $dynamicRunningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $ProcessIdsToIgnore
+            $dynamicRunningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore
             [String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
             If ($dynamicRunningProcessDescriptions -ne $script:runningProcessDescriptions) {
                 # Update the runningProcessDescriptions variable for the next time this function runs
