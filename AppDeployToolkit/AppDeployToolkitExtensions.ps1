@@ -7039,6 +7039,9 @@ Function Show-NxtInstallationWelcome {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER ProcessIdToIgnore
+		Defines a process id to ignore.
+		Defaults to $PID
     .OUTPUTS
 		Exit code depending on the user's response or the timeout.
     .EXAMPLE
@@ -7148,7 +7151,9 @@ Function Show-NxtInstallationWelcome {
 		[Switch]$ApplyContinueTypeOnError = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.APPLYCONTINUETYPEONERROR)),
 		## Specifies the script root path
 		[Parameter(Mandatory = $false)]
-		[string]$ScriptRoot = $scriptRoot
+		[string]$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[int]$ProcessIdToIgnore = $PID
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -7319,7 +7324,11 @@ Function Show-NxtInstallationWelcome {
 				[Boolean]$forceCountdown = $true
 			}
 			Set-Variable -Name 'closeAppsCountdownGlobal' -Value $closeAppsCountdown -Scope 'Script'
-			While ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses') -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
+			[int[]]$processIdsToIgnore = @()
+			if ($processIdToIgnore -gt 0) {
+				$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+			}
+			While ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses' -ProcessIdsToIgnore $processIdsToIgnore) -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				#  If no proccesses are running close
 				if ([string]::IsNullOrEmpty($runningProcessDescriptions)) {
@@ -7333,12 +7342,12 @@ Function Show-NxtInstallationWelcome {
 					}
 					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
 					ElseIf ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError
+						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
 					}
 				}
 				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
 				ElseIf (($runningProcessDescriptions) -or ($forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError
+					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
 				}
 				#  If there is no deferral and no processes running, break the while loop
 				Else {
@@ -7372,7 +7381,10 @@ Function Show-NxtInstallationWelcome {
 						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
 					}
 					# Update the process list right before closing, in case it changed
-					$runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects
+					if ($processIdToIgnore -gt 0) {
+						$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+					}
+					$runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -ProcessIdsToIgnore $processIdsToIgnore
 					# Close running processes
 					ForEach ($runningProcess in $runningProcesses) {
 						[PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
@@ -7421,8 +7433,10 @@ Function Show-NxtInstallationWelcome {
 							Stop-Process -Name $runningProcess.ProcessName -Force -ErrorAction 'SilentlyContinue'
 						}
 					}
-
-					If ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging) {
+					if ($processIdToIgnore -gt 0) {
+						$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+					}
+					If ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
 						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
 						Start-Sleep -Seconds 2
@@ -7687,7 +7701,7 @@ Function Show-NxtWelcomePrompt {
 		$Logname = $logName,
 		[Parameter(Mandatory = $false)]
 		[int]
-		$ProcessIdToIgnore = $PID
+		$ProcessIdToIgnore
     )
 
     Begin {
