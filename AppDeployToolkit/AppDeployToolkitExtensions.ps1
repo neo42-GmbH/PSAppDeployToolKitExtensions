@@ -5065,6 +5065,53 @@ function Move-NxtItem {
 	}
 }
 #endregion
+#region Function New-NxtFolderWithPermissions
+function New-NxtFolderWithPermissions {
+	<#
+	.SYNOPSIS
+		Creates a new folder with permissions.
+	.DESCRIPTION
+		Creates a new folder with permissions.
+	.PARAMETER Path
+		Path of the folder to create.
+	.PARAMETER Permission
+		Permission to set on the folder.
+	.PARAMETER PermissionType
+		Type of the permission to set on the folder.
+		Defaults to "Allow".
+	.PARAMETER Inherit
+		Defines if the permission should be inherited.
+		Defaults to $true.
+	.PARAMETER ContinueOnError
+		Continue if an error is encountered. Default is: $true.
+	.EXAMPLE
+		New-NxtFolderWithPermissions -Path C:\Temp\MyFolder -Permission "Users" -PermissionType "Allow" -Inherit $true
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[string[]]
+		[ValidateSet("Administrators", "System","Users")]
+		$PermissionsFC = @("Administrators","SystemFC"),
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet("Allways","IfNotMatchingDesiredAcl","Never")]
+		$BreakInheritanceFromParent = "IfNotMatchingDesiredAcl",
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet("System","Administrators","Users")]
+		$SetOwner
+	)
+}
+
+#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
