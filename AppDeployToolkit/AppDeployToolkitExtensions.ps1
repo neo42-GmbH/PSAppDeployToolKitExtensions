@@ -5074,18 +5074,18 @@ function New-NxtFolderWithPermissions {
 		Creates a new folder with permissions.
 	.PARAMETER Path
 		Path of the folder to create.
-	.PARAMETER Permission
+	.PARAMETER FullControlPermissions
 		Permission to set on the folder.
-	.PARAMETER PermissionType
-		Type of the permission to set on the folder.
-		Defaults to "Allow".
-	.PARAMETER Inherit
+	.PARAMETER ReadAndExecutePermissions
+		Permission to set on the folder.
+	.PARAMETER WritePermissions
+		Permission to set on the folder.
+	.PARAMETER BreakInheritance
 		Defines if the permission should be inherited.
 		Defaults to $true.
-	.PARAMETER ContinueOnError
-		Continue if an error is encountered. Default is: $true.
 	.EXAMPLE
-		New-NxtFolderWithPermissions -Path C:\Temp\MyFolder -Permission "Users" -PermissionType "Allow" -Inherit $true
+		New-NxtFolderWithPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions "BuiltinAdministrators","LocalSystem","Self" -ReadAndExecutePermissions "BuiltinUsers"
+		Will create a new folder with the given permissions.
 	.OUTPUTS
 		none.
 	.LINK
@@ -5097,18 +5097,42 @@ function New-NxtFolderWithPermissions {
 		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
+		[ValidateSet("BuiltinAdministrators", "LocalSystem", "BuiltinUsers", "Self")]
 		[string[]]
-		[ValidateSet("Administrators", "System","Users")]
-		$PermissionsFC = @("Administrators","SystemFC"),
+		$FullControlPermissions = @("BuiltinAdministrators", "LocalSystem", "Self"),
 		[Parameter(Mandatory = $false)]
-		[string]
-		[ValidateSet("Allways","IfNotMatchingDesiredAcl","Never")]
-		$BreakInheritanceFromParent = "IfNotMatchingDesiredAcl",
+		[ValidateSet("BuiltinAdministrators", "LocalSystem", "BuiltinUsers", "Self")]
+		[string[]]
+		$ReadAndExecutePermissions = @("BuiltinUsers"),
 		[Parameter(Mandatory = $false)]
+		[ValidateSet("BuiltinAdministrators", "LocalSystem", "BuiltinUsers", "Self")]
+		[string[]]
+		$WritePermissions,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$BreakInheritance = $true,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("BuiltinAdministrators", "LocalSystem", "BuiltinUsers", "Self")]
 		[string]
-		[ValidateSet("System","Administrators","Users")]
-		$SetOwner
+		$Owner = "BuiltinAdministrators"
 	)
+	[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
+	foreach ($PermissionLevel in @("FullControl", "ReadAndExecute", "Write")) {
+		foreach ($Identifier in $(Get-Variable "$PermissionLevel`Permissions" -ValueOnly)) {
+			[System.Security.AccessControl.FileSystemAccessRule]$rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+				[System.Security.Principal.SecurityIdentifier]::new([System.Security.Principal.WellKnownSidType]::"$($Identifier)Sid", $null),
+				"$PermissionLevel",
+				"ContainerInherit,ObjectInherit",
+				"None",
+				"Allow"
+			)
+			$directorySecurity.AddAccessRule($rule)
+		}
+	}
+	if ($null -ne $Owner) {
+		$directorySecurity.SetOwner([System.Security.Principal.SecurityIdentifier]::new([System.Security.Principal.WellKnownSidType]::"$($Owner)Sid", $null))
+	}
+	[System.IO.Directory]::CreateDirectory($Path, $directorySecurity)
 }
 
 #endregion
