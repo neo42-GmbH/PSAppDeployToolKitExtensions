@@ -5186,6 +5186,56 @@ function New-NxtFolderWithPermissions {
 	}
 }
 #endregion
+#region Function New-NxtTemporaryFolder
+function New-NxtTemporaryFolder {
+	<#
+	.SYNOPSIS
+		Creates a new temporary folder.
+	.DESCRIPTION
+		Creates a new temporary folder.
+	.PARAMETER TempPath
+		Parent path of the folder to create.
+		Default is: $env:TEMP.
+	.PARAMETER PermissionPreset
+		Security preset to set on the folder.
+		Default is: "FullControl" for System and BuiltinAdmin, and ReadAnExecute for BuiltinUsers.
+	.EXAMPLE
+		New-NxtTemporaryFolder -TempPath "C:\Temp"
+		Will create a new folder with the given permissions.
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$TempPath = $env:TEMP,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PermissionPreset = "Admin"
+	)
+	$foldername=(get-random -InputObject((48..57 + 65..90)) -Count 3|ForEach-Object{
+		[char]$_}
+	) -join ""
+	[int]$countTries = 1
+	while ($true -eq (Test-Path "$TempPath\$foldername") -and $countTries -lt 100) {
+		$countTries++
+		$foldername=(get-random -InputObject((48..57 + 65..90)) -Count 3|ForEach-Object{
+			[char]$_}
+		) -join ""
+	}
+	if ($countTries -ge 100) {
+		Write-Log -Message "Failed to create temporary folder in '$TempPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		Throw "Failed to create temporary folder in '$TempPath'. `n$(Resolve-Error)"
+	}
+	if ($PermissionPreset -eq "Admin") {
+		$tempfolder = New-NxtFolderWithPermissions -Path "$TempPath\$foldername" -FullControlPermissions "BuiltinAdministrators","LocalSystem" -ReadAndExecutePermissions "BuiltinUsers" -BreakInheritance $true
+	}
+	write-output $tempfolder
+}
+#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
