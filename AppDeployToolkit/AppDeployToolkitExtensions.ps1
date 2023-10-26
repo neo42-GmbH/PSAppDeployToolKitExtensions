@@ -5193,10 +5193,10 @@ function New-NxtTemporaryFolder {
 		Creates a new temporary folder.
 	.DESCRIPTION
 		Creates a new temporary folder.
-	.PARAMETER TempPath
-		Parent path of the folder to create.
-		Default is: $env:TEMP.
-	.PARAMETER PermissionPreset
+	.PARAMETER RootPath
+		Parent path of the folder to create. It is recommended not to not change this parameter!
+		Default is: 
+	.PARAMETER Permissions
 		Security preset to set on the folder.
 		Default is: "FullControl" for System and BuiltinAdmin, and ReadAnExecute for BuiltinUsers.
 	.EXAMPLE
@@ -5211,10 +5211,10 @@ function New-NxtTemporaryFolder {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$TempPath = $env:TEMP,
+		$TempPath = "$env:SystemDrive\`$neo42tmp",
 		[Parameter(Mandatory = $false)]
-		[string]
-		$PermissionPreset = "Admin"
+		[bool]
+		$SetCurrentUserRights
 	)
 	$foldername=(get-random -InputObject((48..57 + 65..90)) -Count 3|ForEach-Object{
 		[char]$_}
@@ -5230,9 +5230,15 @@ function New-NxtTemporaryFolder {
 		Write-Log -Message "Failed to create temporary folder in '$TempPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		Throw "Failed to create temporary folder in '$TempPath'. `n$(Resolve-Error)"
 	}
-	if ($PermissionPreset -eq "Admin") {
-		$tempfolder = New-NxtFolderWithPermissions -Path "$TempPath\$foldername" -FullControlPermissions "BuiltinAdministrators","LocalSystem" -ReadAndExecutePermissions "BuiltinUsers" -BreakInheritance $true
+	[hashtable]$nxtFolderWithPermissionsSplat = @{
+		Path = "$TempPath\$foldername"
 	}
+	$nxtFolderWithPermissionsSplat["FullControlPermissions"] = @("BuiltinAdministrators","LocalSystem")
+	if ($true -eq $SetCurrentUserRights){
+		$nxtFolderWithPermissionsSplat["FullControlPermissions"] += "CurrentUser"
+	}
+	$nxtFolderWithPermissionsSplat["BreakInheritance"] = $true
+	$tempfolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat
 	write-output $tempfolder
 }
 #endregion
