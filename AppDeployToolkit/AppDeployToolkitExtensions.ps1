@@ -5243,10 +5243,10 @@ function New-NxtTemporaryFolder {
 		Path = "$TempPath\$foldername"
 	}
 	$nxtFolderWithPermissionsSplat["FullControlPermissions"] = @("BuiltinAdministrators","LocalSystem")
+	$nxtFolderWithPermissionsSplat["ReadAndExecutePermissions"] = @("BuiltinUsers")
 	if ($true -eq $SetCurrentUserRights){
 		$nxtFolderWithPermissionsSplat["FullControlPermissions"] += "CurrentUser"
 	}
-	$nxtFolderWithPermissionsSplat["BreakInheritance"] = $true
 	$tempfolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat
 	write-output $tempfolder
 }
