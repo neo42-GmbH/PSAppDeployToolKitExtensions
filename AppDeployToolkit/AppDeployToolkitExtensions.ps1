@@ -5090,9 +5090,9 @@ function New-NxtFolderWithPermissions {
 	.PARAMETER Hidden
 		Defines if the folder should be hidden.
 		Default is: $false.
-	.PARAMETER BreakInheritance
-		Defines if the folder should break inheritance.
-		Default is: $false.
+	.PARAMETER DisableLogging
+		Disables logging for this function.
+		Usecase: Log directories might not be created yet and must have the correct permissions first.
 	.EXAMPLE
 		New-NxtFolderWithPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions "BuiltinAdministrators","LocalSystem","Self" -ReadAndExecutePermissions "BuiltinUsers"
 		Will create a new folder with the given permissions.
@@ -5131,7 +5131,10 @@ function New-NxtFolderWithPermissions {
 		$CustomDirectorySecurity,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$Hidden
+		$Hidden,
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$DisableLogging
 	)
 	Begin {
 		## Get the name of this function and write header
