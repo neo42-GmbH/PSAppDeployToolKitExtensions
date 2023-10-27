@@ -1208,6 +1208,75 @@ function Copy-NxtDesktopShortcuts {
 	}
 }
 #endregion
+#region Function Clear-NxtTempFolder
+function Clear-NxtTempFolder {
+	<#
+	.SYNOPSIS
+		Deletes all files and folders in the $neo42temp folder if they are older than the defined number of hours.
+	.DESCRIPTION
+		Deletes all files and folders in the $neo42temp folder if they are older than the defined number of hours.
+	.PARAMETER TempRootFolder
+		Specifies the path to the temp folder.
+		Defaults to $env:SystemDrive\n42Tmp.
+	.PARAMETER HoursToKeep
+		Specifies the number of hours to keep files and folders in the temp folder.
+		Defaults to 96.
+	.EXAMPLE
+		Clear-NxtTempFolder
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$TempRootFolder = "$env:SystemDrive\n42Tmp",
+		[Parameter(Mandatory = $false)]
+		[int]
+		$HoursToKeep = 96
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($true -eq (Test-Path -Path $TempRootFolder)){
+			Write-Log -Message "Clearing temp folder [$TempRootFolder]..." -Source ${cmdletName}
+		}
+		else {
+			Write-Log -Message "Temp folder [$TempRootFolder] does not exist. Skipping." -Source ${cmdletName}
+			return
+		}
+		try {
+			## Get the current date/time
+			[datetime]$now = Get-Date
+			## Get all files and folders in the temp folder
+			[array]$items = Get-ChildItem -Path $TempRootFolder -Force
+			## Loop through each file and folder
+			foreach ($item in $items) {
+				## Calculate the number of hours since the file/folder was last accessed
+				[int]$hoursSinceLastAccess = ($now - $item.LastAccessTime).TotalHours
+				## If the number of hours since the file/folder was last accessed is greater than the number of hours to keep, delete it
+				if ($hoursSinceLastAccess -gt $HoursToKeep -or ($global:NxtTempDirectories -contains $item.FullName)) {
+					Write-Log -Message "Deleting file/folder '$($item.FullName)'..." -Source ${cmdletName}
+					Remove-Item -Path $item.FullName -Force -Recurse
+					Write-Log -Message "File/folder successfully deleted." -Source ${cmdletName}
+				}
+			}
+			## delete rootfolder also in case it is empty
+			if ((Get-ChildItem -Path $TempRootFolder -Force).Count -eq 0){
+				Remove-NxtEmptyFolder -Path $TempRootFolder
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to clear temp folder. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Execute-NxtBitRockInstaller
 function Execute-NxtBitRockInstaller {
 	<#
@@ -5216,7 +5285,7 @@ function New-NxtTemporaryFolder {
 		Creates a new temporary folder.
 	.PARAMETER TempRootPath
 		Parent path of the folder to create. Do not set this to a different path as this is the only temp path we will automatically clean up!
-		Default is: "$env:SystemDrive\`$neo42tmp".
+		Default is: "$env:SystemDrive\n42Tmp".
 	.EXAMPLE
 		New-NxtTemporaryFolder -TempPath "C:\Temp"
 		Will create a new folder with the given permissions.
@@ -5230,7 +5299,7 @@ function New-NxtTemporaryFolder {
 		[Parameter(Mandatory = $false)]
 		[string]
 		# do not set this to a different path as this is the only temp path we will automatically cleaning up!
-		$TempRootPath = "$env:SystemDrive\`$neo42tmp",
+		$TempRootPath = "$env:SystemDrive\n42Tmp",
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$SetCurrentUserRights
@@ -5275,6 +5344,7 @@ function New-NxtTemporaryFolder {
 		$nxtFolderWithPermissionsSplat["FullControlPermissions"] += "CurrentUser"
 	}
 	[string]$tempFolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat |Select-Object -ExpandProperty FullName
+	[string[]]$global:NxtTempDirectories += $tempfolder
 	write-output $tempfolder
 }
 #endregion
