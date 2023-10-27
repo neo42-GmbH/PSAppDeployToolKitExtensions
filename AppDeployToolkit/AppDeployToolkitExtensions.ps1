@@ -5214,12 +5214,9 @@ function New-NxtTemporaryFolder {
 		Creates a new temporary folder.
 	.DESCRIPTION
 		Creates a new temporary folder.
-	.PARAMETER RootPath
-		Parent path of the folder to create. It is recommended not to not change this parameter!
-		Default is: 
-	.PARAMETER Permissions
-		Security preset to set on the folder.
-		Default is: "FullControl" for System and BuiltinAdmin, and ReadAnExecute for BuiltinUsers.
+	.PARAMETER TempRootPath
+		Parent path of the folder to create. Do not set this to a different path as this is the only temp path we will automatically clean up!
+		Default is: "$env:SystemDrive\`$neo42tmp".
 	.EXAMPLE
 		New-NxtTemporaryFolder -TempPath "C:\Temp"
 		Will create a new folder with the given permissions.
@@ -5232,34 +5229,52 @@ function New-NxtTemporaryFolder {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		$TempPath = "$env:SystemDrive\`$neo42tmp",
+		# do not set this to a different path as this is the only temp path we will automatically cleaning up!
+		$TempRootPath = "$env:SystemDrive\`$neo42tmp",
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$SetCurrentUserRights
 	)
+	## prepare temprootfolder
+	[hashtable]$nxtTempRootFolderSplat = @{
+			Path = "$TempRootPath"
+			FullControlPermissions = @("BuiltinAdministrators","LocalSystem")
+			ReadAndExecutePermissions = @("BuiltinUsers")
+			Owner = "BuiltinAdministrators"
+		}
+	## Check if the temprootfolder exists
+	if ($false -eq (Test-Path -Path $TempRootPath)){
+		## create the RootPath
+		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
+	}
+	elseif($false -eq (Test-NxtFolderPermissions @nxtTempRootFolderSplat)){
+		## Remove the RootPath and create it again
+		Remove-Item -Path $TempRootPath -Recurse -Force
+		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
+	}
 	$foldername=(get-random -InputObject((48..57 + 65..90)) -Count 3|ForEach-Object{
 		[char]$_}
 	) -join ""
 	[int]$countTries = 1
-	while ($true -eq (Test-Path "$TempPath\$foldername") -and $countTries -lt 100) {
+	while ($true -eq (Test-Path "$TempRootPath\$foldername") -and $countTries -lt 100) {
 		$countTries++
 		$foldername=(get-random -InputObject((48..57 + 65..90)) -Count 3|ForEach-Object{
 			[char]$_}
 		) -join ""
 	}
 	if ($countTries -ge 100) {
-		Write-Log -Message "Failed to create temporary folder in '$TempPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-		Throw "Failed to create temporary folder in '$TempPath'. `n$(Resolve-Error)"
+		Write-Log -Message "Failed to create temporary folder in '$TempRootPath'. Did not find an available Name." -Severity 3 -Source ${cmdletName}
+		Throw "Failed to create temporary folder in '$TempRootPath'. Did not find an available Name."
 	}
 	[hashtable]$nxtFolderWithPermissionsSplat = @{
-		Path = "$TempPath\$foldername"
+		Path = "$TempRootPath\$foldername"
 	}
 	$nxtFolderWithPermissionsSplat["FullControlPermissions"] = @("BuiltinAdministrators","LocalSystem")
 	$nxtFolderWithPermissionsSplat["ReadAndExecutePermissions"] = @("BuiltinUsers")
 	if ($true -eq $SetCurrentUserRights){
 		$nxtFolderWithPermissionsSplat["FullControlPermissions"] += "CurrentUser"
 	}
-	$tempfolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat
+	[string]$tempFolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat |Select-Object -ExpandProperty FullName
 	write-output $tempfolder
 }
 #endregion
