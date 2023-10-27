@@ -5178,7 +5178,12 @@ function New-NxtFolderWithPermissions {
 				}
 				$directorySecurity.SetOwner($setOwner)
 			}
+			Write-Log -Message "Creating folder '$Path' with permissions." -Source ${cmdletName}
 			[System.IO.DirectoryInfo]$directory = [System.IO.Directory]::CreateDirectory($Path, $directorySecurity)
+			if ($false -eq (Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity)){
+				Write-Log -Message "Failed to create Folder with Permissions. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				Throw "Failed to create Folder with Permissions. `n$(Resolve-Error)"
+			}
 			if ($true -eq $Hidden) {
                 $directory.Attributes = $directory.Attributes -bor [System.IO.FileAttributes]::Hidden
             }
@@ -5188,7 +5193,6 @@ function New-NxtFolderWithPermissions {
 			Write-Log -Message "Failed to create Folder with Permissions. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Throw "Failed to create Folder with Permissions. `n$(Resolve-Error)"
 		}
-		
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -8607,7 +8611,7 @@ function Test-NxtFolderPermissions {
 				'Resulttype'	= 'Permission'
             }
         }
-        if ($false -eq [string]::IsNullOrEmpty($Owner) -or $null -ne $CustomDirectorySecurity) {
+        if ($false -eq [string]::IsNullOrEmpty($Owner) -or $false -eq [string]::IsNullOrEmpty($CustomDirectorySecurity.Owner)) {
 			[System.Security.Principal.IdentityReference]$expectedOwnerSid = $null
 			if ($Owner -eq "CurrentUser") {
 				[System.Security.Principal.NTAccount]$ntAccount = $env:USERNAME
