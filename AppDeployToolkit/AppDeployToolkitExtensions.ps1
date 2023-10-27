@@ -5139,6 +5139,8 @@ function New-NxtFolderWithPermissions {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		## A reminder: this function only works correctly if we break inheritance
+		$breakInheritance = $true
 	}
 	Process {
 		try {
@@ -5181,11 +5183,14 @@ function New-NxtFolderWithPermissions {
 				}
 				$directorySecurity.SetOwner($setOwner)
 			}
+			if ($true -eq $breakInheritance) {
+				$directorySecurity.SetAccessRuleProtection($true, $false)
+			}
 			Write-Log -Message "Creating folder '$Path' with permissions." -Source ${cmdletName}
 			[System.IO.DirectoryInfo]$directory = [System.IO.Directory]::CreateDirectory($Path, $directorySecurity)
 			if ($false -eq (Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity)){
-				Write-Log -Message "Failed to create Folder with Permissions. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				Throw "Failed to create Folder with Permissions. `n$(Resolve-Error)"
+				Write-Log -Message "Failed to create Folder with Permissions. `n" -Severity 3 -Source ${cmdletName}
+				Throw "Failed to create Folder with Permissions. `n $($_.Exception.Message)"
 			}
 			if ($true -eq $Hidden) {
                 $directory.Attributes = $directory.Attributes -bor [System.IO.FileAttributes]::Hidden
@@ -5193,8 +5198,8 @@ function New-NxtFolderWithPermissions {
 			Write-Output $directory
 		}
 		catch {
-			Write-Log -Message "Failed to create Folder with Permissions. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			Throw "Failed to create Folder with Permissions. `n$(Resolve-Error)"
+			Write-Log -Message "Failed to create Folder with Permissions." -Severity 3 -Source ${cmdletName}
+			Throw "Failed to create Folder with Permissions. `n$ $($_.Exception.Message)"
 		}
 	}
 	End {
