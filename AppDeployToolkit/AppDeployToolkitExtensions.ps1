@@ -5090,9 +5090,9 @@ function New-NxtFolderWithPermissions {
 	.PARAMETER Hidden
 		Defines if the folder should be hidden.
 		Default is: $false.
-	.PARAMETER BreakInheritance
-		Defines if the folder should break inheritance.
-		Default is: $false.
+	.PARAMETER DisableLogging
+		Disables logging for this function.
+		Usecase: Log directories might not be created yet and must have the correct permissions first.
 	.EXAMPLE
 		New-NxtFolderWithPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions "BuiltinAdministrators","LocalSystem","Self" -ReadAndExecutePermissions "BuiltinUsers"
 		Will create a new folder with the given permissions.
@@ -5131,11 +5131,16 @@ function New-NxtFolderWithPermissions {
 		$CustomDirectorySecurity,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$Hidden
+		$Hidden,
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$DisableLogging
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		## A reminder: this function only works correctly if we break inheritance
+		$breakInheritance = $true
 	}
 	Process {
 		try {
@@ -5178,17 +5183,24 @@ function New-NxtFolderWithPermissions {
 				}
 				$directorySecurity.SetOwner($setOwner)
 			}
+			if ($true -eq $breakInheritance) {
+				$directorySecurity.SetAccessRuleProtection($true, $false)
+			}
+			Write-Log -Message "Creating folder '$Path' with permissions." -Source ${cmdletName}
 			[System.IO.DirectoryInfo]$directory = [System.IO.Directory]::CreateDirectory($Path, $directorySecurity)
+			if ($false -eq (Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity)){
+				Write-Log -Message "Failed to create Folder with Permissions. `n" -Severity 3 -Source ${cmdletName}
+				Throw "Failed to create Folder with Permissions. `n $($_.Exception.Message)"
+			}
 			if ($true -eq $Hidden) {
                 $directory.Attributes = $directory.Attributes -bor [System.IO.FileAttributes]::Hidden
             }
 			Write-Output $directory
 		}
 		catch {
-			Write-Log -Message "Failed to create Folder with Permissions. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			Throw "Failed to create Folder with Permissions. `n$(Resolve-Error)"
+			Write-Log -Message "Failed to create Folder with Permissions." -Severity 3 -Source ${cmdletName}
+			Throw "Failed to create Folder with Permissions. `n$ $($_.Exception.Message)"
 		}
-		
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -8663,7 +8675,7 @@ function Test-NxtFolderPermissions {
 				'Resulttype'	= 'Permission'
             }
         }
-        if ($false -eq [string]::IsNullOrEmpty($Owner) -or $null -ne $CustomDirectorySecurity) {
+        if ($false -eq [string]::IsNullOrEmpty($Owner) -or $false -eq [string]::IsNullOrEmpty($CustomDirectorySecurity.Owner)) {
 			[System.Security.Principal.IdentityReference]$expectedOwnerSid = $null
 			if ($Owner -eq "CurrentUser") {
 				[System.Security.Principal.NTAccount]$ntAccount = $env:USERNAME
