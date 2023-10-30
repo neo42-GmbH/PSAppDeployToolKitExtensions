@@ -9,14 +9,15 @@ Describe "New-NxtFolderWithPermissions" {
     }
 
     AfterAll {
-        # Clean up the test environment
+        $testFolderPath = "$env:Temp\TestFolder\NxtFolderWithPermissions"
+        Remove-Item -Path $testFolderPath -Force -Recurse
     }
 
     It "Creates a folder with FullControlPermissions" {
-        $expectedFullControlPermissions = @("BuiltinAdministrators", "LocalSystem") | ForEach-Object {
+        $expectedFullControlPermissions = @("BuiltinAdministratorsSid", "LocalSystemSid") | ForEach-Object {
             @{
                 Name = $_
-                Sid = (New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::"$($_)Sid", $null)).Value
+                Sid = (New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::$_, $null)).Value
                 Permission = "FullControl"  # Assuming FullControl for both
             }
         }
@@ -36,22 +37,22 @@ Describe "New-NxtFolderWithPermissions" {
         }
     }
     It "Creates a folder and sets it as hidden" {
-        New-NxtFolderWithPermissions -Path $testFolderPath -FullControlPermissions "BuiltinAdministrators" -Hidden $true
+        New-NxtFolderWithPermissions -Path $testFolderPath -FullControlPermissions "BuiltinAdministratorsSid" -Hidden $true
         $attributes = (Get-Item $testFolderPath -Force).Attributes
         { $attributes -band [System.IO.FileAttributes]::Hidden } | Should -Not -Throw
     }
     It "Creates a folder with ReadAndExecutePermissions" {
-        $expectedReadAndExecutePermissions = @("BuiltinUsers") | ForEach-Object {
+        $expectedReadAndExecutePermissions = @("BuiltinUsersSid") | ForEach-Object {
             @{
                 Name = $_
-                Sid = (New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::"$($_)Sid", $null)).Value
+                Sid = (New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::$_, $null)).Value
                 Permission = "ReadAndExecute, Synchronize"  # Assuming ReadAndExecute for both
             }
         }
-        $expectedFullControlPermissions = @("BuiltinAdministrators") | ForEach-Object {
+        $expectedFullControlPermissions = @("BuiltinAdministratorsSid") | ForEach-Object {
             @{
                 Name = $_
-                Sid = (New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::"$($_)Sid", $null)).Value
+                Sid = (New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::$_, $null)).Value
                 Permission = "FullControl"  # Assuming ReadAndExecute for both
             }
         }
