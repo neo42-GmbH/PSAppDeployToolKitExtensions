@@ -4,7 +4,7 @@ Describe "New-NxtTemporaryFolder" {
     Context "Default TempRootPath" {
         It "Uses default TempRootPath when none is provided" {
             $tempFolder = New-NxtTemporaryFolder
-            $tempFolder | Should -BeLike "$env:SystemDrive\`n42tmp*"
+            $tempFolder | Should -BeLike "$env:SystemDrive\n42tmp*"
         }
     }
 
