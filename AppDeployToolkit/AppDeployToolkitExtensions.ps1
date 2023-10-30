@@ -5294,17 +5294,14 @@ function New-NxtTemporaryFolder {
 		[Parameter(Mandatory = $false)]
 		[string]
 		# do not set this to a different path as this is the only temp path we will automatically cleaning up!
-		$TempRootPath = "$env:SystemDrive\n42Tmp",
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$SetCurrentUserRights
+		$TempRootPath = "$env:SystemDrive\n42Tmp"
 	)
 	## prepare temprootfolder
 	[hashtable]$nxtTempRootFolderSplat = @{
 			Path = "$TempRootPath"
-			FullControlPermissions = @("BuiltinAdministrators","LocalSystem")
-			ReadAndExecutePermissions = @("BuiltinUsers")
-			Owner = "BuiltinAdministrators"
+			FullControlPermissions = @("BuiltinAdministratorsSid","LocalSystemSid")
+			ReadAndExecutePermissions = @("BuiltinUsersSid")
+			Owner = "BuiltinAdministratorsSid"
 		}
 	## Check if the temprootfolder exists
 	if ($false -eq (Test-Path -Path $TempRootPath)){
@@ -5333,11 +5330,8 @@ function New-NxtTemporaryFolder {
 	[hashtable]$nxtFolderWithPermissionsSplat = @{
 		Path = "$TempRootPath\$foldername"
 	}
-	$nxtFolderWithPermissionsSplat["FullControlPermissions"] = @("BuiltinAdministrators","LocalSystem")
-	$nxtFolderWithPermissionsSplat["ReadAndExecutePermissions"] = @("BuiltinUsers")
-	if ($true -eq $SetCurrentUserRights){
-		$nxtFolderWithPermissionsSplat["FullControlPermissions"] += "CurrentUser"
-	}
+	$nxtFolderWithPermissionsSplat["FullControlPermissions"] = @("BuiltinAdministratorsSid","LocalSystemSid")
+	$nxtFolderWithPermissionsSplat["ReadAndExecutePermissions"] = @("BuiltinUsersSid")
 	[string]$tempFolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat |Select-Object -ExpandProperty FullName
 	$script:NxtTempDirectories += $tempfolder
 	write-output $tempfolder
