@@ -4486,7 +4486,7 @@ function Import-NxtIniFileWithComments {
     }
 }
 #endregion
-#region Function Initialize-NxtProtectedAppFolder
+#region Function Initialize-NxtAppFolder
 function Initialize-NxtAppFolder {
 	<#
 	.SYNOPSIS
@@ -4501,11 +4501,11 @@ function Initialize-NxtAppFolder {
 	.PARAMETER App
 		Defines the path to the AppFolder to be protected.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER ScriptRootFolder
-		Defines the path to the ScriptRootFolder currently used.
-		Defaults to $scriptroot.
+	.PARAMETER ScriptRoot
+		Defines the path to the ScriptRoot currently used.
+		Defaults to $scriptRoot.
 	.EXAMPLE
-		Initialize-NxtAppRootFolder
+		Initialize-NxtAppFolder
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -4519,14 +4519,14 @@ function Initialize-NxtAppFolder {
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRootFolder = $scriptroot
+		$ScriptRoot = $scriptRoot
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ( $scriproot -eq $App){
+		if ( $ScriptRoot -eq $App){
 			Write-Log "Executing from `$App Folder, skip appfolder initialization" -Source ${CmdletName}
 			return
 		}
@@ -4535,11 +4535,46 @@ function Initialize-NxtAppFolder {
 			throw "AppRootFolder is not set correctly. Please check your PackageConfig"
 		}
 		if ($true -eq (Test-Path -Path $AppRootFolder)) {
-			Write-Log -Message "AppRootFolder '$AppRootFolder' already exists. Checking if it has the correct permissions" -Source ${CmdletName}
-			if ($false -eq (Test-NxtFolderPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid)) {
-				Write-Log -Message "AppRootFolder '$AppRootFolder' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
-				Set-NxtFolderPermissions -Path $AppRootFolder -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid
+			Write-Log -Message "AppRootFolder '$AppRootFolder' already exists. Checking for Permissions along the `$App path" -Source ${CmdletName}
+			[bool]$permissionResetRequired = $false
+			[int]$counter = 0
+			[string]$parent = Split-Path -Path $App -Parent
+			while (
+				$parent -ne $AppRootFolder -and
+				$permissionResetRequired -ne $true -and
+				$counter -lt 10
+				){
+				$counter++
+				$parent = Split-Path -Path $parent -Parent
+				if ($false -eq (Test-NxtFolderPermissions -Path $parent -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid)) {
+					Write-Log -Message "found incorrect permissions in `$App parent path '$parent'" -Source ${CmdletName}
+					$permissionResetRequired = $true
+				}
+				else {
+					Write-Log -Message "AppRootFolder '$parent' has correct permissions." -Source ${CmdletName}
+				}
+				if ($counter -eq 10){
+					Write-Log -Message "AppRootFolder '$App' seems to have alot of parent folders. This does not seem to be a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+					throw "AppRootFolder '$App' seems to have alot of parent folders. This does not seem to be a valid path. Please check your PackageConfig.json"
+				}
 			}
+			if ($true -eq $permissionResetRequired) {
+				Write-Log -Message "AppRootFolder '$AppRootFolder' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
+				Set-NxtFolderPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -BreakInheritance $true -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
+			}
+			else {
+				Write-Log -Message "AppRootFolder '$AppRootFolder' has correct permissions along the path to '$App'." -Source ${CmdletName}
+			}
+			## Remove the $App Folder sanitize the path and create it again.
+			if ($true -eq (Test-Path -Path $App)) {
+				Write-Log -Message "App '$App' already exists. Removing it..." -Source ${CmdletName}
+				Remove-Folder -Path $App
+			}
+
+		}
+		else {
+			Write-Log -Message "AppRootFolder '$AppRootFolder' does not exist. Creating it..." -Source ${CmdletName}
+			New-NxtFolderWithPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -BreakInheritance $true
 		}
 	}
 	End {
@@ -4593,10 +4628,16 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
+		$AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.AppRootFolder),
+		[Parameter(Mandatory = $false)]
+		[string]
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentType = $DeploymentType
+		$DeploymentType = $DeploymentType,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptRoot = $scriptroot
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4605,6 +4646,8 @@ function Initialize-NxtEnvironment {
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
 		## $App and $SetupCfgPathOverride are possibly not set at this point so we have to reset them after the Get-NxtPackageConfig.
+		$AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.AppRootFolder)
+		## $AppRootFolder also has to be expanded in the global PackageConfig object because it is Part of the $App variable.
 		[string]$global:PackageConfig.AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.AppRootFolder)
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
@@ -4613,6 +4656,7 @@ function Initialize-NxtEnvironment {
 			Write-Log -Message "$App is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
+		Initialize-NxtAppFolder -AppRootFolder $AppRootFolder -App $App -ScriptRoot $ScriptRoot
 		if ($DeploymentType -notlike "*Userpart*") {
 			if ($DeploymentType -eq "Install") {
 				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
@@ -6518,9 +6562,14 @@ function Set-NxtFolderPermissions {
         Owner to be set.
 	.PARAMETER CustomDirectorySecurity
 		DirectorySecurity object to set.
+	.PARAMETER BreakInheritance
+		Enforce inheritence of permissions.
 	.EXAMPLE
 		Set-NxtFolderPermissions -Path "C:\ActualFolder" -FullControlPermissions "BuiltinAdministrators" -Owner "BuiltinAdministrators"
 		Sets the permissions and owner of "C:\ActualFolder" to the specified parameters.
+	.EXAMPLE
+		Set-NxtFolderPermissions -Path "C:\ActualFolder" -CustomDirectorySecurity $directorySecurity -EnforceInheritance $true
+		Sets the permissions of "C:\ActualFolder" to the specified parameters. EnforceInheritance is set to $true.
 	.OUTPUTS
 		none.
 	.LINK
@@ -6548,7 +6597,14 @@ function Set-NxtFolderPermissions {
         $Owner,
 		[Parameter(Mandatory = $false)]
 		[System.Security.AccessControl.DirectorySecurity]
-		$CustomDirectorySecurity
+		$CustomDirectorySecurity,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$BreakInheritance = $true,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$EnforceInheritanceOnSubFolders = $false
+
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6573,15 +6629,36 @@ function Set-NxtFolderPermissions {
 					"None",
 					"Allow"
 				)
-				$directorySecurity.AddAccessRule($rule)
+				$directorySecurity.AddAccessRule($rule) | Out-Null
 			}
 		}
 		if ($false -eq [string]::IsNullOrEmpty($Owner)) {
 			$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
 		}
-		$directorySecurity.SetAccessRuleProtection($true, $true)
-		Set-Acl -Path $Path -AclObject $directorySecurity
-		$null = Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity
+		$directorySecurity.SetAccessRuleProtection($BreakInheritance, $true)
+		Set-Acl -Path $Path -AclObject $directorySecurity -ErrorAction Stop | Out-Null
+		if ($true -eq $EnforceInheritanceOnSubFolders) {
+			Write-Log -Message "Applying permissions to subfolders of '$Path'." -Source ${cmdletName}
+			Get-ChildItem -Path $Path -Recurse | ForEach-Object {
+				$acl = Get-Acl -Path $_.FullName
+				$acl.Access | Where-Object { !$_.IsInherited } | ForEach-Object {
+					$acl.RemoveAccessRule($_) | Out-Null
+				}
+				# Enable inheritance
+				$acl.SetAccessRuleProtection($false, $true) | Out-Null
+				Set-Acl -Path $_.FullName -AclObject $acl -ErrorAction Stop | Out-Null
+			}
+		}
+		if ($true -eq $BreakInheritance){
+			$testResult = Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity
+			if ($false -eq $testResult){
+				Write-Log -Message "Failed to set permissions" -Severity 3 -Source ${cmdletName}
+				Throw "Failed to set permissions on folder '$Path'"
+			}
+		}
+		else{
+			Write-Log -Message "Breakinheritance is set to `$False cannot test for correct permissions" -Severity 2
+		}
     }
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
