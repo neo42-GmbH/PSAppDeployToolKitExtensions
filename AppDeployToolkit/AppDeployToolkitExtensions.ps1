@@ -1240,6 +1240,10 @@ function Clear-NxtTempFolder {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		if ($true -eq [string]::IsNullOrEmpty($TempRootFolder)){
+			Write-Log -Message "TempRootFolder variable is empty. Aborting." -Severity 3 -Source ${cmdletName}
+			Throw "TempRootFolder variable is empty. Aborting."
+		}
 		if ($true -eq (Test-Path -Path $TempRootFolder)){
 			Write-Log -Message "Clearing temp folder [$TempRootFolder]..." -Source ${cmdletName}
 		}
@@ -1257,7 +1261,7 @@ function Clear-NxtTempFolder {
 				## Calculate the number of hours since the file/folder was last accessed
 				[int]$hoursSinceLastAccess = ($now - $item.LastAccessTime).TotalHours
 				## If the number of hours since the file/folder was last accessed is greater than the number of hours to keep, delete it
-				if ($hoursSinceLastAccess -gt $HoursToKeep -or ($global:NxtTempDirectories -contains $item.FullName)) {
+				if ($hoursSinceLastAccess -gt $HoursToKeep -or ($script:NxtTempDirectories -contains $item.FullName)) {
 					Write-Log -Message "Deleting file/folder '$($item.FullName)'..." -Source ${cmdletName}
 					Remove-Item -Path $item.FullName -Force -Recurse
 					Write-Log -Message "File/folder successfully deleted." -Source ${cmdletName}
@@ -2673,6 +2677,7 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -in 0,1641,3010) {
 			[int32]$MainExitCode = 70000
 		}
+		Clear-NxtTempFolder
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $MainExitCode
 	}
@@ -5344,7 +5349,7 @@ function New-NxtTemporaryFolder {
 		$nxtFolderWithPermissionsSplat["FullControlPermissions"] += "CurrentUser"
 	}
 	[string]$tempFolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat |Select-Object -ExpandProperty FullName
-	[string[]]$global:NxtTempDirectories += $tempfolder
+	$script:NxtTempDirectories += $tempfolder
 	write-output $tempfolder
 }
 #endregion
