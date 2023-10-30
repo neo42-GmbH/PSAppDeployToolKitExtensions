@@ -5,6 +5,7 @@ Describe "New-NxtTemporaryFolder" {
         It "Uses default TempRootPath when none is provided" {
             $tempFolder = New-NxtTemporaryFolder
             $tempFolder | Should -BeLike "$env:SystemDrive\n42tmp*"
+            Remove-Item -Path $tempFolder -Recurse -Force
         }
     }
 
@@ -13,16 +14,9 @@ Describe "New-NxtTemporaryFolder" {
             $tempPath = "C:\CustomTempPath"
             $tempFolder = New-NxtTemporaryFolder -TempRootPath $tempPath
             $tempFolder | Should -BeLike "$tempPath*"
+            ## check permissions
+            Test-NxtFolderPermissions -Path $tempFolder -FullControlPermissions "BuiltinAdministratorsSid", "LocalSystemSid" -ReadAndExecutePermissions "BuiltinUsersSid" | Should -Be $true
             Remove-Item -Path $tempPath -Recurse -Force
-        }
-    }
-    Context "Random Folder Name Generation" {
-        It "Generates a unique folder name" {
-            Mock Test-Path { return $true } -ParameterFilter { $Path -like "*ABC*" } # Assuming ABC is the random name generated
-            Mock Test-Path { return $false } -ParameterFilter { $Path -notlike "*ABC*" }
-
-            $tempFolder = New-NxtTemporaryFolder
-            $tempFolder | Should -Not -BeLike "*ABC*"
         }
     }
 }

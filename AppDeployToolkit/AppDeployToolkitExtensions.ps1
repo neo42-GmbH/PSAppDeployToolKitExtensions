@@ -8742,7 +8742,8 @@ function Test-NxtFolderPermissions {
         }
         if ($false -eq [string]::IsNullOrEmpty($directorySecurity.Owner)) {
             [System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
-            if ($actualOwnerSid.Value -ne (New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)).Value) {
+			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
+            if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
                 Write-Warning "Expected owner to be $Owner but found $($actualAcl.Owner)."
                 $results += [PSCustomObject]@{
                     'Rule'          = "$($actualAcl.Owner)"
