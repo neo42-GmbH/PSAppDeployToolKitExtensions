@@ -2562,6 +2562,9 @@ function Exit-NxtScriptWithError {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
+	.PARAMETER NxtTempDirectories
+		Defines a list of TempFolders to be cleared.
+		Defaults to $script:NxtTempDirectories defined in the AppDeployToolkitMain.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
 	.NOTES
@@ -2638,7 +2641,10 @@ function Exit-NxtScriptWithError {
 		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
+		[Parameter(Mandatory = $false)]
+		[string[]]
+		$NxtTempDirectories = $script:NxtTempDirectories
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2677,7 +2683,7 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -in 0,1641,3010) {
 			[int32]$MainExitCode = 70000
 		}
-		Clear-NxtTempFolder
+		Clear-NxtTempFolder -TempRootFolder $NxtTempDirectories
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $MainExitCode
 	}
