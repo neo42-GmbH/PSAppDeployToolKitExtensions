@@ -159,6 +159,7 @@ switch ($DeploymentType) {
 [string]$global:AppDeployToolkitExtensionsPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitExtensions.ps1"
 [string]$global:DeploymentSystem = $DeploymentSystem
 [string]$global:UserPartDir = "User"
+## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
 [string[]]$script:NxtTempDirectories = @()
 ## Several PSADT-functions do not work, if these variables are not set here.
 $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json

@@ -1212,17 +1212,22 @@ function Copy-NxtDesktopShortcuts {
 function Clear-NxtTempFolder {
 	<#
 	.SYNOPSIS
-		Deletes all files and folders in the $neo42temp folder if they are older than the defined number of hours.
+		Cleans the specified temporary directory by removing files and folders older than a specified age. Also all paths in $script:NxtTempDirectories array will be deleted. 
 	.DESCRIPTION
-		Deletes all files and folders in the $neo42temp folder if they are older than the defined number of hours.
+		The Clear-NxtTempFolder function is designed to maintain cleanliness and manage space in a specified temporary directory and the paths in the $script:NxtTempDirectories array. 
+		It systematically scans the directory and deletes all files and folders that are older than a predefined number of hours, helping to prevent unnecessary data buildup and potential performance issues.
 	.PARAMETER TempRootFolder
-		Specifies the path to the temp folder.
+		The path to the temporary folder targeted for cleaning. To ensure that all internal processes work correctly it is highly recommended to keep the default value!
 		Defaults to $env:SystemDrive\n42Tmp.
 	.PARAMETER HoursToKeep
-		Specifies the number of hours to keep files and folders in the temp folder.
-		Defaults to 96.
+		The age threshold, in hours, for retaining files and folders in the temporary folder. Files and folders older than this threshold will be deleted.
+		Defaults to 96 (4 days).
+	.PARAMETER NxtTempDirectories
+		An array of paths to folders which should be cleared even if the HoursToKeep are not reached.
+		Defaults to $script:NxtTempDirectories.
 	.EXAMPLE
 		Clear-NxtTempFolder
+		This example executes the function with default parameters, clearing files and folders older than 96 hours from the $env:SystemDrive\n42Tmp folder.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -1233,7 +1238,10 @@ function Clear-NxtTempFolder {
 		$TempRootFolder = "$env:SystemDrive\n42Tmp",
 		[Parameter(Mandatory = $false)]
 		[int]
-		$HoursToKeep = 96
+		$HoursToKeep = 96,
+        [Parameter(Mandatory = $false)]
+        [string[]]
+        $NxtTempDirectories = $script:NxtTempDirectories
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1260,14 +1268,14 @@ function Clear-NxtTempFolder {
 			foreach ($item in $items) {
 				## Calculate the number of hours since the file/folder was last accessed
 				[int]$hoursSinceLastAccess = ($now - $item.LastAccessTime).TotalHours
-				## If the number of hours since the file/folder was last accessed is greater than the number of hours to keep, delete it
-				if ($hoursSinceLastAccess -gt $HoursToKeep -or ($script:NxtTempDirectories -contains $item.FullName)) {
+				## If the number of hours since the file/folder was last accessed is greater than the defined threshold or if the file/folder is listed in the NxtTempDirectories array, delete it.
+				if ($hoursSinceLastAccess -gt $HoursToKeep -or ($NxtTempDirectories -contains $item.FullName)) {
 					Write-Log -Message "Deleting file/folder '$($item.FullName)'..." -Source ${cmdletName}
 					Remove-Item -Path $item.FullName -Force -Recurse
 					Write-Log -Message "File/folder successfully deleted." -Source ${cmdletName}
 				}
 			}
-			## delete rootfolder also in case it is empty
+			## Delete root folder also in case it is empty
 			if ((Get-ChildItem -Path $TempRootFolder -Force).Count -eq 0){
 				Remove-NxtEmptyFolder -Path $TempRootFolder
 			}
@@ -2683,7 +2691,7 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -in 0,1641,3010) {
 			[int32]$MainExitCode = 70000
 		}
-		Clear-NxtTempFolder -TempRootFolder $NxtTempDirectories
+		Clear-NxtTempFolder
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $MainExitCode
 	}
@@ -5274,17 +5282,19 @@ function New-NxtFolderWithPermissions {
 function New-NxtTemporaryFolder {
 	<#
 	.SYNOPSIS
-		Creates a new temporary folder.
+		Creates and configures a new temporary folder with predefined permissions.
 	.DESCRIPTION
-		Creates a new temporary folder.
+		This function generates a new temporary folder in a specified or default root path, ensuring the folder has specific security permissions set. 
+		If the provided root path doesn't exist or has incorrect permissions, it will be recreated accordingly. The function ensures unique naming for the temporary folder and outputs its path upon successful creation.
 	.PARAMETER TempRootPath
-		Parent path of the folder to create. Do not set this to a different path as this is the only temp path we will automatically clean up!
+		Parent path of the folder to create. To ensure that all internal processes work correctly it is highly recommended to keep the default value!
 		Default is: "$env:SystemDrive\n42Tmp".
 	.EXAMPLE
 		New-NxtTemporaryFolder -TempPath "C:\Temp"
-		Will create a new folder with the given permissions.
+		Will create a new folder with the predefined permissions.
 	.OUTPUTS
-		none.
+		String.
+        Outputs the full path of the newly created temporary folder.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -5292,48 +5302,44 @@ function New-NxtTemporaryFolder {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
-		# do not set this to a different path as this is the only temp path we will automatically cleaning up!
 		$TempRootPath = "$env:SystemDrive\n42Tmp"
 	)
-	## prepare temprootfolder
 	[hashtable]$nxtTempRootFolderSplat = @{
 			Path = "$TempRootPath"
 			FullControlPermissions = @("BuiltinAdministratorsSid","LocalSystemSid")
 			ReadAndExecutePermissions = @("BuiltinUsersSid")
 			Owner = "BuiltinAdministratorsSid"
 		}
-	## Check if the temprootfolder exists
 	if ($false -eq (Test-Path -Path $TempRootPath)){
-		## create the RootPath
 		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
 	}
 	elseif($false -eq (Test-NxtFolderPermissions @nxtTempRootFolderSplat)){
-		## Remove the RootPath and create it again
+		Write-Log -Message "Temp path '$TempRootPath' already exists. Recreating the folder to ensure predefined permissions!" -Severity 2 -Source ${CmdletName}
 		Remove-Item -Path $TempRootPath -Recurse -Force
 		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
 	}
-	$foldername=(get-random -InputObject((48..57 + 65..90)) -Count 3|ForEach-Object{
+	$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object{
 		[char]$_}
 	) -join ""
 	[int]$countTries = 1
 	while ($true -eq (Test-Path "$TempRootPath\$foldername") -and $countTries -lt 100) {
 		$countTries++
-		$foldername=(get-random -InputObject((48..57 + 65..90)) -Count 3|ForEach-Object{
+		$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object{
 			[char]$_}
 		) -join ""
 	}
 	if ($countTries -ge 100) {
-		Write-Log -Message "Failed to create temporary folder in '$TempRootPath'. Did not find an available Name." -Severity 3 -Source ${cmdletName}
-		Throw "Failed to create temporary folder in '$TempRootPath'. Did not find an available Name."
+		Write-Log -Message "Failed to create temporary folder in '$TempRootPath'. Did not find an available name." -Severity 3 -Source ${cmdletName}
+		Throw "Failed to create temporary folder in '$TempRootPath'. Did not find an available name."
 	}
 	[hashtable]$nxtFolderWithPermissionsSplat = @{
 		Path = "$TempRootPath\$foldername"
 	}
 	$nxtFolderWithPermissionsSplat["FullControlPermissions"] = @("BuiltinAdministratorsSid","LocalSystemSid")
 	$nxtFolderWithPermissionsSplat["ReadAndExecutePermissions"] = @("BuiltinUsersSid")
-	[string]$tempFolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat |Select-Object -ExpandProperty FullName
+	[string]$tempFolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat | Select-Object -ExpandProperty FullName
 	$script:NxtTempDirectories += $tempfolder
-	write-output $tempfolder
+	Write-Output $tempfolder
 }
 #endregion
 #region Function Read-NxtSingleXmlNode
