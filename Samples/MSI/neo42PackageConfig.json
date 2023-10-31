@@ -1,5 +1,5 @@
 {
-  "ConfigVersion": "2023.09.18.1",
+  "ConfigVersion": "2023.10.31.1",
   "ScriptAuthor": "neo42 GmbH",
   "ScriptDate": "!CreationDate!",
   "InventoryID": "!11DigitNeo42InventoryID!",
@@ -31,7 +31,8 @@
   "DependentPackages": [],
   "RegPackagesKey": "neoPackages",
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
-  "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
+  "AppRootFolder": "$($env:ProgramData)\\neo42Pkgs",
+  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
   "UninstallOld": true,
   "Reboot": 0,
   "UserPartOnInstallation": false,
