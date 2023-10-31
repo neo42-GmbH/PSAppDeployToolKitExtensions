@@ -346,6 +346,12 @@
         "Type": "System.Management.Automation.PSCustomObject",
         "AllowEmpty": false
     },
+    "AppRootFolder": {
+        "Mandatory": true,
+        "HelpText": "AppRootFolder is mandatory and must be a string.",
+        "Type": "System.String",
+        "AllowEmpty": false
+    },
     "App": {
         "Mandatory": true,
         "HelpText": "App is mandatory and must be a string.",
