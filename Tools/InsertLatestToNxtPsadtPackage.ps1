@@ -254,16 +254,17 @@ function Update-NxtPSAdtPackage {
             ## Update App variable
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
-            if ($jsonContent.App -ne '$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)'){
-                $content = $content -Replace ('  "App": "'+$jsonContent.App+'"'),('  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)"')
+            if ($jsonContent.App -notlike '*AppRootFolder*'){
+                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "App": "' -EndTag ("`n" + '  "UninstallOld"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",'
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
             ## Add AppRootFolder variable
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($null -eq $jsonContent.AppRootFolder){
-                $content = Add-ContentBeforeTag -Content $content -StartTag '  "App"' -ContentToInsert '  "AppRootFolder" :$($env:ProgramData)\\neo42Pkgs",
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "App"' -ContentToInsert '  "AppRootFolder" : "$($env:ProgramData)\\neo42Pkgs",
 '
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
             ## new entry: "AcceptedInstallRebootCodes"
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
