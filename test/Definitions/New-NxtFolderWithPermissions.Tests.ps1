@@ -22,7 +22,7 @@ Describe "New-NxtFolderWithPermissions" {
             }
         }
 
-        New-NxtFolderWithPermissions -Path $testFolderPath -FullControlPermissions ($expectedFullControlPermissions | ForEach-Object { $_.Name })
+        New-NxtFolderWithPermissions -Path $testFolderPath -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid, [System.Security.Principal.WellKnownSidType]::LocalSystemSid)
 
         (Test-Path $testFolderPath) | Should -Be $true
 
@@ -37,7 +37,7 @@ Describe "New-NxtFolderWithPermissions" {
         }
     }
     It "Creates a folder and sets it as hidden" {
-        New-NxtFolderWithPermissions -Path $testFolderPath -FullControlPermissions "BuiltinAdministratorsSid" -Hidden $true
+        New-NxtFolderWithPermissions -Path $testFolderPath -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -Hidden $true
         $attributes = (Get-Item $testFolderPath -Force).Attributes
         { $attributes -band [System.IO.FileAttributes]::Hidden } | Should -Not -Throw
     }
@@ -57,7 +57,7 @@ Describe "New-NxtFolderWithPermissions" {
             }
         }
 
-        New-NxtFolderWithPermissions -Path $testFolderPath -ReadAndExecutePermissions ($expectedReadAndExecutePermissions | ForEach-Object { $_.Name }) -FullControlPermissions BuiltinAdministrators
+        New-NxtFolderWithPermissions -Path $testFolderPath -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid)
 
         (Test-Path $testFolderPath) | Should -Be $true
 

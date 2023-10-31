@@ -2718,7 +2718,6 @@ function Expand-NxtPackageConfig {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[string]$global:PackageConfig.SoftMigration.File.FullNameToCheck = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.SoftMigration.File.FullNameToCheck)
 		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
 		[string]$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
 		[string]$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
@@ -2767,6 +2766,8 @@ function Expand-NxtPackageConfig {
 				$CommonStartMenuShortcutToCopyToCommonDesktop.TargetName = $ExecutionContext.InvokeCommand.ExpandString($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)
 			}
 		}
+		[string]$global:PackageConfig.SoftMigration.File.FullNameToCheck = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.SoftMigration.File.FullNameToCheck)
+		[string]$global:PackageConfig.SoftMigration.File.VersionToCheck = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.SoftMigration.File.VersionToCheck)
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -5149,35 +5150,40 @@ function Move-NxtItem {
 function New-NxtFolderWithPermissions {
 	<#
 	.SYNOPSIS
-		Creates a new folder with permissions.
+		Creates a new folder and configures custom permissions and attributes.
 	.DESCRIPTION
-		Creates a new folder with permissions.
+		The New-NxtFolderWithPermissions function creates a new directory at the specified path and allows for detailed control over permissions and attributes.
+		It supports setting various permission levels (Full Control, Modify, Write, Read & Execute), custom owner, hidden attribute, and protection of access rules. 
 	.PARAMETER Path
-		Path of the folder to create.
+		Specifies the full path of the new folder to be created.
 	.PARAMETER FullControlPermissions
-		Permission to set on the folder.
+		Defines users or groups to be granted Full Control permission. 
+		Accepts an array of WellKnownSidTypes.
 	.PARAMETER ReadAndExecutePermissions
-		Permission to set on the folder.
+		Defines users or groups to be granted ReadAndExecute Permissions permission. 
+		Accepts an array of WellKnownSidTypes.
 	.PARAMETER WritePermissions
-		Permission to set on the folder.
+		Defines users or groups to be granted Write permission. 
+		Accepts an array of WellKnownSidTypes.
 	.PARAMETER ModifyPermissions
-		Permission to set on the folder.
+		Defines users or groups to be granted Modify permission. 
+		Accepts an array of WellKnownSidTypes.
 	.PARAMETER Owner
 		Owner to set on the folder.
+		Accepts a WellKnownSidType.
 	.PARAMETER CustomDirectorySecurity
 		Custom DirectorySecurity to set on the folder.
 		Will be modified by the other parameters.
 	.PARAMETER Hidden
 		Defines if the folder should be hidden.
 		Default is: $false.
-	.PARAMETER DisableLogging
-		Disables logging for this function.
-		Usecase: Log directories might not be created yet and must have the correct permissions first.
 	.EXAMPLE
-		New-NxtFolderWithPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions "BuiltinAdministrators","LocalSystem","Self" -ReadAndExecutePermissions "BuiltinUsers"
-		Will create a new folder with the given permissions.
+		New-NxtFolderWithPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid)
+		Will create a folder "C:\Temp\MyFolder" with with full control for the buildin administrator group and read and execute permissions for the buildin users group.
+		It will also set the owner of the folder to the buildin administrator group.
 	.OUTPUTS
-		none.
+		System.IO.DirectoryInfo
+		Returns a DirectoryInfo object representing the created folder.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -5188,22 +5194,18 @@ function New-NxtFolderWithPermissions {
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[System.Security.Principal.WellKnownSidType[]]
-		[string[]]
 		$FullControlPermissions,
 		[Parameter(Mandatory = $false)]
 		[System.Security.Principal.WellKnownSidType[]]
 		$WritePermissions,
 		[Parameter(Mandatory = $false)]
 		[System.Security.Principal.WellKnownSidType[]]
-		[string[]]
 		$ModifyPermissions,
 		[Parameter(Mandatory = $false)]
 		[System.Security.Principal.WellKnownSidType[]]
-		[string[]]
 		$ReadAndExecutePermissions,
 		[Parameter(Mandatory = $false)]
 		[System.Security.Principal.WellKnownSidType]
-		[string]
 		$Owner,
 		[Parameter(Mandatory = $false)]
 		[System.Security.AccessControl.DirectorySecurity]
@@ -5213,10 +5215,7 @@ function New-NxtFolderWithPermissions {
 		$Hidden,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$ProtectRules = $true,
-		[Parameter(Mandatory = $false)]
-		[switch]
-		$DisableLogging
+		$ProtectRules = $true
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5226,9 +5225,9 @@ function New-NxtFolderWithPermissions {
 		try {
 			if (Test-Path $Path){
 				Write-Log -Message "Folder '$Path' already exists." -Source ${cmdletName} -Severity 3
-				Throw "Folder '$Path' already exists."
+				throw "Folder '$Path' already exists."
 			}
-			if ($false -eq [string]::IsNullOrEmpty($CustomDirectorySecurity)) {
+			if ($null -ne $CustomDirectorySecurity) {
 				[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
 			}
 			else {
@@ -5246,15 +5245,15 @@ function New-NxtFolderWithPermissions {
 					$directorySecurity.AddAccessRule($rule)
 				}
 			}
-			if (![string]::IsNullOrEmpty($Owner)) {
+			if ($null -ne $Owner) {
 				$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
 			}
 			$directorySecurity.SetAccessRuleProtection($ProtectRules, $false)
 			Write-Log -Message "Creating folder '$Path' with permissions." -Source ${cmdletName}
 			[System.IO.DirectoryInfo]$directory = [System.IO.Directory]::CreateDirectory($Path, $directorySecurity)
 			if ($false -eq (Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity)){
-				Write-Log -Message "Failed to create Folder with Permissions. `n" -Severity 3 -Source ${cmdletName}
-				Throw "Failed to create Folder with Permissions. `n $($_.Exception.Message)"
+				Write-Log -Message "Failed to create folder '$Path' with permissions. `n" -Severity 3 -Source ${cmdletName}
+				throw "Failed to create folder '$Path' with permissions. `n $($_.Exception.Message)"
 			}
 			if ($true -eq $Hidden) {
                 $directory.Attributes = $directory.Attributes -bor [System.IO.FileAttributes]::Hidden
@@ -5262,8 +5261,8 @@ function New-NxtFolderWithPermissions {
 			Write-Output $directory
 		}
 		catch {
-			Write-Log -Message "Failed to create Folder with Permissions." -Severity 3 -Source ${cmdletName}
-			Throw "Failed to create Folder with Permissions. `n$ $($_.Exception.Message)"
+			Write-Log -Message "Failed to create folder '$Path' with permissions." -Severity 3 -Source ${cmdletName}
+			throw "Failed to create folder '$Path' with permissions. `n$ $($_.Exception.Message)"
 		}
 	}
 	End {
@@ -5659,6 +5658,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'Installed' -Type 'Dword' -Value '1'
 			if ($false -eq [string]::IsNullOrEmpty($SoftMigrationOccurred)) {
 				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'SoftMigrationOccurred' -Value $SoftMigrationOccurred
+				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'SoftMigrationOccurred' -Value $SoftMigrationOccurred
 			}
 			Remove-RegistryKey "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")"
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
@@ -8655,29 +8655,37 @@ function Test-NxtPackageConfig {
 function Test-NxtFolderPermissions {
     <#
     .SYNOPSIS
-        Compares the permissions of an existing folder with the specified permissions.
+        Checks and compares the actual permissions of a specified folder against expected permissions.
     .DESCRIPTION
-        Compares the permissions of an existing folder with the specified permissions.
+        The function is designed to evaluate a folder's security settings by comparing its actual permissions, owner, and other security attributes with predefined expectations.
+		This function is particularly useful for anyone who need to ensure that folder permissions align with security policies or compliance standards.
     .PARAMETER Path
-        Path of the folder to check.
+        Specifies the full path of the folder whose permissions are to be tested.
+		This parameter is mandatory.
     .PARAMETER FullControlPermissions
-        FullControl permissions to compare.
+        Defines the expected Full Control permissions. 
+		These are compared against the actual Full Control permissions of the folder.
     .PARAMETER WritePermissions
-        Write permissions to compare.
+        Specifies the expected Write permissions.
+		These are compared with the folder's actual Write permissions.
     .PARAMETER ModifyPermissions
-        Modify permissions to compare.
+        Indicates the expected Modify permissions that the folder should have. 
+		These are compared with the folder's actual Modify permissions.
     .PARAMETER ReadAndExecutePermissions
-        ReadAndExecute permissions to compare.
+        Specifies the expected Read and Execute permissions.
+		These are compared with the folder's actual Read and Execute permissions.
     .PARAMETER Owner
-        Expected owner to compare.
+        Defines the expected owner of the folder as a WellKnownSidType. 
+		This is compared with the actual owner of the folder.
 	.PARAMETER CustomDirectorySecurity
-		DirectorySecurity object to compare.
-		Will be modified if other parameters are specified.
+		Allows for providing a custom DirectorySecurity object for advanced comparison. 
+		If other parameters are specified, this object will be modified accordingly.
     .EXAMPLE
-        Test-NxtFolderPermissions -Path "C:\ActualFolder" -FullControlPermissions "BuiltinAdministrators" -Owner "BuiltinAdministrators"
-        Compares the permissions and owner of "C:\ActualFolder" with the specified parameters.
+        Test-NxtFolderPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) 
+        Compares the permissions and owner of "C:\Temp\MyFolder" with the specified parameters.
     .OUTPUTS
         System.Boolean.
+        Returns 'True' if the folder's permissions and owner match the specified criteria. Returns 'False' if discrepancies are found.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
     #>
@@ -8699,7 +8707,7 @@ function Test-NxtFolderPermissions {
 		[System.Security.Principal.WellKnownSidType[]]
         $ReadAndExecutePermissions,
         [Parameter(Mandatory = $false)]
-		[System.Security.Principal.WellKnownSidType[]]
+		[System.Security.Principal.WellKnownSidType]
         $Owner,
 		[Parameter(Mandatory = $false)]
 		[System.Security.AccessControl.DirectorySecurity]
@@ -8710,7 +8718,7 @@ function Test-NxtFolderPermissions {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
     Process {
-		if ($false -eq [string]::IsNullOrEmpty($CustomDirectorySecurity)) {
+		if ($null -ne $CustomDirectorySecurity) {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
 		}else {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
@@ -8727,7 +8735,7 @@ function Test-NxtFolderPermissions {
 				$directorySecurity.AddAccessRule($rule)
 			}
 		}
-		if ($false -eq [string]::IsNullOrEmpty($Owner)) {
+		if ($null -ne $Owner) {
 			$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
 		}
         [System.Security.AccessControl.DirectorySecurity]$actualAcl = Get-Acl -Path $Path
@@ -8740,7 +8748,7 @@ function Test-NxtFolderPermissions {
 				'Resulttype'	= 'Permission'
             }
         }
-        if ($false -eq [string]::IsNullOrEmpty($directorySecurity.Owner)) {
+        if ($null -ne $directorySecurity.Owner) {
             [System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
             if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
