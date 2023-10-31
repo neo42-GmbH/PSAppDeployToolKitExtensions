@@ -50,8 +50,8 @@
     "$($global:PackageConfig.UninstallDisplayName)"
   ],
   "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
-  "InstLogFile": "$($global:PackageConfig.AppRootFolder)Log\\Install.$global:DeploymentTimestamp.log",
-  "UninstLogFile": "$($global:PackageConfig.AppRootFolder)Log\\Uninstall.$global:DeploymentTimestamp.log",
+  "InstLogFile": "$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)\\Install.$global:DeploymentTimestamp.log",
+  "UninstLogFile": "$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)\\Uninstall.$global:DeploymentTimestamp.log",
   "InstFile": "SPSetup.exe",
   "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
   "AppendInstParaToDefaultParameters": false,

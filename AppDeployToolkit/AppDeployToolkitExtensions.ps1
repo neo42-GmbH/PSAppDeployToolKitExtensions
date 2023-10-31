@@ -4546,7 +4546,25 @@ function Initialize-NxtAppFolder {
 				){
 				$counter++
 				$parent = Split-Path -Path $parent -Parent
-				if ($false -eq (Test-NxtFolderPermissions -Path $parent -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid)) {
+				[hashtable]$testFolderPermissionSplat = @{
+					Path = $parent
+					FullControlPermissions = @(
+						"BuiltinAdministratorsSid",
+						"LocalSystemSid"
+					)
+					ReadAndExecutePermissions = @(
+						"BuiltinUsersSid"
+					)
+					Owner = "BuiltinAdministratorsSid"
+					CheckIsInherited = $true
+				}
+				if ($parent -eq $AppRootFolder){
+					$testFolderPermissionSplat["IsInherited"] = $false
+				}
+				else {
+					$testFolderPermissionSplat["IsInherited"] = $true
+				}
+				if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
 					Write-Log -Message "found incorrect permissions in `$App parent path '$parent'" -Source ${CmdletName}
 					$permissionResetRequired = $true
 				}
@@ -4560,7 +4578,7 @@ function Initialize-NxtAppFolder {
 			}
 			if ($true -eq $permissionResetRequired) {
 				Write-Log -Message "AppRootFolder '$AppRootFolder' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
-				Set-NxtFolderPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -BreakInheritance $true -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
+				Set-NxtFolderPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
 			}
 			else {
 				Write-Log -Message "AppRootFolder '$AppRootFolder' has correct permissions along the path to '$App'." -Source ${CmdletName}
@@ -4574,7 +4592,7 @@ function Initialize-NxtAppFolder {
 		}
 		else {
 			Write-Log -Message "AppRootFolder '$AppRootFolder' does not exist. Creating it..." -Source ${CmdletName}
-			New-NxtFolderWithPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -BreakInheritance $true
+			New-NxtFolderWithPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
 		}
 	}
 	End {
@@ -6640,7 +6658,7 @@ function Set-NxtFolderPermissions {
 		if ($true -eq $EnforceInheritanceOnSubFolders) {
 			Write-Log -Message "Applying permissions to subfolders of '$Path'." -Source ${cmdletName}
 			Get-ChildItem -Path $Path -Recurse | ForEach-Object {
-				$acl = Get-Acl -Path $_.FullName
+				$acl = Get-Acl -Path $_.FullName -ErrorAction Stop
 				$acl.Access | Where-Object { !$_.IsInherited } | ForEach-Object {
 					$acl.RemoveAccessRule($_) | Out-Null
 				}
@@ -8790,7 +8808,13 @@ function Test-NxtFolderPermissions {
         $Owner,
 		[Parameter(Mandatory = $false)]
 		[System.Security.AccessControl.DirectorySecurity]
-		$CustomDirectorySecurity
+		$CustomDirectorySecurity,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$CheckIsInherited,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IsInherited
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -8817,12 +8841,28 @@ function Test-NxtFolderPermissions {
 		if ($false -eq [string]::IsNullOrEmpty($Owner)) {
 			$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
 		}
-        [System.Security.AccessControl.DirectorySecurity]$actualAcl = Get-Acl -Path $Path
-        [PSCustomObject]$diffs = Compare-Object @($actualAcl.Access) @($directorySecurity.Access) -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags
+        [System.Security.AccessControl.DirectorySecurity]$actualAcl = Get-Acl -Path $Path -ErrorAction Stop
+		[string[]]$propertiesToCheck = @(
+			"FileSystemRights",
+			"AccessControlType",
+			"IdentityReference",
+			"InheritanceFlags",
+			"PropagationFlags"
+		)
+		if ($true -eq $CheckIsInherited) {
+			$propertiesToCheck += "IsInherited"
+		}
+        [PSCustomObject]$diffs = Compare-Object @($actualAcl.Access) $(
+			if ($true -eq $IsInherited) {
+				@($directorySecurity.Access)|Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$true}}
+			} else {
+				@($directorySecurity.Access)|Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$false}}
+			}
+			) -Property $propertiesToCheck
         [array]$results = @()
         foreach ($diff in $diffs) {
             $results += [PSCustomObject]@{
-                'Rule'          = $diff | Select-Object FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags
+                'Rule'          = $diff | Select-Object -Property $propertiesToCheck
                 'SideIndicator' = $diff.SideIndicator
 				'Resulttype'	= 'Permission'
             }
