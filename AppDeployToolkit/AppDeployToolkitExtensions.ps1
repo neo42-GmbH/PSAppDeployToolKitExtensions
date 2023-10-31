@@ -4656,8 +4656,8 @@ function Initialize-NxtEnvironment {
 			Write-Log -Message "$App is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
-		Initialize-NxtAppFolder -AppRootFolder $AppRootFolder -App $App -ScriptRoot $ScriptRoot
 		if ($DeploymentType -notlike "*Userpart*") {
+			Initialize-NxtAppFolder -AppRootFolder $AppRootFolder -App $App -ScriptRoot $ScriptRoot
 			if ($DeploymentType -eq "Install") {
 				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
 				if (
