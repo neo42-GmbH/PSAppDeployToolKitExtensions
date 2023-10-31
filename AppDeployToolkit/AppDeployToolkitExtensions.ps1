@@ -5066,6 +5066,130 @@ function Move-NxtItem {
 	}
 }
 #endregion
+#region Function New-NxtFolderWithPermissions
+function New-NxtFolderWithPermissions {
+	<#
+	.SYNOPSIS
+		Creates a new folder and configures custom permissions and attributes.
+	.DESCRIPTION
+		The New-NxtFolderWithPermissions function creates a new directory at the specified path and allows for detailed control over permissions and attributes.
+		It supports setting various permission levels (Full Control, Modify, Write, Read & Execute), custom owner, hidden attribute, and protection of access rules. 
+	.PARAMETER Path
+		Specifies the full path of the new folder to be created.
+	.PARAMETER FullControlPermissions
+		Defines users or groups to be granted Full Control permission. 
+		Accepts an array of WellKnownSidTypes.
+	.PARAMETER ReadAndExecutePermissions
+		Defines users or groups to be granted ReadAndExecute Permissions permission. 
+		Accepts an array of WellKnownSidTypes.
+	.PARAMETER WritePermissions
+		Defines users or groups to be granted Write permission. 
+		Accepts an array of WellKnownSidTypes.
+	.PARAMETER ModifyPermissions
+		Defines users or groups to be granted Modify permission. 
+		Accepts an array of WellKnownSidTypes.
+	.PARAMETER Owner
+		Owner to set on the folder.
+		Accepts a WellKnownSidType.
+	.PARAMETER CustomDirectorySecurity
+		Custom DirectorySecurity to set on the folder.
+		Will be modified by the other parameters.
+	.PARAMETER Hidden
+		Defines if the folder should be hidden.
+		Default is: $false.
+	.EXAMPLE
+		New-NxtFolderWithPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid)
+		Will create a folder "C:\Temp\MyFolder" with with full control for the buildin administrator group and read and execute permissions for the buildin users group.
+		It will also set the owner of the folder to the buildin administrator group.
+	.OUTPUTS
+		System.IO.DirectoryInfo
+		Returns a DirectoryInfo object representing the created folder.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+		$FullControlPermissions,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+		$WritePermissions,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+		$ModifyPermissions,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+		$ReadAndExecutePermissions,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType]
+		$Owner,
+		[Parameter(Mandatory = $false)]
+		[System.Security.AccessControl.DirectorySecurity]
+		$CustomDirectorySecurity,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Hidden,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProtectRules = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			if (Test-Path $Path){
+				Write-Log -Message "Folder '$Path' already exists." -Source ${cmdletName} -Severity 3
+				throw "Folder '$Path' already exists."
+			}
+			if ($null -ne $CustomDirectorySecurity) {
+				[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
+			}
+			else {
+				[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
+			}
+			foreach ($permissionLevel in @("FullControl","Modify", "Write", "ReadAndExecute")) {
+				foreach ($wellKnownSid in $(Get-Variable "$permissionLevel`Permissions" -ValueOnly)) {
+					[System.Security.AccessControl.FileSystemAccessRule]$rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+						(New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($wellKnownSid, $null)),
+						"$permissionLevel",
+						"ContainerInherit,ObjectInherit",
+						"None",
+						"Allow"
+					)
+					$directorySecurity.AddAccessRule($rule)
+				}
+			}
+			if ($null -ne $Owner) {
+				$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
+			}
+			$directorySecurity.SetAccessRuleProtection($ProtectRules, $false)
+			Write-Log -Message "Creating folder '$Path' with permissions." -Source ${cmdletName}
+			[System.IO.DirectoryInfo]$directory = [System.IO.Directory]::CreateDirectory($Path, $directorySecurity)
+			if ($false -eq (Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity)){
+				Write-Log -Message "Failed to create folder '$Path' with permissions. `n" -Severity 3 -Source ${cmdletName}
+				throw "Failed to create folder '$Path' with permissions. `n $($_.Exception.Message)"
+			}
+			if ($true -eq $Hidden) {
+                $directory.Attributes = $directory.Attributes -bor [System.IO.FileAttributes]::Hidden
+            }
+			Write-Output $directory
+		}
+		catch {
+			Write-Log -Message "Failed to create folder '$Path' with permissions." -Severity 3 -Source ${cmdletName}
+			throw "Failed to create folder '$Path' with permissions. `n$ $($_.Exception.Message)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
@@ -8381,7 +8505,144 @@ function Test-NxtPackageConfig {
 	}
 }
 #endregion
-
+#region Function Test-NxtFolderPermissions
+function Test-NxtFolderPermissions {
+    <#
+    .SYNOPSIS
+        Checks and compares the actual permissions of a specified folder against expected permissions.
+    .DESCRIPTION
+        The function is designed to evaluate a folder's security settings by comparing its actual permissions, owner, and other security attributes with predefined expectations.
+		This function is particularly useful for anyone who need to ensure that folder permissions align with security policies or compliance standards.
+    .PARAMETER Path
+        Specifies the full path of the folder whose permissions are to be tested.
+		This parameter is mandatory.
+    .PARAMETER FullControlPermissions
+        Defines the expected Full Control permissions. 
+		These are compared against the actual Full Control permissions of the folder.
+    .PARAMETER WritePermissions
+        Specifies the expected Write permissions.
+		These are compared with the folder's actual Write permissions.
+    .PARAMETER ModifyPermissions
+        Indicates the expected Modify permissions that the folder should have. 
+		These are compared with the folder's actual Modify permissions.
+    .PARAMETER ReadAndExecutePermissions
+        Specifies the expected Read and Execute permissions.
+		These are compared with the folder's actual Read and Execute permissions.
+    .PARAMETER Owner
+        Defines the expected owner of the folder as a WellKnownSidType. 
+		This is compared with the actual owner of the folder.
+	.PARAMETER CustomDirectorySecurity
+		Allows for providing a custom DirectorySecurity object for advanced comparison. 
+		If other parameters are specified, this object will be modified accordingly.
+    .EXAMPLE
+        Test-NxtFolderPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) 
+        Compares the permissions and owner of "C:\Temp\MyFolder" with the specified parameters.
+    .OUTPUTS
+        System.Boolean.
+        Returns 'True' if the folder's permissions and owner match the specified criteria. Returns 'False' if discrepancies are found.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+    #>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Path,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $FullControlPermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $WritePermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $ModifyPermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $ReadAndExecutePermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType]
+        $Owner,
+		[Parameter(Mandatory = $false)]
+		[System.Security.AccessControl.DirectorySecurity]
+		$CustomDirectorySecurity
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+    Process {
+		if ($null -ne $CustomDirectorySecurity) {
+			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
+		}else {
+			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
+		}
+		foreach ($permissionLevel in @("FullControl","Modify", "Write", "ReadAndExecute")) {
+			foreach ($wellKnownSid in $(Get-Variable "$permissionLevel`Permissions" -ValueOnly)) {
+				[System.Security.AccessControl.FileSystemAccessRule]$rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+					(New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($wellKnownSid, $null)),
+					"$permissionLevel",
+					"ContainerInherit,ObjectInherit",
+					"None",
+					"Allow"
+				)
+				$directorySecurity.AddAccessRule($rule)
+			}
+		}
+		if ($null -ne $Owner) {
+			$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
+		}
+        [System.Security.AccessControl.DirectorySecurity]$actualAcl = Get-Acl -Path $Path
+        [PSCustomObject]$diffs = Compare-Object @($actualAcl.Access) @($directorySecurity.Access) -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags
+        [array]$results = @()
+        foreach ($diff in $diffs) {
+            $results += [PSCustomObject]@{
+                'Rule'          = $diff | Select-Object FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags
+                'SideIndicator' = $diff.SideIndicator
+				'Resulttype'	= 'Permission'
+            }
+        }
+        if ($null -ne $directorySecurity.Owner) {
+            [System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
+			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
+            if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
+                Write-Warning "Expected owner to be $Owner but found $($actualAcl.Owner)."
+                $results += [PSCustomObject]@{
+                    'Rule'          = "$($actualAcl.Owner)"
+                    'SideIndicator' = "<="
+					'Resulttype'	= 'Owner'
+                }
+            }
+        }
+		if ($results.Count -eq 0) {
+			Write-Output $true
+		}
+		else {
+			foreach ($result in $results) {
+				switch ($result.Resulttype) {
+					'Permission' {
+						if ($result.SideIndicator -eq "<="){
+							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
+						}
+						elseif($result.SideIndicator -eq "=>") {
+							Write-Log -Message "Missing permission $($result.Rule) on $Path." -Severity 2
+						}else{
+							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
+						}
+					}
+					'Owner' {
+						Write-Log -Message "Found unexpected owner $($result.Rule) instead of $Owner on $Path." -Severity 2
+					}
+				}
+			}
+			Write-Output $false
+		}
+    }
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Test-NxtProcessExists
 function Test-NxtProcessExists {
 	<#
