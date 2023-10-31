@@ -159,6 +159,8 @@ switch ($DeploymentType) {
 [string]$global:AppDeployToolkitExtensionsPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitExtensions.ps1"
 [string]$global:DeploymentSystem = $DeploymentSystem
 [string]$global:UserPartDir = "User"
+## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
+[string[]]$script:NxtTempDirectories = @()
 ## Several PSADT-functions do not work, if these variables are not set here.
 $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
@@ -240,6 +242,7 @@ catch {
 	[int32]$mainExitCode = 60001
 	[string]$mainErrorMessage = "$(Resolve-Error)"
 	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+	Clear-NxtTempFolder
 	Exit-Script -ExitCode $mainExitCode
 }
 
@@ -323,6 +326,7 @@ function Main {
 				[string]$script:installPhase = 'Package-PreCleanup'
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
 				if ($false -eq $mainNxtResult.Success) {
+					Clear-NxtTempFolder
 					Close-BlockExecutionWindow
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
@@ -504,6 +508,7 @@ function Main {
 		[string]$script:installPhase = 'Package-Finish'
 		Close-BlockExecutionWindow
 		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
+		Clear-NxtTempFolder
 		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {
