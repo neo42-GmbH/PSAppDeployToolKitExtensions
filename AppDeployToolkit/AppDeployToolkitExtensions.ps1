@@ -8600,7 +8600,7 @@ function Test-NxtFolderPermissions {
 				'Resulttype'	= 'Permission'
             }
         }
-        if ($null -eq $directorySecurity.Owner) {
+        if ($null -ne $directorySecurity.Owner) {
             [System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
             if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
