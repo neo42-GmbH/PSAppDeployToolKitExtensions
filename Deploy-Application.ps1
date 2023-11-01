@@ -106,6 +106,8 @@ function Start-NxtProcess {
 		Write-Output -InputObject $process
 	}
 }
+[string]$deployApplicationExePath = "$PSScriptRoot\Deploy-Application.exe"
+[bool]$deployNxtApplicationExeExists = Test-Path $deployApplicationExePath
 #endregion
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
 if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
@@ -133,7 +135,12 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
 			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
 		}
 	}
-	[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -File `"$file`"$arguments"
+	if ($true -eq $deployNxtApplicationExeExists){
+		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "$arguments"
+	}
+	else{
+		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -File `"$file`"$arguments"
+	}
 	$process.WaitForExit()
     [int]$exitCode = $process.ExitCode
     exit $exitCode
@@ -141,11 +148,21 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
 	TriggerInstallUserPart { 
-		$null = Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart"
+		if ($true -eq $deployNxtApplicationExeExists){
+			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath $deployApplicationExePath -Arguments "-DeploymentType InstallUserPart"
+		}
+		else{
+			$null = Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart"
+		}
 		Exit
 	}
-	TriggerUninstallUserPart { 
-		$null = Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart"
+	TriggerUninstallUserPart {
+		if ($true -eq $deployNxtApplicationExeExists){
+			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath $deployApplicationExePath -Arguments "-DeploymentType UninstallUserPart"
+		}
+		else{
+			$null = Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart"
+		}
 		Exit
 	}
 	Default {}
