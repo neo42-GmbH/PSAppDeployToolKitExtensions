@@ -5,7 +5,7 @@
 			2) Provide an option to defer the installation.
 			3) Show a countdown before applications are automatically closed.
         This script is based on the PSAppDeployToolkit Show-InstallationWelcome function.
-        Necessary changes to make it work with the NxtDeploymentToolkit in session 0 have been made.
+        Significant changes have been applied by neo42 GmbH to enhance capabilities and user experience.
         This script includes mainly extracted and modified code from the PSAppDeployToolkit Licensed under LGPLv3.
 	.DESCRIPTION
 		The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
