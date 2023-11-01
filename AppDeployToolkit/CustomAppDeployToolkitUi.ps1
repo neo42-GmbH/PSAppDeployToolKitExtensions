@@ -1,9 +1,12 @@
 <#
 	.SYNOPSIS
-		Called by Show-InstallationWelcome to prompt the user to optionally do the following:
+		Called by Show-NxtInstallationWelcome to prompt the user to optionally do the following:
 			1) Close the specified running applications.
 			2) Provide an option to defer the installation.
 			3) Show a countdown before applications are automatically closed.
+        This script is based on the PSAppDeployToolkit Show-InstallationWelcome function.
+        Significant changes have been applied by neo42 GmbH to enhance capabilities and user experience.
+        This script includes mainly extracted and modified code from the PSAppDeployToolkit Licensed under LGPLv3.
 	.DESCRIPTION
 		The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
 		If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
@@ -76,7 +79,10 @@
 		Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10 -ProcessObjectsNames "code" -ProcessObjectsDescriptions "visual studio code"
 	.NOTES
 		This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
-		The code of this function is mainly adopted from the PSAppDeployToolkit.
+		The code of this function is mainly adopted from the PSAppDeployToolkit https://psappdeploytoolkit.com.
+		
+		--- LGPL NOTICE ---
+		This software includes code derived from the PSAppDeployToolkit, which is licensed under the GNU Lesser General Public License (LGPL). A copy of the LGPL should be included with this software. If not, you can access it at <http://www.gnu.org/licenses/>.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -595,28 +601,30 @@ function Get-NxtProcessTree {
 }
 #endregion
 #region Function Get-NxtRunningProcesses
-Function Get-NxtRunningProcesses {
+function Get-NxtRunningProcesses {
     <#
     .SYNOPSIS
-        Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
+		Retrieves a list of running processes based on provided process objects, adding a 'ProcessDescription' property to each.
     .DESCRIPTION
-        Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
+		This function scans for running processes that match the names specified in the provided process objects. 
+		It enhances the output by appending a 'ProcessDescription' property to each identified process. 
+		This function is particularly useful for monitoring specific processes or applications.
     .PARAMETER ProcessObjects
-        Custom object containing the process objects to search for. If not supplied, the function just returns $null
+        An array of custom objects, each representing a process to check for. 
+		These objects should contain at least a 'ProcessName' property. If not supplied, the function returns $null.
     .PARAMETER DisableLogging
-        Disables function logging
-	.PARAMETER ProcessIdsToIgnore
-        The process ID to ignore the complete tree for.
-    .INPUTS
-        None
-        You cannot pipe objects to this function.
+        If specified, disables logging within the function, making its execution silent.
+	.PARAMETER ProcessIdToIgnore
+		An array of process IDs. Processes with these IDs, and their child processes, will be excluded from the search.
     .OUTPUTS
         Syste.Boolean.
-        Rettuns $true if the process is running, otherwise $false.
+        Returns $true if the process is running, otherwise $false.
     .EXAMPLE
         Get-NxtRunningProcesses -ProcessObjects $ProcessObjects
     .NOTES
         This is an internal script function and should typically not be called directly.
+	.NOTES
+		This function is a modified version of Get-RunningProcesses from the PSAppDeployToolkit licensed under the LGPLv3.
     .LINK
         https://psappdeploytoolkit.com
     #>
@@ -629,16 +637,15 @@ Function Get-NxtRunningProcesses {
         [Parameter(Mandatory = $false)]
         [int[]]$ProcessIdsToIgnore
     )
-
     Begin {
         ## Get the name of this function and write header
         [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
         Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
     }
     Process {
-        If ($processObjects -and $processObjects[0].ProcessName) {
-            [String]$runningAppsCheck = $processObjects.ProcessName -join ','
-            If (-not $DisableLogging) {
+        if ($processObjects -and $processObjects[0].ProcessName) {
+            [string]$runningAppsCheck = $processObjects.ProcessName -join ','
+            if (-not $DisableLogging) {
                 Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
             }
 			[array]$wqlProcessObjects = $processObjects | Where-Object { $_.IsWql -eq $true }
@@ -652,11 +659,11 @@ Function Get-NxtRunningProcesses {
 			)
             ## Prepare a filter for Where-Object
             [ScriptBlock]$whereObjectFilter = {
-                ForEach ($processObject in $processObjects) {
+                foreach ($processObject in $processObjects) {
+					if ($ProcessIdsToIgnore -contains $_.Id) {
+						continue
+					}
 					[bool]$processFound = $false
-                    if ($ProcessIdsToIgnore -contains $_.Id) {
-                        continue
-                    }
 					if ($processObject.IsWql) {
 						[int]$processId = $_.Id
 						[string]$queryUsed = $processObject.ProcessName
@@ -668,45 +675,45 @@ Function Get-NxtRunningProcesses {
 							$processFound = $true
 						}
 					}
-                    elseIf ($_.ProcessName -ieq $processObject.ProcessName) {
+                    elseif ($_.ProcessName -ieq $processObject.ProcessName) {
 						$processFound = $true
 					}
 					if ($true -eq $processFound) {
-                        If ($processObject.ProcessDescription) {
-                            #  The description of the process provided as a Parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
+                        if ($processObject.ProcessDescription) {
+                            #  The description of the process provided as a parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
                             Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $processObject.ProcessDescription -Force -PassThru -ErrorAction 'SilentlyContinue'
                         }
-                        ElseIf ($_.Description) {
+                        elseif ($_.Description) {
                             #  If the process already has a description field specified, then use it
                             Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.Description -Force -PassThru -ErrorAction 'SilentlyContinue'
                         }
-                        Else {
+                        else {
                             #  Fall back on the process name if no description is provided by the process or as a parameter to the function
                             Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.ProcessName -Force -PassThru -ErrorAction 'SilentlyContinue'
                         }
                         Write-Output -InputObject ($true)
-                        Return
+                        return
                     }
                 }
 
                 Write-Output -InputObject ($false)
-                Return
+                return
             }
             ## Get all running processes and escape special characters. Match against the process names to search for to find running processes.
             [Diagnostics.Process[]]$runningProcesses = Get-Process | Where-Object -FilterScript $whereObjectFilter | Sort-Object -Property 'ProcessName'
 
-            If (-not $DisableLogging) {
-                If ($runningProcesses) {
+            if (-not $DisableLogging) {
+                if ($runningProcesses) {
                     [String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
                     Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
                 }
-                Else {
+                else {
                     Write-Log -Message 'Specified applications are not running.' -Source ${CmdletName}
                 }
             }
             Write-Output -InputObject ($runningProcesses)
         }
-        Else {
+        else {
             Write-Output -InputObject ($null)
         }
     }
