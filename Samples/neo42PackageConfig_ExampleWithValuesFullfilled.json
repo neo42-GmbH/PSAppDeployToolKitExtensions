@@ -1,5 +1,5 @@
 {
-  "ConfigVersion": "2023.09.18.1",
+  "ConfigVersion": "2023.10.31.1",
   "ScriptAuthor": "neo42",
   "ScriptDate": "22/09/2022",
   "InventoryID": "hjt632C168F",
@@ -37,8 +37,9 @@
     }
   ],
   "RegPackagesKey": "neoPackages",
-  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
-  "App": "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
+  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)",
+  "AppRootFolder": "$($env:ProgramData)\\neo42Pkgs",
+  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
   "UninstallOld": true,
   "Reboot": 0,
   "UserPartOnInstallation": false,
@@ -223,7 +224,7 @@
     },
     {
       "Name": "prefilled vars",
-      "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
+      "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.UninstallKey)",
       "ExpandVariables": true
     }
   ]

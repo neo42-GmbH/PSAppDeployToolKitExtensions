@@ -52,13 +52,13 @@
         <!-- Path used to store temporary Toolkit files (with PSAppDeployToolkit as subdirectory), e.g. cache toolkit for cleaning up blocked apps. Normally you don't want this set to a path that is writable by regular users, this might lead to a security vulnerability. The default Temp variable for the LocalSystem account is C:\Windows\Temp. -->
         <Toolkit_RegPath>HKLM:\SOFTWARE</Toolkit_RegPath>
         <!-- Registry key used to store toolkit information (with PSAppDeployToolkit as child registry key), e.g. deferral history. -->
-		<Toolkit_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</Toolkit_LogPath>
+		<Toolkit_LogPath>$($appRootFolder)Logs\$appVendor\$appName\$appVersion</Toolkit_LogPath>
         <!-- Log path used for Toolkit logging. -->
         <Toolkit_TempPathNoAdminRights>$envTemp</Toolkit_TempPathNoAdminRights>
         <!-- Same as TempPath but used when RequireAdmin is False. -->
         <Toolkit_RegPathNoAdminRights>HKCU:\SOFTWARE</Toolkit_RegPathNoAdminRights>
         <!-- Same as RegPath but used when RequireAdmin is False. Bear in mind that since this Registry Key should be writable without admin permission, regular users can modify it also. -->
-		<Toolkit_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</Toolkit_LogPathNoAdminRights>
+		<Toolkit_LogPathNoAdminRights>$($appRootFolder)Logs\$appVendor\$appName\$appVersion\$env:USERNAME</Toolkit_LogPathNoAdminRights>
         <!-- Same as LogPath but used when RequireAdmin is False. -->
         <Toolkit_CompressLogs>False</Toolkit_CompressLogs>
         <!-- Specify if the log files should be bundled together in a compressed zip file -->
@@ -98,9 +98,9 @@
     <MSI_Options>
 		<MSI_LoggingOptions>/L*vx</MSI_LoggingOptions>
         <!-- Logging level used for MSI logging. -->
-		<MSI_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</MSI_LogPath>
+		<MSI_LogPath>$($appRootFolder)Logs\$appVendor\$appName\$appVersion</MSI_LogPath>
         <!-- Log path used for MSI logging. -->
-		<MSI_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</MSI_LogPathNoAdminRights>
+		<MSI_LogPathNoAdminRights>$($appRootFolder)Logs\$appVendor\$appName\$appVersion\$env:USERNAME</MSI_LogPathNoAdminRights>
         <!-- Log path used for MSI logging when RequireAdmin is False. -->
 		<MSI_InstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_InstallParams>
         <!-- Installation parameters used for MSI actions in non-silent Deploy-Application call. -->
@@ -115,11 +115,11 @@
 
 	<!--NxtInnoSetup Options-->
 	<NxtInnoSetup_Options>
-		<NxtInnoSetup_LogPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion</NxtInnoSetup_LogPath>
+		<NxtInnoSetup_LogPath>$($appRootFolder)Logs\$appVendor\$appName\$appVersion</NxtInnoSetup_LogPath>
 		<!-- Log path used for InnoSetup logging. -->
 		<NxtInnoSetup_UninsBackupPath>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\neo42-Source</NxtInnoSetup_UninsBackupPath>
 		<!-- Path used to backup the uninstallation file. -->
-		<NxtInnoSetup_LogPathNoAdminRights>$envProgramData\neoPackages\$appVendor\$appName\$appVersion\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
+		<NxtInnoSetup_LogPathNoAdminRights>$($appRootFolder)Logs\$appVendor\$appName\$appVersion\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
 		<!-- Log path used for InnoSetup logging when RequireAdmin is False. -->
 		<NxtInnoSetup_InstallParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_InstallParams>
 		<!-- Installation parameters used for InnoSetup actions in non-silent Deploy-Application call. -->

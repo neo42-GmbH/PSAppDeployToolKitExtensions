@@ -62,7 +62,9 @@ function Update-NxtPSAdtPackage {
         [Parameter(Mandatory=$false)]
         [string]$LogFileName,
         [Parameter(Mandatory=$true)]
-        [string]$CompatibleVersion
+        [string]$CompatibleVersion,
+        [Parameter(Mandatory=$true)]
+        [string]$ConfigVersion
     )
     try {
     # test if both paths exist
@@ -238,7 +240,29 @@ function Update-NxtPSAdtPackage {
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($null -eq $jsonContent.ConfigVersion){
-                $content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2023.09.18.1",
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2023.10.31.1",
+'
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            }
+            ## update entry: "ConfigVersion"
+            [string]$PackageToUpdateContent = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$PackageToUpdateJsonContent = $content | ConvertFrom-Json
+            if ($PackageToUpdateJsonContent.ConfigVersion -ne $ConfigVersion){
+                $PackageToUpdateContent = $PackageToUpdateContent -Replace ('  "ConfigVersion": "'+$PackageToUpdateJsonContent.ConfigVersion+'",'),('  "ConfigVersion": "'+$ConfigVersion+'",')
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $PackageToUpdateContent -NoNewline
+            }
+            ## Update App variable
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+            if ($jsonContent.App -notlike '*AppRootFolder*'){
+                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "App": "' -EndTag ("`n" + '  "UninstallOld"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",'
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            }
+            ## Add AppRootFolder variable
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+            if ($null -eq $jsonContent.AppRootFolder){
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "App"' -ContentToInsert '  "AppRootFolder" : "$($env:ProgramData)\\neo42Pkgs",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
@@ -280,7 +304,8 @@ function Update-NxtPSAdtPackage {
 [string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
 $PackagesToUpdatePath = $PackagesToUpdatePath.Trim("`"`'")
 $LatestVersionPath = $LatestVersionPath.Trim("`"`'")
+$ConfigVersion = "2023.10.31.1"
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
-   Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName -CompatibleVersion $CompatibleVersion
+   Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName -CompatibleVersion $CompatibleVersion -ConfigVersion $ConfigVersion
 } 
 Read-Host -Prompt "Press Enter to exit"
