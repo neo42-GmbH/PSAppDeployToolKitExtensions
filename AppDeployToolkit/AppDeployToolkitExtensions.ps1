@@ -5267,6 +5267,7 @@ function Install-NxtApplication {
 			}
 			if ([string]::IsNullOrEmpty($UninstallKey)) {
 				[string]$internalInstallerMethod = [string]::Empty
+				Write-Log -Message "No 'UninstallKey is set. Switch to use provided 'InstallFile' ..." -Severity 2 -Source ${cmdletName}
 			}
 			else {
 				[string]$internalInstallerMethod = $InstallMethod
@@ -9787,6 +9788,7 @@ function Uninstall-NxtApplication {
 				}
 				if ([string]::IsNullOrEmpty($UninstallKey)) {
 					[string]$internalInstallerMethod = [string]::Empty
+					Write-Log -Message "No 'UninstallKey is set. Switch to use provided 'InstallFile' ..." -Severity 2 -Source ${cmdletName}
 				}
 				else {
 					[string]$internalInstallerMethod = $UninstallMethod
