@@ -80,6 +80,11 @@
     },
     {
       "Name": "ScPapers-Addons.exe"
+    },
+    {
+      "Name": "commandline like '%notepad.exe%'",
+      "Description": "notepad found using WMI",
+      "IsWQL": true
     }
   ],
   "BlockExecution": true,

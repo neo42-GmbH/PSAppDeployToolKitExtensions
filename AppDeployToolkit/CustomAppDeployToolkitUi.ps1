@@ -1,4 +1,3 @@
-
 <#
 	.SYNOPSIS
 		Called by Show-InstallationWelcome to prompt the user to optionally do the following:
@@ -22,17 +21,51 @@
 	.PARAMETER DeferDeadline
 		Specify the deadline date before the user is allowed to defer.
 	.PARAMETER MinimizeWindows
-		Specifies whether to minimize other windows when displaying prompt. Default: $true.
+		Specifies whether to minimize other windows when displaying prompt.
+        Default: $true.
 	.PARAMETER TopMost
-		Specifies whether the windows is the topmost window. Default: $true.
+		Specifies whether the windows is the topmost window.
+        Default: $true.
 	.PARAMETER CustomText
 		Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
 	.PARAMETER ContinueType
 		Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
 	.PARAMETER UserCanCloseAll
-		Specifies if the user can close all applications. Default: $false.
+		Specifies if the user can close all applications.
+        Default: $false.
 	.PARAMETER UserCanAbort
-		Specifies if the user can abort the process. Default: $false.
+		Specifies if the user can abort the process.
+        Default: $false.
+    .PARAMETER ProcessObjectsEncoded
+        The Base64-encoded and gzip-compressed string that represents a JSON-serialized object containing the process objects to search for.
+    .PARAMETER DeploymentType
+        The deployment type of the application.
+        Default: 'Install'.
+    .PARAMETER InstallTitle
+        The title of the installation.
+        Default: 'Installation'.
+    .PARAMETER AppDeployLogoBanner
+        The logo banner displayed in the prompt.
+        Default: 'AppDeployToolkitBanner.png'.
+    .PARAMETER AppDeployLogoBannerDark
+        The dark logo banner displayed in the prompt.
+        Default: 'AppDeployToolkitBannerDark.png'.
+    .PARAMETER AppVendor
+        The vendor of the application.
+        Default: 'Application Vendor'.
+    .PARAMETER AppName
+        The name of the application.
+        Default: 'Application Name'.
+    .PARAMETER AppVersion
+        The version of the application.
+        Default: 'Application Version'.
+    .PARAMETER EnvProgramData
+        The ProgramData environment variable.
+    .PARAMETER LogName
+        The name of the log file.
+    .PARAMETER ProcessIdToIgnore
+        The process ID to ignore the complete tree for.
+
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -104,7 +137,10 @@ Param (
     $EnvProgramData,
     [Parameter(Mandatory = $true)]
     [string]
-    $LogName
+    $LogName,
+    [Parameter(Mandatory = $false)]
+    [int]
+    $ProcessIdToIgnore
 )
 #region Function ConvertFrom-NxtEncodedObject
 function ConvertFrom-NxtEncodedObject {
@@ -508,8 +544,58 @@ Function Get-RegistryKey {
     }
 }
 #endregion
-#region Function Get-RunningProcesses
-Function Get-RunningProcesses {
+#region Function Get-NxtProcessTree
+function Get-NxtProcessTree {
+    <#
+    .SYNOPSIS
+        Get the process tree for a given process ID
+    .DESCRIPTION
+        This function gets the process tree for a given process ID. 
+		It uses WMI to get the process, its child processes and the parent processes.
+    .PARAMETER ProcessId
+        The process ID for which to get the process tree
+	.PARAMETER IncludeChildProcesses
+		Indicates if child processes should be included in the result.
+		Defaults to $true.
+	.PARAMETER IncludeParentProcesses
+		Indicates if parent processes should be included in the result.
+		Defaults to $true.
+	.OUTPUTS
+		System.Management.ManagementObject
+	.EXAMPLE
+		Get-NxtProcessTree -ProcessId 1234
+		Gets the process tree for process with ID 1234 including child and parent processes.
+	.EXAMPLE
+		Get-NxtProcessTree -ProcessId 1234 -IncludeChildProcesses $false -IncludeParentProcesses $false
+		Gets the process tree for process with ID 1234 without child nor parent processes.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    param (
+        [Parameter(Mandatory=$true)]
+        [int]$ProcessId,
+        [Parameter(Mandatory=$false)]
+        [bool]$IncludeChildProcesses = $true,
+        [Parameter(Mandatory=$false)]
+        [bool]$IncludeParentProcesses = $true
+    )
+    [System.Management.ManagementObject]$process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
+    if ($null -ne $process) {
+        Write-Output $process
+        if ($IncludeChildProcesses) {
+            $childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
+            foreach ($child in $childProcesses) {
+                Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses
+            }
+        }
+        if ($process.ParentProcessId -gt 0 -and $IncludeParentProcesses) {
+            Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses
+        }
+    }
+}
+#endregion
+#region Function Get-NxtRunningProcesses
+Function Get-NxtRunningProcesses {
     <#
     .SYNOPSIS
         Gets the processes that are running from a custom list of process objects and also adds a property called ProcessDescription.
@@ -519,6 +605,8 @@ Function Get-RunningProcesses {
         Custom object containing the process objects to search for. If not supplied, the function just returns $null
     .PARAMETER DisableLogging
         Disables function logging
+	.PARAMETER ProcessIdsToIgnore
+        The process ID to ignore the complete tree for.
     .INPUTS
         None
         You cannot pipe objects to this function.
@@ -526,7 +614,7 @@ Function Get-RunningProcesses {
         Syste.Boolean.
         Rettuns $true if the process is running, otherwise $false.
     .EXAMPLE
-        Get-RunningProcesses -ProcessObjects $ProcessObjects
+        Get-NxtRunningProcesses -ProcessObjects $ProcessObjects
     .NOTES
         This is an internal script function and should typically not be called directly.
     .LINK
@@ -537,7 +625,9 @@ Function Get-RunningProcesses {
         [Parameter(Mandatory = $false, Position = 0)]
         [PSObject[]]$ProcessObjects,
         [Parameter(Mandatory = $false, Position = 1)]
-        [Switch]$DisableLogging
+        [Switch]$DisableLogging,
+        [Parameter(Mandatory = $false)]
+        [int[]]$ProcessIdsToIgnore
     )
 
     Begin {
@@ -551,10 +641,37 @@ Function Get-RunningProcesses {
             If (-not $DisableLogging) {
                 Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
             }
+			[array]$wqlProcessObjects = $processObjects | Where-Object { $_.IsWql -eq $true }
+			[array]$processesFromWmi = $(
+				foreach ($wqlProcessObject in $wqlProcessObjects) {
+					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
+						n = "QueryUsed"
+						e = { $wqlProcessObject.ProcessName }
+					}
+				}
+			)
             ## Prepare a filter for Where-Object
             [ScriptBlock]$whereObjectFilter = {
                 ForEach ($processObject in $processObjects) {
-                    If ($_.ProcessName -ieq $processObject.ProcessName) {
+					[bool]$processFound = $false
+                    if ($ProcessIdsToIgnore -contains $_.Id) {
+                        continue
+                    }
+					if ($processObject.IsWql) {
+						[int]$processId = $_.Id
+						[string]$queryUsed = $processObject.ProcessName
+						if (($processesFromWmi | Where-Object {
+							$_.ProcessId -eq $processId -and
+							$_.QueryUsed -eq $queryUsed
+						}).count -ne 0
+							){
+							$processFound = $true
+						}
+					}
+                    elseIf ($_.ProcessName -ieq $processObject.ProcessName) {
+						$processFound = $true
+					}
+					if ($true -eq $processFound) {
                         If ($processObject.ProcessDescription) {
                             #  The description of the process provided as a Parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
                             Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $processObject.ProcessDescription -Force -PassThru -ErrorAction 'SilentlyContinue'
@@ -1901,9 +2018,13 @@ else {
 
 $control_AppNameText.Text = $installTitle
 $control_TitleText.Text = $installTitle
-                
+if ($ProcessIdToIgnore -gt 0){
+    [int[]]$ProcessIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
+}else{
+    [int[]]$ProcessIdsToIgnore = @()
+}
 [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects) {
-    Get-RunningProcesses -ProcessObjects $processObject | Where-Object { $false -eq [string]::IsNullOrEmpty($_.id) }
+    Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $ProcessIdsToIgnore | Where-Object { $false -eq [string]::IsNullOrEmpty($_.id) }
 }
 [ScriptBlock]$FillCloseApplicationList = {
     param($runningProcessesParam)
@@ -2067,10 +2188,16 @@ If ($PersistPrompt) {
 If ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
     [System.Windows.Threading.DispatcherTimer]$timerRunningProcesses = New-Object System.Windows.Threading.DispatcherTimer
     $timerRunningProcesses.Interval = [timespan]::fromseconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
+    [int]$tickCounter = 0
     [ScriptBlock]$timerRunningProcesses_Tick = {
         Try {
+            if ([math]::DivRem($tickCounter,10,[ref]$null) -eq 1){
+                # As this is performance intensive, only run it every 10 Ticks
+                [int[]]$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
+            }
+            $tickCounter++
             [PSObject[]]$dynamicRunningProcesses = $null
-            $dynamicRunningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging
+            $dynamicRunningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore
             [String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
             If ($dynamicRunningProcessDescriptions -ne $script:runningProcessDescriptions) {
                 # Update the runningProcessDescriptions variable for the next time this function runs

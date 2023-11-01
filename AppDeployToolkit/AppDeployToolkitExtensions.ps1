@@ -3806,6 +3806,56 @@ function Get-NxtProcessorArchiteW6432 {
 	}
 }
 #endregion
+#region Function Get-NxtProcessTree
+function Get-NxtProcessTree {
+    <#
+    .SYNOPSIS
+        Get the process tree for a given process ID
+    .DESCRIPTION
+        This function gets the process tree for a given process ID. 
+		It uses WMI to get the process, its child processes and the parent processes.
+    .PARAMETER ProcessId
+        The process ID for which to get the process tree
+	.PARAMETER IncludeChildProcesses
+		Indicates if child processes should be included in the result.
+		Defaults to $true.
+	.PARAMETER IncludeParentProcesses
+		Indicates if parent processes should be included in the result.
+		Defaults to $true.
+	.OUTPUTS
+		System.Management.ManagementObject
+	.EXAMPLE
+		Get-NxtProcessTree -ProcessId 1234
+		Gets the process tree for process with ID 1234 including child and parent processes.
+	.EXAMPLE
+		Get-NxtProcessTree -ProcessId 1234 -IncludeChildProcesses $false -IncludeParentProcesses $false
+		Gets the process tree for process with ID 1234 without child nor parent processes.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    param (
+        [Parameter(Mandatory=$true)]
+        [int]$ProcessId,
+        [Parameter(Mandatory=$false)]
+        [bool]$IncludeChildProcesses = $true,
+        [Parameter(Mandatory=$false)]
+        [bool]$IncludeParentProcesses = $true
+    )
+    [System.Management.ManagementObject]$process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
+    if ($null -ne $process) {
+        Write-Output $process
+        if ($IncludeChildProcesses) {
+            $childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
+            foreach ($child in $childProcesses) {
+                Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses
+            }
+        }
+        if ($process.ParentProcessId -gt 0 -and $IncludeParentProcesses) {
+            Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses
+        }
+    }
+}
+#endregion
 #region Function Get-NxtRebootRequirement
 function Get-NxtRebootRequirement {
 	<#
@@ -4164,6 +4214,126 @@ function Get-NxtRegisterOnly {
 		Write-Log -Message 'No valid conditions for SoftMigration present.' -Source ${cmdletName}
 		Write-Output $false
 	}
+}
+#endregion
+#region Function Get-NxtRunningProcesses
+function Get-NxtRunningProcesses {
+    <#
+    .SYNOPSIS
+		Retrieves a list of running processes based on provided process objects, adding a 'ProcessDescription' property to each.
+    .DESCRIPTION
+		This function scans for running processes that match the names specified in the provided process objects. 
+		It enhances the output by appending a 'ProcessDescription' property to each identified process. 
+		This function is particularly useful for monitoring specific processes or applications.
+    .PARAMETER ProcessObjects
+        An array of custom objects, each representing a process to check for. 
+		These objects should contain at least a 'ProcessName' property. If not supplied, the function returns $null.
+    .PARAMETER DisableLogging
+        If specified, disables logging within the function, making its execution silent.
+	.PARAMETER ProcessIdToIgnore
+		An array of process IDs. Processes with these IDs, and their child processes, will be excluded from the search.
+    .OUTPUTS
+        Syste.Boolean.
+        Returns $true if the process is running, otherwise $false.
+    .EXAMPLE
+        Get-NxtRunningProcesses -ProcessObjects $ProcessObjects
+    .NOTES
+        This is an internal script function and should typically not be called directly.
+    .LINK
+        https://psappdeploytoolkit.com
+    #>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $false, Position = 0)]
+        [PSObject[]]$ProcessObjects,
+        [Parameter(Mandatory = $false, Position = 1)]
+        [Switch]$DisableLogging,
+        [Parameter(Mandatory = $false)]
+        [int[]]$ProcessIdsToIgnore
+    )
+    Begin {
+        ## Get the name of this function and write header
+        [String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+    }
+    Process {
+        if ($processObjects -and $processObjects[0].ProcessName) {
+            [string]$runningAppsCheck = $processObjects.ProcessName -join ','
+            if (-not $DisableLogging) {
+                Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
+            }
+			[array]$wqlProcessObjects = $processObjects | Where-Object { $_.IsWql -eq $true }
+			[array]$processesFromWmi = $(
+				foreach ($wqlProcessObject in $wqlProcessObjects) {
+					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
+						n = "QueryUsed"
+						e = { $wqlProcessObject.ProcessName }
+					}
+				}
+			)
+            ## Prepare a filter for Where-Object
+            [ScriptBlock]$whereObjectFilter = {
+                foreach ($processObject in $processObjects) {
+					if ($ProcessIdsToIgnore -contains $_.Id) {
+						continue
+					}
+					[bool]$processFound = $false
+					if ($processObject.IsWql) {
+						[int]$processId = $_.Id
+						[string]$queryUsed = $processObject.ProcessName
+						if (($processesFromWmi | Where-Object {
+							$_.ProcessId -eq $processId -and
+							$_.QueryUsed -eq $queryUsed
+						}).count -ne 0
+							){
+							$processFound = $true
+						}
+					}
+                    elseif ($_.ProcessName -ieq $processObject.ProcessName) {
+						$processFound = $true
+					}
+					if ($true -eq $processFound) {
+                        if ($processObject.ProcessDescription) {
+                            #  The description of the process provided as a parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
+                            Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $processObject.ProcessDescription -Force -PassThru -ErrorAction 'SilentlyContinue'
+                        }
+                        elseif ($_.Description) {
+                            #  If the process already has a description field specified, then use it
+                            Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.Description -Force -PassThru -ErrorAction 'SilentlyContinue'
+                        }
+                        else {
+                            #  Fall back on the process name if no description is provided by the process or as a parameter to the function
+                            Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.ProcessName -Force -PassThru -ErrorAction 'SilentlyContinue'
+                        }
+                        Write-Output -InputObject ($true)
+                        return
+                    }
+                }
+
+                Write-Output -InputObject ($false)
+                return
+            }
+            ## Get all running processes and escape special characters. Match against the process names to search for to find running processes.
+            [Diagnostics.Process[]]$runningProcesses = Get-Process | Where-Object -FilterScript $whereObjectFilter | Sort-Object -Property 'ProcessName'
+
+            if (-not $DisableLogging) {
+                if ($runningProcesses) {
+                    [String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
+                    Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
+                }
+                else {
+                    Write-Log -Message 'Specified applications are not running.' -Source ${CmdletName}
+                }
+            }
+            Write-Output -InputObject ($runningProcesses)
+        }
+        else {
+            Write-Output -InputObject ($null)
+        }
+    }
+    End {
+        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+    }
 }
 #endregion
 #region Function Get-NxtServiceState
@@ -7481,6 +7651,9 @@ Function Show-NxtInstallationWelcome {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER ProcessIdToIgnore
+		Defines a process id to ignore.
+		Defaults to $PID
     .OUTPUTS
 		Exit code depending on the user's response or the timeout.
     .EXAMPLE
@@ -7590,7 +7763,9 @@ Function Show-NxtInstallationWelcome {
 		[Switch]$ApplyContinueTypeOnError = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.ASKKILLPROCESSES.APPLYCONTINUETYPEONERROR)),
 		## Specifies the script root path
 		[Parameter(Mandatory = $false)]
-		[string]$ScriptRoot = $scriptRoot
+		[string]$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[int]$ProcessIdToIgnore = $PID
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -7628,46 +7803,52 @@ Function Show-NxtInstallationWelcome {
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
 				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", ""
-				if (![String]::IsNullOrEmpty($processAppsItem.Description)) {
-					[string]$processAppsItem.Name = $processAppsItem.Name + "=" + $processAppsItem.Description
-				}
 			}
 		}
-		[string]$closeApps = ($AskKillProcessApps | Where-Object -property 'Name' -ne '').Name -join ","
-
-		## If using Zero-Config MSI Deployment, append any executables found in the MSI to the CloseApps list
-		If ($useDefaultMsi) {
-			[string]$closeApps = "$closeApps,$defaultMsiExecutablesList"
-		}
-
-		if ($true -eq [string]::IsNullOrEmpty($closeApps)) {
+		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
 			## prevent BlockExecution function if there is no process to kill
 			$BlockExecution = $false
 		}
 		else {
 			## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
 			[PSObject[]]$processObjects = @()
-			#  Split multiple processes on a comma, then split on equal sign, then create custom object with process name and description
-			ForEach ($process in ($closeApps -split ',' | Where-Object { $_ })) {
-				If ($process.Contains('=')) {
-					[String[]]$ProcessSplit = $process -split '='
+			foreach ($AskKillProcessApp in $AskKillProcessApps) {
+				if ($AskKillProcessApp.IsWQL) {
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName        = $ProcessSplit[0]
-						ProcessDescription = $ProcessSplit[1]
+						ProcessName			= $AskKillProcessApp.Name
+						ProcessDescription	= $AskKillProcessApp.Description
+						IsWql				= $true
 					}
 				}
-				Else {
-					[String]$ProcessInfo = $process
+				elseif ($AskKillProcessApp.Name.Contains('=')) {
+					[String[]]$ProcessSplit = $AskKillProcessApp.Name -split '='
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName        = $process
+						ProcessName			= $ProcessSplit[0]
+						ProcessDescription	= $ProcessSplit[1]
+						IsWql				= $false
+					}
+				}
+				else {
+					$processObjects += New-Object -TypeName 'PSObject' -Property @{
+						ProcessName        = $AskKillProcessApp.Name
 						ProcessDescription = ''
+						IsWql				= $false
 					}
 				}
 			}
+			if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)){
+				foreach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ",")) {
+					$processObjects += New-Object -TypeName 'PSObject' -Property @{
+						ProcessName        = $defaultMsiExecutable
+						ProcessDescription = ''
+						IsWql				= $false
+					}
+				}
+			}
+			
 		}
-
 		## Check Deferral history and calculate remaining deferrals
-		If (($allowDefer) -or ($AllowDeferCloseApps)) {
+		if (($allowDefer) -or ($AllowDeferCloseApps)) {
 			#  Set $allowDefer to true if $AllowDeferCloseApps is true
 			$allowDefer = $true
 
@@ -7679,109 +7860,113 @@ Function Show-NxtInstallationWelcome {
 			#  Reset Switches
 			$checkDeferDays = $false
 			$checkDeferDeadline = $false
-			If ($DeferDays -ne 0) {
+			if ($DeferDays -ne 0) {
 				$checkDeferDays = $true
 			}
-			If ($DeferDeadline) {
+			if ($DeferDeadline) {
 				$checkDeferDeadline = $true
 			}
-			If ($DeferTimes -ne 0) {
-				If ($deferHistoryTimes -ge 0) {
+			if ($DeferTimes -ne 0) {
+				if ($deferHistoryTimes -ge 0) {
 					Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${CmdletName}
 					$DeferTimes = $deferHistory.DeferTimesRemaining - 1
 				}
-				Else {
+				else {
 					$DeferTimes = $DeferTimes - 1
 				}
 				Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${CmdletName}
-				If ($DeferTimes -lt 0) {
+				if ($DeferTimes -lt 0) {
 					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
 					$AllowDefer = $false
 				}
 			}
-			Else {
-				If (Test-Path -LiteralPath 'variable:deferTimes') {
+			else {
+				if (Test-Path -LiteralPath 'variable:deferTimes') {
 					Remove-Variable -Name 'deferTimes'
 				}
 				$DeferTimes = $null
 			}
-			If ($checkDeferDays -and $allowDefer) {
-				If ($deferHistoryDeadline) {
+			if ($checkDeferDays -and $allowDefer) {
+				if ($deferHistoryDeadline) {
 					Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${CmdletName}
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
 				}
-				Else {
+				else {
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime (Get-Date -Date ((Get-Date).AddDays($deferDays)) -Format ($culture).DateTimeFormat.UniversalDateTimePattern).ToString()
 				}
 				Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${CmdletName}
-				If ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
+				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
 					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
 					$AllowDefer = $false
 				}
 			}
-			If ($checkDeferDeadline -and $allowDefer) {
+			if ($checkDeferDeadline -and $allowDefer) {
 				#  Validate Date
-				Try {
+				try {
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferDeadline -ErrorAction 'Stop'
 				}
-				Catch {
+				catch {
 					Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-					Throw "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z': $($_.Exception.Message)"
+					throw "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z': $($_.Exception.Message)"
 				}
 				Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${CmdletName}
-				If ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
+				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
 					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
 					$AllowDefer = $false
 				}
 			}
 		}
-		If (($deferTimes -lt 0) -and (-not $deferDeadlineUniversal)) {
+		if (($deferTimes -lt 0) -and (-not $deferDeadlineUniversal)) {
 			$AllowDefer = $false
 		}
 
 		[string]$promptResult = [string]::Empty
 		## Prompt the user to close running applications and optionally defer if enabled
-		If (-not $silent) {
-			If ($forceCloseAppsCountdown -gt 0) {
+		if (-not $silent) {
+			if ($forceCloseAppsCountdown -gt 0) {
 				#  Keep the same variable for countdown to simplify the code:
 				$closeAppsCountdown = $forceCloseAppsCountdown
 				#  Change this variable to a boolean now to switch the countdown on even with deferral
 				[Boolean]$forceCloseAppsCountdown = $true
 			}
-			ElseIf ($forceCountdown -gt 0) {
+			elseif ($forceCountdown -gt 0) {
 				#  Keep the same variable for countdown to simplify the code:
 				$closeAppsCountdown = $forceCountdown
 				#  Change this variable to a boolean now to switch the countdown on
 				[Boolean]$forceCountdown = $true
 			}
 			Set-Variable -Name 'closeAppsCountdownGlobal' -Value $closeAppsCountdown -Scope 'Script'
-			While ((Get-RunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses') -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
+			[int[]]$processIdsToIgnore = @()
+			if ($processIdToIgnore -gt 0) {
+				$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+			}
+			while ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses' -ProcessIdsToIgnore $processIdsToIgnore) -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				#  If no proccesses are running close
 				if ([string]::IsNullOrEmpty($runningProcessDescriptions)) {
 					break
 				}
 				#  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
-				If ($allowDefer) {
+				if ($allowDefer) {
 					#  If there is deferral and closing apps is allowed but there are no apps to be closed, break the while loop
-					If ($AllowDeferCloseApps -and (-not $runningProcessDescriptions)) {
-						Break
+					if ($AllowDeferCloseApps -and (-not $runningProcessDescriptions)) {
+						break
 					}
 					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
-					ElseIf ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError
+					elseif ((-not $promptResult.Contains('Close')) -or (($runningProcessDescriptions) -and (-not $promptResult.Contains('Continue')))) {
+						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
 					}
 				}
 				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
-				ElseIf (($runningProcessDescriptions) -or ($forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError
+				elseif (($runningProcessDescriptions) -or ($forceCountdown)) {
+					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
 				}
 				#  If there is no deferral and no processes running, break the while loop
-				Else {
-					Break
+				else {
+					break
 				}
 
-				If ($promptResult.Contains('Cancel')) {
+				if ($promptResult.Contains('Cancel')) {
 					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${CmdletName}
                     
 					#  Restore minimized windows
@@ -7792,93 +7977,98 @@ Function Show-NxtInstallationWelcome {
 				}
 
 				#  If the user has clicked OK, wait a few seconds for the process to terminate before evaluating the running processes again
-				If ($promptResult.Contains('Continue')) {
+				if ($promptResult.Contains('Continue')) {
 					Write-Log -Message 'The user selected to continue...' -Source ${CmdletName}
 					Start-Sleep -Seconds 2
 
 					#  Break the while loop if there are no processes to close and the user has clicked OK to continue
-					If (-not $runningProcesses) {
-						Break
+					if (-not $runningProcesses) {
+						break
 					}
 				}
 				#  Force the applications to close
-				ElseIf ($promptResult.Contains('Close')) {
+				elseif ($promptResult.Contains('Close')) {
 					Write-Log -Message 'The user selected to force the application(s) to close...' -Source ${CmdletName}
-					If (($PromptToSave) -and ($SessionZero -and (-not $IsProcessUserInteractive))) {
+					if (($PromptToSave) -and ($SessionZero -and (-not $IsProcessUserInteractive))) {
 						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
 					}
 					# Update the process list right before closing, in case it changed
-					$runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects
+					if ($processIdToIgnore -gt 0) {
+						$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+					}
+					$runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -ProcessIdsToIgnore $processIdsToIgnore
 					# Close running processes
-					ForEach ($runningProcess in $runningProcesses) {
+					foreach ($runningProcess in $runningProcesses) {
 						[PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
 						#  If the PromptToSave parameter was specified and the process has a window open, then prompt the user to save work if there is work to be saved when closing window
-						If (($PromptToSave) -and (-not ((-not $IsProcessUserInteractive))) -and ($AllOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
+						if (($PromptToSave) -and (-not ((-not $IsProcessUserInteractive))) -and ($AllOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
 							[Timespan]$PromptToSaveTimeout = New-TimeSpan -Seconds $configInstallationPromptToSave
 							[Diagnostics.StopWatch]$PromptToSaveStopWatch = [Diagnostics.StopWatch]::StartNew()
 							$PromptToSaveStopWatch.Reset()
-							ForEach ($OpenWindow in $AllOpenWindowsForRunningProcess) {
-								Try {
+							foreach ($OpenWindow in $AllOpenWindowsForRunningProcess) {
+								try {
 									Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${CmdletName}
 									[Boolean]$IsBringWindowToFrontSuccess = [PSADT.UiAutomation]::BringWindowToFront($OpenWindow.WindowHandle)
 									[Boolean]$IsCloseWindowCallSuccess = $runningProcess.CloseMainWindow()
-									If (-not $IsCloseWindowCallSuccess) {
+									if (-not $IsCloseWindowCallSuccess) {
 										Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${CmdletName}
 									}
-									Else {
+									else {
 										$PromptToSaveStopWatch.Start()
-										Do {
+										do {
 											[Boolean]$IsWindowOpen = [Boolean](Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.WindowHandle -eq $OpenWindow.WindowHandle })
-											If (-not $IsWindowOpen) {
-												Break
+											if (-not $IsWindowOpen) {
+												break
 											}
 											Start-Sleep -Seconds 3
-										} While (($IsWindowOpen) -and ($PromptToSaveStopWatch.Elapsed -lt $PromptToSaveTimeout))
+										} while (($IsWindowOpen) -and ($PromptToSaveStopWatch.Elapsed -lt $PromptToSaveTimeout))
 										$PromptToSaveStopWatch.Reset()
-										If ($IsWindowOpen) {
+										if ($IsWindowOpen) {
 											Write-Log -Message "Exceeded the [$configInstallationPromptToSave] seconds timeout value for the user to save work associated with process [$($runningProcess.ProcessName)] with window title [$($OpenWindow.WindowTitle)]." -Severity 2 -Source ${CmdletName}
 										}
-										Else {
+										else {
 											Write-Log -Message "Window [$($OpenWindow.WindowTitle)] for process [$($runningProcess.ProcessName)] was successfully closed." -Source ${CmdletName}
 										}
 									}
 								}
-								Catch {
+								catch {
 									Write-Log -Message "Failed to close window [$($OpenWindow.WindowTitle)] for process [$($runningProcess.ProcessName)]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-									Continue
+									continue
 								}
-								Finally {
+								finally {
 									$runningProcess.Refresh()
 								}
 							}
 						}
-						Else {
+						else {
 							Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${CmdletName}
 							Stop-Process -Name $runningProcess.ProcessName -Force -ErrorAction 'SilentlyContinue'
 						}
 					}
-
-					If ($runningProcesses = Get-RunningProcesses -ProcessObjects $processObjects -DisableLogging) {
+					if ($processIdToIgnore -gt 0) {
+						$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+					}
+					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
 						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
 						Start-Sleep -Seconds 2
 					}
 				}
 				#  Stop the script (if not actioned before the timeout value)
-				ElseIf ($promptResult.Contains('Timeout')) {
+				elseif ($promptResult.Contains('Timeout')) {
 					Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${CmdletName}
 					$BlockExecution = $false
 
-					If (($deferTimes -ge 0) -or ($deferDeadlineUniversal)) {
+					if (($deferTimes -ge 0) -or ($deferDeadlineUniversal)) {
 						Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
 					}
 					## Dispose the welcome prompt timer here because if we dispose it within the Show-WelcomePrompt function we risk resetting the timer and missing the specified timeout period
-					If ($script:welcomeTimer) {
-						Try {
+					if ($script:welcomeTimer) {
+						try {
 							$script:welcomeTimer.Dispose()
 							$script:welcomeTimer = $null
 						}
-						Catch {
+						catch {
 						}
 					}
 
@@ -7889,7 +8079,7 @@ Function Show-NxtInstallationWelcome {
 					return
 				}
 				#  Stop the script (user chose to defer)
-				ElseIf ($promptResult.Contains('Defer')) {
+				elseif ($promptResult.Contains('Defer')) {
 					Write-Log -Message 'Installation deferred by the user.' -Source ${CmdletName}
 					$BlockExecution = $false
 
@@ -7905,10 +8095,10 @@ Function Show-NxtInstallationWelcome {
 		}
 
 		## Force the processes to close silently, without prompting the user
-		If (($Silent -or $deployModeSilent) -and $closeApps) {
+		if ( ($Silent -or $deployModeSilent) -and ($processObjects.Count -ne 0) ) {
 			[Array]$runningProcesses = $null
-			[Array]$runningProcesses = Get-RunningProcesses $processObjects
-			If ($runningProcesses) {
+			[Array]$runningProcesses = Get-NxtRunningProcesses $processObjects
+			if ($runningProcesses) {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
 				$runningProcesses.ProcessName | ForEach-Object -Process { Stop-Process -Name $_ -Force -ErrorAction 'SilentlyContinue' }
@@ -7917,30 +8107,30 @@ Function Show-NxtInstallationWelcome {
 		}
 
 		## Force nsd.exe to stop if Notes is one of the required applications to close
-		If (($processObjects | Select-Object -ExpandProperty 'ProcessName') -contains 'notes') {
+		if (($processObjects | Select-Object -ExpandProperty 'ProcessName') -contains 'notes') {
 			## Get the path where Notes is installed
 			[String]$notesPath = Get-Item -LiteralPath $regKeyLotusNotes -ErrorAction 'SilentlyContinue' | Get-ItemProperty | Select-Object -ExpandProperty 'Path'
 
 			## Ensure we aren't running as a Local System Account and Notes install directory was found
-			If ((-not $IsLocalSystemAccount) -and ($notesPath)) {
+			if ((-not $IsLocalSystemAccount) -and ($notesPath)) {
 				#  Get a list of all the executables in the Notes folder
 				[string[]]$notesPathExes = Get-ChildItem -LiteralPath $notesPath -Filter '*.exe' -Recurse | Select-Object -ExpandProperty 'BaseName' | Sort-Object
 				## Check for running Notes executables and run NSD if any are found
 				$notesPathExes | ForEach-Object {
-					If ((Get-Process | Select-Object -ExpandProperty 'Name') -contains $_) {
+					if ((Get-Process | Select-Object -ExpandProperty 'Name') -contains $_) {
 						[String]$notesNSDExecutable = Join-Path -Path $notesPath -ChildPath 'NSD.exe'
-						Try {
-							If (Test-Path -LiteralPath $notesNSDExecutable -PathType 'Leaf' -ErrorAction 'Stop') {
+						try {
+							if (Test-Path -LiteralPath $notesNSDExecutable -PathType 'Leaf' -ErrorAction 'Stop') {
 								Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${CmdletName}
 								[Diagnostics.Process]$notesNSDProcess = Start-Process -FilePath $notesNSDExecutable -ArgumentList '-kill' -WindowStyle 'Hidden' -PassThru -ErrorAction 'SilentlyContinue'
 
-								If (-not $notesNSDProcess.WaitForExit(10000)) {
+								if (-not $notesNSDProcess.WaitForExit(10000)) {
 									Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${CmdletName}
 									Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
 								}
 							}
 						}
-						Catch {
+						catch {
 							Write-Log -Message "Failed to launch [$notesNSDExecutable]. `r`n$(Resolve-Error)" -Source ${CmdletName}
 						}
 
@@ -7953,22 +8143,25 @@ Function Show-NxtInstallationWelcome {
 			}
 
 			#  Strip all Notes processes from the process list except notes.exe, because the other notes processes (e.g. notes2.exe) may be invoked by the Notes installation, so we don't want to block their execution.
-			If ($notesPathExes) {
+			if ($notesPathExes) {
 				[Array]$processesIgnoringNotesExceptions = Compare-Object -ReferenceObject ($processObjects | Select-Object -ExpandProperty 'ProcessName' | Sort-Object) -DifferenceObject $notesPathExes -IncludeEqual | Where-Object { ($_.SideIndicator -eq '<=') -or ($_.InputObject -eq 'notes') } | Select-Object -ExpandProperty 'InputObject'
 				[Array]$processObjects = $processObjects | Where-Object { $processesIgnoringNotesExceptions -contains $_.ProcessName }
 			}
 		}
 
 		## If block execution switch is true, call the function to block execution of these processes
-		If ($true -eq $BlockExecution) {
+		if ($true -eq $BlockExecution) {
 			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
-			Block-AppExecution -ProcessName ($processObjects | Select-Object -ExpandProperty 'ProcessName')
-			if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
-				## in case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
-				Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
-				Update-NxtXmlNode -FilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+			if (($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
+				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
+				Block-AppExecution -ProcessName ($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName')
+				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
+					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
+					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
+					Update-NxtXmlNode -FilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+				}
 			}
 		}
 	}
@@ -8019,6 +8212,33 @@ Function Show-NxtWelcomePrompt {
 		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.PARAMETER ApplyContinueTypeOnError
 		Specifies if the ContinueType should be applied in case of an error. Default: $false.
+	.PARAMETER InstallTitle
+		The title of the installation.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppDeployLogoBanner
+		The logo banner to display in the prompt.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppDeployLogoBannerDark
+		The dark logo banner to display in the prompt.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER EnvProgramData
+		The path to the ProgramData folder.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppVendor
+		The vendor of the application.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppName
+		The name of the application.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER AppVersion
+		The version of the application.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER Logname
+		The name of the log file.
+		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+	.PARAMETER ProcessIdToIgnore
+		The process ID to ignore.
+		Defaults to the ID of the current process $PID.
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -8090,7 +8310,10 @@ Function Show-NxtWelcomePrompt {
 		$AppVersion = $appVersion,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Logname = $logName
+		$Logname = $logName,
+		[Parameter(Mandatory = $false)]
+		[int]
+		$ProcessIdToIgnore
     )
 
     Begin {
@@ -8125,6 +8348,9 @@ Function Show-NxtWelcomePrompt {
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppName" -Value $appName
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVersion" -Value $appVersion
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
+		if ($ProcessIdToIgnore -gt 0){
+			$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ProcessIdToIgnore" -Value $ProcessIdToIgnore
+		}
 		Write-Log "Searching for Sessions..." -Source ${CmdletName}
 		[int]$welcomeExitCode = 1618;
 		[PsObject]$activeSessions = Get-LoggedOnUser
