@@ -926,7 +926,12 @@ function Complete-NxtPackageInstallation {
 			}
 			## Userpart-Installation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID.uninstall"
-			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
+			if ($true -eq (Test-Path -Path "$dirSupportFiles\$UserpartDir")) {
+				Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
+			 }
+			 else {
+				 New-Folder -Path "$App\$UserpartDir\SupportFiles"
+			 }
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			$null = Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
@@ -1018,7 +1023,12 @@ function Complete-NxtPackageUninstallation {
 				Throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
 			}
 			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
-			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
+			if ($true -eq (Test-Path -Path "$dirSupportFiles\$UserpartDir")) {
+				Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
+			 }
+			 else {
+				 New-Folder -Path "$App\$UserpartDir\SupportFiles"
+			 }
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
