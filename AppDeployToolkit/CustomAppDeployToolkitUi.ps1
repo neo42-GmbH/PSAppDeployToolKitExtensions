@@ -1,4 +1,3 @@
-
 <#
 	.SYNOPSIS
 		Called by Show-InstallationWelcome to prompt the user to optionally do the following:
@@ -22,33 +21,44 @@
 	.PARAMETER DeferDeadline
 		Specify the deadline date before the user is allowed to defer.
 	.PARAMETER MinimizeWindows
-		Specifies whether to minimize other windows when displaying prompt. Default: $true.
+		Specifies whether to minimize other windows when displaying prompt.
+        Default: $true.
 	.PARAMETER TopMost
-		Specifies whether the windows is the topmost window. Default: $true.
+		Specifies whether the windows is the topmost window.
+        Default: $true.
 	.PARAMETER CustomText
 		Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
 	.PARAMETER ContinueType
 		Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
 	.PARAMETER UserCanCloseAll
-		Specifies if the user can close all applications. Default: $false.
+		Specifies if the user can close all applications.
+        Default: $false.
 	.PARAMETER UserCanAbort
-		Specifies if the user can abort the process. Default: $false.
+		Specifies if the user can abort the process.
+        Default: $false.
     .PARAMETER ProcessObjectsEncoded
         The Base64-encoded and gzip-compressed string that represents a JSON-serialized object containing the process objects to search for.
     .PARAMETER DeploymentType
-        The deployment type of the application. Default: 'Install'.
+        The deployment type of the application.
+        Default: 'Install'.
     .PARAMETER InstallTitle
-        The title of the installation. Default: 'Installation'.
+        The title of the installation.
+        Default: 'Installation'.
     .PARAMETER AppDeployLogoBanner
-        The logo banner displayed in the prompt. Default: 'AppDeployToolkitBanner.png'.
+        The logo banner displayed in the prompt.
+        Default: 'AppDeployToolkitBanner.png'.
     .PARAMETER AppDeployLogoBannerDark
-        The dark logo banner displayed in the prompt. Default: 'AppDeployToolkitBannerDark.png'.
+        The dark logo banner displayed in the prompt.
+        Default: 'AppDeployToolkitBannerDark.png'.
     .PARAMETER AppVendor
-        The vendor of the application. Default: 'Application Vendor'.
+        The vendor of the application.
+        Default: 'Application Vendor'.
     .PARAMETER AppName
-        The name of the application. Default: 'Application Name'.
+        The name of the application.
+        Default: 'Application Name'.
     .PARAMETER AppVersion
-        The version of the application. Default: 'Application Version'.
+        The version of the application.
+        Default: 'Application Version'.
     .PARAMETER EnvProgramData
         The ProgramData environment variable.
     .PARAMETER LogName
@@ -540,7 +550,8 @@ function Get-NxtProcessTree {
     .SYNOPSIS
         Get the process tree for a given process ID
     .DESCRIPTION
-        This function gets the process tree for a given process ID. It uses WMI to get the process, its child processes and the parent processes.
+        This function gets the process tree for a given process ID. 
+		It uses WMI to get the process, its child processes and the parent processes.
     .PARAMETER ProcessId
         The process ID for which to get the process tree
 	.PARAMETER IncludeChildProcesses
