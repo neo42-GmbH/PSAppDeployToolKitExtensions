@@ -82,6 +82,8 @@ following VariableSets of config files are useable (in order of availability):
 - InstPara
 - UninstFile
 - UninstPara
+- CommonDesktopShortcutsToDelete
+- CommonStartMenuShortcutsToCopyToCommonDesktop
 - UninstallKey (if value "UninstallKeyContainsExpandVariables" is set to 'true'' only!)
 - UninstallKeysToHide.KeyName
 - UninstallKeysToHide.KeyNameIsDisplayName
