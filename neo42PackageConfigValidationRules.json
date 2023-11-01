@@ -111,7 +111,7 @@
             "Operator": "match"
         },
         "Type": "System.String",
-        "AllowEmpty": false
+        "AllowEmpty": true
     },
     "AppLang": {
         "Mandatory": true,
@@ -193,11 +193,11 @@
                                 "Type": "System.String",
                                 "AllowEmpty": false
                             },
-                            "Description": {
+                            "ShouldExist": {
                                 "Mandatory": true,
-                                "HelpText": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.Description is mandatory and must be a string. If empty, the name will be used.",
-                                "Type": "System.String",
-                                "AllowEmpty": true
+                                "HelpText": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.ShouldExist is mandatory and must be boolean.",
+                                "Type": "System.Boolean",
+                                "AllowEmpty": false
                             }
                         },
                         "Type": "System.Array",
@@ -211,13 +211,13 @@
                                 "Mandatory": true,
                                 "HelpText": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
                                 "Type": "System.String",
-                                "AllowEmpty": false
+                                "AllowEmpty": true
                             },
                             "ValueData": {
                                 "Mandatory": true,
                                 "HelpText": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
                                 "Type": "System.String",
-                                "AllowEmpty": false
+                                "AllowEmpty": true
                             },
                             "KeyPath": {
                                 "Mandatory": true,
@@ -279,11 +279,11 @@
                                 "Type": "System.String",
                                 "AllowEmpty": false
                             },
-                            "Description": {
+                            "ShouldExist": {
                                 "Mandatory": true,
-                                "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.Description is mandatory and must be a string. If empty, the name will be used.",
-                                "Type": "System.String",
-                                "AllowEmpty": true
+                                "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.ProcessesToWaitFor.ShouldExist is mandatory and must be boolean.",
+                                "Type": "System.Boolean",
+                                "AllowEmpty": false
                             }
                         },
                         "Type": "System.Array",
@@ -297,13 +297,13 @@
                                 "Mandatory": true,
                                 "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor and must be a string.",
                                 "Type": "System.String",
-                                "AllowEmpty": false
+                                "AllowEmpty": true
                             },
                             "ValueData": {
                                 "Mandatory": true,
                                 "HelpText": "TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor and must be a string.",
                                 "Type": "System.String",
-                                "AllowEmpty": false
+                                "AllowEmpty": true
                             },
                             "KeyPath": {
                                 "Mandatory": true,
@@ -344,6 +344,12 @@
             }
         },
         "Type": "System.Management.Automation.PSCustomObject",
+        "AllowEmpty": false
+    },
+    "AppRootFolder": {
+        "Mandatory": true,
+        "HelpText": "AppRootFolder is mandatory and must be a string.",
+        "Type": "System.String",
         "AllowEmpty": false
     },
     "App": {

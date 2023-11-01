@@ -39,7 +39,7 @@
     powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeploymentType 'Uninstall'; Exit $LastExitCode }"
 .NOTES
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2023.10.17.1
+	ConfigVersion: 2023.10.31.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -159,11 +159,14 @@ switch ($DeploymentType) {
 [string]$global:AppDeployToolkitExtensionsPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitExtensions.ps1"
 [string]$global:DeploymentSystem = $DeploymentSystem
 [string]$global:UserPartDir = "User"
+## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
+[string[]]$script:NxtTempDirectories = @()
 ## Several PSADT-functions do not work, if these variables are not set here.
 $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
+[string]$appRootFolder = $ExecutionContext.InvokeCommand.ExpandString($tempLoadPackageConfig.AppRootFolder)
 Remove-Variable -Name tempLoadPackageConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
@@ -231,6 +234,7 @@ try {
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVendor: $appVendor"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appName: $appName"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVersion: $appVersion"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appRootFolder: $appRootFolder"
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -240,6 +244,7 @@ catch {
 	[int32]$mainExitCode = 60001
 	[string]$mainErrorMessage = "$(Resolve-Error)"
 	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+	Clear-NxtTempFolder
 	Exit-Script -ExitCode $mainExitCode
 }
 
@@ -323,6 +328,7 @@ function Main {
 				[string]$script:installPhase = 'Package-PreCleanup'
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
 				if ($false -eq $mainNxtResult.Success) {
+					Clear-NxtTempFolder
 					Close-BlockExecutionWindow
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
@@ -504,6 +510,7 @@ function Main {
 		[string]$script:installPhase = 'Package-Finish'
 		Close-BlockExecutionWindow
 		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
+		Clear-NxtTempFolder
 		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {

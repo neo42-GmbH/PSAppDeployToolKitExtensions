@@ -2,7 +2,9 @@ param(
         [Parameter(Mandatory=$true)]
         [string]$PackagesToUpdatePath,
         [Parameter(Mandatory=$true)]
-        [string]$LatestVersionPath
+        [string]$LatestVersionPath,
+        [Parameter(Mandatory=$false)]
+        [string]$CompatibleVersion = "##REPLACEVERSION##"
     )
 function Get-NxtContentBetweenTags {
     param(
@@ -58,7 +60,11 @@ function Update-NxtPSAdtPackage {
         [Parameter(Mandatory=$true)]
         [string]$LatestVersionPath,
         [Parameter(Mandatory=$false)]
-        [string]$LogFileName
+        [string]$LogFileName,
+        [Parameter(Mandatory=$true)]
+        [string]$CompatibleVersion,
+        [Parameter(Mandatory=$true)]
+        [string]$ConfigVersion
     )
     try {
     # test if both paths exist
@@ -69,18 +75,26 @@ function Update-NxtPSAdtPackage {
         throw "LatestVersionPath does not exist"
     }
     [string]$newVersionContent = Get-Content -Raw -Path "$LatestVersionPath\Deploy-Application.ps1"
+    [string]$newVersion = (Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
+    if ($CompatibleVersion -eq "`#`#`R`E`P`L`A`C`E`V`E`R`S`I`O`N`#`#") {
+        Write-Warning "CompatibleVersion is $CompatibleVersion, you are probably using a development version, skipping UpdateToolVersionCompatibilityCheck!"
+        Write-Warning "Using $CompatibleVersion as CompatibleVersion might render the resulting package unfunctional, please use a properly built version instead!"
+        Read-Host -Prompt "Press Enter to continue or CTRL+C to exit"
+    }
+    elseif ($newVersion -ne $CompatibleVersion) {
+        throw "LatestVersion $newVersion is not compatible with $CompatibleVersion"
+    }
     [string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
     #check for Version -ge 2023.06.12.01-53
     if ($existingContent -match "ConfigVersion:") {
-        [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	ConfigVersion:"
+        [string]$version =(Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
     } else {
-        [string]$version = Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:"
+        [string]$version = (Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:").TrimEnd("`n")
     }
-    if ([int]($version.TrimEnd("`n") -split "-")[1] -lt 53) {
+    if ([int]($version -split "-")[1] -lt 53) {
         throw "Version of $PackageToUpdatePath is lower than 2023.06.12.01-53 and must be updated manually"
     }
-    [string]$newVersion = Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:"
-    if ($version.TrimEnd("`n") -eq $newVersion.TrimEnd("`n")) {
+    if ($version -eq $newVersion) {
         $versionInfo = " ... but seems already up-to-date (same version tag!)"
     } else {
         $versionInfo = [string]::Empty
@@ -226,7 +240,29 @@ function Update-NxtPSAdtPackage {
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($null -eq $jsonContent.ConfigVersion){
-                $content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2023.10.17.1",
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2023.10.31.1",
+'
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            }
+            ## update entry: "ConfigVersion"
+            [string]$PackageToUpdateContent = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$PackageToUpdateJsonContent = $content | ConvertFrom-Json
+            if ($PackageToUpdateJsonContent.ConfigVersion -ne $ConfigVersion){
+                $PackageToUpdateContent = $PackageToUpdateContent -Replace ('  "ConfigVersion": "'+$PackageToUpdateJsonContent.ConfigVersion+'",'),('  "ConfigVersion": "'+$ConfigVersion+'",')
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $PackageToUpdateContent -NoNewline
+            }
+            ## Update App variable
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+            if ($jsonContent.App -notlike '*AppRootFolder*'){
+                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "App": "' -EndTag ("`n" + '  "UninstallOld"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",'
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            }
+            ## Add AppRootFolder variable
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+            if ($null -eq $jsonContent.AppRootFolder){
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "App"' -ContentToInsert '  "AppRootFolder" : "$($env:ProgramData)\\neo42Pkgs",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
@@ -266,7 +302,10 @@ function Update-NxtPSAdtPackage {
         }
     }
 [string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
+$PackagesToUpdatePath = $PackagesToUpdatePath.Trim("`"`'")
+$LatestVersionPath = $LatestVersionPath.Trim("`"`'")
+$ConfigVersion = "2023.10.31.1"
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
-   Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName
+   Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName -CompatibleVersion $CompatibleVersion -ConfigVersion $ConfigVersion
 } 
 Read-Host -Prompt "Press Enter to exit"

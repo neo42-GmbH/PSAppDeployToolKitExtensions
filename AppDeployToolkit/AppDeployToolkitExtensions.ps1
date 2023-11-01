@@ -11,7 +11,7 @@
 	The script is automatically dot-sourced by the AppDeployToolkitMain.ps1 script.
 .NOTES
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2023.10.17.1
+	ConfigVersion: 2023.10.31.1
     Toolkit Exit Code Ranges:
     60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
     69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -920,6 +920,10 @@ function Complete-NxtPackageInstallation {
 			}
 		}
 		if ($true -eq $UserPartOnInstallation) {
+			if ([string]::IsNullOrEmpty($UserPartRevision)) {
+				Write-Log -Message "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion." -Source ${CmdletName}
+				Throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
+			}
 			## Userpart-Installation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID.uninstall"
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
@@ -1004,6 +1008,10 @@ function Complete-NxtPackageUninstallation {
 		Remove-NxtDesktopShortcuts
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID"
 		if ($true -eq $UserPartOnUninstallation) {
+			if ([string]::IsNullOrEmpty($UserPartRevision)) {
+				Write-Log -Message "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion." -Source ${CmdletName}
+				Throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
+			}
 			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
 			Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
@@ -1193,6 +1201,87 @@ function Copy-NxtDesktopShortcuts {
 		}
 		catch {
 			Write-Log -Message "Failed to copy shortcuts to [$Desktop]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Clear-NxtTempFolder
+function Clear-NxtTempFolder {
+	<#
+	.SYNOPSIS
+		Cleans the specified temporary directory by removing files and folders older than a specified age. Also all paths in $script:NxtTempDirectories array will be deleted. 
+	.DESCRIPTION
+		The Clear-NxtTempFolder function is designed to maintain cleanliness and manage space in a specified temporary directory and the paths in the $script:NxtTempDirectories array. 
+		It systematically scans the directory and deletes all files and folders that are older than a predefined number of hours, helping to prevent unnecessary data buildup and potential performance issues.
+	.PARAMETER TempRootFolder
+		The path to the temporary folder targeted for cleaning. To ensure that all internal processes work correctly it is highly recommended to keep the default value!
+		Defaults to $env:SystemDrive\n42Tmp.
+	.PARAMETER HoursToKeep
+		The age threshold, in hours, for retaining files and folders in the temporary folder. Files and folders older than this threshold will be deleted.
+		Defaults to 96 (4 days).
+	.PARAMETER NxtTempDirectories
+		An array of paths to folders which should be cleared even if the HoursToKeep are not reached.
+		Defaults to $script:NxtTempDirectories.
+	.EXAMPLE
+		Clear-NxtTempFolder
+		This example executes the function with default parameters, clearing files and folders older than 96 hours from the $env:SystemDrive\n42Tmp folder.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$TempRootFolder = "$env:SystemDrive\n42Tmp",
+		[Parameter(Mandatory = $false)]
+		[int]
+		$HoursToKeep = 96,
+        [Parameter(Mandatory = $false)]
+        [string[]]
+        $NxtTempDirectories = $script:NxtTempDirectories
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($true -eq [string]::IsNullOrEmpty($TempRootFolder)){
+			Write-Log -Message "TempRootFolder variable is empty. Aborting." -Severity 3 -Source ${cmdletName}
+			Throw "TempRootFolder variable is empty. Aborting."
+		}
+		if ($true -eq (Test-Path -Path $TempRootFolder)){
+			Write-Log -Message "Clearing temp folder [$TempRootFolder]..." -Source ${cmdletName}
+		}
+		else {
+			Write-Log -Message "Temp folder [$TempRootFolder] does not exist. Skipping." -Source ${cmdletName}
+			return
+		}
+		try {
+			## Get the current date/time
+			[datetime]$now = Get-Date
+			## Get all files and folders in the temp folder
+			[array]$items = Get-ChildItem -Path $TempRootFolder -Force
+			## Loop through each file and folder
+			foreach ($item in $items) {
+				## Calculate the number of hours since the file/folder was last accessed
+				[int]$hoursSinceLastAccess = ($now - $item.LastAccessTime).TotalHours
+				## If the number of hours since the file/folder was last accessed is greater than the defined threshold or if the file/folder is listed in the NxtTempDirectories array, delete it.
+				if ($hoursSinceLastAccess -gt $HoursToKeep -or ($NxtTempDirectories -contains $item.FullName)) {
+					Write-Log -Message "Deleting file/folder '$($item.FullName)'..." -Source ${cmdletName}
+					Remove-Item -Path $item.FullName -Force -Recurse
+					Write-Log -Message "File/folder successfully deleted." -Source ${cmdletName}
+				}
+			}
+			## Delete root folder also in case it is empty
+			if ((Get-ChildItem -Path $TempRootFolder -Force).Count -eq 0){
+				Remove-NxtEmptyFolder -Path $TempRootFolder
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to clear temp folder. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -2481,6 +2570,9 @@ function Exit-NxtScriptWithError {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
+	.PARAMETER NxtTempDirectories
+		Defines a list of TempFolders to be cleared.
+		Defaults to $script:NxtTempDirectories defined in the AppDeployToolkitMain.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
 	.NOTES
@@ -2557,7 +2649,10 @@ function Exit-NxtScriptWithError {
 		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
+		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
+		[Parameter(Mandatory = $false)]
+		[string[]]
+		$NxtTempDirectories = $script:NxtTempDirectories
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -2596,6 +2691,7 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -in 0,1641,3010) {
 			[int32]$MainExitCode = 70000
 		}
+		Clear-NxtTempFolder
 		Close-BlockExecutionWindow
 		Exit-Script -ExitCode $MainExitCode
 	}
@@ -2630,7 +2726,7 @@ function Expand-NxtPackageConfig {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[string]$global:PackageConfig.SoftMigration.File.FullNameToCheck = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.SoftMigration.File.FullNameToCheck)
+		[string]$global:PackageConfig.AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.AppRootFolder)
 		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
 		[string]$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
 		[string]$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
@@ -2679,6 +2775,8 @@ function Expand-NxtPackageConfig {
 				$CommonStartMenuShortcutToCopyToCommonDesktop.TargetName = $ExecutionContext.InvokeCommand.ExpandString($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)
 			}
 		}
+		[string]$global:PackageConfig.SoftMigration.File.FullNameToCheck = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.SoftMigration.File.FullNameToCheck)
+		[string]$global:PackageConfig.SoftMigration.File.VersionToCheck = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.SoftMigration.File.VersionToCheck)
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -3955,19 +4053,19 @@ function Get-NxtRegisterOnly {
 		Specifies if a Software should be registered only if it already exists through a different installation.
 		Defaults to the corresponding value from the Setup.cfg.
 	.PARAMETER DisplayVersion
-		Specifies the DisplayVersion of the Software Package.
+		Specifies the DisplayVersion of the software package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKey
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER SoftMigrationFileName
-		Specifies a file name (instead of DisplayVersion) depending a SoftMigration of the Software Package.
+		Specifies a file name (instead of DisplayVersion) depending a SoftMigration of the software package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.FullNameToCheck.
 	.PARAMETER SoftMigrationFileVersion
-		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the Software Package.
+		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the software package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.VersionToCheck.
 	.PARAMETER SoftMigrationCustomResult
-		Specifies the result of a custom check routine for a SoftMigration of the Software Package.
+		Specifies the result of a custom check routine for a SoftMigration of the software package.
 		Defaults to the corresponding value from the Deploy-Aplication.ps1 object $global:SoftMigrationCustomResult.
 	.PARAMETER RegisterPackage
 		Specifies if package may be registered.
@@ -3984,6 +4082,9 @@ function Get-NxtRegisterOnly {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayNamesToExclude
 		Defines an array of DisplayNames to exclude from the search.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ProductGUID
+		Specifies the ProductGUID of the software package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
@@ -4027,13 +4128,23 @@ function Get-NxtRegisterOnly {
 		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
 		[Parameter(Mandatory = $false)]
 		[array]
-		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExclude
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExclude,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProductGUID = $global:PackageConfig.ProductGUID
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
 		Write-Output $false
 	}
-	elseif ( ($true -eq $SoftMigration) -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and ((Get-NxtRegisteredPackage -ProductGUID "PackageGUID").count -eq 0) -and -not $RemovePackagesWithSameProductGUID ) {
+	elseif ( 
+		($true -eq $SoftMigration) -and
+		-not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
+			(
+				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID).count -eq 0) -or
+				-not $RemovePackagesWithSameProductGUID
+			)
+		) {
 		if ($true -eq $SoftMigrationCustomResult) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 			Write-Output $true
@@ -4633,6 +4744,130 @@ function Import-NxtIniFileWithComments {
     }
 }
 #endregion
+#region Function Initialize-NxtAppFolder
+function Initialize-NxtAppFolder {
+	<#
+	.SYNOPSIS
+		Sets up the App folder structure and forces predefined permissions on the folder structure.
+	.DESCRIPTION
+		This function is designed to prepare the application directory (AppFolder) by verifying paths, setting appropriate permissions, and creating necessary directories. 
+		It should be invoked by the 'Initialize-NxtEnvironment' function as part of a broader initialization process. 
+		The function ensures that the AppFolder and its parent directory (AppRootFolder) are correctly configured.
+	.PARAMETER AppRootFolder
+		Specifies the path to the parent directory of the AppFolder. 
+		This path is crucial for establishing a secure and structured environment for the application. 
+		Defaults to the value from the PackageConfig object.
+	.PARAMETER App
+		Specifies the path to the AppFolder that the package will utilize. This folder has to be nested within the AppRootFolder. 
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ScriptRoot
+		Indicates the path to the root directory of the current script. 
+		This is used to ensure the script is not operating within the AppFolder itself.
+		Defaults to $scriptRoot.
+	.EXAMPLE
+		Initialize-NxtAppFolder
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppRootFolder = $global:PackageConfig.AppRootFolder,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptRoot = $scriptRoot
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		## Resolve possible relative segments in the paths 
+		[string]$absolutAppPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($App)).FullName)
+		[string]$absolutAppRootFolderPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($AppRootFolder)).FullName)
+		if ($ScriptRoot -eq $absolutAppPath) {
+			Write-Log "Executing from `$App Folder, skip appfolder initialization" -Source ${CmdletName}
+			return
+		}
+		## Ensure that $absolutAppRootFolderPath is a valid path
+		if ($false -eq [System.IO.Path]::IsPathRooted($absolutAppRootFolderPath)) {
+			Write-Log -Message "$absolutAppRootFolderPath is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "AppRootFolder is not set correctly. Please check your PackageConfig"
+		}
+		## Ensure that $absolutAppRootFolderPath is not $absolutAppPath
+		if($absolutAppRootFolderPath -ieq $absolutAppPath) {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' is the same as '$absolutAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "AppRootFolder '$absolutAppRootFolderPath' is the same as '$absolutAppPath'. Please check your PackageConfig.json"
+		}
+		## Ensure that $absolutAppRootFolderPath is a parent of $absolutAppPath
+		if ($false -eq $absolutAppPath.StartsWith($absolutAppRootFolderPath, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' is not a parent of '$absolutAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "AppRootFolder '$absolutAppRootFolderPath' is not a parent of '$absolutAppPath'. Please check your PackageConfig.json"
+		}
+		if ($true -eq (Test-Path -Path $absolutAppRootFolderPath)) {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' already exists. Checking for permissions along the `$App path" -Source ${CmdletName}
+			[bool]$permissionResetRequired = $false
+			[string]$tempBasePath = $absolutAppRootFolderPath
+			[string]$tempTailPath = ($absolutAppPath -replace "(?i)$([regex]::Escape($tempBasePath))","").Trim("\")
+			[hashtable]$testFolderPermissionSplat = @{
+				Path = $tempBasePath
+				FullControlPermissions = @(
+					"BuiltinAdministratorsSid",
+					"LocalSystemSid"
+				)
+				ReadAndExecutePermissions = @(
+					"BuiltinUsersSid"
+				)
+				Owner = "BuiltinAdministratorsSid"
+				CheckIsInherited = $true
+				IsInherited = $false
+			}
+			if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
+				Write-Log -Message "AppRootFolder '$tempBasePath' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
+				Set-NxtFolderPermissions -Path $absolutAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
+			}
+			else {
+				Write-Log -Message "AppRootFolder '$tempBasePath' has correct permissions." -Source ${CmdletName}
+				$testFolderPermissionSplat["IsInherited"] = $true
+				foreach($pathItem in $tempTailPath.Split("\")) {
+					$tempBasePath = [System.IO.Path]::Combine($tempBasePath,$pathItem)
+					$testFolderPermissionSplat["Path"] = $tempBasePath
+	
+					if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
+						Write-Log -Message "Found incorrect permissions in `$App parent path '$tempBasePath'" -Source ${CmdletName}
+						$permissionResetRequired = $true
+						break
+					}
+					else {
+						Write-Log -Message "Folder '$tempBasePath' has correct permissions." -Source ${CmdletName}
+					}
+				}
+				if ($true -eq $permissionResetRequired) {
+					Write-Log -Message "Folder '$tempBasePath' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
+					Set-NxtFolderPermissions -Path $absolutAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
+				}
+			}
+
+			## Remove the $App folder, sanitize the path and create it again.
+			if ($true -eq (Test-Path -Path $absolutAppPath)) {
+				Write-Log -Message "App '$absolutAppPath' already exists. Removing it..." -Source ${CmdletName}
+				Remove-Folder -Path $absolutAppPath
+			}
+		}
+		else {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' does not exist. Creating it..." -Source ${CmdletName}
+			New-NxtFolderWithPermissions -Path $absolutAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
 #region Function Initialize-NxtEnvironment
 function Initialize-NxtEnvironment {
 	<#
@@ -4679,10 +4914,16 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
+		$AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.AppRootFolder),
+		[Parameter(Mandatory = $false)]
+		[string]
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentType = $DeploymentType
+		$DeploymentType = $DeploymentType,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptRoot = $scriptroot
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4691,6 +4932,9 @@ function Initialize-NxtEnvironment {
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
 		## $App and $SetupCfgPathOverride are possibly not set at this point so we have to reset them after the Get-NxtPackageConfig.
+		$AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.AppRootFolder)
+		## $AppRootFolder also has to be expanded in the global PackageConfig object because it is Part of the $App variable.
+		[string]$global:PackageConfig.AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.AppRootFolder)
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 		## if $App still is not valid we have to throw an error.
@@ -4699,10 +4943,21 @@ function Initialize-NxtEnvironment {
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
+			Initialize-NxtAppFolder -AppRootFolder $AppRootFolder -App $App -ScriptRoot $ScriptRoot
 			if ($DeploymentType -eq "Install") {
 				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
-				Remove-File -Path "$App\neo42-Install\Setup.cfg"
-				Remove-File -Path "$App\neo42-Install\CustomSetup.cfg"
+				if (
+					[System.IO.Path]::GetFullPath($SetupCfgPath) -ne
+					[System.IO.Path]::GetFullPath("$App\neo42-Install\Setup.cfg")
+				) {
+					Remove-File -Path "$App\neo42-Install\Setup.cfg"
+				}
+				if (
+					[System.IO.Path]::GetFullPath($CustomSetupCfgPath) -ne
+					[System.IO.Path]::GetFullPath("$App\neo42-Install\CustomSetup.cfg")
+				) {
+					Remove-File -Path "$App\neo42-Install\CustomSetup.cfg"
+				}
 			}
 			if ($true -eq (Test-Path -Path $SetupCfgPathOverride\setupOverride.cfg)) {
 				Write-Log -Message "Found an externally provided setup configuration file..."-Source ${cmdletName}
@@ -4711,11 +4966,27 @@ function Initialize-NxtEnvironment {
 			}
 			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
 				Write-Log -Message "Found a default setup config file 'Setup.cfg'..."-Source ${cmdletName}
-				Copy-File -Path "$SetupCfgPath" -Destination "$App\neo42-Install\"
+				if (
+					[System.IO.Path]::GetFullPath($SetupCfgPath) -ne
+					[System.IO.Path]::GetFullPath("$App\neo42-Install\Setup.cfg")
+				) {
+						Copy-File -Path "$SetupCfgPath" -Destination "$App\neo42-Install\"
+				}
+				else {
+					Write-Log -Message "The setup config file is already at its correct location." -Source ${cmdletName}
+				}
 			}
 			if ($true -eq (Test-Path -Path "$CustomSetupCfgPath")) {
 				Write-Log -Message "Found a custom setup config file 'CustomSetup.cfg' too..."-Source ${cmdletName}
-				Copy-File -Path "$CustomSetupCfgPath" -Destination "$App\neo42-Install\"
+				if (
+					[System.IO.Path]::GetFullPath($CustomSetupCfgPath) -ne
+					[System.IO.Path]::GetFullPath("$App\neo42-Install\CustomSetup.cfg")
+				) {
+						Copy-File -Path "$CustomSetupCfgPath" -Destination "$App\neo42-Install\"
+				}
+				else {
+					Write-Log -Message "The custom setup config file is already at its correct location." -Source ${cmdletName}
+				}
 			}
 		}
 		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
@@ -5188,6 +5459,194 @@ function Move-NxtItem {
 	}
 }
 #endregion
+#region Function New-NxtFolderWithPermissions
+function New-NxtFolderWithPermissions {
+	<#
+	.SYNOPSIS
+		Creates a new folder and configures custom permissions and attributes.
+	.DESCRIPTION
+		The New-NxtFolderWithPermissions function creates a new directory at the specified path and allows for detailed control over permissions and attributes.
+		It supports setting various permission levels (Full Control, Modify, Write, Read & Execute), custom owner, hidden attribute, and protection of access rules. 
+	.PARAMETER Path
+		Specifies the full path of the new folder to be created.
+	.PARAMETER FullControlPermissions
+		Defines users or groups to be granted Full Control permission. 
+		Accepts an array of WellKnownSidTypes.
+	.PARAMETER ReadAndExecutePermissions
+		Defines users or groups to be granted ReadAndExecute Permissions permission. 
+		Accepts an array of WellKnownSidTypes.
+	.PARAMETER WritePermissions
+		Defines users or groups to be granted Write permission. 
+		Accepts an array of WellKnownSidTypes.
+	.PARAMETER ModifyPermissions
+		Defines users or groups to be granted Modify permission. 
+		Accepts an array of WellKnownSidTypes.
+	.PARAMETER Owner
+		Owner to set on the folder.
+		Accepts a WellKnownSidType.
+	.PARAMETER CustomDirectorySecurity
+		Custom DirectorySecurity to set on the folder.
+		Will be modified by the other parameters.
+	.PARAMETER Hidden
+		Defines if the folder should be hidden.
+		Default is: $false.
+	.EXAMPLE
+		New-NxtFolderWithPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid)
+		Will create a folder "C:\Temp\MyFolder" with with full control for the buildin administrator group and read and execute permissions for the buildin users group.
+		It will also set the owner of the folder to the buildin administrator group.
+	.OUTPUTS
+		System.IO.DirectoryInfo
+		Returns a DirectoryInfo object representing the created folder.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+		$FullControlPermissions,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+		$WritePermissions,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+		$ModifyPermissions,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+		$ReadAndExecutePermissions,
+		[Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType]
+		$Owner,
+		[Parameter(Mandatory = $false)]
+		[System.Security.AccessControl.DirectorySecurity]
+		$CustomDirectorySecurity,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Hidden,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ProtectRules = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			if (Test-Path $Path){
+				Write-Log -Message "Folder '$Path' already exists." -Source ${cmdletName} -Severity 3
+				throw "Folder '$Path' already exists."
+			}
+			if ($null -ne $CustomDirectorySecurity) {
+				[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
+			}
+			else {
+				[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
+			}
+			foreach ($permissionLevel in @("FullControl","Modify", "Write", "ReadAndExecute")) {
+				foreach ($wellKnownSid in $(Get-Variable "$permissionLevel`Permissions" -ValueOnly)) {
+					[System.Security.AccessControl.FileSystemAccessRule]$rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+						(New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($wellKnownSid, $null)),
+						"$permissionLevel",
+						"ContainerInherit,ObjectInherit",
+						"None",
+						"Allow"
+					)
+					$directorySecurity.AddAccessRule($rule)
+				}
+			}
+			if ($null -ne $Owner) {
+				$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
+			}
+			$directorySecurity.SetAccessRuleProtection($ProtectRules, $false)
+			Write-Log -Message "Creating folder '$Path' with permissions." -Source ${cmdletName}
+			[System.IO.DirectoryInfo]$directory = [System.IO.Directory]::CreateDirectory($Path, $directorySecurity)
+			if ($false -eq (Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity)){
+				Write-Log -Message "Failed to create folder '$Path' with permissions. `n" -Severity 3 -Source ${cmdletName}
+				throw "Failed to create folder '$Path' with permissions. `n $($_.Exception.Message)"
+			}
+			if ($true -eq $Hidden) {
+                $directory.Attributes = $directory.Attributes -bor [System.IO.FileAttributes]::Hidden
+            }
+			Write-Output $directory
+		}
+		catch {
+			Write-Log -Message "Failed to create folder '$Path' with permissions." -Severity 3 -Source ${cmdletName}
+			throw "Failed to create folder '$Path' with permissions. `n$ $($_.Exception.Message)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function New-NxtTemporaryFolder
+function New-NxtTemporaryFolder {
+	<#
+	.SYNOPSIS
+		Creates and configures a new temporary folder with predefined permissions.
+	.DESCRIPTION
+		This function generates a new temporary folder in a specified or default root path, ensuring the folder has specific security permissions set. 
+		If the provided root path doesn't exist or has incorrect permissions, it will be recreated accordingly. The function ensures unique naming for the temporary folder and outputs its path upon successful creation.
+	.PARAMETER TempRootPath
+		Parent path of the folder to create. To ensure that all internal processes work correctly it is highly recommended to keep the default value!
+		Default is: "$env:SystemDrive\n42Tmp".
+	.EXAMPLE
+		New-NxtTemporaryFolder -TempPath "C:\Temp"
+		Will create a new folder with the predefined permissions.
+	.OUTPUTS
+		String.
+        Outputs the full path of the newly created temporary folder.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$TempRootPath = "$env:SystemDrive\n42Tmp"
+	)
+	[hashtable]$nxtTempRootFolderSplat = @{
+			Path = "$TempRootPath"
+			FullControlPermissions = @("BuiltinAdministratorsSid","LocalSystemSid")
+			ReadAndExecutePermissions = @("BuiltinUsersSid")
+			Owner = "BuiltinAdministratorsSid"
+		}
+	if ($false -eq (Test-Path -Path $TempRootPath)){
+		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
+	}
+	elseif($false -eq (Test-NxtFolderPermissions @nxtTempRootFolderSplat)){
+		Write-Log -Message "Temp path '$TempRootPath' already exists. Recreating the folder to ensure predefined permissions!" -Severity 2 -Source ${CmdletName}
+		Remove-Item -Path $TempRootPath -Recurse -Force
+		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
+	}
+	$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object{
+		[char]$_}
+	) -join ""
+	[int]$countTries = 1
+	while ($true -eq (Test-Path "$TempRootPath\$foldername") -and $countTries -lt 100) {
+		$countTries++
+		$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object{
+			[char]$_}
+		) -join ""
+	}
+	if ($countTries -ge 100) {
+		Write-Log -Message "Failed to create temporary folder in '$TempRootPath'. Did not find an available name." -Severity 3 -Source ${cmdletName}
+		Throw "Failed to create temporary folder in '$TempRootPath'. Did not find an available name."
+	}
+	[hashtable]$nxtFolderWithPermissionsSplat = @{
+		Path = "$TempRootPath\$foldername"
+	}
+	$nxtFolderWithPermissionsSplat["FullControlPermissions"] = @("BuiltinAdministratorsSid","LocalSystemSid")
+	$nxtFolderWithPermissionsSplat["ReadAndExecutePermissions"] = @("BuiltinUsersSid")
+	[string]$tempFolder = New-NxtFolderWithPermissions @nxtFolderWithPermissionsSplat | Select-Object -ExpandProperty FullName
+	$script:NxtTempDirectories += $tempfolder
+	Write-Output $tempfolder
+}
+#endregion
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
@@ -5510,6 +5969,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'Installed' -Type 'Dword' -Value '1'
 			if ($false -eq [string]::IsNullOrEmpty($SoftMigrationOccurred)) {
 				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'SoftMigrationOccurred' -Value $SoftMigrationOccurred
+				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'SoftMigrationOccurred' -Value $SoftMigrationOccurred
 			}
 			Remove-RegistryKey "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")"
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
@@ -6426,6 +6886,134 @@ function Set-NxtCustomSetupCfg {
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+#region Function Set-NxtFolderPermissions
+function Set-NxtFolderPermissions {
+    <#
+    .SYNOPSIS
+        Configures and applies custom access control permissions to a specified, existing folder.
+    .DESCRIPTION
+        The function allows granular control over the access permissions of a specified folder.
+		It can assign specific permission levels (e.g., Full Control, Modify, Write, Read & Execute) to well-known security identifiers (SIDs).
+		The function also provides options to set the owner, manage custom directory security settings, and control the inheritance of permissions. 
+		It is capable of applying these settings to both the target folder and its subfolders.
+    .PARAMETER Path
+        Specifies the full path of the folder whose permissions are to be configured.
+    .PARAMETER FullControlPermissions
+        An array of well-known SIDs to be granted Full Control permissions.
+    .PARAMETER WritePermissions
+        An array of well-known SIDs to be granted Write permissions.
+    .PARAMETER ModifyPermissions
+        An array of well-known SIDs to be granted Modify permissions.
+    .PARAMETER ReadAndExecutePermissions
+        An array of well-known SIDs to be granted Read & Execute permissions.
+    .PARAMETER Owner
+        The well-known SID of the user or group to be set as the owner of the folder.
+	.PARAMETER CustomDirectorySecurity
+		A boolean flag indicating whether to break the inheritance of permissions from parent objects. 
+		Default is $true.
+	.PARAMETER BreakInheritance
+		When set to $true, enforces inheritance of permissions on all subfolders.
+		Default is $false.
+	.EXAMPLE
+		Set-NxtFolderPermissions -Path "C:\ActualFolder" -FullControlPermissions "BuiltinAdministrators" -Owner "BuiltinAdministrators"
+		Sets the permissions and owner of "C:\ActualFolder" to the specified parameters.
+	.EXAMPLE
+		Set-NxtFolderPermissions -Path "C:\ActualFolder" -CustomDirectorySecurity $directorySecurity -EnforceInheritance $true
+		Sets the permissions of "C:\ActualFolder" to the specified parameters. EnforceInheritance is set to $true.
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+    #>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Path,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $FullControlPermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $WritePermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $ModifyPermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $ReadAndExecutePermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType]
+        $Owner,
+		[Parameter(Mandatory = $false)]
+		[System.Security.AccessControl.DirectorySecurity]
+		$CustomDirectorySecurity,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$BreakInheritance = $true,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$EnforceInheritanceOnSubFolders = $false
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+    Process {
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Message "Folder '$Path' does not exist!" -Source ${cmdletName} -Severity 3
+			Throw "Folder '$Path' does not exist!"
+		}
+		if ($false -eq [string]::IsNullOrEmpty($CustomDirectorySecurity)) {
+			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
+		}else {
+			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
+		}
+		foreach ($permissionLevel in @("FullControl","Modify", "Write", "ReadAndExecute")) {
+			foreach ($wellKnownSid in $(Get-Variable "$permissionLevel`Permissions" -ValueOnly)) {
+				[System.Security.AccessControl.FileSystemAccessRule]$rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+					(New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($wellKnownSid, $null)),
+					"$permissionLevel",
+					"ContainerInherit,ObjectInherit",
+					"None",
+					"Allow"
+				)
+				$directorySecurity.AddAccessRule($rule) | Out-Null
+			}
+		}
+		if ($null -ne $Owner) {
+			$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
+		}
+		$directorySecurity.SetAccessRuleProtection($BreakInheritance, $true)
+		Set-Acl -Path $Path -AclObject $directorySecurity -ErrorAction Stop | Out-Null
+		if ($true -eq $EnforceInheritanceOnSubFolders) {
+			Write-Log -Message "Applying permissions to subfolders of '$Path'." -Source ${cmdletName}
+			Get-ChildItem -Path $Path -Recurse | ForEach-Object {
+				$acl = Get-Acl -Path $_.FullName -ErrorAction Stop
+				$acl.Access | Where-Object { !$_.IsInherited } | ForEach-Object {
+					$acl.RemoveAccessRule($_) | Out-Null
+				}
+				# Enable inheritance
+				$acl.SetAccessRuleProtection($false, $true) | Out-Null
+				Set-Acl -Path $_.FullName -AclObject $acl -ErrorAction Stop | Out-Null
+			}
+		}
+		if ($true -eq $BreakInheritance) {
+			$testResult = Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity
+			if ($false -eq $testResult){
+				Write-Log -Message "Failed to set permissions" -Severity 3 -Source ${cmdletName}
+				Throw "Failed to set permissions on folder '$Path'"
+			}
+		}
+		else {
+			Write-Log -Message "BreakInheritance is set to `$False cannot test for correct permissions" -Severity 2
+		}
+    }
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -8558,7 +9146,170 @@ function Test-NxtPackageConfig {
 	}
 }
 #endregion
-
+#region Function Test-NxtFolderPermissions
+function Test-NxtFolderPermissions {
+    <#
+    .SYNOPSIS
+        Checks and compares the actual permissions of a specified folder against expected permissions.
+    .DESCRIPTION
+        The function is designed to evaluate a folder's security settings by comparing its actual permissions, owner, and other security attributes with predefined expectations.
+		This function is particularly useful for anyone who need to ensure that folder permissions align with security policies or compliance standards.
+    .PARAMETER Path
+        Specifies the full path of the folder whose permissions are to be tested.
+		This parameter is mandatory.
+    .PARAMETER FullControlPermissions
+        Defines the expected Full Control permissions. 
+		These are compared against the actual Full Control permissions of the folder.
+    .PARAMETER WritePermissions
+        Specifies the expected Write permissions.
+		These are compared with the folder's actual Write permissions.
+    .PARAMETER ModifyPermissions
+        Indicates the expected Modify permissions that the folder should have. 
+		These are compared with the folder's actual Modify permissions.
+    .PARAMETER ReadAndExecutePermissions
+        Specifies the expected Read and Execute permissions.
+		These are compared with the folder's actual Read and Execute permissions.
+    .PARAMETER Owner
+        Defines the expected owner of the folder as a WellKnownSidType. 
+		This is compared with the actual owner of the folder.
+	.PARAMETER CustomDirectorySecurity
+		Allows for providing a custom DirectorySecurity object for advanced comparison. 
+		If other parameters are specified, this object will be modified accordingly.
+	.PARAMETER CheckIsInherited
+		Indicates if the IsInherited property should be checked.
+	.PARAMETER IsInherited
+		Indicates if the IsInherited property should be set to true or false.
+    .EXAMPLE
+        Test-NxtFolderPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) 
+        Compares the permissions and owner of "C:\Temp\MyFolder" with the specified parameters.
+    .OUTPUTS
+        System.Boolean.
+        Returns 'True' if the folder's permissions and owner match the specified criteria. Returns 'False' if discrepancies are found.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+    #>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Path,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $FullControlPermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $WritePermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $ModifyPermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType[]]
+        $ReadAndExecutePermissions,
+        [Parameter(Mandatory = $false)]
+		[System.Security.Principal.WellKnownSidType]
+        $Owner,
+		[Parameter(Mandatory = $false)]
+		[System.Security.AccessControl.DirectorySecurity]
+		$CustomDirectorySecurity,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$CheckIsInherited,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IsInherited
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+    Process {
+		if ($null -ne $CustomDirectorySecurity) {
+			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
+		}else {
+			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
+		}
+		foreach ($permissionLevel in @("FullControl","Modify", "Write", "ReadAndExecute")) {
+			foreach ($wellKnownSid in $(Get-Variable "$permissionLevel`Permissions" -ValueOnly)) {
+				[System.Security.AccessControl.FileSystemAccessRule]$rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+					(New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($wellKnownSid, $null)),
+					"$permissionLevel",
+					"ContainerInherit,ObjectInherit",
+					"None",
+					"Allow"
+				)
+				$directorySecurity.AddAccessRule($rule)
+			}
+		}
+		if ($null -ne $Owner) {
+			$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
+		}
+        [System.Security.AccessControl.DirectorySecurity]$actualAcl = Get-Acl -Path $Path -ErrorAction Stop
+		[string[]]$propertiesToCheck = @(
+			"FileSystemRights",
+			"AccessControlType",
+			"IdentityReference",
+			"InheritanceFlags",
+			"PropagationFlags"
+		)
+		if ($true -eq $CheckIsInherited) {
+			$propertiesToCheck += "IsInherited"
+		}
+        [PSCustomObject]$diffs = Compare-Object @($actualAcl.Access) $(
+			if ($true -eq $IsInherited) {
+				@($directorySecurity.Access)|Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$true}}
+			} else {
+				@($directorySecurity.Access)|Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$false}}
+			}
+			) -Property $propertiesToCheck
+        [array]$results = @()
+        foreach ($diff in $diffs) {
+            $results += [PSCustomObject]@{
+                'Rule'          = $diff | Select-Object -Property $propertiesToCheck
+                'SideIndicator' = $diff.SideIndicator
+				'Resulttype'	= 'Permission'
+            }
+        }
+        if ($null -ne $directorySecurity.Owner) {
+            [System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
+			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
+            if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
+                Write-Warning "Expected owner to be $Owner but found $($actualAcl.Owner)."
+                $results += [PSCustomObject]@{
+                    'Rule'          = "$($actualAcl.Owner)"
+                    'SideIndicator' = "<="
+					'Resulttype'	= 'Owner'
+                }
+            }
+        }
+		if ($results.Count -eq 0) {
+			Write-Output $true
+		}
+		else {
+			foreach ($result in $results) {
+				switch ($result.Resulttype) {
+					'Permission' {
+						if ($result.SideIndicator -eq "<="){
+							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
+						}
+						elseif($result.SideIndicator -eq "=>") {
+							Write-Log -Message "Missing permission $($result.Rule) on $Path." -Severity 2
+						}else{
+							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
+						}
+					}
+					'Owner' {
+						Write-Log -Message "Found unexpected owner $($result.Rule) instead of $Owner on $Path." -Severity 2
+					}
+				}
+			}
+			Write-Output $false
+		}
+    }
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Test-NxtProcessExists
 function Test-NxtProcessExists {
 	<#
@@ -8609,6 +9360,126 @@ function Test-NxtProcessExists {
 		catch {
 			Write-Log -Message "Failed to get processes for '$ProcessName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Test-NxtStringInFile
+function Test-NxtStringInFile {
+	<#
+    .SYNOPSIS
+        Tests if a string exists in a file.
+	.DESCRIPTION
+		Tests if a string exists in a file. Returns $true if the string is found, $false if not.
+    .PARAMETER Path
+		The path to the file.
+	.PARAMETER SearchString
+		The string to search for. May contain a regex if ContainsRegex is set to $true.
+	.PARAMETER ContainsRegex
+		Indicates if the string is a regex.
+		Defaults to $false.
+	.PARAMETER IgnoreCase
+		Indicates if the search should be case insensitive.
+		Defaults to $true.
+	.PARAMETER Encoding
+		The encoding of the file can explicitly be set here.
+	.PARAMETER DefaultEncoding
+		The default encoding of the file if auto detection fails.
+	.OUTPUTS
+		System.Boolean.
+	.EXAMPLE
+		Test-NxtStringInFile -Path "C:\temp\test.txt" -SearchString "test"
+		Searches for a string.
+	.EXAMPLE
+		Test-NxtStringInFile -Path "C:\temp\test.txt" -ContainsRegex $true -SearchString "test.*"
+		Searches for a regex.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+    #>
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SearchString,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContainsRegex = $false,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IgnoreCase = $true,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$Encoding,
+		[Parameter()]
+		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[String]
+		$DefaultEncoding
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		#return false if the file does not exist
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Severity 3 -Message "File $Path does not exist" -Source ${cmdletName}
+			throw "File $Path does not exist"
+		}
+		[string]$intEncoding = $Encoding
+		if (!(Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			[string]$intEncoding = "UTF8"
+		}
+		elseif ((Test-Path -Path $Path) -and ([String]::IsNullOrEmpty($intEncoding))) {
+			try {
+				[hashtable]$getFileEncodingParams = @{
+					Path = $Path
+				}
+				if (![string]::IsNullOrEmpty($DefaultEncoding)) {
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+				}
+				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				if ($intEncoding -eq "UTF8") {
+					[bool]$noBOMDetected = $true
+				}
+				elseif ($intEncoding -eq "UTF8withBom") {
+					[bool]$noBOMDetected = $false
+					[string]$intEncoding = "UTF8"
+				}
+			}
+			catch {
+				[string]$intEncoding = "UTF8"
+			}
+		}
+		[bool]$textFound = $false
+		[hashtable]$contentParams = @{
+			Path = $Path
+		}
+		if (![string]::IsNullOrEmpty($intEncoding)) {
+			[string]$contentParams['Encoding'] = $intEncoding
+		}
+		[string]$content = Get-Content @contentParams -Raw
+		[regex]$pattern = if ($true -eq $ContainsRegex) {
+			[regex]::new($SearchString)
+		}
+		else {
+			[regex]::new([regex]::Escape($SearchString))
+		}
+		if ($true -eq $IgnoreCase){
+			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+		}
+		else {
+			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::None
+		}
+		[array]$regexMatches = [regex]::Matches($content, $pattern, $options)
+		if ($regexMatches.Count -gt 0) {
+			[bool]$textFound = $true
+		}
+		Write-Output $textFound
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -9542,6 +10413,7 @@ function Update-NxtTextInFile {
 		[String]
 		$SearchString,
 		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
 		[String]
 		$ReplaceString,
 		[Parameter()]
