@@ -7,6 +7,8 @@
     Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
     This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
     You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+	# MODIFICATIONS #
+	This script has been extensively modified by neo42 GmbH, building upon the template provided by the PowerShell App Deployment Toolkit.
 .DESCRIPTION
 	The script is automatically dot-sourced by the AppDeployToolkitMain.ps1 script.
 .NOTES
@@ -3410,6 +3412,7 @@ function Get-NxtInstalledApplication {
 	<#
 	.SYNOPSIS
 		Retrieves information about installed applications based on exact values only or with WildCards if specified.
+		Wrapped function for Get-InstalledApplication from AppDeployToolkit.
 	.DESCRIPTION
 		Retrieves information about installed applications by querying the registry depending on the name of its uninstallkey or its display name.
 		Returns information about application publisher, name & version, product code, uninstall string, install source, location, date, and application architecture.
@@ -4251,6 +4254,8 @@ function Get-NxtRunningProcesses {
         Get-NxtRunningProcesses -ProcessObjects $ProcessObjects
     .NOTES
         This is an internal script function and should typically not be called directly.
+	.NOTES
+		This function is a modified version of Get-RunningProcesses from the PSAppDeployToolkit licensed under the LGPLv3.
     .LINK
         https://psappdeploytoolkit.com
     #>
@@ -7601,6 +7606,7 @@ Function Show-NxtInstallationWelcome {
 	<#
     .SYNOPSIS
     	Show a welcome dialog prompting the user with information about the installation and actions to be performed before the installation can begin.
+		This function is based on the Show-InstallationWelcome function from the PowerShell App Deployment Toolkit. It is modified to be able to show the dialogs even from session 0.
     .DESCRIPTION
 		The following prompts can be included in the welcome dialog:
 			a) Close the specified running applications, or optionally close the applications without showing a prompt (using the -Silent switch).
@@ -7696,7 +7702,7 @@ Function Show-NxtInstallationWelcome {
 		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "excel"},[pscustomobject]@{Name = "winword"}) -UserCanCloseAll -UserCanAbort
 		Prompt the user to close Word and Excel. The user can close all applications or abort the installation.
 	.NOTES
-		The code of this function is mainly adopted from the PSAppDeployToolkit.
+		The code of this function is mainly adopted from the PSAppDeployToolkit Show-InstallationWelcome function licensed under the LGPLv3.
     .LINK
     	https://neo42.de/psappdeploytoolkit
     #>
@@ -8191,6 +8197,7 @@ Function Show-NxtWelcomePrompt {
 			1) Close the specified running applications.
 			2) Provide an option to defer the installation.
 			3) Show a countdown before applications are automatically closed.
+        This function is based on the PSAppDeployToolkit Show-InstallationWelcome function from the PSAppDeployToolkit licensed under the LGPLv3 license.
 	.DESCRIPTION
 		The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
 		If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
@@ -8261,7 +8268,7 @@ Function Show-NxtWelcomePrompt {
 		Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10
 	.NOTES
 		This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
-		The code of this function is mainly adopted from the PSAppDeployToolkit.
+		The code of this function is mainly adopted from the PSAppDeployToolkit Show-InstallationWelcome function licensed under the LGPLv3 license.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>

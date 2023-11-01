@@ -1,9 +1,12 @@
 <#
 	.SYNOPSIS
-		Called by Show-InstallationWelcome to prompt the user to optionally do the following:
+		Called by Show-NxtInstallationWelcome to prompt the user to optionally do the following:
 			1) Close the specified running applications.
 			2) Provide an option to defer the installation.
 			3) Show a countdown before applications are automatically closed.
+        This script is based on the PSAppDeployToolkit Show-InstallationWelcome function.
+        Necessary changes to make it work with the NxtDeploymentToolkit in session 0 have been made.
+        This script includes mainly extracted and modified code from the PSAppDeployToolkit Licensed under LGPLv3.
 	.DESCRIPTION
 		The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
 		If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
@@ -76,7 +79,10 @@
 		Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10 -ProcessObjectsNames "code" -ProcessObjectsDescriptions "visual studio code"
 	.NOTES
 		This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
-		The code of this function is mainly adopted from the PSAppDeployToolkit.
+		The code of this function is mainly adopted from the PSAppDeployToolkit https://psappdeploytoolkit.com.
+		
+		--- LGPL NOTICE ---
+		This software includes code derived from the PSAppDeployToolkit, which is licensed under the GNU Lesser General Public License (LGPL). A copy of the LGPL should be included with this software. If not, you can access it at <http://www.gnu.org/licenses/>.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
