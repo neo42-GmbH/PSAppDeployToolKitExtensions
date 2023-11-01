@@ -6571,25 +6571,30 @@ function Set-NxtCustomSetupCfg {
 function Set-NxtFolderPermissions {
     <#
     .SYNOPSIS
-        Sets the permissions of an existing folder.
+        Configures and applies custom access control permissions to a specified, existing folder.
     .DESCRIPTION
-        Sets the permissions of an existing folder.
+        The function allows granular control over the access permissions of a specified folder.
+		It can assign specific permission levels (e.g., Full Control, Modify, Write, Read & Execute) to well-known security identifiers (SIDs).
+		The function also provides options to set the owner, manage custom directory security settings, and control the inheritance of permissions. 
+		It is capable of applying these settings to both the target folder and its subfolders.
     .PARAMETER Path
-        Path of the folder to set.
+        Specifies the full path of the folder whose permissions are to be configured.
     .PARAMETER FullControlPermissions
-        FullControl permissions to be set.
+        An array of well-known SIDs to be granted Full Control permissions.
     .PARAMETER WritePermissions
-        Write permissions to be set.
+        An array of well-known SIDs to be granted Write permissions.
     .PARAMETER ModifyPermissions
-        Modify permissions to be set.
+        An array of well-known SIDs to be granted Modify permissions.
     .PARAMETER ReadAndExecutePermissions
-        ReadAndExecute permissions to be set.
+        An array of well-known SIDs to be granted Read & Execute permissions.
     .PARAMETER Owner
-        Owner to be set.
+        The well-known SID of the user or group to be set as the owner of the folder.
 	.PARAMETER CustomDirectorySecurity
-		DirectorySecurity object to set.
+		A boolean flag indicating whether to break the inheritance of permissions from parent objects. 
+		Default is $true.
 	.PARAMETER BreakInheritance
-		Enforce inheritence of permissions.
+		When set to $true, enforces inheritance of permissions on all subfolders.
+		Default is $false.
 	.EXAMPLE
 		Set-NxtFolderPermissions -Path "C:\ActualFolder" -FullControlPermissions "BuiltinAdministrators" -Owner "BuiltinAdministrators"
 		Sets the permissions and owner of "C:\ActualFolder" to the specified parameters.
@@ -6619,7 +6624,7 @@ function Set-NxtFolderPermissions {
 		[System.Security.Principal.WellKnownSidType[]]
         $ReadAndExecutePermissions,
         [Parameter(Mandatory = $false)]
-		[System.Security.Principal.WellKnownSidType[]]
+		[System.Security.Principal.WellKnownSidType]
         $Owner,
 		[Parameter(Mandatory = $false)]
 		[System.Security.AccessControl.DirectorySecurity]
@@ -6630,7 +6635,6 @@ function Set-NxtFolderPermissions {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$EnforceInheritanceOnSubFolders = $false
-
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6658,7 +6662,7 @@ function Set-NxtFolderPermissions {
 				$directorySecurity.AddAccessRule($rule) | Out-Null
 			}
 		}
-		if ($false -eq [string]::IsNullOrEmpty($Owner)) {
+		if ($null -ne $Owner) {
 			$directorySecurity.SetOwner((New-Object System.Security.Principal.SecurityIdentifier -ArgumentList ($Owner, $null)))
 		}
 		$directorySecurity.SetAccessRuleProtection($BreakInheritance, $true)
@@ -6675,15 +6679,15 @@ function Set-NxtFolderPermissions {
 				Set-Acl -Path $_.FullName -AclObject $acl -ErrorAction Stop | Out-Null
 			}
 		}
-		if ($true -eq $BreakInheritance){
+		if ($true -eq $BreakInheritance) {
 			$testResult = Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity
 			if ($false -eq $testResult){
 				Write-Log -Message "Failed to set permissions" -Severity 3 -Source ${cmdletName}
 				Throw "Failed to set permissions on folder '$Path'"
 			}
 		}
-		else{
-			Write-Log -Message "Breakinheritance is set to `$False cannot test for correct permissions" -Severity 2
+		else {
+			Write-Log -Message "BreakInheritance is set to `$False cannot test for correct permissions" -Severity 2
 		}
     }
 	End {
@@ -8793,6 +8797,10 @@ function Test-NxtFolderPermissions {
 	.PARAMETER CustomDirectorySecurity
 		Allows for providing a custom DirectorySecurity object for advanced comparison. 
 		If other parameters are specified, this object will be modified accordingly.
+	.PARAMETER CheckIsInherited
+		Indicates if the IsInherited property should be checked.
+	.PARAMETER IsInherited
+		Indicates if the IsInherited property should be set to true or false.
     .EXAMPLE
         Test-NxtFolderPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) 
         Compares the permissions and owner of "C:\Temp\MyFolder" with the specified parameters.
