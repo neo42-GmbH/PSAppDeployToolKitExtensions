@@ -30,9 +30,9 @@
   "PackageGUID": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
   "DependentPackages": [],
   "RegPackagesKey": "neoPackages",
-  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
+  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)",
   "AppRootFolder": "$($env:ProgramData)\\neo42Pkgs",
-  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",
+  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
   "UninstallOld": true,
   "Reboot": 0,
   "UserPartOnInstallation": false,
@@ -50,8 +50,8 @@
     "$($global:PackageConfig.UninstallDisplayName)"
   ],
   "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
-  "InstLogFile": "$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)\\Install.$global:DeploymentTimestamp.log",
-  "UninstLogFile": "$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)\\Uninstall.$global:DeploymentTimestamp.log",
+  "InstLogFile": "$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)\\Install.$global:DeploymentTimestamp.log",
+  "UninstLogFile": "$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)\\Uninstall.$global:DeploymentTimestamp.log",
   "InstFile": "SPSetup.exe",
   "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
   "AppendInstParaToDefaultParameters": false,
@@ -145,7 +145,7 @@
     },
     {
       "Name": "prefilled vars",
-      "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.uninstallKey)",
+      "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.UninstallKey)",
       "ExpandVariables": true
     }
   ]

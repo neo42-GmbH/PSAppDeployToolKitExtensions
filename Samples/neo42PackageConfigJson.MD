@@ -412,7 +412,7 @@ registry sub key to store all package depending information seperated by "Packag
 
 parent: /
 ```
-default value: "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)"
+default value: "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)"
 registered display name of uninstall registry entry of installed application package on client system (= data of value name 'DisplayName' for the installed application package entry under registry path '..\CurrentVersion\Uninstall\"PackageFamilyGUID"')
 note: this package system registration is done additionally to a regular manufacturer setup own registration in registry and may be suppressed by deployment system (if variable '$env:registerPackage' is set to '$false')
 ```
@@ -423,7 +423,7 @@ note: this package system registration is done additionally to a regular manufac
 
 parent: /
 ```
-default value: "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)"
+default value: "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)"
 package cache folder on client system (i.e. possible user parts of package are executed from there)
 ```
  

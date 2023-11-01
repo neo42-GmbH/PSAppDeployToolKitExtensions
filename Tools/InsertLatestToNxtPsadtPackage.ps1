@@ -255,7 +255,7 @@ function Update-NxtPSAdtPackage {
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($jsonContent.App -notlike '*AppRootFolder*'){
-                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "App": "' -EndTag ("`n" + '  "UninstallOld"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.appName)\\$($global:PackageConfig.appVersion)",'
+                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "App": "' -EndTag ("`n" + '  "UninstallOld"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",'
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
             ## Add AppRootFolder variable
