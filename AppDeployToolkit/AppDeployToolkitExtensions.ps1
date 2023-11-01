@@ -4490,19 +4490,21 @@ function Import-NxtIniFileWithComments {
 function Initialize-NxtAppFolder {
 	<#
 	.SYNOPSIS
-		Initializes the AppFolder.
-		To be called by the Initialize-NxtEnvironment function.
+		Sets up the App folder structure and forces predefined permissions on the folder structure.
 	.DESCRIPTION
-		Initializes the AppFolder.
-		To be called by the Initialize-NxtEnvironment function.
+		This function is designed to prepare the application directory (AppFolder) by verifying paths, setting appropriate permissions, and creating necessary directories. 
+		It should be invoked by the 'Initialize-NxtEnvironment' function as part of a broader initialization process. 
+		The function ensures that the AppFolder and its parent directory (AppRootFolder) are correctly configured.
 	.PARAMETER AppRootFolder
-		Defines the path to the AppRootFolder to be protected.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the path to the parent directory of the AppFolder. 
+		This path is crucial for establishing a secure and structured environment for the application. 
+		Defaults to the value from the PackageConfig object.
 	.PARAMETER App
-		Defines the path to the AppFolder to be protected.
+		Specifies the path to the AppFolder that the package will utilize. This folder has to be nested within the AppRootFolder. 
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ScriptRoot
-		Defines the path to the ScriptRoot currently used.
+		Indicates the path to the root directory of the current script. 
+		This is used to ensure the script is not operating within the AppFolder itself.
 		Defaults to $scriptRoot.
 	.EXAMPLE
 		Initialize-NxtAppFolder
@@ -4526,73 +4528,81 @@ function Initialize-NxtAppFolder {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ( $ScriptRoot -eq $App){
+		## Resolve possible relative segments in the paths 
+		[string]$absolutAppPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($App)).FullName)
+		[string]$absolutAppRootFolderPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($AppRootFolder)).FullName)
+		if ($ScriptRoot -eq $absolutAppPath) {
 			Write-Log "Executing from `$App Folder, skip appfolder initialization" -Source ${CmdletName}
 			return
 		}
-		if ($false -eq [System.IO.Path]::IsPathRooted($AppRootFolder)) {
-			Write-Log -Message "$AppRootFolder is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+		## Ensure that $absolutAppRootFolderPath is a valid path
+		if ($false -eq [System.IO.Path]::IsPathRooted($absolutAppRootFolderPath)) {
+			Write-Log -Message "$absolutAppRootFolderPath is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
 			throw "AppRootFolder is not set correctly. Please check your PackageConfig"
 		}
-		if ($true -eq (Test-Path -Path $AppRootFolder)) {
-			Write-Log -Message "AppRootFolder '$AppRootFolder' already exists. Checking for Permissions along the `$App path" -Source ${CmdletName}
+		## Ensure that $absolutAppRootFolderPath is not $absolutAppPath
+		if($absolutAppRootFolderPath -ieq $absolutAppPath) {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' is the same as '$absolutAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "AppRootFolder '$absolutAppRootFolderPath' is the same as '$absolutAppPath'. Please check your PackageConfig.json"
+		}
+		## Ensure that $absolutAppRootFolderPath is a parent of $absolutAppPath
+		if ($false -eq $absolutAppPath.StartsWith($absolutAppRootFolderPath, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' is not a parent of '$absolutAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "AppRootFolder '$absolutAppRootFolderPath' is not a parent of '$absolutAppPath'. Please check your PackageConfig.json"
+		}
+		if ($true -eq (Test-Path -Path $absolutAppRootFolderPath)) {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' already exists. Checking for permissions along the `$App path" -Source ${CmdletName}
 			[bool]$permissionResetRequired = $false
-			[int]$counter = 0
-			[string]$parent = Split-Path -Path $App -Parent
-			while (
-				$parent -ne $AppRootFolder -and
-				$permissionResetRequired -ne $true -and
-				$counter -lt 10
-				){
-				$counter++
-				$parent = Split-Path -Path $parent -Parent
-				[hashtable]$testFolderPermissionSplat = @{
-					Path = $parent
-					FullControlPermissions = @(
-						"BuiltinAdministratorsSid",
-						"LocalSystemSid"
-					)
-					ReadAndExecutePermissions = @(
-						"BuiltinUsersSid"
-					)
-					Owner = "BuiltinAdministratorsSid"
-					CheckIsInherited = $true
-				}
-				if ($parent -eq $AppRootFolder){
-					$testFolderPermissionSplat["IsInherited"] = $false
-				}
-				else {
-					$testFolderPermissionSplat["IsInherited"] = $true
-				}
-				if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
-					Write-Log -Message "found incorrect permissions in `$App parent path '$parent'" -Source ${CmdletName}
-					$permissionResetRequired = $true
-				}
-				else {
-					Write-Log -Message "AppRootFolder '$parent' has correct permissions." -Source ${CmdletName}
-				}
-				if ($counter -eq 10){
-					Write-Log -Message "AppRootFolder '$App' seems to have alot of parent folders. This does not seem to be a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-					throw "AppRootFolder '$App' seems to have alot of parent folders. This does not seem to be a valid path. Please check your PackageConfig.json"
-				}
+			[string]$tempBasePath = $absolutAppRootFolderPath
+			[string]$tempTailPath = ($absolutAppPath -replace "(?i)$([regex]::Escape($tempBasePath))","").Trim("\")
+			[hashtable]$testFolderPermissionSplat = @{
+				Path = $tempBasePath
+				FullControlPermissions = @(
+					"BuiltinAdministratorsSid",
+					"LocalSystemSid"
+				)
+				ReadAndExecutePermissions = @(
+					"BuiltinUsersSid"
+				)
+				Owner = "BuiltinAdministratorsSid"
+				CheckIsInherited = $true
+				IsInherited = $false
 			}
-			if ($true -eq $permissionResetRequired) {
-				Write-Log -Message "AppRootFolder '$AppRootFolder' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
-				Set-NxtFolderPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
+			if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
+				Write-Log -Message "AppRootFolder '$tempBasePath' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
+				Set-NxtFolderPermissions -Path $absolutAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
 			}
 			else {
-				Write-Log -Message "AppRootFolder '$AppRootFolder' has correct permissions along the path to '$App'." -Source ${CmdletName}
-			}
-			## Remove the $App Folder sanitize the path and create it again.
-			if ($true -eq (Test-Path -Path $App)) {
-				Write-Log -Message "App '$App' already exists. Removing it..." -Source ${CmdletName}
-				Remove-Folder -Path $App
+				Write-Log -Message "AppRootFolder '$tempBasePath' has correct permissions." -Source ${CmdletName}
+				$testFolderPermissionSplat["IsInherited"] = $true
+				foreach($pathItem in $tempTailPath.Split("\")) {
+					$tempBasePath = [System.IO.Path]::Combine($tempBasePath,$pathItem)
+					$testFolderPermissionSplat["Path"] = $tempBasePath
+	
+					if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
+						Write-Log -Message "Found incorrect permissions in `$App parent path '$tempBasePath'" -Source ${CmdletName}
+						$permissionResetRequired = $true
+						break
+					}
+					else {
+						Write-Log -Message "Folder '$tempBasePath' has correct permissions." -Source ${CmdletName}
+					}
+				}
+				if ($true -eq $permissionResetRequired) {
+					Write-Log -Message "Folder '$tempBasePath' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
+					Set-NxtFolderPermissions -Path $absolutAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
+				}
 			}
 
+			## Remove the $App folder, sanitize the path and create it again.
+			if ($true -eq (Test-Path -Path $absolutAppPath)) {
+				Write-Log -Message "App '$absolutAppPath' already exists. Removing it..." -Source ${CmdletName}
+				Remove-Folder -Path $absolutAppPath
+			}
 		}
 		else {
-			Write-Log -Message "AppRootFolder '$AppRootFolder' does not exist. Creating it..." -Source ${CmdletName}
-			New-NxtFolderWithPermissions -Path $AppRootFolder -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' does not exist. Creating it..." -Source ${CmdletName}
+			New-NxtFolderWithPermissions -Path $absolutAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
 		}
 	}
 	End {
