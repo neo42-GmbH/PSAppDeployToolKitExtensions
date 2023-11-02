@@ -4873,14 +4873,19 @@ function Initialize-NxtAppFolder {
 				foreach($pathItem in $tempTailPath.Split("\")) {
 					$tempBasePath = [System.IO.Path]::Combine($tempBasePath,$pathItem)
 					$testFolderPermissionSplat["Path"] = $tempBasePath
-	
-					if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
-						Write-Log -Message "Found incorrect permissions in `$App parent path '$tempBasePath'" -Source ${CmdletName}
-						$permissionResetRequired = $true
-						break
+					if ($true -eq (Test-Path -Path $tempBasePath)) {
+						if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
+							Write-Log -Message "Found incorrect permissions in `$App parent path '$tempBasePath'" -Source ${CmdletName}
+							$permissionResetRequired = $true
+							break
+						}
+						else {
+							Write-Log -Message "Folder '$tempBasePath' has correct permissions." -Source ${CmdletName}
+						}
 					}
 					else {
-						Write-Log -Message "Folder '$tempBasePath' has correct permissions." -Source ${CmdletName}
+						Write-Log -Message "Folder '$tempBasePath' does not exist. It will be created as needed" -Source ${CmdletName}
+						break
 					}
 				}
 				if ($true -eq $permissionResetRequired) {
