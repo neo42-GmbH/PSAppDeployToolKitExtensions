@@ -50,8 +50,8 @@
     "$($global:PackageConfig.UninstallDisplayName)"
   ],
   "InstallLocation": "!INSTALLDIR!",
-  "InstLogFile": "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log",
-  "UninstLogFile": "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log",
+  "InstLogFile": "$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)\\Install.$global:DeploymentTimestamp.log",
+  "UninstLogFile": "$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)\\Uninstall.$global:DeploymentTimestamp.log",
   "InstFile": "!MSIFilenameWithExtension!",
   "InstPara": "",
   "AppendInstParaToDefaultParameters": true,
