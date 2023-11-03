@@ -473,7 +473,7 @@ function Main {
 				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($false -eq $SkipUnregister) ) {
 					Remove-NxtProductMember
 				}
-				if ( ($false -eq $SkipUnregister) -or (($true -eq $SkipUnregister) -and ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1))) ) {
+				if ( ($true -eq $RegisterPackage) -and ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1)) ) {
 					[int]$showUnInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $false
 					if ($showUnInstallationWelcomeResult -ne 0) {
 						switch ($showUnInstallationWelcomeResult) {
