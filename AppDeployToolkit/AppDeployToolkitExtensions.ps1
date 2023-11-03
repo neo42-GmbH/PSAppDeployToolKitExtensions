@@ -4747,38 +4747,48 @@ function Import-NxtIniFileWithComments {
         [bool]
         $ContinueOnError = $true
     )
-    try {
-        [hashtable]$ini = @{}
-        [string]$section = 'default'
-        [array]$commentBuffer = @()
-        [Array]$content = Get-Content -Path $Path
-        foreach ($line in $content) {
-            if ($line -match '^\[(.+)\]$') {
-                [string]$section = $matches[1]
-                if (!$ini.ContainsKey($section)) {
-                    [hashtable]$ini[$section] = @{}
-                }
-            }
-            elseif ($line -match '^(;|#)\s*(.*)') {
-                [array]$commentBuffer += $matches[2].trim("; ")
-            }
-            elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
-                [string]$variableName = $matches[1]
-                [string]$value = $matches[2].Trim()
-                [hashtable]$ini[$section][$variableName] = @{
-                    Value    = $value.trim()
-                    Comments = $commentBuffer -join "`r`n"
-                }
-                [array]$commentBuffer = @()
-            }
-        }
-        Write-Output $ini
-    }
-    catch {
-        if (-not $ContinueOnError) {
-            throw "Failed to read ini file [$path]: $($_.Exception.Message)"
-        }
-    }
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			[hashtable]$ini = @{}
+			[string]$section = 'default'
+			[array]$commentBuffer = @()
+			[Array]$content = Get-Content -Path $Path
+			foreach ($line in $content) {
+				if ($line -match '^\[(.+)\]$') {
+					[string]$section = $matches[1]
+					if (!$ini.ContainsKey($section)) {
+						[hashtable]$ini[$section] = @{}
+					}
+				}
+				elseif ($line -match '^(;|#)\s*(.*)') {
+					[array]$commentBuffer += $matches[2].trim("; ")
+				}
+				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
+					[string]$variableName = $matches[1]
+					[string]$value = $matches[2].Trim()
+					[hashtable]$ini[$section][$variableName] = @{
+						Value    = $value.trim()
+						Comments = $commentBuffer -join "`r`n"
+					}
+					[array]$commentBuffer = @()
+				}
+			}
+			Write-Output $ini
+			Write-Log -Message "Read ini file [$path]. " -Source ${CmdletName}
+		}
+		catch {
+			if (-not $ContinueOnError) {
+				throw "Failed to read ini file [$path]: $($_.Exception.Message)"
+			}
+		}
+	}
+    End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
 }
 #endregion
 #region Function Initialize-NxtAppFolder
