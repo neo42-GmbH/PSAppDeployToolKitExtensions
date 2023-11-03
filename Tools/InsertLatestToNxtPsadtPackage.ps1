@@ -262,14 +262,14 @@ function Update-NxtPSAdtPackage {
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($jsonContent.InstLogFile -notlike '*AppRootFolder*'){
-                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "InstLogFile": "' -EndTag ("`n" + '  "UninstLogFile"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)\\$($global:PackageConfig.InstLogFile)",'
+                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "InstLogFile": "' -EndTag ("`n" + '  "UninstLogFile"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)\\Install.$global:DeploymentTimestamp.log",'
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
             ## Update UninstLogFile variable
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($jsonContent.UninstLogFile -notlike '*AppRootFolder*'){
-                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "UninstLogFile": "' -EndTag ("`n" + '  "InstFile"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)\\$($global:PackageConfig.UninstLogFile)",'
+                $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "UninstLogFile": "' -EndTag ("`n" + '  "InstFile"') -ContentBetweenTags '$($global:PackageConfig.AppRootFolder)Logs\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)\\Uninstall.$global:DeploymentTimestamp.log",'
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
             ## Add AppRootFolder variable
