@@ -221,6 +221,7 @@ function Update-NxtPSAdtPackage {
     Copy-Item -Path "$LatestVersionPath\AppDeployToolkit" -Destination $PackageToUpdatePath -Recurse -Force
     ## insert an updated validation file to destination
     Copy-Item -Path "$LatestVersionPath\neo42PackageConfigValidationRules.json" -Destination "$PackageToUpdatePath\neo42PackageConfigValidationRules.json" -Force
+    Copy-Item -Path "$LatestVersionPath\DeployNxtApplication.exe" -Destination "$PackageToUpdatePath\DeployNxtApplication.exe" -Force
 
             #also update packageconfig.json so it contains all default values
             ## remove entries: "AcceptedRepairExitCodes" and "AcceptedMSIRepairExitCodes" (just to be sure!)
