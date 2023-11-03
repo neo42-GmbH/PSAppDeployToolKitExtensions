@@ -1555,6 +1555,16 @@ Function Test-RegistryValue {
     }
 }
 #endregion
+## global default variables 
+[string]$global:Neo42PackageConfigPath = "$PSScriptRoot\..\neo42PackageConfig.json"
+## Several PSADT-functions do not work, if these variables are not set here.
+$tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
+[string]$appVendor = $tempLoadPackageConfig.AppVendor
+[string]$appName = $tempLoadPackageConfig.AppName
+[string]$appVersion = $tempLoadPackageConfig.AppVersion
+[string]$appRootFolder = $ExecutionContext.InvokeCommand.ExpandString($tempLoadPackageConfig.AppRootFolder)
+Remove-Variable -Name tempLoadPackageConfig
+
 [string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 $script:installPhase = "AskKillProcesses"
 [String]$scriptPath = $MyInvocation.MyCommand.Definition
@@ -2036,9 +2046,9 @@ if ($ProcessIdToIgnore -gt 0){
 [ScriptBlock]$FillCloseApplicationList = {
     param($runningProcessesParam)
     $control_CloseApplicationList.Items.Clear()
-    ForEach ($runningProcessItem in $runningProcessesParam) {
+    [psobject[]]$processUIItems = ForEach ($runningProcessItem in $runningProcessesParam) {
         Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($runningProcessItem.Id)'" | ForEach-Object {
-            $item = New-Object PSObject -Property @{
+            [psobject]$item = New-Object PSObject -Property @{
                 Name      = $runningProcessItem.ProcessDescription
                 StartedBy = $null
             }
@@ -2047,8 +2057,11 @@ if ($ProcessIdToIgnore -gt 0){
             }else{
                 $item.StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
             }
-            $control_CloseApplicationList.Items.Add($item) | Out-Null
+            Write-Output $item
         }
+    }
+    foreach ($processUIItem in ($processUIItems |Select-Object * -Unique)){
+        $control_CloseApplicationList.Items.Add($processUIItem) | Out-Null
     }
 }
 & $FillCloseApplicationList $runningProcesses
