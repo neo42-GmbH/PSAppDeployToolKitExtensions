@@ -4897,7 +4897,11 @@ function Initialize-NxtAppFolder {
 			## Remove the $App folder, sanitize the path and create it again.
 			if ($true -eq (Test-Path -Path $absoluteAppPath)) {
 				Write-Log -Message "App '$absoluteAppPath' already exists. Removing it..." -Source ${CmdletName}
-				Remove-Folder -Path $absoluteAppPath -ContinueOnError $false
+				Remove-Folder -Path $absoluteAppPath
+				If ($true -eq (Test-Path $absoluteAppPath)){
+					Write-Log -Message "App '$absoluteAppPath' could not be removed. Please check your permissions or close all open handles to the folder." -Severity 3 -Source ${CmdletName}
+					throw "App '$absoluteAppPath' could not be removed. Please check your permissions or close all open handles to the folder."
+				}
 			}
 		}
 		else {
