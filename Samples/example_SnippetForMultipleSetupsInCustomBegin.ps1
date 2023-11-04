@@ -26,13 +26,13 @@ function CustomBegin {
 		Set-NxtSetupCfg -Path "$PSScriptRoot\$alternativeSetupCfg"
 		if ($false -eq (Test-Path -Path "$PSScriptRoot\$alternativeSetupCfg")) {
 			## alternatively, if necessary you can stop script execution commonly here: uncomment next line
-			#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid file decision!" -MainExitCode '60001'
+			#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid file decision!" -MainExitCode '69001'
 		}
 	}
 	else {
 		Write-Log -Message "No or invalid registry key/value for an alternative setup file defined." -Severity 3 -Source $deployAppScriptFriendlyName
 		## alternatively, if necessary you can stop script execution here: uncomment next line
-		#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid pre-configuration!" -MainExitCode '60001'
+		#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid pre-configuration!" -MainExitCode '69001'
 	}
 
 	############################################
@@ -55,14 +55,14 @@ function CustomBegin {
 			[string]$alternativeSetupCfg = $null
 			Write-Log -Message "No alternative setup file defined for current selection [$decision]." -Severity 3 -Source $deployAppScriptFriendlyName
 			## alternatively, if necessary you can stop script execution here: uncomment next line
-			#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid file decision!" -MainExitCode '60001'
+			#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid file decision!" -MainExitCode '69001'
 		}
 	}
 	if (![string]::IsNullOrEmpty($alternativeSetupCfg)) {
 		Set-NxtSetupCfg -Path "$alternativeSetupCfg"
 		if ($false -eq (Test-Path -Path "$alternativeSetupCfg")) {
 			## alternatively, if necessary you can stop script execution commonly here: uncomment next line
-			#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid alternative setup file selection!" -MainExitCode '60001'
+			#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid alternative setup file selection!" -MainExitCode '69001'
 		}
 	}
 
@@ -77,13 +77,13 @@ function CustomBegin {
 		Set-NxtSetupCfg -Path "$PSScriptRoot\$decision.cfg"
 		if ($false -eq (Test-Path -Path "$PSScriptRoot\$decision.cfg")) {
 			## alternatively, if necessary you can stop script execution commonly here: uncomment next line
-			#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid alternative setup file selection!" -MainExitCode '60001'
+			#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid alternative setup file selection!" -MainExitCode '69001'
 		}
 	}
 	else {
 		Write-Log -Message "Invalid decision for an alternative setup file defined." -Severity 3 -Source $deployAppScriptFriendlyName
 		## alternatively, if necessary you can stop script execution here: uncomment next line
-		#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid pre-configuration!" -MainExitCode '60001'
+		#Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an invalid pre-configuration!" -MainExitCode '69001'
     }
 }
 Write-Host "Please open this script in an editor and copy necessary code parts into your script."
