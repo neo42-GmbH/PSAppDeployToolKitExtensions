@@ -50,19 +50,31 @@ if (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
 #region Function Add-NxtContent
 function Add-NxtContent {
 	<#
+	.SYNOPSIS
+		Appends a string to a text file.
 	.DESCRIPTION
-		Appends strings to text files.
+		The `Add-NxtContent` function appends a specified string to a text file. If the file does not exist, it will create one. 
+		The function can detect the encoding of the file and use the appropriate encoding to write the content. If the encoding 
+		cannot be detected, the function provides an option to use a default encoding.
 	.PARAMETER Path
-		Path to the file.
+		Specifies the path to the file where the string will be appended.
 	.PARAMETER Value
-		String to be appended.
+		Specifies the string that will be appended to the file.
 	.PARAMETER Encoding
-		Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding.
+		Specifies the encoding that should be used to write the content. It defaults to the value obtained from `Get-NxtFileEncoding`.
+		Possible values include: "Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", 
+		"Byte", "Oem", "Unicode", "UTF32", "UTF8".
 	.PARAMETER DefaultEncoding
-		Encoding to be used in case the encoding could not be detected.
+		Specifies the encoding that should be used if the `Get-NxtFileEncoding` function is unable to detect the file's encoding.
+		Possible values include: "Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", 
+		"Byte", "Oem", "Unicode", "UTF32", "UTF8".
 	.EXAMPLE
 		Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
-  	.OUTPUTS
+		This example appends the text "Text to be appended to a file" to the `testfile.txt` in the `C:\Temp` directory.
+	.EXAMPLE
+		Add-NxtContent -Path C:\Temp\testfile.txt -Value "Additional content" -Encoding "UTF8"
+		This example appends the text "Additional content" to the `testfile.txt` in the `C:\Temp` directory using the UTF8 encoding.
+	.OUTPUTS
 		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
@@ -142,18 +154,26 @@ function Add-NxtContent {
 #region Function Add-NxtLocalGroup
 function Add-NxtLocalGroup {
 	<#
+	.SYNOPSIS
+		Creates or updates a local group.
 	.DESCRIPTION
-		Creates a local group with the given parameter.
-		If group already exists only the description parameter is processed.
+		This function creates a local group with the given parameters. If the group already exists,
+		it will only process the description parameter.
+		Returns $true if the operation was successful, otherwise returns $false.
 	.PARAMETER GroupName
-		Name of the group.
-	.PARAMETER Computername
-		Name of the Computer,
-		Defaults to $env:COMPUTERNAME.
+		Name of the local group.
+		This parameter is mandatory.
+	.PARAMETER ComputerName
+		Name of the computer where the group needs to be added or updated. 
+		If not specified, defaults to the current computer ($env:COMPUTERNAME).
 	.PARAMETER Description
-		Description for the new group.
+		Description for the new group or updated group.
 	.EXAMPLE
 		Add-NxtLocalGroup -GroupName "TestGroup"
+		This will create or update a local group named "TestGroup" on the current computer.
+	.EXAMPLE
+		Add-NxtLocalGroup -GroupName "TestGroup" -ComputerName "Computer123" -Description "This is a test group."
+		This will create or update a local group named "TestGroup" on "Computer123" with the provided description.
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -208,19 +228,30 @@ function Add-NxtLocalGroup {
 #region Function Add-NxtLocalGroupMember
 function Add-NxtLocalGroupMember {
 	<#
+	.SYNOPSIS
+		Adds a local member (either a user or a group) to a specified local group.
 	.DESCRIPTION
-		Adds local member to a local group.
+		The Add-NxtLocalGroupMember function provides a way to add a local member (either a user or a group) to an existing local group. 
+		It requires the name of the target group, the name of the member to be added, and the type of the member (either "Group" or "User"). 
+		Optionally, a computer name can be provided; otherwise, it defaults to the current computer. 
+		The function returns a boolean value indicating whether the operation was successful or not.
 	.PARAMETER GroupName
-		Name of the target group.
+		Name of the target group to which the member should be added.
+		This parameter is mandatory.
 	.PARAMETER MemberName
-		Name of the member to add.
+		Name of the member that needs to be added to the specified group.
+		This parameter is mandatory.
 	.PARAMETER MemberType
-		Defines the type of member.
+		Defines the type of the member. Valid options are "Group" or "User".
+		This parameter is mandatory.
 	.PARAMETER Computername
-		Name of the Computer,
-		Defaults to $env:COMPUTERNAME.
+		Specifies the name of the computer where the group exists. Defaults to the name of the current computer.
 	.EXAMPLE
-		Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestUser" -MemberType "User"
+		Add-NxtLocalGroupMember -GroupName "Administrators" -MemberName "JohnDoe" -MemberType "User"
+		This example adds the local user "JohnDoe" to the "Administrators" group.
+	.EXAMPLE
+		Add-NxtLocalGroupMember -GroupName "Administrators" -MemberName "Managers" -MemberType "Group"
+		This example adds the local group "Managers" to the "Administrators" group.
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -293,26 +324,32 @@ function Add-NxtLocalGroupMember {
 #region Function Add-NxtLocalUser
 function Add-NxtLocalUser {
 	<#
+	.SYNOPSIS
+		Creates a new local user or updates an existing one with the specified parameters.
 	.DESCRIPTION
-		Creates a local user with the given parameter.
-		If the user already exists only FullName, Description, SetPwdExpired and SetPwdNeverExpires are processed.
+		The `Add-NxtLocalUser` function is designed to create a new local user or update properties of an existing one based on the provided parameters. 
+		If the user already exists, only `FullName`, `Description`, `SetPwdExpired`, and `SetPwdNeverExpires` parameters will be processed.
+		Returns $true if the operation was successful, otherwise returns $false.
 	.PARAMETER UserName
-		Name of the user.
+		The name of the user.
+		This parameter is mandatory.
 	.PARAMETER Password
-		Password for the new user.
+		Password for the new user. 
+		This parameter is mandatory.
 	.PARAMETER FullName
 		Full name of the user.
 	.PARAMETER Description
 		Description for the new user.
 	.PARAMETER SetPwdExpired
-		If set the user has to change the password at first logon.
+		If set, the user will be prompted to change the password at the first logon.
 	.PARAMETER SetPwdNeverExpires
-		If set the password is set to not expire.
-	.PARAMETER Computername
-		Name of the Computer,
-		Defaults to $env:COMPUTERNAME.
+		If set, the user's password will be configured to never expire.
+	.PARAMETER COMPUTERNAME
+		Specifies the name of the computer. If not provided, defaults to the current computer's name (`$env:COMPUTERNAME`).
 	.EXAMPLE
 		Add-NxtLocalUser -UserName "ServiceUser" -Password "123!abc" -Description "User to run service" -SetPwdNeverExpires
+	.EXAMPLE
+		Add-NxtLocalUser -UserName "JohnDoe" -Password "Secure$Pwd123" -FullName "John Doe" -Description "Backup admin account" -SetPwdExpired
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -431,7 +468,7 @@ function Add-NxtXmlNode {
 		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2";"other"="1232"} -InnerText "NewValue2"
 		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3 with the attributes name=NewNode2 and other=1232 and the value NewValue2.
 	.OUTPUTS
-		none
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -504,15 +541,18 @@ function Add-NxtXmlNode {
 function Close-BlockExecutionWindow {
 	<#
 	.SYNOPSIS
-		Closes Block-Execution dialogues generated by the current Installation.
+		Closes Block-Execution dialogues generated by the current installation.
 	.DESCRIPTION
-		Closes an information window of block execution functionality if still shown at script end, so script can do a successful cleanup, else an embedded graphics file is still in use.
+		The Close-BlockExecutionWindow function is designed to close any lingering information windows generated by block execution functionality. 
+		If these windows are not closed by the end of the script, embedded graphics files may remain in use, preventing a successful cleanup. 
+		This function helps to address this issue by ensuring these windows are properly closed.
 	.EXAMPLE
 		Close-BlockExecutionWindow
+		This example demonstrates how to call the function to close any active Block-Execution dialogues.
 	.OUTPUTS
 		none.
 	.NOTES
-		This is an internal script function and should typically not be called directly. It is used as workaround before script ending.
+		It is typically not recommended to call this function directly, as it's primarily intended for internal script operations. 
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -811,10 +851,12 @@ function Compare-NxtVersionPart {
 function Complete-NxtPackageInstallation {
 	<#
 	.SYNOPSIS
-		Defines the required steps to finalize the installation of the package
+		Defines the required steps to finalize the installation of the current package
 	.DESCRIPTION
-		Is only called in the Main function and should not be modified!
-		To customize the script always use the "CustomXXXX" entry points.
+		The Complete-NxtPackageInstallation function is designed to finalize the installation steps for a package. 
+		It primarily deals with various aspects like copying/removing desktop shortcuts, hiding uninstall keys, 
+		setting up active user setups, and ensuring the successful post-installation of a package.
+		Always consider using the "CustomXXXX" entry points for script customization rather than modifying this function.
 	.PARAMETER App
 		Defines the path to a local persistent cache for installation files.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -844,6 +886,8 @@ function Complete-NxtPackageInstallation {
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -964,10 +1008,11 @@ function Complete-NxtPackageInstallation {
 function Complete-NxtPackageUninstallation {
 	<#
 	.SYNOPSIS
-		Defines the required steps to finalize the uninstallation of the package
+		Completes the required steps to finalize the uninstallation of a package.
 	.DESCRIPTION
-		Is only called in the Main function and should not be modified!
-		To customize the script always use the "CustomXXXX" entry points.
+		The Complete-NxtPackageUninstallation function performs the necessary actions to finalize the uninstallation of a given package. 
+		This includes removing desktop shortcuts and handling user-specific uninstallation tasks if specified. 
+		Always consider using the "CustomXXXX" entry points for script customization rather than modifying this function.
 	.PARAMETER App
 		Defines the path to a local persistent cache for installation files.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -988,6 +1033,10 @@ function Complete-NxtPackageUninstallation {
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
 	.EXAMPLE
 		Complete-NxtPackageUninstallation
+	.EXAMPLE
+		Complete-NxtPackageUninstallation -UserPartOnUninstallation $true -UserPartDir "UserDirectory"
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -1180,20 +1229,28 @@ function ConvertTo-NxtEncodedObject {
 function Copy-NxtDesktopShortcuts {
 	<#
 	.SYNOPSIS
-		By default: Copys the shortcuts defined under "CommonStartMenuShortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop.
+		Copies specific shortcuts from the Start Menu to the Desktop.
 	.DESCRIPTION
-		Is called after an installation/reinstallation if DESKTOPSHORTCUT=1 is defined in the Setup.cfg.
+		The Copy-NxtDesktopShortcuts function copies the specified shortcuts from the Start Menu to the Desktop. 
+		This function is invoked after an installation or reinstallation when DESKTOPSHORTCUT=1 is specified in the Setup.cfg.
+		By default it copies the shortcuts defined under "CommonStartMenuShortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop.
 	.PARAMETER StartMenuShortcutsToCopyToDesktop
 		Specifies the links from the start menu which should be copied to the desktop.
-		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the Setup.cfg.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the eo42PackageConfig.json.
 	.PARAMETER Desktop
-		Specifies the path to the Desktop (eg. $envCommonDesktop or $envUserDesktop).
-		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
+		Determines the path to the Desktop, e.g., $envCommonDesktop or $envUserDesktop.
+		Defaults to $envCommonDesktop.
 	.PARAMETER StartMenu
-		Specifies the path to the StartMenu (e.g. $envCommonStartMenu or $envUserStartMenu).
-		Defaults to $envCommonStartMenu defined in AppDeploymentToolkitMain.ps1.
+		Defines the path to the Start Menu, e.g., $envCommonStartMenu or $envUserStartMenu.
+		Defaults to $envCommonStartMenu.
 	.EXAMPLE
 		Copy-NxtDesktopShortcuts
+	.EXAMPLE
+		Copy-NxtDesktopShortcuts -Desktop "$envUserDesktop" -StartMenu "$envUserStartMenu"
+	.EXAMPLE
+		Copy-NxtDesktopShortcuts -StartMenuShortcutsToCopyToDesktop @({'Source'='App.lnk'; 'TargetName'='App_Desktop.lnk'})
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2467,6 +2524,8 @@ function Exit-NxtAbortReboot {
 		Exit-NxtAbortReboot -RebootMessage "This package requires a system reboot..." -RebootExitCode "1641" -PackageStatus "RebootPending"
 	.EXAMPLE
 		Exit-NxtAbortReboot -EmpirumMachineKey "OurPackages\Microsoft\Office365\16.0" -EmpirumUninstallKey "OurPackage Microsoft Office365 16.0"
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2820,16 +2879,21 @@ function Expand-NxtPackageConfig {
 #region Function Expand-NxtVariablesInFile
 function Expand-NxtVariablesInFile {
 	<#
-  	.DESCRIPTION
-		Expands different variables types in a text file.
-		Supports local, script, $env:, $global: and common Windows environment variables.
-  	.PARAMETER Path
-		The path to the file.
-  	.OUTPUTS
-		none
-  	.EXAMPLE
+	.SYNOPSIS
+		Expands different variable types in a given text file.
+	.DESCRIPTION
+		The Expand-NxtVariablesInFile function is designed to expand a variety of variable types present in a text file. 
+		The function is equipped to handle local, script, $env:, $global: and common Windows environment variables.
+		Upon execution, the function will update the target file by replacing all variable references with their actual values. 
+	.PARAMETER Path
+		The full path to the file that contains the variables you want to expand.
+		This parameter is mandatory.
+	.EXAMPLE
 		Expand-NxtVariablesInFile -Path C:\Temp\testfile.txt
-  	.LINK
+		This will process the 'testfile.txt' file located in the C:\Temp directory, expanding all supported variable types present in the file.
+	.OUTPUTS
+		none.
+	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
@@ -2978,11 +3042,12 @@ function Expand-NxtVariablesInFile {
 #region Function Format-NxtPackageSpecificVariables
 function Format-NxtPackageSpecificVariables {
 	<#
+	.SYNOPSIS
+		Formats the PackageSpecificVariables from PackageSpecificVariablesRaw in a given package configuration.
 	.DESCRIPTION
-		Formats the PackageSpecificVariables from PackageSpecificVariablesRaw in the $global:PackageConfig.
-		The variables can then be acquired like this:
-		$global:PackageConfig.PackageSpecificVariables.CustomVariableName
-		Expands variables if "ExpandVariables" is set to true
+		The Format-NxtPackageSpecificVariables function is designed to format the PackageSpecificVariables from the PackageSpecificVariablesRaw	property within the provided package configuration. After formatting, these variables can be accessed using the syntax:
+		$global:PackageConfig.PackageSpecificVariables.CustomVariableName.
+		Optionally, it can also expand variables if the ExpandVariables property is set to true within the PackageSpecificVariablesRaw.
 	.PARAMETER PackageConfig
 		Expects an object containing the Packageconfig, defaults to $global:PackageConfig
 		Defaults to $global:PackageConfig
@@ -3024,10 +3089,14 @@ function Format-NxtPackageSpecificVariables {
 #region Function Get-NxtComputerManufacturer
 function Get-NxtComputerManufacturer {
 	<#
+	.SYNOPSIS
+		Retrieves the manufacturer name of the computer system.
 	.DESCRIPTION
-		Gets the manufacturer of the computer system.
+		The Get-NxtComputerManufacturer function fetches the manufacturer's name of the computer system by querying the Win32_ComputerSystem class. 
+		In the event of an error or inability to retrieve the manufacturer name, an error log will be written and the function will return an empty string.
 	.EXAMPLE
 		Get-NxtComputerManufacturer
+		This will return the name of the computer system's manufacturer, e.g., "Dell" or "HP".
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -3057,10 +3126,15 @@ function Get-NxtComputerManufacturer {
 #region Function Get-NxtComputerModel
 function Get-NxtComputerModel {
 	<#
+	.SYNOPSIS
+		Retrieves the model of the computer system.
 	.DESCRIPTION
-		Gets the model of the computer system.
+		The Get-NxtComputerModel function fetches the model information of the computer system. 
+		It leverages the Win32_ComputerSystem WMI class to obtain this information. 
+		In the event of an error during the retrieval process, an appropriate log message is recorded.
 	.EXAMPLE
 		Get-NxtComputerModel
+		This example retrieves the computer system's model.
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -3190,14 +3264,22 @@ function Get-NxtCurrentDisplayVersion {
 #region Function Get-NxtDriveFreeSpace
 function Get-NxtDriveFreeSpace {
 	<#
+	.SYNOPSIS
+		Retrieves the free space of a specified drive.
 	.DESCRIPTION
-		Gets free space of drive in bytes.
+		The Get-NxtDriveFreeSpace function retrieves the available free space of a given drive in the specified unit.
+		By default, it returns the free space in bytes. You can also specify other units such as KB, MB, GB, TB, or PB.
 	.PARAMETER DriveName
-		Name of the drive.
+		Specifies the name of the drive for which the free space needs to be determined.
+		This parameter is mandatory.
 	.PARAMETER Unit
-		Unit the disksize should be returned in.
+		Specifies the unit in which the free space should be returned. Possible values are B (default), KB, MB, GB, TB, and PB.
 	.EXAMPLE
-		Get-NxtDriveFreeSpace "c:"
+		Get-NxtDriveFreeSpace -DriveName "c:"
+		This example retrieves the free space of the C: drive in bytes.
+	.EXAMPLE
+		Get-NxtDriveFreeSpace -DriveName "d:" -Unit "GB"
+		This example retrieves the free space of the D: drive in gigabytes.
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -3236,14 +3318,21 @@ function Get-NxtDriveFreeSpace {
 #region Function Get-NxtDriveType
 function Get-NxtDriveType {
 	<#
+	.SYNOPSIS
+		Retrieves the type of a specified drive.
 	.DESCRIPTION
-		Gets the drive type.
+		The Get-NxtDriveType function determines the type of a given drive. 
+		The returned drive type can be one of several values, including Unknown, NoRootDirectory, Removable, Local, Network, Compact, and Ram.
+		If the drive does not exist or an error occurs, the function returns the drive type as Unknown.
 	.PARAMETER DriveName
-		Name of the drive.
+		Specifies the name of the drive for which the type needs to be determined.
+		This parameter is mandatory.
+	.EXAMPLE
+		Get-NxtDriveType -DriveName "c:"
+		This example retrieves the type of the C: drive.
 	.OUTPUTS
 		PSADTNXT.DriveType
-
-		Values:
+		The drive type is returned as one of the following values:
 		Unknown = 0
 		NoRootDirectory = 1
 		Removable = 2
@@ -3285,18 +3374,27 @@ function Get-NxtDriveType {
 #region Function Get-NxtFileEncoding
 function Get-NxtFileEncoding {
 	<#
-  	.DESCRIPTION
-		Returns the estimated encoding based on BOM detection, defaults to ASCII.
-		Used to get the default encoding for Add-NxtContent.
-  	.PARAMETER Path
-		The path to the file.
+	.SYNOPSIS
+		Gets the estimated encoding of a file based on BOM detection, or returns a specified default encoding.
+	.DESCRIPTION
+		The Get-NxtFileEncoding function returns the estimated encoding of a file based on Byte Order Mark (BOM) detection. If the encoding cannot
+		be detected, it will default to the provided DefaultEncoding value or ASCII if no value is specified. This can be used to identify the
+		proper encoding for further file operations like reading or writing.
+		Returns the detected encoding or the specified default encoding if detection was not possible.
+	.PARAMETER Path
+		Specifies the path to the file for which the encoding needs to be determined. This parameter is mandatory.
 	.PARAMETER DefaultEncoding
-	  	Encoding to be returned in case the encoding could not be detected.
-  	.OUTPUTS
-		System.String.
-  	.EXAMPLE
+		Specifies the encoding to be returned in case the encoding could not be detected. Valid options include "Ascii", "BigEndianUTF32",
+		"Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", and "UTF8".
+	.EXAMPLE
 		Get-NxtFileEncoding -Path C:\Temp\testfile.txt
-  	.LINK
+		This example returns the estimated encoding of the file located at "C:\Temp\testfile.txt".
+	.EXAMPLE
+		Get-NxtFileEncoding -Path C:\Temp\testfile.txt -DefaultEncoding UTF8
+		This example returns the estimated encoding of the file located at "C:\Temp\testfile.txt", or "UTF8" if the encoding cannot be detected.
+	.OUTPUTS
+		System.String.
+	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
@@ -3333,13 +3431,19 @@ function Get-NxtFileEncoding {
 #region Function Get-NxtFileVersion
 function Get-NxtFileVersion {
 	<#
+	.SYNOPSIS
+		Retrieves the version information of a specified file.
 	.DESCRIPTION
-		Gets version of file.
-		The return value is a version object.
+		The Get-NxtFileVersion function retrieves the version information of a file specified by the FilePath parameter. The return value is the version object representing the file version.
 	.PARAMETER FilePath
-		Full path to the file.
+		Specifies the full path to the file for which the version information needs to be retrieved. This parameter is mandatory.
+		Get-NxtFileVersion -FilePath "D:\setup.exe"
+		This example retrieves the version information of the file located at "D:\setup.exe".
 	.EXAMPLE
 		Get-NxtFileVersion "D:\setup.exe"
+	.EXAMPLE
+		Get-NxtFileVersion "D:\Program Files\App\file.dll"
+		This example retrieves the version information of the file located at "D:\Program Files\App\file.dll".
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -3373,14 +3477,20 @@ function Get-NxtFileVersion {
 #region Function Get-NxtFolderSize
 function Get-NxtFolderSize {
 	<#
+	.SYNOPSIS
+		Retrieves the size of the specified folder recursively, in the given unit.
 	.DESCRIPTION
-		Gets the size of the folder recursive in bytes.
+		The Get-NxtFolderSize function calculates the size of the specified folder, including all of its subfolders and files. It can return the size in different units such as bytes (B), kilobytes (KB), megabytes (MB), gigabytes (GB), terabytes (TB), or petabytes (PB).
 	.PARAMETER FolderPath
-		Path to the folder.
+		Path to the folder. This parameter is mandatory.
 	.PARAMETER Unit
-		Unit the foldersize should be returned in.
+		Unit in which the folder size should be returned. Supported values are "B", "KB", "MB", "GB", "TB", "PB". The default value is "B".
 	.EXAMPLE
 		Get-NxtFolderSize "D:\setup\"
+		Retrieves the size of the folder located at "D:\setup\" in bytes.
+	.EXAMPLE
+		Get-NxtFolderSize "C:\Users\User\Documents" -Unit "MB"
+		Retrieves the size of the folder located at "C:\Users\User\Documents" in megabytes.
 	.OUTPUTS
 		System.Long.
 	.LINK
@@ -3442,7 +3552,7 @@ function Get-NxtInstalledApplication {
 		DisplayName(s) to exclude from the search result.
 		Use commas to separate more than one value.
 		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
-		We reccommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
+		We recommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtInstalledApplication -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
@@ -3521,10 +3631,14 @@ function Get-NxtInstalledApplication {
 #region Function Get-NxtIsSystemProcess
 function Get-NxtIsSystemProcess {
 	<#
+	.SYNOPSIS
+		Detects if a process is running with the system account or not.
 	.DESCRIPTION
-		Detects if process is running with system account or not.
+		Detects if a process is running with the system account or not by querying the process ID.
 	.PARAMETER ProcessId
-		Id of the process.
+		Id of the process. This parameter is mandatory.
+	.EXAMPLE
+		Get-NxtIsSystemProcess -ProcessId 1004
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
@@ -3561,15 +3675,17 @@ function Get-NxtIsSystemProcess {
 #region Function Get-NxtNameBySid
 function Get-NxtNameBySid {
 	<#
+	.SYNOPSIS
+		Retrieves the NetBIOS user name for a given Security Identifier (SID).
 	.DESCRIPTION
-		Gets the netbios user name for a SID.
-		Returns $null if SID was not found.
+		The Get-NxtNameBySid function takes a SID as input and returns the corresponding NetBIOS user name. If the SID is not found, the function returns $null. This can be useful for translating SIDs to recognizable names in various administrative tasks.
 	.PARAMETER Sid
-		SID to search.
-	.OUTPUTS
-		System.String.
+		The Security Identifier (SID) to search for. This parameter is mandatory.
 	.EXAMPLE
 		Get-NxtNameBySid -Sid "S-1-5-21-3072877179-2344900292-1557472252-500"
+		This example retrieves the NetBIOS user name for the given SID.
+	.OUTPUTS
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3608,12 +3724,15 @@ function Get-NxtNameBySid {
 #region Function Get-NxtOsLanguage
 function Get-NxtOsLanguage {
 	<#
+	.SYNOPSIS
+		Retrieves the Operating System Language as an LCID (Locale Identifier) code.
 	.DESCRIPTION
-		Gets OsLanguage as LCID Code from the Get-Culture cmdlet.
+		The Get-NxtOsLanguage function gets the Operating System Language as an LCID Code using the Get-Culture cmdlet.
+		It returns the LCID code that represents the current culture settings on the system.
 	.EXAMPLE
 		Get-NxtOsLanguage
 	.OUTPUTS
-		System.Int.
+		System.Int32.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -3639,13 +3758,20 @@ function Get-NxtOsLanguage {
 #region Function Get-NxtPackageConfig
 function Get-NxtPackageConfig {
 	<#
+	.SYNOPSIS
+		Parses a neo42PackageConfig.json file into the global variable $global:PackageConfig.
 	.DESCRIPTION
-		Parses a neo42PackageConfig.json into the variable $global:PackageConfig.
+		The Get-NxtPackageConfig function reads the contents of a neo42PackageConfig.json file and parses it into the $global:PackageConfig variable.
+		This can be used to retrieve configuration details for a package.
 	.PARAMETER Path
-		Path to the Packageconfig.json
-		Defaults to "$global:Neo42PackageConfigPath"
+		Specifies the path to the Packageconfig.json file.
+		Defaults to "$global:Neo42PackageConfigPath". This parameter is mandatory.
 	.EXAMPLE
 		Get-NxtPackageConfig
+		This example parses the neo42PackageConfig.json file at the default path into the $global:PackageConfig variable.
+	.EXAMPLE
+		Get-NxtPackageConfig -Path "C:\path\to\Packageconfig.json"
+		This example specifies a custom path to parse the neo42PackageConfig.json file into the $global:PackageConfig variable.
 	.OUTPUTS
 		none.
 	.LINK
@@ -3674,10 +3800,21 @@ function Get-NxtPackageConfig {
 #region Function Get-NxtParentProcess
 function Get-NxtParentProcess {
 	<#
+	.SYNOPSIS
+		Retrieves the parent process of a given process ID.
 	.DESCRIPTION
-		Gets the Parent Process of a given Process ID.
+		The Get-NxtParentProcess function obtains the parent process of a specified child process ID. 
+		It can optionally retrieve the entire parent hierarchy by using the -Recurse switch.
 	.PARAMETER Id
-		The Id of the child process.
+		Specifies the ID of the child process. This parameter is mandatory.
+	.PARAMETER Recurse
+		A switch that, if provided, continues to retrieve the parent of the parent process, and so on, up the hierarchy.
+	.EXAMPLE
+		Get-NxtParentProcess -Id 1234
+		This example retrieves the parent process of the process with ID 1234.
+	.EXAMPLE
+		Get-NxtParentProcess -Id 1234 -Recurse
+		This example retrieves the entire parent hierarchy of the process with ID 1234.
 	.OUTPUTS
 		System.Management.ManagementBaseObject.
 	.EXAMPLE
@@ -3716,10 +3853,20 @@ function Get-NxtParentProcess {
 #region Function Get-NxtProcessEnvironmentVariable
 function Get-NxtProcessEnvironmentVariable {
 	<#
+	.SYNOPSIS
+		Retrieves the value of a specified process environment variable.
 	.DESCRIPTION
-		Gets the value of the process environment variable.
+		The Get-NxtProcessEnvironmentVariable function retrieves the value of the environment variable available in the current process.
+		The process environment variables are merged from the user and system environment variables.
+		It returns the value of the environment variable as a System.String if the specified key exists, otherwise, an error will be logged.
 	.PARAMETER Key
-		Key of the variable.
+		Specifies the key of the variable you want to retrieve. This parameter is mandatory.
+	.EXAMPLE
+		Get-NxtProcessEnvironmentVariable -Key "USERNAME"
+		This example retrieves the value of the USERNAME environment variable for the current process.
+	.EXAMPLE
+		Get-NxtProcessEnvironmentVariable -Key "PATH"
+		This example retrieves the value of the PATH environment variable for the current process.
 	.OUTPUTS
 		System.String.
 	.EXAMPLE
@@ -3754,13 +3901,19 @@ function Get-NxtProcessEnvironmentVariable {
 #region Function Get-NxtProcessName
 function Get-NxtProcessName {
 	<#
+	.SYNOPSIS
+		Retrieves the name of a process based on its process ID.
 	.DESCRIPTION
-		Gets name of process.
-		Returns an empty string if process was not found.
+		The Get-NxtProcessName function returns the name of the process that corresponds to the specified process ID. If the process ID does not exist, an error will
+		be logged and the function will return an empty string.
 	.PARAMETER ProcessId
-		Id of the process.
+		Specifies the ID of the process whose name you want to retrieve. This parameter is mandatory.
 	.EXAMPLE
-		Get-NxtProcessName 1004
+		Get-NxtProcessName -ProcessId 1004
+		This example retrieves the name of the process with the ID of 1004.
+	.EXAMPLE
+		Get-NxtProcessName -ProcessId 5000
+		This example attempts to retrieve the name of the process with the ID of 5000. If the process does not exist, it will return an empty string.
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -3795,13 +3948,18 @@ function Get-NxtProcessName {
 #region Function Get-NxtProcessorArchiteW6432
 function Get-NxtProcessorArchiteW6432 {
 	<#
+	.SYNOPSIS
+		Retrieves the value of the environment variable $env:PROCESSOR_ARCHITEW6432.
 	.DESCRIPTION
-		Gets the environment variable $env:PROCESSOR_ARCHITEW6432 which is only set in a x86_32 process, returns empty string if run under 64-Bit Process.
+		The Get-NxtProcessorArchiteW6432 function retrieves the value of the environment variable $env:PROCESSOR_ARCHITEW6432, which is only set in a x86_32 process. It returns an empty string if run under a 64-bit process.
 	.PARAMETER PROCESSOR_ARCHITEW6432
-		Defines the String to be returned.
-		Defaults to $env:PROCESSOR_ARCHITEW6432.
+		Defines the string to be returned. Defaults to the value of $env:PROCESSOR_ARCHITEW6432.
 	.EXAMPLE
 		Get-NxtProcessorArchiteW6432
+		This example retrieves the value of the $env:PROCESSOR_ARCHITEW6432 environment variable.
+	.EXAMPLE
+		Get-NxtProcessorArchiteW6432 -PROCESSOR_ARCHITEW6432 "AMD64"
+		This example specifies the value "AMD64" for the PROCESSOR_ARCHITEW6432 parameter and returns it.
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -3978,17 +4136,23 @@ function Get-NxtRegisteredPackage {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstalledState
 		Represents the installation state of the package in a binary string ("0" or "1"):
-		"0" represents that the package is not installed
+		"0" represents that the package is not installed.
 		"1" represents that the package is installed.
 	.PARAMETER RegPackagesKey
 		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
-		Get-NxtRegisteredPackage -PackageGUID "12345678-1234-1234-1234-123456789012"
+		Get-NxtRegisteredPackage -PackageGUID "{12345678-1234-1234-1234-123456789012}"
+		This example retrieves information about a specific package using its PackageGUID.
 	.EXAMPLE
-		Get-NxtRegisteredPackage -ProductGUID "12345678-1234-1234-1234-123456789012"
+		Get-NxtRegisteredPackage -ProductGUID "{12345678-1234-1234-1234-123456789012}"
+		This example retrieves information about a specific product using its ProductGUID.
 	.EXAMPLE
-		Get-NxtRegisteredPackage -ProductGUID "12345678-1234-1234-1234-123456789012" -InstalledState 1
+		Get-NxtRegisteredPackage -ProductGUID "{12345678-1234-1234-1234-123456789012}" -InstalledState 1
+		This example retrieves information about a specific product that is installed.
+	.EXAMPLE
+		Get-NxtRegisteredPackage -ProductGUID "{12345678-1234-1234-1234-123456789012}" -InstalledState 0
+		This example retrieves information about a specific product that is registered but not installed.
 	.INPUTS
 		None.
 	.OUTPUTS
@@ -4078,11 +4242,12 @@ function Get-NxtRegisteredPackage {
 function Get-NxtRegisterOnly {
 	<#
 	.SYNOPSIS
-		Detects if the target application is already installed
+		Detects if the target application is already installed and verifies conditions for a soft migration.
 	.DESCRIPTION
-		Uses registry values to detect the application in target or higher versions
+		Uses registry values and various parameters to detect the application in target or higher versions, and verifies whether conditions are met for a soft migration.
+		Soft migration refers to the process of determining if the application is already present and if it is, whether it is a higher version than the one being installed.
 	.PARAMETER PackageRegisterPath
-		Specifies the registry path used for the registered package (wrapper) entries
+		Specifies the registry path used for the registered package entries.
 		Defaults to the default location under "HKLM:\Software" constructed with corresponding values from the PackageConfig objects of 'RegPackagesKey' and 'PackageGUID'.
 	.PARAMETER SoftMigration
 		Specifies if a Software should be registered only if it already exists through a different installation.
@@ -4094,10 +4259,10 @@ function Get-NxtRegisterOnly {
 		Specifies the original UninstallKey set by the Installer in this Package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER SoftMigrationFileName
-		Specifies a file name (instead of DisplayVersion) depending a SoftMigration of the software package.
+		Specifies a file name depending a SoftMigration of the software package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.FullNameToCheck.
 	.PARAMETER SoftMigrationFileVersion
-		Specifies the file version of the file name specified (instead of DisplayVersion) depending a SoftMigration of the software package.
+		Specifies the file version of the file name specified depending a SoftMigration of the software package.
 		Defaults to the corresponding value from the PackageConfig object $global:PackageConfig.SoftMigration.File.VersionToCheck.
 	.PARAMETER SoftMigrationCustomResult
 		Specifies the result of a custom check routine for a SoftMigration of the software package.
@@ -4123,6 +4288,15 @@ function Get-NxtRegisterOnly {
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
+		This example detects if the target application is already installed and verifies conditions for a soft migration based on the values from the PackageConfig object.
+	.EXAMPLE
+		Get-NxtRegisterOnly -SoftMigrationFileName "C:\Program Files\MyApp\MyApp.exe" -RegisterPackage $true
+		This example detects if the target application is already installed and verifies conditions for a soft migration based on the values from the PackageConfig object and the specified SoftMigrationFileName.
+	.EXAMPLE
+		Get-NxtRegisterOnly -SoftMigrationCustomResult $selfScriptedSoftmigrationConditionCheckResult -RegisterPackage $true
+		This example detects if the target application is already installed and verifies conditions for a soft migration based on the values from the PackageConfig object and the specified SoftMigrationCustomResult.
+	.OUTPUTS
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -4366,15 +4540,20 @@ function Get-NxtRunningProcesses {
 #region Function Get-NxtServiceState
 function Get-NxtServiceState {
 	<#
+	.SYNOPSIS
+		Retrieves the state of a specified service on the system.
 	.DESCRIPTION
-		Gets the state of the given service name.
-		Returns $null if service was not found.
+		The Get-NxtServiceState function gets the current state of the service specified by the ServiceName parameter.
+		The state can be one of the following values: "Running," "Stopped," "Paused," etc.
+		If the specified service is not found, the function returns $null.
+		Returns the current state of the specified service as a string.
 	.PARAMETER ServiceName
-		Name of the service.
-	.OUTPUTS
-		System.String.
+		Specifies the name of the service to get the state for. This parameter is mandatory.
 	.EXAMPLE
 		Get-NxtServiceState "BITS"
+		Retrieves the current state of the Background Intelligent Transfer Service (BITS).
+	.OUTPUTS
+		System.String
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -4411,13 +4590,21 @@ function Get-NxtServiceState {
 #region Function Get-NxtSidByName
 function Get-NxtSidByName {
 	<#
+	.SYNOPSIS
+		Retrieves the Security Identifier (SID) for a specified user name.
 	.DESCRIPTION
-		Gets the SID for a given user name,
-		Returns $null if user is not found.
+		The Get-NxtSidByName function fetches the SID corresponding to a given user name. 
+		It searches for the user on the system and returns the SID if the user is found.
+		If the specified user is not found, the function returns $null.
+		This function might be stressful for the domain controller, so use it with caution.
 	.PARAMETER UserName
-		Name of the user to search.
+		Specifies the user name for which to fetch the SID. This parameter is mandatory.
 	.EXAMPLE
 		Get-NxtSidByName -UserName "Workgroup\Administrator"
+		Retrieves the SID for the Administrator user in the Workgroup.
+	.EXAMPLE
+		Get-NxtSidByName -UserName "DOMAIN\User"
+		Retrieves the SID for the User in the specified DOMAIN.
 	.OUTPUTS
 		none.
 	.LINK
@@ -4456,14 +4643,22 @@ function Get-NxtSidByName {
 #region Function Get-NxtSystemEnvironmentVariable
 function Get-NxtSystemEnvironmentVariable {
 	<#
+	.SYNOPSIS
+		Retrieves the value of a specified system environment variable.
 	.DESCRIPTION
-		Gets the value of the system environment variable.
+		The Get-NxtSystemEnvironmentVariable function retrieves the value of a system environment variable
+		identified by the Key parameter. The value is read from the machine-level environment variables.
+		Returns the value of the specified system environment variable as a string.
 	.PARAMETER Key
-		Key of the variable.
-	.OUTPUTS
-		System.String.
+		Specifies the key of the system environment variable to retrieve. This parameter is mandatory.
 	.EXAMPLE
 		Get-NxtSystemEnvironmentVariable "windir"
+		Retrieves the value of the system environment variable for the Windows directory.
+	.EXAMPLE
+		Get-NxtSystemEnvironmentVariable "Path"
+		Retrieves the value of the system Path environment variable.
+	.OUTPUTS
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -4495,10 +4690,14 @@ function Get-NxtSystemEnvironmentVariable {
 #region Function Get-NxtUILanguage
 function Get-NxtUILanguage {
 	<#
+	.SYNOPSIS
+		Retrieves the UI Language as an LCID Code from the current UI Culture.
 	.DESCRIPTION
-		Gets UiLanguage as LCID Code from Get-UICulture.
+		The Get-NxtUILanguage cmdlet obtains the UI Language as an LCID (Locale Identifier) Code by calling the Get-UICulture cmdlet.
+		This can be useful in scenarios where you need to identify the specific language code associated with the user interface culture on the system.
 	.EXAMPLE
 		Get-NxtUILanguage
+		Returns the LCID code representing the UI language of the current system.
 	.OUTPUTS
 		System.Int.
 	.LINK
@@ -4527,19 +4726,21 @@ function Get-NxtUILanguage {
 function Get-NxtVariablesFromDeploymentSystem {
 	<#
 	.SYNOPSIS
-		Gets environment variables set by the deployment system
+		Gets environment variables set by the deployment system and overwrites the corresponding global variables.
 	.DESCRIPTION
-		Should be called at the end of the variable definition section of any 'Deploy-Application.ps1' 
-		Variables not set by the deployment system (or set to an unsuitable value) get a default value (e.g. [bool]$global:$registerPackage = $true)
-		Variables set by the deployment system overwrite the values from the neo42PackageConfig.json
+		The Get-NxtVariablesFromDeploymentSystem cmdlet retrieves environment variables set by the deployment system and assigns specific values to global variables. It should be called at the end of the variable definition section of any 'Deploy-Application.ps1'. Variables not set by the deployment system (or set to an unsuitable value) receive a default value. Variables set by the deployment system overwrite the values from the neo42PackageConfig.json.
 	.PARAMETER RegisterPackage
-		Value to set $global:RegisterPackage to. Defaults to $env:registerPackage
+		Value to set $global:RegisterPackage to.
+		Defaults to $env:registerPackage.
 		Usually, packages are registered. A value of "false" for the $env:registerPackage environmental variable prevents this step.
 	.PARAMETER DeploymentType
 		The type of deployment that is performed.
 		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.EXAMPLE
 		Get-NxtVariablesFromDeploymentSystem
+		Configures the global variables based on the corresponding environment variables.
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -4580,13 +4781,19 @@ function Get-NxtVariablesFromDeploymentSystem {
 #region Function Get-NxtWindowsBits
 function Get-NxtWindowsBits {
 	<#
+	.SYNOPSIS
+		Translates the environment variable $env:PROCESSOR_ARCHITECTURE from "x86" or "AMD64" to 32 or 64.
 	.DESCRIPTION
-		Translates the environment variable $env:PROCESSOR_ARCHITECTURE from x86 and amd64 to 32 / 64.
+		This function takes the environment variable $env:PROCESSOR_ARCHITECTURE and translates it to either 32 or 64 depending on whether the architecture is "x86" or "AMD64". This is useful for installing applications that have different installers for 32-bit and 64-bit systems.
 	.PARAMETER ProcessorArchitecture
 		Accepts the string "x86" or "AMD64".
 		Defaults to $env:PROCESSOR_ARCHITECTURE.
 	.EXAMPLE
 		Get-NxtWindowsBits
+		Returns 32 or 64 depending on the architecture of the system.
+	.EXAMPLE
+		Get-NxtWindowsBits -ProcessorArchitecture "AMD64"
+		Returns 64.
 	.OUTPUTS
 		System.Int.
 	.LINK
@@ -4628,8 +4835,10 @@ function Get-NxtWindowsBits {
 #region Function Get-NxtWindowsVersion
 function Get-NxtWindowsVersion {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Gets the Windows Version (CurrentVersion) from the Registry.
+	.DESCRIPTION
+		This function retrieves the current Windows Version from the system's registry. It queries the specific registry path to obtain the version of the installed Windows operating system.
 	.EXAMPLE
 		Get-NxtWindowsVersion
 	.OUTPUTS
@@ -4660,13 +4869,21 @@ function Get-NxtWindowsVersion {
 function Import-NxtIniFile {
 	<#
 	.SYNOPSIS
-		Imports an INI file into Powershell Object.
+		Imports an INI file into a PowerShell object.
 	.DESCRIPTION
-		Imports an INI file into Powershell Object.
+		This function reads the specified INI file and converts it into a PowerShell hashtable object. It handles various INI file structures and can read sections, and key-value pairs.
 	.PARAMETER Path
-		The path to the INI file.
+		The path to the INI file. This parameter is mandatory.
+	.PARAMETER ContinueOnError
+		Specifies whether the function continues to execute if an error occurs. Accepts $true or $false. Defaults to $true.
 	.EXAMPLE
 		Import-NxtIniFile -Path C:\path\to\ini\file.ini
+		This example reads the specified INI file and converts it into a PowerShell hashtable object.
+	.EXAMPLE
+		Import-NxtIniFile -Path C:\path\to\ini\file.ini -ContinueOnError $false
+		This example reads the specified INI file and converts it into a PowerShell hashtable object. If an error occurs, the function stops executing and throws an error.
+	.OUTPUTS
+		System.Collections.Hashtable.
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -4722,17 +4939,21 @@ function Import-NxtIniFile {
 #endregion
 #region Function Import-NxtIniFileWithComments
 function Import-NxtIniFileWithComments {
-    <#
+	<#
 	.SYNOPSIS
-		Imports an INI file into Powershell Object.
+		Imports an INI file, including comments, into a PowerShell object.
 	.DESCRIPTION
-		Imports an INI file into Powershell Object.
+		This function reads the specified INI file and converts it into a PowerShell hashtable object, including comments. Sections, comments, and key-value pairs are structured into the hashtable, allowing easy access in PowerShell.
 	.PARAMETER Path
-		The path to the INI file.
+		The path to the INI file. This parameter is mandatory.
 	.PARAMETER ContinueOnError
-		Continue on error.
+		Specifies whether the function continues to execute if an error occurs. Accepts $true or $false. Defaults to $true.
 	.EXAMPLE
 		Import-NxtIniFileWithComments -Path C:\path\to\ini\file.ini
+	.EXAMPLE
+		Import-NxtIniFileWithComments -Path C:\path\to\ini\file.ini -ContinueOnError $false
+	.OUTPUTS
+		System.Collections.Hashtable.
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -4913,19 +5134,25 @@ function Initialize-NxtAppFolder {
 #region Function Initialize-NxtEnvironment
 function Initialize-NxtEnvironment {
 	<#
+	.SYNOPSIS
+		Initializes all neo42 functions and variables for package deployment.
 	.DESCRIPTION
-		Initializes all neo42 functions and variables.
-		Should be called on top of any 'Deploy-Application.ps1'.
-		parses the neo42PackageConfig.json
+		Initializes all neo42 functions and variables that are essential for deployment scripts.
+		This includes parsing the neo42PackageConfig.json and setting global variables for package configuration.
+		It should be called at the beginning of any 'Deploy-Application.ps1' script.
 	.PARAMETER PackageConfigPath
 		Defines the path to the Packageconfig.json to be loaded to the global packageconfig Variable.
-		Defaults to "$global:Neo42PackageConfigPath"
+		Defaults to "$global:Neo42PackageConfigPath".
 	.PARAMETER SetupCfgPath
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
-		Defaults to the "$global:SetupCfgPath".
+		Defaults to "$global:SetupCfgPath".
+	.PARAMETER CustomSetupCfgPath
+		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable. If this parameter is set, the values from the found file will override the values from the Setup.cfg.
+		Defaults to "$global:CustomSetupCfgPath".
 	.PARAMETER SetupCfgPathOverride
 		Defines the path to the Setup.cfg to be loaded to the global setupcfg Variable.
 		Defaults to "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)".
+		This path is used to replace the Setup.cfg with a custom file in the $App Directory.
 	.PARAMETER App
 		This parameter can not be set manually for this function!
 		Defines the path to a local persistent cache for installation files.
@@ -4937,6 +5164,12 @@ function Initialize-NxtEnvironment {
 		System.Int32.
 	.EXAMPLE
 		Initialize-NxtEnvironment
+		Initializes all neo42 functions and variables that are essential for deployment scripts, using the default values.
+	.EXAMPLE
+		Initialize-NxtEnvironment -PackageConfigPath "C:\path\to\config.json" -SetupCfgPath "C:\path\to\setup.cfg"
+		Initializes all neo42 functions and variables that are essential for deployment scripts, using the specified values.
+	.OUTPUTS
+		System.Int32.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -5067,7 +5300,7 @@ function Initialize-NxtEnvironment {
 function Initialize-NxtUninstallApplication {
 	<#
 	.SYNOPSIS
-		Defines the required steps to prepare the uninstallation of the package
+		Defines the required steps to prepare the uninstallation of the package.
 	.DESCRIPTION
 		Unhides all defined registry keys from a corresponding value in the PackageConfig object.
 		Is only called in the Main function and should not be modified!
@@ -5077,6 +5310,10 @@ function Initialize-NxtUninstallApplication {
 		Defaults to the corresponding values from the PackageConfig object.
 	.EXAMPLE
 		Initialize-NxtUninstallApplication
+	.EXAMPLE
+		Initialize-NxtUninstallApplication -UninstallKeysToHide @{"KeyName"="MyApp"; "Is64Bit"=$false}
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -5124,10 +5361,9 @@ function Initialize-NxtUninstallApplication {
 function Install-NxtApplication {
 	<#
 	.SYNOPSIS
-		Defines the required steps to install the application based on the target installer type
+		Defines the required steps to install the application based on the target installer type.
 	.DESCRIPTION
-		Is only called in the Main function and should not be modified!
-		To customize the script always use the "CustomXXXX" entry points.
+		The Install-NxtApplication function is responsible for managing the installation process for a given application. It supports various installer types like MSI, InnoSetup, Nullsoft, and BitRockInstaller. Utilizing the provided parameters, users can configure the uninstall registry keys, log files, installation files, installation parameters, and other related settings. The function is meant to be called within the main function and should not be modified.
 	.PARAMETER AppName
         Specifies the Application Name used in the registry etc.
         Defaults to the corresponding value from the PackageConfig object.
@@ -5171,7 +5407,7 @@ function Install-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
-		Defaults to the corresponding value from the PackageConfig object
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
 		Timeout in seconds the function waits and checks for the condition to occur.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -5189,6 +5425,12 @@ function Install-NxtApplication {
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Install-NxtApplication
+		Installs the application applying the settings from the packageconfig.json.
+	.EXAMPLE
+		Install-NxtApplication -UninstallKey "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}_is1" -UninstallKeyContainsWildCards $true
+		Installs the application using the provided UninstallKey with WildCards interpretation. Caution: If you use this function in a custom function, you have to specify all parameters that should differ from the settings in the packageconfig.json for the installation to work properly.
+	.OUTPUTS
+		PSADTNXT.NxtApplicationResult.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -5383,7 +5625,7 @@ function Install-NxtApplication {
 	}
 }
 #endregion
-#region Function Move-NxtItem
+#region Function Merge-NxtExitCodes
 function Merge-NxtExitCodes {
 	<#
 	.SYNOPSIS
@@ -5443,18 +5685,25 @@ function Merge-NxtExitCodes {
 #region Function Move-NxtItem
 function Move-NxtItem {
 	<#
+	.SYNOPSIS
+		Moves or renames a file or directory from a source path to a destination path with optional parameters to force overwrite and continue on error.
 	.DESCRIPTION
-		Renames or moves a file or directory.
-	.EXAMPLE
-		Move-NxtItem -Path C:\Temp\Sources\Installer.exe -Destination C:\Temp\Sources\Installer_bak.exe
+		The Move-NxtItem function moves or renames a file or directory from the specified source path to the destination path. 
+		The operation can be forced to overwrite existing files, and it can be configured to continue if an error is encountered.
 	.PARAMETER Path
-		Source Path of the File or Directory.
+		Source Path of the File or Directory. This parameter is mandatory.
 	.PARAMETER Destination
-		Destination Path for the File or Directory.
+		Destination Path for the File or Directory. This parameter is mandatory.
 	.PARAMETER Force
 		Overwrite existing file.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
+	.EXAMPLE
+		Move-NxtItem -Path C:\Temp\Sources\Installer.exe -Destination C:\Temp\Sources\Installer_bak.exe
+		Moves the "Installer.exe" file from the specified source path to the destination path.
+	.EXAMPLE
+		Move-NxtItem -Path C:\Temp\Sources\Installer.exe -Destination C:\Temp\Sources\Installer_bak.exe -Force
+		Moves the "Installer.exe" file from the specified source path to the destination path, overwriting the existing file if it exists.
 	.OUTPUTS
 		none.
 	.LINK
@@ -5693,21 +5942,25 @@ function New-NxtTemporaryFolder {
 #region Function Read-NxtSingleXmlNode
 function Read-NxtSingleXmlNode {
 	<#
+	.SYNOPSIS
+		Reads the content of a single specified XML node from a given XML file.
 	.DESCRIPTION
-		Reads single node of xml file.
+		The Read-NxtSingleXmlNode function reads the content of a specified XML node from an XML file. 
+		The node is identified by the path provided in the SingleNodeName parameter, and the XML file is specified by the XmlFilePath parameter.
 	.PARAMETER XmlFilePath
-		Path to the xml file.
+		Path to the XML file. This parameter is mandatory.
 	.PARAMETER SingleNodeName
-		Node path. (https://www.w3schools.com/xml/xpath_syntax.asp).
+		Node path following XPath syntax. (https://www.w3schools.com/xml/xpath_syntax.asp).
+		This parameter is mandatory.
 	.PARAMETER AttributeName
 		Attribute name to be read from the node.
 		Default is "Innertext".
 	.EXAMPLE
 		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
-		Will return the inner text of the node.
+		Reads the content of the "UserId" node from the XML file located at "C:\Test\setup.xml."
 	.EXAMPLE
-		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId" -AttributeName "UserName"
-		Will return the value of the attribute "UserName" of the node.
+		Read-NxtSingleXmlNode -XmlFilePath "C:\Config\settings.xml" -SingleNodeName "/Configuration/UserName"
+		Reads the content of the specified node from the XML file
 	.OUTPUTS
 		System.String.
 	.LINK
@@ -5818,6 +6071,7 @@ function Register-NxtPackage {
 		Defaults to $logname defined in the AppDeployToolkitMain.
 	.PARAMETER MainExitCode
 		The value, the script returns to the deployment system and that will be written as LastExitCode to the package entry in the the registry.
+		Defaults to the variable $mainExitCode.
 	.PARAMETER PackageStatus
 		The value, that will be written as PackageStatus to the package entry in the the registry.
 		Defaults to "Success".
@@ -5835,6 +6089,7 @@ function Register-NxtPackage {
 		Defaults to $ProcessNTAccountSID defined in the PSADT Main script.
 	.PARAMETER LastErrorMessage
 		If set the message is written to the registry.
+		Defaults to the $global:LastErrorMessage.
 	.PARAMETER $UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
@@ -6043,20 +6298,23 @@ function Register-NxtPackage {
 function Remove-NxtDesktopShortcuts {
 	<#
 	.SYNOPSIS
-		By default: Removes the Shortcots defined under "CommonDesktopShortcutsToDelete" in the neo42PackageConfig.json from the common desktop.
+		Removes specified desktop shortcuts. By default, removes the shortcuts defined under "CommonDesktopShortcutsToDelete" in the neo42PackageConfig.json from the common desktop.
 	.DESCRIPTION
-		Is called after an installation/reinstallation if DESKTOPSHORTCUT=0 is defined in the Setup.cfg.
-		Is always called before the uninstallation.
+		This function is called to remove desktop shortcuts after an installation or reinstallation if DESKTOPSHORTCUT=0 is defined in the Setup.cfg. It is also called before the uninstallation process. The function supports the removal of specified shortcuts or defaults to common shortcuts to delete.
 	.PARAMETER DesktopShortcutsToDelete
-		A list of Desktopshortcuts that should be deleted.
+		A list of desktop shortcuts that should be deleted.
 		Defaults to the CommonDesktopShortcutsToDelete value from the PackageConfig object.
 	.PARAMETER Desktop
-		Specifies the path to the Desktop (eg. $envCommonDesktop or $envUserDesktop).
+		Specifies the path to the desktop (e.g., $envCommonDesktop or $envUserDesktop).
 		Defaults to $envCommonDesktop defined in AppDeploymentToolkitMain.ps1.
 	.EXAMPLE
 		Remove-NxtDesktopShortcuts
+		This example removes the desktop shortcuts defined under "CommonDesktopShortcutsToDelete" in the neo42PackageConfig.json from the common desktop.
 	.EXAMPLE
 		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete "SomeUserShortcut.lnk" -Desktop "$envUserDesktop"
+		This example removes the specified "SomeUserShortcut.lnk" from the user desktop.
+	 .OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -6096,11 +6354,13 @@ function Remove-NxtEmptyFolder {
 	.SYNOPSIS
 		Removes only empty folders.
 	.DESCRIPTION
-		Removes folders only if they are empty and continues otherwise without any action.
+		This function is designed to remove folders if and only if they are empty. If the specified folder contains any files or other items, the function continues without taking any action.
 	.PARAMETER Path
-		Path to the empty folder to remove.
+		Specifies the path to the empty folder to remove.
+		This parameter is mandatory.
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
+		This example removes the specified empty folder located at "$installLocation\SomeEmptyFolder".
 	.OUTPUTS
 		none.
 	.LINK
@@ -6221,15 +6481,21 @@ Function Remove-NxtIniValue {
 #region Function Remove-NxtLocalGroup
 function Remove-NxtLocalGroup {
 	<#
+	.SYNOPSIS
+		Removes a specified local group from a computer.
 	.DESCRIPTION
-		Deletes a local group with the given name.
+		The Remove-NxtLocalGroup function deletes a local group with the given name on the specified computer or on the local computer if no computer name is provided.
+		Returns $true if the operation was successful, returns $false if the Group does not exist or if the operation failed.
 	.PARAMETER GroupName
-		Name of the group.
-	.PARAMETER Computername
-		Name of the Computer,
-		Defaults to $env:COMPUTERNAME.
+		Name of the group. This parameter is mandatory.
+	.PARAMETER ComputerName
+		Name of the computer where the local group should be removed. Defaults to the local computer name ($env:COMPUTERNAME).
 	.EXAMPLE
 		Remove-NxtLocalGroup -GroupName "TestGroup"
+		Removes the local group named "TestGroup" from the local computer.
+	.EXAMPLE
+		Remove-NxtLocalGroup -GroupName "TestGroup" -ComputerName "Server01"
+		Removes the local group named "TestGroup" from the remote computer named "Server01".
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -6273,25 +6539,26 @@ function Remove-NxtLocalGroup {
 #region Function Remove-NxtLocalGroupMember
 function Remove-NxtLocalGroupMember {
 	<#
+	.SYNOPSIS
+		Removes a specific member or a type of member from a local group on a computer.
 	.DESCRIPTION
-		Removes a single member or a type of member from the given group by name.
-		Returns the amount of members removed.
-		Returns $null if the group(s) could not be found.
+		The Remove-NxtLocalGroupMember cmdlet removes a specific member, all users, all groups, or all members from a given group by name. It provides flexibility in defining the type of members to be removed. Returns the number of members removed.
+		If the specified group is not found, the function will return $null.
 	.PARAMETER GroupName
-		Name of the Group to remove Members from.
+		Name of the Group from which to remove Members.
+		This parameter is mandatory.
 	.PARAMETER MemberName
-		Name of the member to remove.
-	.PARAMETER Users
-		If defined all users are removed.
-	.PARAMETER Groups
-		If defined all groups are removed.
+		Name of the specific member to remove.
+	.PARAMETER AllUsers
+		If this switch is defined, all users will be removed from the specified GroupName.
+	.PARAMETER AllGroups
+		If this switch is defined, all groups will be removed from the specified GroupName.
 	.PARAMETER AllMember
-		If defined all members are removed.
-	.PARAMETER Computername
-		Name of the Computer,
-		Defaults to $env:COMPUTERNAME.
+		If this switch is defined, all members will be removed from the specified GroupName.
+	.PARAMETER COMPUTERNAME
+		Name of the Computer where the group resides. Defaults to the value of $env:COMPUTERNAME.
 	.EXAMPLE
-		Remove-NxtLocalGroupMember -GroupName "Users" -All
+		Remove-NxtLocalGroupMember -GroupName "Users" -AllMember
 	.EXAMPLE
 		Remove-NxtLocalGroupMember -GroupName "Administrators" -MemberName "Dummy"
 	.OUTPUTS
@@ -6382,17 +6649,22 @@ function Remove-NxtLocalGroupMember {
 #region Function Remove-NxtLocalUser
 function Remove-NxtLocalUser {
 	<#
+	.SYNOPSIS
+		Deletes a local user account by its username on a specified computer.
 	.DESCRIPTION
-		Deletes a local group by name.
+		The Remove-NxtLocalUser cmdlet deletes a local user account from a computer. It first checks if the user exists and then proceeds to delete the account. If the user is not found or the deletion is unsuccessful, the operation returns $false.
 	.PARAMETER UserName
-		Name of the user.
-	.PARAMETER Computername
-		Name of the Computer,
-		Defaults to $env:COMPUTERNAME.
+		Name of the user account to delete.
+		This parameter is mandatory.
+	.PARAMETER COMPUTERNAME
+		Name of the computer where the user account resides. Defaults to the value of $env:COMPUTERNAME.
 	.EXAMPLE
 		Remove-NxtLocalUser -UserName "Test"
+	.EXAMPLE
+		Remove-NxtLocalUser -UserName "JohnDoe" -COMPUTERNAME "Server01"
 	.OUTPUTS
 		System.Boolean.
+		Returns $true if the operation was successful, otherwise returns $false.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -6434,12 +6706,16 @@ function Remove-NxtLocalUser {
 #region Function Remove-NxtProcessEnvironmentVariable
 function Remove-NxtProcessEnvironmentVariable {
 	<#
+	.SYNOPSIS
+		This function removes a specified process environment variable from the current session.
 	.DESCRIPTION
-		Deletes a process environment variable.
+		The Remove-NxtProcessEnvironmentVariable function deletes a process environment variable based on the provided key.
 	.PARAMETER Key
-		Key of the variable.
+		Specifies the key of the environment variable you want to remove.
+		This parameter is mandatory.
 	.EXAMPLE
-		Remove-NxtProcessEnvironmentVariable "Test"
+		Remove-NxtProcessEnvironmentVariable -Key "TestVariable"
+		This example will remove the process environment variable with the key "TestVariable" from the current session.
 	.OUTPUTS
 		none.
 	.LINK
@@ -6475,26 +6751,31 @@ function Remove-NxtProductMember {
 	.SYNOPSIS
 		Removes an installed and registered product member application package.
 	.DESCRIPTION
-		Removes an application package assigned to a product if the assigned application package is registered and installed only.
-		Uses the value 'ProductGUID' in registry sub keys (installed application packages) under 'RegPackagesKey' to detect if an application package is a product member.
+		The Remove-NxtProductMember function is used for removing application packages that are registered and installed, 
+		and are members of a specific product identified by a ProductGUID. 
+		The function uses registry entries under the specified 'RegPackagesKey' to identify which application packages are 
+		members of the product.
 	.PARAMETER ProductGUID
-		Specifies a membership GUID for a product of an application package.
-		Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership.
+		Specifies the membership GUID for identifying the product to which an application package belongs. 
+		It can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>".
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RemovePackagesWithSameProductGUID
-		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
-		The uninstalled application packages stay registered, when removed during installation process of current application package.
+		Specifies whether to uninstall all application packages that have the same ProductGUID.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
-		Specifies the registry key name used for the packages wrapper uninstall entry.
+		Specifies the registry key name used for the package's wrapper uninstall entry.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegPackagesKey
-		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
+		Defines the registry key under which all packages are tracked by this packaging framework.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Remove-NxtProductMember
+		This example removes the installed and registered product member application packages based on the global configuration.
 	.EXAMPLE
 		Remove-NxtProductMember -ProductGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}" -PackageGUID "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
+		In this example, the function will remove the application packages with the specified ProductGUID and PackageGUID.
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -6556,12 +6837,15 @@ function Remove-NxtProductMember {
 #region Function Remove-NxtSystemEnvironmentVariable
 function Remove-NxtSystemEnvironmentVariable {
 	<#
+	.SYNOPSIS
+		This function removes a specified system environment variable.
 	.DESCRIPTION
-		Deletes a system environment variable.
+		The Remove-NxtSystemEnvironmentVariable function deletes a system environment variable based on the given key. It uses .NET framework methods to perform the operation.
 	.PARAMETER Key
-		Key of the variable.
+		The name of the system environment variable you want to remove. This parameter is mandatory.
 	.EXAMPLE
-		Remove-NxtSystemEnvironmentVariable "Test"
+		Remove-NxtSystemEnvironmentVariable -Key "MyEnvironmentVariable"
+		This example removes the system environment variable named "MyEnvironmentVariable".
 	.OUTPUTS
 		none.
 	.LINK
@@ -6595,10 +6879,9 @@ function Remove-NxtSystemEnvironmentVariable {
 function Repair-NxtApplication {
 	<#
 	.SYNOPSIS
-		Defines the required steps to repair an MSI based application.
+		Repairs an MSI-based application by executing the necessary steps.
 	.DESCRIPTION
-		Is only called in the Main function and should not be modified!
-		To customize the script always use the "CustomXXXX" entry points.
+		The Repair-NxtApplication function is designed to perform repair operations on an MSI-based application. It uses the MSI product code to identify the application to repair.
 	.PARAMETER AppName
         Specifies the Application Name used in the registry etc.
         Defaults to the corresponding value from the PackageConfig object.
@@ -6644,7 +6927,13 @@ function Repair-NxtApplication {
 		Defines a list of reboot exit codes for all exit codes that will be accepted for reboot by called setup execution.
 		Defaults to $global:PackageConfig.AcceptedInstallRebootCodes.
 	.EXAMPLE
-		Repair-NxtApplication
+	Repair-NxtApplication -UninstallKey "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
+		This example repairs an application based on its specific uninstall registry key.
+	.EXAMPLE
+	Repair-NxtApplication -UninstallKey "My Application" -UninstallKeyIsDisplayName $true
+		This example repairs an application based on its display name by setting UninstallKeyIsDisplayName to $true.
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -6777,16 +7066,25 @@ function Repair-NxtApplication {
 #region Function Resolve-NxtDependentPackage
 function Resolve-NxtDependentPackage {
 	<#
+	.SYNOPSIS
+		Resolves the installation status of dependent packages and performs actions based on their desired states.
 	.DESCRIPTION
-		Checks if depentent packages are (not) installed and updates the status of the packages accordingly.
+		The Resolve-NxtDependentPackage function checks if the specified dependent packages are installed or not. 
+		Based on their actual and desired states, it takes actions such as uninstalling or logging warnings.
+		This function can operate using global package configuration or explicit parameter values.
 	.PARAMETER DependentPackages
-		Defines a (list of) dependent package(s) to check.
+		An array of dependent packages to be checked.
+		Requires a hash table with the following keys: GUID, DesiredState, OnConflict(Continue|Warn|Uninstall|Fail), ErrorMessage.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegPackagesKey
-		Defines the Name of the Registry Key keeping track of all Packages delivered by this Packaging Framework.
+		The name of the Registry Key where all the packages are tracked.
 		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
-		Resolve-NxtDependentPackages -DependentPackages "$($global:PackageConfig.DependentPackages)"
+		Resolve-NxtDependentPackages -DependentPackages $global:PackageConfig.DependentPackages
+		This example resolves the installation status of dependent packages using the global package configuration.
+	.EXAMPLE
+		Resolve-NxtDependentPackage -DependentPackages @(@{GUID = "{042XXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}";Errormessage = "abc missing"; DesiredState = "Present"; OnConflict = "Fail"})
+		This example resolves the installation status of a dependent package with the specified GUID and desired state.
 	.OUTPUTS
 		PSADTNXT.ResolvedPackagesResult
 	.LINK
@@ -6889,19 +7187,24 @@ function Resolve-NxtDependentPackage {
 function Set-NxtCustomSetupCfg {
 	<#
 	.SYNOPSIS
-		Set the contents from CustomSetup.cfg to $global:CustomSetupCfg.
+		Sets the contents of the CustomSetup.cfg file to the global variable $global:CustomSetupCfg.
 	.DESCRIPTION
-		Imports a CustomSetup.cfg file in INI format.
+		This function imports the settings from a CustomSetup.cfg file, which should be in INI format, into the global PowerShell variable $global:CustomSetupCfg.
 	.PARAMETER Path
-		The path to the CustomSetup.cfg file (including file name).
+		The full path to the CustomSetup.cfg file that you wish to import. This includes both the directory path and the file name.
+		This parameter is mandatory.
 	.PARAMETER ContinueOnError
-		Continue if an error is encountered. Default is: $true.
+		Determines whether the function will continue to execute if an error is encountered.
+		The default value is $true.
 	.EXAMPLE
-		Set-NxtCustomSetupCfg -Path C:\path\to\customsetupcfg\CustomSetup.cfg -ContinueOnError $false
+		Set-NxtCustomSetupCfg -Path "C:\path\to\customsetupcfg\CustomSetup.cfg" -ContinueOnError $false
+		This example shows how to specify the path to the CustomSetup.cfg file and instructs the function to halt on any error.
 	.NOTES
-		AppDeployToolkit is required in order to run this function.
+		The PSAppDeployToolkit is required to run this function.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
+	.OUTPUTS
+		System.Boolean
 	#>
 	[CmdletBinding()]
 	Param (
@@ -7077,23 +7380,28 @@ function Set-NxtFolderPermissions {
 function Set-NxtIniValue {
 	<#
 	.SYNOPSIS
-		Opens or creates an INI file and sets the value of the specified section and key.
+		Modifies or creates a specified INI file to set the value of a given section and key.
+
 	.DESCRIPTION
-		Opens or creates an INI file and sets the value of the specified section and key.
+		The Set-NxtIniValue function is used for opening or creating an INI file and setting the value for a specific section and key. The function has options to continue on errors and to create the file if it doesn't exist. The file, section, key, and value parameters are mandatory for the function to execute properly.
 	.PARAMETER FilePath
-		Path to the INI file.
+		Path to the INI file you wish to modify or create. This parameter is mandatory.
 	.PARAMETER Section
-		Section within the INI file.
+		Specifies the section within the INI file that you wish to modify or add. This parameter is mandatory.
 	.PARAMETER Key
-		Key within the section of the INI file.
+		Specifies the key within the selected section of the INI file that you wish to modify or add. This parameter is mandatory.
 	.PARAMETER Value
-		Value for the key within the section of the INI file. To remove a value, set this variable to $null.
+		The value to be assigned to the specified key within the selected section of the INI file. To remove a value, set this parameter to $null. This parameter is mandatory.
 	.PARAMETER ContinueOnError
-		Continue if an error is encountered. Default is: $true.
+		Boolean flag to continue executing the script even if an error is encountered. Default is: $true.
 	.PARAMETER Create
-		Creates the file if it does not exist. Default is: $true.
+		Boolean flag that determines whether or not to create the INI file if it does not already exist. Default is: $true.
 	.EXAMPLE
-		Set-NxtIniValue -FilePath "$envProgramFilesX86\IBM\Notes\notes.ini" -Section 'Notes' -Key 'KeyFileName' -Value 'MyFile.ID'
+		Set-NxtIniValue -FilePath "C:\ProgramFiles\Example\config.ini" -Section "General" -Key "LogLevel" -Value "Verbose"
+		This example sets the value of "LogLevel" under the "General" section in the config.ini file to "Verbose".
+	.EXAMPLE
+		Set-NxtIniValue -FilePath "C:\ProgramFiles\Example\config.ini" -Section "Network" -Key "Port" -Value 8080 -Create $true
+		This example sets the value of "Port" under the "Network" section in the config.ini file to 8080 and creates the file if it doesn't exist.
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -7151,41 +7459,45 @@ function Set-NxtIniValue {
 function Set-NxtPackageArchitecture {
 	<#
 	.SYNOPSIS
-		Sets variables depending on the $appArch value and the system architecture.
+		Sets variables based on the application and system architecture.
 	.DESCRIPTION
-		Sets variables (e.g. $ProgramFilesDir[x86], $CommonFilesDir[x86], $System, $Wow6432Node) that are depending on the $appArch (x86, x64 or *) value and the system architecture (AMD64 or x86).
+		This function sets various system variables based on the application architecture (AppArch) and the processor architecture. 
+		The variables set can include $ProgramFilesDir, $ProgramFilesDirx86, $System, $Wow6432Node, and others. 
+		It can adapt to x86, x64, and wildcard (*) AppArch settings.
 	.PARAMETER AppArch
-		Defines the Application Architecture (x86/x64/*)
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the architecture of the application. Valid options are x86, x64, and *.
 	.PARAMETER PROCESSOR_ARCHITECTURE
-		The processor architecture of the system.
-		Defaults to $env:PROCESSOR_ARCHITECTURE.
+		Specifies the processor architecture of the system.
+		Defaults to the system's $env:PROCESSOR_ARCHITECTURE.
 	.PARAMETER ProgramFiles
-		The environment variable for the Program Files directory on the system.
-		Defaults to $env:ProgramFiles.
+		Specifies the Program Files directory.
+		Defaults to the system's $env:ProgramFiles.
 	.PARAMETER ProgramFiles(x86)
-		The environment variable for the Program Files (x86) directory on the system.
-		Defaults to $env:ProgramFiles(x86).
+		Specifies the Program Files (x86) directory.
+		Defaults to the system's $env:ProgramFiles(x86).
 	.PARAMETER CommonProgramFiles
-		The environment variable for the Common Program Files directory on the system.
-		Defaults to $env:CommonProgramFiles.
+		Specifies the Common Program Files directory.
+		Defaults to the system's $env:CommonProgramFiles.
 	.PARAMETER CommonProgramFiles(x86)
-		The environment variable for the Common Program Files (x86) directory on the system.
-		Defaults to $env:CommonProgramFiles(x86).
+		Specifies the Common Program Files (x86) directory.
+		Defaults to the system's $env:CommonProgramFiles(x86).
 	.PARAMETER SystemRoot
-		The environment variable for the root directory of the system.
-		Defaults to $env:SystemRoot.
-	.PARAMETER deployAppScriptFriendlyName
-		The friendly name of the script used for deploying applications.
+		Specifies the system root directory.
+		Defaults to the system's $env:SystemRoot.
+	.PARAMETER DeployAppScriptFriendlyName
+		Specifies the friendly name of the script used for deploying applications.
 		Defaults to $deployAppScriptFriendlyName definded in the DeployApplication.ps1.
 	.EXAMPLE
 		Set-NxtPackageArchitecture -AppArch "x64"
-	.NOTES
-		Should be executed during package Initialization only.
-	.PARAMETER AppArch
-		Provide the AppArchitecture.
+		Sets the architecture-specific variables based on a 64-bit application.
+	.EXAMPLE
+		Set-NxtPackageArchitecture -AppArch "x86" -ProgramFiles "C:\Program Files"
+		Sets the architecture-specific variables for a 32-bit application and explicitly specifies the Program Files directory.
 	.OUTPUTS
 		System.Int32.
+		Returns the function's exit code as an integer.
+	.NOTES
+		This function is intended to be executed during package initialization only.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -7291,16 +7603,23 @@ function Set-NxtPackageArchitecture {
 #region Function Set-NxtProcessEnvironmentVariable
 function Set-NxtProcessEnvironmentVariable {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Sets a process environment variable.
+	.DESCRIPTION
+		This function sets an environment variable for the current PowerShell process. The variable will be accessible only for the duration of the process in which it was set.
 	.PARAMETER Key
-		Key of the variable.
+		The key name of the environment variable.
+		This parameter is mandatory.
 	.PARAMETER Value
-		Value of the variable.
+		The value to be assigned to the environment variable.
+		This parameter is mandatory.
 	.EXAMPLE
 		Set-NxtProcessEnvironmentVariable -Key "Test" -Value "Hello world"
+		Sets an environment variable with key "Test" and value "Hello world" for the current process.
 	.OUTPUTS
 		none.
+	.NOTES
+		This function sets the variable for the current process only. The variable will not persist after the process terminates.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -7399,17 +7718,23 @@ function Set-NxtRebootVariable {
 function Set-NxtSetupCfg {
 	<#
 	.SYNOPSIS
-		Set the contents from Setup.cfg to $global:SetupCfg.
+		Imports and sets the global configuration for a setup process from an INI file named Setup.cfg.
 	.DESCRIPTION
-		Imports a Setup.cfg file in INI format.
+		The Set-NxtSetupCfg function is designed to import configuration settings from an INI file, Setup.cfg, and store it into a global variable, $global:SetupCfg. It offers options to include default settings from the AppDeployToolkit (ADT) framework and continue running even when errors occur.
 	.PARAMETER Path
-		The path to the Setup.cfg file (including file name).
+		The full path to the Setup.cfg file you want to import. This parameter is mandatory.
 	.PARAMETER AddDefaultOptions
-		Specifies to load all necessary option values from ADT framework config file if they are missing/undefined in provided config file in parameter 'Path'. Default is: $true.
+		If set to $true, the function will also load all necessary default settings from the ADT framework configuration file if they are missing or undefined in the specified Setup.cfg file. The default value is $true.
 	.PARAMETER ContinueOnError
-		Continue if an error is encountered. Default is: $true.
+		If set to $true, the function will continue running even when an error occurs during the import process. The default value is $true.
 	.EXAMPLE
-		Set-NxtSetupCfg -Path C:\path\to\setupcfg\setup.cfg -ContinueOnError $false
+		Set-NxtSetupCfg -Path "C:\path\to\setupcfg\setup.cfg"
+		Imports the Setup.cfg file from the specified path and uses the default settings for 'AddDefaultOptions' and 'ContinueOnError'.
+	.EXAMPLE
+		Set-NxtSetupCfg -Path "C:\path\to\setupcfg\setup.cfg" -AddDefaultOptions $false -ContinueOnError $false
+		Imports the Setup.cfg file from the specified path but does not use any default settings from the PSADT framework and stops if an error occurs.
+	.OUTPUTS
+		none.
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -7512,25 +7837,26 @@ function Set-NxtSystemEnvironmentVariable {
 function Set-NxtXmlNode {
 	<#
 	.SYNOPSIS
-		Sets an existing node or creates a new one.
+		Sets or creates an XML node in a specified XML file.
 	.DESCRIPTION
-		Sets an existing node or creates a new one. If the node already exists, the value and attributes are updated. If the node does not exist, it is created. Does not support namespaces.
+		The Set-NxtXmlNode function is used for setting the value and attributes of an existing XML node or creating a new one in a given XML file. The function takes parameters for the file path, node path, attributes, filter attributes, and inner text. If the node already exists, its value and attributes are updated based on the input parameters. If the node doesn't exist, it is created with the specified attributes and inner text.
 	.PARAMETER FilePath
-		The path to the xml file
+		The path to the XML file.
+		This parameter is mandatory.
 	.PARAMETER NodePath
-		The path to the node to write to
+		The XPath expression specifying the location of the node within the XML document. This parameter is mandatory.
 	.PARAMETER Attributes
-		The attributes to write to
+		A hashtable containing attributes to set or add to the XML node.
 	.PARAMETER FilterAttributes
-		The attributes to filter on
+		A hashtable containing attributes to filter the XML node to be updated.
 	.PARAMETER InnerText
-		The value to write to the node
+		The text to set as the value of the XML node.
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
-		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to NewValue2 and adds the attribute name="NewNode2".
+		Sets the value of the node located at /RootNode/Settings/Settings2/SubSubSetting3 to "NewValue2" and adds the attribute name="NewNode2".
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -InnerText "NewValue2"
-		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to NewValue2.
+		Sets the value of the node located at /RootNode/Settings/Settings2/SubSubSetting3 to "NewValue2", without altering or adding any attributes.
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -InnerText [string]::Empty
 		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to an empty string.
@@ -7545,7 +7871,9 @@ function Set-NxtXmlNode {
 		Sets the value of the node /RootNode/Settings/Settings2/SubSubSetting3 to NewValue2 and adds the attribute Id="NodeID" if the node has the attribute name="NewNode2".
 	.OUTPUTS
 		none.
-  	.LINK
+	.NOTES
+		This function does not support XML namespaces.
+	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
@@ -7664,7 +7992,7 @@ Function Show-NxtInstallationWelcome {
     .PARAMETER MinimizeWindows
     	Specifies whether to minimize other windows when displaying prompt. Defaults to the corresponding value 'MINIMIZEALLWINDOWS' from the Setup.cfg.
     .PARAMETER TopMost
-    	Specifies whether the window is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
+    	Specifies whether the windows is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
     .PARAMETER ForceCountdown
     	Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
     .PARAMETER CustomText
@@ -7717,6 +8045,9 @@ Function Show-NxtInstallationWelcome {
 	.EXAMPLE
 		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "excel"},[pscustomobject]@{Name = "winword"}) -UserCanCloseAll -UserCanAbort
 		Prompt the user to close Word and Excel. The user can close all applications or abort the installation.
+	.OUTPUTS
+		System.Int32.
+		Exit code depending on the user's response or the timeout.
 	.NOTES
 		The code of this function is mainly adopted from the PSAppDeployToolkit Show-InstallationWelcome function licensed under the LGPLv3.
     .LINK
@@ -8461,7 +8792,6 @@ Function Show-NxtWelcomePrompt {
     }
 }
 #endregion
-
 #region Function Stop-NxtProcess
 function Stop-NxtProcess {
 	<#
