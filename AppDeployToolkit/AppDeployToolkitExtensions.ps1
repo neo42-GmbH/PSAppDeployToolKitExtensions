@@ -4894,11 +4894,10 @@ function Initialize-NxtAppFolder {
 					Set-NxtFolderPermissions -Path $absolutAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
 				}
 			}
-
 			## Remove the $App folder, sanitize the path and create it again.
 			if ($true -eq (Test-Path -Path $absoluteAppPath)) {
 				Write-Log -Message "App '$absoluteAppPath' already exists. Removing it..." -Source ${CmdletName}
-				Remove-Folder -Path $absoluteAppPath
+				Remove-Folder -Path $absoluteAppPath -ContinueOnError $false
 			}
 		}
 		else {
