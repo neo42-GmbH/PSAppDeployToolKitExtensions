@@ -4824,10 +4824,11 @@ function Initialize-NxtAppFolder {
 	}
 	Process {
 		## Resolve possible relative segments in the paths 
-		[string]$absolutAppPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($App)).FullName)
+		[string]$absoluteAppPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($App)).FullName)
 		[string]$absolutAppRootFolderPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($AppRootFolder)).FullName)
-		if ($ScriptRoot -eq $absolutAppPath) {
-			Write-Log "Executing from `$App Folder, skip appfolder initialization" -Source ${CmdletName}
+		## Test if $ScriptRoot is a subpath of $absoluteAppPath
+		if ($ScriptRoot.StartsWith($absoluteAppPath, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+			Write-Log -Message "Executing from within `$App Folder, skip appfolder initialization" -Source ${CmdletName}
 			return
 		}
 		## Ensure that $absolutAppRootFolderPath is a valid path
@@ -4835,21 +4836,21 @@ function Initialize-NxtAppFolder {
 			Write-Log -Message "$absolutAppRootFolderPath is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
 			throw "AppRootFolder is not set correctly. Please check your PackageConfig"
 		}
-		## Ensure that $absolutAppRootFolderPath is not $absolutAppPath
-		if($absolutAppRootFolderPath -ieq $absolutAppPath) {
-			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' is the same as '$absolutAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-			throw "AppRootFolder '$absolutAppRootFolderPath' is the same as '$absolutAppPath'. Please check your PackageConfig.json"
+		## Ensure that $absolutAppRootFolderPath is not $absoluteAppPath
+		if($absolutAppRootFolderPath -ieq $absoluteAppPath) {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' is the same as '$absoluteAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "AppRootFolder '$absolutAppRootFolderPath' is the same as '$absoluteAppPath'. Please check your PackageConfig.json"
 		}
-		## Ensure that $absolutAppRootFolderPath is a parent of $absolutAppPath
-		if ($false -eq $absolutAppPath.StartsWith($absolutAppRootFolderPath, [System.StringComparison]::InvariantCultureIgnoreCase)) {
-			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' is not a parent of '$absolutAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-			throw "AppRootFolder '$absolutAppRootFolderPath' is not a parent of '$absolutAppPath'. Please check your PackageConfig.json"
+		## Ensure that $absolutAppRootFolderPath is a parent of $absoluteAppPath
+		if ($false -eq $absoluteAppPath.StartsWith($absolutAppRootFolderPath, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' is not a parent of '$absoluteAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
+			throw "AppRootFolder '$absolutAppRootFolderPath' is not a parent of '$absoluteAppPath'. Please check your PackageConfig.json"
 		}
 		if ($true -eq (Test-Path -Path $absolutAppRootFolderPath)) {
 			Write-Log -Message "AppRootFolder '$absolutAppRootFolderPath' already exists. Checking for permissions along the `$App path" -Source ${CmdletName}
 			[bool]$permissionResetRequired = $false
 			[string]$tempBasePath = $absolutAppRootFolderPath
-			[string]$tempTailPath = ($absolutAppPath -replace "(?i)$([regex]::Escape($tempBasePath))","").Trim("\")
+			[string]$tempTailPath = ($absoluteAppPath -replace "(?i)$([regex]::Escape($tempBasePath))","").Trim("\")
 			[hashtable]$testFolderPermissionSplat = @{
 				Path = $tempBasePath
 				FullControlPermissions = @(
@@ -4895,9 +4896,9 @@ function Initialize-NxtAppFolder {
 			}
 
 			## Remove the $App folder, sanitize the path and create it again.
-			if ($true -eq (Test-Path -Path $absolutAppPath)) {
-				Write-Log -Message "App '$absolutAppPath' already exists. Removing it..." -Source ${CmdletName}
-				Remove-Folder -Path $absolutAppPath
+			if ($true -eq (Test-Path -Path $absoluteAppPath)) {
+				Write-Log -Message "App '$absoluteAppPath' already exists. Removing it..." -Source ${CmdletName}
+				Remove-Folder -Path $absoluteAppPath
 			}
 		}
 		else {
@@ -4985,6 +4986,7 @@ function Initialize-NxtEnvironment {
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
+			Write-Log -Message "Initializing environment with Approotfolder '$AppRootFolder' and App '$App' ScriptRoot '$ScriptRoot'..." -Source ${cmdletName}
 			Initialize-NxtAppFolder -AppRootFolder $AppRootFolder -App $App -ScriptRoot $ScriptRoot
 			if ($DeploymentType -eq "Install") {
 				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
