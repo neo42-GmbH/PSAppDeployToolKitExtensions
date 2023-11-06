@@ -8214,7 +8214,7 @@ Function Show-NxtInstallationWelcome {
 				else {
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
 						ProcessName        = $AskKillProcessApp.Name
-						ProcessDescription = ''
+						ProcessDescription = $AskKillProcessApp.Description
 						IsWql				= $false
 					}
 				}
