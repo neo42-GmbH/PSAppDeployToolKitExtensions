@@ -53,6 +53,74 @@ function Add-ContentBeforeTag {
     $content = $content.Insert($StartIndex, $ContentToInsert)
     return $content
 }
+#region Function Import-NxtIniFileWithComments
+function Import-NxtIniFileWithComments {
+    <#
+	.SYNOPSIS
+		Imports an INI file into Powershell Object.
+	.DESCRIPTION
+		Imports an INI file into Powershell Object.
+	.PARAMETER Path
+		The path to the INI file.
+	.PARAMETER ContinueOnError
+		Continue on error.
+	.EXAMPLE
+		Import-NxtIniFileWithComments -Path C:\path\to\ini\file.ini
+	.NOTES
+		AppDeployToolkit is required in order to run this function.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+    [CmdletBinding()]
+    Param (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [String]
+        $Path,
+        [Parameter(Mandatory = $false)]
+        [bool]
+        $ContinueOnError = $true
+    )
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			[hashtable]$ini = @{}
+			[string]$section = 'default'
+			[array]$commentBuffer = @()
+			[Array]$content = Get-Content -Path $Path
+			foreach ($line in $content) {
+				if ($line -match '^\[(.+)\]$') {
+					[string]$section = $matches[1]
+					if (!$ini.ContainsKey($section)) {
+						[hashtable]$ini[$section] = @{}
+					}
+				}
+				elseif ($line -match '^(;|#)\s*(.*)') {
+					[array]$commentBuffer += $matches[2].trim("; ")
+				}
+				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
+					[string]$variableName = $matches[1]
+					[string]$value = $matches[2].Trim()
+					[hashtable]$ini[$section][$variableName] = @{
+						Value    = $value.trim()
+						Comments = $commentBuffer -join "`r`n"
+					}
+					[array]$commentBuffer = @()
+				}
+			}
+			Write-Output $ini
+		}
+		catch {
+			if (-not $ContinueOnError) {
+				throw "Failed to read ini file [$path]: $($_.Exception.Message)"
+			}
+		}
+	}
+    End {}
+}
+#endregion
 function Update-NxtPSAdtPackage {
     param(
         [Parameter(Mandatory=$true)]
@@ -221,6 +289,7 @@ function Update-NxtPSAdtPackage {
     Copy-Item -Path "$LatestVersionPath\AppDeployToolkit" -Destination $PackageToUpdatePath -Recurse -Force
     ## insert an updated validation file to destination
     Copy-Item -Path "$LatestVersionPath\neo42PackageConfigValidationRules.json" -Destination "$PackageToUpdatePath\neo42PackageConfigValidationRules.json" -Force
+    Copy-Item -Path "$LatestVersionPath\DeployNxtApplication.exe" -Destination "$PackageToUpdatePath\DeployNxtApplication.exe" -Force
 
             #also update packageconfig.json so it contains all default values
             ## remove entries: "AcceptedRepairExitCodes" and "AcceptedMSIRepairExitCodes" (just to be sure!)
@@ -308,6 +377,32 @@ function Update-NxtPSAdtPackage {
             if ($true -eq $contentChanged) {
                 Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
                 [bool]$contentChanged = $false
+            }
+            ## check setup.cfg default parameters
+            [bool]$missingIniValues = $true
+            while ($true -eq $missingIniValues) {
+                [psobject]$iniToUpdate=Import-NxtIniFileWithComments -Path "$PackageToUpdatePath\setup.cfg"
+                [psobject]$iniLatest=Import-NxtIniFileWithComments -Path "$LatestVersionPath\setup.cfg"
+                [bool]$missingIniValues = $false
+                foreach ($section in $iniLatest.Keys) {
+                    foreach ($key in $iniLatest.$section.Keys) {
+                        if ($null -eq $iniToUpdate.$section.$key) {
+                            Write-Warning "Missing key $key in section $section in $PackageToUpdatePath\setup.cfg, Please Add:"
+                            foreach ($comment in $iniLatest.$section.$key.Comments) {
+                                Write-Output ";$comment"
+                            }
+                            Write-Output "$key=$($iniLatest.$section.$key.Value)"
+                            [bool]$missingIniValues = $true
+                        }
+                    }
+                }
+                if ($true -eq $missingIniValues) {
+                    Write-Warning "Please add the missing values to $PackageToUpdatePath\setup.cfg"
+                    Write-Output "Press Enter to open $PackageToUpdatePath\setup.cfg in notepad or CTRL+C to exit"
+                    Read-Host
+                    notepad.exe "$PackageToUpdatePath\setup.cfg"
+                    Read-Host "Press to check again or CTRL+C to exit"
+                }
             }
         }
         catch {
