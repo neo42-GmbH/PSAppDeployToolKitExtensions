@@ -13,12 +13,9 @@ Describe "Add-NxtContent" {
         }
 
         It "Should create a new file with correct encoding" {
-            # Create file
             Add-NxtContent -Path $filePath -Value $content -Encoding "UTF8"
 
-            # Test content and file existence
             Get-Content $filePath | Should -Be $content
-            # Test correct encoding
             Get-NxtFileEncoding -Path $filePath | Should -Be "UTF8withBOM"
         }
     }
@@ -35,8 +32,6 @@ Describe "Add-NxtContent" {
 
         It "Should append to the file" {
             Add-NxtContent -Path $filePath -Value "This is a new line." -Encoding "UTF8"
-
-            # Test content and file existence
             Get-Content $filePath -Raw | Should -BeLike "This is a test file.`r`nThis is a new line.`r`n"
         }
     }
@@ -55,23 +50,6 @@ Describe "Add-NxtContent" {
             }
             catch {}
             Test-Path $PSScriptRoot\invalid\test.txt | Should -Be $false
-        }
-    }
-    Context "When encoding cannot be determined" -Skip {
-        BeforeEach {
-            $filePath = "$PSScriptRoot\test.txt"
-            $content = "This is a test file."
-            New-Item -Path $filePath -ItemType File -Value $content
-        }
-        AfterEach {
-            if ("$PSScriptRoot\test.txt") {
-                Remove-Item "$PSScriptRoot\test.txt"
-            }
-        }
-        It "Should use default encoding" {
-            Mock Get-NxtFileEncoding { return $null }
-            Add-NxtContent -Path $filePath -Value "This is a test file." -DefaultEncoding "UTF8"
-            Get-NxtFileEncoding -Path $filePath | Should -Be "UTF8withBOM"
         }
     }
     Context "When specificing multiple related parameters" {
