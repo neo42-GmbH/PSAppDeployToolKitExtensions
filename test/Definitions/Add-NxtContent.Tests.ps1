@@ -49,7 +49,7 @@ Describe "Add-NxtContent" {
                 Add-NxtContent -Path $PSScriptRoot\invalid\test.txt -Value "This is a test file."
             }
             catch {}
-            Test-Path $PSScriptRoot\invalid\test.txt | Should -Be $false
+            Test-Path $PSScriptRoot\invalid | Should -Be $false
         }
     }
     Context "When specificing multiple related parameters" {
@@ -62,6 +62,18 @@ Describe "Add-NxtContent" {
         It "Should use Encoding instead of DefaultEncoding" {
             Add-NxtContent -Path "$PSScriptRoot\test.txt" -Value "This is a test file." -Encoding "UTF8" -DefaultEncoding "UTF7"
             Get-NxtFileEncoding -Path "$PSScriptRoot\test.txt" | Should -Be "UTF8withBOM"
+        }
+    }
+    Context "When entering special inputs" {
+        AfterEach {
+            if ("$PSScriptRoot\test.txt") {
+                Remove-Item "$PSScriptRoot\test.txt"
+            }
+        }
+
+        It "Should " {
+            Add-NxtContent -Path "$PSScriptRoot\test.txt" -Value "🚀"
+            Get-Content "$PSScriptRoot\test.txt" -Raw | Should -Be "🚀`r`n"
         }
     }
 }
