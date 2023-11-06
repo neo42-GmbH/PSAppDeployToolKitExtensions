@@ -5277,24 +5277,27 @@ function Initialize-NxtEnvironment {
 		[string]$global:DeploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
 		Expand-NxtPackageConfig
 		Format-NxtPackageSpecificVariables
-		switch ($SetupCfg.Options.ShowBalloonNotifications) {
-			"0"	{
-				[bool]$script:configShowBalloonNotifications = $false
-				Write-Log -Message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
-			}
-			"1" {
-				[bool]$script:configShowBalloonNotifications = $true
-				Write-Log -Message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
-			}
-			"2" {
-				## Use ShowBalloonNotifications setting from XML config
-			}
-			default {
-				if ($false -eq [string]::IsNullOrEmpty($SetupCfg.Options.ShowBalloonNotifications)) {
-					throw "Not supported value detected for option 'SHOWBALLOONNOTIFICATIONS' while reading setting from setup.cfg"
+		## In Userpart deployments we don't want to show Balloon Notifications.
+		if ($DeploymentType -notlike "*Userpart*") {
+			switch ($SetupCfg.Options.ShowBalloonNotifications) {
+				"0"	{
+					[bool]$script:configShowBalloonNotifications = $false
+					Write-Log -Message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications deactivated" -Source ${CmdletName}
+				}
+				"1" {
+					[bool]$script:configShowBalloonNotifications = $true
+					Write-Log -Message "Overriding ShowBalloonNotifications setting from XML config: balloon notifications activated" -Source ${CmdletName}
+				}
+				"2" {
+					## Use ShowBalloonNotifications setting from XML config
+				}
+				default {
+					if ($false -eq [string]::IsNullOrEmpty($SetupCfg.Options.ShowBalloonNotifications)) {
+						throw "Not supported value detected for option 'SHOWBALLOONNOTIFICATIONS' while reading setting from setup.cfg"
+					}
 				}
 			}
-		}		
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
