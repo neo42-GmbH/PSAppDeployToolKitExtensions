@@ -385,7 +385,7 @@ function Update-NxtPSAdtPackage {
                 [psobject]$iniLatest=Import-NxtIniFileWithComments -Path "$LatestVersionPath\setup.cfg"
                 [bool]$missingIniValues = $false
                 foreach ($section in $iniLatest.Keys) {
-                    foreach ($key in $iniLatest.$section.Keys) {
+                    foreach ($key in ($iniLatest.$section.Keys|Where-Object {$_ -ne "DesktopShortcut"})) {
                         if ($null -eq $iniToUpdate.$section.$key) {
                             Write-Warning "Missing key $key in section $section in $PackageToUpdatePath\setup.cfg, Please Add:"
                             foreach ($comment in $iniLatest.$section.$key.Comments) {
