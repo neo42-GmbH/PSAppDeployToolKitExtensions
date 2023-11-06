@@ -72,8 +72,8 @@ Describe "Add-NxtContent" {
         }
 
         It "Should " {
-            Add-NxtContent -Path "$PSScriptRoot\test.txt" -Value "🚀"
-            Get-Content "$PSScriptRoot\test.txt" -Raw | Should -Be "🚀`r`n"
+            Add-NxtContent -Path "$PSScriptRoot\test.txt" -Value "🚀äß$"
+            Get-Content "$PSScriptRoot\test.txt" -Raw | Should -Be "🚀äß$`r`n"
         }
     }
 }
