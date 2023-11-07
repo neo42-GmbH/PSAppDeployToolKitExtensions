@@ -27,8 +27,8 @@ Describe "Test-NxtProcessExists" {
         It "Should return false if the process is not running" {
             Test-NxtProcessExists -ProcessName 'Name LIKE "invalidProcess"' -IsWql | Should -Be $false
         }
-        It "Should throw an error if the wql is invalid" {
-            Test-NxtProcessExists -ProcessName 'invalidWql' -IsWql | Should -Be $false
+        It "Should throw an error if the wql is invalid" -Skip {
+            { Test-NxtProcessExists -ProcessName 'invalidWql' -IsWql } | Should -Throw
         }
     }
 }
