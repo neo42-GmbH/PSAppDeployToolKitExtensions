@@ -6944,6 +6944,9 @@ function Repair-NxtApplication {
 	.PARAMETER AcceptedRepairRebootCodes
 		Defines a list of reboot exit codes for all exit codes that will be accepted for reboot by called setup execution.
 		Defaults to $global:PackageConfig.AcceptedInstallRebootCodes.
+	.PARAMETER RepairLogPath
+		Defines the path to the folder where the log file should be stored.
+		Defaults to $configMSILogDir.
 	.EXAMPLE
 	Repair-NxtApplication -UninstallKey "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}"
 		This example repairs an application based on its specific uninstall registry key.
@@ -6994,7 +6997,10 @@ function Repair-NxtApplication {
 		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AcceptedRepairRebootCodes = $global:PackageConfig.AcceptedInstallRebootCodes
+		$AcceptedRepairRebootCodes = $global:PackageConfig.AcceptedInstallRebootCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RepairLogPath = $configMSILogDir
 		)
 	Begin {
 		## Get the name of this function and write header
@@ -7037,7 +7043,7 @@ function Repair-NxtApplication {
 				}
 				if ([string]::IsNullOrEmpty($RepairLogFile)) {
 					## now set default path and name including retrieved ProductCode
-					[string]$RepairLogFile = Join-Path -Path $($global:PackageConfig.app) -ChildPath ("Repair_$($executeNxtParams.Path).$DeploymentTimestamp.log")
+					[string]$RepairLogFile = Join-Path -Path $RepairLogPath -ChildPath ("Repair_$($executeNxtParams.Path).$DeploymentTimestamp.log")
 				}
 				## parameter -RepairFromSource $true runs 'msiexec /fvomus ...'
 				[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
