@@ -5907,6 +5907,11 @@ function New-NxtTemporaryFolder {
 	.EXAMPLE
 		New-NxtTemporaryFolder -TempPath "C:\Temp"
 		Will create a new folder with the predefined permissions.
+	.EXAMPLE
+		$global:PackageConfig.PackageSpecificVariables.TempDir = New-NxtTemporaryFolder
+    	Expand-Archive -LiteralPath "$dirFiles\$($global:PackageConfig.PackageSpecificVariables.ZipFileName)" -DestinationPath "$($global:PackageConfig.PackageSpecificVariables.TempDir)"
+		Execute-Process -Path "$($global:PackageConfig.PackageSpecificVariables.TempDir)\setup.exe"
+		Will create a new folder with the predefined permissions and store the path in the global variable $global:PackageConfig.PackageSpecificVariables.TempDir. 
 	.OUTPUTS
 		String.
         Outputs the full path of the newly created temporary folder.
