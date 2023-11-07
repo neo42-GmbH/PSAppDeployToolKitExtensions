@@ -8113,7 +8113,7 @@ Function Show-NxtInstallationWelcome {
 		## Specify whether to minimize other windows when displaying prompt
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Boolean]$MinimizeWindows = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.MINMIZEALLWINDOWS)),
+		[Boolean]$MinimizeWindows = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.MINIMIZEALLWINDOWS)),
 		## Specifies whether the window is the topmost window
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]

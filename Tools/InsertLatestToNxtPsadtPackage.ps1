@@ -378,6 +378,12 @@ function Update-NxtPSAdtPackage {
                 Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
                 [bool]$contentChanged = $false
             }
+            ## check for MINMIZEALLWINDOWS in setup.cfg
+            [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\setup.cfg"
+            if ($content -like "*MINMIZEALLWINDOWS*") {
+                $content = $content -replace "MINMIZEALLWINDOWS","MINIMIZEALLWINDOWS"
+                Set-Content -Path "$PackageToUpdatePath\setup.cfg" -Value $content -NoNewline
+            }
             ## check setup.cfg default parameters
             [bool]$missingIniValues = $true
             while ($true -eq $missingIniValues) {
