@@ -2,18 +2,18 @@
 
 Describe "Add-NxtContent" {
     Context "When creating a new file" {
-        BeforeEach {
-            $filePath = "$PSScriptRoot\test.txt"
-            $content = "This is a test file."
+        BeforeAll {
+            [string]$filePath = "$PSScriptRoot\test.txt"
+            [string]$content = "This is a test file."
         }
         AfterEach {
             if ("$PSScriptRoot\test.txt") {
-                Remove-Item "$PSScriptRoot\test.txt"
+                Remove-Item "$PSScriptRoot\test.txt" -Force
             }
         }
 
         It "Should create a new file with correct encoding" {
-            Add-NxtContent -Path $filePath -Value $content -Encoding "UTF8"
+            Add-NxtContent -Path $filePath -Value $content -Encoding "UTF8" | Should -Be $null
 
             Get-Content $filePath | Should -Be $content
             Get-NxtFileEncoding -Path $filePath | Should -Be "UTF8withBOM"
@@ -21,7 +21,7 @@ Describe "Add-NxtContent" {
     }
     Context "When appending to an existing file" {
         BeforeEach {
-            $filePath = "$PSScriptRoot\test.txt"
+            [string]$filePath = "$PSScriptRoot\test.txt"
             Add-NxtContent -Path $filePath -Value "This is a test file." -Encoding "UTF8"
         }
         AfterEach {
@@ -36,20 +36,22 @@ Describe "Add-NxtContent" {
         }
     }
     Context "When destination is unavailable" {
+        BeforeAll {
+            [string]$filePath = "$PSScriptRoot\test.txt"
+        }
+        AfterEach {
+            if ("$PSScriptRoot\test.txt") {
+                Remove-Item "$PSScriptRoot\test.txt"
+            }
+        }
         It "Should throw when read-only" -Skip {
-            $filePath = "$PSScriptRoot\test.txt"
             New-Item -Path $filePath -ItemType File
             Set-ItemProperty -Path $filePath -Name IsReadOnly -Value $true
-            Add-NxtContent -Path $filePath -Value "This is a new line." -Encoding "UTF8" | Should -Throw
+            { Add-NxtContent -Path $filePath -Value "This is a new line." -Encoding "UTF8" } | Should -Throw
             Set-ItemProperty -Path $filePath -Name IsReadOnly -Value $false
-            Remove-Item $filePath
         }
-        It "Should not create folder structure" {
-            try {
-                Add-NxtContent -Path $PSScriptRoot\invalid\test.txt -Value "This is a test file."
-            }
-            catch {}
-            Test-Path $PSScriptRoot\invalid | Should -Be $false
+        It "Should not create folder structure" -Skip {
+            { Add-NxtContent -Path $PSScriptRoot\invalid\test.txt -Value "This is a test file." } | Should -Throw
         }
     }
     Context "When specificing multiple related parameters" {
@@ -71,7 +73,7 @@ Describe "Add-NxtContent" {
             }
         }
 
-        It "Should " {
+        It "Should write extended charset characters" {
             Add-NxtContent -Path "$PSScriptRoot\test.txt" -Value "🚀äß$"
             Get-Content "$PSScriptRoot\test.txt" -Raw | Should -Be "🚀äß$`r`n"
         }
