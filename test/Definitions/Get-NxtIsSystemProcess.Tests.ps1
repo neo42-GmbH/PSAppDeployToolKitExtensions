@@ -13,7 +13,8 @@ Describe "Get-NxtIsSystemProcess" {
         It "Should return false on self" {
             Get-NxtIsSystemProcess -ProcessId $selfProcess | Should -Be $false
         }
-        It "Should return throw on access denied" -Skip {
+        It "Should throw on access denied" -Skip {
+            # Issue #628
             Get-NxtIsSystemProcess -ProcessId $systemProcess | Should -Be $true
         }
     }
