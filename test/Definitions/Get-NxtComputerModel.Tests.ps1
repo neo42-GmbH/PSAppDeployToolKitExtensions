@@ -1,14 +1,20 @@
 Describe "Get-NxtComputerModel" {
     Context "When running the function" {
+        AfterAll {
+            Remove-Item Function:\Get-WmiObject
+        }
         It "Should return the correct computer model" {
-            [string]$model = (Get-CimInstance -ClassName Win32_ComputerSystem).Model
+            function global:Get-WmiObject {
+                return [PSCustomObject]@{
+                    Model = 'Test'
+                }
+            }
             $result = Get-NxtComputerModel
             $result | Should -BeOfType 'String'
-            $result | Should -Be $model
+            $result | Should -Be 'Test'
         }
-        It "Should return an empty string if the WMI query fails" -Skip {
-            # Mocking and replacing function does not work because of scope issues #626
-            Mock Get-WmiObject { return $null }
+        It "Should return an empty string if the WMI query fails" {
+            function global:Get-WmiObject { return $null }
             $result = Get-NxtComputerModel
             $result | Should -BeOfType 'String'
             $result | Should -Be ''

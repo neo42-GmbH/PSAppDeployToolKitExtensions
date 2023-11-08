@@ -1,14 +1,22 @@
 Describe "Get-NxtComputerManufacturer" {
     Context "When running the function with working WMI" {
+        AfterAll {
+            Remove-Item Function:\Get-WmiObject
+        }
         It "Should return the correct computer manufacturer" {
-            [string]$manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem).Manufacturer
+            function global:Get-WmiObject {
+                return [PSCustomObject]@{
+                    Manufacturer = 'Test'
+                }
+            }
             $result = Get-NxtComputerManufacturer
             $result | Should -BeOfType 'String'
-            $result | Should -Be $manufacturer
+            $result | Should -Be 'Test'
         }
-        It "Should return an empty string if the WMI query fails" -Skip{
-            # Mocking and replacing function does not work because of scope issues #626
-            Mock Get-WmiObject { return $null }
+        It "Should return an empty string if the WMI query fails"{
+            function global:Get-WmiObject {
+                return $null
+            }
             $result = Get-NxtComputerManufacturer
             $result | Should -BeOfType 'String'
             $result | Should -Be ''
