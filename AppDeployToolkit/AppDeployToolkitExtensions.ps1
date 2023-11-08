@@ -10338,10 +10338,9 @@ function Uninstall-NxtOld {
 						else {
 							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
 								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
-									[string]$appEmpirumPackageVersionNumber = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'Version'
 									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
 								}
-								If ( ($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or (($appEmpirumPackageGUID -eq $PackageGUID) -and (("$(Compare-NxtVersion -DetectedVersion "$appEmpirumPackageVersionNumber" -TargetVersion "$AppVersion")") -ne "Equal")) ) {
+								If ( ($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
 									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
 										try {
@@ -10406,10 +10405,9 @@ function Uninstall-NxtOld {
 						else {
 							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
 								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
-									[string]$appEmpirumPackageVersionNumber = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'Version'
 									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
 								}
-								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or (($appEmpirumPackageGUID -eq $PackageGUID) -and (("$(Compare-NxtVersion -DetectedVersion "$appEmpirumPackageVersionNumber" -TargetVersion "$AppVersion")") -ne "Equal"))) {
+								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
 									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
 										try {
