@@ -5,7 +5,7 @@ Describe "Get-NxtRunningProcesses" {
             [System.Diagnostics.Process]$lsassProcess = (Get-Process | Where-Object { $_.ProcessName -eq "lsass" })[0]
         }
         It "Returns the list of found processes" {
-            $processes = [array]@(
+            [array]$processes = @(
                 @{
                     ProcessName = $selfProcess.Name
                 },
@@ -20,7 +20,7 @@ Describe "Get-NxtRunningProcesses" {
         }
         It "Should return only the running processes" -Skip {
             # #629 results in object returned. TBD
-            $processes = [array]@(
+            [array]$processes = @(
                 @{
                     ProcessName = $lsassProcess.Name
                 },
@@ -34,7 +34,7 @@ Describe "Get-NxtRunningProcesses" {
             $result.ProcessName | Should -Contain $lsassProcess.Name
         }
         It "Should return empty array if no running processes are found" {
-            $processes = [array]@(
+            [array]$processes = @(
                 @{
                     ProcessName = "invalid"
                 }
