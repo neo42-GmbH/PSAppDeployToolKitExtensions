@@ -10032,6 +10032,9 @@ function Uninstall-NxtApplication {
 	.PARAMETER PreSuccessCheckRegkeysToWaitFor
 		An array of regkey conditions to check for.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DirFiles
+		The directory where the files are located.
+		Defaults to $dirFiles.
 	.EXAMPLE
 		Uninstall-NxtApplication
 	.LINK
@@ -10089,7 +10092,10 @@ function Uninstall-NxtApplication {
 		$PreSuccessCheckRegKeyOperator = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegKeyOperator,
 		[Parameter(Mandatory = $false)]
 		[array]
-		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor
+		$PreSuccessCheckRegkeysToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Uninstall.RegkeysToWaitFor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DirFiles = $dirFiles
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -10111,6 +10117,9 @@ function Uninstall-NxtApplication {
 					[int]$logMessageSeverity = 2
 				}
 				else {
+					if ($false -eq [System.IO.Path]::IsPathRooted($UninstFile)){
+						[string]$UninstFile = Join-Path -Path $DirFiles -ChildPath $UninstFile
+					}
 					if ([System.IO.File]::Exists($UninstFile)) {
 						Write-Log -Message "File for running an uninstallation found: '$UninstFile'. Executing the uninstallation..." -Source ${CmdletName}
 					}
