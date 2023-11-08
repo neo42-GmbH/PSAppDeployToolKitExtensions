@@ -4,7 +4,7 @@ Describe 'Get-NxtNameBySid' {
             [System.Security.Principal.WindowsIdentity]$currentID = [System.Security.Principal.WindowsIdentity]::GetCurrent()
         }
         It 'Should return the correct name'{
-            $result = Get-NxtNameBySid -Sid $currentID.User
+            $result = Get-NxtNameBySid -Sid $currentID.User.Value
             $result | Should -BeOfType 'System.String'
             $result | Should -Be $currentID.Name
         }
