@@ -19,6 +19,7 @@ Describe 'Add-NxtLocalGroupMember' {
             (Get-LocalGroup -Name "TestGroup").Members | Should -Contain "TestUser"
         }
         It 'Should add a group to a group' -Skip {
+            #Add-NxtLocalGroupMember fails to add nested groups #621
             Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestGroupAdd" -MemberType "Group" | Should -Be $true
             (Get-LocalGroup -Name "TestGroup").Members | Should -Contain "TestGroupAdd"
         }
