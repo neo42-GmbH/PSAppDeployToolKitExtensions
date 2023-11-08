@@ -9,6 +9,7 @@ Describe 'Add-NxtLocalUser' {
             }
         }
         It 'Should create a new user account' -Skip {
+            # Issue #624
             Add-NxtLocalUser -Username 'TestUser' -Password 'JX{C@Wb<PHV=H}Gx' | Should -Be $true
             Get-LocalUser -Name 'TestUser' | Should -Not -Be $null
         }
@@ -25,6 +26,7 @@ Describe 'Add-NxtLocalUser' {
             $user.PasswordExpires | Should -Be $null
         }
         It 'Should update parameters when user exists' -Skip {
+            # Issue #624
             Add-NxtLocalUser -Username 'TestUser' -Password 'JX{C@Wb<PHV=H}Gx' -Description 'Test Description' -SetPwdNeverExpires -FullName 'Test User'
             Add-NxtLocalUser -UserName 'TestUser' -Password 'JX{C@Wb<PHV=H}Gx2' -Description 'Test Description2' -SetPwdExpired -FullName 'Test User2' | Should -Be $true
             [Microsoft.PowerShell.Commands.LocalUser]$user = Get-LocalUser -Name 'TestUser'
