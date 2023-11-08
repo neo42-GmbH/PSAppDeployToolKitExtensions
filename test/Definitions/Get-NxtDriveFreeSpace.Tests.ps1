@@ -1,7 +1,7 @@
 Describe "Get-NxtDriveFreeSpace" {
     Context "When running the function" {
         BeforeAll {
-            [System.Management.Automation.PSDriveInfo]$drive = (Get-PSDrive -PSProvider FileSystem)[0]
+            [System.Management.Automation.PSDriveInfo]$drive = Get-PSDrive -PSProvider FileSystem | Where-Object {$_.Free -gt 0} | Select-Object -First 1
             [string]$driveLetter = $drive.Root.TrimEnd('\')
         }
         It "Should return the free space of a drive" {
