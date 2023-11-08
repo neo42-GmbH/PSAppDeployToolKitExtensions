@@ -884,6 +884,15 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER AppName
+		Defines the name of the application.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppVendor
+		Defines the name of the application vendor.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER LegacyAppRoots
+		Defines the legacy application roots.
+		Defaults to $envProgramFiles and $envProgramFilesX86.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.OUTPUTS
@@ -919,7 +928,16 @@ function Complete-NxtPackageInstallation {
 		$UserPartDir = $global:UserPartDir,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptRoot
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $global:PackageConfig.AppName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$appVendor = $global:PackageConfig.AppVendor,
+		[Parameter(Mandatory = $false)]
+		[string[]]
+		$LegacyAppRoots= @("$envProgramFiles\neoPackages", "$envProgramFilesX86\neoPackages")
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -997,6 +1015,19 @@ function Complete-NxtPackageInstallation {
 			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
 			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
+		}
+		## Cleanup Legacy Package Folders
+		foreach ($legacyAppRoot in $LegacyAppRoots){
+			if ($true -eq (Test-Path -Path $legacyAppRoot ) -and [System.IO.Path]::IsPathRooted($legacyAppRoot)){
+				if (Test-Path -Path $legacyAppRoot\$appVendor){
+					if (Test-Path -Path $legacyAppRoot\$appVendor\$appName){
+						Write-Log -Message "Removing legacy application folder $legacyAppRoot\$appVendor\$appName" -Source ${CmdletName}
+						Remove-Folder -Path $legacyAppRoot\$appVendor\$appName -ContinueOnError $true
+					}
+					Remove-NxtEmptyFolder -Path $legacyAppRoot\$appVendor
+				}
+				Remove-NxtEmptyFolder -Path $legacyAppRoot
+			}
 		}
 	}
 	End {
