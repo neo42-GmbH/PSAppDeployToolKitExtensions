@@ -14,5 +14,8 @@ Describe 'Get-NxtNameBySid' {
         It 'Should fail on an invalid SID' {
             Get-NxtNameBySid -Sid 'S-1-5-18-19' | Should -BeNullOrEmpty
         }
+        It 'Should fail in invalid SID format' {
+            Get-NxtNameBySid -Sid 'invalid' | Should -BeNullOrEmpty
+        }
     }
 }
