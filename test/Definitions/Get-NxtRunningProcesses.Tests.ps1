@@ -19,6 +19,7 @@ Describe "Get-NxtRunningProcesses" {
             $result.ProcessName | Should -Contain $lsassProcess.Name
         }
         It "Should return only the running processes" -Skip {
+            # #629 results in object returned. TBD
             $processes = [array]@(
                 @{
                     ProcessName = $lsassProcess.Name
