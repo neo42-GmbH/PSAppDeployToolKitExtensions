@@ -33,14 +33,17 @@ Describe 'Add-NxtLocalGroupMember' {
             Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestGroupDoesNotExist" -MemberType "Group" | Should -Be $false
         }
         It 'Should fail if the wrong MemberType has been selected' -Skip {
+            #Uncaught exception #621
             Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestUser" -MemberType "Group" | Should -Be $false
             Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestGroupAdd" -MemberType "User"  | Should -Be $false
         }
         It 'Should do nothing if the user is already a member' -Skip {
+            #Uncaught exception #621
             Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestUser" -MemberType "User"
             Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestUser" -MemberType "User" | Should -Be $false
         }
         It 'Should fail on self reference' -Skip {
+            # Uncaught exception #621
             Add-NxtLocalGroupMember -GroupName "TestGroup" -MemberName "TestGroup" -MemberType "Group" | Should -Throw
         }
     }
