@@ -28,6 +28,7 @@ Describe "Test-NxtProcessExists" {
             Test-NxtProcessExists -ProcessName 'Name LIKE "invalidProcess"' -IsWql | Should -Be $false
         }
         It "Should throw an error if the wql is invalid" -Skip {
+            # Issue #625
             { Test-NxtProcessExists -ProcessName 'invalidWql' -IsWql } | Should -Throw
         }
     }
