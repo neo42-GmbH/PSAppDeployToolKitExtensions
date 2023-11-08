@@ -4,7 +4,7 @@ Describe 'Add-NxtLocalGroupMember' {
         BeforeAll {
             New-LocalGroup -Name "TestGroup"
             New-LocalGroup -Name "TestGroupAdd"
-            New-LocalUser -Name "TestUser" -Password (ConvertTo-SecureString -String "Password" -AsPlainText -Force)
+            New-LocalUser -Name "TestUser" -Password (ConvertTo-SecureString -String "2uqWjQ/OvM,wh£9[47o" -AsPlainText -Force)
         }
         AfterAll {
             Remove-LocalGroup -Name "TestGroup"
