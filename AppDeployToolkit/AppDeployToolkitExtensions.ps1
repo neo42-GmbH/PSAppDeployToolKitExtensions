@@ -1016,7 +1016,7 @@ function Complete-NxtPackageInstallation {
 			Start-Sleep -Seconds 1
 			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
 		}
-		## Cleanup Legacy Package Folders
+		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots){
 			if ($true -eq (Test-Path -Path $legacyAppRoot ) -and [System.IO.Path]::IsPathRooted($legacyAppRoot)){
 				if (Test-Path -Path $legacyAppRoot\$appVendor){
