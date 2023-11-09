@@ -1,5 +1,5 @@
 Describe 'Set-NxtXmlNode' {
-    Context 'when given valid input' {
+    Context 'When given valid input' {
         BeforeAll {
             $xml = "$PSScriptRoot\test.xml"
         }
@@ -55,7 +55,7 @@ Describe 'Set-NxtXmlNode' {
             ($xmlDoc.catalog.product.catalog_item | Where-Object { $_.gender -eq "Men's" }).InnerText | Should -Not -Be "Test"
             ($xmlDoc.catalog.product.catalog_item | Where-Object { $_.gender -eq "Women's" }).InnerText | Should -Be "Test"
         }
-        It 'Should fail if node does not exist' -Skip {
+        It 'Should create the node if node does not exist' -Skip {
             Set-NxtXmlNode -FilePath $xml -NodePath '/new' -InnerText 'Test' | Should -BeNullOrEmpty
             $xmlDoc = [xml](Get-Content -Path $xml -Raw)
             $xmlDoc.GetEnumerator().Name | Should -Contain 'new'
