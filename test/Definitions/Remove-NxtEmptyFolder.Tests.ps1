@@ -8,7 +8,6 @@ Describe "Remove-NxtEmptyFolder" {
         }
         AfterEach{
             if (Test-Path $folder) {
-                Set-ItemProperty -Path $folder -Name IsReadOnly -Value $false
                 Remove-Item $folder -Force -Recurse | Out-Null
             }
         }
@@ -25,10 +24,12 @@ Describe "Remove-NxtEmptyFolder" {
             Remove-NxtEmptyFolder -Path "$folder\test" | Should -BeNullOrEmpty
             Test-Path "$folder\test" | Should -Be $false
         }
-        It "Should ignore read only flag and delete anyway" {
-            Set-ItemProperty -Path $folder -Name IsReadOnly -Value $true
+        It "Should not delete a folder if it is read-only" {
+            $folder = Get-Item -Path $folder
+            $folder.Attributes += [System.IO.FileAttributes]::ReadOnly
             Remove-NxtEmptyFolder -Path "$folder" | Should -BeNullOrEmpty
-            Test-Path "$folder" | Should -Be $true
+            $folder.Attributes -band -bnot [System.IO.FileAttributes]::ReadOnly
+            Test-Path "$folder" | Should -Be $false
         }
     }
 }
