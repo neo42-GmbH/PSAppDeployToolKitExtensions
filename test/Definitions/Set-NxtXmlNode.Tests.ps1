@@ -62,4 +62,9 @@ Describe 'Set-NxtXmlNode' {
             $xmlDoc.GetEnumerator().Name | Should -Contain 'product'
         }
     }
+    Context 'When given invalid input' {
+        It 'Should fail if file does not exist' {
+            { Set-NxtXmlNode -FilePath 'C:\nonexistant.xml' -NodePath '/catalog' -InnerText 'Test' } | Should -Throw
+        }
+    }
 }
