@@ -1,7 +1,7 @@
 Describe "Stop-NxtProcess" {
     Context "When given a running process" {
         BeforeEach {
-            $process = Start-Process -FilePath cmd.exe -PassThru
+            $process = Start-Process -FilePath simple.exe -PassThru
         }
         AfterEach {
             if (Get-Process -Id $process.Id -ErrorAction SilentlyContinue){
