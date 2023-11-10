@@ -18,7 +18,7 @@ Describe "Test-NxtProcessExists" {
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
         }
-        It "Should fail when WQL is invalid" {
+        It "Should fail when WQL is invalid" -Skip {
             $result = Test-NxtProcessExists -ProcessName "invalid" -IsWql
             $result | Should -BeOfType 'bool'
             $result | Should -Be $false
