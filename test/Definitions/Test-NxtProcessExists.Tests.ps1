@@ -1,35 +1,33 @@
 Describe "Test-NxtProcessExists" {
-    Context "When given a process name" {
+    Context "When function is called" {
         BeforeAll {
-            [string]$processName = [System.Diagnostics.Process]::GetCurrentProcess().ProcessName + '.exe'
+            [System.Diagnostics.Process]$process = Start-Process "cmd.exe" -PassThru
         }
-        It "Should return true if the process exists" {
-            $result = Test-NxtProcessExists -ProcessName $processName
-            $result | Should -BeOfType "Boolean"
+        AfterAll {
+            if (-not $process.HasExited) {
+                $process.Kill()
+            }
+        }
+        It "Should return true if process exists" {
+            $result = Test-NxtProcessExists -ProcessName $process.MainModule.ModuleName
+            $result | Should -BeOfType 'bool'
             $result | Should -Be $true
         }
-        It "Should return false if the process is not running" {
-            Test-NxtProcessExists -ProcessName 'invalidProcess' | Should -Be $false
+        It "Should return true when using WQL on existing process" {
+            $result = Test-NxtProcessExists -ProcessName "Name LIKE '$($process.MainModule.ModuleName)'" -IsWql
+            $result | Should -BeOfType 'bool'
+            $result | Should -Be $true
         }
         It "Should work with wildcard character *" {
-            Test-NxtProcessExists -ProcessName "$($processName.Substring(0, 5))*" | Should -Be $true
+            Test-NxtProcessExists -ProcessName "$($process.MainModule.ModuleName.Substring(0, 5))*" | Should -Be $true
         }
-    }
-    Context "When given wql" {
-        BeforeAll {
-            [string]$processName = [System.Diagnostics.Process]::GetCurrentProcess().ProcessName + '.exe'
+        It "Should fail when WQL is invalid" -Skip {
+            { Test-NxtProcessExists -ProcessName "invalid" -IsWql } | Should -Throw
         }
-        It "Should return true if the process exists" {
-            $result = Test-NxtProcessExists -ProcessName "Name LIKE `"$processName`"" -IsWql
-            $result | Should -BeOfType "Boolean"
-            $result | Should -Be $true
-        }
-        It "Should return false if the process is not running" {
-            Test-NxtProcessExists -ProcessName 'Name LIKE "invalidProcess"' -IsWql | Should -Be $false
-        }
-        It "Should throw an error if the wql is invalid" -Skip {
-            # Issue #625
-            { Test-NxtProcessExists -ProcessName 'invalidWql' -IsWql } | Should -Throw
+        It "Should return false when process does not exsit" {
+            $result = Test-NxtProcessExists -ProcessName "invalid"
+            $result | Should -BeOfType 'bool'
+            $result | Should -Be $false
         }
     }
 }

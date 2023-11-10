@@ -4,6 +4,9 @@ Describe 'Remove-NxtSystemEnvironmentVariable' {
             [System.Environment]::SetEnvironmentVariable('TestVariable','TestValue','Machine')
             $env:TestVariable = "TestValue"
         }
+        AfterAll {
+            [System.Environment]::SetEnvironmentVariable('TestVariable', $null, 'Machine')
+        }
         It 'Removes the variable successfully' {
             Remove-NxtSystemEnvironmentVariable -Key "TestVariable" | Should -BeNullOrEmpty
             [System.Environment]::GetEnvironmentVariable('TestVariable', 'Machine') | Should -BeNullOrEmpty
