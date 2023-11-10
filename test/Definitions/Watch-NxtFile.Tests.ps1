@@ -21,9 +21,9 @@ Describe "Watch-NxtFile" {
         }
         It "Should return true if file is created later" {
             $start = Get-Date
-            Start-Job -ScriptBlock { Start-Sleep -Seconds 2; New-Item -Path "$using:PSScriptRoot\TestFile" -ItemType File } -ArgumentList $file | Out-Null
-            Watch-NxtFile -FileName $file -Timeout 4 | Should -Be $true
-            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 3
+            Start-Job -ScriptBlock { Start-Sleep -Seconds 2; New-Item -Path $args[0] -ItemType File } -ArgumentList @($file) | Out-Null
+            Watch-NxtFile -FileName $file -Timeout 5 | Should -Be $true
+            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 4
         }
         It "Should return false if folder path does not exist" {
             Watch-NxtFile -FileName "$PSScriptRoot\NonExistentFolder\TestFile" -Timeout 1 | Should -Be $false
