@@ -1062,6 +1062,9 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER AppRootFolder
+		Defines the root folder of the application.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Complete-NxtPackageUninstallation
 	.EXAMPLE
@@ -1090,7 +1093,10 @@ function Complete-NxtPackageUninstallation {
 		$UserPartDir = $global:UserPartDir,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptRoot
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppRootFolder = $global:PackageConfig.AppRootFolder
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1125,6 +1131,8 @@ function Complete-NxtPackageUninstallation {
 				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 		}
+		## Cleanup App Folder
+		Remove-NxtEmptyFolder -Path $App -RootPathToRecurseUpTo $AppRootFolder
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -6407,6 +6415,7 @@ function Remove-NxtEmptyFolder {
 	.PARAMETER Path
 		Specifies the path to the empty folder to remove.
 		This parameter is mandatory.
+		.PARAMETER RootPathToRecurseUpTo
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
 		This example removes the specified empty folder located at "$installLocation\SomeEmptyFolder".
@@ -6419,14 +6428,24 @@ function Remove-NxtEmptyFolder {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$Path
+		[string]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$RootPathToRecurseUpTo
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		$Path = $Path.TrimEnd("\")
+		if ($false -eq [string]::IsNullOrEmpty($RootPathToRecurseUpTo)) {
+			$RootPathToRecurseUpTo = $RootPathToRecurseUpTo.TrimEnd("\")
+		}
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
+		[bool]$skipRecursion = $false
 		if (Test-Path -LiteralPath $Path -PathType 'Container') {
 			try {
 				if ( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
@@ -6441,6 +6460,7 @@ function Remove-NxtEmptyFolder {
 				}
 				else {
 					Write-Log -Message "Folder [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
+					$skipRecursion = $true
 				}
 			}
 			catch {
@@ -6452,6 +6472,28 @@ function Remove-NxtEmptyFolder {
 		}
 		else {
 			Write-Log -Message "Folder [$Path] does not exist..." -Source ${CmdletName}
+		}
+		if (
+			$false -eq [string]::IsNullOrEmpty($RootPathToRecurseUpTo) -and
+			$false -eq $skipRecursion
+		) {
+			## Resolve possible relative segments in the paths 
+			[string]$absolutePath = $Path | Split-Path -Parent
+			[string]$absoluteRootPathToRecurseUpTo = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($RootPathToRecurseUpTo)).FullName)
+			if ($absolutePath -ne $absoluteRootPathToRecurseUpTo)
+			{
+				## Ensure that $absoluteRootPathToRecurseUpTo is a valid path
+				if ($false -eq [System.IO.Path]::IsPathRooted($absoluteRootPathToRecurseUpTo)) {
+					Write-Log -Message "$absoluteRootPathToRecurseUpTo is not a valid path." -Severity 3 -Source ${CmdletName}
+					throw "RootPathToRecurseUpTo is not a valid path."
+				}
+				## Ensure that $absoluteRootPathToRecurseUpTo is a parent of $absolutePath
+				if ($false -eq $absolutePath.StartsWith($absoluteRootPathToRecurseUpTo, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+					Write-Log -Message "RootPathToRecurseUpTo '$absoluteRootPathToRecurseUpTo' is not a parent of '$absolutePath'." -Severity 3 -Source ${CmdletName}
+					throw "RootPathToRecurseUpTo '$absoluteRootPathToRecurseUpTo' is not a parent of '$absolutePath'."
+				}
+				Remove-NxtEmptyFolder -Path $absolutePath -RootPathToRecurseUp $absoluteRootPathToRecurseUpTo
+			}
 		}
 	}
 	End {
