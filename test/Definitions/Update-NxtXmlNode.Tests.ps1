@@ -1,7 +1,7 @@
 Describe 'Update-NxtXmlNode' {
     Context 'when given valid input' {
         BeforeAll {
-            $xml = "$PSScriptRoot\test.xml"
+            [string]$xml = "$PSScriptRoot\test.xml"
         }
         BeforeEach {
             @"

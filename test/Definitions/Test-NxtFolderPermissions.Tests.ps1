@@ -24,7 +24,7 @@ Describe "Test-NxtFolderPermissions" {
 
     Context "When running against an invalid folder" {
         BeforeAll {
-            $file = "$PSScriptRoot\TestFile.txt"
+            [string]$file = "$PSScriptRoot\TestFile.txt"
         }
         AfterEach {
             if (Test-Path $file) {
