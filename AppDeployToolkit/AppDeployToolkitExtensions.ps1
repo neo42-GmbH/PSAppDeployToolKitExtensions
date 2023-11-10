@@ -9792,7 +9792,7 @@ function Test-NxtProcessExists {
 			else {
 				[string]$wqlString = "Name LIKE '$($ProcessName.Replace("*","%"))'"
 			}
-			[System.Management.ManagementBaseObject]$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" | Select-Object -First 1
+			[System.Management.ManagementBaseObject]$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" -ErrorAction Stop | Select-Object -First 1
 			if ($processes) {
 				Write-Output $true
 			}
