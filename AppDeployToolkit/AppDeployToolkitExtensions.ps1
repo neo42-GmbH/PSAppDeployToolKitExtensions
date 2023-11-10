@@ -934,7 +934,7 @@ function Complete-NxtPackageInstallation {
 		$AppName = $global:PackageConfig.AppName,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$appVendor = $global:PackageConfig.AppVendor,
+		$AppVendor = $global:PackageConfig.AppVendor,
 		[Parameter(Mandatory = $false)]
 		[string[]]
 		$LegacyAppRoots= @("$envProgramFiles\neoPackages", "$envProgramFilesX86\neoPackages")
@@ -1019,12 +1019,12 @@ function Complete-NxtPackageInstallation {
 		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots){
 			if ($true -eq (Test-Path -Path $legacyAppRoot ) -and [System.IO.Path]::IsPathRooted($legacyAppRoot)){
-				if (Test-Path -Path $legacyAppRoot\$appVendor){
-					if (Test-Path -Path $legacyAppRoot\$appVendor\$appName){
-						Write-Log -Message "Removing legacy application folder $legacyAppRoot\$appVendor\$appName" -Source ${CmdletName}
-						Remove-Folder -Path $legacyAppRoot\$appVendor\$appName -ContinueOnError $true
+				if (Test-Path -Path $legacyAppRoot\$AppVendor){
+					if (Test-Path -Path $legacyAppRoot\$AppVendor\$AppName){
+						Write-Log -Message "Removing legacy application folder $legacyAppRoot\$AppVendor\$AppName" -Source ${CmdletName}
+						Remove-Folder -Path $legacyAppRoot\$AppVendor\$AppName -ContinueOnError $true
 					}
-					Remove-NxtEmptyFolder -Path $legacyAppRoot\$appVendor
+					Remove-NxtEmptyFolder -Path $legacyAppRoot\$AppVendor
 				}
 				Remove-NxtEmptyFolder -Path $legacyAppRoot
 			}
