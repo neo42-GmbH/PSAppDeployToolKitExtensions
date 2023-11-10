@@ -1,7 +1,7 @@
 Describe "Test-NxtProcessExists" {
     Context "When function is called" {
         BeforeAll {
-            [System.Diagnostics.Process]$process = Start-Process "cmd.exe" -PassThru
+            [System.Diagnostics.Process]$process = Start-Process "..\simple.exe" -PassThru
         }
         AfterAll {
             if (-not $process.HasExited) {
