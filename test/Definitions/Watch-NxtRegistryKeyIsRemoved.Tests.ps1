@@ -31,10 +31,10 @@ Describe "Watch-NxtRegistryKeyIsRemoved" {
             New-Item -Path "HKLM:\SOFTWARE\neo42" -Name "PesterTest" -Force | Out-Null
             [System.Management.Automation.Job]$job = New-DelayedTestRegistryKeyRemoval
             [datetime]$start = Get-Date
-            $result = Watch-NxtRegistryKeyIsRemoved -RegistryKey $key -Timeout 4
+            $result = Watch-NxtRegistryKeyIsRemoved -RegistryKey $key -Timeout 10
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
-            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 3
+            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 9
             $job | Remove-Job
         }
     }

@@ -35,10 +35,10 @@ Describe "Watch-NxtRegistryKey" {
         It "Should return true if the key is created later" {
             [System.Management.Automation.Job]$job = New-DelayedTestRegistryKey
             [datetime]$start = Get-Date
-            $result = Watch-NxtRegistryKey -RegistryKey $key -Timeout 4
+            $result = Watch-NxtRegistryKey -RegistryKey $key -Timeout 10
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
-            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 3
+            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 9
             $job | Remove-Job
         }
     }

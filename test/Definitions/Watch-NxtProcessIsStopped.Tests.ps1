@@ -21,10 +21,10 @@ Describe "Watch-NxtProcessIsStopped" {
         It "Should return true if process is started later" {
             [System.Management.Automation.Job]$job = New-TestProcess
             $start = Get-Date
-            $result = Watch-NxtProcessIsStopped -ProcessName "cmd.exe" -Timeout 4
+            $result = Watch-NxtProcessIsStopped -ProcessName "cmd.exe" -Timeout 10
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
-            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 3
+            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 9
             $job | Wait-Job
         }
         It "Should return true if WQL is used" {

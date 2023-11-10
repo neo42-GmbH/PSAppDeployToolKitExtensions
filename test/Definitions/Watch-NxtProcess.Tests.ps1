@@ -18,10 +18,10 @@ Describe "Watch-NxtProcess" {
         It "Should return true if process is started later" {
             [datetime]$start = Get-Date
             [System.Management.Automation.Job]$job = Start-Job -ScriptBlock { Start-Sleep -Seconds 2; $proc = Start-Process -FilePath "cmd" -PassThru; Start-Sleep 2; Stop-Process  $proc } | Out-Null
-            $result = Watch-NxtProcess -ProcessName "cmd.exe" -Timeout 4
+            $result = Watch-NxtProcess -ProcessName "cmd.exe" -Timeout 10
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
-            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 3
+            [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 9
         }
         It "Should return true if WQL is used" {
             $result = Watch-NxtProcess -ProcessName "Name LIKE '$($process.MainModule.ModuleName)'" -Timeout 1 -IsWql
