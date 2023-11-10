@@ -15,13 +15,13 @@ Describe "Watch-NxtFile" {
             $result | Should -Be $true
         }
         It "Should timeout and return false within specified time" {
-            $start = Get-Date
+            [datetime]$start = Get-Date
             $result = Watch-NxtFile -FileName $file -Timeout 1 | Should -Be $false
             [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 2
         }
         It "Should return true if file is created later" {
-            $start = Get-Date
-            Start-Job -ScriptBlock { Start-Sleep -Seconds 2; New-Item -Path $args[0] -ItemType File } -ArgumentList @($file) | Out-Null
+            [datetime]$start = Get-Date
+            Start-Job -ScriptBlock { Start-Sleep -Seconds 2; New-Item -Path $args[0] -ItemType File -Force } -ArgumentList @($file) | Out-Null
             Watch-NxtFile -FileName $file -Timeout 5 | Should -Be $true
             [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 4
         }
