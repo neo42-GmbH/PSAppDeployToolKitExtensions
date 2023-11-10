@@ -410,6 +410,30 @@ function Update-NxtPSAdtPackage {
                     Read-Host "Press to check again or CTRL+C to exit"
                 }
             }
+            ## check comment value of TOPMOSTWINOW MINIMIZEALLWINDOWS APPLYCONTINUETYPEONERROR
+            [bool]$incorrectIniComment = $true
+            while ($incorrectIniComment) {
+                [psobject]$iniToUpdate=Import-NxtIniFileWithComments -Path "$PackageToUpdatePath\setup.cfg"
+                $incorrectIniComment = $false
+                if ($iniToUpdate.AskKillProcesses.TOPMOSTWINDOW.Comments -notlike "*Values    = 0,1*"){
+                    $incorrectIniComment = $true
+                    Write-Warning "Please correct the comments in $PackageToUpdatePath\setup.cfg TOPMOSTWINDOW to 'Values    = 0,1'"
+                }
+                if ($iniToUpdate.AskKillProcesses.MINIMIZEALLWINDOWS.Comments -notlike "*Values    = 0,1*"){
+                    $incorrectIniComment = $true
+                    Write-Warning "Please correct the comments in $PackageToUpdatePath\setup.cfg MINIMIZEALLWINDOWS to 'Values    = 0,1'"
+                }
+                if ($iniToUpdate.AskKillProcesses.APPLYCONTINUETYPEONERROR.Comments -notlike "*Values    = 0,1*"){
+                    $incorrectIniComment = $true
+                    Write-Warning "Please correct the comments in $PackageToUpdatePath\setup.cfg APPLYCONTINUETYPEONERROR to 'Values    = 0,1'"
+                }
+                if ($incorrectIniComment) {
+                    Write-Output "Press Enter to open $PackageToUpdatePath\setup.cfg in notepad or CTRL+C to exit"
+                    Read-Host
+                    notepad.exe "$PackageToUpdatePath\setup.cfg"
+                    Read-Host "Press to check again or CTRL+C to exit"
+                }
+            }
         }
         catch {
             Write-Error "$PackageToUpdatePath could not be updated from $LatestVersionPath - $_"
