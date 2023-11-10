@@ -2,7 +2,7 @@ Describe 'Get-NxtParentProcess' {
     Context 'when given a process ID' {
         BeforeAll {
             [string]$selfPID = ([System.Diagnostics.Process]::GetCurrentProcess()).Id
-            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath "..\simple.exe" -PassThru
+            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath simple.exe -PassThru
         }
         AfterAll{
             $childProcess.Kill()

@@ -32,7 +32,7 @@ Copy-Item "$PSScriptRoot/Definitions/*.Tests.ps1" "$testWorkFolder/" -Force
 Copy-Item "$PSScriptRoot/RunPester.ps1" "$testWorkFolder/" -Force
 ## Create simple test binary
 $compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
-$compilerArgs = "/target:winexe /out:$PSScriptRoot\simple.exe $PSScriptRoot\simple.cs"
+$compilerArgs = "/target:winexe /out:$testWorkFolder\simple.exe $PSScriptRoot\simple.cs"
 Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait
 ## run tests
 &"$testWorkFolder/RunPester.ps1"
