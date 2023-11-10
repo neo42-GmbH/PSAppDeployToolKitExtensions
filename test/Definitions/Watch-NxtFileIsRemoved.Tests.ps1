@@ -22,7 +22,7 @@ Describe "Watch-NxtFileIsRemoved" {
         It "Should return true if file is removed later" {
             New-Item -Path $file -ItemType File | Out-Null
             [datetime]$start = Get-Date
-            Start-Job -ScriptBlock { Start-Sleep -Seconds 2; Remove-Item -Path "$using:PSScriptRoot\TestFile" -Force } | Out-Null
+            Start-Job -ScriptBlock { Start-Sleep -Seconds 2; Remove-Item -Path $args[0] -Force } -ArgumentList @($file) | Out-Null
             Watch-NxtFileIsRemoved -FileName $file -Timeout 4 | Should -Be $true
             [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 3
         }
