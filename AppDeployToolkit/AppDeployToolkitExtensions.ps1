@@ -9802,6 +9802,7 @@ function Test-NxtProcessExists {
 		}
 		catch {
 			Write-Log -Message "Failed to get processes for '$ProcessName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to get processes for '$ProcessName'. `n$(Resolve-Error)"
 		}
 	}
 	End {
