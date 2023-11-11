@@ -10874,6 +10874,7 @@ function Unregister-NxtPackage {
 							NoWait = $true
 							WorkingDirectory = $env:TEMP
 						}
+						## we use temp es workingdirectory to avoid issues with locked directories
 						if ($false -eq [string]::IsNullOrEmpty($AppRootFolder)){
 							$ExecuteProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $ExecuteProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value $AppRootFolder
 						}
