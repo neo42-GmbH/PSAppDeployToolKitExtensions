@@ -6415,7 +6415,9 @@ function Remove-NxtEmptyFolder {
 	.PARAMETER Path
 		Specifies the path to the empty folder to remove.
 		This parameter is mandatory.
-		.PARAMETER RootPathToRecurseUpTo
+	.PARAMETER RootPathToRecurseUpTo
+		Specifies the root path to recurse up to.
+		This parameter is optional. Only Subfolders of this Path will be removed if specified.
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
 		This example removes the specified empty folder located at "$installLocation\SomeEmptyFolder".
@@ -6480,8 +6482,11 @@ function Remove-NxtEmptyFolder {
 			## Resolve possible relative segments in the paths 
 			[string]$absolutePath = $Path | Split-Path -Parent
 			[string]$absoluteRootPathToRecurseUpTo = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($RootPathToRecurseUpTo)).FullName)
-			if ($absolutePath -ne $absoluteRootPathToRecurseUpTo)
-			{
+			if ($absolutePath -eq $absoluteRootPathToRecurseUpTo){
+				## We are at the root of the recursion, so we can stop recursing up
+				Remove-NxtEmptyFolder -Path $absolutePath
+			}
+			else {
 				## Ensure that $absoluteRootPathToRecurseUpTo is a valid path
 				if ($false -eq [System.IO.Path]::IsPathRooted($absoluteRootPathToRecurseUpTo)) {
 					Write-Log -Message "$absoluteRootPathToRecurseUpTo is not a valid path." -Severity 3 -Source ${CmdletName}
@@ -10776,6 +10781,9 @@ function Unregister-NxtPackage {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER AppRootFolder
+		Defines the root folder of the application package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Unregister-NxtPackage
 	.NOTES
@@ -10804,7 +10812,10 @@ function Unregister-NxtPackage {
 		$App = $global:PackageConfig.App,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptRoot
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppRootFolder = $global:PackageConfig.AppRootFolder
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -10857,7 +10868,16 @@ function Unregister-NxtPackage {
 						## note: we always use the script from current application package source folder (it is basically identical in each package)
 						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
 						Start-Sleep -Seconds 1
-						Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$App" -NoWait
+						[hashtable]$ExecuteProcessSplat = @{
+							Path = 'powershell.exe'
+							Parameters = "-File `"$App\Clean-Neo42AppFolder.ps1`""
+							NoWait = $true
+							WorkingDirectory = $env:TEMP
+						}
+						if ($false -eq [string]::IsNullOrEmpty($AppRootFolder)){
+							$ExecuteProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $ExecuteProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value $AppRootFolder
+						}
+						Execute-Process @ExecuteProcessSplat
 					}
 					else {
 						Write-Log -Message "No current 'App' path [$App] available, cleanup script will not be executed." -Source ${CmdletName}
