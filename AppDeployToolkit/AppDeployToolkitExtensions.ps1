@@ -1062,9 +1062,6 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
-	.PARAMETER AppRootFolder
-		Defines the root folder of the application.
-		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Complete-NxtPackageUninstallation
 	.EXAMPLE
@@ -1093,10 +1090,7 @@ function Complete-NxtPackageUninstallation {
 		$UserPartDir = $global:UserPartDir,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptRoot,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$AppRootFolder = $global:PackageConfig.AppRootFolder
+		$ScriptRoot = $scriptRoot
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1131,8 +1125,6 @@ function Complete-NxtPackageUninstallation {
 				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 		}
-		## Cleanup App Folder
-		Remove-NxtEmptyFolder -Path $App -RootPathToRecurseUpTo $AppRootFolder
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
