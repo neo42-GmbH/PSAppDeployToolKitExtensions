@@ -5712,7 +5712,7 @@ function Merge-NxtExitCodes {
 	Process {
 		[array]$ExitCodeObj = @()
 		if ($ExitCodeString1 -eq "*" -or $ExitCodeString2 -eq "*") {
-			$ExitCodeObj = "*"
+			[string]$ExitCodeString = "*"
 		}
 		else {
 			if (-not [string]::IsNullOrEmpty($ExitCodeString1)) { 
@@ -5722,9 +5722,9 @@ function Merge-NxtExitCodes {
 				$ExitCodeObj += $ExitCodeString2 -split ","
 			}
 			$ExitCodeObj = $ExitCodeObj | Select-Object -Unique
-			[string]$IgnoreExitCodes = $ExitCodeObj -join ","
+			[string]$ExitCodeString = $ExitCodeObj -join ","
 		}
-		return $IgnoreExitCodes
+		return $ExitCodeString
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
