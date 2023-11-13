@@ -11445,6 +11445,7 @@ function Watch-NxtProcess {
 		}
 		catch {
 			Write-Log -Message "Failed to wait until process '$ProcessName' is started. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to wait until process '$ProcessName' is started. `n$(Resolve-Error)"
 		}
 	}
 	End {
@@ -11511,6 +11512,7 @@ function Watch-NxtProcessIsStopped {
 		}
 		catch {
 			Write-Log -Message "Failed to wait until process '$ProcessName' is stopped. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to wait until process '$ProcessName' is stopped. `n$(Resolve-Error)"
 		}
 	}
 	End {
