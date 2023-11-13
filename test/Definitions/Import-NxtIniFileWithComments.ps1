@@ -23,6 +23,9 @@ port = 143
         It 'Should return a hashtable of the INI file contents' {
             $result = Import-NxtIniFileWithComments -Path $PSScriptRoot\test.ini
 
+            # Test global variables
+            $result.GetEnumerator().Name | Should -Not -Contain 'info'
+
             # Return value is a hashtable
             $result.GetEnumerator().Name | Should -Contain 'database'
             $result.database | Should -BeOfType 'System.Collections.Hashtable'
@@ -41,6 +44,7 @@ port = 143
     Context 'When given a complex INI file' {
         BeforeAll {
             @"
+info = Global info
 ; last modified 1 April 2001 by John Doe
 [owner]
 name : John Doe
