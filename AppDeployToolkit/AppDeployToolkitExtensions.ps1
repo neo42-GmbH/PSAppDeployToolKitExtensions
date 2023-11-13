@@ -6035,6 +6035,10 @@ function Read-NxtSingleXmlNode {
 		try {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
+			[System.Xml.XmlNode]$selection = $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName)
+			if ($selection.ChildNodes.count -gt 1){
+				Write-Log -Message "Found multiple child nodes for '$SingleNodeName'. Contacted values will be returned." -Severity 3 -Source ${cmdletName}
+			}
 			Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).$AttributeName)
 		}
 		catch {
