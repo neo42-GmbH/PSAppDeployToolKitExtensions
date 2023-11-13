@@ -52,7 +52,7 @@ Describe "Read-NxtSingleXmlNode" {
             $result | Should -Be "cardigan.jpg"
         }
         It "Should error when specifing node with multiple entries but return concated string" {
-            Read-NxtSingleXmlNode -XmlFilePath $xml -SingleNodeName '//catalog_item' | Should -Be 'QWZ567139.95BurgundyRedBurgund'
+            Read-NxtSingleXmlNode -XmlFilePath $xml -SingleNodeName '//catalog_item' | Should -Be 'QWZ567139.95BurgundyRedBurgundy'
         }
         It "Should return empty if node or attribute does not exist" {
             Read-NxtSingleXmlNode -XmlFilePath $xml -SingleNodeName '//invalid' | Should -BeNullOrEmpty
