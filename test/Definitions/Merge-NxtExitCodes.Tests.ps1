@@ -18,7 +18,7 @@ Describe 'Merge-NxtExitCodes' {
             Merge-NxtExitCodes -ExitCodeString1 "1" -ExitCodeString2 "" | Should -Be '1'
             Merge-NxtExitCodes -ExitCodeString1 "" -ExitCodeString2 "1" | Should -Be '1'
         }
-        It 'Should always be * if any element is *' -Skip {
+        It 'Should always be * if any element is *' {
             # Issue #631
             Merge-NxtExitCodes -ExitCodeString1 "*" -ExitCodeString2 "1" | Should -Be '*'
             Merge-NxtExitCodes -ExitCodeString1 "1" -ExitCodeString2 "*" | Should -Be '*'
