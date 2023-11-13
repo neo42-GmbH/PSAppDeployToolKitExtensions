@@ -8,10 +8,10 @@ Describe "Add-NxtParameterToCommand" {
         It "Should add a switch to the command" {
             Add-NxtParameterToCommand -Command 'text.exe' -Name 'test' -Switch $true | Should -Be 'text.exe -test'
         }
-        It "Should still use switch if value is specified" {
+        It "Should not allow a switch and a value to be specified" {
             { Add-NxtParameterToCommand -Command 'text.exe' -Name 'test' -Value 'value' -Switch $true } | Should -Throw
         }
-        It "Should not add values if no value or switch is specified" {
+        It "Should not allow not specifiying what to add" {
             { Add-NxtParameterToCommand -Command 'text.exe' -Name 'test' } | Should -Throw
         }
 
