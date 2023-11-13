@@ -6039,7 +6039,7 @@ function Read-NxtSingleXmlNode {
 			if ($selection.ChildNodes.count -gt 1){
 				Write-Log -Message "Found multiple child nodes for '$SingleNodeName'. Contacted values will be returned." -Severity 3 -Source ${cmdletName}
 			}
-			Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).$AttributeName)
+			Write-Output ($selection.$AttributeName)
 		}
 		catch {
 			Write-Log -Message "Failed to read single node '$SingleNodeName' from xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
