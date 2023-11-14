@@ -3858,6 +3858,7 @@ function Get-NxtParentProcess {
 	[CmdletBinding()]
 	Param (
 		[Parameter()]
+		[ValidateRange(1, [int]::MaxValue)]
 		[int]
 		$Id = $global:PID,
 		[Parameter()]
@@ -3869,7 +3870,13 @@ function Get-NxtParentProcess {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+
 		[System.Management.ManagementBaseObject]$process = Get-WmiObject Win32_Process -filter "ProcessID ='$ID'"
+		if ($null -eq $process){
+			Write-Log -Message "Failed to find process with pid '$Id'." -Severity 2 -Source ${cmdletName}
+			return
+		}
+
 		[System.Management.ManagementBaseObject]$parentProcess = Get-WmiObject Win32_Process -filter "ProcessID ='$($process.ParentProcessId)'"
 		Write-Output $parentProcess
 		if ($Recurse -and ![string]::IsNullOrEmpty($parentProcess)) {
@@ -4049,6 +4056,7 @@ function Get-NxtProcessTree {
 	#>
     param (
         [Parameter(Mandatory=$true)]
+		[ValidateRange(1, [int]::MaxValue)]
         [int]$ProcessId,
         [Parameter(Mandatory=$false)]
         [bool]$IncludeChildProcesses = $true,
