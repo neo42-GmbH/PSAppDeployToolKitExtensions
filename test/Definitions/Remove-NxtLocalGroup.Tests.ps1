@@ -1,5 +1,8 @@
 Describe 'Remove-NxtLocalGroup' {
     Context 'When the group exists' {
+        BeforeAll {
+            New-LocalUser -Name 'TestUser' -NoPassword
+        }
         BeforeEach {
             New-LocalGroup -Name 'TestGroup'
         }
@@ -8,18 +11,21 @@ Describe 'Remove-NxtLocalGroup' {
                 Remove-LocalGroup -Name 'TestGroup' -Force
             }
         }
+        AfterAll {
+            Remove-LocalUser -Name 'TestUser'
+        }
         It 'Should remove an existing group with no members' {
             # Issue #624
             $result = Remove-NxtLocalGroup -GroupName 'TestGroup'
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
-            Get-LocalGroup -Name 'TestGroup' | Should -BeNullOrEmpty
+            Get-LocalGroup -Name 'TestGroup' -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
         }
         It 'Should remove an existing group with members' {
             # Issue #624
-            Add-LocalGroupMember -Group 'TestGroup' -Member 'Administrator'
+            Add-LocalGroupMember -Group 'TestGroup' -Member 'TestUser'
             Remove-NxtLocalGroup -GroupName 'TestGroup' | Should -Be $true
-            Get-LocalGroup -Name 'TestGroup' | Should -BeNullOrEmpty
+            Get-LocalGroup -Name 'TestGroup' -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
         }
     }
     Context 'When group does not exist' {
