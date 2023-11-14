@@ -18,7 +18,7 @@ Describe 'Get-NxtParentProcess' {
             $processes.Length | Should -BeGreaterThan 1
             $processes.ProcessId | Should -Contain $selfPID
         }
-        It 'Should fail if process not found' -Skip {
+        It 'Should fail if process not found' {
             # #622 Returns idle process/ Hangs on recurse
             Get-NxtParentProcess -Id 9999999 | Should -Be $null
             Get-NxtParentProcess -Id 9999999 -Recurse | Should -Be $null
