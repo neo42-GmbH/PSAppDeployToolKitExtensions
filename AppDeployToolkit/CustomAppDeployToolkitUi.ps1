@@ -1562,7 +1562,6 @@ $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | 
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
-[string]$appRootFolder = $ExecutionContext.InvokeCommand.ExpandString($tempLoadPackageConfig.AppRootFolder)
 Remove-Variable -Name tempLoadPackageConfig
 
 [string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
