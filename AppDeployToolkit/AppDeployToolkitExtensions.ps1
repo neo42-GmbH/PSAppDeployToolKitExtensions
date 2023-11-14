@@ -5176,6 +5176,87 @@ function Initialize-NxtAppFolder {
 	}
 }
 #endregion
+#region Function Initialize-NxtAppRootFolder
+function Initialize-NxtAppRootFolder {
+	<#
+	.SYNOPSIS
+		Sets up the App Root Folder and forces predefined permissions on the folder.
+	.DESCRIPTION
+		This function is designed to prepare the application root directory (AppRootFolder) by verifying paths, setting appropriate permissions, and creating necessary directories. 
+		It should be invoked by the 'Initialize-NxtEnvironment' function as part of a broader initialization process. 
+		The function ensures that the AppRootFolder is correctly configured.
+
+	.EXAMPLE
+		Initialize-NxtAppRootFolder
+		.OUPUTS
+		System.String
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$BaseName,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$RegPackagesKey
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		## Get AppRootFolderNames we have claimed from the registry
+		if (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey" -Value "AppRootFolderNames") {
+			[string[]]$AppRootFolderNames = Get-RegistryKey "HKLM:\Software\$RegPackagesKey" -Value "AppRootFolderNames"
+		}
+		else {
+			[string[]]$AppRootFolderNames = @()
+		}
+		[string]$appRootFolderName = foreach ($Name in $AppRootFolderNames) {
+			if ($Name -eq $BaseName) {
+				Write-Log -Message "AppRootFolderName with Name '$Name' found." -Source ${CmdletName}
+				$Name
+				break
+			}
+			if ($Name -match "^$BaseName.{8}$") {
+				Write-Log -Message "AppRootFolderName with Name '$Name' found." -Source ${CmdletName}
+				$Name
+				break
+			}
+		}
+		if ([string]::IsNullOrEmpty($appRootFolderName)){
+			## Claim an ApprootFolder
+			if ($false -eq (Test-Path -Path $env:ProgramData\$BaseName)) {
+				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+				$AppRootFolderNames += $BaseName
+				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey" -Name "AppRootFolderNames" -Value $AppRootFolderNames -Type MultiString -ContinueOnError $false
+				$appRootFolderName = $BaseName
+			}
+			else {
+				## use a foldername with a random suffix
+				$randomSuffix = [System.Guid]::NewGuid().ToString().Substring(0,8)
+				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName$randomSuffix -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+				$AppRootFolderNames += "$BaseName$randomSuffix"
+				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey" -Name "AppRootFolderNames" -Value $AppRootFolderNames -Type MultiString -ContinueOnError $false
+				$appRootFolderName = "$BaseName$randomSuffix"
+			}
+		}
+		if ($appRootFolderName.length -ne 0){
+			Write-Output "$env:ProgramData\$appRootFolderName"
+		}
+		else {
+			Throw "Failed to find or create AppRootFolderName"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
 #region Function Initialize-NxtEnvironment
 function Initialize-NxtEnvironment {
 	<#
@@ -5234,7 +5315,7 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.AppRootFolder),
+		$AppRootFolderName = $global:PackageConfig.AppRootFolderName,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
@@ -5243,7 +5324,10 @@ function Initialize-NxtEnvironment {
 		$DeploymentType = $DeploymentType,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptroot
+		$ScriptRoot = $scriptroot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5252,9 +5336,9 @@ function Initialize-NxtEnvironment {
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
 		## $App and $SetupCfgPathOverride are possibly not set at this point so we have to reset them after the Get-NxtPackageConfig.
-		$AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.AppRootFolder)
+		$AppRootFolder = Initialize-NxtAppRootFolder -BaseName $AppRootFolderName -RegPackagesKey $RegPackagesKey
 		## $AppRootFolder also has to be expanded in the global PackageConfig object because it is Part of the $App variable.
-		[string]$global:PackageConfig.AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.AppRootFolder)
+		[string]$global:PackageConfig.AppRootFolder = Initialize-NxtAppRootFolder -BaseName $AppRootFolderName -RegPackagesKey $RegPackagesKey
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 		## if $App still is not valid we have to throw an error.
@@ -5263,8 +5347,8 @@ function Initialize-NxtEnvironment {
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
-			Write-Log -Message "Initializing environment with Approotfolder '$AppRootFolder' and App '$App' ScriptRoot '$ScriptRoot'..." -Source ${cmdletName}
-			Initialize-NxtAppFolder -AppRootFolder $AppRootFolder -App $App -ScriptRoot $ScriptRoot
+			#Write-Log -Message "Initializing environment with Approotfolder '$AppRootFolder' and App '$App' ScriptRoot '$ScriptRoot'..." -Source ${cmdletName}
+			#Initialize-NxtAppFolder -AppRootFolder $AppRootFolder -App $App -ScriptRoot $ScriptRoot
 			if ($DeploymentType -eq "Install") {
 				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
 				if (
