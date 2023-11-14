@@ -8899,7 +8899,7 @@ function Stop-NxtProcess {
 				}
 			}
 			elseif ($PSCmdlet.ParameterSetName -eq "WqlQuery") {
-				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $WqlQuery -ErrorAction SilentlyContinue | ForEach-Object {
+				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $WqlQuery -ErrorAction Stop| ForEach-Object {
 					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
 				}
 				[int]$processCountForLogging = $processes.Count
@@ -8908,7 +8908,7 @@ function Stop-NxtProcess {
 				}
 				## Test after 1s if the process(es) are still running, if it is still in the list it is ok if it has exited.
 				Start-Sleep 1
-				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $WqlQuery -ErrorAction SilentlyContinue | ForEach-Object {
+				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $WqlQuery -ErrorAction Stop | ForEach-Object {
 					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
 				} | Where-Object { $false -eq $_.HasExited }
 				if ($processes.Count -ne 0) {
@@ -8920,7 +8920,7 @@ function Stop-NxtProcess {
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to stop $($processes.Count) of $processCountForLogging processes. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to stop process(es) using $($PSCmdlet.ParameterSetName) with $WqlQuery$Name. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
