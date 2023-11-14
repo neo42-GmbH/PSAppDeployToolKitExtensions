@@ -8,17 +8,17 @@ Describe 'Remove-NxtLocalGroup' {
                 Remove-LocalGroup -Name 'TestGroup' -Force
             }
         }
-        It 'Should remove an existing group with no members' -Skip {
+        It 'Should remove an existing group with no members' {
             # Issue #624
             $result = Remove-NxtLocalGroup -GroupName 'TestGroup'
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
             Get-LocalGroup -Name 'TestGroup' | Should -BeNullOrEmpty
         }
-        It 'Should remove an existing group with members' -Skip {
+        It 'Should remove an existing group with members' {
             # Issue #624
             Add-LocalGroupMember -Group 'TestGroup' -Member 'Administrator'
-            $result = Remove-NxtLocalGroup -GroupName 'TestGroup' | Should -Be $true
+            Remove-NxtLocalGroup -GroupName 'TestGroup' | Should -Be $true
             Get-LocalGroup -Name 'TestGroup' | Should -BeNullOrEmpty
         }
     }

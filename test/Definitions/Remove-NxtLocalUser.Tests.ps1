@@ -8,13 +8,13 @@ Describe "Remove-NxtLocalUser" {
                 Remove-LocalUser -Name "TestUser"
             }
         }
-        It "Should remove the user from the local machine" -Skip {
+        It "Should remove the user from the local machine" {
             # Issue #624
             $result = Remove-NxtLocalUser -UserName "TestUser"
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
         }
-        It "Should fail if the user does not exist" -Skip {
+        It "Should fail if the user does not exist" {
             # Issue #624
             $result = Remove-NxtLocalUser -UserName "TestUser2"
             $result | Should -BeOfType 'bool'
