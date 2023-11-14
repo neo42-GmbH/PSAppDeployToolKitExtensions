@@ -2850,7 +2850,9 @@ function Expand-NxtPackageConfig {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[string]$global:PackageConfig.AppRootFolder = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.AppRootFolder)
+		if ($false -eq [System.IO.Path]::IsPathRooted($global:PackageConfig.AppRootFolder)){
+			Throw "AppRootFolder is not a valid path. Please check your PackageConfig."
+		}
 		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
 		[string]$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
 		[string]$global:PackageConfig.InstallLocation = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.InstallLocation)
@@ -5043,139 +5045,6 @@ function Import-NxtIniFileWithComments {
 	}
 }
 #endregion
-#region Function Initialize-NxtAppFolder
-function Initialize-NxtAppFolder {
-	<#
-	.SYNOPSIS
-		Sets up the App folder structure and forces predefined permissions on the folder structure.
-	.DESCRIPTION
-		This function is designed to prepare the application directory (AppFolder) by verifying paths, setting appropriate permissions, and creating necessary directories. 
-		It should be invoked by the 'Initialize-NxtEnvironment' function as part of a broader initialization process. 
-		The function ensures that the AppFolder and its parent directory (AppRootFolder) are correctly configured.
-	.PARAMETER AppRootFolder
-		Specifies the path to the parent directory of the AppFolder. 
-		This path is crucial for establishing a secure and structured environment for the application. 
-		Defaults to the value from the PackageConfig object.
-	.PARAMETER App
-		Specifies the path to the AppFolder that the package will utilize. This folder has to be nested within the AppRootFolder. 
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER ScriptRoot
-		Indicates the path to the root directory of the current script. 
-		This is used to ensure the script is not operating within the AppFolder itself.
-		Defaults to $scriptRoot.
-	.EXAMPLE
-		Initialize-NxtAppFolder
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-	#>
-	[CmdletBinding()]
-	Param (
-		[Parameter(Mandatory = $false)]
-		[string]
-		$AppRootFolder = $global:PackageConfig.AppRootFolder,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
-		[Parameter(Mandatory = $false)]
-		[string]
-		$ScriptRoot = $scriptRoot
-	)
-	Begin {
-		## Get the name of this function and write header
-		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-	}
-	Process {
-		## Resolve possible relative segments in the paths 
-		[string]$absoluteAppPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($App)).FullName)
-		[string]$absoluteAppRootFolderPath = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($AppRootFolder)).FullName)
-		## Test if $ScriptRoot is a subpath of $absoluteAppPath
-		if ($ScriptRoot.StartsWith($absoluteAppPath, [System.StringComparison]::InvariantCultureIgnoreCase)) {
-			Write-Log -Message "Executing from within `$App Folder, skip appfolder initialization" -Source ${CmdletName}
-			return
-		}
-		## Ensure that $absoluteAppRootFolderPath is a valid path
-		if ($false -eq [System.IO.Path]::IsPathRooted($absoluteAppRootFolderPath)) {
-			Write-Log -Message "$absoluteAppRootFolderPath is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-			throw "AppRootFolder is not set correctly. Please check your PackageConfig"
-		}
-		## Ensure that $absoluteAppRootFolderPath is not $absoluteAppPath
-		if($absoluteAppRootFolderPath -ieq $absoluteAppPath) {
-			Write-Log -Message "AppRootFolder '$absoluteAppRootFolderPath' is the same as '$absoluteAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-			throw "AppRootFolder '$absoluteAppRootFolderPath' is the same as '$absoluteAppPath'. Please check your PackageConfig.json"
-		}
-		## Ensure that $absoluteAppRootFolderPath is a parent of $absoluteAppPath
-		if ($false -eq $absoluteAppPath.StartsWith($absoluteAppRootFolderPath, [System.StringComparison]::InvariantCultureIgnoreCase)) {
-			Write-Log -Message "AppRootFolder '$absoluteAppRootFolderPath' is not a parent of '$absoluteAppPath'. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-			throw "AppRootFolder '$absoluteAppRootFolderPath' is not a parent of '$absoluteAppPath'. Please check your PackageConfig.json"
-		}
-		if ($true -eq (Test-Path -Path $absoluteAppRootFolderPath)) {
-			Write-Log -Message "AppRootFolder '$absoluteAppRootFolderPath' already exists. Checking for permissions along the `$App path" -Source ${CmdletName}
-			[bool]$permissionResetRequired = $false
-			[string]$tempBasePath = $absoluteAppRootFolderPath
-			[string]$tempTailPath = ($absoluteAppPath -replace "(?i)$([regex]::Escape($tempBasePath))","").Trim("\")
-			[hashtable]$testFolderPermissionSplat = @{
-				Path = $tempBasePath
-				FullControlPermissions = @(
-					"BuiltinAdministratorsSid",
-					"LocalSystemSid"
-				)
-				ReadAndExecutePermissions = @(
-					"BuiltinUsersSid"
-				)
-				Owner = "BuiltinAdministratorsSid"
-				CheckIsInherited = $true
-				IsInherited = $false
-			}
-			if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
-				Write-Log -Message "AppRootFolder '$tempBasePath' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
-				Set-NxtFolderPermissions -Path $absoluteAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
-			}
-			else {
-				Write-Log -Message "AppRootFolder '$tempBasePath' has correct permissions." -Source ${CmdletName}
-				$testFolderPermissionSplat["IsInherited"] = $true
-				foreach($pathItem in $tempTailPath.Split("\")) {
-					$tempBasePath = [System.IO.Path]::Combine($tempBasePath,$pathItem)
-					$testFolderPermissionSplat["Path"] = $tempBasePath
-					if ($true -eq (Test-Path -Path $tempBasePath)) {
-						if ($false -eq (Test-NxtFolderPermissions @testFolderPermissionSplat)) {
-							Write-Log -Message "Found incorrect permissions in `$App parent path '$tempBasePath'" -Source ${CmdletName}
-							$permissionResetRequired = $true
-							break
-						}
-						else {
-							Write-Log -Message "Folder '$tempBasePath' has correct permissions." -Source ${CmdletName}
-						}
-					}
-					else {
-						Write-Log -Message "Folder '$tempBasePath' does not exist. It will be created as needed" -Source ${CmdletName}
-						break
-					}
-				}
-				if ($true -eq $permissionResetRequired) {
-					Write-Log -Message "Folder '$tempBasePath' has incorrect permissions. Resetting permissions..." -Source ${CmdletName}
-					Set-NxtFolderPermissions -Path $absoluteAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -EnforceInheritanceOnSubFolders $true -Owner BuiltinAdministratorsSid
-				}
-			}
-			## Remove the $App folder, sanitize the path and create it again.
-			if ($true -eq (Test-Path -Path $absoluteAppPath)) {
-				Write-Log -Message "App '$absoluteAppPath' already exists. Removing it..." -Source ${CmdletName}
-				Remove-Folder -Path $absoluteAppPath
-				If ($true -eq (Test-Path $absoluteAppPath)){
-					Write-Log -Message "App '$absoluteAppPath' could not be removed. Please check your permissions or close all open handles to the folder." -Severity 3 -Source ${CmdletName}
-					throw "App '$absoluteAppPath' could not be removed. Please check your permissions or close all open handles to the folder."
-				}
-			}
-		}
-		else {
-			Write-Log -Message "AppRootFolder '$absoluteAppRootFolderPath' does not exist. Creating it..." -Source ${CmdletName}
-			New-NxtFolderWithPermissions -Path $absoluteAppRootFolderPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
-		}
-	}
-	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
-	}
-}
-#endregion
 #region Function Initialize-NxtAppRootFolder
 function Initialize-NxtAppRootFolder {
 	<#
@@ -5315,7 +5184,7 @@ function Initialize-NxtEnvironment {
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AppRootFolderName = $global:PackageConfig.AppRootFolderName,
+		$AppRootFolder = $global:PackageConfig.AppRootFolder,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
@@ -5336,9 +5205,9 @@ function Initialize-NxtEnvironment {
 	Process {
 		Get-NxtPackageConfig -Path $PackageConfigPath
 		## $App and $SetupCfgPathOverride are possibly not set at this point so we have to reset them after the Get-NxtPackageConfig.
-		$AppRootFolder = Initialize-NxtAppRootFolder -BaseName $AppRootFolderName -RegPackagesKey $RegPackagesKey
 		## $AppRootFolder also has to be expanded in the global PackageConfig object because it is Part of the $App variable.
-		[string]$global:PackageConfig.AppRootFolder = Initialize-NxtAppRootFolder -BaseName $AppRootFolderName -RegPackagesKey $RegPackagesKey
+		[string][ValidateNotNullOrEmpty()]$appRootFolderName = Split-Path -Leaf -Path $AppRootFolder
+		[string]$global:PackageConfig.AppRootFolder = Initialize-NxtAppRootFolder -BaseName $appRootFolderName -RegPackagesKey $RegPackagesKey
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
 		$SetupCfgPathOverride = "$env:temp\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 		## if $App still is not valid we have to throw an error.
@@ -5347,8 +5216,6 @@ function Initialize-NxtEnvironment {
 			throw "App is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
-			#Write-Log -Message "Initializing environment with Approotfolder '$AppRootFolder' and App '$App' ScriptRoot '$ScriptRoot'..." -Source ${cmdletName}
-			#Initialize-NxtAppFolder -AppRootFolder $AppRootFolder -App $App -ScriptRoot $ScriptRoot
 			if ($DeploymentType -eq "Install") {
 				Write-Log -Message "Cleanup of possibly existing/outdated setup configuration files in folder '$App'..." -Source ${cmdletName}
 				if (
