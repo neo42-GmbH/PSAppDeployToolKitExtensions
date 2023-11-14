@@ -203,14 +203,14 @@ function Add-NxtLocalGroup {
 			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
 			if ($false -eq $groupExists) {
 				[System.DirectoryServices.DirectoryEntry]$objGroup = $adsiObj.Create("Group", $GroupName)
-				$objGroup.SetInfo()
+				$objGroup.SetInfo() | Out-Null
 			}
 			else {
 				[System.DirectoryServices.DirectoryEntry]$objGroup = [ADSI]"WinNT://$COMPUTERNAME/$GroupName,group"
 			}
 			if (-NOT [string]::IsNullOrEmpty($Description)) {
-				$objGroup.Put("Description", $Description)
-				$objGroup.SetInfo()
+				$objGroup.Put("Description", $Description) | Out-Null
+				$objGroup.SetInfo() | Out-Null
 			}
 			Write-Output $true
 		}
@@ -397,32 +397,32 @@ function Add-NxtLocalUser {
 			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
 			if ($false -eq $userExists) {
 				[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
-				$objUser.setpassword($Password)
-				$objUser.SetInfo()
+				$objUser.setpassword($Password) | Out-Null
+				$objUser.SetInfo() | Out-Null
 			}
 			else {
 				[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$COMPUTERNAME/$UserName,user"
 			}
 			if (-NOT [string]::IsNullOrEmpty($FullName)) {
-				$objUser.Put("FullName", $FullName)
-				$objUser.SetInfo()
+				$objUser.Put("FullName", $FullName) | Out-Null
+				$objUser.SetInfo() | Out-Null
 			}
 			if (-NOT [string]::IsNullOrEmpty($Description)) {
-				$objUser.Put("Description", $Description)
-				$objUser.SetInfo()
+				$objUser.Put("Description", $Description) | Out-Null
+				$objUser.SetInfo() | Out-Null
 			}
 			if ($SetPwdExpired) {
 				## Reset to normal account flag ADS_UF_NORMAL_ACCOUNT
 				$objUser.UserFlags = 512
-				$objUser.SetInfo()
+				$objUser.SetInfo() | Out-Null
 				## Set password expired
-				$objUser.Put("PasswordExpired", 1)
-				$objUser.SetInfo()
-			}
+				$objUser.Put("PasswordExpired", 1) | Out-Null
+				$objUser.SetInfo() | Out-Null
+			} 
 			if ($SetPwdNeverExpires) {
 				## Set flag ADS_UF_DONT_EXPIRE_PASSWD 
 				$objUser.UserFlags = 65536
-				$objUser.SetInfo()
+				$objUser.SetInfo() | Out-Null
 			}
 			Write-Output $true
 		}
@@ -6569,7 +6569,7 @@ function Remove-NxtLocalGroup {
 			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
 			if ($groupExists) {
 				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
-				$adsiObj.Delete("Group", $GroupName)
+				$adsiObj.Delete("Group", $GroupName) | Out-Null
 				Write-Output $true
 				return
 			}
@@ -6736,7 +6736,7 @@ function Remove-NxtLocalUser {
 			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
 			if ($userExists) {
 				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
-				$adsiObj.Delete("User", $UserName)
+				$adsiObj.Delete("User", $UserName) | Out-Null
 				Write-Output $true
 				return
 			}
