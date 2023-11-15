@@ -4302,7 +4302,7 @@ function Get-NxtRegisterOnly {
 		Specifies if package may be registered.
 		Defaults to the corresponding global value.
 	.PARAMETER RemovePackagesWithSameProductGUID
-		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
+		Defines wether to uninstall all found application packages with same ProductGUID (product membership) assigned.
 		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
@@ -6079,7 +6079,7 @@ function Register-NxtPackage {
 		Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RemovePackagesWithSameProductGUID
-		Defines to uninstall found all application packages with same ProductGUID (product membership) assigned.
+		Defines wether to uninstall all found application packages with same ProductGUID (product membership) assigned.
 		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
@@ -9759,14 +9759,16 @@ function Test-NxtProcessExists {
 	.DESCRIPTION
 		Tests if a process exists by name or custom WQL query.
 	.PARAMETER ProcessName
-		Name of the process or WQL search string.
+		Name of the process or WQL search string. 
+		Must include full file name including extension.
+		Supports wildcard character * and %.
 	.PARAMETER IsWql
 		Defines if the given ProcessName is a WQL search string.
 		Defaults to $false.
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
-		Test-NxtProcessExists "Notepad"
+		Test-NxtProcessExists "Notepad.exe"
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -10719,8 +10721,8 @@ function Unregister-NxtPackage {
 		Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RemovePackagesWithSameProductGUID
-		Switch for awareness of product membership of the application package, a value of '$true' defines the package itself will be hided during removal of other product member application packages, it will be processed like an default independent application package then.
-		During installation and uninstallation of itself the application package will operate like a product member too.
+		Defines wether to uninstall all found application packages with same ProductGUID (product membership) assigned.
+		The uninstalled application packages stay registered, when removed during installation process of current application package.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
 		Specifies the registry key name used for the packages wrapper uninstall entry.
@@ -11392,6 +11394,8 @@ function Watch-NxtProcess {
 		Checks whether a process exists within a given time based on the name or a custom WQL query.
 	.PARAMETER ProcessName
 		Name of the process or WQL search string.
+		Must include full file name including extension.
+		Supports wildcard character * and %.
 	.PARAMETER Timeout
 		Timeout in seconds the function waits for the process to start.
 	.PARAMETER IsWql
@@ -11458,6 +11462,8 @@ function Watch-NxtProcessIsStopped {
 		Checks whether a process ends within a given time based on the name or a custom WQL query.
 	.PARAMETER ProcessName
 		Name of the process or WQL search string.
+		Must include full file name including extension.
+		Supports wildcard character * and %.
 	.PARAMETER Timeout
 		Timeout in seconds the function waits for the process the stop.
 	.PARAMETER IsWql
