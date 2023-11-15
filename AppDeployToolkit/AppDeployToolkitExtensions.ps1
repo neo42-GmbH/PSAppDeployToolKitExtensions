@@ -4935,8 +4935,8 @@ function Import-NxtIniFile {
 	}
 	Process {
 		try {
-			[hashtable]$ini = @{}
-			[string]$section = ''
+			[hashtable]$ini = @{default=@{}}
+			[string]$section = 'default'
 			[Array]$content = Get-Content -Path $Path
 			foreach ($line in $content) {
 				if ($line -match '^\[(.+)\]$') {
@@ -4951,12 +4951,11 @@ function Import-NxtIniFile {
 				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
 					[string]$variableName = $matches[1]
 					[string]$value = $matches[2].Trim()
-					if ($false -eq $section){
-						Write-Log -Message "Section for variable '$variableName' has not been specified. Skipping assignment." -Severity 2 -Source ${CmdletName}
-						continue
-					}
 					[string]$ini[$section][$variableName] = $value
 				}
+			}
+			if ($ini.default.count -eq 0) {
+				$ini.Remove('default')
 			}
 			Write-Output $ini
 			Write-Log -Message "Read ini file [$path]. " -Source ${CmdletName}
@@ -5010,8 +5009,8 @@ function Import-NxtIniFileWithComments {
 	}
 	Process {
 		try {
-			[hashtable]$ini = @{}
-			[string]$section = ''
+			[hashtable]$ini = @{default=@{}}
+			[string]$section = 'default'
 			[array]$commentBuffer = @()
 			[Array]$content = Get-Content -Path $Path
 			foreach ($line in $content) {
@@ -5027,16 +5026,15 @@ function Import-NxtIniFileWithComments {
 				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
 					[string]$variableName = $matches[1]
 					[string]$value = $matches[2].Trim()
-					if ($false -eq $section){
-						Write-Log -Message "Section for variable '$variableName' has not been specified. Skipping assignment." -Severity 2 -Source ${CmdletName}
-						continue
-					}
 					[hashtable]$ini[$section][$variableName] = @{
 						Value    = $value
 						Comments = $commentBuffer -join "`r`n"
 					}
 					[array]$commentBuffer = @()
 				}
+			}
+			if ($ini.default.count -eq 0) {
+				$ini.Remove('default')
 			}
 			Write-Output $ini
 			Write-Log -Message "Read ini file [$path]. " -Source ${CmdletName}

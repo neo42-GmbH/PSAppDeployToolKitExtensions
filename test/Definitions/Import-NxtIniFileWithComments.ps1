@@ -72,6 +72,11 @@ file = "payroll.dat"
         It "Should return a hashtable of the INI file contents" {
             $result = Import-NxtIniFileWithComments -Path $PSScriptRoot\test.ini
 
+             # Test global variables
+            $result.GetEnumerator().Name | Should -Contain 'default'
+            $result.default.GetEnumerator().Name | Should -Contain 'info'
+            $result.default.info.value | Should -Be 'Global info'
+
             # Test delimiter
             $result.owner.GetEnumerator().Name | Should -Not -Contain 'name'
 

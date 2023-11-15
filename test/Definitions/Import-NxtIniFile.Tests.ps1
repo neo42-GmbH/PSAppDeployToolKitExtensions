@@ -69,7 +69,9 @@ file = "payroll.dat"
             $result = Import-NxtIniFile -Path $PSScriptRoot\test.ini -ContinueOnError $true
 
             # Test global variables
-            $result.GetEnumerator().Name | Should -Not -Contain 'info'
+            $result.GetEnumerator().Name | Should -Contain 'default'
+            $result.default.GetEnumerator().Name | Should -Contain 'info'
+            $result.default.info | Should -Be 'Global info'
 
             # Test delimiter
             $result.owner.GetEnumerator().Name | Should -Not -Contain 'name'
