@@ -13,11 +13,11 @@ Describe "Stop-NxtProcess" {
             $process.HasExited | Should -Be $true
         }
         It "Should stop the process by WQL Query" {
-            Stop-NxtProcess -WqlQuery "Name = '$($process.Name).exe'" | Should -BeNullOrEmpty
+            Stop-NxtProcess -Name "Name = '$($process.Name).exe'" -IsWql $true | Should -BeNullOrEmpty
             $process.HasExited | Should -Be $true
         }
         It "Should not stop the Process if the WQL Query does not match" {
-            Stop-NxtProcess -WqlQuery "Name = 'NonexistantProcess'" | Should -BeNullOrEmpty
+            Stop-NxtProcess -Name "Name = 'NonexistantProcess'" -IsWql $true | Should -BeNullOrEmpty
             $process.HasExited | Should -Be $false
         }
     }
