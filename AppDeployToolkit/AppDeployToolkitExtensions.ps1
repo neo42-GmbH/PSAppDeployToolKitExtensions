@@ -4462,8 +4462,8 @@ function Get-NxtRunningProcesses {
 	.PARAMETER ProcessIdToIgnore
 		An array of process IDs. Processes with these IDs, and their child processes, will be excluded from the search.
     .OUTPUTS
-        Syste.Boolean.
-        Returns $true if the process is running, otherwise $false.
+        Diagnostics.Process[]
+        Returns a list of processes that match the conditions specified.
     .EXAMPLE
         Get-NxtRunningProcesses -ProcessObjects $ProcessObjects
     .NOTES
@@ -4636,7 +4636,7 @@ function Get-NxtSidByName {
 		Get-NxtSidByName -UserName "DOMAIN\User"
 		Retrieves the SID for the User in the specified DOMAIN.
 	.OUTPUTS
-		none.
+		System.String.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -7332,8 +7332,7 @@ function Set-NxtFolderPermissions {
     .PARAMETER Owner
         The well-known SID of the user or group to be set as the owner of the folder.
 	.PARAMETER CustomDirectorySecurity
-		A boolean flag indicating whether to break the inheritance of permissions from parent objects. 
-		Default is $true.
+		A DirectorySecurity object descrbing the permissions to be set on the folder.
 	.PARAMETER BreakInheritance
 		When set to $true, enforces inheritance of permissions on all subfolders.
 		Default is $false.
