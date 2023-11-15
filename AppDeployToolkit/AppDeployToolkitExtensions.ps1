@@ -614,6 +614,7 @@ function Add-NxtParameterToCommand {
 		$Switch,
 		[Parameter(Mandatory = $true, ParameterSetName = 'Value')]
 		[string]
+		[AllowEmptyString()]
 		$Value
 		)
 	Begin {
