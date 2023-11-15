@@ -32,7 +32,7 @@ Describe "Watch-NxtProcess" {
             $result | Should -Be $true
         }
         It "Should throw when WQL is invalid" {
-            Watch-NxtProcess -ProcessName "INVALID" -Timeout 1 -IsWql | Should -Be $false
+            { Watch-NxtProcess -ProcessName "INVALID" -Timeout 1 -IsWql } | Should -Throw
         }
     }
 }
