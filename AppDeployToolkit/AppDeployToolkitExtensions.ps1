@@ -609,11 +609,10 @@ function Add-NxtParameterToCommand {
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Name,
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true, ParameterSetName = 'Switch')]
 		[bool]
 		$Switch,
-		[Parameter(Mandatory = $false)]
-		[string]
+		[Parameter(Mandatory = $true, ParameterSetName = 'Value')]
 		[string]
 		$Value
 		)
