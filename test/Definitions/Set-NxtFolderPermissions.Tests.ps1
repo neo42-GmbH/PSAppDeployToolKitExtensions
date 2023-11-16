@@ -19,8 +19,6 @@ Describe "Set-NxtFolderPermissions" {
         }
         It "Should set the folder permissions for a single Sid correctly" {
             Set-NxtFolderPermissions -Path $folder -Owner 'WorldSid' -FullControlPermissions 'WorldSid' -BreakInheritance $true | Should -BeNullOrEmpty
-            [System.Security.AccessControl.DirectorySecurity]$acl = Get-Acl -Path $folder
-            [string]$name = (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')).Translate([System.Security.Principal.NTAccount]).Value
             $acl.Access[0].IdentityReference.Value | Should -Be (Get-NameOfSid -SidName 'WorldSid')
             $acl.Access[0].FileSystemRights | Should -Be 'FullControl'
             $acl.Access.Count | Should -Be 1
@@ -33,7 +31,7 @@ Describe "Set-NxtFolderPermissions" {
             $acl.Access.IdentityReference.Value | Should -Contain (Get-NameOfSid -SidName 'WorldSid')
             $acl.Access.IdentityReference.Value | Should -Contain (Get-NameOfSid -SidName 'BuiltinGuestsSid')
             $acl.Access.Count | Should -Be 2
-            $acl.Owner | Should -Be 'Everyone'
+            $acl.Owner | Should -Be (Get-NameOfSid -SidName 'WorldSid')
         }
         It "Should apply custom access rules" {
             [System.Security.AccessControl.DirectorySecurity]$access = New-Object System.Security.AccessControl.DirectorySecurity
