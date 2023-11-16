@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    runs-on: PSAppDeployToolKitExtensions
+    runs-on: PSAppDeployToolKitExtensions-Runner
 
     steps:
     - name: Checkout
