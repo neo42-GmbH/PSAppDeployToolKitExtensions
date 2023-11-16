@@ -22,5 +22,8 @@ Describe 'Get-NxtParentProcess' {
             Get-NxtParentProcess -Id 9999999 | Should -Be $null
             Get-NxtParentProcess -Id 9999999 -Recurse | Should -Be $null
         }
+        It 'Should not loop on idle process' {
+            (Get-NxtParentProcess -Id 0).length | Should -Be 1
+        }
     }
 }

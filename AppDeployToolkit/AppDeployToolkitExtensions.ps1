@@ -3858,7 +3858,6 @@ function Get-NxtParentProcess {
 	[CmdletBinding()]
 	Param (
 		[Parameter()]
-		[ValidateRange(1, [int]::MaxValue)]
 		[int]
 		$Id = $global:PID,
 		[Parameter()]
@@ -3879,7 +3878,7 @@ function Get-NxtParentProcess {
 
 		[System.Management.ManagementBaseObject]$parentProcess = Get-WmiObject Win32_Process -filter "ProcessID ='$($process.ParentProcessId)'"
 		Write-Output $parentProcess
-		if ($Recurse -and ![string]::IsNullOrEmpty($parentProcess)) {
+		if ($true -eq $Recurse -and $false -eq [string]::IsNullOrEmpty($parentProcess) -and $parentProcess.ParentProcessId -ne 0) {
 			Get-NxtParentProcess -Id ($process.ParentProcessId) -Recurse
 		}
 	}
@@ -4056,7 +4055,6 @@ function Get-NxtProcessTree {
 	#>
     param (
         [Parameter(Mandatory=$true)]
-		[ValidateRange(1, [int]::MaxValue)]
         [int]$ProcessId,
         [Parameter(Mandatory=$false)]
         [bool]$IncludeChildProcesses = $true,
@@ -4069,6 +4067,9 @@ function Get-NxtProcessTree {
         if ($IncludeChildProcesses) {
             $childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
             foreach ($child in $childProcesses) {
+				if ($child.ProcessId -eq 0){
+					return
+				}
                 Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses
             }
         }

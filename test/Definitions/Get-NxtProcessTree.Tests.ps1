@@ -26,5 +26,8 @@ Describe "Get-NxtProcessTree" {
         It "Should output nothing if PID does not exist" {
             Get-NxtProcessTree -ProcessId 9999999 | Should -BeNullOrEmpty
         }
+        It 'Should not loop on idle process' {
+            (Get-NxtProcessTree -Id 0).length | Should -Be 1
+        }
     }
 }
