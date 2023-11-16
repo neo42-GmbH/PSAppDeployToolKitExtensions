@@ -8907,7 +8907,7 @@ function Stop-NxtProcess {
 					$processes | Stop-Process -Force
 				}
 				## Test after 1s if the process(es) are still running, if it is still in the list it is ok if it has exited.
-				Start-Sleep 1
+				Start-Sleep -Milliseconds 10
 				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $Name -ErrorAction Stop | ForEach-Object {
 					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
 				} | Where-Object { $false -eq $_.HasExited }
