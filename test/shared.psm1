@@ -60,6 +60,7 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 ## Variables: Environment
 If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
+[string]$global:AppLogFolder = $scriptDirectory
 [int]$env:nxtScriptDepth += 1
 ## dot source the required AppDeploy Toolkit functions
 Try {
