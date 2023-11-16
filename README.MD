@@ -2,7 +2,7 @@
 This repository contains all extensions and changes to the [PSAppDeploymentToolkit](#links) required by neo42 GmbH to provide packages. We hope by providing public access you can profit off of our extensive effort in improving the original work from the PSAppDeploymentToolkit-Team and help us improve ourselfs.
 
 # Build instructions
-In order to create a functional build of the Toolkit with our extensions please follow the instructions below:
+In order to create a functional build of the toolkit with our extensions please follow the instructions below:
 
 * Get a version 3.x release copy of the [PSAppDeploymentToolkit](#links).
     - ```Recommended``` Remove the Deploy-Application* files at the root of "\Toolkit"
@@ -22,3 +22,4 @@ This code is distributed WITHOUT ANY WARRANTY; without even the implied warranty
 
 # Links
 https://github.com/PSAppDeployToolkit/PSAppDeployToolkit
+https://www.gnu.org/licenses/licenses.html
