@@ -1,4 +1,4 @@
-name: Pester Tests
+name: Pester Tests on self-hosted
 
 on:
   workflow_dispatch:
