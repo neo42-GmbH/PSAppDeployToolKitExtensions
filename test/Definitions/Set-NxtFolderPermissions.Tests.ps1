@@ -19,6 +19,7 @@ Describe "Set-NxtFolderPermissions" {
         }
         It "Should set the folder permissions for a single Sid correctly" {
             Set-NxtFolderPermissions -Path $folder -Owner 'WorldSid' -FullControlPermissions 'WorldSid' -BreakInheritance $true | Should -BeNullOrEmpty
+            [System.Security.AccessControl.DirectorySecurity]$acl = Get-Acl -Path $folder
             $acl.Access[0].IdentityReference.Value | Should -Be (Get-NameOfSid -SidName 'WorldSid')
             $acl.Access[0].FileSystemRights | Should -Be 'FullControl'
             $acl.Access.Count | Should -Be 1
