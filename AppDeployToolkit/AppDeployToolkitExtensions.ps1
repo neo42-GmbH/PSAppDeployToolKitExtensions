@@ -5102,7 +5102,7 @@ function Initialize-NxtAppRootFolder {
 		else {
 			[string[]]$AppRootFolderNames = @()
 		}
-		[string]$appRootFolderName = foreach ($Name in $AppRootFolderNames) {
+		[string]$appRootFolderName = foreach ($name in $AppRootFolderNames) {
 			if ($Name -eq $BaseName) {
 				Write-Log -Message "AppRootFolderName with Name '$Name' found." -Source ${CmdletName}
 				$Name
