@@ -4,9 +4,6 @@
 			1) Close the specified running applications.
 			2) Provide an option to defer the installation.
 			3) Show a countdown before applications are automatically closed.
-        This script is based on the PSAppDeployToolkit Show-InstallationWelcome function.
-        Significant changes have been applied by neo42 GmbH to enhance capabilities and user experience.
-        This script includes mainly extracted and modified code from the PSAppDeployToolkit Licensed under LGPLv3.
 	.DESCRIPTION
 		The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
 		If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
@@ -68,7 +65,6 @@
         The name of the log file.
     .PARAMETER ProcessIdToIgnore
         The process ID to ignore the complete tree for.
-
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -79,10 +75,21 @@
 		Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10 -ProcessObjectsNames "code" -ProcessObjectsDescriptions "visual studio code"
 	.NOTES
 		This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
-		The code of this function is mainly adopted from the PSAppDeployToolkit https://psappdeploytoolkit.com.
-		
-		--- LGPL NOTICE ---
-		This software includes code derived from the PSAppDeployToolkit, which is licensed under the GNU Lesser General Public License (LGPL). A copy of the LGPL should be included with this software. If not, you can access it at <http://www.gnu.org/licenses/>.
+    .NOTES
+        This script is based on the PSAppDeployToolkit Show-InstallationWelcome function.
+        Significant changes have been applied by neo42 GmbH to enhance capabilities and user experience.
+        This script includes mainly modified code extracted from the PSAppDeployToolkit.
+    .NOTES
+        # LICENSE #
+        This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+        You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+        # ORIGINAL COPYRIGHT #
+        PowerShell App Deployment Toolkit - Provides a set of functions to perform common application deployment tasks on Windows.
+        Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
+
+        # MODIFICATION COPYRIGHT #
+        Copyright (c) 2023 neo42 GmbH, Germany.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>

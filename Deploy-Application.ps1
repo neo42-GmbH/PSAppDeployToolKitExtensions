@@ -1,23 +1,6 @@
 ﻿<#
 .SYNOPSIS
 	This script performs the installation, repair or uninstallation of an application(s).
-	# LICENSE #
-	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-	You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
-	# ORIGINAL COPYRIGHT #
-	PowerShell App Deployment Toolkit - Provides a set of functions to perform common application deployment tasks on Windows.
-	Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
-	
-	# MODIFICATIONS #
-	This script has been extensively modified by neo42 GmbH, building upon the template provided by the PowerShell App Deployment Toolkit.
-	Be aware that while it serves the original purpose of the PowerShell App Deployment Toolkit, it is not compatible with the original version.
-	Changes include but are not limited to:
-		- Unified script file
-		- External configuration file
-		- Customized logging
-		- Custom hook functions
-	# MODIFICATION COPYRIGHT #
-	Copyright (c) 2023 neo42 GmbH, Germany.
 .DESCRIPTION
 	The script is provided as a template to perform an install, repair or uninstall of an application(s).
 	The script either performs an "Install", a "Repair" or an "Uninstall" deployment type.
@@ -56,6 +39,25 @@
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
 	70000 - 79999: Recommended for user customized exit codes in AppDeployToolkitExtensions.ps1
+.NOTES
+	This script has been extensively modified by neo42 GmbH, building upon the template provided by the PowerShell App Deployment Toolkit.
+	Be aware that while it serves the original purpose of the PowerShell App Deployment Toolkit, it is not compatible with the original version.
+	Changes include but are not limited to:
+		- Unified script file
+		- External configuration file
+		- Customized logging
+		- Custom hook functions
+.NOTES
+	# LICENSE #
+	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+	You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+	# ORIGINAL COPYRIGHT #
+	PowerShell App Deployment Toolkit - Provides a set of functions to perform common application deployment tasks on Windows.
+	Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
+
+	# MODIFICATION COPYRIGHT #
+	Copyright (c) 2023 neo42 GmbH, Germany.
 .LINK
 	http://psappdeploytoolkit.com
 #>
