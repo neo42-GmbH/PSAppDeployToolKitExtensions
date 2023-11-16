@@ -167,7 +167,7 @@ switch ($DeploymentType) {
 	}
 	Default {}
 }
-## global default variables 
+## Global default variables
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
@@ -178,16 +178,17 @@ switch ($DeploymentType) {
 [string]$global:UserPartDir = "User"
 ## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
 [string[]]$script:NxtTempDirectories = @()
-## Several PSADT-functions do not work, if these variables are not set here.
+## We temporarily load the package config to get the appVendor, appName and appVersion variables which are also required to define the AppLogFolder.
 $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
+## Several PSADT-functions do not work, if these variables are not set here.
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
-[string]$appRootFolder = $ExecutionContext.InvokeCommand.ExpandString($tempLoadPackageConfig.AppRootFolder)
+[string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
 Remove-Variable -Name tempLoadPackageConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
-## set the script execution policy for this process
+## Set the script execution policy for this process
 Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop' } Catch {}
 ## Variables: Exit Code
 [int32]$mainExitCode = 0
@@ -251,7 +252,7 @@ try {
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVendor: $appVendor"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appName: $appName"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVersion: $appVersion"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appRootFolder: $appRootFolder"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] AppLogFolder: $global:AppLogFolder"
 
 	##*===============================================
 	##* END VARIABLE DECLARATION

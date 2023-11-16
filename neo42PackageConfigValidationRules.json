@@ -362,7 +362,8 @@
         "Mandatory": true,
         "HelpText": "AppRootFolder is mandatory and must be a string.",
         "Type": "System.String",
-        "AllowEmpty": false
+        "AllowEmpty": false,
+        "CheckInvalidFileNameChars": true
     },
     "App": {
         "Mandatory": true,
