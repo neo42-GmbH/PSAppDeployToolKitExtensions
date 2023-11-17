@@ -1,7 +1,7 @@
 Describe 'Get-NxtSidByName' {
     Context 'when given an SID' {
         BeforeAll {
-            [Microsoft.PowerShell.Commands.LocalUser]$localUser = New-LocalUser -Name 'TestUser'
+            [Microsoft.PowerShell.Commands.LocalUser]$localUser = New-LocalUser -Name 'TestUser' -NoPassword
         }
         AfterAll {
             if (Get-LocalUser -Name 'TestUser' -ErrorAction SilentlyContinue) {
