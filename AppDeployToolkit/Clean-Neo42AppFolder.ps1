@@ -22,7 +22,9 @@ function Remove-NxtEmptyFolder {
 	.PARAMETER Path
 		Specifies the path to the empty folder to remove.
 		This parameter is mandatory.
-		.PARAMETER RootPathToRecurseUpTo
+	.PARAMETER RootPathToRecurseUpTo
+		Specifies the root path to recurse up to. If this parameter is not specified, the function will not recurse up.
+		This parameter is optional. If specified, it must be a parent of the specified path or recursion will not be carried out.
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
 		This example removes the specified empty folder located at "$installLocation\SomeEmptyFolder".
@@ -55,29 +57,19 @@ function Remove-NxtEmptyFolder {
 		if (Test-Path -LiteralPath $Path -PathType 'Container') {
 			try {
 				if ( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
-					#Write-Log -Message "Delete empty folder [$Path]..." -Source ${CmdletName}
 					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveFolder'
-					if ($ErrorRemoveFolder) {
-						#Write-Log -Message "The following error(s) took place while deleting the empty folder [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${CmdletName}
-					}
-					else {
-						#Write-Log -Message "Empty folder [$Path] was deleted successfully..." -Source ${CmdletName}
-					}
 				}
 				else {
-					#Write-Log -Message "Folder [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
 					$skipRecursion = $true
 				}
 			}
 			catch {
-				#Write-Log -Message "Failed to delete empty folder [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				if (-not $ContinueOnError) {
 					throw "Failed to delete empty folder [$Path]: $($_.Exception.Message)"
 				}
 			}
 		}
 		else {
-			#Write-Log -Message "Folder [$Path] does not exist..." -Source ${CmdletName}
 		}
 		if (
 			$false -eq [string]::IsNullOrEmpty($RootPathToRecurseUpTo) -and
@@ -93,12 +85,10 @@ function Remove-NxtEmptyFolder {
 			else{
 				## Ensure that $absoluteRootPathToRecurseUpTo is a valid path
 				if ($false -eq [System.IO.Path]::IsPathRooted($absoluteRootPathToRecurseUpTo)) {
-					#Write-Log -Message "$absoluteRootPathToRecurseUpTo is not a valid path." -Severity 3 -Source ${CmdletName}
 					throw "RootPathToRecurseUpTo is not a valid path."
 				}
 				## Ensure that $absoluteRootPathToRecurseUpTo is a parent of $absolutePath
 				if ($false -eq $absolutePath.StartsWith($absoluteRootPathToRecurseUpTo, [System.StringComparison]::InvariantCultureIgnoreCase)) {
-					#Write-Log -Message "RootPathToRecurseUpTo '$absoluteRootPathToRecurseUpTo' is not a parent of '$absolutePath'." -Severity 3 -Source ${CmdletName}
 					throw "RootPathToRecurseUpTo '$absoluteRootPathToRecurseUpTo' is not a parent of '$absolutePath'."
 				}
 				Remove-NxtEmptyFolder -Path $absolutePath -RootPathToRecurseUp $absoluteRootPathToRecurseUpTo
@@ -129,7 +119,7 @@ try {
 finally {
     Remove-Item $currentScript -Force
     if ($false -eq [string]::IsNullOrEmpty($RootPathToRecurseUpTo)) {
-		Start-Sleep 0.1
+		Start-Sleep -Milliseconds 100
         Remove-NxtEmptyFolder -Path $PSScriptRoot -RootPathToRecurseUpTo $RootPathToRecurseUpTo
 	}
 }
