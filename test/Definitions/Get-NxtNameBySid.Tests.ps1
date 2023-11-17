@@ -1,12 +1,17 @@
 Describe 'Get-NxtNameBySid' {
     Context 'when given an SID' {
         BeforeAll {
-            [System.Security.Principal.WindowsIdentity]$currentID = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+            [Microsoft.PowerShell.Commands.LocalUser]$localUser = New-LocalUser -Name 'TestUser' -NoPassword
+        }
+        AfterAll {
+            if (Get-LocalUser -Name 'TestUser' -ErrorAction SilentlyContinue) {
+                Remove-LocalUser -Name 'TestUser'
+            }
         }
         It 'Should return the correct name'{
-            $result = Get-NxtNameBySid -Sid $currentID.User.Value
+            $result = Get-NxtNameBySid -Sid $localUser.SID
             $result | Should -BeOfType 'System.String'
-            $result | Should -Be $currentID.Name
+            $result | Should -Be "$env:COMPUTERNAME\$($localUser.Name)"
         }
         It 'Should return the correct name for a well-known SID' {
             [string]$name = (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')).Translate([System.Security.Principal.NTAccount]).Value
