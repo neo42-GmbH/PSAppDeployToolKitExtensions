@@ -2,8 +2,8 @@ Describe "Get-NxtIsSystemProcess" {
     Context "When given a system process name" {
         BeforeAll {
             [int]$systemProcess = 4
-            [int]$selfProcess = [System.Diagnostics.Process]::GetCurrentProcess().Id
-            [int]$lsassProcess = (Get-Process | Where-Object { $_.ProcessName -eq "lsass" })[0].Id
+            [int]$userProcess = (Get-Process -Name 'explorer' | Select-Object -First 1).Id
+            [int]$lsassProcess = (Get-Process -Name 'lsass' | Select-Object -First 1).Id
         }
         It "Should return true for lsass process" {
             $result = Get-NxtIsSystemProcess -ProcessId $lsassProcess
