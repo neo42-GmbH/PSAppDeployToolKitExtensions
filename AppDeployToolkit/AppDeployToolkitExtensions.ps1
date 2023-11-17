@@ -4095,7 +4095,7 @@ function Get-NxtProcessTree {
                 Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses
             }
         }
-        if ($process.ParentProcessId -eq $process.ProccessId -and $IncludeParentProcesses) {
+        if (($process.ParentProcessId -ne $process.ProccessId) -and $IncludeParentProcesses) {
             Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses
         }
     }
