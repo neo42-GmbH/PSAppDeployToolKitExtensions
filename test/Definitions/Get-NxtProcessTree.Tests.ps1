@@ -3,6 +3,8 @@ Describe "Get-NxtProcessTree" {
         BeforeAll {
             [System.Diagnostics.Process]$process = [System.Diagnostics.Process]::GetCurrentProcess()
             [System.Diagnostics.Process]$childProcess = Start-Process -FilePath simple.exe -PassThru
+            [ciminstance]$service = Get-CimInstance -Class Win32_Service -Filter "State = 'Running'" | Select-Object -First 1
+            [System.Diagnostics.Process]$serviceProcess = Get-Process -Id $service.ProcessId
         }
         AfterAll {
             $childProcess.Kill()
@@ -28,6 +30,7 @@ Describe "Get-NxtProcessTree" {
         }
         It 'Should not loop on idle process' {
             [Array]@((Get-NxtProcessTree -ProcessId 0)).count | Should -Be 1
+            [Array]@((Get-NxtParentProcess -Id $serviceProcess.id)).count | Should -BeLessThan 25
         }
     }
 }

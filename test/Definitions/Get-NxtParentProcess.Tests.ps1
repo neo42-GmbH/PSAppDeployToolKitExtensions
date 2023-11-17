@@ -3,6 +3,8 @@ Describe 'Get-NxtParentProcess' {
         BeforeAll {
             [string]$selfPID = ([System.Diagnostics.Process]::GetCurrentProcess()).Id
             [System.Diagnostics.Process]$childProcess = Start-Process -FilePath simple.exe -PassThru
+            [ciminstance]$service = Get-CimInstance -Class Win32_Service -Filter "State = 'Running'" | Select-Object -First 1
+            [System.Diagnostics.Process]$serviceProcess = Get-Process -Id $service.ProcessId
         }
         AfterAll{
             $childProcess.Kill()
@@ -22,8 +24,9 @@ Describe 'Get-NxtParentProcess' {
             [Array]@((Get-NxtParentProcess -Id 9999999)).count | Should -Be 0
             [Array]@((Get-NxtParentProcess -Id 9999999 -Recurse)).count | Should -Be 0
         }
-        It 'Should not loop on idle process' {
+        It 'Should not loop on idle or service process' {
             [Array]@((Get-NxtParentProcess -Id 0)).count | Should -Be 1
+            [Array]@((Get-NxtParentProcess -Id $serviceProcess.id)).count | Should -BeLessThan 25
         }
     }
 }
