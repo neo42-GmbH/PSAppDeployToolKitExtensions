@@ -4096,6 +4096,7 @@ function Get-NxtProcessTree {
             }
         }
         if (($process.ParentProcessId -ne $process.ProccessId) -and $IncludeParentProcesses) {
+			Write-Host "Process $($process.name) $($process.ProcessId) has parent $($process.ParentProcessId)"
             Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses
         }
     }
