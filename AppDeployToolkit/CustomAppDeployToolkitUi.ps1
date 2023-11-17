@@ -587,7 +587,7 @@ function Get-NxtProcessTree {
         if ($IncludeChildProcesses) {
             $childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
             foreach ($child in $childProcesses) {
-                if ($child.ProcessId -eq 0){
+                if ($child.ProcessId -eq $process.ParentProcessId){
                     return
                 }
                 Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses
