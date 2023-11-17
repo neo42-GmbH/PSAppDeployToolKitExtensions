@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-	This script is a minimalistic version of Deploy-Application.ps1. It is used to test the AppDeployToolkit.
+	This script is a minimalistic version of Deploy-Application.ps1. It is used to test our AppDeployToolkit Extensions.
 .PARAMETER DisableLogging
 	Disables logging to file for the script. Default is: $false.
 .NOTES
@@ -19,7 +19,6 @@
 .LINK
 	http://psappdeploytoolkit.com
 #>
-
 ## set the script execution policy for this process
 Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop' } Catch {}
 ## Variables: Exit Code
