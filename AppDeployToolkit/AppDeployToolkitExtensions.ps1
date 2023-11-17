@@ -6392,8 +6392,9 @@ function Remove-NxtEmptyFolder {
 		Specifies the path to the empty folder to remove.
 		This parameter is mandatory.
 	.PARAMETER RootPathToRecurseUpTo
-		Specifies the root path to recurse up to.
-		This parameter is optional. Only Subfolders of this Path will be removed if specified.
+		.PARAMETER RootPathToRecurseUpTo
+		Specifies the root path to recurse up to. If this parameter is not specified, the function will not recurse up.
+		This parameter is optional. If specified, it must be a parent of the specified path or recursion will not be carried out.
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
 		This example removes the specified empty folder located at "$installLocation\SomeEmptyFolder".
