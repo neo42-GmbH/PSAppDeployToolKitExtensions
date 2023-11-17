@@ -19,11 +19,11 @@ Describe 'Get-NxtParentProcess' {
             $processes.ProcessId | Should -Contain $selfPID
         }
         It 'Should fail if process not found' {
-            Get-NxtParentProcess -Id 9999999 | Should -Be $null
-            Get-NxtParentProcess -Id 9999999 -Recurse | Should -Be $null
+            [Array]@((Get-NxtParentProcess -Id 9999999)).count | Should -Be 0
+            [Array]@((Get-NxtParentProcess -Id 9999999 -Recurse)).count | Should -Be 0
         }
         It 'Should not loop on idle process' {
-            (Get-NxtParentProcess -Id 0).length | Should -Be 1
+            [Array]@((Get-NxtParentProcess -Id 0)).count | Should -Be 1
         }
     }
 }

@@ -27,7 +27,7 @@ Describe "Get-NxtProcessTree" {
             Get-NxtProcessTree -ProcessId 9999999 | Should -BeNullOrEmpty
         }
         It 'Should not loop on idle process' {
-            (Get-NxtProcessTree -Id 0).length | Should -Be 1
+            [Array]@((Get-NxtProcessTree -ProcessId 0)).count | Should -Be 1
         }
     }
 }
