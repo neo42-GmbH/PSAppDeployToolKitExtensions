@@ -9,7 +9,8 @@ Describe 'Get-NxtNameBySid' {
             $result | Should -Be $currentID.Name
         }
         It 'Should return the correct name for a well-known SID' {
-            Get-NxtNameBySid -Sid 'S-1-5-18' | Should -Be 'NT AUTHORITY\SYSTEM'
+            [string]$name = (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')).Translate([System.Security.Principal.NTAccount]).Value
+            Get-NxtNameBySid -Sid 'S-1-5-18' | Should -Be $name
         }
         It 'Should fail on an invalid SID' {
             Get-NxtNameBySid -Sid 'S-1-5-18-19' | Should -BeNullOrEmpty

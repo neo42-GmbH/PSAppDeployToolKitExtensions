@@ -591,6 +591,9 @@ function Get-NxtProcessTree {
         if ($IncludeChildProcesses) {
             $childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
             foreach ($child in $childProcesses) {
+                if ($child.ProcessId -eq 0){
+                    return
+                }
                 Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses
             }
         }
@@ -1562,7 +1565,7 @@ $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | 
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
-[string]$appRootFolder = $ExecutionContext.InvokeCommand.ExpandString($tempLoadPackageConfig.AppRootFolder)
+[string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
 Remove-Variable -Name tempLoadPackageConfig
 
 [string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name

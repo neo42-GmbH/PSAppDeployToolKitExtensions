@@ -2,7 +2,7 @@ Describe "Get-NxtProcessTree" {
     Context "When given a valid process ID" {
         BeforeAll {
             [System.Diagnostics.Process]$process = [System.Diagnostics.Process]::GetCurrentProcess()
-            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath "cmd.exe" -PassThru
+            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath simple.exe -PassThru
         }
         AfterAll {
             $childProcess.Kill()
@@ -25,6 +25,9 @@ Describe "Get-NxtProcessTree" {
         }
         It "Should output nothing if PID does not exist" {
             Get-NxtProcessTree -ProcessId 9999999 | Should -BeNullOrEmpty
+        }
+        It 'Should not loop on idle process' {
+            [Array]@((Get-NxtProcessTree -ProcessId 0)).count | Should -Be 1
         }
     }
 }

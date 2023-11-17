@@ -40,6 +40,7 @@ port = 143
     Context 'When given a complex INI file' {
         BeforeAll {
             @"
+info = Global info
 ; last modified 1 April 2001 by John Doe
 [owner]
 name : John Doe
@@ -66,6 +67,11 @@ file = "payroll.dat"
 
         It "Should return a hashtable of the INI file contents" {
             $result = Import-NxtIniFile -Path $PSScriptRoot\test.ini -ContinueOnError $true
+
+            # Test global variables
+            $result.GetEnumerator().Name | Should -Contain 'default'
+            $result.default.GetEnumerator().Name | Should -Contain 'info'
+            $result.default.info | Should -Be 'Global info'
 
             # Test delimiter
             $result.owner.GetEnumerator().Name | Should -Not -Contain 'name'
