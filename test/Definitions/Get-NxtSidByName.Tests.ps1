@@ -9,7 +9,7 @@ Describe 'Get-NxtSidByName' {
             }
         }
         It 'Should return the correct name'{
-            $result = Get-NxtSidByName -UserName $localUser.Name
+            $result = Get-NxtSidByName -UserName "$env:COMPUTERNAME\$($localUser.Name)"
             $result | Should -BeOfType 'System.String'
             $result | Should -Be $localUser.SID
         }

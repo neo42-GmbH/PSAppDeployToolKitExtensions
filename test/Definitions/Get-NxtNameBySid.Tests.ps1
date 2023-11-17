@@ -11,7 +11,7 @@ Describe 'Get-NxtNameBySid' {
         It 'Should return the correct name'{
             $result = Get-NxtNameBySid -Sid $localUser.SID
             $result | Should -BeOfType 'System.String'
-            $result | Should -Be $localUser.Name
+            $result | Should -Be "$env:COMPUTERNAME\$($localUser.Name)"
         }
         It 'Should return the correct name for a well-known SID' {
             [string]$name = (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')).Translate([System.Security.Principal.NTAccount]).Value
