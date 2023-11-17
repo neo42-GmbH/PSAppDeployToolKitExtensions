@@ -21,7 +21,7 @@ Describe "Test-NxtProcessExists" {
         It "Should work with wildcard character *" {
             Test-NxtProcessExists -ProcessName "$($process.MainModule.ModuleName.Substring(0, 5))*" | Should -Be $true
         }
-        It "Should fail when WQL is invalid" -Skip{
+        It "Should fail when WQL is invalid" {
             { Test-NxtProcessExists -ProcessName "invalid" -IsWql } | Should -Throw
         }
         It "Should return false when process does not exsit" {

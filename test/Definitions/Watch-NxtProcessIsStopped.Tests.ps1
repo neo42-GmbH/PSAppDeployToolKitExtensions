@@ -34,8 +34,8 @@ Describe "Watch-NxtProcessIsStopped" {
             $result | Should -Be $true
             $job | Wait-Job
         }
-        It "Should throw when WQL is invalid" -Skip {
-            Watch-NxtProcessIsStopped -ProcessName "INVALID" -Timeout 1 -IsWql | Should -Be $true
+        It "Should throw when WQL is invalid" {
+            { Watch-NxtProcessIsStopped -ProcessName "INVALID" -Timeout 1 -IsWql } | Should -Throw
         }
     }
 }
