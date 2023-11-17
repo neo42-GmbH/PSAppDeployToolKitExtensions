@@ -8,9 +8,17 @@ Describe "Stop-NxtProcess" {
                 $process.Kill()
             }
         }
-        It "Should stop the process" {
+        It "Should stop the process by name" {
             Stop-NxtProcess -Name $process.Name | Should -BeNullOrEmpty
             $process.HasExited | Should -Be $true
+        }
+        It "Should stop the process by WQL Query" {
+            Stop-NxtProcess -Name "Name = '$($process.Name).exe'" -IsWql $true | Should -BeNullOrEmpty
+            $process.HasExited | Should -Be $true
+        }
+        It "Should not stop the Process if the WQL Query does not match" {
+            Stop-NxtProcess -Name "Name = 'NonexistantProcess'" -IsWql $true | Should -BeNullOrEmpty
+            $process.HasExited | Should -Be $false
         }
     }
     Context "When the process is not running"{
