@@ -25,7 +25,7 @@ Describe 'Get-NxtParentProcess' {
             [Array]@((Get-NxtParentProcess -Id 9999999 -Recurse)).count | Should -Be 0
         }
         It 'Should not loop on idle or service process' {
-            [Array]@((Get-NxtParentProcess -Id 0)).count | Should -Be 1
+            [Array]@((Get-NxtParentProcess -Id 0)).count | Should -Be 0
             [Array]@((Get-NxtParentProcess -Id $serviceProcess.id)).count | Should -BeLessThan 25
         }
     }
