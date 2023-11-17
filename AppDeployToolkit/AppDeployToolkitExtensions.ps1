@@ -10796,6 +10796,9 @@ function Unregister-NxtPackage {
 	.PARAMETER AppRootFolder
 		Defines the root folder of the application package.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppVendor
+		Defines the vendor of the application package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Unregister-NxtPackage
 	.NOTES
@@ -10827,7 +10830,10 @@ function Unregister-NxtPackage {
 		$ScriptRoot = $scriptRoot,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AppRootFolder = $global:PackageConfig.AppRootFolder
+		$AppRootFolder = $global:PackageConfig.AppRootFolder,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppDeveloper = $global:PackageConfig.AppVendor
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -10887,8 +10893,11 @@ function Unregister-NxtPackage {
 							WorkingDirectory = $env:TEMP
 						}
 						## we use temp es workingdirectory to avoid issues with locked directories
-						if ($false -eq [string]::IsNullOrEmpty($AppRootFolder)){
-							$ExecuteProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $ExecuteProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value $AppRootFolder
+						if (
+							$false -eq [string]::IsNullOrEmpty($AppRootFolder) -and
+							$false -eq [string]::IsNullOrEmpty($AppVendor)
+							){
+							$ExecuteProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $ExecuteProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
 						}
 						Execute-Process @ExecuteProcessSplat
 					}
