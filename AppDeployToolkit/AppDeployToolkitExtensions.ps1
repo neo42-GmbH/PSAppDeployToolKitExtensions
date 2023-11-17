@@ -3893,7 +3893,7 @@ function Get-NxtParentProcess {
 		if ($null -eq $process){
 			Write-Log -Message "Failed to find process with pid '$Id'." -Severity 2 -Source ${cmdletName}
 			return
-		} elseif ($process.ProcessId -eq $parentProcess.ParentProcessId){
+		} elseif ($process.ProcessId -eq $process.ParentProcessId){
 			Write-Log -Message "Process with pid '$Id' references itself as parent." -Severity 2 -Source ${cmdletName}
 			return
 		}
