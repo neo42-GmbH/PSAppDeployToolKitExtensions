@@ -4,9 +4,6 @@
 			1) Close the specified running applications.
 			2) Provide an option to defer the installation.
 			3) Show a countdown before applications are automatically closed.
-        This script is based on the PSAppDeployToolkit Show-InstallationWelcome function.
-        Significant changes have been applied by neo42 GmbH to enhance capabilities and user experience.
-        This script includes mainly extracted and modified code from the PSAppDeployToolkit Licensed under LGPLv3.
 	.DESCRIPTION
 		The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
 		If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
@@ -68,7 +65,6 @@
         The name of the log file.
     .PARAMETER ProcessIdToIgnore
         The process ID to ignore the complete tree for.
-
 	.INPUTS
 		None
 		You cannot pipe objects to this function.
@@ -79,10 +75,21 @@
 		Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10 -ProcessObjectsNames "code" -ProcessObjectsDescriptions "visual studio code"
 	.NOTES
 		This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
-		The code of this function is mainly adopted from the PSAppDeployToolkit https://psappdeploytoolkit.com.
-		
-		--- LGPL NOTICE ---
-		This software includes code derived from the PSAppDeployToolkit, which is licensed under the GNU Lesser General Public License (LGPL). A copy of the LGPL should be included with this software. If not, you can access it at <http://www.gnu.org/licenses/>.
+    .NOTES
+        This script is based on the PSAppDeployToolkit Show-InstallationWelcome function.
+        Significant changes have been applied by neo42 GmbH to enhance capabilities and user experience.
+        This script includes mainly modified code extracted from the PSAppDeployToolkit.
+    .NOTES
+        # LICENSE #
+        This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+        You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+        # ORIGINAL COPYRIGHT #
+        PowerShell App Deployment Toolkit - Provides a set of functions to perform common application deployment tasks on Windows.
+        Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
+
+        # MODIFICATION COPYRIGHT #
+        Copyright (c) 2023 neo42 GmbH, Germany.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -151,22 +158,22 @@ Param (
 #region Function ConvertFrom-NxtEncodedObject
 function ConvertFrom-NxtEncodedObject {
 	<#
-	.SYNOPSIS
-		Converts a Base64-encoded and gzip-compressed JSON object string into a PowerShell object.
-	.DESCRIPTION
-		The ConvertFrom-NxtEncodedObject function decodes a given Base64-encoded and gzip-compressed string that represents a JSON-serialized object. It returns the decompressed and deserialized PowerShell object. This function is particularly useful in data transport scenarios where JSON objects have been serialized, compressed, and then encoded for safe transmission.
-	.PARAMETER EncodedObject
-		The Base64-encoded and gzip-compressed string that you want to convert back into a PowerShell object. This parameter is mandatory.
-	.EXAMPLE
-		$encodedObj = "H4sIAAAAAAAEAIuuVnLPLEvN80vMTVWyUvLKz8hT0lEKLi2CCrjkpyrV6qAq8k2sQFHjW1pcklqUm5iXp1QbCwCmtj3MUQAAAA=="
-		$decodedObj = ConvertFrom-NxtEncodedObject -EncodedObject $encodedObj
-		This example demonstrates how to decode a Base64-encoded and gzip-compressed JSON string into a PowerShell object.
-	.OUTPUTS
-		System.Object
-	.NOTES
-		Ensure that the EncodedObject parameter contains a valid, gzip-compressed and Base64-encoded string. Invalid or malformed input can result in errors.
-	.LINK
-		https://neo42.de/psappdeploytoolkit
+        .SYNOPSIS
+            Converts a Base64-encoded and gzip-compressed JSON object string into a PowerShell object.
+        .DESCRIPTION
+            The ConvertFrom-NxtEncodedObject function decodes a given Base64-encoded and gzip-compressed string that represents a JSON-serialized object. It returns the decompressed and deserialized PowerShell object. This function is particularly useful in data transport scenarios where JSON objects have been serialized, compressed, and then encoded for safe transmission.
+        .PARAMETER EncodedObject
+            The Base64-encoded and gzip-compressed string that you want to convert back into a PowerShell object. This parameter is mandatory.
+        .EXAMPLE
+            $encodedObj = "H4sIAAAAAAAEAIuuVnLPLEvN80vMTVWyUvLKz8hT0lEKLi2CCrjkpyrV6qAq8k2sQFHjW1pcklqUm5iXp1QbCwCmtj3MUQAAAA=="
+            $decodedObj = ConvertFrom-NxtEncodedObject -EncodedObject $encodedObj
+            This example demonstrates how to decode a Base64-encoded and gzip-compressed JSON string into a PowerShell object.
+        .OUTPUTS
+            System.Object
+        .NOTES
+            Ensure that the EncodedObject parameter contains a valid, gzip-compressed and Base64-encoded string. Invalid or malformed input can result in errors.
+        .LINK
+            https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
 	param (
@@ -201,30 +208,32 @@ function ConvertFrom-NxtEncodedObject {
 #region Function Convert-RegistryPath
 Function Convert-RegistryPath {
     <#
-    .SYNOPSIS
-        Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
-    .DESCRIPTION
-        Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
-        Converts registry key hives to their full paths. Example: HKLM is converted to "Registry::HKEY_LOCAL_MACHINE".
-    .PARAMETER Key
-        Path to the registry key to convert (can be a registry hive or fully qualified path)
-    .PARAMETER SID
-        The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
-        Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
-    .PARAMETER DisableFunctionLogging
-        Disables logging of this function. Default: $true
-    .INPUTS
-        None
-        You cannot pipe objects to this function.
-    .OUTPUTS
-        System.String
-        Returns the converted registry key path.
-    .EXAMPLE
-        Convert-RegistryPath -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
-    .EXAMPLE
-        Convert-RegistryPath -Key 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
-    .LINK
-        https://psappdeploytoolkit.com
+        .SYNOPSIS
+            Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
+        .DESCRIPTION
+            Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
+            Converts registry key hives to their full paths. Example: HKLM is converted to "Registry::HKEY_LOCAL_MACHINE".
+        .PARAMETER Key
+            Path to the registry key to convert (can be a registry hive or fully qualified path)
+        .PARAMETER SID
+            The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
+            Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
+        .PARAMETER DisableFunctionLogging
+            Disables logging of this function. Default: $true
+        .INPUTS
+            None
+            You cannot pipe objects to this function.
+        .OUTPUTS
+            System.String
+            Returns the converted registry key path.
+        .EXAMPLE
+            Convert-RegistryPath -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
+        .EXAMPLE
+            Convert-RegistryPath -Key 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
+        .NOTES
+            This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
+        .LINK
+            https://psappdeploytoolkit.com
     #>
     [CmdletBinding()]
     Param (
@@ -300,64 +309,49 @@ Function Convert-RegistryPath {
 #region Function Get-LoggedOnUser
 Function Get-LoggedOnUser {
     <#
-.SYNOPSIS
+        .SYNOPSIS
+            Get session details for all local and RDP logged on users.
+        .DESCRIPTION
+            Get session details for all local and RDP logged on users using Win32 APIs. Get the following session details:
+                NTAccount, SID, UserName, DomainName, SessionId, SessionName, ConnectState, IsCurrentSession, IsConsoleSession, IsUserSession, IsActiveUserSession
+                IsRdpSession, IsLocalAdmin, LogonTime, IdleTime, DisconnectTime, ClientName, ClientProtocolType, ClientDirectory, ClientBuildNumber
+        .INPUTS
+            None
+        .OUTPUTS
+            PSADT.QueryUser
+        .EXAMPLE
+            Get-LoggedOnUser
+        .NOTES
+            Description of ConnectState property:
 
-Get session details for all local and RDP logged on users.
+            Value        Description
+            -----        -----------
+            Active       A user is logged on to the session.
+            ConnectQuery The session is in the process of connecting to a client.
+            Connected    A client is connected to the session.
+            Disconnected The session is active, but the client has disconnected from it.
+            Down         The session is down due to an error.
+            Idle         The session is waiting for a client to connect.
+            Initializing The session is initializing.
+            Listening    The session is listening for connections.
+            Reset        The session is being reset.
+            Shadowing    This session is shadowing another session.
 
-.DESCRIPTION
+            Description of IsActiveUserSession property:
 
-Get session details for all local and RDP logged on users using Win32 APIs. Get the following session details:
-    NTAccount, SID, UserName, DomainName, SessionId, SessionName, ConnectState, IsCurrentSession, IsConsoleSession, IsUserSession, IsActiveUserSession
-    IsRdpSession, IsLocalAdmin, LogonTime, IdleTime, DisconnectTime, ClientName, ClientProtocolType, ClientDirectory, ClientBuildNumber
+            - If a console user exists, then that will be the active user session.
+            - If no console user exists but users are logged in, such as on terminal servers, then the first logged-in non-console user that has ConnectState either 'Active' or 'Connected' is the active user.
 
-.INPUTS
+            Description of IsRdpSession property:
+            - Gets a value indicating whether the user is associated with an RDP client session.
 
-None
-
-You cannot pipe objects to this function.
-
-.OUTPUTS
-
-None
-
-This function does not return any objects.
-
-.EXAMPLE
-
-Get-LoggedOnUser
-
-.NOTES
-
-Description of ConnectState property:
-
-Value        Description
------        -----------
-Active       A user is logged on to the session.
-ConnectQuery The session is in the process of connecting to a client.
-Connected    A client is connected to the session.
-Disconnected The session is active, but the client has disconnected from it.
-Down         The session is down due to an error.
-Idle         The session is waiting for a client to connect.
-Initializing The session is initializing.
-Listening    The session is listening for connections.
-Reset        The session is being reset.
-Shadowing    This session is shadowing another session.
-
-Description of IsActiveUserSession property:
-
-- If a console user exists, then that will be the active user session.
-- If no console user exists but users are logged in, such as on terminal servers, then the first logged-in non-console user that has ConnectState either 'Active' or 'Connected' is the active user.
-
-Description of IsRdpSession property:
-- Gets a value indicating whether the user is associated with an RDP client session.
-
-Description of IsLocalAdmin property:
-- Checks whether the user is a member of the Administrators group
-
-.LINK
-
-https://psappdeploytoolkit.com
-#>
+            Description of IsLocalAdmin property:
+            - Checks whether the user is a member of the Administrators group
+        .NOTES
+            This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
+        .LINK
+            https://psappdeploytoolkit.com
+    #>
     [CmdletBinding()]
     Param (
     )
@@ -384,43 +378,45 @@ https://psappdeploytoolkit.com
 #region Function Get-RegistryKey
 Function Get-RegistryKey {
     <#
-    .SYNOPSIS
-        Retrieves value names and value data for a specified registry key or optionally, a specific value.
-    .DESCRIPTION
-        Retrieves value names and value data for a specified registry key or optionally, a specific value.
-        If the registry key does not exist or contain any values, the function will return $null by default. To test for existence of a registry key path, use built-in Test-Path cmdlet.
-    .PARAMETER Key
-        Path of the registry key.
-    .PARAMETER Value
-        Value to retrieve (optional).
-    .PARAMETER SID
-        The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
-        Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
-    .PARAMETER ReturnEmptyKeyIfExists
-        Return the registry key if it exists but it has no property/value pairs underneath it. Default is: $false.
-    .PARAMETER DoNotExpandEnvironmentNames
-        Return unexpanded REG_EXPAND_SZ values. Default is: $false.
-    .PARAMETER ContinueOnError
-        Continue if an error is encountered. Default is: $true.
-    .INPUTS
-        None
-        You cannot pipe objects to this function.
-    .OUTPUTS
-        System.String
-        Returns the value of the registry key or value.
-    .EXAMPLE
-        Get-RegistryKey -Key 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
-    .EXAMPLE
-        Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\iexplore.exe'
-    .EXAMPLE
-        Get-RegistryKey -Key 'HKLM:Software\Wow6432Node\Microsoft\Microsoft SQL Server Compact Edition\v3.5' -Value 'Version'
-    .EXAMPLE
-        Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Value 'Path' -DoNotExpandEnvironmentNames
-        Returns %ProgramFiles%\Java instead of C:\Program Files\Java
-    .EXAMPLE
-        Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Example' -Value '(Default)'
-    .LINK
-        https://psappdeploytoolkit.com
+        .SYNOPSIS
+            Retrieves value names and value data for a specified registry key or optionally, a specific value.
+        .DESCRIPTION
+            Retrieves value names and value data for a specified registry key or optionally, a specific value.
+            If the registry key does not exist or contain any values, the function will return $null by default. To test for existence of a registry key path, use built-in Test-Path cmdlet.
+        .PARAMETER Key
+            Path of the registry key.
+        .PARAMETER Value
+            Value to retrieve (optional).
+        .PARAMETER SID
+            The security identifier (SID) for a user. Specifying this parameter will convert a HKEY_CURRENT_USER registry key to the HKEY_USERS\$SID format.
+            Specify this parameter from the Invoke-HKCURegistrySettingsForAllUsers function to read/edit HKCU registry settings for all users on the system.
+        .PARAMETER ReturnEmptyKeyIfExists
+            Return the registry key if it exists but it has no property/value pairs underneath it. Default is: $false.
+        .PARAMETER DoNotExpandEnvironmentNames
+            Return unexpanded REG_EXPAND_SZ values. Default is: $false.
+        .PARAMETER ContinueOnError
+            Continue if an error is encountered. Default is: $true.
+        .INPUTS
+            None
+            You cannot pipe objects to this function.
+        .OUTPUTS
+            System.String
+            Returns the value of the registry key or value.
+        .EXAMPLE
+            Get-RegistryKey -Key 'HKLM:SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1AD147D0-BE0E-3D6C-AC11-64F6DC4163F1}'
+        .EXAMPLE
+            Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\iexplore.exe'
+        .EXAMPLE
+            Get-RegistryKey -Key 'HKLM:Software\Wow6432Node\Microsoft\Microsoft SQL Server Compact Edition\v3.5' -Value 'Version'
+        .EXAMPLE
+            Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Value 'Path' -DoNotExpandEnvironmentNames
+            Returns %ProgramFiles%\Java instead of C:\Program Files\Java
+        .EXAMPLE
+            Get-RegistryKey -Key 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Example' -Value '(Default)'
+        .NOTES
+            This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
+        .LINK
+            https://psappdeploytoolkit.com
     #>
     [CmdletBinding()]
     Param (
@@ -728,35 +724,37 @@ function Get-NxtRunningProcesses {
 #region Function Get-WindowTitle
 Function Get-WindowTitle {
     <#
-    .SYNOPSIS
-        Search for an open window title and return details about the window.
-    .DESCRIPTION
-        Search for a window title. If window title searched for returns more than one result, then details for each window will be displayed.
-        Returns the following properties for each window: WindowTitle, WindowHandle, ParentProcess, ParentProcessMainWindowHandle, ParentProcessId.
-        Function does not work in SYSTEM context unless launched with "psexec.exe -s -i" to run it as an interactive process under the SYSTEM account.
-    .PARAMETER WindowTitle
-        The title of the application window to search for using regex matching.
-    .PARAMETER GetAllWindowTitles
-        Get titles for all open windows on the system.
-    .PARAMETER DisableFunctionLogging
-        Disables logging messages to the script log file.
-    .INPUTS
-        None
-        You cannot pipe objects to this function.
-    .OUTPUTS
-        System.Management.Automation.PSObject
-        Returns a PSObject with the following properties: WindowTitle, WindowHandle, ParentProcess, ParentProcessMainWindowHandle, ParentProcessId.
-    .EXAMPLE
-        Get-WindowTitle -WindowTitle 'Microsoft Word'
-        Gets details for each window that has the words "Microsoft Word" in the title.
-    .EXAMPLE
-        Get-WindowTitle -GetAllWindowTitles
-        Gets details for all windows with a title.
-    .EXAMPLE
-        Get-WindowTitle -GetAllWindowTitles | Where-Object { $_.ParentProcess -eq 'WINWORD' }
-        Get details for all windows belonging to Microsoft Word process with name "WINWORD".
-    .LINK
-        https://psappdeploytoolkit.com
+        .SYNOPSIS
+            Search for an open window title and return details about the window.
+        .DESCRIPTION
+            Search for a window title. If window title searched for returns more than one result, then details for each window will be displayed.
+            Returns the following properties for each window: WindowTitle, WindowHandle, ParentProcess, ParentProcessMainWindowHandle, ParentProcessId.
+            Function does not work in SYSTEM context unless launched with "psexec.exe -s -i" to run it as an interactive process under the SYSTEM account.
+        .PARAMETER WindowTitle
+            The title of the application window to search for using regex matching.
+        .PARAMETER GetAllWindowTitles
+            Get titles for all open windows on the system.
+        .PARAMETER DisableFunctionLogging
+            Disables logging messages to the script log file.
+        .INPUTS
+            None
+            You cannot pipe objects to this function.
+        .OUTPUTS
+            System.Management.Automation.PSObject
+            Returns a PSObject with the following properties: WindowTitle, WindowHandle, ParentProcess, ParentProcessMainWindowHandle, ParentProcessId.
+        .EXAMPLE
+            Get-WindowTitle -WindowTitle 'Microsoft Word'
+            Gets details for each window that has the words "Microsoft Word" in the title.
+        .EXAMPLE
+            Get-WindowTitle -GetAllWindowTitles
+            Gets details for all windows with a title.
+        .EXAMPLE
+            Get-WindowTitle -GetAllWindowTitles | Where-Object { $_.ParentProcess -eq 'WINWORD' }
+            Get details for all windows belonging to Microsoft Word process with name "WINWORD".
+        .NOTES
+            This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
+        .LINK
+            https://psappdeploytoolkit.com
     #>
     [CmdletBinding()]
     Param (
@@ -884,39 +882,41 @@ function New-NxtWpfControl() {
 #region Function Resolve-Error
 Function Resolve-Error {
     <#
-    .SYNOPSIS
-        Enumerate error record details.
-    .DESCRIPTION
-        Enumerate an error record, or a collection of error record, properties. By default, the details for the last error will be enumerated.
-    .PARAMETER ErrorRecord
-        The error record to resolve. The default error record is the latest one: $global:Error[0]. This parameter will also accept an array of error records.
-    .PARAMETER Property
-        The list of properties to display from the error record. Use "*" to display all properties.
-    D   efault list of error properties is: Message, FullyQualifiedErrorId, ScriptStackTrace, PositionMessage, InnerException
-    .PARAMETER GetErrorRecord
-        Get error record details as represented by $_.
-    .PARAMETER GetErrorInvocation
-        Get error record invocation information as represented by $_.InvocationInfo.
-    .PARAMETER GetErrorException
-        Get error record exception details as represented by $_.Exception.
-    .PARAMETER GetErrorInnerException
-        Get error record inner exception details as represented by $_.Exception.InnerException. Will retrieve all inner exceptions if there is more than one.
-    .INPUTS
-        System.Array.
-        Accepts an array of error records.
-       .OUTPUTS
-        System.String
-        Displays the error record details.
-    .EXAMPLE
-        Resolve-Error
-    .EXAMPLE
-        Resolve-Error -Property *
-    .EXAMPLE
-        Resolve-Error -Property InnerException
-    .EXAMPLE
-        Resolve-Error -GetErrorInvocation:$false
-    .LINK
-        https://psappdeploytoolkit.com
+        .SYNOPSIS
+            Enumerate error record details.
+        .DESCRIPTION
+            Enumerate an error record, or a collection of error record, properties. By default, the details for the last error will be enumerated.
+        .PARAMETER ErrorRecord
+            The error record to resolve. The default error record is the latest one: $global:Error[0]. This parameter will also accept an array of error records.
+        .PARAMETER Property
+            The list of properties to display from the error record. Use "*" to display all properties.
+        D   efault list of error properties is: Message, FullyQualifiedErrorId, ScriptStackTrace, PositionMessage, InnerException
+        .PARAMETER GetErrorRecord
+            Get error record details as represented by $_.
+        .PARAMETER GetErrorInvocation
+            Get error record invocation information as represented by $_.InvocationInfo.
+        .PARAMETER GetErrorException
+            Get error record exception details as represented by $_.Exception.
+        .PARAMETER GetErrorInnerException
+            Get error record inner exception details as represented by $_.Exception.InnerException. Will retrieve all inner exceptions if there is more than one.
+        .INPUTS
+            System.Array.
+            Accepts an array of error records.
+        .OUTPUTS
+            System.String
+            Displays the error record details.
+        .EXAMPLE
+            Resolve-Error
+        .EXAMPLE
+            Resolve-Error -Property *
+        .EXAMPLE
+            Resolve-Error -Property InnerException
+        .EXAMPLE
+            Resolve-Error -GetErrorInvocation:$false
+        .NOTES
+            This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
+        .LINK
+            https://psappdeploytoolkit.com
     #>
     [CmdletBinding()]
     Param (
@@ -1166,6 +1166,8 @@ Function Write-FunctionHeaderOrFooter {
         Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
     .NOTES
         This is an internal script function and should typically not be called directly.
+    .NOTES
+        This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
     .LINK
         https://psappdeploytoolkit.com
     #>
@@ -1203,14 +1205,16 @@ Function Write-FunctionHeaderOrFooter {
 #region Function Write-Log
 function Write-Log {
     <#
-    .SYNOPSIS
-        Write messages to a log file in CMTrace.exe compatible format or Legacy text file format.
-    .DESCRIPTION
-        Write messages to a log file in CMTrace.exe compatible format or Legacy text file format and optionally display in the console.
-    .PARAMETER Message
-        The message to write to the log file or output to the console.
-    .PARAMETER Source
-        The source of the message being logged.
+        .SYNOPSIS
+            Write messages to a log file in CMTrace.exe compatible format or Legacy text file format.
+        .DESCRIPTION
+            Write messages to a log file in CMTrace.exe compatible format or Legacy text file format and optionally display in the console.
+        .PARAMETER Message
+            The message to write to the log file or output to the console.
+        .PARAMETER Source
+            The source of the message being logged.
+        .NOTES
+            This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
     #>
     [CmdletBinding()]
     Param (
