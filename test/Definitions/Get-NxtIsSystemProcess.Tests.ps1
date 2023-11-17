@@ -1,21 +1,20 @@
 Describe "Get-NxtIsSystemProcess" {
-    Context "When given a system process name" {
+    Context "When given a process name" {
         BeforeAll {
             [int]$systemProcessId = 4
             [int]$lsassProcessId = (Get-Process -Name 'lsass' | Select-Object -First 1).Id
 
             [securestring]$securePassword = ConvertTo-SecureString -String "sdouighASDG42!" -AsPlainText -Force
+            [pscredential]$credential = New-Object System.Management.Automation.PSCredential ('TestUser', $securePassword)
             New-LocalUser -Name 'TestUser' -Password $securePassword
-            [pscredential]$credObject = New-Object System.Management.Automation.PSCredential ($userName, $secStringPassword)
-            [System.Diagnostics.Process]$userProcess = Start-Process -FilePath "simple.exe" -Credential $credObject
+
+            [System.Diagnostics.Process]$userProcess = Start-Process -FilePath "timeout" -ArgumentList ("/t 300") -Credential $credential -PassThru -WorkingDirectory "$env:windir"
         }
         AfterAll {
             if (Get-LocalUser -Name 'TestUser' -ErrorAction SilentlyContinue) {
                 Remove-LocalUser -Name 'TestUser'
             }
-            if (Get-Process $process.Id -ErrorAction SilentlyContinue){
-                $userProcess.Kill()
-            }
+            $userProcess.Kill()
         }
         It "Should return true for lsass process" {
             $result = Get-NxtIsSystemProcess -ProcessId $lsassProcessId
