@@ -6015,7 +6015,11 @@ function Read-NxtSingleXmlNode {
 		try {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
-			Write-Output ($xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName).$AttributeName)
+			[System.Xml.XmlNode]$selection = $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName)
+			if ($selection.ChildNodes.count -gt 1){
+				Write-Log -Message "Found multiple child nodes for '$SingleNodeName'. Concated values will be returned." -Severity 3 -Source ${cmdletName}
+			}
+			Write-Output ($selection.$AttributeName)
 		}
 		catch {
 			Write-Log -Message "Failed to read single node '$SingleNodeName' from xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
