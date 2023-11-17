@@ -934,7 +934,7 @@ function Complete-NxtPackageInstallation {
 		$AppName = $global:PackageConfig.AppName,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$appVendor = $global:PackageConfig.AppVendor,
+		$AppVendor = $global:PackageConfig.AppVendor,
 		[Parameter(Mandatory = $false)]
 		[string[]]
 		$LegacyAppRoots= @("$envProgramFiles\neoPackages", "$envProgramFilesX86\neoPackages")
@@ -1019,12 +1019,12 @@ function Complete-NxtPackageInstallation {
 		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots){
 			if ($true -eq (Test-Path -Path $legacyAppRoot ) -and [System.IO.Path]::IsPathRooted($legacyAppRoot)){
-				if (Test-Path -Path $legacyAppRoot\$appVendor){
-					if (Test-Path -Path $legacyAppRoot\$appVendor\$appName){
-						Write-Log -Message "Removing legacy application folder $legacyAppRoot\$appVendor\$appName" -Source ${CmdletName}
-						Remove-Folder -Path $legacyAppRoot\$appVendor\$appName -ContinueOnError $true
+				if (Test-Path -Path $legacyAppRoot\$AppVendor){
+					if (Test-Path -Path $legacyAppRoot\$AppVendor\$AppName){
+						Write-Log -Message "Removing legacy application folder $legacyAppRoot\$AppVendor\$AppName" -Source ${CmdletName}
+						Remove-Folder -Path $legacyAppRoot\$AppVendor\$AppName -ContinueOnError $true
 					}
-					Remove-NxtEmptyFolder -Path $legacyAppRoot\$appVendor
+					Remove-NxtEmptyFolder -Path $legacyAppRoot\$AppVendor
 				}
 				Remove-NxtEmptyFolder -Path $legacyAppRoot
 			}
@@ -6391,6 +6391,10 @@ function Remove-NxtEmptyFolder {
 	.PARAMETER Path
 		Specifies the path to the empty folder to remove.
 		This parameter is mandatory.
+	.PARAMETER RootPathToRecurseUpTo
+		.PARAMETER RootPathToRecurseUpTo
+		Specifies the root path to recurse up to. If this parameter is not specified, the function will not recurse up.
+		This parameter is optional. If specified, it must be a parent of the specified path or recursion will not be carried out.
 	.EXAMPLE
 		Remove-NxtEmptyFolder -Path "$installLocation\SomeEmptyFolder"
 		This example removes the specified empty folder located at "$installLocation\SomeEmptyFolder".
@@ -6403,14 +6407,24 @@ function Remove-NxtEmptyFolder {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$Path
+		[string]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$RootPathToRecurseUpTo
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		$Path = $Path.TrimEnd("\")
+		if ($false -eq [string]::IsNullOrEmpty($RootPathToRecurseUpTo)) {
+			$RootPathToRecurseUpTo = $RootPathToRecurseUpTo.TrimEnd("\")
+		}
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
+		[bool]$skipRecursion = $false
 		if (Test-Path -LiteralPath $Path -PathType 'Container') {
 			try {
 				if ( (Get-ChildItem $Path | Measure-Object).Count -eq 0) {
@@ -6425,6 +6439,7 @@ function Remove-NxtEmptyFolder {
 				}
 				else {
 					Write-Log -Message "Folder [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
+					$skipRecursion = $true
 				}
 			}
 			catch {
@@ -6436,6 +6451,31 @@ function Remove-NxtEmptyFolder {
 		}
 		else {
 			Write-Log -Message "Folder [$Path] does not exist..." -Source ${CmdletName}
+		}
+		if (
+			$false -eq [string]::IsNullOrEmpty($RootPathToRecurseUpTo) -and
+			$false -eq $skipRecursion
+		) {
+			## Resolve possible relative segments in the paths 
+			[string]$absolutePath = $Path | Split-Path -Parent
+			[string]$absoluteRootPathToRecurseUpTo = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($RootPathToRecurseUpTo)).FullName)
+			if ($absolutePath -eq $absoluteRootPathToRecurseUpTo){
+				## We are at the root of the recursion, so we can stop recursing up
+				Remove-NxtEmptyFolder -Path $absolutePath
+			}
+			else {
+				## Ensure that $absoluteRootPathToRecurseUpTo is a valid path
+				if ($false -eq [System.IO.Path]::IsPathRooted($absoluteRootPathToRecurseUpTo)) {
+					Write-Log -Message "$absoluteRootPathToRecurseUpTo is not a valid path." -Severity 3 -Source ${CmdletName}
+					throw "RootPathToRecurseUpTo is not a valid path."
+				}
+				## Ensure that $absoluteRootPathToRecurseUpTo is a parent of $absolutePath
+				if ($false -eq $absolutePath.StartsWith($absoluteRootPathToRecurseUpTo, [System.StringComparison]::InvariantCultureIgnoreCase)) {
+					Write-Log -Message "RootPathToRecurseUpTo '$absoluteRootPathToRecurseUpTo' is not a parent of '$absolutePath'." -Severity 3 -Source ${CmdletName}
+					throw "RootPathToRecurseUpTo '$absoluteRootPathToRecurseUpTo' is not a parent of '$absolutePath'."
+				}
+				Remove-NxtEmptyFolder -Path $absolutePath -RootPathToRecurseUp $absoluteRootPathToRecurseUpTo
+			}
 		}
 	}
 	End {
@@ -10754,6 +10794,12 @@ function Unregister-NxtPackage {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER AppRootFolder
+		Defines the root folder of the application package.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppVendor
+		Defines the vendor of the application package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Unregister-NxtPackage
 	.NOTES
@@ -10782,7 +10828,13 @@ function Unregister-NxtPackage {
 		$App = $global:PackageConfig.App,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptRoot
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppRootFolder = $global:PackageConfig.AppRootFolder,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppDeveloper = $global:PackageConfig.AppVendor
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -10835,7 +10887,20 @@ function Unregister-NxtPackage {
 						## note: we always use the script from current application package source folder (it is basically identical in each package)
 						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
 						Start-Sleep -Seconds 1
-						Execute-Process -Path powershell.exe -Parameters "-File `"$App\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$App" -NoWait
+						[hashtable]$executeProcessSplat = @{
+							Path = 'powershell.exe'
+							Parameters = "-File `"$App\Clean-Neo42AppFolder.ps1`""
+							NoWait = $true
+							WorkingDirectory = $env:TEMP
+						}
+						## we use temp es workingdirectory to avoid issues with locked directories
+						if (
+							$false -eq [string]::IsNullOrEmpty($AppRootFolder) -and
+							$false -eq [string]::IsNullOrEmpty($AppVendor)
+							){
+							$executeProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $executeProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
+						}
+						Execute-Process @executeProcessSplat
 					}
 					else {
 						Write-Log -Message "No current 'App' path [$App] available, cleanup script will not be executed." -Source ${CmdletName}
