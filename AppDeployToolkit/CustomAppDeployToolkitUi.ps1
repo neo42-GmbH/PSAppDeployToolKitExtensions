@@ -562,6 +562,8 @@ function Get-NxtProcessTree {
 	.PARAMETER IncludeParentProcesses
 		Indicates if parent processes should be included in the result.
 		Defaults to $true.
+	.PARAMETER ProcessIdsToExcludeFromRecursion
+		Process IDs to exclude from the recursion. Internal use only.
 	.OUTPUTS
 		System.Management.ManagementObject
 	.EXAMPLE
@@ -575,11 +577,18 @@ function Get-NxtProcessTree {
 	#>
     param (
         [Parameter(Mandatory=$true)]
-        [int]$ProcessId,
+        [int]
+		$ProcessId,
         [Parameter(Mandatory=$false)]
-        [bool]$IncludeChildProcesses = $true,
+        [bool]
+		$IncludeChildProcesses = $true,
         [Parameter(Mandatory=$false)]
-        [bool]$IncludeParentProcesses = $true
+        [bool]
+		$IncludeParentProcesses = $true,
+		[Parameter(Mandatory=$false)]
+		[AllowNull()]
+		[int[]]
+		$ProcessIdsToExcludeFromRecursion
     )
     [System.Management.ManagementObject]$process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
     if ($null -ne $process) {
@@ -587,14 +596,23 @@ function Get-NxtProcessTree {
         if ($IncludeChildProcesses) {
             $childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
             foreach ($child in $childProcesses) {
-                if ($child.ProcessId -eq 0){
+                if (
+					$child.ProcessId -eq $process.ProcessId -and
+					$child.ProcessId -notin $ProcessIdsToExcludeFromRecursion
+				){
                     return
                 }
-                Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses
+				$ProcessIdsToExcludeFromRecursion += $process.ProcessId
+                Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses -ProcessIdsToExcludeFromRecursion $ProcessIdsToExcludeFromRecursion
             }
         }
-        if ($process.ParentProcessId -gt 0 -and $IncludeParentProcesses) {
-            Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses
+        if (
+			($process.ParentProcessId -ne $ProcessId) -and
+			$IncludeParentProcesses -and
+			$process.ParentProcessId -notin $ProcessIdsToExcludeFromRecursion
+		) {
+			$ProcessIdsToExcludeFromRecursion += $process.ProcessId
+            Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses -ProcessIdsToExcludeFromRecursion $ProcessIdsToExcludeFromRecursion
         }
     }
 }
