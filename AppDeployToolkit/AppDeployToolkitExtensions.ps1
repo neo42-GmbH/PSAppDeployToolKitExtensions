@@ -582,7 +582,6 @@ function Close-BlockExecutionWindow {
 	}
 }
 #endregion
-
 #region Add-NxtParameterToCommand
 function Add-NxtParameterToCommand {
 	<#
@@ -8647,7 +8646,6 @@ Function Show-NxtInstallationWelcome {
 	}
 }
 #endregion
-
 #region Function Show-NxtWelcomePrompt
 Function Show-NxtWelcomePrompt {
     <#
@@ -10950,6 +10948,117 @@ function Unregister-NxtPackage {
 		}
 		catch {
 			Write-Log -Message "Failed to unregister package. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Update-NxtProcessPathVariable
+function Update-NxtProcessPathVariable {
+	<#
+  	.DESCRIPTION
+		Adds or removes a path to the processes PATH environment variable.
+  	.PARAMETER AddPath
+		Path to be added to the processes PATH environment variable.
+  	.PARAMETER Position
+		Position where the path should be added, defaults to "End".
+	.PARAMETER Force
+		Adds the path to the environment variable even if it already exists.
+  	.PARAMETER RemovePath
+		Path to be removed from the processes PATH environment variable.
+  	.PARAMETER RemoveOccurences
+		Defines which occurrences of the path should be removed, defaults to "All".
+  	.EXAMPLE
+		Update-NxtProcessPathVariable -AddPath "C:\Temp"
+	.EXAMPLE
+		Update-NxtProcessPathVariable -AddPath "C:\Temp" -Position "Start"
+	.EXAMPLE
+		Update-NxtProcessPathVariable -AddPath "C:\Temp" -Force
+	.EXAMPLE
+		Update-NxtProcessPathVariable -RemovePath "C:\Temp"
+	.EXAMPLE
+		Update-NxtProcessPathVariable -RemovePath "C:\Temp" -RemoveOccurences "First" 
+	.OUTPUTS
+		none.
+  	.LINK
+		https://neo42.de/psappdeploytoolkit
+  	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ParameterSetName = 'Add')]
+		[String]
+		$AddPath,
+		[Parameter(Mandatory = $false, ParameterSetName = 'Add')]
+		[ValidateSet("End","Start")]
+		[String]
+		$Position = "End",
+		[Parameter(Mandatory = $false, ParameterSetName = 'Add')]
+		[switch]
+		$Force = $false,
+		[Parameter(Mandatory = $true, ParameterSetName = 'Remove')]
+		[String]
+		$RemovePath,
+		[Parameter(Mandatory = $false, ParameterSetName = 'Remove')]
+		[ValidateSet("All","First","Last")]
+		[String]
+		$RemoveOccurences = "All"
+  	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';')
+		if ($true -eq $AddPath){
+			if ($false -eq (Test-Path -Path $AddPath)){
+				Write-Log "Warning! The path '$AddPath' that will be added does not exist." -Severity 2 -Source ${cmdletName}
+			}
+			if ($pathEntries.toLower().TrimEnd('\') -notcontains $AddPath.ToLower().TrimEnd('\') -or $true -eq $Force){
+				if ($Position -eq "End"){
+					$pathEntries.Add("$AddPath")
+					Write-Log "Appended '$AddPath' to the processes PATH variable." -Source ${cmdletName}
+				}elseif ($Position -eq "Start"){
+					$pathEntries.Reverse()
+					$pathEntries.Add("$AddPath")
+					$pathEntries.Reverse()
+					Write-Log "Prepended '$AddPath' to the processes PATH variable." -Source ${cmdletName}
+				}
+				Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ($pathEntries -join ";")
+			} else {
+				Write-Log "Path entry '$AddPath' already exists in the PATH variable. Use -Force to add it anyway." -Severity 2 -Source ${cmdletName}
+			}
+		} elseif ($true -eq $RemovePath){
+			if ($pathEntries.toLower().TrimEnd('\') -contains $RemovePath.ToLower().TrimEnd('\')){
+				if ($RemoveOccurences -eq "All"){
+					[System.Collections.ArrayList]$pathEntries = $pathEntries | Where-Object { 
+						$_.ToLower().TrimEnd('\') -ne $RemovePath.ToLower().TrimEnd('\') 
+					}
+					Write-Log "Removed all occurences of '$RemovePath' in the processes PATH variable." -Source ${cmdletName}
+				} elseif($RemoveOccurences -eq "First"){
+					foreach ($pathEntry in $pathEntries){
+						if ($pathEntry.ToLower().TrimEnd('\') -eq $RemovePath.ToLower().TrimEnd('\')){
+							$pathEntries.Remove($pathEntry)
+							break
+						}
+					}
+					Write-Log "Removed first occurence of '$RemovePath' in the processes PATH variable." -Source ${cmdletName}
+				} elseif($RemoveOccurences -eq "Last"){
+					$pathEntries.Reverse()
+					foreach ($pathEntry in $pathEntries){
+						if ($pathEntry.ToLower().TrimEnd('\') -eq $RemovePath.ToLower().TrimEnd('\')){
+							$pathEntries.Remove($pathEntry)
+							break
+						}
+					}
+					$pathEntries.Reverse()
+					Write-Log "Removed last occurence of '$RemovePath' in the processes PATH variable." -Source ${cmdletName}
+				}
+				Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ($pathEntries -join ";")
+			} else {
+				Write-Log "Path entry '$RemovePath' does not exist in the PATH variable." -Severity 2 -Source ${cmdletName}
+			}
 		}
 	}
 	End {
