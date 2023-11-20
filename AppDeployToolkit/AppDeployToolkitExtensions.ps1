@@ -11013,7 +11013,7 @@ function Update-NxtProcessPathVariable {
 		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';')
 		if ($true -eq $AddPath){
 			if ($false -eq (Test-Path -Path $AddPath)){
-				Write-Log "Warning! The path '$AddPath' that will be added does not exist." -Severity 2 -Source ${cmdletName}
+				Write-Log "The path '$AddPath' that will be added does not exist." -Severity 2 -Source ${cmdletName}
 			}
 			if ($pathEntries.toLower().TrimEnd('\') -notcontains $AddPath.ToLower().TrimEnd('\') -or $true -eq $Force){
 				if ($Position -eq "End"){
