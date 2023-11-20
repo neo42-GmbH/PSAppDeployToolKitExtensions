@@ -47,5 +47,13 @@ Describe "Remove-NxtEmptyFolder" {
             Test-Path "$folder\1\2" | Should -Be $false
             Test-Path "$folder\1" | Should -Be $true
         }
+        It "Should not delete a folder in recurse is specified in the wrong way" {
+            New-Item "$folder\1" -ItemType Directory -Force | Out-Null
+            New-Item "$folder\1\2" -ItemType Directory -Force | Out-Null
+            New-Item "$folder\1\test.txt" -ItemType File -Force | Out-Null
+            New-Item "$folder\1\2\3" -ItemType Directory -Force | Out-Null
+            Remove-NxtEmptyFolder -Path "$folder" -RootPathToRecurseUpTo "$folder\1\2\3" | Should -BeNullOrEmpty
+            Test-Path "$folder\1\2\3" | Should -Be $true
+        }
     }
 }
