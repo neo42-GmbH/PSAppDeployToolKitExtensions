@@ -31,5 +31,21 @@ Describe "Remove-NxtEmptyFolder" {
             $folder.Attributes -band -bnot [System.IO.FileAttributes]::ReadOnly
             Test-Path "$folder" | Should -Be $false
         }
+        It "Should delete a folder if the folder recurse to folder exists" {
+            New-Item "$folder\1" -ItemType Directory -Force | Out-Null
+            New-Item "$folder\1\2" -ItemType Directory -Force | Out-Null
+            New-Item "$folder\1\2\3" -ItemType Directory -Force | Out-Null
+            Remove-NxtEmptyFolder -Path "$folder\1\2\3" -RootPathToRecurseUpTo "$folder" | Should -BeNullOrEmpty
+            Test-Path "$folder\1\2\3" | Should -Be $false
+        }
+        It "Should not delete a folder in recurse if one has content" {
+            New-Item "$folder\1" -ItemType Directory -Force | Out-Null
+            New-Item "$folder\1\2" -ItemType Directory -Force | Out-Null
+            New-Item "$folder\1\test.txt" -ItemType File -Force | Out-Null
+            New-Item "$folder\1\2\3" -ItemType Directory -Force | Out-Null
+            Remove-NxtEmptyFolder -Path "$folder\1\2\3" -RootPathToRecurseUpTo "$folder" | Should -BeNullOrEmpty
+            Test-Path "$folder\1\2" | Should -Be $false
+            Test-Path "$folder\1" | Should -Be $true
+        }
     }
 }
