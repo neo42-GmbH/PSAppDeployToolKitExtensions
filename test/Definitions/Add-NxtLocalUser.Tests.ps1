@@ -33,7 +33,7 @@ Describe 'Add-NxtLocalUser' {
             $user.PasswordExpires | Should -Be $null
             $user.PasswordChangeableDate | Should -BeLessOrEqual (Get-Date)
         }
-        It 'Should update the password of an existing user' -Skip {
+        It 'Should update the password of an existing user' {
             Add-NxtLocalUser -Username 'TestUser' -Password 'JX{C@Wb<PHV=H}Gx' 
             Add-NxtLocalUser -UserName 'TestUser' -Password 'JX{C@Wb<PHV=H}Gx2' | Should -Be $true
             [System.DirectoryServices.AccountManagement.PrincipalContext]$accounts = New-Object System.DirectoryServices.AccountManagement.PrincipalContext('machine', $env:COMPUTERNAME)
