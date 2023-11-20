@@ -21,5 +21,5 @@ The content of this repository is licensed under the GNU Lesser General Public L
 This code is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
 # Links
-https://github.com/PSAppDeployToolkit/PSAppDeployToolkit
-https://www.gnu.org/licenses/licenses.html
+* https://github.com/PSAppDeployToolkit/PSAppDeployToolkit
+* https://www.gnu.org/licenses/licenses.html
