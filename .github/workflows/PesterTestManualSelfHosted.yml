@@ -1,7 +1,9 @@
 name: Pester Tests on self-hosted
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
 
 jobs:
   test:
