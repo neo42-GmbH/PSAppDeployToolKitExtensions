@@ -39,7 +39,7 @@ Describe "Watch-NxtRegistryKey" {
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
             [Math]::Floor(((Get-Date) - $start).TotalSeconds) | Should -BeLessOrEqual 9
-            $job | Remove-Job
+            $job | Remove-Job -Force
         }
     }
 }
