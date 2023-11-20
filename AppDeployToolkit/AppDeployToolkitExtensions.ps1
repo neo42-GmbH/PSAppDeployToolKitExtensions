@@ -6427,7 +6427,6 @@ function Remove-NxtEmptyFolder {
 		Specifies the path to the empty folder to remove.
 		This parameter is mandatory.
 	.PARAMETER RootPathToRecurseUpTo
-		.PARAMETER RootPathToRecurseUpTo
 		Specifies the root path to recurse up to. If this parameter is not specified, the function will not recurse up.
 		This parameter is optional. If specified, it must be a parent of the specified path or recursion will not be carried out.
 	.EXAMPLE
