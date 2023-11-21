@@ -666,7 +666,7 @@ function Add-NxtXmlNode {
 			}
 			$message += "."
 			Write-Log -Message $message -Source ${CmdletName}
-			$null = $xml.SelectSingleNode($parentNodePath).AppendChild($newNode)
+			$xml.SelectSingleNode($parentNodePath).AppendChild($newNode)  | Out-Null
 			$xml.Save("$FilePath")
 		}
 		catch {
@@ -1138,7 +1138,7 @@ function Complete-NxtPackageInstallation {
 				 New-Folder -Path "$App\$UserpartDir\SupportFiles"
 			 }
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
-			$null = Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
+			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue  | Out-Null
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")) {
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
@@ -2330,7 +2330,7 @@ function Execute-NxtMSI {
 			"AcceptedRebootCodes"
 		)
 		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved) {
-			$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
+			$PSBoundParameters.Remove($functionParameterToBeRemoved)  | Out-Null
 		}
 	}
 	Process {
@@ -2358,10 +2358,10 @@ function Execute-NxtMSI {
 		[bool]$PSBoundParameters["PassThru"] = $true
 		[bool]$PSBoundParameters["ExitOnProcessFailure"] = $false
 		if ($true -eq ([string]::IsNullOrEmpty($Parameters))) {
-			$null = $PSBoundParameters.Remove('Parameters')
+			$PSBoundParameters.Remove('Parameters') | Out-Null
 		}
 		if ($true -eq ([string]::IsNullOrEmpty($AddParameters))) {
-			$null = $PSBoundParameters.Remove('AddParameters')
+			$PSBoundParameters.Remove('AddParameters') | Out-Null
 		}
 		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
 		if ($false -eq ([string]::IsNullOrEmpty($ignoreExitCodes))) {
@@ -5429,7 +5429,7 @@ function Initialize-NxtEnvironment {
 			}
 			if ($true -eq (Test-Path -Path $SetupCfgPathOverride\setupOverride.cfg)) {
 				Write-Log -Message "Found an externally provided setup configuration file..."-Source ${cmdletName}
-				$null = New-Item -Path "$App\neo42-Install" -ItemType Directory -Force
+				New-Item -Path "$App\neo42-Install" -ItemType Directory -Force  | Out-Null
 				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg" -Recurse
 			}
 			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
@@ -5933,7 +5933,7 @@ function Move-NxtItem {
 				"ContinueOnError"
 			)
 			foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved) {
-				$null = $PSBoundParameters.Remove($functionParameterToBeRemoved)
+				$PSBoundParameters.Remove($functionParameterToBeRemoved) | Out-Null
 			}
 			Write-Log -Message "Move '$path' to '$Destination'." -Source ${cmdletName}
 			Move-Item @PSBoundParameters -ErrorAction Stop
@@ -8677,7 +8677,7 @@ Function Show-NxtInstallationWelcome {
 					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${CmdletName}
 
 					#  Restore minimized windows
-					$null = $shellApp.UndoMinimizeAll()
+					$shellApp.UndoMinimizeAll() | Out-Null
 
 					Write-Output $configInstallationUIExitCode
 					return
@@ -8780,7 +8780,7 @@ Function Show-NxtInstallationWelcome {
 					}
 
 					#  Restore minimized windows
-					$null = $shellApp.UndoMinimizeAll()
+					$shellApp.UndoMinimizeAll() | Out-Null
 
 					Write-Output $configInstallationUIExitCode
 					return
@@ -8793,7 +8793,7 @@ Function Show-NxtInstallationWelcome {
 					Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
 
 					#  Restore minimized windows
-					$null = $shellApp.UndoMinimizeAll()
+					$shellApp.UndoMinimizeAll() | Out-Null
 
 					Write-Output $configInstallationDeferExitCode
 					return
