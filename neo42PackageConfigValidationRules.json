@@ -399,7 +399,7 @@
     "AcceptedInstallExitCodes": {
         "Mandatory": true,
         "Regex": {
-            "Pattern": "^(-{0,1}\\*|\\d+(,-{0,1}\\d+)*)$",
+            "Pattern": "^(\\*|-?\\d+(,-?\\d+)*)$",
             "Operator": "match"
         },
         "ErrorMessage": "AcceptedInstallExitCodes must be a comma separated list of numbers.",
@@ -409,7 +409,7 @@
     "AcceptedInstallRebootCodes": {
         "Mandatory": true,
         "Regex": {
-            "Pattern": "^(-{0,1}\\*|\\d+(,-{0,1}\\d+)*)$",
+            "Pattern": "^(\\*|-?\\d+(,-?\\d+)*)$",
             "Operator": "match"
         },
         "ErrorMessage": "AcceptedInstallRebootCodes must be a comma separated list of numbers.",
@@ -420,7 +420,7 @@
         "Mandatory": true,
         "HelpText": "AcceptedUninstallExitCodes must be a comma separated list of numbers.",
         "Regex": {
-            "Pattern": "^(-{0,1}\\*|\\d+(,-{0,1}\\d+)*)$",
+            "Pattern": "^(\\*|-?\\d+(,-?\\d+)*)$",
             "Operator": "match"
         },
         "Type": "System.String",
@@ -429,7 +429,7 @@
     "AcceptedUninstallRebootCodes": {
         "Mandatory": true,
         "Regex": {
-            "Pattern": "^(-{0,1}\\*|\\d+(,-{0,1}\\d+)*)$",
+            "Pattern": "^(\\*|-?\\d+(,-?\\d+)*)$",
             "Operator": "match"
         },
         "ErrorMessage": "AcceptedUninstallRebootCodes must be a comma separated list of numbers.",
