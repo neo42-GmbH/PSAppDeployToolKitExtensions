@@ -9665,7 +9665,7 @@ function Test-NxtObjectValidation {
 		Process{
 			## ckeck for missing mandatory parameters
 			foreach ($validationRuleKey in ($ValidationRule | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty name)){
-				if ($ValidationRule.$validationRuleKey.Mandatory -eq $true){
+				if ($true -eq $ValidationRule.$validationRuleKey.Mandatory){
 					if ($false -eq ([bool]($ObjectToValidate.psobject.Properties.Name -contains $validationRuleKey))){
 						Write-Log -Message "The mandatory variable '$ParentObjectName $validationRuleKey' is missing." -severity 3
 					}
