@@ -15,7 +15,7 @@ Describe "Add-NxtProcessPathVariable" {
             Add-NxtProcessPathVariable -Path $pathToAdd -AddToBeginning $true | Should -BeNullOrEmpty
             $env:PATH.Split(";")[0] | Should -Be $pathToAdd
         }
-        It "Does not remove other entires" {
+        It "Does not remove other entries" {
             $env:PATH = "C:\keepme;" + $pathBackup + ";C:\keepme;"
             Add-NxtProcessPathVariable -Path $pathToAdd -AddToBeginning $true | Should -BeNullOrEmpty
             $env:PATH.Split(";")[0] | Should -Be $pathToAdd

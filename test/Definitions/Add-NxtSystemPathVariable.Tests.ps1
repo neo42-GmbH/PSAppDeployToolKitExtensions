@@ -24,7 +24,7 @@ Describe "Remove-NxtSystemPathVariable" {
             Add-NxtSystemPathVariable -Path $pathToAdd -AddToBeginning $true | Should -BeNullOrEmpty
             (Get-SystemPath).Split(';')[0] | Should -Be $pathToAdd
         }
-        It "Does not remove other entires" {
+        It "Does not remove other entries" {
             Set-SystemPath -path ("C:\keepme;" + $pathBackup + ";C:\keepme;")
             Add-NxtSystemPathVariable -Path $pathToAdd -AddToBeginning $true | Should -BeNullOrEmpty
             (Get-SystemPath).Split(";")[0] | Should -Be $pathToAdd
