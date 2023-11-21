@@ -446,10 +446,14 @@ function Add-NxtLocalUser {
 #region Function Add-NxtProcessPathVariable
 function Add-NxtProcessPathVariable {
 	<#
-  	.DESCRIPTION
+	.SYNOPSIS
 		Adds a path to the processes PATH environment variable.
+  	.DESCRIPTION
+		Adds a path to the processes PATH environment variable. If the path already exists, it will not be added again.
+		Empty values will be sanitized.
   	.PARAMETER AddPath
 		Path to be added to the processes PATH environment variable.
+		Has to be a valid path. The path value will automatically be expanded.
   	.PARAMETER AddToBeginning
 		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
   	.EXAMPLE
@@ -492,9 +496,7 @@ function Add-NxtProcessPathVariable {
 				Write-Log "Appended '$Path' to the processes PATH variable." -Source ${cmdletName}
 			}
 			else{
-				$pathEntries.Reverse() | Out-Null
-				$pathEntries.Add("$Path") | Out-Null
-				$pathEntries.Reverse() | Out-Null
+				$pathEntries.Insert(0,"$Path") | Out-Null
 				Write-Log "Prepended '$Path' to the processes PATH variable." -Source ${cmdletName}
 			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
@@ -511,10 +513,14 @@ function Add-NxtProcessPathVariable {
 #region Function Add-NxtSystemPathVariable
 function Add-NxtSystemPathVariable {
 	<#
-  	.DESCRIPTION
+	.SYNOPSIS
 		Adds a path to the systems PATH environment variable.
+  	.DESCRIPTION
+		Adds a path to the systems PATH environment variable. If the path already exists, it will not be added again.
+		Empty values will be sanitized.
   	.PARAMETER AddPath
 		Path to be added to the systems PATH environment variable.
+		Has to be a valid path. The path value will automatically be expanded.
   	.PARAMETER AddToBeginning
 		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
   	.EXAMPLE
@@ -557,9 +563,7 @@ function Add-NxtSystemPathVariable {
 				Write-Log "Appended '$Path' to the systems PATH variable." -Source ${cmdletName}
 			}
 			else{
-				$pathEntries.Reverse() | Out-Null
-				$pathEntries.Add("$Path") | Out-Null
-				$pathEntries.Reverse() | Out-Null
+				$pathEntries.Insert(0,"$Path") | Out-Null
 				Write-Log "Prepended '$Path' to the systems PATH variable." -Source ${cmdletName}
 			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
@@ -6984,8 +6988,11 @@ function Remove-NxtProcessEnvironmentVariable {
 #region Function Remove-NxtProcessPathVariable
 function Remove-NxtProcessPathVariable {
 	<#
+	.SYNOPSIS
+		Removes a path to the processes PATH environment variable.
   	.DESCRIPTION
 		Removes a path to the processes PATH environment variable.
+		Sanatizes empty entries.
   	.PARAMETER Path
 		Path to be removed from the processes PATH environment variable.
   	.EXAMPLE
@@ -7027,8 +7034,11 @@ function Remove-NxtProcessPathVariable {
 #region Function Remove-NxtProcessPathVariable
 function Remove-NxtSystemPathVariable {
 	<#
+	.SYNOPSIS
+		Removes a path to the systems PATH environment variable.
   	.DESCRIPTION
 		Removes a path to the systems PATH environment variable.
+		Sanatizes empty entries.
   	.PARAMETER Path
 		Path to be added to the systems PATH environment variable.
   	.EXAMPLE
