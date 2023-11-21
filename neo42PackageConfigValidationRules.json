@@ -409,7 +409,7 @@
     "AcceptedInstallRebootCodes": {
         "Mandatory": true,
         "Regex": {
-            "Pattern": "^(\\*|-?\\d+(,-?\\d+)*)$",
+            "Pattern": "^-?\\d+(,-?\\d+)*$",
             "Operator": "match"
         },
         "ErrorMessage": "AcceptedInstallRebootCodes must be a comma separated list of numbers.",
@@ -429,7 +429,7 @@
     "AcceptedUninstallRebootCodes": {
         "Mandatory": true,
         "Regex": {
-            "Pattern": "^(\\*|-?\\d+(,-?\\d+)*)$",
+            "Pattern": "^-?\\d+(,-?\\d+)*$",
             "Operator": "match"
         },
         "ErrorMessage": "AcceptedUninstallRebootCodes must be a comma separated list of numbers.",
