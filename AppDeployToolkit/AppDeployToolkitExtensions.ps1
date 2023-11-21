@@ -1754,7 +1754,7 @@ function Execute-NxtBitRockInstaller {
 			$executeProcessSplat.Add('ContinueOnError', $ContinueOnError)
 		}
 		[string]$ignoreExitCodes = Merge-NxtExitCodes -ExitCodeString1 $AcceptedExitCodes -ExitCodeString2 $AcceptedRebootCodes
-		if ($false -eq ([string]::IsNullOrEmpty($ignoreExitCodes)) {
+		if ($false -eq ([string]::IsNullOrEmpty($ignoreExitCodes))) {
 			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
@@ -7339,7 +7339,7 @@ function Repair-NxtApplication {
 		}
 		else {
 			$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
-			if ($true -eq ([string]::IsNullOrEmpty($executeNxtParams.Path)) {
+			if ($true -eq ([string]::IsNullOrEmpty($executeNxtParams.Path))) {
 				$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
 				$repairResult.Success = $null
 				[int]$logMessageSeverity = 1
