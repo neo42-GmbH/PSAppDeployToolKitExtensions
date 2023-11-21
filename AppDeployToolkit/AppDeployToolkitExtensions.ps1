@@ -7662,7 +7662,8 @@ function Set-NxtFolderPermissions {
 		}
 		if ($false -eq [string]::IsNullOrEmpty($CustomDirectorySecurity)) {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
-		}else {
+		}
+		else {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
 		}
 		foreach ($permissionLevel in @("FullControl","Modify", "Write", "ReadAndExecute")) {
@@ -9795,12 +9796,14 @@ function Test-NxtObjectValidationHelper {
 			[string]::IsNullOrEmpty($ObjectToValidate)
 		) {
 			Write-Verbose "[${cmdletName}]'$ParentObjectName $ValidationRuleKey' is allowed to be empty"
-		}elseif( [string]::IsNullOrEmpty($ObjectToValidate) ) {
+		}
+		elseif( [string]::IsNullOrEmpty($ObjectToValidate) ) {
 			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object." -severity 3
 			if ($false -eq $ContinueOnError) {
 				throw "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object. $($ValidationRule.HelpText)"
 			}
-		}else{
+		}
+		else{
 			## regex
 			## CheckInvalidFileNameChars
 			if ($true -eq $ValidationRule.Regex.CheckInvalidFileNameChars) {
@@ -9976,7 +9979,8 @@ function Test-NxtFolderPermissions {
 	Process {
 		if ($null -ne $CustomDirectorySecurity) {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
-		}else {
+		}
+		else {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
 		}
 		foreach ($permissionLevel in @("FullControl","Modify", "Write", "ReadAndExecute")) {
