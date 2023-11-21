@@ -488,13 +488,13 @@ function Add-NxtProcessPathVariable {
 		}
 		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')){
 			if ($false -eq $AddToBeginning){
-				$pathEntries.Add("$Path")
+				$pathEntries.Add("$Path") | Out-Null
 				Write-Log "Appended '$Path' to the processes PATH variable." -Source ${cmdletName}
 			}
 			else{
-				$pathEntries.Reverse()
-				$pathEntries.Add("$Path")
-				$pathEntries.Reverse()
+				$pathEntries.Reverse() | Out-Null
+				$pathEntries.Add("$Path") | Out-Null
+				$pathEntries.Reverse() | Out-Null
 				Write-Log "Prepended '$Path' to the processes PATH variable." -Source ${cmdletName}
 			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
@@ -553,13 +553,13 @@ function Add-NxtSystemPathVariable {
 		}
 		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')){
 			if ($false -eq $AddToBeginning){
-				$pathEntries.Add("$Path")
+				$pathEntries.Add("$Path") | Out-Null
 				Write-Log "Appended '$Path' to the systems PATH variable." -Source ${cmdletName}
 			}
 			else{
-				$pathEntries.Reverse()
-				$pathEntries.Add("$Path")
-				$pathEntries.Reverse()
+				$pathEntries.Reverse() | Out-Null
+				$pathEntries.Add("$Path") | Out-Null
+				$pathEntries.Reverse() | Out-Null
 				Write-Log "Prepended '$Path' to the systems PATH variable." -Source ${cmdletName}
 			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
