@@ -1769,7 +1769,7 @@ function Execute-NxtBitRockInstaller {
 				[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout 500
 				Start-Sleep 1
 			}
-			If ($false -eq $result_UninstallProcess) {
+			if ($false -eq $result_UninstallProcess) {
 				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of at least 500s!" -Severity 2 -Source ${CmdletName}
 			} else {
 				Write-Log -Message "All uninstallation processes finished." -Source ${CmdletName}
@@ -2618,7 +2618,7 @@ function Execute-NxtNullsoft {
 			Write-Log -Message "Wait while one of the possible uninstallation processes is still running..." -Source ${CmdletName}
 			[bool]$resultAU_process = Watch-NxtProcessIsStopped -ProcessName "AU_.exe" -Timeout "500"
 			[bool]$resultUn_Aprocess = Watch-NxtProcessIsStopped -ProcessName "Un_A.exe" -Timeout "500"
-			If (($false -eq $resultAU_process) -or ($false -eq $resultUn_Aprocess)) {
+			if (($false -eq $resultAU_process) -or ($false -eq $resultUn_Aprocess)) {
 				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of 500s!" -Severity 2 -Source ${CmdletName}
 			} else {
 				Write-Log -Message "All uninstallation processes finished." -Source ${CmdletName}
@@ -6696,16 +6696,16 @@ Function Remove-NxtIniValue {
 		[String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Try {
+		try {
 			Write-Log -Message "Removing INI Key: [Section = $Section] [Key = $Key]." -Source ${CmdletName}
-			If (-not (Test-Path -LiteralPath $FilePath -PathType 'Leaf')) {
+			if (-not (Test-Path -LiteralPath $FilePath -PathType 'Leaf')) {
 				Throw "File [$filePath] could not be found."
 			}
 			[PSADTNXT.NxtIniFile]::RemoveIniValue($Section, $Key, $FilePath)
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to remove INI file key value. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-			If (-not $ContinueOnError) {
+			if (-not $ContinueOnError) {
 				Throw "Failed to remove INI file key value: $($_.Exception.Message)"
 			}
 		}
@@ -9305,7 +9305,7 @@ function Switch-NxtMSIReinstallMode {
 			}
 			else {
 				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
-				If ($false -eq $displayVersionResult.UninstallKeyExists) {
+				if ($false -eq $displayVersionResult.UninstallKeyExists) {
 					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
 					throw "No repair function executable under current conditions!"
 				}
@@ -9325,7 +9325,7 @@ function Switch-NxtMSIReinstallMode {
 							## check just for sure
 							if ($DeploymentType -eq "Install") {
 								# in this case the defined reinstall mode set by PackageConfig.json has to change
-								If ($true -eq $MSIInplaceUpgradeable) {
+								if ($true -eq $MSIInplaceUpgradeable) {
 									[string]$infoMessage += " Doing an msi inplace upgrade ..."
 									[string]$ReinstallMode = "Install"
 								} else {
@@ -9339,7 +9339,7 @@ function Switch-NxtMSIReinstallMode {
 							## check just for sure
 							if ($DeploymentType -eq "Install") {
 								## in this case the defined reinstall mode set by PackageConfig.json has to change
-								If ($true -eq $MSIDowngradeable) {
+								if ($true -eq $MSIDowngradeable) {
 									[string]$infoMessage += " Doing a msi downgrade ..."
 									[string]$ReinstallMode = "Install"
 								} else {
@@ -10702,7 +10702,7 @@ function Uninstall-NxtOld {
 								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
 									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
 								}
-								If ( ($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
+								if ( ($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
 									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
 										try {
@@ -10769,7 +10769,7 @@ function Uninstall-NxtOld {
 								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
 									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
 								}
-								If (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
+								if (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
 									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
 									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
 										try {
