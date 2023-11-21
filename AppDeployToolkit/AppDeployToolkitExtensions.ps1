@@ -2064,10 +2064,10 @@ function Execute-NxtInnoSetup {
 		if ($false -eq ([string]::IsNullOrWhiteSpace($Log))) {
 			## create Log file name if non is specified
 			if ($Action -eq 'Install') {
-				[string]$Log = "Install_$(((Get-Item $innoSetupPath).Basename) -replace ' ',[string]::Empty)_$DeploymentTimestamp"
+				[string]$Log = "Install_$(((Get-Item $innoSetupPath).Basename) -Replace ' ', [string]::Empty)_$DeploymentTimestamp"
 			}
 			else {
-				[string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -replace ' ',[string]::Empty)_$DeploymentTimestamp"
+				[string]$Log = "Uninstall_$($InstalledAppResults.DisplayName -Replace ' ', [string]::Empty)_$DeploymentTimestamp"
 			}
 		}
 
@@ -2080,7 +2080,7 @@ function Execute-NxtInnoSetup {
 
 		## Check, if $Log is a full path
 		if ($false -eq ($Log.Contains('\'))) {
-			[string]$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
+			[string]$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -Replace ' ', [string]::Empty)
 		}
 		else {
 			[string]$fullLogPath = $Log
@@ -2368,7 +2368,7 @@ function Execute-NxtMSI {
 			[string]$PSBoundParameters["IgnoreExitCodes"] = "$ignoreExitCodes"
 		}
 		if ($false -eq ([string]::IsNullOrEmpty($Log))) {
-			[string]$msiLogName = ($Log | Split-Path -Leaf) -replace '\.log$',[string]::Empty
+			[string]$msiLogName = ($Log | Split-Path -Leaf) -Replace '\.log$', [string]::Empty
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
 		[PSObject]$executeResult = Execute-MSI @PSBoundParameters
@@ -3488,7 +3488,7 @@ function Get-NxtDriveFreeSpace {
 	Process {
 		try {
 			[System.Management.ManagementObject]$disk = Get-WmiObject -Class Win32_logicaldisk -Filter "DeviceID = '$DriveName'"
-			[long]$diskFreekSize = [math]::Floor(($disk.FreeSpace / "$("1$Unit" -replace "1B","1D")"))
+			[long]$diskFreekSize = [math]::Floor(($disk.FreeSpace / "$("1$Unit" -Replace "1B", "1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get free space for '$DriveName'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -3700,7 +3700,7 @@ function Get-NxtFolderSize {
 		try {
 			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { Param ($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
 			[long]$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { Param ($x) $x.Length })
-			[long]$folderSize = [math]::round(($result / "$("1$Unit" -replace "1B","1D")"))
+			[long]$folderSize = [math]::round(($result / "$("1$Unit" -Replace "1B", "1D")"))
 		}
 		catch {
 			Write-Log -Message "Failed to get size from folder '$FolderPath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -8496,8 +8496,8 @@ Function Show-NxtInstallationWelcome {
 			elseif ($true -eq ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name))) {				
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
 				## Get-WmiObject Win32_Process always requires an extension, so we add one in case there is none
-				[string]$processAppsItem.Name = $($processAppsItem.Name -replace "\$fileExtension$","") + $fileExtension
-				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension$",[string]::Empty) -join ","
+				[string]$processAppsItem.Name = $($processAppsItem.Name -Replace "\$fileExtension$", "") + $fileExtension
+				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -Replace "\$fileExtension$", [string]::Empty) -join ","
 				if ( $true -eq [String]::IsNullOrEmpty($processAppsItem.Name) ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
@@ -8509,7 +8509,7 @@ Function Show-NxtInstallationWelcome {
 			}
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
-				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", [string]::Empty
+				[string]$processAppsItem.Name = $processAppsItem.Name -Replace "\$fileExtension$", [string]::Empty
 			}
 		}
 		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
@@ -9169,7 +9169,7 @@ function Stop-NxtProcess {
 		Write-Log -Message "Stopping process with '$Name'..." -Source ${cmdletName}
 		try {
 			if ( $false -eq $IsWql ) {
-				[string]$processNameWithoutExtension = $Name -Replace("\.exe$",[string]::Empty)
+				[string]$processNameWithoutExtension = $Name -Replace "\.exe$", [string]::Empty
 				[System.Diagnostics.Process[]]$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue
 				[int]$processCountForLogging = $processes.Count
 				if ($processes.Count -ne 0) {
@@ -9828,7 +9828,7 @@ function Test-NxtObjectValidationHelper {
 				}
 			}
 			if ($false -eq [string]::IsNullOrEmpty($ValidationRule.Regex.ReplaceBeforeMatch)) {
-				[psobject]$ObjectToValidate = $ObjectToValidate -replace $ValidationRule.Regex.ReplaceBeforeMatch
+				[psobject]$ObjectToValidate = $ObjectToValidate -Replace $ValidationRule.Regex.ReplaceBeforeMatch
 			}
 			if ($ValidationRule.Regex.Operator -eq "match") {
 				## validate regex pattern
