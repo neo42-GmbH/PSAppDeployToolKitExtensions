@@ -706,7 +706,7 @@ function Close-BlockExecutionWindow {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		$blockexecutionWindowId = (Get-Process powershell | Where-Object {"$(($_).MainWindowTitle)" -eq "$installTitle"}).Id
+		[int]$blockexecutionWindowId = (Get-Process powershell | Where-Object {"$(($_).MainWindowTitle)" -eq "$installTitle"}).Id
 		if (-not [string]::IsNullOrEmpty($blockexecutionWindowId)) {
 			Write-Log "The informational window of BlockExecution functionality will be closed now ..."
 			## Stop-NxtProcess does not yet support Id as Parameter
@@ -931,10 +931,10 @@ function Compare-NxtVersionPart {
 	}
 	Process {
 		if ([string]::IsNullOrEmpty($DetectedVersionPart)) {
-			$DetectedVersionPart = "0"
+			[string]$DetectedVersionPart = "0"
 		}
 		if ([string]::IsNullOrEmpty($TargetVersionPart)) {
-			$TargetVersionPart = "0"
+			[string]$TargetVersionPart = "0"
 		}
 		[int]$detectedVersionPartInt = 0
 		[int]$targetVersionPartInt = 0
@@ -3797,7 +3797,7 @@ function Get-NxtInstalledApplication {
 					}
 				}
 				foreach ($displayNameToExclude in $DisplayNamesToExclude) {
-					$installedAppResults = $installedAppResults | Where-Object DisplayName -ne $displayNameToExclude
+					[PSCustomObject]$installedAppResults = $installedAppResults | Where-Object DisplayName -ne $displayNameToExclude
 					Write-Log -Message "Excluded [$displayNameToExclude] from the results above." -Source ${CmdletName}
 				}
 				Write-Output $installedAppResults
@@ -4240,7 +4240,7 @@ function Get-NxtProcessTree {
 	if ($null -ne $process) {
 		Write-Output $process
 		if ($IncludeChildProcesses) {
-			$childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
+			[array]$childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
 			foreach ($child in $childProcesses) {
 				if (
 					$child.ProcessId -eq $process.ProcessId -and
@@ -4711,11 +4711,11 @@ function Get-NxtRunningProcesses {
 							$_.QueryUsed -eq $queryUsed
 						}).count -ne 0
 							) {
-							$processFound = $true
+							[bool]$processFound = $true
 						}
 					}
 					elseif ($_.ProcessName -ieq $processObject.ProcessName) {
-						$processFound = $true
+						[bool]$processFound = $true
 					}
 					if ($true -eq $processFound) {
 						if ($processObject.ProcessDescription) {
@@ -5306,15 +5306,15 @@ function Initialize-NxtAppRootFolder {
 				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
 				$AppRootFolderNames += $BaseName
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey" -Name "AppRootFolderNames" -Value $AppRootFolderNames -Type MultiString -ContinueOnError $false
-				$appRootFolderName = $BaseName
+				[string]$appRootFolderName = $BaseName
 			}
 			else {
 				## use a foldername with a random suffix
-				$randomSuffix = [System.Guid]::NewGuid().ToString().Substring(0,8)
+				[string]$randomSuffix = [System.Guid]::NewGuid().ToString().Substring(0,8)
 				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName$randomSuffix -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
 				$AppRootFolderNames += "$BaseName$randomSuffix"
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey" -Name "AppRootFolderNames" -Value $AppRootFolderNames -Type MultiString -ContinueOnError $false
-				$appRootFolderName = "$BaseName$randomSuffix"
+				[string]$appRootFolderName = "$BaseName$randomSuffix"
 			}
 		}
 		if ($appRootFolderName.length -ne 0) {
@@ -5405,7 +5405,7 @@ function Initialize-NxtEnvironment {
 		## $AppRootFolder and $RegPackagesKey have to be taken from the newly set $global:PackageConfig.
 		[string]$global:PackageConfig.AppRootFolder = Initialize-NxtAppRootFolder -BaseName $global:PackageConfig.AppRootFolder -RegPackagesKey $global:PackageConfig.RegPackagesKey
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
-		$SetupCfgPathOverride = "$env:SystemRoot\system32\config\systemprofile\AppData\Roaming\neo42\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
+		[string]$SetupCfgPathOverride = "$env:SystemRoot\system32\config\systemprofile\AppData\Roaming\neo42\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 		## if $App still is not valid we have to throw an error.
 		if ($false -eq [System.IO.Path]::IsPathRooted($App)) {
 			Write-Log -Message "$App is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
@@ -5527,7 +5527,7 @@ function Initialize-NxtUninstallApplication {
 		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 			[string]$wowEntry = [string]::Empty
 			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
-				$wowEntry = "\Wow6432Node"
+				[string]$wowEntry = "\Wow6432Node"
 			}
 			if ($true -eq $uninstallKeyToHide.KeyNameIsDisplayName) {
 				[string]$currentKeyName = (Get-NxtInstalledApplication -UninstallKey $uninstallKeyToHide.KeyName -UninstallKeyIsDisplayName $true).UninstallSubkey
@@ -5871,7 +5871,7 @@ function Merge-NxtExitCodes {
 			if (-not [string]::IsNullOrEmpty($ExitCodeString2)) { 
 				$ExitCodeObj += $ExitCodeString2 -split ","
 			}
-			$ExitCodeObj = $ExitCodeObj | Select-Object -Unique
+			[array]$ExitCodeObj = $ExitCodeObj | Select-Object -Unique
 			[string]$ExitCodeString = $ExitCodeObj -join ","
 		}
 		return $ExitCodeString
@@ -6114,13 +6114,13 @@ function New-NxtTemporaryFolder {
 		Remove-Item -Path $TempRootPath -Recurse -Force
 		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
 	}
-	$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object {
+	[string]$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object {
 		[char]$_}
 	) -join ""
 	[int]$countTries = 1
 	while ($true -eq (Test-Path "$TempRootPath\$foldername") -and $countTries -lt 100) {
 		$countTries++
-		$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object {
+		[string]$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object {
 			[char]$_}
 		) -join ""
 	}
@@ -6588,9 +6588,9 @@ function Remove-NxtEmptyFolder {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		$Path = $Path.TrimEnd("\")
+		[string]$Path = $Path.TrimEnd("\")
 		if ($false -eq [string]::IsNullOrEmpty($RootPathToRecurseUpTo)) {
-			$RootPathToRecurseUpTo = $RootPathToRecurseUpTo.TrimEnd("\")
+			[string]$RootPathToRecurseUpTo = $RootPathToRecurseUpTo.TrimEnd("\")
 		}
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
 		[bool]$skipRecursion = $false
@@ -6608,7 +6608,7 @@ function Remove-NxtEmptyFolder {
 				}
 				else {
 					Write-Log -Message "Folder [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
-					$skipRecursion = $true
+					[bool]$skipRecursion = $true
 				}
 			}
 			catch {
@@ -7693,7 +7693,7 @@ function Set-NxtFolderPermissions {
 		if ($true -eq $EnforceInheritanceOnSubFolders) {
 			Write-Log -Message "Applying permissions to subfolders of '$Path'." -Source ${cmdletName}
 			Get-ChildItem -Path $Path -Recurse | ForEach-Object {
-				$acl = Get-Acl -Path $_.FullName -ErrorAction Stop
+				[System.Security.AccessControl.DirectorySecurity]$acl = Get-Acl -Path $_.FullName -ErrorAction Stop
 				$acl.Access | Where-Object { !$_.IsInherited } | ForEach-Object {
 					$acl.RemoveAccessRule($_) | Out-Null
 				}
@@ -7703,7 +7703,7 @@ function Set-NxtFolderPermissions {
 			}
 		}
 		if ($true -eq $BreakInheritance) {
-			$testResult = Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity
+			[bool]$testResult = Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity
 			if ($false -eq $testResult) {
 				Write-Log -Message "Failed to set permissions" -Severity 3 -Source ${cmdletName}
 				Throw "Failed to set permissions on folder '$Path'"
@@ -8514,7 +8514,7 @@ Function Show-NxtInstallationWelcome {
 		}
 		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
 			## prevent BlockExecution function if there is no process to kill
-			$BlockExecution = $false
+			[bool]$BlockExecution = $false
 		}
 		else {
 			## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
@@ -8557,7 +8557,7 @@ Function Show-NxtInstallationWelcome {
 		## Check Deferral history and calculate remaining deferrals
 		if (($allowDefer) -or ($AllowDeferCloseApps)) {
 			#  Set $allowDefer to true if $AllowDeferCloseApps is true
-			$allowDefer = $true
+			[bool]$allowDefer = $true
 
 			#  Get the deferral history from the registry
 			$deferHistory = Get-DeferHistory
@@ -8565,26 +8565,26 @@ Function Show-NxtInstallationWelcome {
 			$deferHistoryDeadline = $deferHistory | Select-Object -ExpandProperty 'DeferDeadline' -ErrorAction 'SilentlyContinue'
 
 			#  Reset Switches
-			$checkDeferDays = $false
-			$checkDeferDeadline = $false
+			[bool]$checkDeferDays = $false
+			[bool]$checkDeferDeadline = $false
 			if ($DeferDays -ne 0) {
-				$checkDeferDays = $true
+				[bool]$checkDeferDays = $true
 			}
 			if ($DeferDeadline) {
-				$checkDeferDeadline = $true
+				[bool]$checkDeferDeadline = $true
 			}
 			if ($DeferTimes -ne 0) {
 				if ($deferHistoryTimes -ge 0) {
 					Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${CmdletName}
-					$DeferTimes = $deferHistory.DeferTimesRemaining - 1
+					[int]$DeferTimes = $deferHistory.DeferTimesRemaining - 1
 				}
 				else {
-					$DeferTimes = $DeferTimes - 1
+					[int]$DeferTimes = $DeferTimes - 1
 				}
 				Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${CmdletName}
 				if ($DeferTimes -lt 0) {
 					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
-					$AllowDefer = $false
+					[bool]$AllowDefer = $false
 				}
 			}
 			else {
@@ -8604,7 +8604,7 @@ Function Show-NxtInstallationWelcome {
 				Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${CmdletName}
 				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
 					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
-					$AllowDefer = $false
+					[bool]$AllowDefer = $false
 				}
 			}
 			if ($checkDeferDeadline -and $allowDefer) {
@@ -8619,12 +8619,12 @@ Function Show-NxtInstallationWelcome {
 				Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${CmdletName}
 				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
 					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
-					$AllowDefer = $false
+					[bool]$AllowDefer = $false
 				}
 			}
 		}
 		if (($deferTimes -lt 0) -and (-not $deferDeadlineUniversal)) {
-			$AllowDefer = $false
+			[bool]$AllowDefer = $false
 		}
 
 		[string]$promptResult = [string]::Empty
@@ -8632,20 +8632,20 @@ Function Show-NxtInstallationWelcome {
 		if (-not $silent) {
 			if ($forceCloseAppsCountdown -gt 0) {
 				#  Keep the same variable for countdown to simplify the code:
-				$closeAppsCountdown = $forceCloseAppsCountdown
+				[int]$closeAppsCountdown = $forceCloseAppsCountdown
 				#  Change this variable to a boolean now to switch the countdown on even with deferral
 				[Boolean]$forceCloseAppsCountdown = $true
 			}
 			elseif ($forceCountdown -gt 0) {
 				#  Keep the same variable for countdown to simplify the code:
-				$closeAppsCountdown = $forceCountdown
+				[int]$closeAppsCountdown = $forceCountdown
 				#  Change this variable to a boolean now to switch the countdown on
 				[Boolean]$forceCountdown = $true
 			}
 			Set-Variable -Name 'closeAppsCountdownGlobal' -Value $closeAppsCountdown -Scope 'Script'
 			[int[]]$processIdsToIgnore = @()
 			if ($processIdToIgnore -gt 0) {
-				$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+				[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 			}
 			while ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses' -ProcessIdsToIgnore $processIdsToIgnore) -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
@@ -8701,9 +8701,9 @@ Function Show-NxtInstallationWelcome {
 					}
 					# Update the process list right before closing, in case it changed
 					if ($processIdToIgnore -gt 0) {
-						$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+						[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 					}
-					$runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -ProcessIdsToIgnore $processIdsToIgnore
+					[System.Diagnostics.Process[]]$runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -ProcessIdsToIgnore $processIdsToIgnore
 					# Close running processes
 					foreach ($runningProcess in $runningProcesses) {
 						[PSObject[]]$AllOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
@@ -8753,7 +8753,7 @@ Function Show-NxtInstallationWelcome {
 						}
 					}
 					if ($processIdToIgnore -gt 0) {
-						$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+						[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 					}
 					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
@@ -8764,7 +8764,7 @@ Function Show-NxtInstallationWelcome {
 				#  Stop the script (if not actioned before the timeout value)
 				elseif ($promptResult.Contains('Timeout')) {
 					Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${CmdletName}
-					$BlockExecution = $false
+					[bool]$BlockExecution = $false
 
 					if (($deferTimes -ge 0) -or ($deferDeadlineUniversal)) {
 						Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
@@ -8788,7 +8788,7 @@ Function Show-NxtInstallationWelcome {
 				#  Stop the script (user chose to defer)
 				elseif ($promptResult.Contains('Defer')) {
 					Write-Log -Message 'Installation deferred by the user.' -Source ${CmdletName}
-					$BlockExecution = $false
+					[bool]$BlockExecution = $false
 
 					Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
 
@@ -9030,33 +9030,33 @@ Function Show-NxtWelcomePrompt {
 	}
 	Process {
 
-		$contiuneTypeValue = [int]$ContinueType;
+		[int]$contiuneTypeValue = $ContinueType
 		# Convert to JSON in compressed form
 		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects
-		$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
-		$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferTimes" -Value $DeferTimes
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferDeadline" -Value $DeferDeadline
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ContinueType" -Value $contiuneTypeValue
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CloseAppsCountdown" -Value $CloseAppsCountdown
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "PersistPrompt" -Switch $PersistPrompt
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AllowDefer" -Switch $AllowDefer
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "MinimizeWindows" -Switch $MinimizeWindows
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "TopMost" -Switch $TopMost
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CustomText" -Switch $CustomText
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanCloseAll" -Switch $UserCanCloseAll
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanAbort" -Switch $UserCanAbort
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeploymentType" -Value $DeploymentType
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "InstallTitle" -Value $InstallTitle
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBanner" -Value $AppDeployLogoBanner
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBannerDark" -Value $AppDeployLogoBannerDark
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "EnvProgramData" -Value $envProgramData
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVendor" -Value $appVendor
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppName" -Value $appName
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVersion" -Value $appVersion
-		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
+		[string]$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
+		[string]$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferTimes" -Value $DeferTimes
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferDeadline" -Value $DeferDeadline
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ContinueType" -Value $contiuneTypeValue
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CloseAppsCountdown" -Value $CloseAppsCountdown
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "PersistPrompt" -Switch $PersistPrompt
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AllowDefer" -Switch $AllowDefer
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "MinimizeWindows" -Switch $MinimizeWindows
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "TopMost" -Switch $TopMost
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "CustomText" -Switch $CustomText
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanCloseAll" -Switch $UserCanCloseAll
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "UserCanAbort" -Switch $UserCanAbort
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeploymentType" -Value $DeploymentType
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "InstallTitle" -Value $InstallTitle
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBanner" -Value $AppDeployLogoBanner
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppDeployLogoBannerDark" -Value $AppDeployLogoBannerDark
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "EnvProgramData" -Value $envProgramData
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVendor" -Value $appVendor
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppName" -Value $appName
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVersion" -Value $appVersion
+		[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
 		if ($ProcessIdToIgnore -gt 0) {
-			$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ProcessIdToIgnore" -Value $ProcessIdToIgnore
+			[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ProcessIdToIgnore" -Value $ProcessIdToIgnore
 		}
 		Write-Log "Searching for Sessions..." -Source ${CmdletName}
 		[int]$welcomeExitCode = 1618;
@@ -9069,7 +9069,7 @@ Function Show-NxtWelcomePrompt {
 					[UInt32[]]$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
 					Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
 					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
-					$welcomeExitCode = $askKillProcessesResult.ExitCode
+					[int]$welcomeExitCode = $askKillProcessesResult.ExitCode
 					[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
 					[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
 					Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName"
@@ -9078,10 +9078,10 @@ Function Show-NxtWelcomePrompt {
 					if ($true -eq $ApplyContinueTypeOnError) {
 						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Applying ContinueType $contiuneTypeValue" -Severity 3 -Source ${CmdletName}
 						if ($contiuneTypeValue -eq [PSADTNXT.ContinueType]::Abort) {
-							$welcomeExitCode = 1002
+							[int]$welcomeExitCode = 1002
 						}
 						elseif ($contiuneTypeValue -eq [PSADTNXT.ContinueType]::Continue) {
-							$welcomeExitCode = 1001
+							[int]$welcomeExitCode = 1001
 						}
 					}
 					else {
@@ -9093,7 +9093,7 @@ Function Show-NxtWelcomePrompt {
 		}
 		else
 		{
-			$welcomeExitCode = [PSADTNXT.Extensions]::StartPowershellScriptAndWaitForExitCode($powershellCommand);
+			[int]$welcomeExitCode = [PSADTNXT.Extensions]::StartPowershellScriptAndWaitForExitCode($powershellCommand);
 			Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $env:USERNAME\$env:USERDOMAIN"
 		}
 
@@ -9103,27 +9103,27 @@ Function Show-NxtWelcomePrompt {
 		{
 			1001
 			{
-				$returnCode = 'Close'
+				[string]$returnCode = 'Close'
 			}
 			1002
 			{
-				$returnCode = 'Cancel'
+				[string]$returnCode = 'Cancel'
 			}
 			1003
 			{
-				$returnCode = 'Defer'
+				[string]$returnCode = 'Defer'
 			}
 			1004
 			{
-				$returnCode = 'Timeout'
+				[string]$returnCode = 'Timeout'
 			}
 			1005
 			{
-				$returnCode = 'Continue'
+				[string]$returnCode = 'Continue'
 			}
 			default
 			{
-				$returnCode = 'Continue'
+				[string]$returnCode = 'Continue'
 			}
 		}
 		Write-Output -InputObject ($returnCode)   
@@ -9177,7 +9177,7 @@ function Stop-NxtProcess {
 				}
 				## Test after 10ms if the process(es) is/are still running, if it is still in the list it is ok if it has exited
 				Start-Sleep -Milliseconds 10
-				$processes = Get-Process -Name $Name -ErrorAction SilentlyContinue | Where-Object { $false -eq $_.HasExited }
+				[System.Diagnostics.Process[]]$processes = Get-Process -Name $Name -ErrorAction SilentlyContinue | Where-Object { $false -eq $_.HasExited }
 				if ($processes.Count -ne 0) {
 					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				}
@@ -9515,13 +9515,13 @@ function Test-NxtConfigVersionCompatibility {
 	}
 	Process {
 		$deployApplicationContent = Get-Content -Path $DeployApplicationPath
-		$deployApplicationConfigVersion = $deployApplicationContent | Select-String -Pattern "ConfigVersion: $ConfigVersion$"
+		[string]$deployApplicationConfigVersion = $deployApplicationContent | Select-String -Pattern "ConfigVersion: $ConfigVersion$"
 		if ([string]::IsNullOrEmpty($deployApplicationConfigVersion)) {
 			Write-Log -Message "ConfigVersion: $ConfigVersion not found in $DeployApplicationPath. Please use a Deploy-Application.ps1 that matches the ConfigVersion from Packageconfig" -Severity 3 -Source ${cmdletName}
 			throw "ConfigVersion: $ConfigVersion not found in $DeployApplicationPath. Please use a Deploy-Application.ps1 that matches the ConfigVersion from Packageconfig"
 		}
 		$appDeployToolkitExtensionsContent = Get-Content -Path $AppDeployToolkitExtensionsPath
-		$appDeployToolkitExtensionsConfigVersion = $appDeployToolkitExtensionsContent | Select-String -Pattern "ConfigVersion: $ConfigVersion`$"
+		[string]$appDeployToolkitExtensionsConfigVersion = $appDeployToolkitExtensionsContent | Select-String -Pattern "ConfigVersion: $ConfigVersion`$"
 		if ([string]::IsNullOrEmpty($appDeployToolkitExtensionsConfigVersion)) {
 			Write-Log -Message "ConfigVersion: $ConfigVersion not found in $AppDeployToolkitExtensionsPath. Please use an AppDeployToolkit Folder that matches the ConfigVersion from Packageconfig" -Severity 3 -Source ${cmdletName}
 			throw "ConfigVersion: $ConfigVersion not found in $AppDeployToolkitExtensionsPath. Please use an AppDeployToolkit Folder that matches the ConfigVersion from Packageconfig"
@@ -9828,7 +9828,7 @@ function Test-NxtObjectValidationHelper {
 				}
 			}
 			if ($false -eq [string]::IsNullOrEmpty($ValidationRule.Regex.ReplaceBeforeMatch)) {
-				$ObjectToValidate = $ObjectToValidate -replace $ValidationRule.Regex.ReplaceBeforeMatch
+				[psobject]$ObjectToValidate = $ObjectToValidate -replace $ValidationRule.Regex.ReplaceBeforeMatch
 			}
 			if ($ValidationRule.Regex.Operator -eq "match") {
 				## validate regex pattern
@@ -9896,7 +9896,7 @@ function Test-NxtPackageConfig {
 	)
 	Begin {
 		## break reference to global variable
-		$PackageConfig = $PackageConfig | Select-Object *
+		[psobject]$PackageConfig = $PackageConfig | Select-Object *
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
@@ -11388,10 +11388,10 @@ function Update-NxtXmlNode {
 		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeExistsParams)) {
 			[xml]$xml = [xml]::new()
 			$xml.Load($FilePath)
-			[psobject]$nodes = $xml.SelectNodes($NodePath)
+			[System.Xml.XPathNodeList]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-					$nodes = $nodes | Where-Object { $_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value }
+					[System.Xml.XPathNodeList]$nodes = $nodes | Where-Object { $_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value }
 				}
 				Clear-Variable filterAttribute
 			}
@@ -11584,9 +11584,9 @@ function Wait-NxtRegistryAndProcessCondition {
 						}
 						{
 							## valueEquals
-						(![string]::IsNullOrEmpty($_.ValueName)) -and
-						(![string]::IsNullOrEmpty($_.ValueData) ) -and
-						($true -eq $_.ShouldExist)
+							(![string]::IsNullOrEmpty($_.ValueName)) -and
+							(![string]::IsNullOrEmpty($_.ValueData) ) -and
+							($true -eq $_.ShouldExist)
 						} {
 								Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
 								## Check if Value is equal
@@ -11595,16 +11595,16 @@ function Wait-NxtRegistryAndProcessCondition {
 								}
 						}
 						{
-								## valueNotEquals
+							## valueNotEquals
 							(![string]::IsNullOrEmpty($_.ValueName)) -and
 							(![string]::IsNullOrEmpty($_.ValueData) ) -and
 							($false -eq $_.ShouldExist)
 						} {
-								Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
-								## Check if Value is not equal
-								if ( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
-									$regkeyToWaitFor.success = $true
-								}
+							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
+							## Check if Value is not equal
+							if ( $regkeyToWaitFor.ValueData -ne (Get-RegistryKey -Key $regkeyToWaitFor.KeyPath -ReturnEmptyKeyIfExists -Value $regkeyToWaitFor.ValueName)) {
+								$regkeyToWaitFor.success = $true
+							}
 						}
 							default {
 							Write-Log -Message "Could not check for values in `"$($regkeyToWaitFor.RegKey)`", please check the config file." -Severity 3 -Source ${cmdletName}
