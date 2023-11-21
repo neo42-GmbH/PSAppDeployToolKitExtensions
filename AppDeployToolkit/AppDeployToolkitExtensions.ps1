@@ -477,7 +477,7 @@ function Add-NxtProcessPathVariable {
 	Process {
 		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object { $_ -ne '' }
 		try{
-			New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop | Out-Null
+			[string]$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
 		}
 		catch {
 			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -542,7 +542,7 @@ function Add-NxtSystemPathVariable {
 	Process {
 		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object { $_ -ne '' }
 		try{
-			New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop | Out-Null
+			[string]$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
 		}
 		catch {
 			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
