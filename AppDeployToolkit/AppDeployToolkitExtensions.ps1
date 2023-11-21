@@ -487,11 +487,11 @@ function Add-NxtProcessPathVariable {
 			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			throw
 		}
-		if ($false -eq (Test-Path -Path $Path)){
+		if ($false -eq (Test-Path -Path $Path)) {
 			Write-Log "The path '$Path' that will be added does not exist." -Severity 2 -Source ${cmdletName}
 		}
-		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')){
-			if ($false -eq $AddToBeginning){
+		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')) {
+			if ($false -eq $AddToBeginning) {
 				$pathEntries.Add("$Path") | Out-Null
 				Write-Log "Appended '$Path' to the processes PATH variable." -Source ${cmdletName}
 			}
@@ -554,11 +554,11 @@ function Add-NxtSystemPathVariable {
 			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			throw
 		}
-		if ($false -eq (Test-Path -Path $Path)){
+		if ($false -eq (Test-Path -Path $Path)) {
 			Write-Log "The path '$Path' that will be added does not exist." -Severity 2 -Source ${cmdletName}
 		}
-		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')){
-			if ($false -eq $AddToBeginning){
+		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')) {
+			if ($false -eq $AddToBeginning) {
 				$pathEntries.Add("$Path") | Out-Null
 				Write-Log "Appended '$Path' to the systems PATH variable." -Source ${cmdletName}
 			}
@@ -1137,12 +1137,12 @@ function Complete-NxtPackageInstallation {
 			 }
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			$null = Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
-			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
+			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")) {
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
 			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$ScriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_RequireAdmin" -InnerText "False"
 			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$ScriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/UI_Options/ShowBalloonNotifications" -InnerText "False"
-			if ($true -eq (Test-Path "$App\$UserpartDir\DeployNxtApplication.exe")){
+			if ($true -eq (Test-Path "$App\$UserpartDir\DeployNxtApplication.exe")) {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments "TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 			}
 			else{
@@ -1156,10 +1156,10 @@ function Complete-NxtPackageInstallation {
 			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
 		}
 		## Cleanup legacy package folders
-		foreach ($legacyAppRoot in $LegacyAppRoots){
-			if ($true -eq (Test-Path -Path $legacyAppRoot ) -and [System.IO.Path]::IsPathRooted($legacyAppRoot)){
-				if (Test-Path -Path $legacyAppRoot\$AppVendor){
-					if (Test-Path -Path $legacyAppRoot\$AppVendor\$AppName){
+		foreach ($legacyAppRoot in $LegacyAppRoots) {
+			if ($true -eq (Test-Path -Path $legacyAppRoot ) -and [System.IO.Path]::IsPathRooted($legacyAppRoot)) {
+				if (Test-Path -Path $legacyAppRoot\$AppVendor) {
+					if (Test-Path -Path $legacyAppRoot\$AppVendor\$AppName) {
 						Write-Log -Message "Removing legacy application folder $legacyAppRoot\$AppVendor\$AppName" -Source ${CmdletName}
 						Remove-Folder -Path $legacyAppRoot\$AppVendor\$AppName -ContinueOnError $true
 					}
@@ -1252,12 +1252,12 @@ function Complete-NxtPackageUninstallation {
 			 }
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
-			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")){
+			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")) {
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
 			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$ScriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_RequireAdmin" -InnerText "False"
 			Update-NxtXmlNode -FilePath "$App\$UserpartDir\$(Split-Path "$ScriptRoot" -Leaf)\$(Split-Path "$appDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/UI_Options/ShowBalloonNotifications" -InnerText "False"
-			if ($true -eq (Test-Path "$App\$UserpartDir\DeployNxtApplication.exe")){
+			if ($true -eq (Test-Path "$App\$UserpartDir\DeployNxtApplication.exe")) {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments "TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 			else{
@@ -1497,11 +1497,11 @@ function Clear-NxtTempFolder {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($true -eq [string]::IsNullOrEmpty($TempRootFolder)){
+		if ($true -eq [string]::IsNullOrEmpty($TempRootFolder)) {
 			Write-Log -Message "TempRootFolder variable is empty. Aborting." -Severity 3 -Source ${cmdletName}
 			Throw "TempRootFolder variable is empty. Aborting."
 		}
-		if ($true -eq (Test-Path -Path $TempRootFolder)){
+		if ($true -eq (Test-Path -Path $TempRootFolder)) {
 			Write-Log -Message "Clearing temp folder [$TempRootFolder]..." -Source ${cmdletName}
 		}
 		else {
@@ -1525,7 +1525,7 @@ function Clear-NxtTempFolder {
 				}
 			}
 			## Delete root folder also in case it is empty
-			if ((Get-ChildItem -Path $TempRootFolder -Force).Count -eq 0){
+			if ((Get-ChildItem -Path $TempRootFolder -Force).Count -eq 0) {
 				Remove-NxtEmptyFolder -Path $TempRootFolder
 			}
 		}
@@ -1756,7 +1756,7 @@ function Execute-NxtBitRockInstaller {
 			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
-		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')) {
 			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
 			$executeResult.ExitCode = 3010
 			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
@@ -2101,7 +2101,7 @@ function Execute-NxtInnoSetup {
 			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
-		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')) {
 			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
 			$executeResult.ExitCode = 3010
 			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
@@ -2380,7 +2380,7 @@ function Execute-NxtMSI {
 				Write-Log -Message "MSI log [$logPath] not found. Skipped moving it to [$Log]." -Severity 2 -Source ${CmdletName}
 			}
 		}
-		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')) {
 			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
 			$executeResult.ExitCode = 3010
 			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
@@ -2608,7 +2608,7 @@ function Execute-NxtNullsoft {
 			$executeProcessSplat.Add('IgnoreExitCodes', $ignoreExitCodes)
 		}
 		[psobject]$executeResult = Execute-Process @executeProcessSplat
-		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')){
+		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')) {
 			Write-Log -Message "A custom reboot return code was detected '$($executeResult.ExitCode)' and is translated to return code '3010': Reboot required!" -Severity 2 -Source ${cmdletName}
 			$executeResult.ExitCode = 3010
 			Set-Variable -Name 'msiRebootDetected' -Value $true -Scope 'Script'
@@ -2742,7 +2742,7 @@ function Exit-NxtAbortReboot {
 	Process {
 		Write-Log -Message "Initiating AbortReboot..." -Source ${CmdletName}
 		try {
-			foreach ($varThatMustNotBeEmpty in @("PackageMachineKey", "PackageUninstallKey")){
+			foreach ($varThatMustNotBeEmpty in @("PackageMachineKey", "PackageUninstallKey")) {
 				if ([string]::IsNullOrEmpty((Get-Variable -Name $varThatMustNotBeEmpty -ValueOnly))) {
 					Write-Log -Message "$varThatMustNotBeEmpty is empty. Skipping AbortReboot. Throwing error" -Severity 3 -Source ${CmdletName}
 					throw "$varThatMustNotBeEmpty is empty. Skipping AbortReboot. Throwing error"
@@ -2998,7 +2998,7 @@ function Expand-NxtPackageConfig {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($false -eq [System.IO.Path]::IsPathRooted($global:PackageConfig.AppRootFolder)){
+		if ($false -eq [System.IO.Path]::IsPathRooted($global:PackageConfig.AppRootFolder)) {
 			Throw "AppRootFolder is not a valid path. Please check your PackageConfig."
 		}
 		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
@@ -3045,7 +3045,7 @@ function Expand-NxtPackageConfig {
 		}
 		foreach ($CommonStartMenuShortcutToCopyToCommonDesktop in $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop) {
 			$CommonStartMenuShortcutToCopyToCommonDesktop.Source = $ExecutionContext.InvokeCommand.ExpandString($CommonStartMenuShortcutToCopyToCommonDesktop.Source)
-			if ($false -eq [string]::IsNullOrEmpty($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)){
+			if ($false -eq [string]::IsNullOrEmpty($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)) {
 				$CommonStartMenuShortcutToCopyToCommonDesktop.TargetName = $ExecutionContext.InvokeCommand.ExpandString($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)
 			}
 		}
@@ -4023,10 +4023,10 @@ function Get-NxtParentProcess {
 	}
 	Process {
 		[System.Management.ManagementBaseObject]$process = Get-WmiObject Win32_Process -filter "ProcessID ='$ID'"
-		if ($null -eq $process){
+		if ($null -eq $process) {
 			Write-Log -Message "Failed to find process with pid '$Id'." -Severity 2 -Source ${cmdletName}
 			return
-		} elseif ($process.ProcessId -eq $process.ParentProcessId){
+		} elseif ($process.ProcessId -eq $process.ParentProcessId) {
 			Write-Log -Message "Process with pid '$Id' references itself as parent." -Severity 2 -Source ${cmdletName}
 			return
 		}
@@ -4240,7 +4240,7 @@ function Get-NxtProcessTree {
 				if (
 					$child.ProcessId -eq $process.ProcessId -and
 					$child.ProcessId -notin $ProcessIdsToExcludeFromRecursion
-				){
+				) {
 					return
 				}
 				$ProcessIdsToExcludeFromRecursion += $process.ProcessId
@@ -4705,7 +4705,7 @@ function Get-NxtRunningProcesses {
 							$_.ProcessId -eq $processId -and
 							$_.QueryUsed -eq $queryUsed
 						}).count -ne 0
-							){
+							) {
 							$processFound = $true
 						}
 					}
@@ -5295,7 +5295,7 @@ function Initialize-NxtAppRootFolder {
 				break
 			}
 		}
-		if ([string]::IsNullOrEmpty($appRootFolderName)){
+		if ([string]::IsNullOrEmpty($appRootFolderName)) {
 			## Claim an ApprootFolder
 			if ($false -eq (Test-Path -Path $env:ProgramData\$BaseName)) {
 				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
@@ -5312,7 +5312,7 @@ function Initialize-NxtAppRootFolder {
 				$appRootFolderName = "$BaseName$randomSuffix"
 			}
 		}
-		if ($appRootFolderName.length -ne 0){
+		if ($appRootFolderName.length -ne 0) {
 			Write-Output "$env:ProgramData\$appRootFolderName"
 		}
 		else {
@@ -5718,7 +5718,7 @@ function Install-NxtApplication {
 			else {
 				[string]$internalInstallerMethod = $InstallMethod
 			}
-			if($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
+			if ($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
 				if ($false -eq [string]::IsNullOrEmpty($AcceptedInstallExitCodes)) {
 					[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedInstallExitCodes"
 				}
@@ -6022,7 +6022,7 @@ function New-NxtFolderWithPermissions {
 	}
 	Process {
 		try {
-			if (Test-Path $Path){
+			if (Test-Path $Path) {
 				Write-Log -Message "Folder '$Path' already exists." -Source ${cmdletName} -Severity 3
 				throw "Folder '$Path' already exists."
 			}
@@ -6050,7 +6050,7 @@ function New-NxtFolderWithPermissions {
 			$directorySecurity.SetAccessRuleProtection($ProtectRules, $false)
 			Write-Log -Message "Creating folder '$Path' with permissions." -Source ${cmdletName}
 			[System.IO.DirectoryInfo]$directory = [System.IO.Directory]::CreateDirectory($Path, $directorySecurity)
-			if ($false -eq (Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity)){
+			if ($false -eq (Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity)) {
 				Write-Log -Message "Failed to create folder '$Path' with permissions. `n" -Severity 3 -Source ${cmdletName}
 				throw "Failed to create folder '$Path' with permissions. `n $($_.Exception.Message)"
 			}
@@ -6101,10 +6101,10 @@ function New-NxtTemporaryFolder {
 			ReadAndExecutePermissions = @("BuiltinUsersSid")
 			Owner = "BuiltinAdministratorsSid"
 		}
-	if ($false -eq (Test-Path -Path $TempRootPath)){
+	if ($false -eq (Test-Path -Path $TempRootPath)) {
 		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
 	}
-	elseif($false -eq (Test-NxtFolderPermissions @nxtTempRootFolderSplat)){
+	elseif ($false -eq (Test-NxtFolderPermissions @nxtTempRootFolderSplat)) {
 		Write-Log -Message "Temp path '$TempRootPath' already exists. Recreating the folder to ensure predefined permissions!" -Severity 2 -Source ${CmdletName}
 		Remove-Item -Path $TempRootPath -Recurse -Force
 		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
@@ -6181,7 +6181,7 @@ function Read-NxtSingleXmlNode {
 			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
 			$xmlDoc.Load($XmlFilePath)
 			[System.Xml.XmlNode]$selection = $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName)
-			if ($selection.ChildNodes.count -gt 1){
+			if ($selection.ChildNodes.count -gt 1) {
 				Write-Log -Message "Found multiple child nodes for '$SingleNodeName'. Concated values will be returned." -Severity 3 -Source ${cmdletName}
 			}
 			Write-Output ($selection.$AttributeName)
@@ -6436,7 +6436,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
-			if ($true -eq (Test-Path "$App\neo42-Install\DeployNxtApplication.exe")){
+			if ($true -eq (Test-Path "$App\neo42-Install\DeployNxtApplication.exe")) {
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$App\neo42-Install\DeployNxtApplication.exe"" uninstall")
 			}
 			else {
@@ -6469,7 +6469,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'PackageVersion' -Value $AppVersion
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'Publisher' -Value $AppVendor
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'SystemComponent' -Type 'Dword' -Value $HidePackageUninstallEntry
-			if ($true -eq (Test-Path "$App\neo42-Install\DeployNxtApplication.exe")){
+			if ($true -eq (Test-Path "$App\neo42-Install\DeployNxtApplication.exe")) {
 				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$App\neo42-Install\DeployNxtApplication.exe"" uninstall")
 			}
 			else {
@@ -6623,7 +6623,7 @@ function Remove-NxtEmptyFolder {
 			## Resolve possible relative segments in the paths 
 			[string]$absolutePath = $Path | Split-Path -Parent
 			[string]$absoluteRootPathToRecurseUpTo = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($RootPathToRecurseUpTo)).FullName)
-			if ($absolutePath -eq $absoluteRootPathToRecurseUpTo){
+			if ($absolutePath -eq $absoluteRootPathToRecurseUpTo) {
 				## We are at the root of the recursion, so we can stop recursing up
 				Remove-NxtEmptyFolder -Path $absolutePath
 			}
@@ -7696,7 +7696,7 @@ function Set-NxtFolderPermissions {
 		}
 		if ($true -eq $BreakInheritance) {
 			$testResult = Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity
-			if ($false -eq $testResult){
+			if ($false -eq $testResult) {
 				Write-Log -Message "Failed to set permissions" -Severity 3 -Source ${cmdletName}
 				Throw "Failed to set permissions on folder '$Path'"
 			}
@@ -8489,7 +8489,7 @@ Function Show-NxtInstallationWelcome {
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
 				## Get-WmiObject Win32_Process always requires an extension, so we add one in case there is none
 				[string]$processAppsItem.Name = $($processAppsItem.Name -replace "\$fileExtension$","") + $fileExtension
-				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension$","") -join ","
+				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension$",[string]::Empty) -join ","
 				if ( [String]::IsNullOrEmpty($processAppsItem.Name) ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
@@ -8501,7 +8501,7 @@ Function Show-NxtInstallationWelcome {
 			}
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
-				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", ""
+				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", [string]::Empty
 			}
 		}
 		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
@@ -8535,7 +8535,7 @@ Function Show-NxtInstallationWelcome {
 					}
 				}
 			}
-			if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)){
+			if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)) {
 				foreach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ",")) {
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
 						ProcessName			= $defaultMsiExecutable
@@ -9047,13 +9047,13 @@ Function Show-NxtWelcomePrompt {
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppName" -Value $appName
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "AppVersion" -Value $appVersion
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Logname" -Value $logName
-		if ($ProcessIdToIgnore -gt 0){
+		if ($ProcessIdToIgnore -gt 0) {
 			$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ProcessIdToIgnore" -Value $ProcessIdToIgnore
 		}
 		Write-Log "Searching for Sessions..." -Source ${CmdletName}
 		[int]$welcomeExitCode = 1618;
 		[PsObject]$activeSessions = Get-LoggedOnUser
-		if((Get-Process -Id $PID).SessionId -eq 0)
+		if ((Get-Process -Id $PID).SessionId -eq 0)
 		{
 			if ($activeSessions.Count -gt 0)
 			{
@@ -9160,8 +9160,8 @@ function Stop-NxtProcess {
 	Process {
 		Write-Log -Message "Stopping process with '$Name'..." -Source ${cmdletName}
 		try {
-			if ( $false -eq $IsWql ){
-				[string]$processNameWithoutExtension = $Name -Replace("\.exe$","")
+			if ( $false -eq $IsWql ) {
+				[string]$processNameWithoutExtension = $Name -Replace("\.exe$",[string]::Empty)
 				[System.Diagnostics.Process[]]$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue
 				[int]$processCountForLogging = $processes.Count
 				if ($processes.Count -ne 0) {
@@ -9640,7 +9640,7 @@ function Test-NxtObjectValidation {
 		private
 	#>
 	[CmdletBinding()]
-	param(
+	param (
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
 		[psobject]
@@ -9664,9 +9664,9 @@ function Test-NxtObjectValidation {
 		}
 		Process{
 			## ckeck for missing mandatory parameters
-			foreach ($validationRuleKey in ($ValidationRule | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty name)){
-				if ($true -eq $ValidationRule.$validationRuleKey.Mandatory){
-					if ($false -eq ([bool]($ObjectToValidate.psobject.Properties.Name -contains $validationRuleKey))){
+			foreach ($validationRuleKey in ($ValidationRule | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty name)) {
+				if ($true -eq $ValidationRule.$validationRuleKey.Mandatory) {
+					if ($false -eq ([bool]($ObjectToValidate.psobject.Properties.Name -contains $validationRuleKey))) {
 						Write-Log -Message "The mandatory variable '$ParentObjectName $validationRuleKey' is missing." -severity 3
 					}
 					else{
@@ -9676,47 +9676,47 @@ function Test-NxtObjectValidation {
 				## check for allowed object types and trigger the validation function for sub objects
 				switch ($ValidationRule.$validationRuleKey.Type) {
 					"System.Array" {
-						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match [Regex]::Escape($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)))){
+						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match [Regex]::Escape($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)))) {
 							Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)"
 						}
 						else{
 							Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object."-severity 3
-							if ($false -eq $ContinueOnError){
+							if ($false -eq $ContinueOnError) {
 								throw "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object. $($ValidationRule.$validationRuleKey.HelpText)"
 							}
 						}
 						## check for sub objects
-						foreach ($arrayItem in $ObjectToValidate.$validationRuleKey){
+						foreach ($arrayItem in $ObjectToValidate.$validationRuleKey) {
 							[hashtable]$testNxtObjectValidationParams = @{
 								"ValidationRule" = $ValidationRule.$validationRuleKey.SubKeys
 								"ObjectToValidate" = $arrayItem
 								"ContinueOnError" = $ContinueOnError
 								"ParentObjectName" = $validationRuleKey
 							}
-							if($true -eq $ValidationRule.$validationRuleKey.ContainsDirectValues){
+							if ($true -eq $ValidationRule.$validationRuleKey.ContainsDirectValues) {
 								$testNxtObjectValidationParams["ContainsDirectValues"] = $true
 							}
 							Test-NxtObjectValidation @testNxtObjectValidationParams
 						}
 					}
 					"System.Management.Automation.PSCustomObject" {
-						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match $ObjectToValidate.$validationRuleKey.GetType().FullName))){
+						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match $ObjectToValidate.$validationRuleKey.GetType().FullName))) {
 							Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.$validationRuleKey.GetType().FullName)"
 						}
 						else{
 							Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object." -severity 3
-							if ($false -eq $ContinueOnError){
+							if ($false -eq $ContinueOnError) {
 								throw "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object. $($ValidationRule.$validationRuleKey.HelpText)"
 							}
 						}
 						## check for sub objects
-						foreach ($subkey in $ValidationRule.$validationRuleKey.SubKeys.PSObject.Properties.Name){
+						foreach ($subkey in $ValidationRule.$validationRuleKey.SubKeys.PSObject.Properties.Name) {
 							Test-NxtObjectValidation -ValidationRule $ValidationRule.$validationRuleKey.SubKeys.$subkey.SubKeys -ObjectToValidate $ObjectToValidate.$validationRuleKey.$subkey -ParentObjectName $validationRuleKey -ContinueOnError $ContinueOnError
 						}
 					}
 					{$true -eq $ContainsDirectValues}{
 						## cast the object to an array in case it is a single value
-						foreach ($directValue in [array]$ObjectToValidate){
+						foreach ($directValue in [array]$ObjectToValidate) {
 							Test-NxtObjectValidationHelper -ValidationRule $ValidationRule.$ValidationRuleKey -ObjectToValidate $directValue -ValidationRuleKey $validationRuleKey -ParentObjectName $ParentObjectName -ContinueOnError $ContinueOnError
 						}
 					}
@@ -9781,32 +9781,32 @@ function Test-NxtObjectValidationHelper {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($true -eq [bool]($ValidationRule.Type -match $ObjectToValidate.GetType().FullName)){
+		if ($true -eq [bool]($ValidationRule.Type -match $ObjectToValidate.GetType().FullName)) {
 			Write-Verbose "[${cmdletName}]The variable '$ParentObjectName $ValidationRuleKey' is of the allowed type $($ObjectToValidate.GetType().FullName)"
 		}
 		else{
 			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object." -severity 3
-			if ($false -eq $ContinueOnError){
+			if ($false -eq $ContinueOnError) {
 				throw "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object. $($ValidationRule.HelpText)"
 			}
 		}
 		if (
 			$true -eq $ValidationRule.AllowEmpty -and
 			[string]::IsNullOrEmpty($ObjectToValidate)
-		){
+		) {
 			Write-Verbose "[${cmdletName}]'$ParentObjectName $ValidationRuleKey' is allowed to be empty"
-		}elseif( [string]::IsNullOrEmpty($ObjectToValidate) ){
+		}elseif( [string]::IsNullOrEmpty($ObjectToValidate) ) {
 			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object." -severity 3
-			if ($false -eq $ContinueOnError){
+			if ($false -eq $ContinueOnError) {
 				throw "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object. $($ValidationRule.HelpText)"
 			}
 		}else{
 			## regex
 			## CheckInvalidFileNameChars
 			if ($true -eq $ValidationRule.Regex.CheckInvalidFileNameChars) {
-				if ($ObjectToValidate.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0){
+				if ($ObjectToValidate.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0) {
 					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)" -severity 3
-					if ($false -eq $ContinueOnError){
+					if ($false -eq $ContinueOnError) {
 						throw "The variable '$ParentObjectName $ValidationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)"
 					}
 				}
@@ -9817,26 +9817,26 @@ function Test-NxtObjectValidationHelper {
 			if ($false -eq [string]::IsNullOrEmpty($ValidationRule.Regex.ReplaceBeforeMatch)) {
 				$ObjectToValidate = $ObjectToValidate -replace $ValidationRule.Regex.ReplaceBeforeMatch
 			}
-			if ($ValidationRule.Regex.Operator -eq "match"){
+			if ($ValidationRule.Regex.Operator -eq "match") {
 				## validate regex pattern
-				if ($true -eq ([bool]($ObjectToValidate -match $ValidationRule.Regex.Pattern))){
+				if ($true -eq ([bool]($ObjectToValidate -match $ValidationRule.Regex.Pattern))) {
 					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' matches the regex $($ValidationRule.Regex.Pattern)"
 				}
 				else{
 					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object." -severity 3
-					if ($false -eq $ContinueOnError){
+					if ($false -eq $ContinueOnError) {
 						throw "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object. $($ValidationRule.HelpText)"
 					}
 				}
 			}
 			## ValidateSet
-			if ($false -eq [string]::IsNullOrEmpty($ValidationRule.ValidateSet)){
-				if ($true -eq ([bool]($ValidationRule.ValidateSet -contains $ObjectToValidate))){
+			if ($false -eq [string]::IsNullOrEmpty($ValidationRule.ValidateSet)) {
+				if ($true -eq ([bool]($ValidationRule.ValidateSet -contains $ObjectToValidate))) {
 					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' is in the allowed set $($ValidationRule.ValidateSet)"
 				}
 				else{
 					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object." -severity 3
-					if ($false -eq $ContinueOnError){
+					if ($false -eq $ContinueOnError) {
 						throw "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object. $($ValidationRule.HelpText)"
 					}
 				}
@@ -10039,12 +10039,13 @@ function Test-NxtFolderPermissions {
 			foreach ($result in $results) {
 				switch ($result.Resulttype) {
 					'Permission' {
-						if ($result.SideIndicator -eq "<="){
+						if ($result.SideIndicator -eq "<=") {
 							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
 						}
-						elseif($result.SideIndicator -eq "=>") {
+						elseif ($result.SideIndicator -eq "=>") {
 							Write-Log -Message "Missing permission $($result.Rule) on $Path." -Severity 2
-						}else{
+						}
+						else{
 							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
 						}
 					}
@@ -10223,7 +10224,7 @@ function Test-NxtStringInFile {
 		else {
 			[regex]::new([regex]::Escape($SearchString))
 		}
-		if ($true -eq $IgnoreCase){
+		if ($true -eq $IgnoreCase) {
 			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
 		}
 		else {
@@ -10464,7 +10465,7 @@ function Uninstall-NxtApplication {
 					[int]$logMessageSeverity = 2
 				}
 				else {
-					if ($false -eq [System.IO.Path]::IsPathRooted($UninstFile)){
+					if ($false -eq [System.IO.Path]::IsPathRooted($UninstFile)) {
 						[string]$UninstFile = Join-Path -Path $DirFiles -ChildPath $UninstFile
 					}
 					if ([System.IO.File]::Exists($UninstFile)) {
@@ -10515,7 +10516,7 @@ function Uninstall-NxtApplication {
 				else {
 					[string]$internalInstallerMethod = $UninstallMethod
 				}
-				if($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
+				if ($internalInstallerMethod -match "^Inno.*$|^Nullsoft$|^BitRock.*$|^MSI$") {
 					if ($false -eq [string]::IsNullOrEmpty($AcceptedUninstallExitCodes)) {
 						[string]$executeNxtParams["AcceptedExitCodes"] = "$AcceptedUninstallExitCodes"
 					}
@@ -11153,7 +11154,7 @@ function Unregister-NxtPackage {
 						if (
 							$false -eq [string]::IsNullOrEmpty($AppRootFolder) -and
 							$false -eq [string]::IsNullOrEmpty($AppVendor)
-							){
+							) {
 							$executeProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $executeProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
 						}
 						Execute-Process @executeProcessSplat
@@ -12024,7 +12025,7 @@ function Write-NxtXmlNode {
 			$xmlDoc.Load($XmlFilePath)
 
 			[scriptblock]$createXmlNode = { Param ([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child) 
-				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, "")
+				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, [string]::Empty)
 
 				for ([int]$i = 0; $i -lt $child.Attributes.count; $i++) {
 					[System.Collections.Generic.KeyValuePair[string, string]]$attribute = [System.Linq.Enumerable]::ElementAt($child.Attributes, $i)
