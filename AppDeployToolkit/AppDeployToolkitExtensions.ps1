@@ -443,6 +443,140 @@ function Add-NxtLocalUser {
 	}
 }
 #endregion
+#region Function Add-NxtProcessPathVariable
+function Add-NxtProcessPathVariable {
+	<#
+	.SYNOPSIS
+		Adds a path to the processes PATH environment variable.
+  	.DESCRIPTION
+		Adds a path to the processes PATH environment variable. If the path already exists, it will not be added again.
+		Empty values will be removed.
+  	.PARAMETER AddPath
+		Path to be added to the processes PATH environment variable.
+		Has to be a valid path. The path value will automatically be expanded.
+  	.PARAMETER AddToBeginning
+		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
+  	.EXAMPLE
+		Add-NxtProcessPathVariable -Path "C:\Temp"
+	.EXAMPLE
+		Add-NxtProcessPathVariable -Path "C:\Temp" -AddToBeginning $true
+	.OUTPUTS
+		none.
+  	.LINK
+		https://neo42.de/psappdeploytoolkit
+  	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AddToBeginning = $false
+  	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object { $_ -ne '' }
+		try{
+			[string]$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
+		}
+		catch {
+			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw
+		}
+		if ($false -eq (Test-Path -Path $Path)){
+			Write-Log "The path '$Path' that will be added does not exist." -Severity 2 -Source ${cmdletName}
+		}
+		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')){
+			if ($false -eq $AddToBeginning){
+				$pathEntries.Add("$Path") | Out-Null
+				Write-Log "Appended '$Path' to the processes PATH variable." -Source ${cmdletName}
+			}
+			else{
+				$pathEntries.Insert(0,"$Path") | Out-Null
+				Write-Log "Prepended '$Path' to the processes PATH variable." -Source ${cmdletName}
+			}
+			[string]$pathString = ($pathEntries -join ";") + ";"
+			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
+		} else {
+			Write-Log "Path entry '$Path' already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
+		} 
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Add-NxtSystemPathVariable
+function Add-NxtSystemPathVariable {
+	<#
+	.SYNOPSIS
+		Adds a path to the systems PATH environment variable.
+  	.DESCRIPTION
+		Adds a path to the systems PATH environment variable. If the path already exists, it will not be added again.
+		Empty values will be removed.
+  	.PARAMETER AddPath
+		Path to be added to the systems PATH environment variable.
+		Has to be a valid path. The path value will automatically be expanded.
+  	.PARAMETER AddToBeginning
+		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
+  	.EXAMPLE
+		Add-NxtProcessPathVariable -Path "C:\Temp"
+	.EXAMPLE
+		Add-NxtProcessPathVariable -Path "C:\Temp" -AddToBeginning $true
+	.OUTPUTS
+		none.
+  	.LINK
+		https://neo42.de/psappdeploytoolkit
+  	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$AddToBeginning = $false
+  	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object { $_ -ne '' }
+		try{
+			[string]$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
+		}
+		catch {
+			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw
+		}
+		if ($false -eq (Test-Path -Path $Path)){
+			Write-Log "The path '$Path' that will be added does not exist." -Severity 2 -Source ${cmdletName}
+		}
+		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')){
+			if ($false -eq $AddToBeginning){
+				$pathEntries.Add("$Path") | Out-Null
+				Write-Log "Appended '$Path' to the systems PATH variable." -Source ${cmdletName}
+			}
+			else{
+				$pathEntries.Insert(0,"$Path") | Out-Null
+				Write-Log "Prepended '$Path' to the systems PATH variable." -Source ${cmdletName}
+			}
+			[string]$pathString = ($pathEntries -join ";") + ";"
+			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
+		} else {
+			Write-Log "Path entry '$Path' already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
+		} 
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Add-NxtXmlNode
 function Add-NxtXmlNode {
 	<#
@@ -582,7 +716,6 @@ function Close-BlockExecutionWindow {
 	}
 }
 #endregion
-
 #region Add-NxtParameterToCommand
 function Add-NxtParameterToCommand {
 	<#
@@ -6849,6 +6982,98 @@ function Remove-NxtProcessEnvironmentVariable {
 	}
 }
 #endregion
+#region Function Remove-NxtProcessPathVariable
+function Remove-NxtProcessPathVariable {
+	<#
+	.SYNOPSIS
+		Removes a path to the processes PATH environment variable.
+  	.DESCRIPTION
+		Removes a path to the processes PATH environment variable.
+		Empty entries will be removed.
+  	.PARAMETER Path
+		Path to be removed from the processes PATH environment variable.
+  	.EXAMPLE
+		Remove-NxtProcessPathVariable -Path "C:\Temp"
+	.OUTPUTS
+		none.
+  	.LINK
+		https://neo42.de/psappdeploytoolkit
+  	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path
+  	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | 
+			Where-Object { 
+				$_ -ne '' -and
+				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\') 
+			}
+		try{
+			[string]$pathString = ($pathEntries -join ";") + ";"
+			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
+			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
+		} catch {
+			Write-Log -Message "Failed to remove path '$Path' from PATH environment variable." -Severity 3
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Remove-NxtProcessPathVariable
+function Remove-NxtSystemPathVariable {
+	<#
+	.SYNOPSIS
+		Removes a path to the systems PATH environment variable.
+  	.DESCRIPTION
+		Removes a path to the systems PATH environment variable.
+		Empty entries will be removed.
+  	.PARAMETER Path
+		Path to be added to the systems PATH environment variable.
+  	.EXAMPLE
+		Remove-NxtSystemPathVariable -Path "C:\Temp"
+	.OUTPUTS
+		none.
+  	.LINK
+		https://neo42.de/psappdeploytoolkit
+  	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[String]
+		$Path
+  	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | 
+			Where-Object { 
+				$_ -ne '' -and
+				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\') 
+			}
+		try{
+			[string]$pathString = ($pathEntries -join ";") + ";"
+			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
+			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
+		} catch {
+			Write-Log -Message "Failed to remove path '$Path' from PATH environment variable." -Severity 3
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Remove-NxtProductMember
 function Remove-NxtProductMember {
 	<#
@@ -8644,7 +8869,6 @@ Function Show-NxtInstallationWelcome {
 	}
 }
 #endregion
-
 #region Function Show-NxtWelcomePrompt
 Function Show-NxtWelcomePrompt {
     <#
