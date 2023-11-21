@@ -11388,10 +11388,10 @@ function Update-NxtXmlNode {
 		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeExistsParams)) {
 			[xml]$xml = [xml]::new()
 			$xml.Load($FilePath)
-			[System.Xml.XPathNodeList]$nodes = $xml.SelectNodes($NodePath)
+			$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-					[System.Xml.XPathNodeList]$nodes = $nodes | Where-Object { $_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value }
+					$nodes = $nodes | Where-Object { $_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value }
 				}
 				Clear-Variable filterAttribute
 			}
