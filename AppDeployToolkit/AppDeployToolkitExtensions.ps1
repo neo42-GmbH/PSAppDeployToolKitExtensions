@@ -480,7 +480,7 @@ function Add-NxtProcessPathVariable {
 	}
 	Process {
 		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object { $_ -ne '' }
-		try{
+		try {
 			[string]$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
 		}
 		catch {
@@ -495,13 +495,14 @@ function Add-NxtProcessPathVariable {
 				$pathEntries.Add("$Path") | Out-Null
 				Write-Log "Appended '$Path' to the processes PATH variable." -Source ${cmdletName}
 			}
-			else{
+			else {
 				$pathEntries.Insert(0,"$Path") | Out-Null
 				Write-Log "Prepended '$Path' to the processes PATH variable." -Source ${cmdletName}
 			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
-		} else {
+		} 
+		else {
 			Write-Log "Path entry '$Path' already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
 		} 
 	}
@@ -547,7 +548,7 @@ function Add-NxtSystemPathVariable {
 	}
 	Process {
 		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object { $_ -ne '' }
-		try{
+		try {
 			[string]$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
 		}
 		catch {
@@ -562,13 +563,14 @@ function Add-NxtSystemPathVariable {
 				$pathEntries.Add("$Path") | Out-Null
 				Write-Log "Appended '$Path' to the systems PATH variable." -Source ${cmdletName}
 			}
-			else{
+			else {
 				$pathEntries.Insert(0,"$Path") | Out-Null
 				Write-Log "Prepended '$Path' to the systems PATH variable." -Source ${cmdletName}
 			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
-		} else {
+		} 
+		else {
 			Write-Log "Path entry '$Path' already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
 		} 
 	}
@@ -1145,7 +1147,7 @@ function Complete-NxtPackageInstallation {
 			if ($true -eq (Test-Path "$App\$UserpartDir\DeployNxtApplication.exe")) {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments "TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 			}
-			else{
+			else {
 				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 			}
 		}
@@ -1260,7 +1262,7 @@ function Complete-NxtPackageUninstallation {
 			if ($true -eq (Test-Path "$App\$UserpartDir\DeployNxtApplication.exe")) {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments "TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
-			else{
+			else {
 				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 		}
@@ -1771,7 +1773,8 @@ function Execute-NxtBitRockInstaller {
 			}
 			if ($false -eq $result_UninstallProcess) {
 				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of at least 500s!" -Severity 2 -Source ${CmdletName}
-			} else {
+			} 
+			else {
 				Write-Log -Message "All uninstallation processes finished." -Source ${CmdletName}
 			}
 		}
@@ -2620,7 +2623,8 @@ function Execute-NxtNullsoft {
 			[bool]$resultUn_Aprocess = Watch-NxtProcessIsStopped -ProcessName "Un_A.exe" -Timeout "500"
 			if (($false -eq $resultAU_process) -or ($false -eq $resultUn_Aprocess)) {
 				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of 500s!" -Severity 2 -Source ${CmdletName}
-			} else {
+			} 
+			else {
 				Write-Log -Message "All uninstallation processes finished." -Source ${CmdletName}
 			}
 		}
@@ -4026,7 +4030,8 @@ function Get-NxtParentProcess {
 		if ($null -eq $process) {
 			Write-Log -Message "Failed to find process with pid '$Id'." -Severity 2 -Source ${cmdletName}
 			return
-		} elseif ($process.ProcessId -eq $process.ParentProcessId) {
+		} 
+		elseif ($process.ProcessId -eq $process.ParentProcessId) {
 			Write-Log -Message "Process with pid '$Id' references itself as parent." -Severity 2 -Source ${cmdletName}
 			return
 		}
@@ -6109,13 +6114,13 @@ function New-NxtTemporaryFolder {
 		Remove-Item -Path $TempRootPath -Recurse -Force
 		[System.IO.DirectoryInfo]$tempRootFolder = New-NxtFolderWithPermissions @nxtTempRootFolderSplat -Hidden $true
 	}
-	$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object{
+	$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object {
 		[char]$_}
 	) -join ""
 	[int]$countTries = 1
 	while ($true -eq (Test-Path "$TempRootPath\$foldername") -and $countTries -lt 100) {
 		$countTries++
-		$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object{
+		$foldername=(Get-Random -InputObject((48..57 + 65..90)) -Count 3 | ForEach-Object {
 			[char]$_}
 		) -join ""
 	}
@@ -7015,11 +7020,12 @@ function Remove-NxtProcessPathVariable {
 				$_ -ne '' -and
 				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\') 
 			}
-		try{
+		try {
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
 			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
-		} catch {
+		} 
+		catch {
 			Write-Log -Message "Failed to remove path '$Path' from PATH environment variable." -Severity 3
 		}
 	}
@@ -7061,11 +7067,12 @@ function Remove-NxtSystemPathVariable {
 				$_ -ne '' -and
 				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\') 
 			}
-		try{
+		try {
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
 			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
-		} catch {
+		} 
+		catch {
 			Write-Log -Message "Failed to remove path '$Path' from PATH environment variable." -Severity 3
 		}
 	}
@@ -9329,7 +9336,8 @@ function Switch-NxtMSIReinstallMode {
 								if ($true -eq $MSIInplaceUpgradeable) {
 									[string]$infoMessage += " Doing an msi inplace upgrade ..."
 									[string]$ReinstallMode = "Install"
-								} else {
+								} 
+								else {
 									[string]$ReinstallMode = "Reinstall"
 								}
 							}
@@ -9343,7 +9351,8 @@ function Switch-NxtMSIReinstallMode {
 								if ($true -eq $MSIDowngradeable) {
 									[string]$infoMessage += " Doing a msi downgrade ..."
 									[string]$ReinstallMode = "Install"
-								} else {
+								} 
+								else {
 									[string]$ReinstallMode = "Reinstall"
 								}
 							}
@@ -9441,7 +9450,8 @@ function Test-NxtAppIsInstalled {
 				[bool]$approvedResult = $false
 				Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 3 -Source ${CmdletName}
 				throw "Processing multiple found msi installations is not supported yet! Abort."
-			} else {
+			} 
+			else {
 				[bool]$approvedResult = $true
 				Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 2 -Source ${CmdletName}
 			}
@@ -9663,14 +9673,14 @@ function Test-NxtObjectValidation {
 		Begin {
 
 		}
-		Process{
+		Process {
 			## ckeck for missing mandatory parameters
 			foreach ($validationRuleKey in ($ValidationRule | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty name)) {
 				if ($true -eq $ValidationRule.$validationRuleKey.Mandatory) {
 					if ($false -eq ([bool]($ObjectToValidate.psobject.Properties.Name -contains $validationRuleKey))) {
 						Write-Log -Message "The mandatory variable '$ParentObjectName $validationRuleKey' is missing." -severity 3
 					}
-					else{
+					else {
 						Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is present."
 					}
 				}
@@ -9680,7 +9690,7 @@ function Test-NxtObjectValidation {
 						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match [Regex]::Escape($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)))) {
 							Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)"
 						}
-						else{
+						else {
 							Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object."-severity 3
 							if ($false -eq $ContinueOnError) {
 								throw "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object. $($ValidationRule.$validationRuleKey.HelpText)"
@@ -9704,7 +9714,7 @@ function Test-NxtObjectValidation {
 						if ($true -eq ([bool]($ValidationRule.$validationRuleKey.Type -match $ObjectToValidate.$validationRuleKey.GetType().FullName))) {
 							Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.$validationRuleKey.GetType().FullName)"
 						}
-						else{
+						else {
 							Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object." -severity 3
 							if ($false -eq $ContinueOnError) {
 								throw "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object. $($ValidationRule.$validationRuleKey.HelpText)"
@@ -9727,7 +9737,7 @@ function Test-NxtObjectValidation {
 				}
 			}
 		}
-		End{
+		End {
 
 		}
 }
@@ -9785,7 +9795,7 @@ function Test-NxtObjectValidationHelper {
 		if ($true -eq [bool]($ValidationRule.Type -match $ObjectToValidate.GetType().FullName)) {
 			Write-Verbose "[${cmdletName}]The variable '$ParentObjectName $ValidationRuleKey' is of the allowed type $($ObjectToValidate.GetType().FullName)"
 		}
-		else{
+		else {
 			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object." -severity 3
 			if ($false -eq $ContinueOnError) {
 				throw "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object. $($ValidationRule.HelpText)"
@@ -9797,13 +9807,13 @@ function Test-NxtObjectValidationHelper {
 		) {
 			Write-Verbose "[${cmdletName}]'$ParentObjectName $ValidationRuleKey' is allowed to be empty"
 		}
-		elseif( [string]::IsNullOrEmpty($ObjectToValidate) ) {
+		elseif ( [string]::IsNullOrEmpty($ObjectToValidate) ) {
 			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object." -severity 3
 			if ($false -eq $ContinueOnError) {
 				throw "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object. $($ValidationRule.HelpText)"
 			}
 		}
-		else{
+		else {
 			## regex
 			## CheckInvalidFileNameChars
 			if ($true -eq $ValidationRule.Regex.CheckInvalidFileNameChars) {
@@ -9825,7 +9835,7 @@ function Test-NxtObjectValidationHelper {
 				if ($true -eq ([bool]($ObjectToValidate -match $ValidationRule.Regex.Pattern))) {
 					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' matches the regex $($ValidationRule.Regex.Pattern)"
 				}
-				else{
+				else {
 					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object." -severity 3
 					if ($false -eq $ContinueOnError) {
 						throw "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object. $($ValidationRule.HelpText)"
@@ -9837,7 +9847,7 @@ function Test-NxtObjectValidationHelper {
 				if ($true -eq ([bool]($ValidationRule.ValidateSet -contains $ObjectToValidate))) {
 					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' is in the allowed set $($ValidationRule.ValidateSet)"
 				}
-				else{
+				else {
 					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object." -severity 3
 					if ($false -eq $ContinueOnError) {
 						throw "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object. $($ValidationRule.HelpText)"
@@ -10012,7 +10022,8 @@ function Test-NxtFolderPermissions {
 		[PSCustomObject]$diffs = Compare-Object @($actualAcl.Access) $(
 			if ($true -eq $IsInherited) {
 				@($directorySecurity.Access)|Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$true}}
-			} else {
+			} 
+			else {
 				@($directorySecurity.Access)|Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$false}}
 			}
 			) -Property $propertiesToCheck
@@ -10049,7 +10060,7 @@ function Test-NxtFolderPermissions {
 						elseif ($result.SideIndicator -eq "=>") {
 							Write-Log -Message "Missing permission $($result.Rule) on $Path." -Severity 2
 						}
-						else{
+						else {
 							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
 						}
 					}
@@ -10842,7 +10853,8 @@ function Uninstall-NxtOld {
 						if ("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "$regPackageGUID" -Value 'Version')" -TargetVersion "$AppVersion")" -ne "Update") {
 							[string]$regPackageGUID = $null
 						}
-					} else {
+					} 
+					else {
 						## Check for old VBS product member package (only here: old $PackageFamilyGUID is stored in $ProductGUID)
 						if ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -Value 'UninstallString')) {
 							[string]$regPackageGUID = "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID"
