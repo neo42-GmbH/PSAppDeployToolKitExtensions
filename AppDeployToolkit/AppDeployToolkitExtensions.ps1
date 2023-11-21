@@ -5246,7 +5246,7 @@ function Initialize-NxtEnvironment {
 		$CustomSetupCfgPath = "$global:CustomSetupCfgPath",
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SetupCfgPathOverride = "$env:LOCALAPPDATA\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
+		$SetupCfgPathOverride = "$env:SystemRoot\system32\config\systemprofile\AppData\Roaming\neo42\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)",
 		[Parameter(Mandatory = $false)]
 		[string]
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App),
@@ -5267,7 +5267,7 @@ function Initialize-NxtEnvironment {
 		## $AppRootFolder and $RegPackagesKey have to be taken from the newly set $global:PackageConfig.
 		[string]$global:PackageConfig.AppRootFolder = Initialize-NxtAppRootFolder -BaseName $global:PackageConfig.AppRootFolder -RegPackagesKey $global:PackageConfig.RegPackagesKey
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
-		$SetupCfgPathOverride = "$env:LOCALAPPDATA\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
+		$SetupCfgPathOverride = "$env:SystemRoot\system32\config\systemprofile\AppData\Roaming\neo42\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 		## if $App still is not valid we have to throw an error.
 		if ($false -eq [System.IO.Path]::IsPathRooted($App)) {
 			Write-Log -Message "$App is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
