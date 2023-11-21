@@ -8937,10 +8937,11 @@ function Stop-NxtProcess {
 		Write-Log -Message "Stopping process with '$Name'..." -Source ${cmdletName}
 		try {
 			if ( $false -eq $IsWql ){
-				[System.Diagnostics.Process[]]$processes = Get-Process -Name $Name -ErrorAction SilentlyContinue
+				[string]$processNameWithoutExtension = $Name -Replace("\.exe$","")
+				[System.Diagnostics.Process[]]$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue
 				[int]$processCountForLogging = $processes.Count
 				if ($processes.Count -ne 0) {
-					Stop-Process -Name $Name -Force
+					Stop-Process -Name $processNameWithoutExtension -Force
 				}
 				## Test after 10ms if the process(es) is/are still running, if it is still in the list it is ok if it has exited
 				Start-Sleep -Milliseconds 10
@@ -8953,7 +8954,7 @@ function Stop-NxtProcess {
 				}
 			}
 			else {
-				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $Name -ErrorAction Stop| ForEach-Object {
+				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $Name -ErrorAction Stop | ForEach-Object {
 					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
 				}
 				[int]$processCountForLogging = $processes.Count
