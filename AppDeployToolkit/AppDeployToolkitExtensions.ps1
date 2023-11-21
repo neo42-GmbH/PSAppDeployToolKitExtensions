@@ -450,7 +450,7 @@ function Add-NxtProcessPathVariable {
 		Adds a path to the processes PATH environment variable.
   	.DESCRIPTION
 		Adds a path to the processes PATH environment variable. If the path already exists, it will not be added again.
-		Empty values will be sanitized.
+		Empty values will be removed.
   	.PARAMETER AddPath
 		Path to be added to the processes PATH environment variable.
 		Has to be a valid path. The path value will automatically be expanded.
@@ -517,7 +517,7 @@ function Add-NxtSystemPathVariable {
 		Adds a path to the systems PATH environment variable.
   	.DESCRIPTION
 		Adds a path to the systems PATH environment variable. If the path already exists, it will not be added again.
-		Empty values will be sanitized.
+		Empty values will be removed.
   	.PARAMETER AddPath
 		Path to be added to the systems PATH environment variable.
 		Has to be a valid path. The path value will automatically be expanded.
@@ -6992,7 +6992,7 @@ function Remove-NxtProcessPathVariable {
 		Removes a path to the processes PATH environment variable.
   	.DESCRIPTION
 		Removes a path to the processes PATH environment variable.
-		Sanatizes empty entries.
+		Empty entries will be removed.
   	.PARAMETER Path
 		Path to be removed from the processes PATH environment variable.
   	.EXAMPLE
@@ -7038,7 +7038,7 @@ function Remove-NxtSystemPathVariable {
 		Removes a path to the systems PATH environment variable.
   	.DESCRIPTION
 		Removes a path to the systems PATH environment variable.
-		Sanatizes empty entries.
+		Empty entries will be removed.
   	.PARAMETER Path
 		Path to be added to the systems PATH environment variable.
   	.EXAMPLE
