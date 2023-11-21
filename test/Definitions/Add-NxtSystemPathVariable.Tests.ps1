@@ -17,11 +17,11 @@ Describe "Remove-NxtSystemPathVariable" {
             Set-SystemPath -Path $pathBackup
         }
         It "Adds the path to the environment variable" {
-            Add-NxtSystemPathVariable -Path $pathToAdd
+            Add-NxtSystemPathVariable -Path $pathToAdd | Should -BeNullOrEmpty
             (Get-SystemPath).Split(';') | Should -Contain $pathToAdd
         }
         It "Adds the path to the environment variable at the correct position" {
-            Add-NxtSystemPathVariable -Path $pathToAdd -AddToBeginning $true
+            Add-NxtSystemPathVariable -Path $pathToAdd -AddToBeginning $true | Should -BeNullOrEmpty
             (Get-SystemPath).Split(';')[0] | Should -Be $pathToAdd
         }
         It "Should throw when invalid path is specified" {

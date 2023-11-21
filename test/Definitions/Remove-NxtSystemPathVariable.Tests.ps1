@@ -20,11 +20,11 @@ Describe "Remove-NxtSystemPathVariable" {
             Set-SystemPath -Path $pathBackup
         }
         It "Removes all occurences from the path environment variable" {
-            Remove-NxtSystemPathVariable -Path $pathToRemove
+            Remove-NxtSystemPathVariable -Path $pathToRemove | Should -BeNullOrEmpty
             (Get-SystemPath).Split(';') | Should -Not -Contain $pathToRemove
         }
         It "Should not remove other entries" {
-            Remove-NxtSystemPathVariable -Path $pathToRemove
+            Remove-NxtSystemPathVariable -Path $pathToRemove | Should -BeNullOrEmpty
             (Get-SystemPath).Split(';') | Should -Contain "C:\KeepMe"
         }
     }

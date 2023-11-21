@@ -11,11 +11,11 @@ Describe "Remove-NxtProcessPathVariable" {
             $env:PATH = $pathBackup
         }
         It "Removes all occurences from the path environment variable" {
-            Remove-NxtProcessPathVariable -Path $pathToRemove
+            Remove-NxtProcessPathVariable -Path $pathToRemove | Should -BeNullOrEmpty
             $env:PATH.Split(';') | Should -Not -Contain $pathToRemove
         }
         It "Should not remove other entries" {
-            Remove-NxtProcessPathVariable -Path $pathToRemove
+            Remove-NxtProcessPathVariable -Path $pathToRemove | Should -BeNullOrEmpty
             $env:PATH.Split(';') | Should -Contain "C:\KeepMe"
         }
     }
