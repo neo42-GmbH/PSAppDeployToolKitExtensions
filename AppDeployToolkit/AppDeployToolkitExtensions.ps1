@@ -5313,6 +5313,9 @@ function Initialize-NxtAppRootFolder {
 			}
 		}
 		if ($appRootFolderName.length -ne 0){
+			if ($false -eq (Test-Path "$env:ProgramData\$appRootFolderName\DoNotDeleteThisFolder.lock")) {
+				Write-Output "This folder is used for software deployment. Do not delete." | Out-File "$env:ProgramData\$appRootFolderName\DoNotDeleteThisFolder.lock" -Encoding "UTF8"
+			}
 			Write-Output "$env:ProgramData\$appRootFolderName"
 		}
 		else {
