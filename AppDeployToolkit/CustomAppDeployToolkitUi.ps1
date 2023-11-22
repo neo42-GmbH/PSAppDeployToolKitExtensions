@@ -806,7 +806,7 @@ Function Get-WindowTitle {
 			[IntPtr[]]$VisibleWindowHandles = [PSADT.UiAutomation]::EnumWindows() | Where-Object { [PSADT.UiAutomation]::IsWindowVisible($_) }
 
 			## Discover details about each visible window that was discovered
-			ForEach ($VisibleWindowHandle in $VisibleWindowHandles) {
+			foreach ($VisibleWindowHandle in $VisibleWindowHandles) {
 				if (-not $VisibleWindowHandle) {
 					Continue
 				}
@@ -978,7 +978,7 @@ Function Resolve-Error {
 			)
 
 			[String[]]$ObjectProperty = $InputObject | Get-Member -MemberType '*Property' | Select-Object -ExpandProperty 'Name'
-			ForEach ($Prop in $Property) {
+			foreach ($Prop in $Property) {
 				if ($Prop -eq '*') {
 					[String[]]$PropertySelection = $ObjectProperty
 					Break
@@ -1001,7 +1001,7 @@ Function Resolve-Error {
 		if (-not $ErrorRecord) {
 			Return
 		}
-		ForEach ($ErrRecord in $ErrorRecord) {
+		foreach ($ErrRecord in $ErrorRecord) {
 			## Capture Error Record
 			if ($true -eq $GetErrorRecord) {
 				[String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrRecord -Property $Property
@@ -1391,7 +1391,7 @@ function Write-Log {
 			Return
 		}
 
-		ForEach ($Msg in $Message) {
+		foreach ($Msg in $Message) {
 			## If the message is not $null or empty, create the log entry for the different logging methods
 			[String]$CMTraceMsg = ''
 			[String]$ConsoleLogLine = ''
@@ -2072,7 +2072,7 @@ else {
 [ScriptBlock]$FillCloseApplicationList = {
 	param($runningProcessesParam)
 	$control_CloseApplicationList.Items.Clear()
-	[psobject[]]$processUIItems = ForEach ($runningProcessItem in $runningProcessesParam) {
+	[psobject[]]$processUIItems = foreach ($runningProcessItem in $runningProcessesParam) {
 		Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($runningProcessItem.Id)'" | ForEach-Object {
 			[psobject]$item = New-Object PSObject -Property @{
 				Name	  = $runningProcessItem.ProcessDescription
