@@ -8560,9 +8560,9 @@ Function Show-NxtInstallationWelcome {
 			[bool]$allowDefer = $true
 
 			#  Get the deferral history from the registry
-			$deferHistory = Get-DeferHistory
-			$deferHistoryTimes = $deferHistory | Select-Object -ExpandProperty 'DeferTimesRemaining' -ErrorAction 'SilentlyContinue'
-			$deferHistoryDeadline = $deferHistory | Select-Object -ExpandProperty 'DeferDeadline' -ErrorAction 'SilentlyContinue'
+			[psobject]$deferHistory = Get-DeferHistory
+			[psobject]$deferHistoryTimes = $deferHistory | Select-Object -ExpandProperty 'DeferTimesRemaining' -ErrorAction 'SilentlyContinue'
+			[psobject]$deferHistoryDeadline = $deferHistory | Select-Object -ExpandProperty 'DeferDeadline' -ErrorAction 'SilentlyContinue'
 
 			#  Reset Switches
 			[bool]$checkDeferDays = $false
@@ -8623,7 +8623,7 @@ Function Show-NxtInstallationWelcome {
 				}
 			}
 		}
-		if (($deferTimes -lt 0) -and (-not $deferDeadlineUniversal)) {
+		if (($deferTimes -lt 0) -and ($false -eq $deferDeadlineUniversal)) {
 			[bool]$AllowDefer = $false
 		}
 
