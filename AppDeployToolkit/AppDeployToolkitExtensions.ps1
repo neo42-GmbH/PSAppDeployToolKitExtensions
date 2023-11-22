@@ -224,7 +224,6 @@ function Add-NxtLocalGroup {
 			Write-Log -Message "Failed to create group $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Write-Output $false
 		}
-
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -436,7 +435,6 @@ function Add-NxtLocalUser {
 			Write-Log -Message "Failed to create user $UserName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Write-Output $false
 		}
-
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -1355,13 +1353,10 @@ function ConvertTo-NxtEncodedObject {
 		}
 		$encodedObj = ConvertTo-NxtEncodedObject -Object $nestedObject -Depth 3
 		This example demonstrates how to convert a nested PowerShell object into a Base64-encoded and gzip-compressed string by specifying the depth parameter.
-
 	.OUTPUTS
 		System.String
-
 	.NOTES
 		The "Depth" parameter controls the depth of object hierarchy to include in JSON serialization. Be cautious when setting this to a large value as it may result in large strings.
-
 	.LINK
 		For more information, refer to [System.IO.Compression.GZipStream] and [ConvertTo-Json].
 	#>
@@ -1652,7 +1647,6 @@ function Execute-NxtBitRockInstaller {
 	)
 	Begin {
 		## read config data from AppDeployToolkitConfig.xml
-
 		[string]$configNxtBitRockInstallerInstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_InstallParams)
 		[string]$configNxtBitRockInstallerUninstallParams = $ExecutionContext.InvokeCommand.ExpandString($XmlConfigNxtBitRockInstaller.NxtBitRockInstaller_UninstallParams)
 
@@ -1727,7 +1721,6 @@ function Execute-NxtBitRockInstaller {
 						throw "Uninstallation file could not be found nor restored."
 					}
 				}
-
 			}
 		}
 
@@ -1818,7 +1811,6 @@ function Execute-NxtBitRockInstaller {
 	}
 	End {
 		Write-Output -InputObject $executeResult
-
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
@@ -2038,7 +2030,6 @@ function Execute-NxtInnoSetup {
 						throw "Uninstallation file could not be found nor restored."
 					}
 				}
-
 			}
 		}
 
@@ -2148,7 +2139,6 @@ function Execute-NxtInnoSetup {
 	}
 	End {
 		Write-Output -InputObject $executeResult
-
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
@@ -2580,7 +2570,6 @@ function Execute-NxtNullsoft {
 						throw "Uninstallation file could not be found nor restored."
 					}
 				}
-
 			}
 		}
 
@@ -2665,7 +2654,6 @@ function Execute-NxtNullsoft {
 	}
 	End {
 		Write-Output -InputObject $executeResult
-
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
