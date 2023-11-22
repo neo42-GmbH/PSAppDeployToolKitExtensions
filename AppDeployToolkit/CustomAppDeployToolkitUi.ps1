@@ -245,7 +245,7 @@ Function Convert-RegistryPath {
 		[String]$SID,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Boolean]$DisableFunctionLogging = $true
+		[bool]$DisableFunctionLogging = $true
 	)
 
 	Begin {
@@ -256,33 +256,33 @@ Function Convert-RegistryPath {
 	Process {
 		## Convert the registry key hive to the full path, only match if at the beginning of the line
 		if ($Key -match '^HKLM') {
-			[string]$Key = $Key -Replace '^HKLM:\\', 'HKEY_LOCAL_MACHINE\' -Replace '^HKLM:', 'HKEY_LOCAL_MACHINE\' -Replace '^HKLM\\', 'HKEY_LOCAL_MACHINE\'
+			$Key = $Key -Replace '^HKLM:\\', 'HKEY_LOCAL_MACHINE\' -Replace '^HKLM:', 'HKEY_LOCAL_MACHINE\' -Replace '^HKLM\\', 'HKEY_LOCAL_MACHINE\'
 		}
 		elseif ($Key -match '^HKCR') {
-			[string]$Key = $Key -Replace '^HKCR:\\', 'HKEY_CLASSES_ROOT\' -Replace '^HKCR:', 'HKEY_CLASSES_ROOT\' -Replace '^HKCR\\', 'HKEY_CLASSES_ROOT\'
+			$Key = $Key -Replace '^HKCR:\\', 'HKEY_CLASSES_ROOT\' -Replace '^HKCR:', 'HKEY_CLASSES_ROOT\' -Replace '^HKCR\\', 'HKEY_CLASSES_ROOT\'
 		}
 		elseif ($Key -match '^HKCU') {
-			[string]$Key = $Key -Replace '^HKCU:\\', 'HKEY_CURRENT_USER\' -Replace '^HKCU:', 'HKEY_CURRENT_USER\' -Replace '^HKCU\\', 'HKEY_CURRENT_USER\'
+			$Key = $Key -Replace '^HKCU:\\', 'HKEY_CURRENT_USER\' -Replace '^HKCU:', 'HKEY_CURRENT_USER\' -Replace '^HKCU\\', 'HKEY_CURRENT_USER\'
 		}
 		elseif ($Key -match '^HKU') {
-			[string]$Key = $Key -Replace '^HKU:\\', 'HKEY_USERS\' -Replace '^HKU:', 'HKEY_USERS\' -Replace '^HKU\\', 'HKEY_USERS\'
+			$Key = $Key -Replace '^HKU:\\', 'HKEY_USERS\' -Replace '^HKU:', 'HKEY_USERS\' -Replace '^HKU\\', 'HKEY_USERS\'
 		}
 		elseif ($Key -match '^HKCC') {
-			[string]$Key = $Key -Replace '^HKCC:\\', 'HKEY_CURRENT_CONFIG\' -Replace '^HKCC:', 'HKEY_CURRENT_CONFIG\' -Replace '^HKCC\\', 'HKEY_CURRENT_CONFIG\'
+			$Key = $Key -Replace '^HKCC:\\', 'HKEY_CURRENT_CONFIG\' -Replace '^HKCC:', 'HKEY_CURRENT_CONFIG\' -Replace '^HKCC\\', 'HKEY_CURRENT_CONFIG\'
 		}
 		elseif ($Key -match '^HKPD') {
-			[string]$Key = $Key -Replace '^HKPD:\\', 'HKEY_PERFORMANCE_DATA\' -Replace '^HKPD:', 'HKEY_PERFORMANCE_DATA\' -Replace '^HKPD\\', 'HKEY_PERFORMANCE_DATA\'
+			$Key = $Key -Replace '^HKPD:\\', 'HKEY_PERFORMANCE_DATA\' -Replace '^HKPD:', 'HKEY_PERFORMANCE_DATA\' -Replace '^HKPD\\', 'HKEY_PERFORMANCE_DATA\'
 		}
 
 		## Append the PowerShell provider to the registry key path
-		if ($key -notmatch '^Registry::') {
-			[String]$key = "Registry::$key"
+		if ($Key -notmatch '^Registry::') {
+			$Key = "Registry::$Key"
 		}
 
 		if ($true -eq ($PSBoundParameters.ContainsKey('SID'))) {
 			## If the SID variable is specified, then convert all HKEY_CURRENT_USER key's to HKEY_USERS\$SID
-			if ($key -match '^Registry::HKEY_CURRENT_USER\\') {
-				[string]$key = $key -Replace '^Registry::HKEY_CURRENT_USER\\', "Registry::HKEY_USERS\$SID\"
+			if ($Key -match '^Registry::HKEY_CURRENT_USER\\') {
+				$Key = $Key -Replace '^Registry::HKEY_CURRENT_USER\\', "Registry::HKEY_USERS\$SID\"
 			}
 			elseif ($false -eq $DisableFunctionLogging) {
 				Write-Log -Message 'SID parameter specified but the registry hive of the key is not HKEY_CURRENT_USER.' -Source ${CmdletName} -Severity 2
@@ -292,13 +292,13 @@ Function Convert-RegistryPath {
 		if ($Key -match '^Registry::HKEY_LOCAL_MACHINE|^Registry::HKEY_CLASSES_ROOT|^Registry::HKEY_CURRENT_USER|^Registry::HKEY_USERS|^Registry::HKEY_CURRENT_CONFIG|^Registry::HKEY_PERFORMANCE_DATA') {
 			## Check for expected key string format
 			if ($false -eq $DisableFunctionLogging) {
-				Write-Log -Message "Return fully qualified registry key path [$key]." -Source ${CmdletName}
+				Write-Log -Message "Return fully qualified registry key path [$Key]." -Source ${CmdletName}
 			}
 			Write-Output -InputObject ($key)
 		}
 		else {
 			#  If key string is not properly formatted, throw an error
-			Throw "Unable to detect target registry hive in string [$key]."
+			Throw "Unable to detect target registry hive in string [$Key]."
 		}
 	}
 	End {
@@ -437,7 +437,7 @@ Function Get-RegistryKey {
 		[Switch]$DoNotExpandEnvironmentNames = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[Boolean]$ContinueOnError = $true
+		[bool]$ContinueOnError = $true
 	)
 
 	Begin {
@@ -475,7 +475,7 @@ Function Get-RegistryKey {
 				## Select requested property
 				if ($true -eq ($PSBoundParameters.ContainsKey('Value'))) {
 					#  Check if registry value exists
-					[Boolean]$IsRegistryValueExists = $false
+					[bool]$IsRegistryValueExists = $false
 					if ($regKeyValuePropertyCount -gt 0) {
 						try {
 							[string[]]$PathProperties = Get-Item -LiteralPath $Key -ErrorAction 'Stop' | Select-Object -ExpandProperty 'Property' -ErrorAction 'Stop'
@@ -594,7 +594,7 @@ function Get-NxtProcessTree {
 	if ($null -ne $process) {
 		Write-Output $process
 		if ($true -eq $IncludeChildProcesses) {
-			[System.Diagnostics.Process[]]$childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
+			[System.Management.ManagementBaseObject[]]$childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
 			foreach ($child in $childProcesses) {
 				if (
 					$child.ProcessId -eq $process.ProcessId -and
@@ -689,11 +689,11 @@ function Get-NxtRunningProcesses {
 							$_.QueryUsed -eq $queryUsed
 						}).count -ne 0
 							) {
-							[bool]$processFound = $true
+							$processFound = $true
 						}
 					}
 					elseif ($_.ProcessName -ieq $processObject.ProcessName) {
-						[bool]$processFound = $true
+						$processFound = $true
 					}
 					if ($true -eq $processFound) {
 						if ($processObject.ProcessDescription) {
@@ -879,7 +879,7 @@ function New-NxtWpfControl() {
 	}
 	Process {
 		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-		[string]$InputXml = $InputXml -Replace 'mc:Ignorable="d"', '' -Replace "x:N", 'N' -Replace '^<Win.*', '<Window'
+		$InputXml = $InputXml -Replace 'mc:Ignorable="d"', '' -Replace "x:N", 'N' -Replace '^<Win.*', '<Window'
 		#Read XAML
 		[xml]$xaml = $InputXml
 		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
@@ -1268,16 +1268,16 @@ function Write-Log {
 		[Decimal]$MaxLogFileSizeMB = $configToolkitLogMaxSize,
 		[Parameter(Mandatory = $false, Position = 8)]
 		[ValidateNotNullorEmpty()]
-		[Boolean]$WriteHost = $configToolkitLogWriteToHost,
+		[bool]$WriteHost = $configToolkitLogWriteToHost,
 		[Parameter(Mandatory = $false, Position = 9)]
 		[ValidateNotNullorEmpty()]
-		[Boolean]$ContinueOnError = $true,
+		[bool]$ContinueOnError = $true,
 		[Parameter(Mandatory = $false, Position = 10)]
 		[Switch]$PassThru = $false,
 		[Parameter(Mandatory = $false, Position = 11)]
 		[Switch]$DebugMessage = $false,
 		[Parameter(Mandatory = $false, Position = 12)]
-		[Boolean]$LogDebugMessage = $configToolkitLogDebugMessage
+		[bool]$LogDebugMessage = $configToolkitLogDebugMessage
 	)
 	Begin {
 		## Get the name of this function
@@ -1293,12 +1293,12 @@ function Write-Log {
 		}
 		[String]$LogTimePlusBias = $LogTime + $script:LogTimeZoneBias
 		#  Initialize variables
-		[Boolean]$ExitLoggingFunction = $false
+		[bool]$ExitLoggingFunction = $false
 		if ($false -eq (Test-Path -LiteralPath 'variable:DisableLogging')) {
 			[bool]$DisableLogging = $false
 		}
 		#  Check if the script section is defined
-		[Boolean]$ScriptSectionDefined = [Boolean](-not [String]::IsNullOrEmpty($ScriptSection))
+		[bool]$ScriptSectionDefined = [bool](-not [String]::IsNullOrEmpty($ScriptSection))
 		#  Get the file name of the source script
 		try {
 			if ($script:MyInvocation.Value.ScriptName) {
@@ -1352,11 +1352,11 @@ function Write-Log {
 
 		## Exit function if it is a debug message and logging debug messages is not enabled in the config XML file
 		if (($true -eq $DebugMessage) -and (-not $LogDebugMessage)) {
-			[Boolean]$ExitLoggingFunction = $true; Return
+			[bool]$ExitLoggingFunction = $true; Return
 		}
 		## Exit function if logging to file is disabled and logging to console host is disabled
 		if (($true -eq $DisableLogging) -and ($false -eq $WriteHost)) {
-			[Boolean]$ExitLoggingFunction = $true; Return
+			[bool]$ExitLoggingFunction = $true; Return
 		}
 		## Exit Begin block if logging is disabled
 		if ($true -eq $DisableLogging) {
@@ -1364,7 +1364,7 @@ function Write-Log {
 		}
 		## Exit function function if it is an [Initialization] message and the toolkit has been relaunched
 		if (($AsyncToolkitLaunch) -and ($ScriptSection -eq 'Initialization')) {
-			[Boolean]$ExitLoggingFunction = $true; Return
+			[bool]$ExitLoggingFunction = $true; Return
 		}
 
 		## Create the directory where the log file will be saved
@@ -1373,7 +1373,7 @@ function Write-Log {
 				New-Item -Path $LogFileDirectory -Type 'Directory' -Force -ErrorAction 'Stop' | Out-Null
 			}
 			catch {
-				[Boolean]$ExitLoggingFunction = $true
+				[bool]$ExitLoggingFunction = $true
 				#  If error creating directory, write message to console
 				if ($false -eq $ContinueOnError) {
 					Write-Host -Object "[$LogDate $LogTime] [${CmdletName}] $ScriptSection :: Failed to create the log directory [$LogFileDirectory]. `r`n$(Resolve-Error)" -ForegroundColor 'Red'
@@ -1529,12 +1529,15 @@ Function Test-RegistryValue {
 	#>
 	Param (
 		[Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
-		[ValidateNotNullOrEmpty()]$Key,
+		[ValidateNotNullOrEmpty()]
+		$Key,
 		[Parameter(Mandatory = $true, Position = 1)]
-		[ValidateNotNullOrEmpty()]$Value,
+		[ValidateNotNullOrEmpty()]
+		$Value,
 		[Parameter(Mandatory = $false, Position = 2)]
 		[ValidateNotNullorEmpty()]
-		[String]$SID
+		[String]
+		$SID
 	)
 
 	Begin {
@@ -1555,25 +1558,25 @@ Function Test-RegistryValue {
 		catch {
 			Throw
 		}
-		[Boolean]$IsRegistryValueExists = $false
+		[bool]$isRegistryValueExists = $false
 		try {
 			if ($true -eq (Test-Path -LiteralPath $Key -ErrorAction 'Stop')) {
 				[String[]]$PathProperties = Get-Item -LiteralPath $Key -ErrorAction 'Stop' | Select-Object -ExpandProperty 'Property' -ErrorAction 'Stop'
 				if ($PathProperties -contains $Value) {
-					[bool]$IsRegistryValueExists = $true
+					$isRegistryValueExists = $true
 				}
 			}
 		}
 		catch {
 		}
 
-		if ($true -eq $IsRegistryValueExists) {
+		if ($true -eq $isRegistryValueExists) {
 			Write-Log -Message "Registry key value [$Key] [$Value] does exist." -Source ${CmdletName}
 		}
 		else {
 			Write-Log -Message "Registry key value [$Key] [$Value] does not exist." -Source ${CmdletName}
 		}
-		Write-Output -InputObject ($IsRegistryValueExists)
+		Write-Output -InputObject ($isRegistryValueExists)
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
@@ -1602,8 +1605,8 @@ $script:installPhase = "AskKillProcesses"
 [String]$configToolkitLogDir = $ExecutionContext.InvokeCommand.ExpandString($xmlToolkitOptions.Toolkit_LogPathNoAdminRights)
 [String]$configToolkitLogStyle = $xmlToolkitOptions.Toolkit_LogStyle
 [Double]$configToolkitLogMaxSize = $xmlToolkitOptions.Toolkit_LogMaxSize
-[Boolean]$configToolkitLogWriteToHost = [Boolean]::Parse($xmlToolkitOptions.Toolkit_LogWriteToHost)
-[Boolean]$configToolkitLogDebugMessage = [Boolean]::Parse($xmlToolkitOptions.Toolkit_LogDebugMessage)
+[bool]$configToolkitLogWriteToHost = [bool]::Parse($xmlToolkitOptions.Toolkit_LogWriteToHost)
+[bool]$configToolkitLogDebugMessage = [bool]::Parse($xmlToolkitOptions.Toolkit_LogDebugMessage)
 [String]$appDeployCustomTypesSourceCode = Join-Path -Path $scriptRoot -ChildPath 'AppDeployToolkitMain.cs'
 if ($false -eq (Test-Path -LiteralPath $appDeployConfigFile -PathType 'Leaf')) {
 	Throw 'App Deploy XML configuration file not found.'
@@ -1614,15 +1617,15 @@ if ($false -eq (Test-Path -LiteralPath $appDeployCustomTypesSourceCode -PathType
 
 ## Add the custom types required for the toolkit
 if (-not ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
-	[String[]]$ReferencedAssemblies = 'System.Drawing', 'System.Windows.Forms', 'System.DirectoryServices'
-	Add-Type -Path $appDeployCustomTypesSourceCode -ReferencedAssemblies $ReferencedAssemblies -IgnoreWarnings -ErrorAction 'Stop'
+	[String[]]$referencedAssemblies = 'System.Drawing', 'System.Windows.Forms', 'System.DirectoryServices'
+	Add-Type -Path $appDeployCustomTypesSourceCode -ReferencedAssemblies $referencedAssemblies -IgnoreWarnings -ErrorAction 'Stop'
 }
 
 #  Get UI Options
 [Xml.XmlElement]$xmlConfigUIOptions = $xmlConfig.UI_Options
 [Int32]$configInstallationUITimeout = $xmlConfigUIOptions.InstallationUI_Timeout
 [Int32]$configInstallationPersistInterval = $xmlConfigUIOptions.InstallationPrompt_PersistInterval
-[Boolean]$configInstallationWelcomePromptDynamicRunningProcessEvaluation = [Boolean]::Parse($xmlConfigUIOptions.InstallationWelcomePrompt_DynamicRunningProcessEvaluation)
+[bool]$configInstallationWelcomePromptDynamicRunningProcessEvaluation = [bool]::Parse($xmlConfigUIOptions.InstallationWelcomePrompt_DynamicRunningProcessEvaluation)
 [Int32]$configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval = $xmlConfigUIOptions.InstallationWelcomePrompt_DynamicRunningProcessEvaluationInterval
 ## Reset switches
 [bool]$showCloseApps = $false
@@ -1959,9 +1962,9 @@ $control_CancelButton.add_Click($cancelButtonClickHandler)
 $control_PopupCloseApplication.add_Click($popupCloseApplicationClickHandler)
 $control_PopupCancel.add_Click($popupCancelClickHandler)
 
-[Boolean]$IsLightTheme = Test-NxtPersonalizationLightTheme
+[bool]$isLightTheme = Test-NxtPersonalizationLightTheme
 
-if ($true -eq $IsLightTheme) {
+if ($true -eq $isLightTheme) {
 	$backColor.r = 246
 	$backColor.g = 246
 	$backColor.b = 246
@@ -2061,15 +2064,15 @@ else {
 $control_AppNameText.Text = $installTitle
 $control_TitleText.Text = $installTitle
 if ($ProcessIdToIgnore -gt 0) {
-	[int[]]$ProcessIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
+	[int[]]$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
 }
 else {
-	[int[]]$ProcessIdsToIgnore = @()
+	[int[]]$processIdsToIgnore = @()
 }
 [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects) {
 	Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $ProcessIdsToIgnore | Where-Object { $false -eq [string]::IsNullOrEmpty($_.id) }
 }
-[ScriptBlock]$FillCloseApplicationList = {
+[ScriptBlock]$fillCloseApplicationList = {
 	param($runningProcessesParam)
 	$control_CloseApplicationList.Items.Clear()
 	[psobject[]]$processUIItems = foreach ($runningProcessItem in $runningProcessesParam) {
@@ -2091,14 +2094,14 @@ else {
 		$control_CloseApplicationList.Items.Add($processUIItem) | Out-Null
 	}
 }
-& $FillCloseApplicationList $runningProcesses
+& $fillCloseApplicationList $runningProcesses
 
 [string]$names = $runningProcesses | Select-Object -ExpandProperty Name
 $control_PopupListText.Text = $names.Trim()
 
-[Int32]$OutNumber = $null
+[Int32]$outNumber = $null
 
-if ([Int32]::TryParse($DeferTimes, [ref]$OutNumber) -and $DeferTimes -ge 0) {
+if ([Int32]::TryParse($DeferTimes, [ref]$outNumber) -and $DeferTimes -ge 0) {
 	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
 }
 if ($DeferDeadline) {
@@ -2109,7 +2112,7 @@ if ($true -eq [string]::IsNullOrEmpty($control_DeferTimerText.Text)) {
 	$control_DeferTextOne.Visibility = "Collapsed"
 	$control_DeferTextTwo.Visibility = "Collapsed"
 	$control_DeferButton.Visibility = "Collapsed"
-	$control_DeferDeadlineText.Visibility = "Collapsed"		 
+	$control_DeferDeadlineText.Visibility = "Collapsed"
 }
 else {  
 	$control_DeferTextOne.Visibility = "Visible"
@@ -2240,7 +2243,7 @@ if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 		try {
 			if ([math]::DivRem($tickCounter,10,[ref]$null) -eq 1) {
 				# As this is performance intensive, only run it every 10 Ticks
-				[int[]]$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
+				$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
 			}
 			$tickCounter++
 			[PSObject[]]$dynamicRunningProcesses = $null
@@ -2277,7 +2280,7 @@ if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$timerRunningProcesses.add_Tick($timerRunningProcesses_Tick)
 	$timerRunningProcesses.Start()
 }
-[__ComObject]$ShellApp = New-Object -ComObject 'Shell.Application' -ErrorAction 'SilentlyContinue'
+[__ComObject]$shellApp = New-Object -ComObject 'Shell.Application' -ErrorAction 'SilentlyContinue'
 if ($true -eq $MinimizeWindows) {
 	$shellApp.MinimizeAll()
 }
