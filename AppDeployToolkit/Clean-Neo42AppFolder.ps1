@@ -82,7 +82,7 @@ function Remove-NxtEmptyFolder {
 			$false -eq [string]::IsNullOrEmpty($RootPathToRecurseUpTo) -and
 			$false -eq $skipRecursion
 		) {
-			## Resolve possible relative segments in the paths 
+			## Resolve possible relative segments in the paths
 			[string]$absolutePath = $Path | Split-Path -Parent
 			[string]$absoluteRootPathToRecurseUpTo = [System.IO.Path]::GetFullPath(([System.IO.DirectoryInfo]::new($RootPathToRecurseUpTo)).FullName)
 			if ($absolutePath -eq $absoluteRootPathToRecurseUpTo){

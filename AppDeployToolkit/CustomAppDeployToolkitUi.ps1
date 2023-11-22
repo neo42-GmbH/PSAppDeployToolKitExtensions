@@ -362,11 +362,11 @@ Function Get-LoggedOnUser {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Try {
+		try {
 			Write-Log -Message 'Getting session information for all logged on users.' -Source ${CmdletName}
 			Write-Output -InputObject ([PSADT.QueryUser]::GetUserSessionInfo("$env:ComputerName"))
 		}
-		Catch {
+		catch {
 			Write-Log -Message "Failed to get session information for all logged on users. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
 	}
@@ -446,7 +446,7 @@ Function Get-RegistryKey {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Try {
+		try {
 			## If the SID variable is specified, then convert all HKEY_CURRENT_USER key's to HKEY_USERS\$SID
 			if ($true -eq ($PSBoundParameters.ContainsKey('SID'))) {
 				[String]$key = Convert-RegistryPath -Key $key -SID $SID
@@ -477,13 +477,13 @@ Function Get-RegistryKey {
 					#  Check if registry value exists
 					[Boolean]$IsRegistryValueExists = $false
 					if ($regKeyValuePropertyCount -gt 0) {
-						Try {
+						try {
 							[string[]]$PathProperties = Get-Item -LiteralPath $Key -ErrorAction 'Stop' | Select-Object -ExpandProperty 'Property' -ErrorAction 'Stop'
 							if ($PathProperties -contains $Value) {
 								[bool]$IsRegistryValueExists = $true
 							}
 						}
-						Catch {
+						catch {
 						}
 					}
 
@@ -526,7 +526,7 @@ Function Get-RegistryKey {
 			}
 			Write-Output -InputObject ($regKeyValue)
 		}
-		Catch {
+		catch {
 			if ($true -eq [string]::IsNullOrEmpty($Value)) {
 				Write-Log -Message "Failed to read registry key [$key]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				if ($false -eq $ContinueOnError) {
@@ -790,7 +790,7 @@ Function Get-WindowTitle {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
-		Try {
+		try {
 			if ($PSCmdlet.ParameterSetName -eq 'SearchWinTitle') {
 				if ($false -eq $DisableFunctionLogging) {
 					Write-Log -Message "Finding open window title(s) [$WindowTitle] using regex matching." -Source ${CmdletName}
@@ -839,7 +839,7 @@ Function Get-WindowTitle {
 				}
 			}
 		}
-		Catch {
+		catch {
 			if ($false -eq $DisableFunctionLogging) {
 				Write-Log -Message "Failed to get requested window title(s). `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 			}
@@ -1300,7 +1300,7 @@ function Write-Log {
 		#  Check if the script section is defined
 		[Boolean]$ScriptSectionDefined = [Boolean](-not [String]::IsNullOrEmpty($ScriptSection))
 		#  Get the file name of the source script
-		Try {
+		try {
 			if ($script:MyInvocation.Value.ScriptName) {
 				[String]$ScriptSource = Split-Path -Path $script:MyInvocation.Value.ScriptName -Leaf -ErrorAction 'Stop'
 			}
@@ -1308,7 +1308,7 @@ function Write-Log {
 				[String]$ScriptSource = Split-Path -Path $script:MyInvocation.MyCommand.Definition -Leaf -ErrorAction 'Stop'
 			}
 		}
-		Catch {
+		catch {
 			[string]$ScriptSource = ''
 		}
 
@@ -1450,10 +1450,10 @@ function Write-Log {
 
 			## Write the log entry to the log file if logging is not currently disabled
 			if ($false -eq $DisableLogging) {
-				Try {
+				try {
 					$LogLine | Out-File -FilePath $LogFilePath -Append -NoClobber -Force -Encoding 'UTF8' -ErrorAction 'Stop'
 				}
-				Catch {
+				catch {
 					if ($false -eq $ContinueOnError) {
 						Write-Host -Object "[$LogDate $LogTime] [$ScriptSection] [${CmdletName}] :: Failed to write message [$Msg] to the log file [$LogFilePath]. `r`n$(Resolve-Error)" -ForegroundColor 'Red'
 					}
@@ -1466,7 +1466,7 @@ function Write-Log {
 	}
 	End {
 		## Archive log file if size is greater than $MaxLogFileSizeMB and $MaxLogFileSizeMB > 0
-		Try {
+		try {
 			if (($false -eq $ExitLoggingFunction) -and ($false -eq $DisableLogging)) {
 				[IO.FileInfo]$LogFile = Get-ChildItem -LiteralPath $LogFilePath -ErrorAction 'Stop'
 				[Decimal]$LogFileSizeMB = $LogFile.Length / 1MB
@@ -1488,10 +1488,10 @@ function Write-Log {
 				}
 			}
 		}
-		Catch {
+		catch {
 			## If renaming of file fails, script will continue writing to log file even if size goes over the max file size
 		}
-		Finally {
+		finally {
 			if ($true -eq $PassThru) {
 				Write-Output -InputObject ($Message)
 			}
@@ -1544,7 +1544,7 @@ Function Test-RegistryValue {
 	}
 	Process {
 		## If the SID variable is specified, then convert all HKEY_CURRENT_USER key's to HKEY_USERS\$SID
-		Try {
+		try {
 			if ($true -eq ($PSBoundParameters.ContainsKey('SID'))) {
 				[String]$Key = Convert-RegistryPath -Key $Key -SID $SID
 			}
@@ -1552,11 +1552,11 @@ Function Test-RegistryValue {
 				[String]$Key = Convert-RegistryPath -Key $Key
 			}
 		}
-		Catch {
+		catch {
 			Throw
 		}
 		[Boolean]$IsRegistryValueExists = $false
-		Try {
+		try {
 			if ($true -eq (Test-Path -LiteralPath $Key -ErrorAction 'Stop')) {
 				[String[]]$PathProperties = Get-Item -LiteralPath $Key -ErrorAction 'Stop' | Select-Object -ExpandProperty 'Property' -ErrorAction 'Stop'
 				if ($PathProperties -contains $Value) {
@@ -1564,7 +1564,7 @@ Function Test-RegistryValue {
 				}
 			}
 		}
-		Catch {
+		catch {
 		}
 
 		if ($true -eq $IsRegistryValueExists) {
@@ -2158,7 +2158,7 @@ if (-not $script:welcomeTimer) {
 }
 
 [ScriptBlock]$mainWindowClosed = {
-	Try {
+	try {
 		$control_WindowCloseButton.remove_Click($windowsCloseButtonClickHandler)
 		$control_CloseButton.remove_Click($closeButtonClickHandler)
 		$control_DeferButton.remove_Click($deferbuttonClickHandler)
@@ -2178,7 +2178,7 @@ if (-not $script:welcomeTimer) {
 		$control_MainWindow.remove_Loaded($mainWindowLoaded)
 		$control_MainWindow.remove_Closed($mainWindowClosed)
 	}
-	Catch {
+	catch {
 	}
 }
 
@@ -2189,7 +2189,7 @@ $control_MainWindow.Add_Closed($mainWindowClosed)
 $script:welcomeTimer.Interval = [timespan]::fromseconds(1)
 [ScriptBlock]$welcomeTimer_Tick = {
 	# Your code to be executed every second goes here
-	Try {
+	try {
 		[Int32]$progressValue = $closeAppsCountdownGlobal - 1
 		Set-Variable -Name 'closeAppsCountdownGlobal' -Value $progressValue -Scope 'Script'
 		## If the countdown is complete, close the application(s) or continue
@@ -2214,7 +2214,7 @@ $script:welcomeTimer.Interval = [timespan]::fromseconds(1)
 
 		}
 	}
-	Catch {
+	catch {
 	}
 }
 
@@ -2237,7 +2237,7 @@ if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$timerRunningProcesses.Interval = [timespan]::fromseconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
 	[int]$tickCounter = 0
 	[ScriptBlock]$timerRunningProcesses_Tick = {
-		Try {
+		try {
 			if ([math]::DivRem($tickCounter,10,[ref]$null) -eq 1) {
 				# As this is performance intensive, only run it every 10 Ticks
 				[int[]]$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
@@ -2271,7 +2271,7 @@ if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 				}
 			}
 		}
-		Catch {
+		catch {
 		}
 	}
 	$timerRunningProcesses.add_Tick($timerRunningProcesses_Tick)
