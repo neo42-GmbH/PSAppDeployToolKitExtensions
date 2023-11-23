@@ -116,7 +116,7 @@ function Start-NxtProcess {
 		$processStartInfo.FileName = $FilePath
 		$processStartInfo.Arguments = $Arguments
 		$processStartInfo.UseShellExecute = $UseShellExecute;
-		$process = [System.Diagnostics.Process]::Start($processStartInfo);
+		[System.Diagnostics.Process]$process = [System.Diagnostics.Process]::Start($processStartInfo);
 		Write-Output -InputObject $process
 	}
 }
@@ -150,7 +150,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSys
 	if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")){
 		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "$arguments"
 	}
-	else{
+	else {
 		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -File `"$file`"$arguments"
 	}
 	$process.WaitForExit()
@@ -163,8 +163,8 @@ switch ($DeploymentType) {
 		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")){
 			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "-DeploymentType InstallUserPart"
 		}
-		else{
-			$null = Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart"
+		else {
+			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart" | Out-Null
 		}
 		Exit
 	}
@@ -172,8 +172,8 @@ switch ($DeploymentType) {
 		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")){
 			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "-DeploymentType UninstallUserPart"
 		}
-		else{
-			$null = Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart"
+		else {
+			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
 		}
 		Exit
 	}
@@ -201,7 +201,7 @@ Remove-Variable -Name tempLoadPackageConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
-Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop' } Catch {}
+try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop' } catch {}
 ## Variables: Exit Code
 [int32]$mainExitCode = 0
 ## Variables: Script
@@ -210,21 +210,21 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 [string]$deployAppScriptDate = '02/05/2023'
 [hashtable]$deployAppScriptParameters = $psBoundParameters
 ## Variables: Environment
-If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
+if (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
 ## dot source the required AppDeploy Toolkit functions
-Try {
+try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
-	If (-not (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
-	If ($DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
+	if ($false -eq (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
+	if ($true -eq $DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
 	## add custom 'Nxt' variables
 	[string]$appDeployLogoBannerDark = Join-Path -Path $scriptRoot -ChildPath $xmlBannerIconOptions.Banner_Filename_Dark
 }
-Catch {
-	If ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
+catch {
+	if ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
 	Write-Error -Message "Module [$moduleAppDeployToolkitMain] failed to load: `n$($_.Exception.Message)`n `n$($_.InvocationInfo.PositionMessage)" -ErrorAction 'Continue'
 	## exit the script, returning the exit code to SCCM
-	If (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
+	if (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
 }
 #endregion
 ##* Do not modify section above	=============================================================================================================================================
@@ -475,7 +475,8 @@ function Main {
 					## register package for uninstall
 					[string]$script:installPhase = 'Package-Registration'
 					Register-NxtPackage -MainExitCode $rebootRequirementResult.MainExitCode -LastErrorMessage $returnErrorMessage -SoftMigrationOccurred $softMigrationOccurred
-				} else {
+				} 
+				else {
 					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 				}
 				## END OF INSTALL
