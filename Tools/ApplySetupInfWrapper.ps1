@@ -61,7 +61,7 @@ catch {
     Start-Sleep -Seconds 5
     Exit
 }
-$wrapperPath = $wrapperPath -Replace "{VERSION}", $latestWrapper.Version
+$wrapperPath = $wrapperPath -replace "{VERSION}", $latestWrapper.Version
 
 ## Create the PSADT folder if it doesn't exist
 if (-not (Test-Path $adtSubFolder)) {

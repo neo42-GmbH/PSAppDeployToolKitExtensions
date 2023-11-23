@@ -256,22 +256,22 @@ Function Convert-RegistryPath {
 	Process {
 		## Convert the registry key hive to the full path, only match if at the beginning of the line
 		if ($Key -match '^HKLM') {
-			$Key = $Key -Replace '^HKLM:\\', 'HKEY_LOCAL_MACHINE\' -Replace '^HKLM:', 'HKEY_LOCAL_MACHINE\' -Replace '^HKLM\\', 'HKEY_LOCAL_MACHINE\'
+			$Key = $Key -replace '^HKLM:\\', 'HKEY_LOCAL_MACHINE\' -replace '^HKLM:', 'HKEY_LOCAL_MACHINE\' -replace '^HKLM\\', 'HKEY_LOCAL_MACHINE\'
 		}
 		elseif ($Key -match '^HKCR') {
-			$Key = $Key -Replace '^HKCR:\\', 'HKEY_CLASSES_ROOT\' -Replace '^HKCR:', 'HKEY_CLASSES_ROOT\' -Replace '^HKCR\\', 'HKEY_CLASSES_ROOT\'
+			$Key = $Key -replace '^HKCR:\\', 'HKEY_CLASSES_ROOT\' -replace '^HKCR:', 'HKEY_CLASSES_ROOT\' -replace '^HKCR\\', 'HKEY_CLASSES_ROOT\'
 		}
 		elseif ($Key -match '^HKCU') {
-			$Key = $Key -Replace '^HKCU:\\', 'HKEY_CURRENT_USER\' -Replace '^HKCU:', 'HKEY_CURRENT_USER\' -Replace '^HKCU\\', 'HKEY_CURRENT_USER\'
+			$Key = $Key -replace '^HKCU:\\', 'HKEY_CURRENT_USER\' -replace '^HKCU:', 'HKEY_CURRENT_USER\' -replace '^HKCU\\', 'HKEY_CURRENT_USER\'
 		}
 		elseif ($Key -match '^HKU') {
-			$Key = $Key -Replace '^HKU:\\', 'HKEY_USERS\' -Replace '^HKU:', 'HKEY_USERS\' -Replace '^HKU\\', 'HKEY_USERS\'
+			$Key = $Key -replace '^HKU:\\', 'HKEY_USERS\' -replace '^HKU:', 'HKEY_USERS\' -replace '^HKU\\', 'HKEY_USERS\'
 		}
 		elseif ($Key -match '^HKCC') {
-			$Key = $Key -Replace '^HKCC:\\', 'HKEY_CURRENT_CONFIG\' -Replace '^HKCC:', 'HKEY_CURRENT_CONFIG\' -Replace '^HKCC\\', 'HKEY_CURRENT_CONFIG\'
+			$Key = $Key -replace '^HKCC:\\', 'HKEY_CURRENT_CONFIG\' -replace '^HKCC:', 'HKEY_CURRENT_CONFIG\' -replace '^HKCC\\', 'HKEY_CURRENT_CONFIG\'
 		}
 		elseif ($Key -match '^HKPD') {
-			$Key = $Key -Replace '^HKPD:\\', 'HKEY_PERFORMANCE_DATA\' -Replace '^HKPD:', 'HKEY_PERFORMANCE_DATA\' -Replace '^HKPD\\', 'HKEY_PERFORMANCE_DATA\'
+			$Key = $Key -replace '^HKPD:\\', 'HKEY_PERFORMANCE_DATA\' -replace '^HKPD:', 'HKEY_PERFORMANCE_DATA\' -replace '^HKPD\\', 'HKEY_PERFORMANCE_DATA\'
 		}
 
 		## Append the PowerShell provider to the registry key path
@@ -282,7 +282,7 @@ Function Convert-RegistryPath {
 		if ($true -eq ($PSBoundParameters.ContainsKey('SID'))) {
 			## If the SID variable is specified, then convert all HKEY_CURRENT_USER key's to HKEY_USERS\$SID
 			if ($Key -match '^Registry::HKEY_CURRENT_USER\\') {
-				$Key = $Key -Replace '^Registry::HKEY_CURRENT_USER\\', "Registry::HKEY_USERS\$SID\"
+				$Key = $Key -replace '^Registry::HKEY_CURRENT_USER\\', "Registry::HKEY_USERS\$SID\"
 			}
 			elseif ($false -eq $DisableFunctionLogging) {
 				Write-Log -Message 'SID parameter specified but the registry hive of the key is not HKEY_CURRENT_USER.' -Source ${CmdletName} -Severity 2
@@ -879,7 +879,7 @@ function New-NxtWpfControl() {
 	}
 	Process {
 		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-		$InputXml = $InputXml -Replace 'mc:Ignorable="d"', '' -Replace "x:N", 'N' -Replace '^<Win.*', '<Window'
+		$InputXml = $InputXml -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
 		#Read XAML
 		[xml]$xaml = $InputXml
 		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
@@ -1647,7 +1647,7 @@ if (($true -eq $AllowDefer) -and (($DeferTimes -ge 0) -or $DeferDeadline)) {
 	[bool]$showDefer = $true
 	if ($DeferDeadline) {
 		#  Remove the Z from universal sortable date time format, otherwise it could be converted to a different time zone
-		$DeferDeadline = $DeferDeadline -Replace 'Z', ''
+		$DeferDeadline = $DeferDeadline -replace 'Z', ''
 		#  Convert the deadline date to a string
 		$DeferDeadline = (Get-Date -Date $DeferDeadline).ToString()
 	}
