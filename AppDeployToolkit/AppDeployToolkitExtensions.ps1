@@ -2383,7 +2383,7 @@ function Execute-NxtMSI {
 		[PSObject]$executeResult = Execute-MSI @PSBoundParameters
 		## Move Logs to correct destination
 		if ($true -eq ([System.IO.Path]::IsPathRooted($Log))) {
-			[string]$msiLogName = "$($msiLogName.TrimEnd(".log"))_$($action).log"
+			[string]$msiLogName = "$($msiLogName -replace "\.log$",[string]::Empty)_$($action).log"
 			[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
 			if ($true -eq (Test-Path -Path $logPath)) {
 				Move-NxtItem $logPath -Destination $Log -Force
