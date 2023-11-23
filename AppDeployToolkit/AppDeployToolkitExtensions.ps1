@@ -5313,10 +5313,15 @@ function Initialize-NxtAppRootFolder {
 			}
 		}
 		if ($appRootFolderName.length -ne 0){
-			if ($false -eq (Test-Path "$env:ProgramData\$appRootFolderName\DoNotDeleteThisFolder.lock")) {
-				Write-Output "This folder is used for software deployment. Do not delete." | Out-File "$env:ProgramData\$appRootFolderName\DoNotDeleteThisFolder.lock" -Encoding "UTF8"
-				Write-Log -Message "Created lock file in $env:ProgramData\$appRootFolderName" -Source ${CmdletName}
+			if ($false -eq (Test-Path -PathType Container "$env:ProgramData\$appRootFolderName")) {
+				New-NxtFolderWithPermissions -Path $env:ProgramData\$appRootFolderName -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+				Write-Log -Message "Recreated AppRootFolder '$appRootFolderName' in $env:ProgramData\$appRootFolderName, this directory is required for software deployment and should not be deleted or altered." -Source ${CmdletName} -Severity 2
 			}
+			if ($false -eq (Test-Path -PathType Leaf "$env:ProgramData\$appRootFolderName\readme.txt")) {
+				Set-Content -Path "$env:ProgramData\$appRootFolderName\readme.txt" -Value "This directory is required for software deployment and should not be deleted or altered." -Encoding "UTF8"
+				Write-Log -Message "Created readme file in $env:ProgramData\$appRootFolderName" -Source ${CmdletName}
+			}
+
 			Write-Output "$env:ProgramData\$appRootFolderName"
 		}
 		else {
