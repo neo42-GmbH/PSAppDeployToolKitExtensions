@@ -2048,7 +2048,7 @@ function Execute-NxtInnoSetup {
 		}
 
 		## MergeTasks if parameters were not replaced
-		if (($true -eq ([string]::isnullorempty($Parameters))) -and ($false -eq ([string]::IsNullOrWhiteSpace($MergeTasks)))) {
+		if (($true -eq ([string]::IsNullOrEmpty($Parameters))) -and ($false -eq ([string]::IsNullOrWhiteSpace($MergeTasks)))) {
 			[string]$argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
 		}
 
