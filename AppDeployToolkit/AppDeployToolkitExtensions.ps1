@@ -446,23 +446,23 @@ function Add-NxtProcessPathVariable {
 	<#
 	.SYNOPSIS
 		Adds a path to the processes PATH environment variable.
-  	.DESCRIPTION
+	.DESCRIPTION
 		Adds a path to the processes PATH environment variable. If the path already exists, it will not be added again.
 		Empty values will be removed.
-  	.PARAMETER AddPath
+	.PARAMETER AddPath
 		Path to be added to the processes PATH environment variable.
 		Has to be a valid path. The path value will automatically be expanded.
-  	.PARAMETER AddToBeginning
+	.PARAMETER AddToBeginning
 		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
-  	.EXAMPLE
+	.EXAMPLE
 		Add-NxtProcessPathVariable -Path "C:\Temp"
 	.EXAMPLE
 		Add-NxtProcessPathVariable -Path "C:\Temp" -AddToBeginning $true
 	.OUTPUTS
 		none.
-  	.LINK
+	.LINK
 		https://neo42.de/psappdeploytoolkit
-  	#>
+	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
@@ -471,7 +471,7 @@ function Add-NxtProcessPathVariable {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$AddToBeginning = $false
-  	)
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -514,23 +514,23 @@ function Add-NxtSystemPathVariable {
 	<#
 	.SYNOPSIS
 		Adds a path to the systems PATH environment variable.
-  	.DESCRIPTION
+	.DESCRIPTION
 		Adds a path to the systems PATH environment variable. If the path already exists, it will not be added again.
 		Empty values will be removed.
-  	.PARAMETER AddPath
+	.PARAMETER AddPath
 		Path to be added to the systems PATH environment variable.
 		Has to be a valid path. The path value will automatically be expanded.
-  	.PARAMETER AddToBeginning
+	.PARAMETER AddToBeginning
 		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
-  	.EXAMPLE
+	.EXAMPLE
 		Add-NxtProcessPathVariable -Path "C:\Temp"
 	.EXAMPLE
 		Add-NxtProcessPathVariable -Path "C:\Temp" -AddToBeginning $true
 	.OUTPUTS
 		none.
-  	.LINK
+	.LINK
 		https://neo42.de/psappdeploytoolkit
-  	#>
+	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
@@ -539,7 +539,7 @@ function Add-NxtSystemPathVariable {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$AddToBeginning = $false
-  	)
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -1131,10 +1131,10 @@ function Complete-NxtPackageInstallation {
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID.uninstall"
 			if ($true -eq (Test-Path -Path "$dirSupportFiles\$UserpartDir")) {
 				Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
-			 }
-			 else {
-				 New-Folder -Path "$App\$UserpartDir\SupportFiles"
-			 }
+			}
+			else {
+				New-Folder -Path "$App\$UserpartDir\SupportFiles"
+			}
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue  | Out-Null
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")) {
@@ -1246,10 +1246,10 @@ function Complete-NxtPackageUninstallation {
 			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
 			if ($true -eq (Test-Path -Path "$dirSupportFiles\$UserpartDir")) {
 				Copy-File -Path "$dirSupportFiles\$UserpartDir\*" -Destination "$App\$UserpartDir\SupportFiles" -Recurse
-			 }
-			 else {
-				 New-Folder -Path "$App\$UserpartDir\SupportFiles"
-			 }
+			}
+			else {
+				New-Folder -Path "$App\$UserpartDir\SupportFiles"
+			}
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
 			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")) {
@@ -6539,7 +6539,7 @@ function Remove-NxtDesktopShortcuts {
 	.EXAMPLE
 		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete "SomeUserShortcut.lnk" -Desktop "$envUserDesktop"
 		This example removes the specified "SomeUserShortcut.lnk" from the user desktop.
-	 .OUTPUTS
+	.OUTPUTS
 		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
@@ -7019,24 +7019,24 @@ function Remove-NxtProcessPathVariable {
 	<#
 	.SYNOPSIS
 		Removes a path to the processes PATH environment variable.
-  	.DESCRIPTION
+	.DESCRIPTION
 		Removes a path to the processes PATH environment variable.
 		Empty entries will be removed.
-  	.PARAMETER Path
+	.PARAMETER Path
 		Path to be removed from the processes PATH environment variable.
-  	.EXAMPLE
+	.EXAMPLE
 		Remove-NxtProcessPathVariable -Path "C:\Temp"
 	.OUTPUTS
 		none.
-  	.LINK
+	.LINK
 		https://neo42.de/psappdeploytoolkit
-  	#>
+	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[String]
 		$Path
-  	)
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -7066,24 +7066,24 @@ function Remove-NxtSystemPathVariable {
 	<#
 	.SYNOPSIS
 		Removes a path to the systems PATH environment variable.
-  	.DESCRIPTION
+	.DESCRIPTION
 		Removes a path to the systems PATH environment variable.
 		Empty entries will be removed.
-  	.PARAMETER Path
+	.PARAMETER Path
 		Path to be added to the systems PATH environment variable.
-  	.EXAMPLE
+	.EXAMPLE
 		Remove-NxtSystemPathVariable -Path "C:\Temp"
 	.OUTPUTS
 		none.
-  	.LINK
+	.LINK
 		https://neo42.de/psappdeploytoolkit
-  	#>
+	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[String]
 		$Path
-  	)
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -8302,7 +8302,7 @@ function Set-NxtXmlNode {
 			}
 			Update-NxtXmlNode @updateNxtXmlNodeParams
 		}
- 	else {
+	else {
 			[hashtable]$addNxtXmlNodeParams = @{
 				FilePath = $FilePath
 				NodePath = $NodePath
@@ -8325,105 +8325,76 @@ function Set-NxtXmlNode {
 Function Show-NxtInstallationWelcome {
 	<#
 	.SYNOPSIS
-		Show a welcome dialog prompting the user with information about the installation and actions to be performed before the installation can begin.
-		This function is based on the Show-InstallationWelcome function from the PowerShell App Deployment Toolkit. It is modified to be able to show the dialogs even from session 0.
+	.SYNOPSIS
+	Displays a customizable welcome dialog for software installations, offering options like closing specified applications, deferring installation, and blocking application execution during installation.
 	.DESCRIPTION
-		The following prompts can be included in the welcome dialog:
-			a) Close the specified running applications, or optionally close the applications without showing a prompt (using the -Silent switch).
-			b) Defer the installation a certain number of times, for a certain number of days or until a deadline is reached.
-			c) Countdown until applications are automatically closed.
-			d) Prevent users from launching the specified applications while the installation is in progress.
-
-		Notes:
-			The process descriptions are retrieved from WMI, with a fall back on the process name if no description is available. Alternatively, you can specify the description yourself with a '=' symbol - see examples.
-			The dialog box will timeout after the timeout specified in the XML configuration file (default 1 hour and 55 minutes) to prevent SCCM installations from timing out and returning a failure code to SCCM. When the dialog times out, the script will exit and return a 1618 code (SCCM fast retry code).
+		Show-NxtInstallationWelcome is a versatile PowerShell function designed to interact with users during software installations. It provides a range of features:
+			- Prompting users to close specified running applications.
+			- Allowing installation deferral based on time or number of deferrals.
+			- Providing countdowns for automatic application closure or installation deferral.
+			- Blocking specified applications from running during installation.
+		Additional functionalities include process description retrieval, customizable timeout for the dialog, and compatibility with different user session types.
 	.PARAMETER Silent
-		Stop processes without prompting the user.
+		Closes specified applications without user prompt. Default value: $false. This parameter is optional.
 	.PARAMETER CloseAppsCountdown
-		Option to provide a countdown in seconds until the specified applications are automatically closed. This only takes effect if deferral is not allowed or has expired.
+		Specifies a countdown in seconds before specified applications are automatically closed. The default value is specified in the setup.cfg. This parameter is optional.
 	.PARAMETER ForceCloseAppsCountdown
-		Option to provide a countdown in seconds until the specified applications are automatically closed regardless of whether deferral is allowed.
+		Forces application closure after a specified countdown, regardless of deferral settings. Default value: 0. This parameter is optional.
 	.PARAMETER PromptToSave
-		Specify whether to prompt to save working documents when the user chooses to close applications by selecting the "Close Programs" button. Option does not work in SYSTEM context unless toolkit launched with "psexec.exe -s -i" to run it as an interactive process under the SYSTEM account.
+		Allows prompting users to save work before closing applications. Not functional in SYSTEM context without specific launch conditions. Default value: $false. This parameter is optional.
 	.PARAMETER PersistPrompt
-		Specify whether to make the Show-InstallationWelcome prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml. The user will have no option but to respond to the prompt. This only takes effect if deferral is not allowed or has expired.
+		Makes the welcome prompt reappear periodically, ensuring user response. Effective when deferral is not allowed or expired. Default value: $false. This parameter is optional.
 	.PARAMETER BlockExecution
-		Option to prevent the user from launching processes/applications, specified in -CloseApps, during the installation.
+		Prevents users from launching specified applications during installation. Defaults to the corresponding variable from $global:PackageConfig. This parameter is optional.
 	.PARAMETER AllowDefer
-		Enables an optional defer button to allow the user to defer the installation.
+		Enables deferral of installation. Default value: $false. This parameter is optional.
 	.PARAMETER AllowDeferCloseApps
-		Enables an optional defer button to allow the user to defer the installation only if there are running applications that need to be closed. This parameter automatically enables -AllowDefer
+		Allows deferral only when specified applications are running. Implicitly enables AllowDefer. Default value: $false. This parameter is optional.
 	.PARAMETER DeferTimes
-		Specify the number of times the installation can be deferred.
-		Defaults to the corresponding value from the $global:SetupCfg object.
+		Sets the number of times installation can be deferred. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER DeferDays
-		Specify the number of days since first run that the installation can be deferred. This is converted to a deadline.
-		Defaults to the corresponding value from the $global:SetupCfg object.
+		Defines the number of days since first run for allowing installation deferral. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER DeferDeadline
-		Specify the deadline date until which the installation can be deferred.
-		Specify the date in the local culture if the script is intended for that same culture.
-		If the script is intended to run on EN-US machines, specify the date in the format: "08/25/2013" or "08-25-2013" or "08-25-2013 18:00:00"
-		If the script is intended for multiple cultures, specify the date in the universal sortable date/time format: "2013-08-22 11:51:52Z"
-		The deadline date will be displayed to the user in the format of their culture.
+		Sets a deadline for installation deferral. Accepts date in local culture format or universal sortable format. Default value: Empty string. This parameter is optional.
 	.PARAMETER MinimizeWindows
-		Specifies whether to minimize other windows when displaying prompt. Defaults to the corresponding value 'MINIMIZEALLWINDOWS' from the Setup.cfg.
+		Determines if other windows should be minimized when displaying the prompt. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER TopMost
-		Specifies whether the windows is the topmost window. Defaults to the corresponding value 'TOPMOSTWINDOW' from the Setup.cfg.
+		Sets the welcome window as the topmost window. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER ForceCountdown
-		Specify a countdown to display before automatically proceeding with the installation when a deferral is enabled.
+		Specifies a countdown to automatically proceed with installation when deferral is enabled. Default value: 0. This parameter is optional.
 	.PARAMETER CustomText
-		Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.   
-	.Parameter IsInstall
-		Calls the Show-InstallationWelcome Function differently based on if it is an (un)intallation.
+		Allows displaying custom messages defined in an XML file. Default value: $false. This parameter is optional.
+	.PARAMETER IsInstall
+		Indicates if the function is being used for installation or uninstallation. This parameter is mandatory.
 	.PARAMETER ContinueType
-		Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
+		Defines behavior after dialog timeout. Influences further actions. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER UserCanCloseAll
-		Specifies if the user can close all applications.
-		Defaults to the corresponding value from the $global:SetupCfg object.
+		Allows users to close all specified applications. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER UserCanAbort
-		Specifies if the user can abort the process.
-		Defaults to the corresponding value from the $global:SetupCfg object.
+		Permits users to abort the installation process. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER ApplyContinueTypeOnError
-		Specifies if the ContinueType should be applied on error.
-		Defaults to the corresponding value from the $global:SetupCfg object.
+		Determines if ContinueType should be applied in case of an error. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER ScriptRoot
-		Defines the parent directory of the script.
-		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+		Defines the parent directory of the script. Defaults to the script root variable set by AppDeployToolkitMain.ps1. This parameter is optional.
 	.PARAMETER ProcessIdToIgnore
-		Defines a process id to ignore.
-		Defaults to $PID
+		Specifies a process ID to ignore during operations. Defaults to the current process ID. This parameter is optional.
+	.EXAMPLE
+		Show-NxtInstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"; Description = "Internet Explorer"}, [pscustomobject]@{Name = "winword"; Description = "Microsoft Word"}, [pscustomobject]@{Name = "excel"; Description = "Microsoft Excel"}) -CloseAppsCountdown 600 -Silent
+		Silently closes Internet Explorer, Microsoft Word, and Microsoft Excel without user interaction, with a countdown of 10 minutes (600 seconds).
+
+	.EXAMPLE
+		Show-NxtInstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "outlook"; Description = "Microsoft Outlook"}) -CloseAppsCountdown 300 -PersistPrompt -AllowDefer -DeferDays 5
+		Displays a persistent prompt every few seconds to close Microsoft Outlook with a 5-minute countdown. Allows the user to defer the installation for up to 5 days.
+
+	.EXAMPLE
+		Show-NxtInstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "chrome"; Description = "Google Chrome"}, [pscustomobject]@{Name = "firefox"; Description = "Mozilla Firefox"}) -BlockExecution -AllowDefer -DeferDeadline '25/08/2013'
+		Blocks Google Chrome and Mozilla Firefox from executing during installation and allows the user to defer the installation until the specified deadline.
+
+	.EXAMPLE
+		Show-NxtInstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "notepad"; Description = "Notepad"}) -PromptToSave -CustomText -MinimizeWindows
+		Prompts the user to save work in Notepad before closing it with custom text, minimizing other windows when displaying the prompt.
 	.OUTPUTS
-		Exit code depending on the user's response or the timeout.
-	.EXAMPLE
-		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"},[pscustomobject]@{Name = "winword"},[pscustomobject]@{Name = "excel"})
-		Prompt the user to close Internet Explorer, Word and Excel.
-	.EXAMPLE
-		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"},[pscustomobject]@{Name = "winword"}) -Silent
-		Close Word and Excel without prompting the user.
-	.EXAMPLE
-		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"},[pscustomobject]@{Name = "winword"}) -BlockExecution
-		Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
-	.EXAMPLE
-		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "winword";Description = "Microsoft Office Word"},[pscustomobject]@{Name = "excel";Description = "Microsoft Office Excel"}) -CloseAppsCountdown 600
-		Prompt the user to close Word and Excel, with customized descriptions for the applications and automatically close the applications after 10 minutes.
-	.EXAMPLE
-		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "excel"},[pscustomobject]@{Name = "winword"}) -PersistPrompt
-		Prompt the user to close Word and Excel.
-		By using the PersistPrompt switch, the dialog will return to the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml, so the user cannot ignore it by dragging it aside.
-	.EXAMPLE
-		Show-InstallationWelcome -AllowDefer -DeferDeadline '25/08/2013'
-		Allow the user to defer the installation until the deadline is reached.
-	.EXAMPLE
-		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "excel"},[pscustomobject]@{Name = "winword"}) -BlockExecution -AllowDefer -DeferTimes 10 -DeferDeadline '25/08/2013' -CloseAppsCountdown 600
-		Close Word and Excel and prevent the user from launching the applications while the installation is in progress.
-		Allow the user to defer the installation a maximum of 10 times or until the deadline is reached, whichever happens first.
-		When deferral expires, prompt the user to close the applications and automatically close them after 10 minutes.
-	.EXAMPLE
-		Show-InstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "excel"},[pscustomobject]@{Name = "winword"}) -UserCanCloseAll -UserCanAbort
-		Prompt the user to close Word and Excel. The user can close all applications or abort the installation.
-	.OUTPUTS
-		System.Int32.
-		Exit code depending on the user's response or the timeout.
+		System.Int32. Returns an exit code based on the user's response or timeout occurrence.
 	.NOTES
 		The code of this function is mainly adopted from the PSAppDeployToolkit Show-InstallationWelcome function licensed under the LGPLv3.
 	.LINK
@@ -8942,75 +8913,62 @@ Function Show-NxtWelcomePrompt {
 			3) Show a countdown before applications are automatically closed.
 		This function is based on the PSAppDeployToolkit Show-InstallationWelcome function from the PSAppDeployToolkit licensed under the LGPLv3 license.
 	.DESCRIPTION
-		The user is presented with a Windows Forms dialog box to close the applications themselves and continue or to have the script close the applications for them.
-		If the -AllowDefer option is set to true, an optional "Defer" button will be shown to the user. If they select this option, the script will exit and return a 1618 code (SCCM fast retry code).
-		The dialog box will timeout after the timeout specified in the XML configuration file (default 1 hour and 55 minutes) to prevent SCCM installations from timing out and returning a failure code to SCCM. When the dialog times out, the script will exit and return a 1618 code (SCCM fast retry code).
+		Show-NxtWelcomePrompt presents a dialog for managing application installations. Features include closing specified applications, deferring installation, and handling installation timeouts. Customization options for the prompt appearance and behavior are available.
 	.PARAMETER ProcessDescriptions
-		The descriptive names of the applications that are running and need to be closed.
+		Descriptive names of applications that need to be closed for installation. This parameter is mandatory.
 	.PARAMETER CloseAppsCountdown
-		Specify the countdown time in seconds before running applications are automatically closed when deferral is not allowed or expired.
+		Time in seconds before automatically closing applications or defer the installation.
 	.PARAMETER PersistPrompt
-		Specify whether to make the prompt persist in the center of the screen every couple of seconds, specified in the AppDeployToolkitConfig.xml.
+		Keeps the prompt persistent on the screen, reappearing every few seconds as specified in the AppDeployToolkitConfig.xml. Default: $false.
 	.PARAMETER AllowDefer
-		Specify whether to provide an option to defer the installation.
+		Enables the option for users to defer installation. Default: $false.
 	.PARAMETER DeferTimes
-		Specify the number of times the user is allowed to defer.
+		Specifies how many times a user can defer the installation.
 	.PARAMETER DeferDeadline
-		Specify the deadline date before the user is allowed to defer.
+		Sets a deadline date for deferring the installation.
 	.PARAMETER MinimizeWindows
-		Specifies whether to minimize other windows when displaying prompt. Default: $true.
+		Minimizes other windows when displaying the prompt. Default: $true.
 	.PARAMETER TopMost
-		Specifies whether the window is the topmost window. Default: $true.
+		Keeps the prompt window as the topmost window. Default: $true.
 	.PARAMETER CustomText
-		Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
+		Displays a custom message from the XML file for different languages. Default: $false.
 	.PARAMETER ContinueType
-		Specify if the window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
+		Determines the action after timeout: Continue or Abort. Default: Abort.
 	.PARAMETER UserCanCloseAll
-		Specifies if the user can close all applications. Default: $false.
+		Allows users to close all applications through the prompt. Default: $false.
 	.PARAMETER UserCanAbort
-		Specifies if the user can abort the process. Default: $false.
+		Allows users to abort the installation process. Default: $false.
 	.PARAMETER DeploymentType
-		The type of deployment that is performed.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
-	.PARAMETER ApplyContinueTypeOnError
-		Specifies if the ContinueType should be applied in case of an error. Default: $false.
+		Specifies the type of deployment, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER InstallTitle
-		The title of the installation.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		Title of the installation, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER AppDeployLogoBanner
-		The logo banner to display in the prompt.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		Logo banner for the prompt, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER AppDeployLogoBannerDark
-		The dark logo banner to display in the prompt.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		Dark theme logo banner for the prompt, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER EnvProgramData
-		The path to the ProgramData folder.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		Path to the ProgramData folder, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER AppVendor
-		The vendor of the application.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		Vendor of the application, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER AppName
-		The name of the application.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		Name of the application, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER AppVersion
-		The version of the application.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		Version of the application, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER Logname
-		The name of the log file.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		Name of the log file, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER ProcessIdToIgnore
-		The process ID to ignore.
-		Defaults to the ID of the current process $PID.
-	.INPUTS
-		None
-		You cannot pipe objects to this function.
+		Process ID to ignore, defaulting to the current process ID $PID.
+	.EXAMPLE
+		Show-NxtWelcomePrompt -ProcessDescriptions "Notepad, Calculator" -CloseAppsCountdown 300 -AllowDefer $true
+		This example shows a prompt to close Notepad and Calculator, with a 5-minute countdown and the option to defer.
+	.EXAMPLE
+		Show-NxtWelcomePrompt -ProcessDescriptions "Word, Excel" -CustomText $true -TopMost $true
+		Demonstrates a prompt with custom text, set to remain as the topmost window, targeting Word and Excel.
 	.OUTPUTS
 		System.String
 		Returns the user's selection.
-	.EXAMPLE
-		Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10
 	.NOTES
-		This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
+		This function should not be called directly in most cases. It is designed for internal script use, adapting from the PSAppDeployToolkit.
 		The code of this function is mainly adopted from the PSAppDeployToolkit Show-InstallationWelcome function licensed under the LGPLv3 license.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
@@ -9204,15 +9162,19 @@ Function Show-NxtWelcomePrompt {
 function Stop-NxtProcess {
 	<#
 	.SYNOPSIS
-		Stops a process by name.
+		Stops a specified process using either its name or a WQL query.
 	.DESCRIPTION
-		Wrapper of the native Stop-Process cmdlet.
+		The Stop-NxtProcess function is a wrapper for the Stop-Process cmdlet, allowing users to terminate processes by name. It supports WQL query syntax for advanced process selection. The function requires the process name to be specified and optionally accepts a WQL Filter against the Win32_Process class.
 	.PARAMETER Name
-		Name of the process.
+		The name of the process to stop. This parameter is mandatory. It is interpreted as a WQL query if the IsWql parameter is set to $true.
 	.PARAMETER IsWql
-		Name should be interpreted as a WQL query.
+		Indicates if the 'Name' parameter should be interpreted as a WQL query. Default is $false.
 	.EXAMPLE
-		Stop-NxtProcess -Name Notepad
+		Stop-NxtProcess -Name "Notepad"
+		This example stops all instances of Notepad.
+	.EXAMPLE
+		Stop-NxtProcess -Name "name like '%chrome%'" -IsWql $true
+		This example uses a WQL query to stop all processes with 'chrome' in their name.
 	.OUTPUTS
 		none.
 	.LINK
@@ -9288,47 +9250,29 @@ function Stop-NxtProcess {
 function Switch-NxtMSIReinstallMode {
 	<#
 	.SYNOPSIS
-		Switches the ReinstallMode for a msi setup depending on comparison of exact DisplayVersion if the target application is installed.
+		Switches the ReinstallMode of an MSI setup based on a comparison of the exact DisplayVersion of the target application.
 	.DESCRIPTION
-		Changes the ReinstallMode for the package depending on comparison of exact DisplayVersion if the application is present.
-		Only applies to MSI Installer.
+		This function adjusts the ReinstallMode for an MSI package based on the comparison of the DisplayVersion if the application is already installed. It is designed specifically for MSI installers and uses various parameters to identify the uninstall registry key, display names to exclude, and the expected display version.
 	.PARAMETER UninstallKey
-		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
-		Can be found under "HKLM:\Software\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
-		Defaults to the corresponding value from the PackageConfig object.
+		The uninstall registry key name of the application. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
-		Determines if the value given as UninstallKey should be interpreted as a displayname.
-		Defaults to the corresponding value from the PackageConfig object.
+		Indicates if the UninstallKey should be interpreted as a display name. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyContainsWildCards
-		Determines if the value given as UninstallKey contains WildCards.
-		If set to $true, "*" are interpreted as WildCards.
-		If set to $false, "*" are interpreted as part of the actual string.
-		Defaults to the corresponding value from the PackageConfig object.
+		Determines if UninstallKey includes wildcards. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayNamesToExclude
-		DisplayName(s) to exclude from the search result.
-		Use commas to separate more than one value.
-		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
-		We reccommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
-		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
+		List of display names to exclude from the search. Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
 	.PARAMETER DisplayVersion
-		Expected version of installed application from a msi setup.
-		Defaults to the corresponding value 'DisplayVersion' from the PackageConfig object.
+		The expected version of the installed MSI application. Defaults to the 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER InstallMethod
-		Defines the type of the installer used in this package for installation.
-		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
-		Defaults to the corresponding value for installation case and uninstallation case from the PackageConfig object ('InstallMethod' includes repair mode or 'UninstallMethod').
+		Type of installer used for the package, applicable to MSI installers. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ReinstallMode
-		Defines how a reinstallation should be performed. By default read from global parameter (especially for msi setups this maybe switched after display version check inside of this function!).
-		Defaults to the corresponding value from the PackageConfig object.
+		Defines how a reinstallation should be performed. Defaults to the corresponding value from the PackageConfig object. Especially for msi setups this might be switched after display version check inside of this function
 	.PARAMETER MSIInplaceUpgradeable
-		Defines the behavior of msi setup process in case of an upgrade.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defines if the MSI setup allows in-place upgrades. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER MSIDowngradeable
-		Defines the behavior of msi setup process in case of a downgrade.
-		Defaults to the corresponding value from the PackageConfig object.
+		Indicates if the MSI setup allows downgrades. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeploymentType
-		The type of deployment that is performed.
-		Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
+		The type of deployment being performed. Defaults to the corresponding call parameter of the Deploy-Application.ps1 script.
 	.EXAMPLE
 		Switch-NxtMSIReinstallMode
 	.EXAMPLE
@@ -9446,41 +9390,27 @@ function Switch-NxtMSIReinstallMode {
 function Test-NxtAppIsInstalled {
 	<#
 	.SYNOPSIS
-		Detects if the target application is installed.
+		Checks whether a specific application is installed on the system.
 	.DESCRIPTION
-		Uses the registry Uninstall Key to detect if the application is present.
+		This function searches the system registry Uninstall Key to determine if a given application is installed. It provides various parameters to specify the search criteria, including the name of the uninstall registry key, whether the key should be interpreted as a display name, and if wildcards are used in the key. It also allows excluding certain display names from the search.
 	.PARAMETER UninstallKey
-		Name of the uninstall registry key of the application (e.g. "This Application_is1" or "{XXXXXXXX-XXXX-XXXXXXXX-XXXXXXXXXXXX}").
-		Can be found under "HKLM:\Software\[WOW6432Node\]Microsoft\Windows\CurrentVersion\Uninstall\".
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the uninstall registry key name of the application to check. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
-		Determines if the value given as UninstallKey should be interpreted as a displayname.
-		Defaults to the corresponding value from the PackageConfig object.
+		Indicates whether the UninstallKey should be treated as a display name. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallKeyContainsWildCards
-		Determines if the value given as UninstallKey contains WildCards.
-		If set to $true, "*" are interpreted as WildCards.
-		If set to $false, "*" are interpreted as part of the actual string.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies whether the UninstallKey includes wildcards. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayNamesToExclude
-		DisplayName(s) to exclude from the search result.
-		Use commas to separate more than one value.
-		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
-		We reccommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
-		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
+		Lists the display names to be excluded from the search. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeploymentMethod
-		Defines the type of the installer used in this package.
-		Only applies to MSI Installer and is necessary when MSI product code is not independent (i.e. ProductCode depends on OS language).
-		Defaults to the corresponding value for installation case and uninstallation case from the PackageConfig object ('InstallMethod' includes repair mode or 'UninstallMethod').
-	.EXAMPLE
-		Test-NxtAppIsInstalled
+		Defines the installer type, applicable only for MSI installers. Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Test-NxtAppIsInstalled -UninstallKey "This Application_is1"
+		Checks if an application with the uninstall key "This Application_is1" is installed. The values not specified explicitly are taken from the PackageConfig.json.
 	.EXAMPLE
-		Test-NxtAppIsInstalled -UninstallKey "This Application" -UninstallKeyIsDisplayName $true
-	.EXAMPLE
-		Test-NxtAppIsInstalled -UninstallKey "SomeApp - Version *" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $true -DisplayNamesToExclude "SomeApp - Version 1.0","SomeApp - Version 1.1",$global:PackageConfig.UninstallDisplayName
-	.EXAMPLE
-		Test-NxtAppIsInstalled -UninstallKey "***MySuperSparklingApp***" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $false
+		Test-NxtAppIsInstalled -UninstallKey "*paper*" -DisplayNamesToExclude @() -UninstallKeyContainsWildCards $true -UninstallKeyIsDisplayName $false -DeploymentMethod Setup
+		Searches for any installed application with a display name containing s"paper" using wildcards.
+	.OUTPUTS
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -9541,28 +9471,25 @@ function Test-NxtAppIsInstalled {
 function Test-NxtConfigVersionCompatibility {
 	<#
 	.SYNOPSIS
-		Tests if the ConfigVersion of the PackageConfig.json is equal to Deploy-Application.ps1 and AppDeployToolkitExtensions.ps1.
+		Validates the compatibility of ConfigVersion between PackageConfig.json, Deploy-Application.ps1, and AppDeployToolkitExtensions.ps1.
 	.DESCRIPTION
-		Tests if the ConfigVersion of the PackageConfig.json is equal to Deploy-Application.ps1 and AppDeployToolkitExtensions.ps1. Throws an error if the versions are not equal.
+		This function compares the ConfigVersion in PackageConfig.json with the versions in Deploy-Application.ps1 and AppDeployToolkitExtensions.ps1. It ensures consistency across these configurations and throws an error if there is a version mismatch.
 	.PARAMETER ConfigVersion
-		Version of the config file.
-		Defaults to $global:PackageConfig.ConfigVersion.
+		The version number of the configuration file. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeployApplicationPath
-		Path to the Deploy-Application.ps1 file.
-		Defaults to $global:DeployApplicationPath.
+		The file path to Deploy-Application.ps1. Defaults to $global:DeployApplicationPath.
 	.PARAMETER AppDeployToolkitExtensionsPath
-		Path to the AppDeployToolkitExtensionsPath.ps1 file.
-		Defaults to $global:AppDeployToolkitExtensionsPath.
-	.OUTPUTS
-		none.
+		The file path to AppDeployToolkitExtensions.ps1. Defaults to $global:AppDeployToolkitExtensionsPath.
 	.EXAMPLE
 		Test-NxtConfigVersionCompatibility
-		Use the default values to test the version compatibility.
+		Tests the version compatibility using the default ConfigVersion and file paths.
 	.EXAMPLE
-		Test-NxtConfigVersionCompatibility -ConfigVersion 2023.12.31.1 -DeployApplicationPath "C:\temp\packagepath\Deploy-Application.ps1" -AppDeployToolkitExtensionsPath "C:\temp\packagepath\AppDeploymentToolkit\AppDeployToolkitExtensions.ps1"
-		Use custom values to test the version compatibility.
+		Test-NxtConfigVersionCompatibility -ConfigVersion 2023.12.31.1 -DeployApplicationPath "C:\temp\packagepath\Deploy-Application.ps1" -AppDeployToolkitExtensionsPath "C:\temp\packagepath\AppDeployToolkitExtensions.ps1"
+		Tests the version compatibility using specified ConfigVersion and custom file paths.
+	.OUTPUTS
+		None.
 	.NOTES
-		This is an internal function.
+		This is an internal function designed to ensure version consistency within deployment scripts.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -9605,15 +9532,20 @@ function Test-NxtConfigVersionCompatibility {
 #region Function Test-NxtLocalGroupExists
 function Test-NxtLocalGroupExists {
 	<#
+	.SYNOPSIS
+		Checks for the existence of a local group on a specified or default computer.
 	.DESCRIPTION
-		Checks if a local group exists by name.
+		This function verifies if a specified local group exists on a computer. It requires the name of the group and can optionally target a specific computer; otherwise, it defaults to the local system.
 	.PARAMETER GroupName
-		Name of the group.
-	.PARAMETER Computername
-		Name of the Computer,
-		Defaults to $env:COMPUTERNAME.
+		The name of the local group to check. This parameter is mandatory.
+	.PARAMETER ComputerName
+		Specifies the name of the computer to check for the group. If not provided, it defaults to the name of the local computer.
 	.EXAMPLE
 		Test-NxtLocalGroupExists -GroupName "Administrators"
+		Checks if the "Administrators" group exists on the local computer.
+	.EXAMPLE
+		Test-NxtLocalGroupExists -GroupName "Users" -ComputerName "Server01"
+		Checks if the "Users" group exists on the computer named "Server01".
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -9651,15 +9583,20 @@ function Test-NxtLocalGroupExists {
 #region Function Test-NxtLocalUserExists
 function Test-NxtLocalUserExists {
 	<#
+	.SYNOPSIS
+		Checks for the existence of a local user on a specified or default computer.
 	.DESCRIPTION
-		Checks if a local user exists by name.
+		This function determines if a specified local user exists on a computer. It requires the name of the user and can optionally target a specific computer; otherwise, it defaults to the local system.
 	.PARAMETER UserName
-		Name of the user.
+		The name of the local user to check. This parameter is mandatory.
 	.PARAMETER ComputerName
-		Name of the Computer,
-		Defaults to $env:COMPUTERNAME.
+		Specifies the name of the computer to check for the user. If not provided, it defaults to the name of the local computer.
 	.EXAMPLE
-		Test-NxtLocalUserExists -UserName "Administrator".
+		Test-NxtLocalUserExists -UserName "Administrator"
+		Determines if the "Administrator" user exists on the local computer.
+	.EXAMPLE
+		Test-NxtLocalUserExists -UserName "JohnDoe" -ComputerName "Workstation01"
+		Determines if the user "JohnDoe" exists on the computer named "Workstation01".
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -9699,23 +9636,28 @@ function Test-NxtLocalUserExists {
 function Test-NxtObjectValidation {
 	<#
 	.SYNOPSIS
-		Validates the package configuration object.
+		Validates the configuration of a given object using specified rules.
 	.DESCRIPTION
-		Validates the package configuration object against the validation rules.
+		This function checks a given object against predefined validation rules to ensure it meets certain criteria. The validation can be customized based on the provided rules and the nature of the object.
 	.PARAMETER ValidationRule
-		Validation rule object.
+		Specifies the validation rules to be applied. This parameter is mandatory.
 	.PARAMETER ObjectToValidate
-		Object to validate.
+		The object to be validated. This parameter is mandatory.
 	.PARAMETER ContainsDirectValues
-		Indicates if the object contains direct values.
+		Indicates whether the object contains direct values. Default is $false.
 	.PARAMETER ParentObjectName
-		Name of the parent object.
+		Specifies the name of the parent object for context in validation.
 	.PARAMETER ContinueOnError
-		Indicates if the validation should continue on error.
+		Determines if the validation should continue after encountering an error.
 	.EXAMPLE
+		Check the neo42PackageConfig.json and its validationrules file as startingpoint.
 		Test-NxtObjectValidation -ValidationRule $ValidationRule -ObjectToValidate $ObjectToValidate
+	.EXAMPLE
+		Test-NxtObjectValidation -ValidationRule $ValidationRule -ObjectToValidate $ObjectToValidate -ContinueOnError $true
 	.OUTPUTS
 		none.
+	.NOTES
+		Ensure that the validation rules are properly defined and relevant to the object being validated.
 	.LINK
 		private
 	#>
@@ -9815,24 +9757,26 @@ function Test-NxtObjectValidation {
 function Test-NxtObjectValidationHelper {
 	<#
 	.SYNOPSIS
-		Tests for Regex, ValidateSet, AllowEmpty etc.
+		Assists in validating objects with specific rules, including regex and set validation.
 	.DESCRIPTION
-		Helper function for Test-NxtObjectValidation.
+		This helper function is used in conjunction with Test-NxtObjectValidation to perform detailed validations on objects. It includes checks for regex patterns, validate sets, and allows handling empty values based on the defined rules.
 	.PARAMETER ValidationRule
-		ValidationRule for the object.
+		The specific validation rule applied to the object. This parameter is mandatory.
 	.PARAMETER ObjectToValidate
-		Object to validate.
+		The object that is being validated. This parameter is mandatory.
 	.PARAMETER ValidationRuleKey
-		ValidationRuleKey for the object, needed for logging.
+		The key associated with the validation rule, used for logging purposes.
 	.PARAMETER ParentObjectName
-		ParentObjectName for the object, needed for logging.
+		Name of the parent object, used for contextual logging.
 	.PARAMETER ContinueOnError
-		Continue on error.
+		If set to true, the function continues executing even after encountering an error.
 	.EXAMPLE
 		Test-NxtObjectValidationHelper -ValidationRule $ValidationRule.$ValidationRuleKey -ObjectToValidate $ObjectToValidate.$validationRuleKey -ValidationRuleKey $validationRuleKey -ContinueOnError $ContinueOnError
 	.OUTPUTS
 		none.
-	.Link
+	.NOTES
+		Use this function as part of a larger validation process, particularly when detailed checks are required for specific object properties.
+	.LINK
 		private
 	#>
 	[CmdletBinding()]
@@ -9931,18 +9875,19 @@ function Test-NxtObjectValidationHelper {
 function Test-NxtPackageConfig {
 	<#
 	.SYNOPSIS
-		Executes validation steps for custom variables of the package configuration.
+		Validates the package configuration using custom validation rules.
 	.DESCRIPTION
-		Is only called in the Main function and should not be modified!
+		This function validates a package configuration object based on specified rules. It should be called within the Main function and not be modified externally.
 	.PARAMETER PackageConfig
-		Collection of variables to validate.
-		Default: $global:PackageConfig
+		The package configuration object to be validated. Default is $global:PackageConfig.
 	.PARAMETER ContinueOnError
-		Continue on error.
-		Default: $false
+		Specifies whether to continue execution upon encountering an error. Default is $false.
 	.EXAMPLE
 		Test-NxtPackageConfig
-		Test-NxtPackageConfig -PackageConfig "$global:PackageConfig"
+		Validates the package configuration using the default PackageConfig object.
+	.EXAMPLE
+		Test-NxtPackageConfig -PackageConfig $global:PackageConfig -ContinueOnError $true
+		Validates the package configuration using the specified PackageConfig object and continues execution upon encountering an error.
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -9985,39 +9930,33 @@ function Test-NxtFolderPermissions {
 	.SYNOPSIS
 		Checks and compares the actual permissions of a specified folder against expected permissions.
 	.DESCRIPTION
-		The function is designed to evaluate a folder's security settings by comparing its actual permissions, owner, and other security attributes with predefined expectations.
-		This function is particularly useful for anyone who need to ensure that folder permissions align with security policies or compliance standards.
+		Test-NxtFolderPermissions evaluates a folder's security settings by comparing its actual permissions, owner, and other security attributes against predefined expectations. It's useful for ensuring folder permissions align with security policies or compliance standards.
 	.PARAMETER Path
-		Specifies the full path of the folder whose permissions are to be tested.
-		This parameter is mandatory.
+		Specifies the full path of the folder whose permissions are to be tested. This parameter is mandatory.
 	.PARAMETER FullControlPermissions
-		Defines the expected Full Control permissions. 
-		These are compared against the actual Full Control permissions of the folder.
+		Defines the expected Full Control permissions to compare against the folder's actual Full Control permissions.
 	.PARAMETER WritePermissions
-		Specifies the expected Write permissions.
-		These are compared with the folder's actual Write permissions.
+		Specifies the expected Write permissions to compare with the folder's actual Write permissions.
 	.PARAMETER ModifyPermissions
-		Indicates the expected Modify permissions that the folder should have. 
-		These are compared with the folder's actual Modify permissions.
+		Indicates the expected Modify permissions to compare with the folder's actual Modify permissions.
 	.PARAMETER ReadAndExecutePermissions
-		Specifies the expected Read and Execute permissions.
-		These are compared with the folder's actual Read and Execute permissions.
+		Specifies the expected Read and Execute permissions to compare with the folder's actual Read and Execute permissions.
 	.PARAMETER Owner
-		Defines the expected owner of the folder as a WellKnownSidType. 
-		This is compared with the actual owner of the folder.
+		Defines the expected owner of the folder as a WellKnownSidType, compared with the folder's actual owner.
 	.PARAMETER CustomDirectorySecurity
-		Allows for providing a custom DirectorySecurity object for advanced comparison. 
-		If other parameters are specified, this object will be modified accordingly.
+		Allows providing a custom DirectorySecurity object for advanced comparison. Modified if other parameters are specified.
 	.PARAMETER CheckIsInherited
 		Indicates if the IsInherited property should be checked.
 	.PARAMETER IsInherited
-		Indicates if the IsInherited property should be set to true or false.
+		Specifies if the IsInherited property should be set to true or false.
 	.EXAMPLE
-		Test-NxtFolderPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) 
-		Compares the permissions and owner of "C:\Temp\MyFolder" with the specified parameters.
+		Test-NxtFolderPermissions -Path "C:\Temp\MyFolder" -FullControlPermissions @([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid) -ReadAndExecutePermissions @([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid) -Owner $([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid)
+		This example compares the permissions and owner of "C:\Temp\MyFolder" with specified parameters.
+	.EXAMPLE
+		Test-NxtFolderPermissions -Path "D:\Data" -ModifyPermissions @([System.Security.Principal.WellKnownSidType]::NetworkServiceSid) -Owner $([System.Security.Principal.WellKnownSidType]::LocalSystemSid)
+		This example checks if "D:\Data" has the specified Modify permissions and owner.
 	.OUTPUTS
 		System.Boolean.
-		Returns 'True' if the folder's permissions and owner match the specified criteria. Returns 'False' if discrepancies are found.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -10149,19 +10088,25 @@ function Test-NxtFolderPermissions {
 #region Function Test-NxtProcessExists
 function Test-NxtProcessExists {
 	<#
+	.SYNOPSIS
+		Tests for the existence of a process by name or custom WQL query.
 	.DESCRIPTION
-		Tests if a process exists by name or custom WQL query.
+		The Test-NxtProcessExists function checks if a specified process is currently running on the system. It can search for a process by its name or use a custom WQL query for more advanced searching.
 	.PARAMETER ProcessName
-		Name of the process or WQL search string. 
-		Must include full file name including extension.
-		Supports wildcard character * and %.
+		The name of the process to search for, or a WQL search string. This parameter is mandatory.
+		Must include the full file name, including its extension.
+		Supports the use of wildcard characters, such as * and %.
 	.PARAMETER IsWql
-		Defines if the given ProcessName is a WQL search string.
-		Defaults to $false.
-	.OUTPUTS
-		System.Boolean.
+		Indicates whether the ProcessName is a WQL search string.
+		This parameter is not mandatory and defaults to $false.
 	.EXAMPLE
 		Test-NxtProcessExists "Notepad.exe"
+		Checks if the process 'Notepad.exe' is currently running.
+	.EXAMPLE
+		Test-NxtProcessExists -ProcessName "Win32_Process WHERE Name LIKE '%chrome%'" -IsWql $true
+		Uses a WQL query to check if any process with 'chrome' in its name is running.
+	.OUTPUTS
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -10209,31 +10154,29 @@ function Test-NxtProcessExists {
 function Test-NxtStringInFile {
 	<#
 	.SYNOPSIS
-		Tests if a string exists in a file.
+		Searches for a specified string or regex pattern within a file.
 	.DESCRIPTION
-		Tests if a string exists in a file. Returns $true if the string is found, $false if not.
+		The Test-NxtStringInFile function searches for a specified string or regex pattern within a file and returns a Boolean result. It supports regular expression searches, case-insensitive searches, and can handle different file encodings.
 	.PARAMETER Path
-		The path to the file.
+		The file path where the search is to be performed. This parameter is mandatory.
 	.PARAMETER SearchString
-		The string to search for. May contain a regex if ContainsRegex is set to $true.
+		The string or regex pattern to search for in the file. This parameter is mandatory.
 	.PARAMETER ContainsRegex
-		Indicates if the string is a regex.
-		Defaults to $false.
+		Indicates whether the SearchString is a regular expression. Defaults to $false.
 	.PARAMETER IgnoreCase
-		Indicates if the search should be case insensitive.
-		Defaults to $true.
+		Specifies if the search should be case insensitive. Defaults to $true.
 	.PARAMETER Encoding
-		The encoding of the file can explicitly be set here.
+		Specifies the encoding of the file. Optional parameter.
 	.PARAMETER DefaultEncoding
-		The default encoding of the file if auto detection fails.
-	.OUTPUTS
-		System.Boolean.
+		Specifies the default encoding to use if the file's encoding cannot be auto-detected. Optional parameter.
 	.EXAMPLE
 		Test-NxtStringInFile -Path "C:\temp\test.txt" -SearchString "test"
-		Searches for a string.
+		Searches for the string "test" in the file located at "C:\temp\test.txt".
 	.EXAMPLE
 		Test-NxtStringInFile -Path "C:\temp\test.txt" -ContainsRegex $true -SearchString "test.*"
-		Searches for a regex.
+		Uses a regular expression to search for any string starting with "test" in the file located at "C:\temp\test.txt".
+	.OUTPUTS
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -10329,23 +10272,27 @@ function Test-NxtStringInFile {
 function Test-NxtXmlNodeExists {
 	<#
 	.SYNOPSIS
-		Tests if a node exists in an xml file.
+		Checks for the existence of a specified XML node in an XML file.
 	.DESCRIPTION
-		Tests if a node exists in an xml file, does not support xml namespaces.
+		The Test-NxtXmlNodeExists function verifies the existence of a node in an XML file. It supports filtering nodes based on specified attributes but does not handle XML namespaces. This function is useful for XML file manipulation and data verification in scripts.
 	.PARAMETER FilePath
-		The path to the xml file.
+		The path to the XML file. This parameter is mandatory.
 	.PARAMETER NodePath
-		The path to the node to test.
+		The XPath to the node that needs to be tested for existence. This parameter is mandatory.
 	.PARAMETER FilterAttributes
-		The attributes to Filter the node.
-	.EXAMPLE
-		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2")
+		A hashtable of attributes to filter the node. Optional parameter.
 	.EXAMPLE
 		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
+		Tests for the existence of a node at the specified XPath in 'xmlstuff.xml'.
+	.EXAMPLE
+		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2")
+		Tests for a node with a specific attribute value in 'xmlstuff.xml'.
 	.EXAMPLE
 		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2","other=1232")
+		Tests for a node with multiple attribute filters in 'xmlstuff.xml'.
 	.OUTPUTS
 		System.Boolean.
+		Returns $true if the node exists with the specified attributes, otherwise returns $false.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -10398,74 +10345,52 @@ function Test-NxtXmlNodeExists {
 function Uninstall-NxtApplication {
 	<#
 	.SYNOPSIS
-		Defines the required steps to uninstall the application based on the target installer type
+		Uninstalls an application based on the specified uninstallation parameters.
 	.DESCRIPTION
-		Is only called in the Main function and should not be modified!
+		The Uninstall-NxtApplication function is designed to automate the uninstallation process of an application. It covers various uninstallation methods and handles complex scenarios, including the use of wildcards in uninstall keys, log file generation, and acceptance of specific exit codes.
 	.PARAMETER AppName
-		Specifies the Application Name used in the registry etc.
-		Defaults to the corresponding value from the PackageConfig object.
+		The name of the application to be uninstalled. Defaults to the AppName from the PackageConfig object.
 	.PARAMETER UninstallKey
-		Specifies the original UninstallKey set by the Installer in this Package.
-		Defaults to the corresponding value from the PackageConfig object.
+		The uninstallation key set by the installer. Defaults to the UninstallKey from the PackageConfig object.
 	.PARAMETER UninstallKeyIsDisplayName
-		Determines if the value given as UninstallKey should be interpreted as a displayname.
-		Only applies to Inno Setup, Nullsoft and BitRockInstaller.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies if the UninstallKey should be treated as a display name. Defaults to the UninstallKeyIsDisplayName from the PackageConfig object.
 	.PARAMETER UninstallKeyContainsWildCards
-		Determines if the value given as UninstallKey contains WildCards.
-		If set to $true "*" are interpreted as WildCards.
-		If set to $false "*" are interpreted as part of the actual string.
-		Defaults to the corresponding value from the PackageConfig object.
+		Indicates if the UninstallKey contains wildcards. Defaults to the UninstallKeyContainsWildCards from the PackageConfig object.
 	.PARAMETER DisplayNamesToExclude
-		DisplayName(s) to exclude, when retrieving Data about the application from the uninstall key in the registry.
-		Use commas to separate more than one value.
-		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
-		We reccommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
-		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
+		Specifies display names to exclude during uninstallation. Defaults to the DisplayNamesToExcludeFromAppSearches from the PackageConfig object.
 	.PARAMETER UninstLogFile
-		Defines the path to the Logfile that should be used by the uninstaller.
-		Defaults to the corresponding value from the PackageConfig object.
+		The path to the uninstallation log file. Defaults to the UninstLogFile from the PackageConfig object.
 	.PARAMETER UninstFile
-		Defines the path to the Installation File.
-		Defaults to the corresponding value from the PackageConfig object.
+		The path to the uninstallation executable file. Defaults to the UninstFile from the PackageConfig object.
 	.PARAMETER UninstPara
-		Defines the parameters which will be passed in the UnInstallation Commandline.
-		Defaults to the corresponding value from the PackageConfig object.
+		The parameters for the uninstallation command line. Defaults to the UninstPara from the PackageConfig object.
 	.PARAMETER AppendUninstParaToDefaultParameters
-		If set to $true the parameters specified with UninstPara are added to the default parameters specified in the XML configuration file.
-		If set to $false the parameters specified with UninstPara overwrite the default parameters specified in the XML configuration file.
-		Defaults to the corresponding value from the PackageConfig object.
+		Determines if UninstPara should be appended to the default parameters. Defaults to the AppendUninstParaToDefaultParameters from the PackageConfig object.
 	.PARAMETER AcceptedUninstallExitCodes
-		Defines a list of exit codes or * for all exit codes that will be accepted for success by called setup execution.
-		Defaults to the corresponding value from the PackageConfig object.
+		List of exit codes accepted as successful uninstallation. Defaults to the AcceptedUninstallExitCodes from the PackageConfig object.
 	.PARAMETER AcceptedUninstallRebootCodes
-		Defines a list of reboot codes that will be accepted for requested reboot by called setup execution. A matching code will be translated to code '3010'.
-		Defaults to the corresponding value from the PackageConfig object.
+		List of reboot codes accepted for a requested reboot. Defaults to the AcceptedUninstallRebootCodes from the PackageConfig object.
 	.PARAMETER UninstallMethod
-		Defines the type of the uninstaller used in this package.
-		Defaults to the corresponding value from the PackageConfig object
+		The type of the uninstaller used. Defaults to the UninstallMethod from the PackageConfig object.
 	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
-		Timeout in seconds the function waits and checks for the condition to occur.
-		Defaults to the corresponding value from the PackageConfig object.
+		Timeout in seconds to wait for a successful condition to occur. Defaults to the PreSuccessCheckTotalSecondsToWaitFor from the PackageConfig object.
 	.PARAMETER PreSuccessCheckProcessOperator
-		Operator to define process condition requirements.
-		Defaults to the corresponding value from the PackageConfig object.
+		Operator defining process condition requirements. Defaults to the PreSuccessCheckProcessOperator from the PackageConfig object.
 	.PARAMETER PreSuccessCheckProcessesToWaitFor
-		An array of process conditions to check for.
-		Defaults to the corresponding value from the PackageConfig object.
+		Array of process conditions to check. Defaults to the PreSuccessCheckProcessesToWaitFor from the PackageConfig object.
 	.PARAMETER PreSuccessCheckRegKeyOperator
-		Operator to define regkey condition requirements.
-		Defaults to the corresponding value from the PackageConfig object.
+		Operator defining regkey condition requirements. Defaults to the PreSuccessCheckRegKeyOperator from the PackageConfig object.
 	.PARAMETER PreSuccessCheckRegkeysToWaitFor
-		An array of regkey conditions to check for.
-		Defaults to the corresponding value from the PackageConfig object.
+		Array of regkey conditions to check. Defaults to the PreSuccessCheckRegkeysToWaitFor from the PackageConfig object.
 	.PARAMETER DirFiles
-		The directory where the files are located.
-		Defaults to $dirFiles.
+		The directory where the files are located. Defaults to $dirFiles.
 	.PARAMETER UninsBackupPath
-		The directory where the backup files are located.
+		The directory for backup files. Optional parameter.
 	.EXAMPLE
 		Uninstall-NxtApplication
+		Executes the uninstallation process with the default parameters defined in the PackageConfig object.
+	.OUTPUTS
+		PSADTNXT.NxtApplicationResult.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11268,27 +11193,27 @@ function Unregister-NxtPackage {
 #region Function Update-NxtTextInFile
 function Update-NxtTextInFile {
 	<#
-  	.DESCRIPTION
+	.DESCRIPTION
 		Replaces text in a file by search string.
-  	.PARAMETER Path
+	.PARAMETER Path
 		Path to the File to be updated.
-  	.PARAMETER SearchString
+	.PARAMETER SearchString
 		String to be replaced in the File.
-  	.PARAMETER ReplaceString
+	.PARAMETER ReplaceString
 		The string to be inserted to the found occurrences.
-  	.PARAMETER Count
+	.PARAMETER Count
 		Number of occurrences to be replaced.
-  	.PARAMETER Encoding
+	.PARAMETER Encoding
 		Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding.
 	.PARAMETER DefaultEncoding
 		Encoding to be used in case the encoding could not be detected.
-  	.EXAMPLE
+	.EXAMPLE
 		Update-NxtTextInFile -Path C:\Temp\testfile.txt -SearchString "Hello" 
 	.OUTPUTS
 		none.
-  	.LINK
+	.LINK
 		https://neo42.de/psappdeploytoolkit
-  #>
+#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
@@ -11417,7 +11342,7 @@ function Update-NxtXmlNode {
 		Updates the node with the attribute "name" set to "NewNode2" to the attribute "name" set to "NewNode3".
 	.OUTPUTS
 		none.
-  	.LINK
+	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	param (
@@ -12087,7 +12012,7 @@ function Write-NxtXmlNode {
 		<item oor:path="/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Fac-tory[com.sun.star.presentation.PresentationDocument]">
 			<prop oor:name="ooSetupFactoryDefaultFilter" oor:op="fuse">
 				<value>Impress MS PowerPoint 2007 XML</value>
- 			</prop>
+			</prop>
 		</item>
 	.OUTPUTS
 		none.
