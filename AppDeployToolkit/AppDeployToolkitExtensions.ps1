@@ -6725,7 +6725,6 @@ function Remove-NxtEmptyRegistryKey {
             try {
 				Write-Log "Have to mount registry hive [$hiveRoot]." -Source ${CmdletName}
                 [System.Management.Automation.PSDriveInfo]$mountedDrive = New-PSDrive -PSProvider "Registry" -Name $hiveRoot -Root $hiveMap[$hiveRoot] -ErrorAction Stop
-				Write-Host $mountedDrive
             } catch {
 				Write-Log -Message "Failed to mount hive root [$hiveRoot] or cannot find mountpount." -Severity 3 -Source ${CmdletName}
                 return
