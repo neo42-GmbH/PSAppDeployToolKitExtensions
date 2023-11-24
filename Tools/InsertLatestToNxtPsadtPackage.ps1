@@ -305,8 +305,8 @@ function Update-NxtPSAdtPackage {
             #also update packageconfig.json so it contains all default values
             ## remove entries: "AcceptedRepairExitCodes" and "AcceptedMSIRepairExitCodes" (just to be sure!)
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
-            $content = $content -Replace ('  "AcceptedRepairExitCodes": "",'+"`n"),''
-            $content = $content -Replace ('  "AcceptedMSIRepairExitCodes": "",'+"`n"),''
+            $content = $content -replace ('  "AcceptedRepairExitCodes": "",'+"`n"),''
+            $content = $content -replace ('  "AcceptedMSIRepairExitCodes": "",'+"`n"),''
             Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             ## new entry: UninstallKeyContainsExpandVariables
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
@@ -328,7 +328,7 @@ function Update-NxtPSAdtPackage {
             [string]$PackageToUpdateContent = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$PackageToUpdateJsonContent = $content | ConvertFrom-Json
             if ($PackageToUpdateJsonContent.ConfigVersion -ne $ConfigVersion){
-                $PackageToUpdateContent = $PackageToUpdateContent -Replace ('  "ConfigVersion": "'+$PackageToUpdateJsonContent.ConfigVersion+'",'),('  "ConfigVersion": "'+$ConfigVersion+'",')
+                $PackageToUpdateContent = $PackageToUpdateContent -replace ('  "ConfigVersion": "'+$PackageToUpdateJsonContent.ConfigVersion+'",'),('  "ConfigVersion": "'+$ConfigVersion+'",')
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $PackageToUpdateContent -NoNewline
             }
             ## Update App variable
