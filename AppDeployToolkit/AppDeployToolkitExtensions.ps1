@@ -6718,22 +6718,27 @@ function Remove-NxtEmptyRegistryKey {
 
         $Path = $Path -ireplace "^HKEY_CURRENT_USER", "HKCU:" -ireplace "^HKEY_USERS", "HKU:" -ireplace "^HKEY_LOCAL_MACHINE", "HKLM:" -ireplace "^HKEY_CURRENT_CONFIG", "HKCC:" -ireplace "^HKEY_CLASSES_ROOT", "HKCR:"
         [string]$hiveRoot = $Path.Split(":") | Select-Object -First 1
-        [string[]]$mappedDrives = Get-PSDrive -PSProvider Registry | Select-Object -ExpandProperty Name
+        [string[]]$mountedHives = Get-PSDrive -PSProvider Registry | Select-Object -ExpandProperty Name
 
-        if ($mappedDrives -notcontains $hiveRoot) {
+		if ($hiveMap.Keys -notcontains $hiveRoot){
+			Write-Log -Message "Hive [$hiveRoot] is not a legitimite root." -Severity 3 -Source ${CmdletName}
+			return
+		} 
+		elseif ($mountedHives -notcontains $hiveRoot) {
             try {
-				Write-Log "Have to mount registry hive [$hiveRoot]."
+				Write-Log "Have to mount registry hive [$hiveRoot]." -Source ${CmdletName}
                 [System.Management.Automation.PSDriveInfo]$mountedDrive = New-PSDrive -PSProvider "Registry" -Name $hiveRoot -Root $hiveMap[$hiveRoot] -ErrorAction Stop
+				Write-Host $mountedDrive
             } catch {
-				Write-Log -Message "Failed to mount hive root [$hiveRoot]."
-                throw
+				Write-Log -Message "Failed to mount hive root [$hiveRoot] or cannot find mountpount." -Severity 3 -Source ${CmdletName}
+                return
             }
         }
 
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
-		if ($true -eq (Test-Path -LiteralPath $Path -PathType 'Container')) {
+		if ($true -eq (Test-Path -LiteralPath "$Path" -PathType 'Container')) {
 			try {
-				if ( ((Get-ChildItem $Path | Measure-Object).Count -eq 0) -and ($null -eq (Get-ItemProperty $Path)) ) {
+				if ( ((Get-ChildItem -LiteralPath $Path | Measure-Object).Count -eq 0) -and ($null -eq (Get-ItemProperty -LiteralPath $Path)) ) {
 					Write-Log -Message "Delete empty key [$Path]..." -Source ${CmdletName}
 					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveKey'
 					if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveKey)) {
@@ -6756,8 +6761,8 @@ function Remove-NxtEmptyRegistryKey {
 			Write-Log -Message "Key [$Path] does not exist..." -Source ${CmdletName}
 		}
 
-		if ($null -ne $drive) {
-            $mountedDrive | Remove-PSDrive 
+		if ($null -ne $mountedDrive) {
+            $mountedDrive | Remove-PSDrive
         }
 	}
 	End {
