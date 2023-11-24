@@ -55,11 +55,11 @@ Describe 'Set-NxtXmlNode' {
             ($xmlDoc.catalog.product.catalog_item | Where-Object { $_.gender -eq "Men's" }).InnerText | Should -Not -Be "Test"
             ($xmlDoc.catalog.product.catalog_item | Where-Object { $_.gender -eq "Women's" }).InnerText | Should -Be "Test"
         }
-        It 'Should create the node if node does not exist' -Skip {
-            Set-NxtXmlNode -FilePath $xml -NodePath '/new' -InnerText 'Test' | Should -BeNullOrEmpty
+        It 'Should create the node if node does not exist' {
+            Set-NxtXmlNode -FilePath $xml -NodePath '/catalog/new' -InnerText 'Test' | Should -BeNullOrEmpty
             $xmlDoc = [xml](Get-Content -Path $xml -Raw)
-            $xmlDoc.GetEnumerator().Name | Should -Contain 'new'
-            $xmlDoc.GetEnumerator().Name | Should -Contain 'product'
+            $xmlDoc.catalog.GetEnumerator().Name | Should -Contain 'new'
+            $xmlDoc.catalog.GetEnumerator().Name | Should -Contain 'product'
         }
     }
     Context 'When given invalid input' {
