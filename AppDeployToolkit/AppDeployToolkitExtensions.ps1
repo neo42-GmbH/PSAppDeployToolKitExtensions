@@ -6687,10 +6687,7 @@ function Remove-NxtEmptyRegistryKey {
 		This parameter is mandatory.
 	.EXAMPLE
 		Remove-NxtEmptyRegistryKey -Path "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment" 
-		This example removes the specified empty folder located at "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment".
-	.EXAMPLE
-		Remove-NxtEmptyRegistryKey -Path "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment" -RootPathToRecurseUpTo "HKLM:\SOFTWARE"
-		This example removes the keys up to HKLM:\SOFTWARE as long as they are empty
+		This example removes the specified empty key located at "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment".
 	.OUTPUTS
 		none.
 	.LINK
