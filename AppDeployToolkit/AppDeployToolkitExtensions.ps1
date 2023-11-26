@@ -10103,7 +10103,7 @@ function Test-NxtProcessExists {
 		Test-NxtProcessExists "Notepad.exe"
 		Checks if the process 'Notepad.exe' is currently running.
 	.EXAMPLE
-		Test-NxtProcessExists -ProcessName "Win32_Process WHERE Name LIKE '%chrome%'" -IsWql $true
+		Test-NxtProcessExists -ProcessName "Name LIKE '%chrome%'" -IsWql $true
 		Uses a WQL query to check if any process with 'chrome' in its name is running.
 	.OUTPUTS
 		System.Boolean.
@@ -10632,36 +10632,39 @@ function Uninstall-NxtApplication {
 function Uninstall-NxtOld {
 	<#
 	.SYNOPSIS
-		Uninstalls old package versions if corresponding value from the PackageConfig object "UninstallOld": true.
+		Uninstalls old package versions based on the specified parameters and PackageConfig object settings.
 	.DESCRIPTION
-		If $UninstallOld is set to true, the function checks for old versions of the same package / $PackageGUID and uninstalls them.
+		The Uninstall-NxtOld function uninstalls older versions of a software package when the UninstallOld parameter is set to $true. It utilizes the PackageConfig object to determine the application's name, vendor, version, and package GUID. The function checks the registry for previous package versions and performs uninstallation if required.
 	.PARAMETER AppName
-		Specifies the Application Name used in the registry etc.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the Application Name used in the registry etc. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AppVendor
-		Specifies the Application Vendor used in the registry etc.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the Application Vendor used in the registry etc. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AppVersion
-		Specifies the Application Version used in the registry etc.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the Application Version used in the registry etc. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
-		Specifies the registry key name used for the packages wrapper uninstall entry.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the registry key name used for the packages wrapper uninstall entry. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegPackagesKey
-		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defines the name of the registry key keeping track of all packages delivered by this packaging framework. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallOld
-		Will uninstall previous Versions before Installation if set to $true.
-		Defaults to the corresponding value from the PackageConfig object.
+		Will uninstall previous Versions before Installation if set to $true. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeploymentSystem
-		Defines the deployment system used for the deployment.
-		Defaults to the corresponding value of the DeployApplication.ps1 parameter.
+		Defines the deployment system used for the deployment. Defaults to the corresponding value of the DeployApplication.ps1 parameter.
 	.EXAMPLE
-		Uninstall-NxtOld
+		Uninstall-NxtOld -UninstallOld $true
+		Uninstalls old versions of the package based on the settings in the PackageConfig object.
+	.EXAMPLE
+		Uninstall-NxtOld -UninstallOld $false -AppName "MyApp" -AppVendor "VendorX" -AppVersion "1.0" -PackageGUID "12345" -RegPackagesKey "Software\MyPackages"
+		Checks for old versions but does not uninstall, specifying custom values for the parameters.
+	.OUTPUTS
+		PSADTNXT.NxtApplicationResult.
+		Returns an object containing information about the uninstallation operation.
+		- ApplicationExitCode: The exit code of the application uninstallation process.
+		- MainExitCode: The exit code of the main function. 70001 indicates an error during uninstallation.
+		- ErrorMessage: A message indicating the success or failure of the uninstallation process.
+		- ErrorMessagePSADT: Additional error message specific to PSAppDeployToolkit.
+		- Success: $true if the operation was successful, otherwise returns $false.
 	.NOTES
 		Should be executed during package Initialization only.
-	.OUTPUTS
-		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -10907,28 +10910,24 @@ function Uninstall-NxtOld {
 function Unregister-NxtOld {
 	<#
 	.SYNOPSIS
-		Unregisters old package versions if UninstallOld from the PackageConfig object is false.
+		Unregisters old versions of a package without uninstalling them, based on PackageConfig object settings.
 	.DESCRIPTION
-		If $UninstallOld is set to false, the function checks for old versions of the same package ($ProductGUID is equal to former ProductFamilyGUID) and unregisters them.
+		The Unregister-NxtOld function is used to unregister older versions of a software package without uninstalling them, applicable when the UninstallOld parameter is set to $false. It identifies older package versions using ProductGUID and PackageGUID from the registry and removes their registration information.
 	.PARAMETER ProductGUID
-		Specifies a membership GUID for a product of an application package.
-		Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies a membership GUID for a product of an application package. Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
-		Specifies the registry key name used for the packages wrapper uninstall entry.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the registry key name used for the package's wrapper uninstall entry. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegPackagesKey
-		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defines the name of the registry key for tracking all packages delivered by the packaging framework. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallOld
-		Will uninstall previous Versions before Installation if set to $true.
-		Defaults to the corresponding value from the PackageConfig object.
+		If set to $false, previous versions will be unregistered before installation. Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Unregister-NxtOld
-	.NOTES
-		Should be executed during package Initialization only.
+		Executes the function with default parameters from the PackageConfig object to unregister old package versions.
 	.OUTPUTS
 		none.
+	.NOTES
+		Should be executed during package Initialization only.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11038,41 +11037,35 @@ function Unregister-NxtOld {
 function Unregister-NxtPackage {
 	<#
 	.SYNOPSIS
-		Removes package files and unregisters the package in the registry.
+		Unregisters an application package by removing its package files and registry entries.
 	.DESCRIPTION
-		Removes the package files from folder "$APP\" and deletes the package's registry keys under "HKLM:\Software\$regPackagesKey\$PackageGUID" and "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID".
+		The Unregister-NxtPackage function is designed to remove an application package by deleting its package files from a specified folder and its registry entries. It targets the package's files located in the "$APP\" directory and removes registry keys found under "HKLM:\Software\$regPackagesKey\$PackageGUID" and "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID". This function is particularly useful for maintaining a clean system state by ensuring that remnants of uninstalled packages are properly cleaned up.
 	.PARAMETER ProductGUID
-		Specifies a membership GUID for a product of an application package.
-		Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the GUID of the product associated with the application package. This GUID is used to identify the package in the system registry. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RemovePackagesWithSameProductGUID
-		Defines wether to uninstall all found application packages with same ProductGUID (product membership) assigned.
-		The uninstalled application packages stay registered, when removed during installation process of current application package.
-		Defaults to the corresponding value from the PackageConfig object.
+		If set to true, the function will uninstall all packages with the same ProductGUID. It is important for managing multiple versions or instances of an application package. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PackageGUID
-		Specifies the registry key name used for the packages wrapper uninstall entry.
-		Defaults to the corresponding value from the PackageConfig object.
+		Indicates the specific registry key name associated with the package's uninstall entry. This is critical for accurately targeting and removing the correct registry entries. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegPackagesKey
-		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
-		Defaults to the corresponding value from the PackageConfig object.
+		Names the registry key that tracks all packages delivered by the packaging framework. This parameter helps in pinpointing the exact location in the registry where the package information is stored. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER App
-		Defines the path to a local persistent cache for installation files.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defines the path to a local persistent cache for installation files. This parameter is essential for locating and removing the actual application files. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ScriptRoot
-		Defines the parent directory of the script.
-		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+		Defines the parent directory of the script. It is essential for locating associated scripts and resources used during the uninstallation process. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AppRootFolder
-		Defines the root folder of the application package.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defines the root folder of the application package, used for determining the scope of file removal. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AppVendor
-		Defines the vendor of the application package.
-		Defaults to the corresponding value from the PackageConfig object.
+		Identifies the vendor of the application package, which can be used for logging or reporting purposes. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
-		Unregister-NxtPackage
-	.NOTES
-		Should be executed at the end of each neo42-package uninstallation only.
+		Unregister-NxtPackage -ProductGUID "{12345678-90ab-cdef-1234-567890abcdef}" -RemovePackagesWithSameProductGUID $true -PackageGUID "{abcdefgh-1234-5678-90ab-cdef012345678}" -RegPackagesKey "MyPackages" -App "C:\Apps\MyApp" -ScriptRoot "C:\Scripts" -AppRootFolder "C:\Apps" -AppVendor "MyCompany"
+		This example unregisters a package with the specified GUID, removing all related files and registry entries.
+	.EXAMPLE
+		Unregister-NxtPackage -ProductGUID "87654321-fedc-ba09-8765-4321fedcba09" -RemovePackagesWithSameProductGUID $false -PackageGUID "mnopqrst-5678-1234-cdef-abcdefghijkl" -RegPackagesKey "OtherPackages" -App "D:\OtherApps\AnotherApp" -ScriptRoot "D:\Scripts" -AppRootFolder "D:\OtherApps" -AppVendor "AnotherCompany"
+		In this example, the function is used to unregister a different package, demonstrating the flexibility of the parameters.
 	.OUTPUTS
 		none.
+	.NOTES
+		Should be executed at the end of each neo42-package uninstallation only.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11101,7 +11094,7 @@ function Unregister-NxtPackage {
 		$AppRootFolder = $global:PackageConfig.AppRootFolder,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AppDeveloper = $global:PackageConfig.AppVendor
+		$AppVendor = $global:PackageConfig.AppVendor
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -11193,27 +11186,33 @@ function Unregister-NxtPackage {
 #region Function Update-NxtTextInFile
 function Update-NxtTextInFile {
 	<#
+	.SYNOPSIS
+		Updates text within a file by replacing specified strings.
 	.DESCRIPTION
-		Replaces text in a file by search string.
+		This cmdlet allows you to replace specific text in a file. It searches for a given string and replaces it with another string. The function can target a specific number of occurrences and use various encoding options.
 	.PARAMETER Path
-		Path to the File to be updated.
+		Specifies the path to the file that needs text replacement. This parameter is mandatory.
 	.PARAMETER SearchString
-		String to be replaced in the File.
+		Defines the string to be searched for in the file. This parameter is mandatory.
 	.PARAMETER ReplaceString
-		The string to be inserted to the found occurrences.
+		Specifies the string that will replace the found occurrences in the file. This parameter is mandatory.
 	.PARAMETER Count
-		Number of occurrences to be replaced.
+		Determines the number of occurrences to replace. If not specified, all occurrences are replaced.
 	.PARAMETER Encoding
-		Encoding to be used, defaults to the value obtained from Get-NxtFileEncoding.
+		Defines the encoding of the file. If not specified, it defaults to the encoding returned by Get-NxtFileEncoding.
 	.PARAMETER DefaultEncoding
-		Encoding to be used in case the encoding could not be detected.
+		Specifies the encoding to be used if the file's encoding cannot be detected. 
 	.EXAMPLE
-		Update-NxtTextInFile -Path C:\Temp\testfile.txt -SearchString "Hello" 
+		Update-NxtTextInFile -Path "C:\Temp\testfile.txt" -SearchString "Hello" -ReplaceString "Hi"
+		This example replaces all occurrences of "Hello" with "Hi" in the specified file.
+	.EXAMPLE
+		Update-NxtTextInFile -Path "C:\Temp\testfile.txt" -SearchString "old text" -ReplaceString "new text" -Count 2
+		This example replaces the first two occurrences of "old text" with "new text" in the specified file.
 	.OUTPUTS
 		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
-#>
+	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
@@ -11312,36 +11311,29 @@ function Update-NxtTextInFile {
 function Update-NxtXmlNode {
 	<#
 	.SYNOPSIS
-		Updates an existing node
+		Updates an existing XML node in a specified file.
 	.DESCRIPTION
-		Updates an existing node in an xml file. Fails if the node does not exist. Does not support namespaces.
+		This cmdlet updates an existing node in an XML file. It allows setting or changing node attributes and inner text. The operation fails if the specified node does not exist. Namespaces are not supported in this cmdlet.
 	.PARAMETER FilePath
-		The path to the xml file
+		The path to the XML file where the node update is to be performed. This parameter is mandatory.
 	.PARAMETER NodePath
-		The path to the node to update
+		XPath to the node in the XML file that is to be updated. This parameter is mandatory.
 	.PARAMETER FilterAttributes
-		The attributes to Filter the node with
+		Attributes used to filter and identify the specific node to update.
 	.PARAMETER Attributes
-		The attributes to update
+		A hashtable of attributes to set or update on the selected node.
 	.PARAMETER InnerText
-		The value to update the node with
+		The text value to be set for the node.
 	.EXAMPLE
-		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
-		Sets the value of the node to "NewValue2" and the attribute "name" to "NewNode2".
+		Update-NxtXmlNode -FilePath ".\xmlstuff.xml" -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
+		This updates the node's inner text to "NewValue2" and sets the attribute "name" to "NewNode2".
 	.EXAMPLE
-		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"}
-		Sets the attribute "name" to "NewNode2".
-	.EXAMPLE
-		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText [string]::Empty
-		Sets the attribute "name" to "NewNode2" and the value of the node to an empty string.
-	.EXAMPLE
-		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
-		Does nothing.
-	.EXAMPLE
-		Update-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{"name"="NewNode2"} -Attributes @{"name"="NewNode3"}
-		Updates the node with the attribute "name" set to "NewNode2" to the attribute "name" set to "NewNode3".
+		Update-NxtXmlNode -FilePath ".\xmlstuff.xml" -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{"name"="NewNode2"} -Attributes @{"name"="NewNode3"}
+		This updates the node which has an attribute "name" with the value "NewNode2", changing this attribute to "name"="NewNode3".
 	.OUTPUTS
-		none.
+		None.
+	.NOTES
+		Ensure the correct file path, node path, and attributes are provided to avoid errors or unintended modifications.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11426,30 +11418,24 @@ function Update-NxtXmlNode {
 function Wait-NxtRegistryAndProcessCondition {
 	<#
 	.SYNOPSIS
-		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
-		Integrated to Install-NxtApplication and Uninstall-Nxtapplication.
+		Waits for specified process and registry key conditions during installation or uninstallation.
 	.DESCRIPTION
-		Runs tests against process and/or registry key collections during a setup action of installation/uninstallation.
-		Integrated to Install-NxtApplication, Uninstall-Nxtapplication.
+		This cmdlet monitors and waits for specified process and registry key conditions to be met during installation or uninstallation processes. It is integrated with Install-NxtApplication and Uninstall-Nxtapplication. The cmdlet supports setting a timeout and defining conditions with operators.
 	.PARAMETER TotalSecondsToWaitFor
-		Timeout in seconds the function waits and checks for the condition to occur.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the timeout duration in seconds. The function waits for this duration for the condition to occur. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProcessOperator
-		Operator to define process condition requirements.
-		Defaults to the corresponding value from the PackageConfig object.
+		Defines the logical operator ("And", "Or") to evaluate multiple process conditions. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ProcessesToWaitFor
-		An array of process conditions to check for.
-		Defaults to the corresponding value from the PackageConfig object.
+		An array of process names to wait for, based on the defined conditions. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RegKeyOperator
-		Operator to define regkey condition requirements.
-		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER RegkeyListToWaitFor
-		An array of regkey conditions to check for.
-		Defaults to the corresponding value from the PackageConfig object.
+		Specifies the logical operator ("And", "Or") to evaluate multiple registry key conditions. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegkeysToWaitFor
+		An array of registry key conditions to monitor. Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 300 -ProcessOperator "Or" -ProcessesToWaitFor  @([PSCustomObject]@{"Name"="notepad.exe"; "ShouldExist"=$true}, [PSCustomObject]@{"Name"="process2.exe"; "ShouldExist"=$true}) -RegKeyOperator "And" -RegkeysToWaitFor @([PSCustomObject]@{"KeyPath"="HKLM:\Software\MySoftware"; "ShouldExist"=$true})
+		This example waits up to 300 seconds for either process "process1" or "process2" to exist (as per the "Or" operator) and for the registry key "HKCU:\Software\MySoftware" to exist.
 	.OUTPUTS
 		System.Boolean.
-	.EXAMPLE
-		Wait-NxtRegistryAndProcessCondition
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11634,17 +11620,24 @@ function Wait-NxtRegistryAndProcessCondition {
 #region Function Watch-NxtFile
 function Watch-NxtFile {
 	<#
+	.SYNOPSIS
+		Monitors the presence of a specified file within a set timeout period.
 	.DESCRIPTION
-		Tests if a file exists in a given time.
-		Automatically resolves cmd environment variables.
+		This function checks for the existence of a specified file within a given time frame. 
+		It continuously checks for the file's existence until the timeout is reached. 
+		The function supports resolution of CMD environment variables in the file path.
 	.PARAMETER FileName
-		Name of the file to watch
+		The file path to monitor. This parameter is mandatory.
 	.PARAMETER Timeout
-		Timeout in seconds the function waits for the file to appear
-	.OUTPUTS
-		System.Boolean.
+		The duration (in seconds) to wait for the file to appear. The default is 60 seconds.
 	.EXAMPLE
 		Watch-NxtFile -FileName "C:\Temp\Sources\Installer.exe"
+		Monitors for 'Installer.exe' in the specified directory. Returns $true if the file appears within the default timeout period.
+	.EXAMPLE
+		Watch-NxtFile -FileName "C:\Temp\Sources\Installer.exe" -Timeout 120
+		Monitors for 'Installer.exe' in the specified directory and waits up to 120 seconds for it to appear.
+	.OUTPUTS
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11687,17 +11680,24 @@ function Watch-NxtFile {
 #region Function Watch-NxtFileIsRemoved
 function Watch-NxtFileIsRemoved {
 	<#
+	.SYNOPSIS
+		Monitors the removal of a specified file within a set timeout period.
 	.DESCRIPTION
-		Tests if a file disappears in a given time.
-		Automatically resolves cmd environment variables.
+		This function checks for the disappearance of a specified file within a given time frame. 
+		It continuously monitors the file's presence until the file is removed or the timeout is reached. 
+		The function also supports the resolution of CMD environment variables in the file path.
 	.PARAMETER FileName
-		Name of the file to watch.
+		The file path to monitor for removal. This parameter is mandatory.
 	.PARAMETER Timeout
-		Timeout in seconds the function waits for the file the disappear.
-	.OUTPUTS
-		System.Boolean.
+		The duration (in seconds) to wait for the file to be removed. The default is 60 seconds.
 	.EXAMPLE
 		Watch-NxtFileIsRemoved -FileName "C:\Temp\Sources\Installer.exe"
+		Monitors for the removal of 'Installer.exe' in the specified directory. Returns $true if the file is removed within the default timeout period.
+	.EXAMPLE
+		Watch-NxtFileIsRemoved -FileName "C:\Temp\Sources\Installer.exe" -Timeout 120
+		Monitors for the removal of 'Installer.exe' in the specified directory and waits up to 120 seconds for its removal.
+	.OUTPUTS
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11741,20 +11741,32 @@ function Watch-NxtFileIsRemoved {
 #region Function Watch-NxtProcess
 function Watch-NxtProcess {
 	<#
+	.SYNOPSIS
+		Monitors the startup of a specified process within a set timeout period, with support for WQL queries.
 	.DESCRIPTION
-		Checks whether a process exists within a given time based on the name or a custom WQL query.
+		This function checks for the startup of a process, either by name or using a WQL query, within a specified time frame. 
+		It allows for custom WQL queries or simple process name monitoring, supporting wildcard characters. 
+		The function continuously checks for the process's presence until it starts or the timeout is reached.
 	.PARAMETER ProcessName
-		Name of the process or WQL search string.
-		Must include full file name including extension.
-		Supports wildcard character * and %.
+		The name of the process or a WQL query string (a filter statement on Win32_Process) to monitor. Must include the full file name with extension. 
+		This parameter is mandatory. Supports wildcard characters like * and %.
 	.PARAMETER Timeout
-		Timeout in seconds the function waits for the process to start.
+		The duration (in seconds) to wait for the process to start. The default is 60 seconds.
 	.PARAMETER IsWql
-		Defines if the given ProcessName is a WQL search string.
-	.OUTPUTS
-		System.Boolean.
+		Indicates whether the ProcessName is a WQL search string. Defaults to false.
 	.EXAMPLE
 		Watch-NxtProcess -ProcessName "Notepad.exe"
+		Monitors for the startup of Notepad.exe. Returns $true if the process starts within the default timeout period.
+	.EXAMPLE
+		Watch-NxtProcess -ProcessName "winword.exe" -Timeout 120
+		Monitors for the startup of Microsoft Word and waits up to 120 seconds for it to start.
+	.EXAMPLE
+		Watch-NxtProcess -ProcessName "commandline like '%chrome.exe%'" -IsWql
+		Uses a WQL query to monitor for the startup of Chrome browser.
+	.OUTPUTS
+		System.Boolean.
+	.NOTES
+		This function is part of the PSAppDeployToolkit.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11810,20 +11822,32 @@ function Watch-NxtProcess {
 #region Function Watch-NxtProcessIsStopped
 function Watch-NxtProcessIsStopped {
 	<#
+	.SYNOPSIS
+		Monitors the termination of a specified process within a set timeout period, with support for WQL queries.
 	.DESCRIPTION
-		Checks whether a process ends within a given time based on the name or a custom WQL query.
+		This function checks for the termination of a process, either by name or using a WQL query, within a specified time frame. 
+		It supports custom WQL queries (a filter statement on Win32_Process) or simple process name monitoring, including wildcard characters. 
+		The function continuously monitors the process's presence until it stops or the timeout is reached.
 	.PARAMETER ProcessName
-		Name of the process or WQL search string.
-		Must include full file name including extension.
-		Supports wildcard character * and %.
+		The name of the process or a WQL query string to monitor for termination. Must include the full file name with extension. 
+		This parameter is mandatory. Supports wildcard characters like * and %.
 	.PARAMETER Timeout
-		Timeout in seconds the function waits for the process the stop.
+		The duration (in seconds) to wait for the process to stop. The default is 60 seconds.
 	.PARAMETER IsWql
-		Defines if the given ProcessName is a WQL search string.
-	.OUTPUTS
-		System.Boolean.
+		Indicates whether the ProcessName is a WQL search string. Defaults to false.
 	.EXAMPLE
 		Watch-NxtProcessIsStopped -ProcessName "Notepad.exe"
+		Monitors for the termination of Notepad.exe. Returns $true if the process stops within the default timeout period.
+	.EXAMPLE
+		Watch-NxtProcessIsStopped -ProcessName "winword.exe" -Timeout 120
+		Monitors for the termination of Microsoft Word and waits up to 120 seconds for it to stop.
+	.EXAMPLE
+		Watch-NxtProcessIsStopped -ProcessName "Name = 'chrome.exe'" -IsWql
+		Uses a WQL query to monitor for the termination of Chrome browser.
+	.OUTPUTS
+		System.Boolean.
+	.NOTES
+		This function is part of the PSAppDeployToolkit.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11879,17 +11903,22 @@ function Watch-NxtProcessIsStopped {
 #region Function Watch-NxtRegistryKey
 function Watch-NxtRegistryKey {
 	<#
+	.SYNOPSIS
+		Watches a specified registry key for a given duration.
 	.DESCRIPTION
-		Tests if a registry key exists in a given time.
+		This command monitors a specified registry key and checks for its existence within a defined timeout period. It is useful for scenarios where the presence of a registry key is required for certain processes or checks.
 	.PARAMETER RegistryKey
-		Name of the registry key to watch.
+		Specifies the registry key to be monitored. This parameter is mandatory.
 	.PARAMETER Timeout
-		Timeout in seconds that the function waits for the key.
-		Defaults to 60.
-	.OUTPUTS
-		System.Boolean.
+		Defines the timeout duration in seconds to wait for the registry key. If not specified, defaults to 60 seconds.
 	.EXAMPLE
 		Watch-NxtRegistryKey -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+		This example monitors the specified registry key and waits up to 60 seconds to check its existence.
+	.EXAMPLE
+		Watch-NxtRegistryKey -RegistryKey "HKEY_CURRENT_USER\Software\MySoftware" -Timeout 120
+		This example monitors the specified registry key and waits up to 120 seconds to check its existence.
+	.OUTPUTS
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11934,16 +11963,22 @@ function Watch-NxtRegistryKey {
 #region Function Watch-NxtRegistryKeyIsRemoved
 function Watch-NxtRegistryKeyIsRemoved {
 	<#
+	.SYNOPSIS
+		Monitors the removal of a specified registry key within a set time frame.
 	.DESCRIPTION
-		Tests if a registry key disappears in a given time.
+		This command checks for the disappearance of a specified registry key over a defined period. It is particularly useful in scenarios where the deletion of a registry key is a required step in a process or procedure.
 	.PARAMETER RegistryKey
-		Name of the registry key to watch.
+		Specifies the registry key to be monitored for removal. This parameter is mandatory.
 	.PARAMETER Timeout
-		Timeout in seconds the function waits for the key the disappear.
-	.OUTPUTS
-		System.Boolean.
+		Sets the timeout duration in seconds during which the function waits for the registry key to disappear. Defaults to 60 seconds if not specified.
 	.EXAMPLE
 		Watch-NxtRegistryKeyIsRemoved -RegistryKey "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+	This example waits for up to 60 seconds to check if the specified registry key is removed.
+	.EXAMPLE
+		Watch-NxtRegistryKeyIsRemoved -RegistryKey "HKEY_CURRENT_USER\Software\MySoftware" -Timeout 120
+	In this example, the function waits for up to 120 seconds to check if the specified registry key is removed.
+	.OUTPUTS
+		System.Boolean.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -11988,27 +12023,28 @@ function Watch-NxtRegistryKeyIsRemoved {
 #region Function Write-NxtXmlNode
 function Write-NxtXmlNode {
 	<#
+	.SYNOPSIS
+	Adds a new XML node with attributes and values to an existing XML file.
 	.DESCRIPTION
-		Adds a node with attributes and values to an existing xml file.
+	This command is used to insert a new XML node, including its attributes and values, into an existing XML file. It is useful for dynamically modifying XML structures during scripting and automation processes.
 	.PARAMETER XmlFilePath
-		Path to the xml file.
+	Specifies the path to the XML file where the node will be added. This parameter is mandatory.
 	.PARAMETER Model
-		Xml Node model.
+	Defines the model of the XML node to be added, including its name, attributes, and child nodes. This parameter is mandatory.
 	.EXAMPLE
-		$newNode = New-Object PSADTNXT.XmlNodeModel
-		$newNode.name = "item"
-		$newNode.AddAttribute("oor:path", "/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Fac-tory[com.sun.star.presentation.PresentationDocument]")
-		$newNode.Child = New-Object PSADTNXT.XmlNodeModel
-		$newNode.Child.name = "prop"
-		$newNode.Child.AddAttribute("oor:name", "ooSetupFactoryDefaultFilter")
-		$newNode.Child.AddAttribute("oor:op", "fuse")
-		$newNode.Child.Child = New-Object PSADTNXT.XmlNodeModel
-		$newNode.Child.Child.name = "value"
-		$newNode.Child.Child.value = "Impress MS PowerPoint 2007 XML"
-		Write-NxtXmlNode -XmlFilePath "C:\Test\setup.xml" -Model $newNode
+	$newNode = New-Object PSADTNXT.XmlNodeModel
+	$newNode.name = "item"
+	$newNode.AddAttribute("oor:path", "/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Factory[com.sun.star.presentation.PresentationDocument]")
+	$newNode.Child = New-Object PSADTNXT.XmlNodeModel
+	$newNode.Child.name = "prop"
+	$newNode.Child.AddAttribute("oor:name", "ooSetupFactoryDefaultFilter")
+	$newNode.Child.AddAttribute("oor:op", "fuse")
+	$newNode.Child.Child = New-Object PSADTNXT.XmlNodeModel
+	$newNode.Child.Child.name = "value"
+	$newNode.Child.Child.value = "Impress MS PowerPoint 2007 XML"
 
-		Creates this node:
-
+	Write-NxtXmlNode -XmlFilePath "C:\Test\setup.xml" -Model $newNode
+	This example creates and adds a new XML node to the specified XML file like this:
 		<item oor:path="/org.openoffice.Setup/Office/Factories/org.openoffice.Setup:Fac-tory[com.sun.star.presentation.PresentationDocument]">
 			<prop oor:name="ooSetupFactoryDefaultFilter" oor:op="fuse">
 				<value>Impress MS PowerPoint 2007 XML</value>
