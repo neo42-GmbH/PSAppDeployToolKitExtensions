@@ -6675,6 +6675,96 @@ function Remove-NxtEmptyFolder {
 	}
 }
 #endregion
+#region Function Remove-NxtEmptyRegistryKey
+function Remove-NxtEmptyRegistryKey {
+	<#
+	.SYNOPSIS
+		Removes only empty registry keys
+	.DESCRIPTION
+		This function is designed to remove registry keys if and only if they are empty. If the specified registry contains any values or subkeys, the function continues without taking any action.
+	.PARAMETER Path
+		Specifies the path to the emptry registry key.
+		This parameter is mandatory.
+	.EXAMPLE
+		Remove-NxtEmptyRegistryKey -Path "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment" 
+		This example removes the specified empty key located at "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment".
+	.EXAMPLE
+		Remove-NxtEmptyRegistryKey -Path "HKEY_CLASSES_ROOT\.7z" 
+		This example removes the specified empty key located at "HKCR:\.7z".
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$Path
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		$hiveMap = @{
+			"HKLM" = "HKEY_LOCAL_MACHINE"
+			"HKCU" = "HKEY_CURRENT_USER"
+			"HKU" = "HKEY_USERS"
+			"HKCC" = "HKEY_CURRENT_CONFIG"
+			"HKCR" = "HKEY_CLASSES_ROOT"
+		}
+		$Path = $Path -replace "^HKEY_CURRENT_USER", "HKCU:" -replace "^HKEY_USERS", "HKU:" -replace "^HKEY_LOCAL_MACHINE", "HKLM:" -replace "^HKEY_CURRENT_CONFIG", "HKCC:" -replace "^HKEY_CLASSES_ROOT", "HKCR:"
+		[string]$hiveRoot = $Path.Split(":") | Select-Object -First 1
+		[string[]]$mountedHives = Get-PSDrive -PSProvider Registry | Select-Object -ExpandProperty Name
+		if ($hiveMap.Keys -notcontains $hiveRoot){
+			Write-Log -Message "Hive [$hiveRoot] is not a legitimite root." -Severity 3 -Source ${CmdletName}
+			return
+		} 
+		elseif ($mountedHives -notcontains $hiveRoot) {
+			try {
+				Write-Log "Have to mount registry hive [$hiveRoot]." -Source ${CmdletName}
+				[System.Management.Automation.PSDriveInfo]$mountedDrive = New-PSDrive -PSProvider "Registry" -Name $hiveRoot -Root $hiveMap[$hiveRoot] -ErrorAction Stop
+			} catch {
+				Write-Log -Message "Failed to mount hive root [$hiveRoot] or cannot find mountpount." -Severity 3 -Source ${CmdletName}
+				return
+			}
+		}
+		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
+		if ($true -eq (Test-Path -LiteralPath "$Path" -PathType 'Container')) {
+			try {
+				if ( ((Get-ChildItem -LiteralPath $Path | Measure-Object).Count -eq 0) -and ($null -eq (Get-ItemProperty -LiteralPath $Path)) ) {
+					Write-Log -Message "Delete empty key [$Path]..." -Source ${CmdletName}
+					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveKey'
+					if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveKey)) {
+						Write-Log -Message "The following error(s) took place while deleting the empty key [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveKey)" -Severity 2 -Source ${CmdletName}
+					}
+					else {
+						Write-Log -Message "Empty key [$Path] was deleted successfully..." -Source ${CmdletName}
+					}
+				}
+				else {
+					Write-Log -Message "Key [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
+				}
+			}
+			catch {
+				Write-Log -Message "Failed to delete empty key [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+				throw
+			}
+		}
+		else {
+			Write-Log -Message "Key [$Path] does not exist..." -Source ${CmdletName}
+		}
+		if ($null -ne $mountedDrive) {
+			$mountedDrive | Remove-PSDrive
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Remove-NxtIniValue
 Function Remove-NxtIniValue {
 	<#
