@@ -15,7 +15,7 @@ Describe "Remove-NxtEmptyRegistryKey" {
             Remove-NxtEmptyRegistryKey -Path $baseKey | Should -BeNullOrEmpty
             Test-Path $baseKey | Should -Be $false
         }
-        It "Should not delete a key if it subkeys" {
+        It "Should not delete a key if it has subkeys" {
             New-Item "$baseKey\test" -Force | Out-Null
             Remove-NxtEmptyFolder -Path $baseKey | Should -BeNullOrEmpty
             Test-Path $baseKey | Should -Be $true
