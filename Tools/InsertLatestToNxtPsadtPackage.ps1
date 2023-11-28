@@ -404,6 +404,25 @@ function Update-NxtPSAdtPackage {
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
+            ## check if Reboot is an integer, if not require manual update
+            [bool]$manualChangeRequired = $true
+            while ($true -eq $manualChangeRequired) {
+                    [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+                    [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+                if ($jsonContent.Reboot -is [int]){
+                    $manualChangeRequired = $false
+                }
+                if ($manualChangeRequired) {
+                    Write-Warning "Reboot value is not an integer, please update manually (Remove the quotes around $($jsonContent.Reboot))"
+                    Write-Output "Press Enter to open $PackageToUpdatePath\neo42PackageConfig.json in notepad or CTRL+C to exit"
+                    Read-Host
+                    notepad.exe "$PackageToUpdatePath\neo42PackageConfig.json"
+                    Read-Host "Press to check again or CTRL+C to exit"
+                }
+            }
+            if ($jsonContent.Reboot -isnot [int]){
+                throw "Reboot value is not an integer, please update manually"
+            }
             ## rename : "-Ignore-ExitCodes to -AcceptedExitCodes in case it is in the same line as Execute-NxtMSI"
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
             foreach ($line in ($content -split "`n")){
