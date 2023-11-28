@@ -6688,6 +6688,9 @@ function Remove-NxtEmptyRegistryKey {
 	.EXAMPLE
 		Remove-NxtEmptyRegistryKey -Path "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment" 
 		This example removes the specified empty key located at "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment".
+	.EXAMPLE
+		Remove-NxtEmptyRegistryKey -Path "HKEY_CLASSES_ROOT\.7z" 
+		This example removes the specified empty key located at "HKCR:\.7z".
 	.OUTPUTS
 		none.
 	.LINK
@@ -6706,31 +6709,28 @@ function Remove-NxtEmptyRegistryKey {
 	}
 	Process {
 		$hiveMap = @{
-            "HKLM" = "HKEY_LOCAL_MACHINE"
-            "HKCU" = "HKEY_CURRENT_USER"
-            "HKU" = "HKEY_USERS"
-            "HKCC" = "HKEY_CURRENT_CONFIG"
-            "HKCR" = "HKEY_CLASSES_ROOT"
-        }
-
-        $Path = $Path -ireplace "^HKEY_CURRENT_USER", "HKCU:" -ireplace "^HKEY_USERS", "HKU:" -ireplace "^HKEY_LOCAL_MACHINE", "HKLM:" -ireplace "^HKEY_CURRENT_CONFIG", "HKCC:" -ireplace "^HKEY_CLASSES_ROOT", "HKCR:"
-        [string]$hiveRoot = $Path.Split(":") | Select-Object -First 1
-        [string[]]$mountedHives = Get-PSDrive -PSProvider Registry | Select-Object -ExpandProperty Name
-
+			"HKLM" = "HKEY_LOCAL_MACHINE"
+			"HKCU" = "HKEY_CURRENT_USER"
+			"HKU" = "HKEY_USERS"
+			"HKCC" = "HKEY_CURRENT_CONFIG"
+			"HKCR" = "HKEY_CLASSES_ROOT"
+		}
+		$Path = $Path -replace "^HKEY_CURRENT_USER", "HKCU:" -replace "^HKEY_USERS", "HKU:" -replace "^HKEY_LOCAL_MACHINE", "HKLM:" -replace "^HKEY_CURRENT_CONFIG", "HKCC:" -replace "^HKEY_CLASSES_ROOT", "HKCR:"
+		[string]$hiveRoot = $Path.Split(":") | Select-Object -First 1
+		[string[]]$mountedHives = Get-PSDrive -PSProvider Registry | Select-Object -ExpandProperty Name
 		if ($hiveMap.Keys -notcontains $hiveRoot){
 			Write-Log -Message "Hive [$hiveRoot] is not a legitimite root." -Severity 3 -Source ${CmdletName}
 			return
 		} 
 		elseif ($mountedHives -notcontains $hiveRoot) {
-            try {
+			try {
 				Write-Log "Have to mount registry hive [$hiveRoot]." -Source ${CmdletName}
-                [System.Management.Automation.PSDriveInfo]$mountedDrive = New-PSDrive -PSProvider "Registry" -Name $hiveRoot -Root $hiveMap[$hiveRoot] -ErrorAction Stop
-            } catch {
+				[System.Management.Automation.PSDriveInfo]$mountedDrive = New-PSDrive -PSProvider "Registry" -Name $hiveRoot -Root $hiveMap[$hiveRoot] -ErrorAction Stop
+			} catch {
 				Write-Log -Message "Failed to mount hive root [$hiveRoot] or cannot find mountpount." -Severity 3 -Source ${CmdletName}
-                return
-            }
-        }
-
+				return
+			}
+		}
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
 		if ($true -eq (Test-Path -LiteralPath "$Path" -PathType 'Container')) {
 			try {
@@ -6756,10 +6756,9 @@ function Remove-NxtEmptyRegistryKey {
 		else {
 			Write-Log -Message "Key [$Path] does not exist..." -Source ${CmdletName}
 		}
-
 		if ($null -ne $mountedDrive) {
-            $mountedDrive | Remove-PSDrive
-        }
+			$mountedDrive | Remove-PSDrive
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
