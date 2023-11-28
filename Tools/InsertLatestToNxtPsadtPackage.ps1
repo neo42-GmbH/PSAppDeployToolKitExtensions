@@ -24,8 +24,15 @@ function Get-NxtContentBetweenTags {
         [Parameter(Mandatory=$true)]
         [string]$EndTag
     )
-    $StartIndex = $Content.IndexOf($StartTag)+$StartTag.Length
+    $StartOfStartTag = $Content.IndexOf($StartTag)
+    if ($StartOfStartTag -eq -1) {
+        throw "StartTag '$StartTag' not found"
+    }
+    $StartIndex = $StartOfStartTag+$StartTag.Length
     $EndIndex = $Content.IndexOf($EndTag)
+    if ($EndIndex -eq -1) {
+        throw "EndTag '$EndTag' not found"
+    }
     $ContentBetweenTags = $Content.Substring($StartIndex, $EndIndex - $StartIndex)
     return $ContentBetweenTags
 }
@@ -40,8 +47,15 @@ function Set-NxtContentBetweenTags {
         [Parameter(Mandatory=$true)]
         [string]$ContentBetweenTags
     )
-    $StartIndex = $Content.IndexOf($StartTag)+$StartTag.Length
+    $StartOfStartTag = $Content.IndexOf($StartTag)
+    if ($StartOfStartTag -eq -1) {
+        throw "StartTag '$StartTag' not found"
+    }
+    $StartIndex = $StartOfStartTag+$StartTag.Length
     $EndIndex = $Content.IndexOf($EndTag)
+    if ($EndIndex -eq -1) {
+        throw "EndTag '$EndTag' not found"
+    }
     $Content = $Content.Remove($StartIndex, $EndIndex - $StartIndex)
     $Content = $Content.Insert($StartIndex, $ContentBetweenTags)
     return $Content
@@ -57,7 +71,7 @@ function Add-ContentBeforeTag {
     )
     $StartIndex = $Content.IndexOf($StartTag)
     if ($StartIndex -eq -1) {
-        throw "StartIndex not found"
+        throw "StartIndex of '$StartTag' not found"
     }
     $content = $content.Insert($StartIndex, $ContentToInsert)
     return $content
@@ -352,11 +366,18 @@ function Update-NxtPSAdtPackage {
                 $content = Set-NxtContentBetweenTags -Content $content -StartTag '  "UninstLogFile": "' -EndTag ("`n" + '  "InstFile"') -ContentBetweenTags '$($global:AppLogFolder)\\Uninstall.$global:DeploymentTimestamp.log",'
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
+            ## Fix Possible Space after AppRootFolder variable
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            ## find '"AppRootFolder" :' and check if there is a space before the colon
+            if ($content -match '"AppRootFolder" : ') {
+                $content = $content -replace ('"AppRootFolder" '),('"AppRootFolder"')
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            }
             ## Add AppRootFolder variable
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
             if ($null -eq $jsonContent.AppRootFolder){
-                $content = Add-ContentBeforeTag -Content $content -StartTag '  "App"' -ContentToInsert '  "AppRootFolder" : "neo42Pkgs",
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "App"' -ContentToInsert '  "AppRootFolder": "neo42Pkgs",
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
