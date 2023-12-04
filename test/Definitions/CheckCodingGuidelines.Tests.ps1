@@ -41,7 +41,6 @@ Describe "Codeing Guidelines" -ForEach @(
                 if ($null -eq $paramBlockAst) { return }
                 $paramBlockAst.Parameters | ForEach-Object {
                     $parameterAst = $_
-                    Write-Host $parameterAst.StaticType
                     $parameterAst.StaticType | Should -Not -Be 'System.Object' -Because "the parameter variable '$($parameterAst.Name.VariablePath.UserPath)' is not typed (line $($parameterAst.Extent.StartLineNumber))"
                 }
             }
@@ -118,7 +117,6 @@ Describe "Codeing Guidelines" -ForEach @(
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
                 }, $true)
             $statements | ForEach-Object {
-                if ($true -eq $_.Unnamed -and $_ -is [System.Management.Automation.Language.NamedBlockAst]) { return } # This is required to skip the unnamed "NamedBlockAst"
 				($_.Extent.Text -split "`n") | Select-Object -Last 1 | Should -Match '\s*\}\s*$' -Because "the statement does not have the ending parentheses as seperate line (line $($_.Extent.EndLineNumber))"
             }
         }
