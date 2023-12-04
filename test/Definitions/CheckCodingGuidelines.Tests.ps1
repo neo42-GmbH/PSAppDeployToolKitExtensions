@@ -14,10 +14,10 @@ Describe "Codeing Guidelines" -ForEach @(
                 $currentLine = 1
                 $statement = $_
                 $content | ForEach-Object {
-                    $currentLine++
                     if ($_ -imatch "^\s*$statement\b") {
                         $_ | Should -MatchExactly "^\s*$statement" -Because "the statement '$statement' is not capitalized correctly (line $currentLine)"
                     }
+                    $currentLine++
                 }
             }
         }
@@ -48,16 +48,26 @@ Describe "Codeing Guidelines" -ForEach @(
         It "Intendations should be made using tabulator" {
             $currentLine = 1
             $content | ForEach-Object {
-                $currentLine++
                 $_ | Should -Match "^(?! +)" -Because "the line is not tab indented (line $currentLine)"
+                $currentLine++
             }
         }
         It "At line endings there should not be trailing whitespaces" {
             $currentLine = 1
             $content | ForEach-Object {
-                $currentLine++
                 $_ | Should -Not -Match "\s+$" -Because "the line has trailing whitespace (line $currentLine)"
+                $currentLine++
             }
+        }
+        It "There should be exactly one whitespace between parameter and scriptblock" {
+            $currentLine = 1
+            $content | ForEach-Object {
+                if ($_ -imatch "\)\s*\{") {
+                    $_ | Should -Match "\)\s\{" -Because "the parentheses spacing is not correct (line $currentLine)"
+                }
+                $currentLine++
+            }
+            
         }
         It "Every function should be described properly" {
             $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
@@ -123,8 +133,8 @@ Describe "Codeing Guidelines" -ForEach @(
         It "Empty strings should not use `"`"" {
             $currentLine = 1
             $content | ForEach-Object {
-                $currentLine++
                 $_ | Should -Not -MatchExactly '([\s\b]+|^)""([\b\s]+|$)' -Because "the line uses `"`" for an empty string (line $currentLine)"
+                $currentLine++
             }
         }
         It "Check condition formatting" {
