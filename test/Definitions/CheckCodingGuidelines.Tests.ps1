@@ -85,7 +85,7 @@ Describe "Codeing Guidelines" -ForEach @(
                 }
             }
         }
-        It "A ScriptBlock should have the parentheses in the first line with the statement" {
+        It "A scriptblock should have the parentheses in the first line with the statement" {
             $statements = $ast.FindAll({ param($ast)
                     (
                         $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
@@ -96,10 +96,10 @@ Describe "Codeing Guidelines" -ForEach @(
                         $ast -is [System.Management.Automation.Language.NamedBlockAst] -or
                         $ast -is [System.Management.Automation.Language.LoopStatementAst] 
                     ) -and
+                    $true -ne $ast.Unnamed -and
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
                 }, $true)
             $statements | ForEach-Object {
-                if ($true -eq $_.Unnamed -and $_ -is [System.Management.Automation.Language.NamedBlockAst]) { return } # This is required to skip the unnamed "NamedBlockAst"
 				($_.Extent.Text -split "`n") | Select-Object -First 1 | Should -Match '.+(\{|\()\s*$' -Because "the statement does not have parentheses in the first line (line $($_.Extent.StartLineNumber))"
             }
         }
@@ -114,6 +114,7 @@ Describe "Codeing Guidelines" -ForEach @(
                         $ast -is [System.Management.Automation.Language.NamedBlockAst] -or
                         $ast -is [System.Management.Automation.Language.LoopStatementAst]
                     ) -and
+                    $true -ne $ast.Unnamed -and
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
                 }, $true)
             $statements | ForEach-Object {
