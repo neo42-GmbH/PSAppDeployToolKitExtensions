@@ -73,11 +73,11 @@ Describe "Codeing Guidelines" -ForEach @(
             $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             $functions | ForEach-Object {
                 $help = $_.Body.GetHelpContent()
-                $help | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' does not have a description at all"
-                $help.Synopsis | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' does not have a synopsis"
-                $help.Description | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' does not have a description"
-                $help.Example | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' does not have an example"
-                $help.Output | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' does not specify its output"
+                $help | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a description at all"
+                $help.Synopsis | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis"
+                $help.Description | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a description"
+                $help.Example | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have an example"
+                $help.Output | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should specify its output"
             }
         }
         It "The variable definitions should be seperated by new lines in param block" {
