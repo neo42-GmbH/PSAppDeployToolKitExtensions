@@ -53,7 +53,7 @@ Describe "Codeing Guidelines" -ForEach @(
                 $_ | Should -Match "^(?! +)" -Because "the line is not tab indented (line $currentLine)"
             }
         }
-        It "At lineendings there should not be trailing whitespaces" {
+        It "At line endings there should not be trailing whitespaces" {
             $currentLine = 1
             $content | ForEach-Object {
                 $currentLine++
