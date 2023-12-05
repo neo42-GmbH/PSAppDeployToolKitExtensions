@@ -322,8 +322,8 @@ function Main {
 		Defaults to the corresponding global value.
 	.EXAMPLE
 		Main
-    .OUTPUTS
-        none.
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>

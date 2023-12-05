@@ -982,7 +982,7 @@ function Resolve-Error {
 		if ($ErrorRecord.Count -eq 0) {
 			if ($global:Error.Count -eq 0) {
 				#Write-Warning -Message "The `$Error collection is empty"
-				Return
+				return
 			}
 			else {
 				[Array]$ErrorRecord = $global:Error[0]
@@ -1004,7 +1004,7 @@ function Resolve-Error {
 			foreach ($Prop in $Property) {
 				if ($Prop -eq '*') {
 					[String[]]$PropertySelection = $ObjectProperty
-					Break
+					break
 				}
 				elseif ($ObjectProperty -contains $Prop) {
 					[String[]]$PropertySelection += $Prop
@@ -1022,7 +1022,7 @@ function Resolve-Error {
 	}
 	Process {
 		if (-not $ErrorRecord) {
-			Return
+			return
 		}
 		foreach ($ErrRecord in $ErrorRecord) {
 			## Capture Error Record
@@ -1136,8 +1136,10 @@ function Resolve-Error {
 #region Function Test-NxtPersonalizationLightTheme
 function Test-NxtPersonalizationLightTheme {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Tests if a user has the light theme enabled.
+	.DESCRIPTION
+		Tests if a user has the light theme enabled by checking the system configuration
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
@@ -1258,6 +1260,8 @@ function Write-Log {
 		The message to write to the log file or output to the console.
 	.PARAMETER Source
 		The source of the message being logged.
+	.OUTPUTS
+		none.
 	.NOTES
 		This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
 	#>
@@ -1392,19 +1396,19 @@ function Write-Log {
 
 		## Exit function if it is a debug message and logging debug messages is not enabled in the config XML file
 		if (($true -eq $DebugMessage) -and (-not $LogDebugMessage)) {
-			[bool]$ExitLoggingFunction = $true; Return
+			[bool]$ExitLoggingFunction = $true; return
 		}
 		## Exit function if logging to file is disabled and logging to console host is disabled
 		if (($true -eq $DisableLogging) -and ($false -eq $WriteHost)) {
-			[bool]$ExitLoggingFunction = $true; Return
+			[bool]$ExitLoggingFunction = $true; return
 		}
 		## Exit Begin block if logging is disabled
 		if ($true -eq $DisableLogging) {
-			Return
+			return
 		}
 		## Exit function function if it is an [Initialization] message and the toolkit has been relaunched
 		if (($AsyncToolkitLaunch) -and ($ScriptSection -eq 'Initialization')) {
-			[bool]$ExitLoggingFunction = $true; Return
+			[bool]$ExitLoggingFunction = $true; return
 		}
 
 		## Create the directory where the log file will be saved
@@ -1418,7 +1422,7 @@ function Write-Log {
 				if ($false -eq $ContinueOnError) {
 					Write-Host -Object "[$LogDate $LogTime] [${CmdletName}] $ScriptSection :: Failed to create the log directory [$LogFileDirectory]. `r`n$(Resolve-Error)" -ForegroundColor 'Red'
 				}
-				Return
+				return
 			}
 		}
 
@@ -1428,7 +1432,7 @@ function Write-Log {
 	Process {
 		## Exit function if logging is disabled
 		if ($true -eq $ExitLoggingFunction) {
-			Return
+			return
 		}
 
 		foreach ($Msg in $Message) {
@@ -2068,7 +2072,7 @@ Switch ($deploymentType) {
 		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_UninstallVerb);
 		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Uninstall);
 		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Uninstall);
-		Break
+		break
 	}
 	'Repair' {
 		if ($ContinueType -eq 0) {
@@ -2080,7 +2084,7 @@ Switch ($deploymentType) {
 		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_RepairVerb);
 		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Repair);
 		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Repair);
-		Break
+		break
 	}
 	Default {
 		if ($ContinueType -eq 0) {
@@ -2092,7 +2096,7 @@ Switch ($deploymentType) {
 		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_InstallVerb);
 		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Install);
 		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Install);
-		Break
+		break
 	}
 }
 if ($CustomText -and $configWelcomePromptCustomMessage) {

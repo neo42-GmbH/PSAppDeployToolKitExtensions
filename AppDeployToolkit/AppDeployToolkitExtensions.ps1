@@ -41,7 +41,7 @@ Param (
 [string]$appDeployExtScriptVersion = [string]'##REPLACEVERSION##'
 [hashtable]$appDeployExtScriptParameters = $PSBoundParameters
 [string]$extensionCsPath = "$scriptRoot\AppDeployToolkitExtensions.cs"
-if (-not ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
+if ($null -eq ([Management.Automation.PSTypeName]'PSADTNXT.Extensions').Type) {
 	if ($true -eq (Test-Path -Path $extensionCsPath)) {
 		Add-Type -Path $extensionCsPath -IgnoreWarnings -ErrorAction 'Stop'
 	}
@@ -1597,6 +1597,8 @@ function Execute-NxtBitRockInstaller {
 		Execute-NxtBitRockInstaller -Action "Uninstall" -UninstallKey "***MySuperSparklingApp***" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $false
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -1889,6 +1891,8 @@ function Execute-NxtInnoSetup {
 		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "***MySuperSparklingApp***" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $false
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2223,6 +2227,8 @@ function Execute-NxtMSI {
 	.EXAMPLE
 		Execute-NxtMSI -Action 'Patch' -Path 'Adobe_Reader_11.0.3_EN.msp'
 		Installs an MSP
+	.OUTPUTS
+		none.
 	.NOTES
 			AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -11687,10 +11693,10 @@ function Wait-NxtRegistryAndProcessCondition {
 				}
 			}
 			if ($RegkeyOperator -eq "Or") {
-				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -contains $true
+				[bool]$regkeysFinished = $true -in ($RegkeysToWaitFor | Select-Object -ExpandProperty success)
 			}
 			elseif ($RegkeyOperator -eq "And") {
-				[bool]$regkeysFinished = ($RegkeysToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
+				[bool]$regkeysFinished = $false -notin ($RegkeysToWaitFor | Select-Object -ExpandProperty success)
 			}
 			[bool]$firstRun = $false
 		}
