@@ -94,7 +94,7 @@ Describe "Codeing Guidelines" -ForEach @(
                 $paramBlockAst.Parameters | ForEach-Object {
                     $parameterAst = $_
                     $parameterAst.Extent.Text -Split "`n" | ForEach-Object {
-                        $_ | Should -Not -Match '\]\s*\$(?!(true|false|global))' -Because "the function '$($functionAst.Name)' does not have the variable definitions seperated by a new line (line $($parameterAst.Extent.StartLineNumber))"
+                        $_ | Should -Not -Match '^\s*\[[\w\.]+\]\s*\$' -Because "the function '$($functionAst.Name)' does not have the variable definitions seperated by a new line (line $($parameterAst.Extent.StartLineNumber))"
                     }
                 }
             }
