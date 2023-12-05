@@ -19,7 +19,15 @@ Describe "Codeing Guidelines" -ForEach @(
             }, $true)
             $spelling = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
             $statements | ForEach-Object {
-                $text = $_.Extent.Text -split "`n" | Select-Object -First 1
+                if (
+                    $_ -is [System.Management.Automation.Language.DoWhileStatementAst] -or 
+                    $_ -is [System.Management.Automation.Language.DoUntilStatementAst]
+                ){
+                    $text = $_.Extent.Text -split "`n" | Select-Object -Last 1
+                }
+                else {
+                    $text = $_.Extent.Text -split "`n" | Select-Object -First 1
+                }
                 $spelling | ForEach-Object {
                     if ($text -imatch "^\s*$_(?!\-)\b") {
                         $text | Should -MatchExactly "^\s*$_" -Because "the statement '$_' is not capitalized correctly (line $($_.Extent.StartLineNumber))"
@@ -58,6 +66,13 @@ Describe "Codeing Guidelines" -ForEach @(
                 $currentLine++
             }
         }
+        It "Intendations should be made using tabulator" {
+            $currentLine = 1
+            $content | ForEach-Object {
+                $_ | Should -Match "^(?! +)" -Because "the line is not tab indented (line $currentLine)"
+                $currentLine++
+            }
+        }
         It "At line endings there should not be trailing whitespaces" {
             $currentLine = 1
             $content | ForEach-Object {
@@ -79,8 +94,8 @@ Describe "Codeing Guidelines" -ForEach @(
             $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             $functions | ForEach-Object {
                 $help = $_.GetHelpContent()
-                $help | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber)))"
-                $help.Synopsis | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber)))"
+                $help | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber))"
+                $help.Synopsis | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber))"
                 $help.Description | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a description (line $($_.Extent.StartLineNumber))"
                 $help.Outputs | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should specify its output (line $($_.Extent.StartLineNumber))"
             }
@@ -132,9 +147,13 @@ Describe "Codeing Guidelines" -ForEach @(
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
                 }, $true)
             $statements | ForEach-Object {
-                if ($_ -is [System.Management.Automation.Language.DoWhileStatementAst]){
+                if (
+                    $_ -is [System.Management.Automation.Language.DoWhileStatementAst] -or 
+                    $_ -is [System.Management.Automation.Language.DoUntilStatementAst]
+                ){
                     ($_.Extent.Text -split "`n") | Select-Object -Last 1 | Should -Not -Match '^\s*\}' -Because "the do while loop should have its conditions as seperate ending line (line $($_.Extent.EndLineNumber))"
-                } else {
+                } 
+                else {
                     ($_.Extent.Text -split "`n") | Select-Object -Last 1 | Should -Match '\s*\}\s*$' -Because "the statement does not have the ending parentheses as seperate line (line $($_.Extent.EndLineNumber))"
                 }
             }
@@ -168,12 +187,29 @@ Describe "Codeing Guidelines" -ForEach @(
             $wrongSideOperator | Should -BeNullOrEmpty -Because "there should be no null or empty on the right side of a comparison (line $($wrongSideOperator.Extent.StartLineNumber))"
 
             $unaryExpression = $ast.Find({ 
-                    param($ast) 
+                    param($ast)
                     $ast -is [System.Management.Automation.Language.UnaryExpressionAst] -and
                     $ast.Extent.Text -notmatch "\$\w+\+\+" -and
                     $ast.Extent.Text -notmatch "\$\w+\-\-"
                 }, $true) 
             $unaryExpression | Should -BeNullOrEmpty -Because "there should be no unary expressions (line $($unaryExpression.Extent.StartLineNumber))"
+
+            $noOperator = $ast.Find({
+                param($ast)
+                (
+                    $ast -is [System.Management.Automation.Language.IfStatementAst] -and
+                    $ast.Clauses.Item1.Extent.Text -notmatch ("-")
+                ) -or 
+                (
+                    (
+                        $ast -is [System.Management.Automation.Language.DoUntilStatementAst] -or
+                        $ast -is [System.Management.Automation.Language.DoWhileStatementAst] -or
+                        $ast -is [System.Management.Automation.Language.WhileStatementAst]
+                    ) -and
+                    $ast.Condition.Extent.Text -notmatch ("-")
+                )
+            }, $true)
+            $noOperator | Should -BeNullOrEmpty -Because "there should be no condition without and operator (line $($noOperator.Extent.StartLineNumber))"
         }
         It "Check if command aliases have been used" {
             $commands = $ast.FindAll({
@@ -183,6 +219,17 @@ Describe "Codeing Guidelines" -ForEach @(
             $commands | ForEach-Object {
                 if ($_.InvocationOperator -ne "Unknown") { return }
                 Test-Path "alias:$($_.GetCommandName())" | Should -Be $false -Because "use of command aliases is not recommended $($_.Extent.StartLineNumber)"
+            }
+        }
+        It "Check spacing between pipelines" {
+            $pipelines = $ast.FindAll({
+                param($ast)
+                $ast -is [System.Management.Automation.Language.PipelineAst] -and 
+                $ast.PipelineElements.count -gt 1
+            },$true)
+            Write-Host $pipelines.count
+            $pipelines | ForEach-Object {
+                $_.Extent.Text | Should -Match "(?s)[^\s] \| (\n|[^\s])"
             }
         }
     }
