@@ -17,12 +17,12 @@ Describe "Codeing Guidelines" -ForEach @(
                 ) -and
                 $true -ne $ast.Unnamed
             }, $true)
-            $spelling = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
+            $spelling = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
             $statements | ForEach-Object {
                 $text = $_.Extent.Text -split "`n" | Select-Object -First 1
                 $spelling | ForEach-Object {
                     if ($text -imatch "^\s*$_(?!\-)\b") {
-                        $text | Should -MatchExactly "^\s*$_" -Because "the statement '$_' is not capitalized correctly (line $currentLine)"
+                        $text | Should -MatchExactly "^\s*$_" -Because "the statement '$_' is not capitalized correctly (line $($_.Extent.StartLineNumber))"
                     }
                 }
             }
