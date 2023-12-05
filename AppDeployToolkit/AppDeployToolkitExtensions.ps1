@@ -1477,6 +1477,8 @@ function Clear-NxtTempFolder {
 	.EXAMPLE
 		Clear-NxtTempFolder
 		This example executes the function with default parameters, clearing files and folders older than 96 hours from the $env:SystemDrive\n42Tmp folder.
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -1677,7 +1679,7 @@ function Execute-NxtBitRockInstaller {
 					if ($false -eq $ContinueOnError) {
 						throw "Failed to find installation file [$Path]."
 					}
-					Continue
+					continue
 				}
 			}
 			'Uninstall' {
@@ -1980,7 +1982,7 @@ function Execute-NxtInnoSetup {
 					if ($false -eq $ContinueOnError) {
 						throw "Failed to find installation file [$path]."
 					}
-					Continue
+					continue
 				}
 			}
 			'Uninstall' {
@@ -2542,7 +2544,7 @@ function Execute-NxtNullsoft {
 					if ($false -eq $ContinueOnError) {
 						throw "Failed to find installation file [$path]."
 					}
-					Continue
+					continue
 				}
 			}
 			'Uninstall' {
@@ -11591,10 +11593,10 @@ function Wait-NxtRegistryAndProcessCondition {
 				}
 			}
 			if ($ProcessOperator -eq "Or") {
-				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -contains $true
+				[bool]$processesFinished = $true -in ($ProcessesToWaitFor | Select-Object -ExpandProperty success)
 			}
 			elseif ($ProcessOperator -eq "And") {
-				[bool]$processesFinished = ($ProcessesToWaitFor | Select-Object -ExpandProperty success) -notcontains $false
+				[bool]$processesFinished = $false -notin ($ProcessesToWaitFor | Select-Object -ExpandProperty success)
 			}
 			## Check Regkey Conditions
 			foreach ($regkeyToWaitFor in ($RegkeysToWaitFor | Where-Object success -ne $true)) {

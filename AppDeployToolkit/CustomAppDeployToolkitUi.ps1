@@ -427,27 +427,27 @@ function Get-RegistryKey {
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
 		[String]
-        $Key,
+		$Key,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[String]
-        $Value,
+		$Value,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[String]
-        $SID,
+		$SID,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[Switch]
-        $ReturnEmptyKeyIfExists = $false,
+		$ReturnEmptyKeyIfExists = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[Switch]
-        $DoNotExpandEnvironmentNames = $false,
+		$DoNotExpandEnvironmentNames = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[bool]
-        $ContinueOnError = $true
+		$ContinueOnError = $true
 	)
 
 	Begin {
@@ -823,7 +823,7 @@ function Get-WindowTitle {
 			## Discover details about each visible window that was discovered
 			foreach ($VisibleWindowHandle in $VisibleWindowHandles) {
 				if (-not $VisibleWindowHandle) {
-					Continue
+					continue
 				}
 				## Get the window title
 				[String]$VisibleWindowTitle = [PSADT.UiAutomation]::GetWindowText($VisibleWindowHandle)
@@ -869,14 +869,16 @@ function Get-WindowTitle {
 #region Function New-NxtWpfControl
 function New-NxtWpfControl() {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Creates a WPF control.
+	.DESCRIPTION
+		Creates a WPF control using an xml as input.
 	.PARAMETER InputXml
 		Xml input that is converted to a WPF control.
 	.EXAMPLE
 		New-NxtWpfControl -InputXml $inputXml
 	.OUTPUTS
-		none.
+		System.Windows.Window
 	.NOTES
 		This is an internal script function and should typically not be called directly. It is used by the Show-NxtWelcomePrompt to create the WPF control.
 	.LINK
@@ -977,7 +979,7 @@ function Resolve-Error {
 
 	Begin {
 		## If function was called without specifying an error record, then choose the latest error that occurred
-		if (-not $ErrorRecord) {
+		if ($ErrorRecord.Count -eq 0) {
 			if ($global:Error.Count -eq 0) {
 				#Write-Warning -Message "The `$Error collection is empty"
 				Return
