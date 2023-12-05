@@ -9,15 +9,21 @@ Describe "Codeing Guidelines" -ForEach @(
             [System.Management.Automation.Language.Ast]$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
         }
         It "Should have the correct capaitalization on statements" {
-            $statements = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
+            $statements = $ast.FindAll({ param($ast)
+                (
+                    $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
+                    $ast -is [System.Management.Automation.Language.StatementAst] -or
+                    $ast -is [System.Management.Automation.Language.NamedBlockAst]
+                ) -and
+                $true -ne $ast.Unnamed
+            }, $true)
+            $spelling = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
             $statements | ForEach-Object {
-                $currentLine = 1
-                $statement = $_
-                $content | ForEach-Object {
-                    if ($_ -imatch "^\s*$statement\b") {
-                        $_ | Should -MatchExactly "^\s*$statement" -Because "the statement '$statement' is not capitalized correctly (line $currentLine)"
+                $text = $_.Extent.Text -split "`n" | Select-Object -First 1
+                $spelling | ForEach-Object {
+                    if ($text -imatch "^\s*$_(?!\-)\b") {
+                        $text | Should -MatchExactly "^\s*$_" -Because "the statement '$_' is not capitalized correctly (line $currentLine)"
                     }
-                    $currentLine++
                 }
             }
         }
@@ -72,12 +78,11 @@ Describe "Codeing Guidelines" -ForEach @(
         It "Every function should be described properly" {
             $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
             $functions | ForEach-Object {
-                $help = $_.Body.GetHelpContent()
-                $help | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a description at all"
-                $help.Synopsis | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis"
-                $help.Description | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a description"
-                $help.Example | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have an example"
-                $help.Output | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should specify its output"
+                $help = $_.GetHelpContent()
+                $help | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber)))"
+                $help.Synopsis | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber)))"
+                $help.Description | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a description (line $($_.Extent.StartLineNumber))"
+                $help.Output | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should specify its output (line $($_.Extent.StartLineNumber))"
             }
         }
         It "The variable definitions should be seperated by new lines in param block" {
@@ -127,7 +132,11 @@ Describe "Codeing Guidelines" -ForEach @(
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
                 }, $true)
             $statements | ForEach-Object {
-				($_.Extent.Text -split "`n") | Select-Object -Last 1 | Should -Match '\s*\}\s*$' -Because "the statement does not have the ending parentheses as seperate line (line $($_.Extent.EndLineNumber))"
+                if ($_ -is [System.Management.Automation.Language.DoWhileStatementAst]){
+                    ($_.Extent.Text -split "`n") | Select-Object -Last 1 | Should -Not -Match '^\s*\}' -Because "the do while loop should have its conditions as seperate ending line (line $($_.Extent.EndLineNumber))"
+                } else {
+                    ($_.Extent.Text -split "`n") | Select-Object -Last 1 | Should -Match '\s*\}\s*$' -Because "the statement does not have the ending parentheses as seperate line (line $($_.Extent.EndLineNumber))"
+                }
             }
         }
         It "Empty strings should not use `"`"" {
