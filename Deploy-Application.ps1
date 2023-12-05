@@ -27,11 +27,11 @@
 	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
 	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
 .EXAMPLE
-    powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; Exit $LastExitCode }"
+	powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; exit $LastExitCode }"
 .EXAMPLE
-    powershell.exe -Command "& { & '.\Deploy-Application.ps1' -AllowRebootPassThru $false; Exit $LastExitCode }"
+	powershell.exe -Command "& { & '.\Deploy-Application.ps1' -AllowRebootPassThru $false; exit $LastExitCode }"
 .EXAMPLE
-    powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeploymentType 'Uninstall'; Exit $LastExitCode }"
+	powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeploymentType 'Uninstall'; exit $LastExitCode }"
 .NOTES
 	Version: ##REPLACEVERSION##
 	ConfigVersion: 2023.10.31.1
@@ -99,17 +99,20 @@ function Start-NxtProcess {
 		System.Diagnostics.Process
 	.LINK
 		https://neo42.de/psappdeploytoolkit
-	#>
+#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$FilePath,
+		[string]
+		$FilePath,
 		[Parameter(Mandatory = $false)]
-		[string]$Arguments,
+		[string]
+		$Arguments,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Switch]$UseShellExecute = $false
+		[Switch]
+		$UseShellExecute = $false
 	)
 	Process {
 		[System.Diagnostics.ProcessStartInfo]$processStartInfo = New-Object System.Diagnostics.ProcessStartInfo;
@@ -123,59 +126,59 @@ function Start-NxtProcess {
 #endregion
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
 if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
-    Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
-    Write-Host "OSArchitecture: $((Get-WmiObject Win32_OperatingSystem).OSArchitecture)"
-    Write-Host $($MyInvocation.BoundParameters)
-    Write-Host "Will restart script in 64bit PowerShell"
-    [string]$file = $MyInvocation.MyCommand.Path
-    # add all bound parameters to the argument list
-    [string]$arguments = [string]::Empty
-    foreach ($item in $MyInvocation.BoundParameters.Keys) {
-        [PsObject]$type = $($MyInvocation.BoundParameters[$item]).GetType()
-        if ($type -eq [switch]) {
-            if ($true -eq $MyInvocation.BoundParameters[$item]) {
-                $arguments += " -$item"
-            }
-        }
-        elseif ($type -eq [string]) {
-            $arguments += " -$item `"$($MyInvocation.BoundParameters[$item])`""
-        }
-        elseif ($type -eq [int]) {
-            $arguments += " -$item $($MyInvocation.BoundParameters[$item])"
-        }
+	Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
+	Write-Host "OSArchitecture: $((Get-WmiObject Win32_OperatingSystem).OSArchitecture)"
+	Write-Host $($MyInvocation.BoundParameters)
+	Write-Host "Will restart script in 64bit PowerShell"
+	[string]$file = $MyInvocation.MyCommand.Path
+	# add all bound parameters to the argument list
+	[string]$arguments = [string]::Empty
+	foreach ($item in $MyInvocation.BoundParameters.Keys) {
+		[PsObject]$type = $($MyInvocation.BoundParameters[$item]).GetType()
+		if ($type -eq [switch]) {
+			if ($true -eq $MyInvocation.BoundParameters[$item]) {
+				$arguments += " -$item"
+			}
+		}
+		elseif ($type -eq [string]) {
+			$arguments += " -$item `"$($MyInvocation.BoundParameters[$item])`""
+		}
+		elseif ($type -eq [int]) {
+			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
+		}
 		elseif ($type -eq [bool]) {
 			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
 		}
 	}
-	if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")){
+	if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")) {
 		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "$arguments"
 	}
 	else {
 		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -File `"$file`"$arguments"
 	}
 	$process.WaitForExit()
-    [int]$exitCode = $process.ExitCode
-    exit $exitCode
+	[int]$exitCode = $process.ExitCode
+	exit $exitCode
 }
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
-	TriggerInstallUserPart { 
-		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")){
+	TriggerInstallUserPart {
+		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")) {
 			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "-DeploymentType InstallUserPart"
 		}
 		else {
 			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart" | Out-Null
 		}
-		Exit
+		exit
 	}
 	TriggerUninstallUserPart {
-		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")){
+		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")) {
 			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "-DeploymentType UninstallUserPart"
 		}
 		else {
 			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
 		}
-		Exit
+		exit
 	}
 	Default {}
 }
@@ -210,13 +213,13 @@ try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 [string]$deployAppScriptDate = '02/05/2023'
 [hashtable]$deployAppScriptParameters = $psBoundParameters
 ## Variables: Environment
-if (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
+if (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } else { $InvocationInfo = $MyInvocation }
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
 ## dot source the required AppDeploy Toolkit functions
 try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
-	if ($false -eq (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { Throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
-	if ($true -eq $DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } Else { . $moduleAppDeployToolkitMain }
+	if ($false -eq (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
+	if ($true -eq $DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } else { . $moduleAppDeployToolkitMain }
 	## add custom 'Nxt' variables
 	[string]$appDeployLogoBannerDark = Join-Path -Path $scriptRoot -ChildPath $xmlBannerIconOptions.Banner_Filename_Dark
 }
@@ -224,7 +227,7 @@ catch {
 	if ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
 	Write-Error -Message "Module [$moduleAppDeployToolkitMain] failed to load: `n$($_.Exception.Message)`n `n$($_.InvocationInfo.PositionMessage)" -ErrorAction 'Continue'
 	## exit the script, returning the exit code to SCCM
-	if (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; Exit } Else { Exit $mainExitCode }
+	if (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; exit } else { exit $mainExitCode }
 }
 #endregion
 ##* Do not modify section above	=============================================================================================================================================
@@ -240,10 +243,10 @@ try {
 	[string]$global:DetectedDisplayVersion = (Get-NxtCurrentDisplayVersion).DisplayVersion
 
 	Get-NxtVariablesFromDeploymentSystem
-	
+
 	[bool]$global:SoftMigrationCustomResult = $false
 	[bool]$global:AppInstallDetectionCustomResult = $false
-	
+
 	## validate package config variables
 	Test-NxtPackageConfig
 
@@ -364,7 +367,7 @@ function Main {
 				}
 				Unregister-NxtOld
 				Resolve-NxtDependentPackage
-				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and -not (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and (-not $RemovePackagesWithSameProductGUID) ) {
+				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and ($false -eq (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName')) -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and ($false -eq $RemovePackagesWithSameProductGUID) ) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-SoftMigration'
@@ -428,7 +431,7 @@ function Main {
 									CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 								}
 								else {
-									Throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
+									throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
 								}
 							}
 							"Install" {
@@ -442,7 +445,7 @@ function Main {
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
 							Default {
-								Throw "Unsupported 'ReinstallMode' property: $($global:PackageConfig.ReinstallMode)"
+								throw "Unsupported 'ReinstallMode' property: $($global:PackageConfig.ReinstallMode)"
 							}
 						}
 					}
@@ -450,7 +453,7 @@ function Main {
 						## default installation
 						CustomInstallBegin
 						[string]$script:installPhase = 'Package-Installation'
-						[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication 
+						[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
 						if ($false -eq $mainNxtResult.Success) {
 							CustomInstallEndOnError -ResultToCheck $mainNxtResult
 							Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
@@ -475,7 +478,7 @@ function Main {
 					## register package for uninstall
 					[string]$script:installPhase = 'Package-Registration'
 					Register-NxtPackage -MainExitCode $rebootRequirementResult.MainExitCode -LastErrorMessage $returnErrorMessage -SoftMigrationOccurred $softMigrationOccurred
-				} 
+				}
 				else {
 					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
 				}
@@ -553,7 +556,7 @@ function Main {
 
 #region entry point functions to perform custom tasks during script run
 ## custom functions are sorted by occurrence order in the main function.
-## naming pattern: 
+## naming pattern:
 ## {functionType}{Phase}{PrePosition}{SubPhase}
 function CustomBegin {
 	[string]$script:installPhase = 'CustomBegin'
