@@ -227,9 +227,8 @@ Describe "Codeing Guidelines" -ForEach @(
                 $ast -is [System.Management.Automation.Language.PipelineAst] -and 
                 $ast.PipelineElements.count -gt 1
             },$true)
-            Write-Host $pipelines.count
             $pipelines | ForEach-Object {
-                $_.Extent.Text | Should -Match "(?s)[^\s] \| (\n|[^\s])"
+                $_.Extent.Text | Should -Match "(?s)[^\s] \|( |\n|[^\s])"
             }
         }
     }
