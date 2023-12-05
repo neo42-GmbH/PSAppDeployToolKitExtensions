@@ -225,10 +225,10 @@ Describe "Codeing Guidelines" -ForEach @(
             $pipelines = $ast.FindAll({
                 param($ast)
                 $ast -is [System.Management.Automation.Language.PipelineAst] -and 
-                $ast.PipelineElements.count -gt 1
+                $ast.PipelineElements.Count -gt 1
             },$true)
             $pipelines | ForEach-Object {
-                $_.Extent.Text | Should -Match "(?s)[^\s] \|( |\n|[^\s])"
+                $_.Extent.Text | Should -Match "(?sm)(?<=\S) \|( (?=\S)|\r?\n)" -Because "there should be a space between pipelines (line $($_.Extent.StartLineNumber))"
             }
         }
     }
