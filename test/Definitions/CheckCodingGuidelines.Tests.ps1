@@ -82,7 +82,7 @@ Describe "Codeing Guidelines" -ForEach @(
                 $help | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber)))"
                 $help.Synopsis | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber)))"
                 $help.Description | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a description (line $($_.Extent.StartLineNumber))"
-                $help.Output | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should specify its output (line $($_.Extent.StartLineNumber))"
+                $help.Outputs | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should specify its output (line $($_.Extent.StartLineNumber))"
             }
         }
         It "The variable definitions should be seperated by new lines in param block" {
