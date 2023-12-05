@@ -17,12 +17,12 @@ Describe "Codeing Guidelines" -ForEach @(
                 ) -and
                 $true -ne $ast.Unnamed
             }, $true)
-            $spelling = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
+            $spelling = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
             $statements | ForEach-Object {
                 $text = $_.Extent.Text -split "`n" | Select-Object -First 1
                 $spelling | ForEach-Object {
                     if ($text -imatch "^\s*$_(?!\-)\b") {
-                        $text | Should -MatchExactly "^\s*$_" -Because "the statement '$_' is not capitalized correctly (line $currentLine)"
+                        $text | Should -MatchExactly "^\s*$_" -Because "the statement '$_' is not capitalized correctly (line $($_.Extent.StartLineNumber))"
                     }
                 }
             }
@@ -169,7 +169,9 @@ Describe "Codeing Guidelines" -ForEach @(
 
             $unaryExpression = $ast.Find({ 
                     param($ast) 
-                    $ast -is [System.Management.Automation.Language.UnaryExpressionAst]
+                    $ast -is [System.Management.Automation.Language.UnaryExpressionAst] -and
+                    $ast.Extent.Text -notmatch "\$\w+\+\+" -and
+                    $ast.Extent.Text -notmatch "\$\w+\-\-"
                 }, $true) 
             $unaryExpression | Should -BeNullOrEmpty -Because "there should be no unary expressions (line $($unaryExpression.Extent.StartLineNumber))"
         }
