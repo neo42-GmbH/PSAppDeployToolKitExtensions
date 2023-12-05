@@ -169,7 +169,9 @@ Describe "Codeing Guidelines" -ForEach @(
 
             $unaryExpression = $ast.Find({ 
                     param($ast) 
-                    $ast -is [System.Management.Automation.Language.UnaryExpressionAst]
+                    $ast -is [System.Management.Automation.Language.UnaryExpressionAst] -and
+                    $ast.Extent.Text -notmatch "\$\w+\+\+" -and
+                    $ast.Extent.Text -notmatch "\$\w+\-\-"
                 }, $true) 
             $unaryExpression | Should -BeNullOrEmpty -Because "there should be no unary expressions (line $($unaryExpression.Extent.StartLineNumber))"
         }
