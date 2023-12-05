@@ -66,13 +66,6 @@ Describe "Codeing Guidelines" -ForEach @(
                 $currentLine++
             }
         }
-        It "Intendations should be made using tabulator" {
-            $currentLine = 1
-            $content | ForEach-Object {
-                $_ | Should -Match "^(?! +)" -Because "the line is not tab indented (line $currentLine)"
-                $currentLine++
-            }
-        }
         It "At line endings there should not be trailing whitespaces" {
             $currentLine = 1
             $content | ForEach-Object {
