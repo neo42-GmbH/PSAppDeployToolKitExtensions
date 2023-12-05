@@ -2136,7 +2136,7 @@ else {
 			Write-Output $item
 		}
 	}
-	foreach ($processUIItem in ($processUIItems |Select-Object * -Unique)) {
+	foreach ($processUIItem in ($processUIItems | Select-Object * -Unique)) {
 		$control_CloseApplicationList.Items.Add($processUIItem) | Out-Null
 	}
 }

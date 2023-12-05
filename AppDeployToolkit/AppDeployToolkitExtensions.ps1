@@ -664,7 +664,7 @@ function Add-NxtXmlNode {
 			}
 			$message += "."
 			Write-Log -Message $message -Source ${CmdletName}
-			$xml.SelectSingleNode($parentNodePath).AppendChild($newNode)  | Out-Null
+			$xml.SelectSingleNode($parentNodePath).AppendChild($newNode) | Out-Null
 			$xml.Save("$FilePath")
 		}
 		catch {
@@ -1136,7 +1136,7 @@ function Complete-NxtPackageInstallation {
 				New-Folder -Path "$App\$UserpartDir\SupportFiles"
 			}
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
-			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue  | Out-Null
+			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue | Out-Null
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")) {
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
@@ -2347,7 +2347,7 @@ function Execute-NxtMSI {
 			"AcceptedRebootCodes"
 		)
 		foreach ($functionParameterToBeRemoved in $functionParametersToBeRemoved) {
-			$PSBoundParameters.Remove($functionParameterToBeRemoved)  | Out-Null
+			$PSBoundParameters.Remove($functionParameterToBeRemoved) | Out-Null
 		}
 	}
 	Process {
@@ -5463,7 +5463,7 @@ function Initialize-NxtEnvironment {
 			}
 			if ($true -eq (Test-Path -Path $SetupCfgPathOverride\setupOverride.cfg)) {
 				Write-Log -Message "Found an externally provided setup configuration file..."-Source ${cmdletName}
-				New-Item -Path "$App\neo42-Install" -ItemType Directory -Force  | Out-Null
+				New-Item -Path "$App\neo42-Install" -ItemType Directory -Force | Out-Null
 				Copy-File -Path $SetupCfgPathOverride\setupOverride.cfg -Destination "$App\neo42-Install\setup.cfg" -Recurse
 			}
 			elseif ($true -eq (Test-Path -Path $SetupCfgPath)) {
@@ -10130,10 +10130,10 @@ function Test-NxtFolderPermissions {
 		}
 		[PSCustomObject]$diffs = Compare-Object @($actualAcl.Access) $(
 			if ($true -eq $IsInherited) {
-				@($directorySecurity.Access)|Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$true}}
+				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$true}}
 			}
 			else {
-				@($directorySecurity.Access)|Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$false}}
+				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$false}}
 			}
 			) -Property $propertiesToCheck
 		[array]$results = @()
