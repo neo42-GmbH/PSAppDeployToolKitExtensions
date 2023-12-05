@@ -131,48 +131,46 @@ Describe "Codeing Guidelines" -ForEach @(
             }
         }
         It "Empty strings should not use `"`"" {
-            $currentLine = 1
-            $content | ForEach-Object {
-                $_ | Should -Not -MatchExactly '([\s\b]+|^)""([\b\s]+|$)' -Because "the line uses `"`" for an empty string (line $currentLine)"
-                $currentLine++
-            }
+            $emptyStringAssignments = $ast.Find({
+                param($ast)
+                $ast -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                $ast.Right.Extent.Text -eq '""'
+            }, $true)
+
+            $emptyStringAssignments | Should -BeNullOrEmpty -Because "empty strings should be defined by .NET functions such as [string]::Empty"
+
+            $emptyStringExpressions = $ast.Find({
+                param($ast)
+                $ast -is [System.Management.Automation.Language.BinaryExpressionAst] -and
+                (   
+                    $ast.Right.Extent.Text -eq '""' -or
+                    $ast.Left.Extent.Text -eq '""'
+                )
+            }, $true)
+
+            $emptyStringExpressions | Should -BeNullOrEmpty -Because "using empty string expressions should be done using .NET functions such as [string]::Empty"
         }
         It "Check condition formatting" {
-            $ifStatements = $ast.FindAll({
+            $wrongSideOperator = $ast.Find({
                     param($ast)
-                    $ast -is [System.Management.Automation.Language.IfStatementAst]
-                }, $true)
+                    $ast -is [System.Management.Automation.Language.BinaryExpressionAst] -and
+                    $ast.Right.Extent.Text -in @('$true', '$false', '$null')
+                }, $true) 
+            $wrongSideOperator | Should -BeNullOrEmpty -Because "there should be no null or empty on the right side of a comparison (line $($wrongSideOperator.Extent.StartLineNumber))"
 
-            $ifStatements | ForEach-Object {
-                $conditions = $_.Clauses.Item1
-                $conditions | ForEach-Object {
-                    # Check if bool/null is at start
-                    $expressions = $_.FindAll({ 
-                        param($ast) 
-                        $ast -is [System.Management.Automation.Language.BinaryExpressionAst] -and
-                        $ast.Operator -in @('Ieq', 'Ine') -and
-                        $ast.Extent.Text -match '\$(true|false|null)'
-                    }, $true)
-                    $expressions | ForEach-Object {
-                        $_ | Should -Match '(?!-).*\$(true|false|null)\s*-' -Because "the bool/null value is not at the start of the comparison (line $($_.Extent.StartLineNumber))"
-                    }
-
-                    # We should not use unary operators
-                    $unaryOperator = $_.Find({ 
-                        param($ast) 
-                        $ast -is [System.Management.Automation.Language.UnaryExpressionAst]
-                    }, $true)
-                    $unaryOperator | Should -BeNullOrEmpty -Because "the operator is not specified (line $($unaryOperator.Extent.StartLineNumber))"
-                }
-            }
+            $unaryExpression = $ast.Find({ 
+                    param($ast) 
+                    $ast -is [System.Management.Automation.Language.UnaryExpressionAst]
+                }, $true) 
+            $unaryExpression | Should -BeNullOrEmpty -Because "there should be no unary expressions (line $($unaryExpression.Extent.StartLineNumber))"
         }
         It "Check if command aliases have been used" {
             $commands = $ast.FindAll({
-                param($ast)
-                $ast -is [System.Management.Automation.Language.CommandAst]
-            }, $true)
+                    param($ast)
+                    $ast -is [System.Management.Automation.Language.CommandAst]
+                }, $true)
             $commands | ForEach-Object {
-                if ($_.InvocationOperator -ne "Unknown"){ return }
+                if ($_.InvocationOperator -ne "Unknown") { return }
                 Test-Path "alias:$($_.GetCommandName())" | Should -Be $false -Because "use of command aliases is not recommended $($_.Extent.StartLineNumber)"
             }
         }
