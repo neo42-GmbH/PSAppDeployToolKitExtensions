@@ -1125,7 +1125,7 @@ function Complete-NxtPackageInstallation {
 		if ($true -eq $UserPartOnInstallation) {
 			if ($true -eq ([string]::IsNullOrEmpty($UserPartRevision))) {
 				Write-Log -Message "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion." -Source ${CmdletName}
-				Throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
+				throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
 			}
 			## Userpart-Installation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomInstallUserPart*-functions inside of main script.
 			Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID.uninstall"
@@ -1241,7 +1241,7 @@ function Complete-NxtPackageUninstallation {
 		if ($true -eq $UserPartOnUninstallation) {
 			if ($true -eq ([string]::IsNullOrEmpty($UserPartRevision))) {
 				Write-Log -Message "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion." -Source ${CmdletName}
-				Throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
+				throw "UserPartRevision is empty. Please define a UserPartRevision in your config. Aborting package completion."
 			}
 			## Userpart-Uninstallation: Copy all needed files to "...\SupportFiles\$UserpartDir\" and add more needed tasks per user commands to the CustomUninstallUserPart*-functions inside of main script.
 			if ($true -eq (Test-Path -Path "$dirSupportFiles\$UserpartDir")) {
@@ -1499,7 +1499,7 @@ function Clear-NxtTempFolder {
 	Process {
 		if ($true -eq [string]::IsNullOrEmpty($TempRootFolder)) {
 			Write-Log -Message "TempRootFolder variable is empty. Aborting." -Severity 3 -Source ${cmdletName}
-			Throw "TempRootFolder variable is empty. Aborting."
+			throw "TempRootFolder variable is empty. Aborting."
 		}
 		if ($true -eq (Test-Path -Path $TempRootFolder)) {
 			Write-Log -Message "Clearing temp folder [$TempRootFolder]..." -Source ${cmdletName}
@@ -3010,7 +3010,7 @@ function Expand-NxtPackageConfig {
 	}
 	Process {
 		if ($false -eq [System.IO.Path]::IsPathRooted($global:PackageConfig.AppRootFolder)) {
-			Throw "AppRootFolder is not a valid path. Please check your PackageConfig."
+			throw "AppRootFolder is not a valid path. Please check your PackageConfig."
 		}
 		[string]$global:PackageConfig.App = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.App)
 		[string]$global:PackageConfig.UninstallDisplayName = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.UninstallDisplayName)
@@ -5341,7 +5341,7 @@ function Initialize-NxtAppRootFolder {
 			Write-Output "$env:ProgramData\$appRootFolderName"
 		}
 		else {
-			Throw "Failed to find or create AppRootFolderName"
+			throw "Failed to find or create AppRootFolderName"
 		}
 	}
 	End {
@@ -6149,7 +6149,7 @@ function New-NxtTemporaryFolder {
 	}
 	if ($countTries -ge 100) {
 		Write-Log -Message "Failed to create temporary folder in '$TempRootPath'. Did not find an available name." -Severity 3 -Source ${cmdletName}
-		Throw "Failed to create temporary folder in '$TempRootPath'. Did not find an available name."
+		throw "Failed to create temporary folder in '$TempRootPath'. Did not find an available name."
 	}
 	[hashtable]$nxtFolderWithPermissionsSplat = @{
 		Path = "$TempRootPath\$foldername"
@@ -6821,14 +6821,14 @@ function Remove-NxtIniValue {
 		try {
 			Write-Log -Message "Removing INI Key: [Section = $Section] [Key = $Key]." -Source ${CmdletName}
 			if ($false -eq (Test-Path -LiteralPath $FilePath -PathType 'Leaf')) {
-				Throw "File [$filePath] could not be found."
+				throw "File [$filePath] could not be found."
 			}
 			[PSADTNXT.NxtIniFile]::RemoveIniValue($Section, $Key, $FilePath)
 		}
 		catch {
 			Write-Log -Message "Failed to remove INI file key value. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 			if ($false -eq $ContinueOnError) {
-				Throw "Failed to remove INI file key value: $($_.Exception.Message)"
+				throw "Failed to remove INI file key value: $($_.Exception.Message)"
 			}
 		}
 	}
@@ -7783,7 +7783,7 @@ function Set-NxtFolderPermissions {
 	Process {
 		if ($false -eq (Test-Path -Path $Path)) {
 			Write-Log -Message "Folder '$Path' does not exist!" -Source ${cmdletName} -Severity 3
-			Throw "Folder '$Path' does not exist!"
+			throw "Folder '$Path' does not exist!"
 		}
 		if ($false -eq [string]::IsNullOrEmpty($CustomDirectorySecurity)) {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
@@ -7824,7 +7824,7 @@ function Set-NxtFolderPermissions {
 			[bool]$testResult = Test-NxtFolderPermissions -Path $Path -CustomDirectorySecurity $directorySecurity
 			if ($false -eq $testResult) {
 				Write-Log -Message "Failed to set permissions" -Severity 3 -Source ${cmdletName}
-				Throw "Failed to set permissions on folder '$Path'"
+				throw "Failed to set permissions on folder '$Path'"
 			}
 		}
 		else {
@@ -8980,7 +8980,7 @@ function Show-NxtInstallationWelcome {
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
 			if (($processObjects | Where-Object {$true -ne $_.IsWql} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
 				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {$true -ne $_.IsWql} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
-				Block-AppExecution -ProcessName ($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName')
+				Block-AppExecution -ProcessName ($processObjects | Where-Object {$true -ne $_.IsWql} | Select-Object -ExpandProperty 'ProcessName')
 				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
@@ -9200,7 +9200,7 @@ function Show-NxtWelcomePrompt {
 					}
 					else {
 						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Not Applying ContinueType $contiuneTypeValue `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-						Throw $_
+						throw $_
 					}
 				}
 			}

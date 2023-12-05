@@ -302,7 +302,7 @@ function Convert-RegistryPath {
 		}
 		else {
 			#  If key string is not properly formatted, throw an error
-			Throw "Unable to detect target registry hive in string [$Key]."
+			throw "Unable to detect target registry hive in string [$Key]."
 		}
 	}
 	End {
@@ -426,22 +426,28 @@ function Get-RegistryKey {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
-		[String]$Key,
+		[String]
+        $Key,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[String]$Value,
+		[String]
+        $Value,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[String]$SID,
+		[String]
+        $SID,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Switch]$ReturnEmptyKeyIfExists = $false,
+		[Switch]
+        $ReturnEmptyKeyIfExists = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Switch]$DoNotExpandEnvironmentNames = $false,
+		[Switch]
+        $DoNotExpandEnvironmentNames = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[bool]$ContinueOnError = $true
+		[bool]
+        $ContinueOnError = $true
 	)
 
 	Begin {
@@ -534,13 +540,13 @@ function Get-RegistryKey {
 			if ($true -eq [string]::IsNullOrEmpty($Value)) {
 				Write-Log -Message "Failed to read registry key [$key]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				if ($false -eq $ContinueOnError) {
-					Throw "Failed to read registry key [$key]: $($_.Exception.Message)"
+					throw "Failed to read registry key [$key]: $($_.Exception.Message)"
 				}
 			}
 			else {
 				Write-Log -Message "Failed to read registry key [$key] value [$value]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				if ($false -eq  $ContinueOnError) {
-					Throw "Failed to read registry key [$key] value [$value]: $($_.Exception.Message)"
+					throw "Failed to read registry key [$key] value [$value]: $($_.Exception.Message)"
 				}
 			}
 		}
@@ -1590,7 +1596,7 @@ function Test-RegistryValue {
 			}
 		}
 		catch {
-			Throw
+			throw
 		}
 		[bool]$isRegistryValueExists = $false
 		try {
@@ -1643,10 +1649,10 @@ $script:installPhase = "AskKillProcesses"
 [bool]$configToolkitLogDebugMessage = [bool]::Parse($xmlToolkitOptions.Toolkit_LogDebugMessage)
 [String]$appDeployCustomTypesSourceCode = Join-Path -Path $scriptRoot -ChildPath 'AppDeployToolkitMain.cs'
 if ($false -eq (Test-Path -LiteralPath $appDeployConfigFile -PathType 'Leaf')) {
-	Throw 'App Deploy XML configuration file not found.'
+	throw 'App Deploy XML configuration file not found.'
 }
 if ($false -eq (Test-Path -LiteralPath $appDeployCustomTypesSourceCode -PathType 'Leaf')) {
-	Throw 'App Deploy custom types source code file not found.'
+	throw 'App Deploy custom types source code file not found.'
 }
 
 ## Add the custom types required for the toolkit
@@ -1668,7 +1674,7 @@ if (-not ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 Set-Variable -Name 'closeAppsCountdownGlobal' -Value $CloseAppsCountdown -Scope 'Script'
 ## Check if the countdown was specified
 if ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeout)) {
-	Throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
+	throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
 }
 [PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -EncodedObject $ProcessObjectsEncoded
 ## Initial form layout: Close Applications / Allow Deferral
@@ -2203,10 +2209,10 @@ if (-not $script:welcomeTimer) {
 		$control_PopupCloseApplication.remove_Click($popupCloseApplicationClickHandler)
 		$control_PopupCancel.remove_Click($popupCancelClickHandler)
 		$control_HeaderPanel.remove_MouseLeftButtonDown($windowLeftButtonDownHandler)
-		if ($null -ne $welcomeTimerPersist.IsEnabled -eq $true) {
+		if ($true -eq $welcomeTimerPersist.IsEnabled) {
 			$welcomeTimerPersist.remove_Tick($welcomeTimerPersist_Tick)
 		}
-		if ($null -ne $timerRunningProcesses.IsEnabled -eq $true) {
+		if ($true -eq $timerRunningProcesses.IsEnabled) {
 			$timerRunningProcesses.remove_Tick($timerRunningProcesses_Tick)
 		}
 		if ($true -eq $script:welcomeTimer.IsEnabled) {
