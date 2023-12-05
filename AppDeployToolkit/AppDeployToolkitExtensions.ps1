@@ -2469,6 +2469,8 @@ function Execute-NxtNullsoft {
 		Execute-NxtNullsoft -Action "Uninstall" -UninstallKey "***MySuperSparklingApp***" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $false
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
+	.OUTPUTS
+		none.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -2770,14 +2772,16 @@ function Exit-NxtAbortReboot {
 			Remove-RegistryKey -Key "HKLM:\Software\$PackageMachineKey" -Recurse
 			Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageUninstallKey" -Recurse
 			if (
-				(Test-Path -Path "HKLM:Software\$EmpirumMachineKey") -and
-				-not [string]::IsNullOrEmpty($EmpirumMachineKey)
+				(
+					Test-Path -Path "HKLM:Software\$EmpirumMachineKey") -and
+					$false -eq [string]::IsNullOrEmpty($EmpirumMachineKey)
 				) {
 				Remove-RegistryKey -Key "HKLM:\Software\$EmpirumMachineKey" -Recurse
 			}
 			if (
-				(Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") -and
-				-not ([string]::IsNullOrEmpty($EmpirumUninstallKey))
+				(
+					Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") -and
+					$false -eq ([string]::IsNullOrEmpty($EmpirumUninstallKey))
 				) {
 				Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
 			}
@@ -2869,6 +2873,8 @@ function Exit-NxtScriptWithError {
 		Defaults to $script:NxtTempDirectories defined in the AppDeployToolkitMain.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
+	.OUTPUTS
+		none.
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -4589,10 +4595,10 @@ function Get-NxtRegisterOnly {
 	}
 	elseif (
 		($true -eq $SoftMigration) -and
-		-not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
+		$false -eq (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
 			(
 				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID).count -eq 0) -or
-				-not $RemovePackagesWithSameProductGUID
+				$false -eq $RemovePackagesWithSameProductGUID
 			)
 		) {
 		if ($true -eq $SoftMigrationCustomResult) {
@@ -4646,7 +4652,7 @@ function Get-NxtRegisterOnly {
 			}
 		}
 	}
-	elseif ( ($false -eq $SoftMigration) -and -not (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') ) {
+	elseif ( ($false -eq $SoftMigration) -and ($false -eq (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName')) ) {
 		Write-Log -Message 'SoftMigration is disabled. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
 		Write-Output $false
 	}
@@ -7820,7 +7826,7 @@ function Set-NxtFolderPermissions {
 			Write-Log -Message "Applying permissions to subfolders of '$Path'." -Source ${cmdletName}
 			Get-ChildItem -Path $Path -Recurse | ForEach-Object {
 				[psobject]$acl = Get-Acl -Path $_.FullName -ErrorAction Stop
-				$acl.Access | Where-Object { !$_.IsInherited } | ForEach-Object {
+				$acl.Access | Where-Object { $false -eq $_.IsInherited } | ForEach-Object {
 					$acl.RemoveAccessRule($_) | Out-Null
 				}
 				# Enable inheritance
@@ -8771,7 +8777,7 @@ function Show-NxtInstallationWelcome {
 			if ($processIdToIgnore -gt 0) {
 				[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 			}
-			while ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses' -ProcessIdsToIgnore $processIdsToIgnore) -or ((-not $promptResult.Contains('Defer')) -and (-not $promptResult.Contains('Close')))) {
+			while ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses' -ProcessIdsToIgnore $processIdsToIgnore) -or (($false -eq ($promptResult.Contains('Defer'))) -and ($false -eq ($promptResult.Contains('Close'))))) {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				#  If no proccesses are running close
 				if ($true -eq ([string]::IsNullOrEmpty($runningProcessDescriptions))) {
@@ -8780,7 +8786,7 @@ function Show-NxtInstallationWelcome {
 				#  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
 				if ($true -eq $AllowDefer) {
 					#  If there is deferral and closing apps is allowed but there are no apps to be closed, break the while loop
-					if (($true -eq $AllowDeferCloseApps) -and (-not $runningProcessDescriptions)) {
+					if (($true -eq $AllowDeferCloseApps) -and ($true -eq ([string]::IsNullOrEmpty($runningProcessDescriptions)))) {
 						break
 					}
 					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
@@ -8832,7 +8838,7 @@ function Show-NxtInstallationWelcome {
 					foreach ($runningProcess in $runningProcesses) {
 						[PSObject[]]$allOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
 						#  If the PromptToSave parameter was specified and the process has a window open, then prompt the user to save work if there is work to be saved when closing window
-						if (($true -eq $PromptToSave) -and (-not (($false -eq $IsProcessUserInteractive))) -and ($true -eq $allOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
+						if (($true -eq $PromptToSave) -and ($true -eq $IsProcessUserInteractive) -and ($true -eq $allOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
 							[Timespan]$promptToSaveTimeout = New-TimeSpan -Seconds $configInstallationPromptToSave
 							[Diagnostics.StopWatch]$promptToSaveStopWatch = [Diagnostics.StopWatch]::StartNew()
 							$promptToSaveStopWatch.Reset()
@@ -11582,7 +11588,7 @@ function Wait-NxtRegistryAndProcessCondition {
 
 		while (
 			$stopWatch.Elapsed.TotalSeconds -lt $TotalSecondsToWaitFor -and
-			!($processesFinished -and $regKeysFinished)
+			$false -eq (($true -eq $processesFinished) -and ($true -eq $regKeysFinished))
 		) {
 			if ($false -eq $firstRun) {
 				Start-Sleep 5
@@ -11635,7 +11641,7 @@ function Wait-NxtRegistryAndProcessCondition {
 						}
 						{
 							## test valueExists
-							(![string]::IsNullOrEmpty($_.ValueName)) -and
+							($false -eq [string]::IsNullOrEmpty($_.ValueName)) -and
 							($null -eq $_.ValueData ) -and
 							($true -eq $_.ShouldExist)
 						} {
@@ -11647,7 +11653,7 @@ function Wait-NxtRegistryAndProcessCondition {
 						}
 						{
 							## test valueNotExists
-							(![string]::IsNullOrEmpty($_.ValueName)) -and
+							($false -eq [string]::IsNullOrEmpty($_.ValueName)) -and
 							($null -eq $_.ValueData ) -and
 							($false -eq $_.ShouldExist)
 						} {
@@ -11659,8 +11665,8 @@ function Wait-NxtRegistryAndProcessCondition {
 						}
 						{
 							## valueEquals
-							(![string]::IsNullOrEmpty($_.ValueName)) -and
-							(![string]::IsNullOrEmpty($_.ValueData) ) -and
+							($false -eq [string]::IsNullOrEmpty($_.ValueName)) -and
+							($false -eq [string]::IsNullOrEmpty($_.ValueData) ) -and
 							($true -eq $_.ShouldExist)
 						} {
 								Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}
@@ -11671,8 +11677,8 @@ function Wait-NxtRegistryAndProcessCondition {
 						}
 						{
 							## valueNotEquals
-							(![string]::IsNullOrEmpty($_.ValueName)) -and
-							(![string]::IsNullOrEmpty($_.ValueData) ) -and
+							($false -eq [string]::IsNullOrEmpty($_.ValueName)) -and
+							($false -eq [string]::IsNullOrEmpty($_.ValueData) ) -and
 							($false -eq $_.ShouldExist)
 						} {
 							Write-Log -Message "Check if value `"$($regkeyToWaitFor.ValueName)`" is not equal to `"$($regkeyToWaitFor.ValueData)`" in: `"$($regkeyToWaitFor.KeyPath)`"" -Severity 1 -Source ${cmdletName}

@@ -822,7 +822,7 @@ function Get-WindowTitle {
 
 			## Discover details about each visible window that was discovered
 			foreach ($VisibleWindowHandle in $VisibleWindowHandles) {
-				if (-not $VisibleWindowHandle) {
+				if ($null -eq $VisibleWindowHandle) {
 					continue
 				}
 				## Get the window title
@@ -1021,7 +1021,7 @@ function Resolve-Error {
 		$LogInnerMessage = $null
 	}
 	Process {
-		if (-not $ErrorRecord) {
+		if ($ErrorRecord.Count -eq 0) {
 			return
 		}
 		foreach ($ErrRecord in $ErrorRecord) {
@@ -1342,7 +1342,7 @@ function Write-Log {
 			[bool]$DisableLogging = $false
 		}
 		#  Check if the script section is defined
-		[bool]$ScriptSectionDefined = [bool](-not [String]::IsNullOrEmpty($ScriptSection))
+		[bool]$ScriptSectionDefined = [bool]($false -eq [String]::IsNullOrEmpty($ScriptSection))
 		#  Get the file name of the source script
 		try {
 			if ($script:MyInvocation.Value.ScriptName) {
@@ -1395,7 +1395,7 @@ function Write-Log {
 		}
 
 		## Exit function if it is a debug message and logging debug messages is not enabled in the config XML file
-		if (($true -eq $DebugMessage) -and (-not $LogDebugMessage)) {
+		if (($true -eq $DebugMessage) -and ($false -eq $LogDebugMessage)) {
 			[bool]$ExitLoggingFunction = $true; return
 		}
 		## Exit function if logging to file is disabled and logging to console host is disabled
@@ -1662,7 +1662,7 @@ if ($false -eq (Test-Path -LiteralPath $appDeployCustomTypesSourceCode -PathType
 }
 
 ## Add the custom types required for the toolkit
-if (-not ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
+if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 	[String[]]$referencedAssemblies = 'System.Drawing', 'System.Windows.Forms', 'System.DirectoryServices'
 	Add-Type -Path $appDeployCustomTypesSourceCode -ReferencedAssemblies $referencedAssemblies -IgnoreWarnings -ErrorAction 'Stop'
 }
@@ -2186,7 +2186,7 @@ if ($true -eq $showCloseApps) {
 }
 
 ## Add the timer if it doesn't already exist - this avoids the timer being reset if the continue button is clicked
-if (-not $script:welcomeTimer) {
+if ($null -eq $script:welcomeTimer) {
 	[System.Windows.Threading.DispatcherTimer]$script:welcomeTimer = New-Object System.Windows.Threading.DispatcherTimer
 }
 
