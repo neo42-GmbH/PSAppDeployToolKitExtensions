@@ -16,27 +16,19 @@ Describe 'Remove-NxtLocalGroupMember' {
             Remove-LocalUser -Name 'TestUser1'
             Remove-LocalUser -Name 'TestUser2'
         }
-        It 'Should remove the specified member from the group' -Skip {
-            # Issue #621
+        It 'Should remove the specified member from the group' {
+
             $result = Remove-NxtLocalGroupMember -GroupName 'TestGroup' -MemberName 'TestUser1'
             $result | Should -BeOfType 'System.Int32'
             $result | Should -Be 1
-            (Get-LocalGroupMember -Group 'TestGroup').Members | Should -Not -Contain 'TestUser1'
-            (Get-LocalGroupMember -Group 'TestGroup').Members | Should -Contain 'TestUser2'
+            (Get-LocalGroupMember -Group 'TestGroup').Name | Should -Not -Contain "$env:ComputerName\TestUser1"
+            (Get-LocalGroupMember -Group 'TestGroup').Name | Should -Contain "$env:ComputerName\TestUser2"
         }
-        It 'Should remove all members of the group when -AllUsers is specified' -Skip {
-            # Issue #621
-            $result = Remove-NxtLocalGroupMember -GroupName 'TestGroup' -AllUsers
-            $result | Should -BeOfType 'System.Int32'
-            $result | Should -Be 2
-            (Get-LocalGroupMember -Group 'TestGroup').Members | Should -BeNullOrEmpty
-        }
-        It 'Should remove all members of the group when -AllMember is specified' -Skip {
-            # Issue #621
+        It 'Should remove all members of the group when -AllMember is specified' {
             $result = Remove-NxtLocalGroupMember -GroupName 'TestGroup' -AllMember
             $result | Should -BeOfType 'System.Int32'
             $result | Should -Be 2
-            (Get-LocalGroupMember -Group 'TestGroup').Members | Should -BeNullOrEmpty
+            (Get-LocalGroupMember -Group 'TestGroup').Name | Should -BeNullOrEmpty
         }
         It 'Should return nothing if the member was not found' {
             Remove-NxtLocalGroupMember -GroupName 'TestGroup' -MemberName 'TestUser3' | Should -BeNullOrEmpty
