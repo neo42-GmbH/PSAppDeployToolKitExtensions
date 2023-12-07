@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: PSAppDeployToolKitExtensions-Runner
 
     steps:
     - name: Checkout
@@ -21,6 +21,7 @@ jobs:
         repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
         ref: ${{ vars.TARGET_ADT_VERSION }}
         path: ./PSADT
+        
     - name: Run Pester Tests
       shell: powershell
       run: .\NxtExtensions\test\PesterTestsStarter.ps1
