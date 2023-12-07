@@ -6,6 +6,7 @@ Describe "Codeing Guidelines" -ForEach @(
     Context "$(Split-Path $path -Leaf)" {
         BeforeAll {
             [string[]]$content = Get-Content -Path "$path"
+            [string]$contentRaw = Get-Content -Path "$path" -Raw
             [System.Management.Automation.Language.Ast]$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
         }
         It "Should have the correct capaitalization on statements" {
@@ -223,6 +224,9 @@ Describe "Codeing Guidelines" -ForEach @(
             $pipelines | ForEach-Object {
                 $_.Extent.Text | Should -Match "(?sm)(?<=\S) \|( (?=\S)|\r?\n)" -Because "there should be a space between pipelines (line $($_.Extent.StartLineNumber))"
             }
+        }
+        It "Last line should be empty new line" {
+            $contentRaw -split "`n" | Select-Object -Last 1 | Should -BeNullOrEmpty
         }
     }
 }
