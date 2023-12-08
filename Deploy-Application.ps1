@@ -204,7 +204,10 @@ Remove-Variable -Name tempLoadPackageConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
-try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop' } catch {}
+try {
+	Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop'
+}
+catch {}
 ## Variables: Exit Code
 [int32]$mainExitCode = 0
 ## Variables: Script
@@ -213,21 +216,40 @@ try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 [string]$deployAppScriptDate = '02/05/2023'
 [hashtable]$deployAppScriptParameters = $psBoundParameters
 ## Variables: Environment
-if (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } else { $InvocationInfo = $MyInvocation }
+if (Test-Path -LiteralPath 'variable:HostInvocation') {
+	$InvocationInfo = $HostInvocation
+}
+else {
+	$InvocationInfo = $MyInvocation
+}
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
 ## dot source the required AppDeploy Toolkit functions
 try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
-	if ($false -eq (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) { throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]." }
-	if ($true -eq $DisableLogging) { . $moduleAppDeployToolkitMain -DisableLogging } else { . $moduleAppDeployToolkitMain }
+	if ($false -eq (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) {
+		throw "Module does not exist at the specified location [$moduleAppDeployToolkitMain]."
+	}
+	if ($true -eq $DisableLogging) {
+		. $moduleAppDeployToolkitMain -DisableLogging
+	} else {
+		. $moduleAppDeployToolkitMain
+	}
 	## add custom 'Nxt' variables
 	[string]$appDeployLogoBannerDark = Join-Path -Path $scriptRoot -ChildPath $xmlBannerIconOptions.Banner_Filename_Dark
 }
 catch {
-	if ($mainExitCode -eq 0) { [int32]$mainExitCode = 60008 }
+	if ($mainExitCode -eq 0) {
+		[int32]$mainExitCode = 60008
+	}
 	Write-Error -Message "Module [$moduleAppDeployToolkitMain] failed to load: `n$($_.Exception.Message)`n `n$($_.InvocationInfo.PositionMessage)" -ErrorAction 'Continue'
 	## exit the script, returning the exit code to SCCM
-	if (Test-Path -LiteralPath 'variable:HostInvocation') { $script:ExitCode = $mainExitCode; exit } else { exit $mainExitCode }
+	if (Test-Path -LiteralPath 'variable:HostInvocation') {
+		$script:ExitCode = $mainExitCode
+		exit
+	}
+	else {
+		exit $mainExitCode
+	}
 }
 #endregion
 ##* Do not modify section above	=============================================================================================================================================
@@ -357,7 +379,9 @@ function Main {
 		Test-NxtConfigVersionCompatibility
 		CustomBegin
 		switch ($DeploymentType) {
-			{ ($_ -eq "Install") -or ($_ -eq "Repair") } {
+			{
+				($_ -eq "Install") -or ($_ -eq "Repair")
+			} {
 				CustomInstallAndReinstallBegin
 				## START OF INSTALL
 				[string]$script:installPhase = 'Package-PreCleanup'

@@ -477,7 +477,9 @@ function Add-NxtProcessPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object { $_ -ne '' }
+		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
+			$false -eq [string]::IsNullOrEmpty($_)
+		}
 		try {
 			$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
 		}
@@ -545,7 +547,9 @@ function Add-NxtSystemPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object { $_ -ne '' }
+		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
+			$false -eq [string]::IsNullOrEmpty($_)
+		}
 		try {
 			$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
 		}
@@ -704,7 +708,9 @@ function Close-BlockExecutionWindow {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[int[]]$blockexecutionWindowId = (Get-Process powershell | Where-Object {"$(($_).MainWindowTitle)" -eq "$installTitle"}).Id
+		[int[]]$blockexecutionWindowId = (Get-Process powershell | Where-Object {
+			$_.MainWindowTitle -eq $installTitle}
+		).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
 			Write-Log "The informational window of BlockExecution functionality will be closed now ..."
 			## Stop-NxtProcess does not yet support Id as Parameter
@@ -2998,6 +3004,8 @@ function Exit-NxtScriptWithError {
 #region Function Expand-NxtPackageConfig
 function Expand-NxtPackageConfig {
 	<#
+	.SYNOPSIS
+		Expands keys from the package config
 	.DESCRIPTION
 		Expands a set of Subkeys in the $global:PackageConfig back into the variable $global:PackageConfig.
 	.PARAMETER PackageConfig
@@ -3161,7 +3169,9 @@ function Expand-NxtVariablesInFile {
 						[string]$envVariableName = $expressionMatch.Groups[1].Value.TrimStart('$(').TrimEnd('")')
 					}
 
-					[string]$envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
+					[string]$envVariableValue = (Get-ChildItem env:* | Where-Object {
+						$_.Name -EQ $envVariableName
+					}).Value
 
 					[string]$line = $line.Replace($expressionMatch.Value, $envVariableValue)
 				}
@@ -3176,7 +3186,9 @@ function Expand-NxtVariablesInFile {
 					else {
 						[string]$envVariableName = $expressionMatch.Groups[1].Value.TrimStart('$(').TrimEnd('")')
 					}
-					[string]$envVariableValue = (Get-ChildItem env:* | Where-Object { $_.Name -EQ $envVariableName }).Value
+					[string]$envVariableValue = (Get-ChildItem env:* | Where-Object {
+						$_.Name -EQ $envVariableName
+					}).Value
 
 					[string]$line = $line.Replace($expressionMatch.Value, $envVariableValue)
 				}
@@ -3276,7 +3288,7 @@ function Format-NxtPackageSpecificVariables {
 		## Get String from object and Expand String if requested
 		[System.Collections.Generic.Dictionary[string, string]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[string,string]"
 		foreach ($packageSpecificVariable in $PackageConfig.PackageSpecificVariablesRaw) {
-			if ($packageSpecificVariable.ExpandVariables) {
+			if ($null -ne $packageSpecificVariable.ExpandVariables) {
 				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name, $ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
 			}
 			else {
@@ -3719,8 +3731,12 @@ function Get-NxtFolderSize {
 	Process {
 		[long]$result = 0
 		try {
-			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] { Param ($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x) })
-			[long]$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] { Param ($x) $x.Length })
+			[System.IO.FileInfo[]]$files = [System.Linq.Enumerable]::Select([System.IO.Directory]::EnumerateFiles($FolderPath, "*.*", "AllDirectories"), [Func[string, System.IO.FileInfo]] {
+				Param ($x) (New-Object -TypeName System.IO.FileInfo -ArgumentList $x)
+			})
+			[long]$result = [System.Linq.Enumerable]::Sum($files, [Func[System.IO.FileInfo, long]] {
+				Param ($x) $x.Length
+			})
 			[long]$folderSize = [math]::round(($result / "$("1$Unit" -replace "1B", "1D")"))
 		}
 		catch {
@@ -3768,6 +3784,8 @@ function Get-NxtInstalledApplication {
 		Get-NxtInstalledApplication -UninstallKey "SomeApp - Version *" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $true -DisplayNamesToExclude "SomeApp - Version 1.0","SomeApp - Version 1.1",$global:PackageConfig.UninstallDisplayName
 	.EXAMPLE
 		Get-NxtInstalledApplication -UninstallKey "***MySuperSparklingApp***" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $false
+	.OUTPUTS
+		PSObject
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -4711,12 +4729,16 @@ function Get-NxtRunningProcesses {
 			if ($false -eq $DisableLogging) {
 				Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
 			}
-			[array]$wqlProcessObjects = $processObjects | Where-Object { $true -eq $_.IsWql }
+			[array]$wqlProcessObjects = $processObjects | Where-Object {
+				$true -eq $_.IsWql
+			}
 			[array]$processesFromWmi = $(
 				foreach ($wqlProcessObject in $wqlProcessObjects) {
 					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
 						n = "QueryUsed"
-						e = { $wqlProcessObject.ProcessName }
+						e = {
+							$wqlProcessObject.ProcessName
+						}
 					}
 				}
 			)
@@ -4742,11 +4764,11 @@ function Get-NxtRunningProcesses {
 						$processFound = $true
 					}
 					if ($true -eq $processFound) {
-						if ($processObject.ProcessDescription) {
+						if ($false -eq [string]::IsNullOrEmpty($processObject.ProcessDescription)) {
 							#  The description of the process provided as a parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
 							Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $processObject.ProcessDescription -Force -PassThru -ErrorAction 'SilentlyContinue'
 						}
-						elseif ($_.Description) {
+						elseif ($false -eq [string]::IsNullOrEmpty($_.Description)) {
 							#  If the process already has a description field specified, then use it
 							Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.Description -Force -PassThru -ErrorAction 'SilentlyContinue'
 						}
@@ -4766,7 +4788,7 @@ function Get-NxtRunningProcesses {
 			[Diagnostics.Process[]]$runningProcesses = Get-Process | Where-Object -FilterScript $whereObjectFilter | Sort-Object -Property 'ProcessName'
 
 			if ($false -eq $DisableLogging) {
-				if ($runningProcesses) {
+				if ($runningProcesses.Count -ne 0) {
 					[String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
 					Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
 				}
@@ -4819,7 +4841,7 @@ function Get-NxtServiceState {
 	Process {
 		try {
 			[System.Management.ManagementBaseObject]$service = Get-WmiObject -Query "Select State from Win32_Service Where Name = '$($ServiceName)'" | Select-Object -First 1
-			if ($service) {
+			if ($null -ne $service) {
 				Write-Output $service.State
 			}
 			else {
@@ -5276,10 +5298,9 @@ function Initialize-NxtAppRootFolder {
 		This function is designed to prepare the application root directory (AppRootFolder) by verifying paths, setting appropriate permissions, and creating necessary directories.
 		It should be invoked by the 'Initialize-NxtEnvironment' function as part of a broader initialization process.
 		The function ensures that the AppRootFolder is correctly configured.
-
 	.EXAMPLE
 		Initialize-NxtAppRootFolder
-		.OUPUTS
+	.OUTPUTS
 		System.String
 	.LINK
 		https://neo42.de/psappdeploytoolkit
@@ -5301,7 +5322,7 @@ function Initialize-NxtAppRootFolder {
 	}
 	Process {
 		[char[]]$invalidChars = [System.IO.Path]::GetInvalidFileNameChars()
-		[string]$invalidCharsRegex = "[$([regex]::Escape($invalidChars -join ''))]"
+		[string]$invalidCharsRegex = "[$([regex]::Escape($invalidChars -join [string]::Empty))]"
 		if ($BaseName -match $invalidCharsRegex) {
 			throw "The '$BaseName' contains invalid characters."
 		}
@@ -7146,7 +7167,7 @@ function Remove-NxtProcessPathVariable {
 	Process {
 		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') |
 			Where-Object {
-				$_ -ne '' -and
+				$false -eq [string]::IsNullOrEmpty($_) -and
 				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\')
 			}
 		try {
@@ -7193,7 +7214,7 @@ function Remove-NxtSystemPathVariable {
 	Process {
 		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') |
 			Where-Object {
-				$_ -ne '' -and
+				$false -eq [string]::IsNullOrEmpty($_) -and
 				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\')
 			}
 		try {
@@ -7266,7 +7287,9 @@ function Remove-NxtProductMember {
 	Process {
 		[int]$removalCounter = 0
 		if ($true -eq $RemovePackagesWithSameProductGUID) {
-			(Get-NxtRegisteredPackage -ProductGUID $ProductGUID -InstalledState 1).PackageGUID | Where-Object {$null -ne $($_)} | ForEach-Object {
+			(Get-NxtRegisteredPackage -ProductGUID $ProductGUID -InstalledState 1).PackageGUID | Where-Object {
+				$null -ne $($_)
+			} | ForEach-Object {
 				[string]$assignedPackageGUID = $_
 				## we don't remove the current package inside this function
 				if ($assignedPackageGUID -ne $PackageGUID) {
@@ -7824,7 +7847,9 @@ function Set-NxtFolderPermissions {
 			Write-Log -Message "Applying permissions to subfolders of '$Path'." -Source ${cmdletName}
 			Get-ChildItem -Path $Path -Recurse | ForEach-Object {
 				[psobject]$acl = Get-Acl -Path $_.FullName -ErrorAction Stop
-				$acl.Access | Where-Object { $false -eq $_.IsInherited } | ForEach-Object {
+				$acl.Access | Where-Object {
+					$false -eq $_.IsInherited
+				} | ForEach-Object {
 					$acl.RemoveAccessRule($_) | Out-Null
 				}
 				# Enable inheritance
@@ -7853,7 +7878,6 @@ function Set-NxtIniValue {
 	<#
 	.SYNOPSIS
 		Modifies or creates a specified INI file to set the value of a given section and key.
-
 	.DESCRIPTION
 		The Set-NxtIniValue function is used for opening or creating an INI file and setting the value for a specific section and key. The function has options to continue on errors and to create the file if it doesn't exist. The file, section, key, and value parameters are mandatory for the function to execute properly.
 	.PARAMETER FilePath
@@ -7874,6 +7898,8 @@ function Set-NxtIniValue {
 	.EXAMPLE
 		Set-NxtIniValue -FilePath "C:\ProgramFiles\Example\config.ini" -Section "Network" -Key "Port" -Value 8080 -Create $true
 		This example sets the value of "Port" under the "Network" section in the config.ini file to 8080 and creates the file if it doesn't exist.
+	.OUTPUTS
+		none.
 	.NOTES
 		AppDeployToolkit is required in order to run this function.
 	.LINK
@@ -7915,7 +7941,6 @@ function Set-NxtIniValue {
 			if (($false -eq (Test-Path -Path $FilePath)) -and $Create) {
 				New-Item -ItemType File -Path $FilePath -Force | Out-Null
 			}
-
 			if ($true -eq (Test-Path -Path $FilePath)) {
 				Set-IniValue -FilePath $FilePath -Section $Section -Key $Key -Value $Value -ContinueOnError $ContinueOnError
 			}
@@ -8042,12 +8067,12 @@ function Set-NxtPackageArchitecture {
 			elseif (($AppArch -eq 'x86' -or $AppArch -eq '*') -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
 				[string]$global:ProgramFilesDir = $ProgramFiles
 				[string]$global:ProgramFilesDirx86 = $ProgramFiles
-				[string]$global:ProgramW6432 = ''
+				[string]$global:ProgramW6432 = [string]::Empty
 				[string]$global:CommonFilesDir = $CommonProgramFiles
 				[string]$global:CommonFilesDirx86 = $CommonProgramFiles
-				[string]$global:CommonProgramW6432 = ''
+				[string]$global:CommonProgramW6432 = [string]::Empty
 				[string]$global:System = "$SystemRoot\System32"
-				[string]$global:Wow6432Node = ''
+				[string]$global:Wow6432Node = [string]::Empty
 				[string]$global:RegSoftwarePath = 'HKLM:\Software'
 				[string]$global:RegSoftwarePathx86 = 'HKLM:\Software'
 			}
@@ -8059,7 +8084,7 @@ function Set-NxtPackageArchitecture {
 				[string]$global:CommonFilesDirx86 = ${CommonProgramFiles(x86)}
 				[string]$global:CommonProgramW6432 = $CommonProgramFiles
 				[string]$global:System = "$SystemRoot\System32"
-				[string]$global:Wow6432Node = ''
+				[string]$global:Wow6432Node = [string]::Empty
 				[string]$global:RegSoftwarePath = 'HKLM:\Software'
 				[string]$global:RegSoftwarePathx86 = 'HKLM:\Software\Wow6432Node'
 			}
@@ -8250,8 +8275,12 @@ function Set-NxtSetupCfg {
 				[hashtable]$global:SetupCfg = @{}
 			}
 			## note: xml nodes are case-sensitive
-			foreach ( $xmlSection in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.ChildNodes.Name | Where-Object { $_ -ne "#comment" }) ) {
-				foreach ( $xmlSectionSubValue in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.ChildNodes.Name | Where-Object { $_ -ne "#comment" }) ) {
+			foreach ( $xmlSection in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.ChildNodes.Name | Where-Object {
+				$_ -ne "#comment"
+			}) ) {
+				foreach ( $xmlSectionSubValue in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.ChildNodes.Name | Where-Object {
+					$_ -ne "#comment"
+				}) ) {
 					if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
 						if ($null -eq $global:SetupCfg.$xmlSection) {
 							[hashtable]$global:SetupCfg.$xmlSection = @{}
@@ -8271,8 +8300,10 @@ function Set-NxtSetupCfg {
 #region Function Set-NxtSystemEnvironmentVariable
 function Set-NxtSystemEnvironmentVariable {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Sets a system environment variable.
+	.DESCRIPTION
+		Sets a persistent system environment variable for the operating system.
 	.PARAMETER Key
 		Key of the variable.
 	.PARAMETER Value
@@ -8551,7 +8582,7 @@ function Show-NxtInstallationWelcome {
 		## Specify the deadline (in format dd/mm/yyyy) for which deferral will expire as an option
 		[Parameter(Mandatory = $false)]
 		[String]
-		$DeferDeadline = '',
+		$DeferDeadline = [string]::Empty,
 		## Specify whether to minimize other windows when displaying prompt
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
@@ -8675,7 +8706,7 @@ function Show-NxtInstallationWelcome {
 				foreach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ",")) {
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
 						ProcessName			= $defaultMsiExecutable
-						ProcessDescription	= ''
+						ProcessDescription	= [string]::Empty
 						IsWql				= $false
 					}
 				}
@@ -8722,7 +8753,7 @@ function Show-NxtInstallationWelcome {
 				$DeferTimes = $null
 			}
 			if (($true -eq $checkDeferDays) -and ($true -eq $AllowDefer)) {
-				if ($deferHistoryDeadline) {
+				if ($null -ne $deferHistoryDeadline) {
 					Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${CmdletName}
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
 				}
@@ -8776,7 +8807,9 @@ function Show-NxtInstallationWelcome {
 				[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 			}
 			while ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses' -ProcessIdsToIgnore $processIdsToIgnore) -or (($false -eq ($promptResult.Contains('Defer'))) -and ($false -eq ($promptResult.Contains('Close'))))) {
-				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object {
+					$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
+				} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				#  If no proccesses are running close
 				if ($true -eq ([string]::IsNullOrEmpty($runningProcessDescriptions))) {
 					break
@@ -8834,7 +8867,9 @@ function Show-NxtInstallationWelcome {
 					[System.Diagnostics.Process[]]$runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -ProcessIdsToIgnore $processIdsToIgnore
 					# Close running processes
 					foreach ($runningProcess in $runningProcesses) {
-						[PSObject[]]$allOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.ParentProcess -eq $runningProcess.ProcessName }
+						[PSObject[]]$allOpenWindowsForRunningProcess = Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object {
+							$_.ParentProcess -eq $runningProcess.ProcessName
+						}
 						#  If the PromptToSave parameter was specified and the process has a window open, then prompt the user to save work if there is work to be saved when closing window
 						if (($true -eq $PromptToSave) -and ($true -eq $IsProcessUserInteractive) -and ($true -eq $allOpenWindowsForRunningProcess) -and ($runningProcess.MainWindowHandle -ne [IntPtr]::Zero)) {
 							[Timespan]$promptToSaveTimeout = New-TimeSpan -Seconds $configInstallationPromptToSave
@@ -8843,7 +8878,7 @@ function Show-NxtInstallationWelcome {
 							foreach ($openWindow in $allOpenWindowsForRunningProcess) {
 								try {
 									Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${CmdletName}
-									[bool]$IsBringWindowToFrontSuccess = [PSADT.UiAutomation]::BringWindowToFront($openWindow.WindowHandle)
+									[PSADT.UiAutomation]::BringWindowToFront($openWindow.WindowHandle) | Out-Null
 									[bool]$isCloseWindowCallSuccess = $runningProcess.CloseMainWindow()
 									if ($false -eq $isCloseWindowCallSuccess) {
 										Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${CmdletName}
@@ -8851,7 +8886,9 @@ function Show-NxtInstallationWelcome {
 									else {
 										$promptToSaveStopWatch.Start()
 										do {
-											[bool]$isWindowOpen = [bool](Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object { $_.WindowHandle -eq $openWindow.WindowHandle })
+											[bool]$isWindowOpen = [bool](Get-WindowTitle -GetAllWindowTitles -DisableFunctionLogging | Where-Object {
+												$_.WindowHandle -eq $openWindow.WindowHandle
+											})
 											if ($false -eq $isWindowOpen) {
 												break
 											}
@@ -8899,7 +8936,7 @@ function Show-NxtInstallationWelcome {
 						Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
 					}
 					## Dispose the welcome prompt timer here because if we dispose it within the Show-WelcomePrompt function we risk resetting the timer and missing the specified timeout period
-					if ($script:welcomeTimer) {
+					if ($null -ne $script:welcomeTimer) {
 						try {
 							$script:welcomeTimer.Dispose()
 							$script:welcomeTimer = $null
@@ -8934,10 +8971,14 @@ function Show-NxtInstallationWelcome {
 		if ( (($true -eq $Silent) -or ($true -eq $deployModeSilent)) -and ($processObjects.Count -ne 0) ) {
 			[Array]$runningProcesses = $null
 			[Array]$runningProcesses = Get-NxtRunningProcesses $processObjects
-			if ($runningProcesses) {
-				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+			if ($runningProcesses.Count -ne 0) {
+				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object {
+					$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
+				} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
-				$runningProcesses.ProcessName | ForEach-Object -Process { Stop-Process -Name $_ -Force -ErrorAction 'SilentlyContinue' }
+				$runningProcesses.ProcessName | ForEach-Object -Process {
+					Stop-Process -Name $_ -Force -ErrorAction 'SilentlyContinue'
+				}
 				Start-Sleep -Seconds 2
 			}
 		}
@@ -8979,9 +9020,13 @@ function Show-NxtInstallationWelcome {
 			}
 
 			#  Strip all Notes processes from the process list except notes.exe, because the other notes processes (e.g. notes2.exe) may be invoked by the Notes installation, so we don't want to block their execution.
-			if ($notesPathExes) {
-				[Array]$processesIgnoringNotesExceptions = Compare-Object -ReferenceObject ($processObjects | Select-Object -ExpandProperty 'ProcessName' | Sort-Object) -DifferenceObject $notesPathExes -IncludeEqual | Where-Object { ($_.SideIndicator -eq '<=') -or ($_.InputObject -eq 'notes') } | Select-Object -ExpandProperty 'InputObject'
-				[Array]$processObjects = $processObjects | Where-Object { $processesIgnoringNotesExceptions -contains $_.ProcessName }
+			if ($notesPathExes.Count -ne 0) {
+				[Array]$processesIgnoringNotesExceptions = Compare-Object -ReferenceObject ($processObjects | Select-Object -ExpandProperty 'ProcessName' | Sort-Object) -DifferenceObject $notesPathExes -IncludeEqual | Where-Object {
+					($_.SideIndicator -eq '<=') -or ($_.InputObject -eq 'notes')
+				} | Select-Object -ExpandProperty 'InputObject'
+				[Array]$processObjects = $processObjects | Where-Object {
+					$processesIgnoringNotesExceptions -contains $_.ProcessName
+				}
 			}
 		}
 
@@ -8990,9 +9035,15 @@ function Show-NxtInstallationWelcome {
 			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
-			if (($processObjects | Where-Object {$true -ne $_.IsWql} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
-				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {$true -ne $_.IsWql} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
-				Block-AppExecution -ProcessName ($processObjects | Where-Object {$true -ne $_.IsWql} | Select-Object -ExpandProperty 'ProcessName')
+			if (($processObjects | Where-Object {
+				$true -ne $_.IsWql
+			} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
+				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {
+					$true -ne $_.IsWql
+				} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
+				Block-AppExecution -ProcessName ($processObjects | Where-Object {
+					$true -ne $_.IsWql
+				} | Select-Object -ExpandProperty 'ProcessName')
 				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
@@ -9192,7 +9243,7 @@ function Show-NxtWelcomePrompt {
 		if ((Get-Process -Id $PID).SessionId -eq 0) {
 			if ($activeSessions.Count -gt 0) {
 				try {
-					[UInt32[]]$sessionIds = $activeSessions | ForEach-Object { $_.SessionId }
+					[UInt32[]]$sessionIds = $activeSessions | Select-Object -ExpandProperty SessionId
 					Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
 					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
 					[int]$welcomeExitCode = $askKillProcessesResult.ExitCode
@@ -9307,7 +9358,9 @@ function Stop-NxtProcess {
 				}
 				## Test after 10ms if the process(es) is/are still running, if it is still in the list it is ok if it has exited
 				Start-Sleep -Milliseconds 10
-				$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue | Where-Object { $false -eq $_.HasExited }
+				$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue | Where-Object {
+					$false -eq $_.HasExited
+				}
 				if ($processes.Count -ne 0) {
 					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				}
@@ -9327,7 +9380,9 @@ function Stop-NxtProcess {
 				Start-Sleep -Milliseconds 10
 				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $Name -ErrorAction Stop | ForEach-Object {
 					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
-				} | Where-Object { $false -eq $_.HasExited }
+				} | Where-Object {
+					$false -eq $_.HasExited
+				}
 				if ($processes.Count -ne 0) {
 					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				}
@@ -9835,7 +9890,9 @@ function Test-NxtObjectValidation {
 							Test-NxtObjectValidation -ValidationRule $ValidationRule.$validationRuleKey.SubKeys.$subkey.SubKeys -ObjectToValidate $ObjectToValidate.$validationRuleKey.$subkey -ParentObjectName $validationRuleKey -ContinueOnError $ContinueOnError
 						}
 					}
-					{$true -eq $ContainsDirectValues}{
+					{
+						$true -eq $ContainsDirectValues
+					}{
 						## cast the object to an array in case it is a single value
 						foreach ($directValue in [array]$ObjectToValidate) {
 							Test-NxtObjectValidationHelper -ValidationRule $ValidationRule.$ValidationRuleKey -ObjectToValidate $directValue -ValidationRuleKey $validationRuleKey -ParentObjectName $ParentObjectName -ContinueOnError $ContinueOnError
@@ -10128,10 +10185,14 @@ function Test-NxtFolderPermissions {
 		}
 		[PSCustomObject]$diffs = Compare-Object @($actualAcl.Access) $(
 			if ($true -eq $IsInherited) {
-				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$true}}
+				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={
+					$true
+				}}
 			}
 			else {
-				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={$false}}
+				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={
+					$false
+				}}
 			}
 			) -Property $propertiesToCheck
 		[array]$results = @()
@@ -10231,8 +10292,8 @@ function Test-NxtProcessExists {
 			else {
 				[string]$wqlString = "Name LIKE '$($ProcessName.Replace("*","%"))'"
 			}
-			[System.Management.ManagementBaseObject]$processes = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" -ErrorAction Stop | Select-Object -First 1
-			if ($processes) {
+			[System.Management.ManagementBaseObject]$process = Get-WmiObject -Query "Select * from Win32_Process Where $($wqlString)" -ErrorAction Stop | Select-Object -First 1
+			if ($null -ne $process) {
 				Write-Output $true
 			}
 			else {
@@ -10420,7 +10481,9 @@ function Test-NxtXmlNodeExists {
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-				if ($true -eq ([string]::IsNullOrEmpty(($nodes | Where-Object { $_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value } )))) {
+				if ($true -eq ([string]::IsNullOrEmpty(($nodes | Where-Object {
+					$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
+				} )))) {
 					return $false
 				}
 			}
@@ -11206,7 +11269,9 @@ function Unregister-NxtPackage {
 				[int]$removalCounter = 0
 				if ($false -eq [string]::IsNullOrEmpty($ProductGUID)) {
 					Write-Log -Message "Cleanup registry entries and folder of assigned product member application packages with 'ProductGUID' [$ProductGUID]..." -Source ${CmdletName}
-					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID).PackageGUID | Where-Object { $null -ne $($_) } | ForEach-Object {
+					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID).PackageGUID | Where-Object {
+						$null -ne $($_)
+					} | ForEach-Object {
 						[string]$assignedPackageGUID = $_
 						Write-Log -Message "Processing tasks for product member application package with PackageGUID [$assignedPackageGUID]..."  -Source ${CmdletName}
 						[string]$assignedPackageGUIDAppPath = (Get-Registrykey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID").AppPath
@@ -11216,6 +11281,7 @@ function Unregister-NxtPackage {
 								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
 								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
+								$removalCounter += 1
 							}
 							else {
 								Write-Log -Message "No current 'App' path [$assignedPackageGUIDAppPath] available, cleanup script will not be executed." -Source ${CmdletName}
@@ -11228,7 +11294,7 @@ function Unregister-NxtPackage {
 						Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID"
 					}
 					Write-Log -Message "All folder and registry entries of assigned product member application packages with 'ProductGUID' [$ProductGUID] are cleaned." -Source ${CmdletName}
-					if ($removalCounter = 0) {
+					if ($removalCounter -eq 0) {
 						Write-Log -Message "No application packages assigned to a product found for removal." -Source ${CmdletName}
 					}
 				}
@@ -11476,7 +11542,9 @@ function Update-NxtXmlNode {
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-					$nodes = $nodes | Where-Object { $_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value }
+					$nodes = $nodes | Where-Object {
+						$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
+					}
 				}
 				Clear-Variable filterAttribute
 			}
@@ -11563,8 +11631,12 @@ function Wait-NxtRegistryAndProcessCondition {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
-		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
-		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *, @{n = "success"; e = { $false } }
+		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *, @{n = "success"; e = {
+			$false
+		} }
+		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *, @{n = "success"; e = {
+			$false
+		} }
 	}
 	Process {
 		# wait for Processes
@@ -12215,7 +12287,7 @@ function Write-NxtXmlNode {
 ##* SCRIPT BODY
 ##*===============================================
 
-if ($scriptParentPath) {
+if ($false -eq [string]::IsNullOrEmpty($scriptParentPath)) {
 	Write-Log -Message "Script [$($MyInvocation.MyCommand.Definition)] dot-source invoked by [$(((Get-Variable -Name MyInvocation).Value).ScriptName)]" -Source $appDeployToolkitExtName
 }
 else {

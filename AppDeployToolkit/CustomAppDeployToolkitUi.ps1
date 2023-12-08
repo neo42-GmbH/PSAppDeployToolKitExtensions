@@ -678,12 +678,16 @@ function Get-NxtRunningProcesses {
 			if ($false -eq $DisableLogging) {
 				Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
 			}
-			[array]$wqlProcessObjects = $processObjects | Where-Object { $true -eq $_.IsWql }
+			[array]$wqlProcessObjects = $processObjects | Where-Object {
+				$true -eq $_.IsWql
+			}
 			[array]$processesFromWmi = $(
 				foreach ($wqlProcessObject in $wqlProcessObjects) {
 					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
 						n = "QueryUsed"
-						e = { $wqlProcessObject.ProcessName }
+						e = {
+							$wqlProcessObject.ProcessName
+						}
 					}
 				}
 			)
@@ -709,11 +713,11 @@ function Get-NxtRunningProcesses {
 						$processFound = $true
 					}
 					if ($true -eq $processFound) {
-						if ($processObject.ProcessDescription) {
+						if ($false -eq [string]::IsNullOrEmpty($processObject.ProcessDescription)) {
 							#  The description of the process provided as a parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
 							Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $processObject.ProcessDescription -Force -PassThru -ErrorAction 'SilentlyContinue'
 						}
-						elseif ($_.Description) {
+						elseif ($false -eq [string]::IsNullOrEmpty($_.Description)) {
 							#  If the process already has a description field specified, then use it
 							Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.Description -Force -PassThru -ErrorAction 'SilentlyContinue'
 						}
@@ -733,7 +737,7 @@ function Get-NxtRunningProcesses {
 			[Diagnostics.Process[]]$runningProcesses = Get-Process | Where-Object -FilterScript $whereObjectFilter | Sort-Object -Property 'ProcessName'
 
 			if ($false -eq $DisableLogging) {
-				if ($runningProcesses) {
+				if ($runningProcesses.Count -ne 0) {
 					[String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
 					Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
 				}
@@ -818,37 +822,41 @@ function Get-WindowTitle {
 			}
 
 			## Get all window handles for visible windows
-			[IntPtr[]]$VisibleWindowHandles = [PSADT.UiAutomation]::EnumWindows() | Where-Object { [PSADT.UiAutomation]::IsWindowVisible($_) }
+			[IntPtr[]]$visibleWindowHandles = [PSADT.UiAutomation]::EnumWindows() | Where-Object {
+				[PSADT.UiAutomation]::IsWindowVisible($_)
+			}
 
 			## Discover details about each visible window that was discovered
-			foreach ($VisibleWindowHandle in $VisibleWindowHandles) {
-				if ($null -eq $VisibleWindowHandle) {
+			foreach ($visibleWindowHandle in $visibleWindowHandles) {
+				if ($null -eq $visibleWindowHandle) {
 					continue
 				}
 				## Get the window title
-				[String]$VisibleWindowTitle = [PSADT.UiAutomation]::GetWindowText($VisibleWindowHandle)
-				if ($VisibleWindowTitle) {
+				[String]$visibleWindowTitle = [PSADT.UiAutomation]::GetWindowText($visibleWindowHandle)
+				if ($false -eq [string]::IsNullOrEmpty($VisibleWindowTitle)) {
 					## Get the process that spawned the window
-					[Diagnostics.Process]$Process = Get-Process -ErrorAction 'Stop' | Where-Object { $_.Id -eq [PSADT.UiAutomation]::GetWindowThreadProcessId($VisibleWindowHandle) }
-					if ($Process) {
+					[Diagnostics.Process]$process = Get-Process -ErrorAction 'Stop' | Where-Object {
+						$_.Id -eq [PSADT.UiAutomation]::GetWindowThreadProcessId($visibleWindowHandle)
+					}
+					if ($null -ne $process) {
 						## Build custom object with details about the window and the process
-						[PSObject]$VisibleWindow = New-Object -TypeName 'PSObject' -Property @{
-							WindowTitle				   = $VisibleWindowTitle
-							WindowHandle				  = $VisibleWindowHandle
-							ParentProcess				 = $Process.ProcessName
-							ParentProcessMainWindowHandle = $Process.MainWindowHandle
-							ParentProcessId			   = $Process.Id
+						[PSObject]$visibleWindow = New-Object -TypeName 'PSObject' -Property @{
+							WindowTitle				   = $visibleWindowTitle
+							WindowHandle				  = $visibleWindowHandle
+							ParentProcess				 = $process.ProcessName
+							ParentProcessMainWindowHandle = $process.MainWindowHandle
+							ParentProcessId			   = $process.Id
 						}
 
 						## Only save/return the window and process details which match the search criteria
 						if ($PSCmdlet.ParameterSetName -eq 'SearchWinTitle') {
-							[bool]$MatchResult = $VisibleWindow.WindowTitle -match $WindowTitle
-							if ($true -eq $MatchResult) {
-								[PSObject[]]$VisibleWindows += $VisibleWindow
+							[bool]$matchResult = $visibleWindow.WindowTitle -match $WindowTitle
+							if ($true -eq $matchResult) {
+								[PSObject[]]$visibleWindows += $visibleWindow
 							}
 						}
 						elseif ($PSCmdlet.ParameterSetName -eq 'GetAllWinTitles') {
-							[PSObject[]]$VisibleWindows += $VisibleWindow
+							[PSObject[]]$visibleWindows += $visibleWindow
 						}
 					}
 				}
@@ -861,7 +869,7 @@ function Get-WindowTitle {
 		}
 	}
 	End {
-		Write-Output -InputObject ($VisibleWindows)
+		Write-Output -InputObject ($visibleWindows)
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
@@ -896,7 +904,7 @@ function New-NxtWpfControl() {
 	}
 	Process {
 		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-		$InputXml = $InputXml -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+		$InputXml = $InputXml -replace 'mc:Ignorable="d"', [string]::Empty -replace "x:N", 'N' -replace '^<Win.*', '<Window'
 		#Read XAML
 		[xml]$xaml = $InputXml
 		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
@@ -1033,7 +1041,7 @@ function Resolve-Error {
 
 			## Error Invocation Information
 			if ($true -eq $GetErrorInvocation) {
-				if ($ErrRecord.InvocationInfo) {
+				if ($null -ne $ErrRecord.InvocationInfo) {
 					[String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrRecord.InvocationInfo -Property $Property
 					$LogErrorInvocationMsg = $ErrRecord.InvocationInfo | Select-Object -Property $SelectedProperties
 				}
@@ -1041,7 +1049,7 @@ function Resolve-Error {
 
 			## Capture Error Exception
 			if ($true -eq $GetErrorException) {
-				if ($ErrRecord.Exception) {
+				if ($null -ne $ErrRecord.Exception) {
 					[String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrRecord.Exception -Property $Property
 					$LogErrorExceptionMsg = $ErrRecord.Exception | Select-Object -Property $SelectedProperties
 				}
@@ -1089,7 +1097,7 @@ function Resolve-Error {
 					$ErrorInnerException = $ErrRecord.Exception.InnerException
 					[int]$Count = 0
 
-					While ($ErrorInnerException) {
+					While ($null -ne $ErrorInnerException) {
 						[String]$InnerExceptionSeperator = '~' * 40
 
 						[String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrorInnerException -Property $Property
@@ -1153,7 +1161,7 @@ function Test-NxtPersonalizationLightTheme {
 	}
 	Process {
 		[PSObject[]]$LoggedOnUserSessions = Get-LoggedOnUser
-		[String[]]$usersLoggedOn = $LoggedOnUserSessions | ForEach-Object { $_.NTAccount }
+		[String[]]$usersLoggedOn = $LoggedOnUserSessions | Select-Object -ExpandProperty NTAccount
 		[String]$sid = (New-Object System.Security.Principal.NTAccount($usersLoggedOn)).Translate([System.Security.Principal.SecurityIdentifier]).Value
 		[bool]$lightThemeResult = $true
 		if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
@@ -1236,8 +1244,27 @@ function Write-FunctionHeaderOrFooter {
 		Write-Log -Message 'Function Start' -Source ${CmdletName} -DebugMessage
 
 		## Get the parameters that the calling function was invoked with
-		[String]$CmdletBoundParameters = $CmdletBoundParameters | Format-Table -Property @{ Label = 'Parameter'; Expression = { "[-$($_.Key)]" } }, @{ Label = 'Value'; Expression = { $_.Value }; Alignment = 'Left' }, @{ Label = 'Type'; Expression = { $_.Value.GetType().Name }; Alignment = 'Left' } -AutoSize -Wrap | Out-String
-		if ($CmdletBoundParameters) {
+		[String]$CmdletBoundParameters = $CmdletBoundParameters | Format-Table -Property @{
+			Label = 'Parameter'
+			Expression = {
+				"[-$($_.Key)]"
+			}
+		},
+		@{
+			Label = 'Value'
+			Expression = {
+				$_.Value
+			}
+			Alignment = 'Left'
+		},
+		@{
+			Label = 'Type'
+			Expression = {
+				$_.Value.GetType().Name
+			}
+			Alignment = 'Left'
+		} -AutoSize -Wrap | Out-String
+		if ($false -eq [string]::IsNullOrEmpty($CmdletBoundParameters)) {
 			Write-Log -Message "Function invoked with bound parameter(s): `r`n$CmdletBoundParameters" -Source ${CmdletName} -DebugMessage
 		}
 		else {
@@ -1279,12 +1306,15 @@ function Write-Log {
 		[Parameter(Mandatory = $false, Position = 2)]
 		[ValidateNotNull()]
 		[String]
-		$Source = $([String]$parentFunctionName = [IO.Path]::GetFileNameWithoutExtension((Get-Variable -Name 'MyInvocation' -Scope 1 -ErrorAction 'SilentlyContinue').Value.MyCommand.Name); if ($parentFunctionName) {
+		$Source = $([String]$parentFunctionName = [IO.Path]::GetFileNameWithoutExtension(
+			(Get-Variable -Name 'MyInvocation' -Scope 1 -ErrorAction 'SilentlyContinue').Value.MyCommand.Name)
+			if ($false -eq [string]::IsNullOrEmpty($parentFunctionName)) {
 				$parentFunctionName
 			}
 			else {
 				'Unknown'
-			}),
+			}
+		),
 		[Parameter(Mandatory = $false, Position = 3)]
 		[ValidateNotNullorEmpty()]
 		[String]
@@ -1345,7 +1375,7 @@ function Write-Log {
 		[bool]$ScriptSectionDefined = [bool]($false -eq [String]::IsNullOrEmpty($ScriptSection))
 		#  Get the file name of the source script
 		try {
-			if ($script:MyInvocation.Value.ScriptName) {
+			if ($false -eq [string]::IsNullOrEmpty($script:MyInvocation.Value.ScriptName)) {
 				[String]$ScriptSource = Split-Path -Path $script:MyInvocation.Value.ScriptName -Leaf -ErrorAction 'Stop'
 			}
 			else {
@@ -1353,7 +1383,7 @@ function Write-Log {
 			}
 		}
 		catch {
-			[string]$ScriptSource = ''
+			[string]$ScriptSource = [string]::Empty
 		}
 
 		## Create script block for generating CMTrace.exe compatible log entry
@@ -1374,7 +1404,7 @@ function Write-Log {
 			)
 			if ($true -eq $WriteHost) {
 				#  Only output using color options if running in a host which supports colors.
-				if ($Host.UI.RawUI.ForegroundColor) {
+				if ($null -ne $Host.UI.RawUI.ForegroundColor) {
 					Switch ($lSeverity) {
 						3 {
 							Write-Host -Object $lTextLogLine -ForegroundColor 'Red' -BackgroundColor 'Black'
@@ -1437,9 +1467,9 @@ function Write-Log {
 
 		foreach ($Msg in $Message) {
 			## If the message is not $null or empty, create the log entry for the different logging methods
-			[String]$CMTraceMsg = ''
-			[String]$ConsoleLogLine = ''
-			[String]$LegacyTextLogLine = ''
+			[String]$CMTraceMsg = [string]::Empty
+			[String]$ConsoleLogLine = [string]::Empty
+			[String]$LegacyTextLogLine = [string]::Empty
 			if ($false -eq [string]::IsNullOrEmpty($Msg)) {
 				#  Create the CMTrace log message
 				if ($true -eq $ScriptSectionDefined) {
@@ -1684,16 +1714,16 @@ if ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeo
 }
 [PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -EncodedObject $ProcessObjectsEncoded
 ## Initial form layout: Close Applications / Allow Deferral
-if ($ProcessDescriptions) {
+if ($false -eq [string]::IsNullOrEmpty($ProcessDescriptions)) {
 	Write-Log -Message "Prompting the user to close application(s) [$ProcessDescriptions]..." -Source ${CmdletName}
 	[bool]$showCloseApps = $true
 }
 if (($true -eq $AllowDefer) -and (($DeferTimes -ge 0) -or $DeferDeadline)) {
 	Write-Log -Message 'The user has the option to defer.' -Source ${CmdletName}
 	[bool]$showDefer = $true
-	if ($DeferDeadline) {
+	if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 		#  Remove the Z from universal sortable date time format, otherwise it could be converted to a different time zone
-		$DeferDeadline = $DeferDeadline -replace 'Z', ''
+		$DeferDeadline = $DeferDeadline -replace 'Z', [string]::Empty
 		#  Convert the deadline date to a string
 		$DeferDeadline = (Get-Date -Date $DeferDeadline).ToString()
 	}
@@ -2116,7 +2146,9 @@ else {
 	[int[]]$processIdsToIgnore = @()
 }
 [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects) {
-	Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $ProcessIdsToIgnore | Where-Object { $false -eq [string]::IsNullOrEmpty($_.id) }
+	Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $ProcessIdsToIgnore | Where-Object {
+		$false -eq [string]::IsNullOrEmpty($_.id)
+	}
 }
 [ScriptBlock]$fillCloseApplicationList = {
 	param($runningProcessesParam)
@@ -2150,7 +2182,7 @@ $control_PopupListText.Text = $names.Trim()
 if ([Int32]::TryParse($DeferTimes, [ref]$outNumber) -and $DeferTimes -ge 0) {
 	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
 }
-if ($DeferDeadline) {
+if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 	$control_DeferDeadlineText.Text = $xmlUIMessages.DeferPrompt_Deadline + " " + $DeferDeadline
 }
 
@@ -2164,7 +2196,7 @@ else {
 	$control_DeferTextOne.Visibility = "Visible"
 	$control_DeferTextTwo.Visibility = "Visible"
 	$control_DeferButton.Visibility = "Visible"
-	if ($DeferDeadline) {
+	if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 		$control_DeferDeadlineText.Visibility = "Visible"
 	}
 	else {
@@ -2281,7 +2313,7 @@ if ($true -eq $PersistPrompt) {
 	$welcomeTimerPersist.Start()
 }
 ## Process Re-Enumeration Timer
-if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
+if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	[System.Windows.Threading.DispatcherTimer]$timerRunningProcesses = New-Object System.Windows.Threading.DispatcherTimer
 	$timerRunningProcesses.Interval = [timespan]::fromseconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
 	[int]$tickCounter = 0
@@ -2294,11 +2326,13 @@ if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 			$tickCounter++
 			[PSObject[]]$dynamicRunningProcesses = $null
 			[System.Diagnostics.Process[]]$dynamicRunningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore
-			[String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+			[String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object {
+				$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
+			} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 			if ($dynamicRunningProcessDescriptions -ne $script:runningProcessDescriptions) {
 				# Update the runningProcessDescriptions variable for the next time this function runs
 				Set-Variable -Name 'runningProcessDescriptions' -Value $dynamicRunningProcessDescriptions -Force -Scope 'Script'
-				if ($dynamicRunningProcesses) {
+				if ($dynamicRunningProcesses.Count -ne 0) {
 					Write-Log -Message "The running processes have changed. Updating the apps to close: [$script:runningProcessDescriptions]..." -Source ${CmdletName}
 				}
 				# Update the list box with the processes to close
@@ -2306,15 +2340,15 @@ if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 				& $FillCloseApplicationList $dynamicRunningProcesses
 			}
 			# If CloseApps processes were running when the prompt was shown, and they are subsequently detected to be closed while the form is showing, then close the form. The deferral and CloseApps conditions will be re-evaluated.
-			if ($ProcessDescriptions) {
-				if (-not $dynamicRunningProcesses) {
+			if ($false -eq [string]::IsNullOrEmpty($ProcessDescriptions)) {
+				if ($dynamicRunningProcesses.Count -eq 0) {
 					Write-Log -Message 'Previously detected running processes are no longer running.' -Source ${CmdletName}
 					$control_MainWindow.Close()
 				}
 			}
 			# If CloseApps processes were not running when the prompt was shown, and they are subsequently detected to be running while the form is showing, then close the form for relaunch. The deferral and CloseApps conditions will be re-evaluated.
 			else {
-				if ($dynamicRunningProcesses) {
+				if ($dynamicRunningProcesses.Count -ne 0) {
 					Write-Log -Message 'New running processes detected. Updating the form to prompt to close the running applications.' -Source ${CmdletName}
 					$control_MainWindow.Close()
 				}
@@ -2334,7 +2368,7 @@ if ($true -eq $MinimizeWindows) {
 # Open dialog and Wait
 $control_MainWindow.ShowDialog() | Out-Null
 
-if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
+if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$timerRunningProcesses.Stop()
 }
 switch ($control_MainWindow.Tag) {
