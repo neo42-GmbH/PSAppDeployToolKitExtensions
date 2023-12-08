@@ -1,4 +1,4 @@
-Describe "Codeing Guidelines" -ForEach @(
+Describe "Coding Guidelines" -ForEach @(
     @{path = (Resolve-Path -Path "$PSScriptRoot\..\..\Deploy-Application.ps1") },
     @{path = (Resolve-Path -Path "$PSScriptRoot\..\..\AppDeployToolkit\AppDeployToolkitExtensions.ps1") },
     @{path = (Resolve-Path -Path "$PSScriptRoot\..\..\AppDeployToolkit\CustomAppDeployToolkitUi.ps1") }
@@ -60,7 +60,7 @@ Describe "Codeing Guidelines" -ForEach @(
                 }
             }
         }
-        It "Intendations should be made using tabulator" {
+        It "Indentations should be made using tabulator" {
             $currentLine = 1
             $content | ForEach-Object {
                 $_ | Should -Match "^(?! +)" -Because "the line is not tab indented (line $currentLine)"
