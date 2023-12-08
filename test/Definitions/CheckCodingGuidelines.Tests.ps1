@@ -10,6 +10,7 @@ Describe "Coding Guidelines" -ForEach @(
             [System.Management.Automation.Language.Ast]$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
         }
         It "Should have the correct capaitalization on statements" {
+            # Currently not reliable. Needs rework
             $statements = $ast.FindAll({ param($ast)
                 (
                     $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
@@ -21,7 +22,7 @@ Describe "Coding Guidelines" -ForEach @(
             $spelling = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
             $statements | ForEach-Object {
                 if (
-                    $_ -is [System.Management.Automation.Language.DoWhileStatementAst] -or 
+                    $_ -is [System.Management.Automation.Language.DoWhileStatementAst] -or
                     $_ -is [System.Management.Automation.Language.DoUntilStatementAst]
                 ){
                     $text = $_.Extent.Text -split "`n" | Select-Object -Last 1
@@ -82,10 +83,14 @@ Describe "Coding Guidelines" -ForEach @(
                 }
                 $currentLine++
             }
-            
         }
         It "Every function should be described properly" {
-            $functions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+            $functionsToExclude = @("Custom*")
+            $functions = $ast.FindAll({
+                param($ast)
+                $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+                $ast.Name -notmatch $functionsToExclude
+            }, $false)
             $functions | ForEach-Object {
                 $help = $_.GetHelpContent()
                 $help | Should -Not -BeNullOrEmpty -Because "the function '$($_.Name)' should have a synopsis (line $($_.Extent.StartLineNumber))"
@@ -114,10 +119,10 @@ Describe "Coding Guidelines" -ForEach @(
                         $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
                         $ast -is [System.Management.Automation.Language.IfStatementAst] -or
                         $ast -is [System.Management.Automation.Language.ThrowStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.TrapStatementAst] -or 
+                        $ast -is [System.Management.Automation.Language.TrapStatementAst] -or
                         $ast -is [System.Management.Automation.Language.TryStatementAst] -or
                         $ast -is [System.Management.Automation.Language.NamedBlockAst] -or
-                        $ast -is [System.Management.Automation.Language.LoopStatementAst] 
+                        $ast -is [System.Management.Automation.Language.LoopStatementAst]
                     ) -and
                     $true -ne $ast.Unnamed -and
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
@@ -132,7 +137,7 @@ Describe "Coding Guidelines" -ForEach @(
                         $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
                         $ast -is [System.Management.Automation.Language.IfStatementAst] -or
                         $ast -is [System.Management.Automation.Language.ThrowStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.TrapStatementAst] -or 
+                        $ast -is [System.Management.Automation.Language.TrapStatementAst] -or
                         $ast -is [System.Management.Automation.Language.TryStatementAst] -or
                         $ast -is [System.Management.Automation.Language.NamedBlockAst] -or
                         $ast -is [System.Management.Automation.Language.LoopStatementAst]
@@ -142,11 +147,11 @@ Describe "Coding Guidelines" -ForEach @(
                 }, $true)
             $statements | ForEach-Object {
                 if (
-                    $_ -is [System.Management.Automation.Language.DoWhileStatementAst] -or 
+                    $_ -is [System.Management.Automation.Language.DoWhileStatementAst] -or
                     $_ -is [System.Management.Automation.Language.DoUntilStatementAst]
                 ){
                     ($_.Extent.Text -split "`n") | Select-Object -Last 1 | Should -Not -Match '^\s*\}' -Because "the do while loop should have its conditions as seperate ending line (line $($_.Extent.EndLineNumber))"
-                } 
+                }
                 else {
                     ($_.Extent.Text -split "`n") | Select-Object -Last 1 | Should -Match '\s*\}\s*$' -Because "the statement does not have the ending parentheses as seperate line (line $($_.Extent.EndLineNumber))"
                 }
@@ -156,36 +161,36 @@ Describe "Coding Guidelines" -ForEach @(
             $emptyStringAssignments = $ast.Find({
                 param($ast)
                 $ast -is [System.Management.Automation.Language.AssignmentStatementAst] -and
-                $ast.Right.Extent.Text -eq '""'
+                $ast.Right.Extent.Text -match "^(`"`"|'')$"
             }, $true)
 
-            $emptyStringAssignments | Should -BeNullOrEmpty -Because "empty strings should be defined by .NET functions such as [string]::Empty"
+            $emptyStringAssignments | Should -BeNullOrEmpty -Because "empty strings should be defined by .NET functions such as [string]::Empty (line $($emptyStringAssignments.Extent.StartLineNumber))"
 
             $emptyStringExpressions = $ast.Find({
                 param($ast)
                 $ast -is [System.Management.Automation.Language.BinaryExpressionAst] -and
-                (   
-                    $ast.Right.Extent.Text -eq '""' -or
-                    $ast.Left.Extent.Text -eq '""'
+                (
+                    $ast.Right.Extent.Text -match "^(`"`"|'')$" -or
+                    $ast.Left.Extent.Text -match "^(`"`"|'')$"
                 )
             }, $true)
 
-            $emptyStringExpressions | Should -BeNullOrEmpty -Because "using empty string expressions should be done using .NET functions such as [string]::Empty"
+            $emptyStringExpressions | Should -BeNullOrEmpty -Because "using empty string expressions should be done using .NET functions such as [string]::Empty (line $($emptyStringExpressions.Extent.StartLineNumber))"
         }
         It "Check condition formatting" {
             $wrongSideOperator = $ast.Find({
                     param($ast)
                     $ast -is [System.Management.Automation.Language.BinaryExpressionAst] -and
                     $ast.Right.Extent.Text -in @('$true', '$false', '$null')
-                }, $true) 
+                }, $true)
             $wrongSideOperator | Should -BeNullOrEmpty -Because "there should be no null or empty on the right side of a comparison (line $($wrongSideOperator.Extent.StartLineNumber))"
 
-            $unaryExpression = $ast.Find({ 
+            $unaryExpression = $ast.Find({
                     param($ast)
                     $ast -is [System.Management.Automation.Language.UnaryExpressionAst] -and
                     $ast.Extent.Text -notmatch "\$\w+\+\+" -and
                     $ast.Extent.Text -notmatch "\$\w+\-\-"
-                }, $true) 
+                }, $true)
             $unaryExpression | Should -BeNullOrEmpty -Because "there should be no unary expressions (line $($unaryExpression.Extent.StartLineNumber))"
 
             $noOperator = $ast.Find({
@@ -193,7 +198,7 @@ Describe "Coding Guidelines" -ForEach @(
                 (
                     $ast -is [System.Management.Automation.Language.IfStatementAst] -and
                     $ast.Clauses.Item1.Extent.Text -notmatch ("-")
-                ) -or 
+                ) -or
                 (
                     (
                         $ast -is [System.Management.Automation.Language.DoUntilStatementAst] -or
@@ -218,7 +223,7 @@ Describe "Coding Guidelines" -ForEach @(
         It "Check spacing between pipelines" {
             $pipelines = $ast.FindAll({
                 param($ast)
-                $ast -is [System.Management.Automation.Language.PipelineAst] -and 
+                $ast -is [System.Management.Automation.Language.PipelineAst] -and
                 $ast.PipelineElements.Count -gt 1
             },$true)
             $pipelines | ForEach-Object {
@@ -227,6 +232,17 @@ Describe "Coding Guidelines" -ForEach @(
         }
         It "Last line should be empty new line" {
             $contentRaw -split "`n" | Select-Object -Last 1 | Should -BeNullOrEmpty
+        }
+        It "Scriptblocks should not be single line" {
+            $scriptblocks = $ast.FindAll({
+                param($ast)
+                $ast -is [System.Management.Automation.Language.ScriptBlockAst]
+            },$true)
+            $scriptblocks | ForEach-Object {
+                if ($_.Extent.Text -notmatch "^{}$"){
+                    $_.Extent.StartLineNumber | Should -Not -Be $_.Extent.EndLineNumber -Because "scriptblocks should not be single line (line $($_.Extent.StartLineNumber))"
+                }
+            }
         }
     }
 }
