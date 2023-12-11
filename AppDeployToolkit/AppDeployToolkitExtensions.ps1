@@ -616,7 +616,7 @@ function Add-NxtXmlNode {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$FilePath,
@@ -747,7 +747,7 @@ function Add-NxtParameterToCommand {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Command,
@@ -840,7 +840,7 @@ function Compare-NxtVersion {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter()]
 		[String]
 		$DetectedVersion,
@@ -918,7 +918,7 @@ function Compare-NxtVersionPart {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter()]
 		[string]
 		$DetectedVersionPart,
@@ -1142,7 +1142,7 @@ function Complete-NxtPackageInstallation {
 				New-Folder -Path "$App\$UserpartDir\SupportFiles"
 			}
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
-			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue | Out-Null
+			Copy-Item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue | Out-Null
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")) {
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
@@ -1257,7 +1257,7 @@ function Complete-NxtPackageUninstallation {
 				New-Folder -Path "$App\$UserpartDir\SupportFiles"
 			}
 			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\$UserpartDir\"
-			Copy-item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
+			Copy-Item -Path "$scriptDirectory\*" -Exclude "Files", "SupportFiles" -Destination "$App\$UserpartDir\" -Recurse -Force -ErrorAction Continue
 			if ($true -eq (Test-Path -Path "$App\neo42-Install\Setup.cfg")) {
 				Copy-File -Path "$App\neo42-Install\Setup.cfg" -Destination "$App\$UserpartDir\"
 			}
@@ -1297,7 +1297,7 @@ function ConvertFrom-NxtEncodedObject {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory=$true)]
 		[string]
 		$EncodedObject
@@ -1352,10 +1352,10 @@ function ConvertTo-NxtEncodedObject {
 		This example shows how to convert a simple PowerShell object into a Base64-encoded and gzip-compressed string.
 	.EXAMPLE
 		$nestedObject = @{
-			Name = 'Jane';
+			Name = 'Jane'
 			Details = @{
-				Age = 25;
-				Occupation = 'Engineer';
+				Age = 25
+				Occupation = 'Engineer'
 			}
 		}
 		$encodedObj = ConvertTo-NxtEncodedObject -Object $nestedObject -Depth 3
@@ -1368,7 +1368,7 @@ function ConvertTo-NxtEncodedObject {
 		For more information, refer to [System.IO.Compression.GZipStream] and [ConvertTo-Json].
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory=$true)]
 		[PSObject]
 		$Object,
@@ -4260,7 +4260,7 @@ function Get-NxtProcessTree {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory=$true)]
 		[int]
 		$ProcessId,
@@ -5900,7 +5900,7 @@ function Merge-NxtExitCodes {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[AllowEmptyString()]
 		[string]
@@ -7922,7 +7922,7 @@ function Set-NxtIniValue {
 		# Don't strongly type this variable as [string] b/c PowerShell replaces [string]$Value = $null with an empty string
 		[Parameter(Mandatory = $true)]
 		[ValidateScript({
-			if ($false -eq ($_.GetType().Name -eq "String" -or $_ -eq $null)) {
+			if ($false -eq (($_.GetType().Name -eq "String") -or ($null -eq $_))) {
 				throw "'$_' is not a string or null."
 			}
 			$true
@@ -8391,7 +8391,7 @@ function Set-NxtXmlNode {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$FilePath,
@@ -9244,14 +9244,14 @@ function Show-NxtWelcomePrompt {
 			$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ProcessIdToIgnore" -Value $ProcessIdToIgnore
 		}
 		Write-Log "Searching for Sessions..." -Source ${CmdletName}
-		[int]$welcomeExitCode = 1618;
+		[int]$welcomeExitCode = 1618
 		[PsObject]$activeSessions = Get-LoggedOnUser
 		if ((Get-Process -Id $PID).SessionId -eq 0) {
 			if ($activeSessions.Count -gt 0) {
 				try {
 					[UInt32[]]$sessionIds = $activeSessions | Select-Object -ExpandProperty SessionId
 					Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
-					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds);
+					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds)
 					[int]$welcomeExitCode = $askKillProcessesResult.ExitCode
 					[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
 					[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
@@ -9275,7 +9275,7 @@ function Show-NxtWelcomePrompt {
 			}
 		}
 		else {
-			[int]$welcomeExitCode = [PSADTNXT.Extensions]::StartPowershellScriptAndWaitForExitCode($powershellCommand);
+			[int]$welcomeExitCode = [PSADTNXT.Extensions]::StartPowershellScriptAndWaitForExitCode($powershellCommand)
 			Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $env:USERNAME\$env:USERDOMAIN"
 		}
 
@@ -9822,7 +9822,7 @@ function Test-NxtObjectValidation {
 		private
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
 		[psobject]
@@ -9942,7 +9942,7 @@ function Test-NxtObjectValidationHelper {
 		private
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
 		[psobject]
@@ -10056,7 +10056,7 @@ function Test-NxtPackageConfig {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[PSCustomObject]
@@ -10191,14 +10191,20 @@ function Test-NxtFolderPermissions {
 		}
 		[PSCustomObject]$diffs = Compare-Object @($actualAcl.Access) $(
 			if ($true -eq $IsInherited) {
-				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={
-					$true
-				}}
+				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{
+					n="IsInherited"
+					e={
+						$true
+					}
+				}
 			}
 			else {
-				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{n="IsInherited";e={
-					$false
-				}}
+				@($directorySecurity.Access) | Select-Object -Property FileSystemRights,AccessControlType,IdentityReference,InheritanceFlags,PropagationFlags,@{
+					n="IsInherited"
+					e={
+						$false
+					}
+				}
 			}
 			) -Property $propertiesToCheck
 		[array]$results = @()
@@ -10346,7 +10352,7 @@ function Test-NxtStringInFile {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$Path,
@@ -10462,7 +10468,7 @@ function Test-NxtXmlNodeExists {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$FilePath,
@@ -10893,7 +10899,7 @@ function Uninstall-NxtOld {
 											}
 											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
 											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
-											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
+											[string]$appEmpLogDate = $currentDateTime | Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
 											$uninstallOldResult.ApplicationExitCode = $LastExitCode
 										}
@@ -10960,7 +10966,7 @@ function Uninstall-NxtOld {
 											}
 											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
 											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
-											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
+											[string]$appEmpLogDate = $currentDateTime | Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
 											$uninstallOldResult.ApplicationExitCode = $LastExitCode
 										}
@@ -11508,7 +11514,7 @@ function Update-NxtXmlNode {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
 		$FilePath,
@@ -11637,12 +11643,18 @@ function Wait-NxtRegistryAndProcessCondition {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
-		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *, @{n = "success"; e = {
-			$false
-		} }
-		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *, @{n = "success"; e = {
-			$false
-		} }
+		[array]$ProcessesToWaitFor = $ProcessesToWaitFor | Select-Object *, @{
+			n = "success"
+			e = {
+				$false
+			}
+		}
+		[array]$RegkeysToWaitFor = $RegkeysToWaitFor | Select-Object *, @{
+			n = "success"
+			e = {
+				$false
+			}
+		}
 	}
 	Process {
 		# wait for Processes

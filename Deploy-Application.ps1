@@ -115,11 +115,11 @@ function Start-NxtProcess {
 		$UseShellExecute = $false
 	)
 	Process {
-		[System.Diagnostics.ProcessStartInfo]$processStartInfo = New-Object System.Diagnostics.ProcessStartInfo;
+		[System.Diagnostics.ProcessStartInfo]$processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
 		$processStartInfo.FileName = $FilePath
 		$processStartInfo.Arguments = $Arguments
-		$processStartInfo.UseShellExecute = $UseShellExecute;
-		[System.Diagnostics.Process]$process = [System.Diagnostics.Process]::Start($processStartInfo);
+		$processStartInfo.UseShellExecute = $UseShellExecute
+		[System.Diagnostics.Process]$process = [System.Diagnostics.Process]::Start($processStartInfo)
 		Write-Output -InputObject $process
 	}
 }
@@ -349,7 +349,7 @@ function Main {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentType = $DeploymentType,
@@ -614,7 +614,7 @@ function CustomSoftMigrationBegin {
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -648,7 +648,7 @@ function CustomReinstallPreUninstall {
 }
 
 function CustomReinstallPostUninstallOnError {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -662,7 +662,7 @@ function CustomReinstallPostUninstallOnError {
 }
 
 function CustomReinstallPostUninstall {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -685,7 +685,7 @@ function CustomReinstallPreInstall {
 }
 
 function CustomReinstallPostInstallOnError {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -699,7 +699,7 @@ function CustomReinstallPostInstallOnError {
 }
 
 function CustomReinstallPostInstall {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -722,7 +722,7 @@ function CustomInstallBegin {
 }
 
 function CustomInstallEndOnError {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -736,7 +736,7 @@ function CustomInstallEndOnError {
 }
 
 function CustomInstallEnd {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -750,7 +750,7 @@ function CustomInstallEnd {
 }
 
 function CustomInstallAndReinstallEnd {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -773,7 +773,7 @@ function CustomUninstallBegin {
 }
 
 function CustomUninstallEndOnError {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
@@ -787,7 +787,7 @@ function CustomUninstallEndOnError {
 }
 
 function CustomUninstallEnd {
-	param (
+	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck

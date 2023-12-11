@@ -176,7 +176,7 @@ function ConvertFrom-NxtEncodedObject {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory=$true)]
 		[string]
 		$EncodedObject
@@ -585,7 +585,7 @@ function Get-NxtProcessTree {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory=$true)]
 		[int]
 		$ProcessId,
@@ -1097,7 +1097,7 @@ function Resolve-Error {
 					$ErrorInnerException = $ErrRecord.Exception.InnerException
 					[int]$Count = 0
 
-					While ($null -ne $ErrorInnerException) {
+					while ($null -ne $ErrorInnerException) {
 						[String]$InnerExceptionSeperator = '~' * 40
 
 						[String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrorInnerException -Property $Property
@@ -1405,7 +1405,7 @@ function Write-Log {
 			if ($true -eq $WriteHost) {
 				#  Only output using color options if running in a host which supports colors.
 				if ($null -ne $Host.UI.RawUI.ForegroundColor) {
-					Switch ($lSeverity) {
+					switch ($lSeverity) {
 						3 {
 							Write-Host -Object $lTextLogLine -ForegroundColor 'Red' -BackgroundColor 'Black'
 						}
@@ -1426,11 +1426,13 @@ function Write-Log {
 
 		## Exit function if it is a debug message and logging debug messages is not enabled in the config XML file
 		if (($true -eq $DebugMessage) -and ($false -eq $LogDebugMessage)) {
-			[bool]$ExitLoggingFunction = $true; return
+			[bool]$ExitLoggingFunction = $true
+			return
 		}
 		## Exit function if logging to file is disabled and logging to console host is disabled
 		if (($true -eq $DisableLogging) -and ($false -eq $WriteHost)) {
-			[bool]$ExitLoggingFunction = $true; return
+			[bool]$ExitLoggingFunction = $true
+			return
 		}
 		## Exit Begin block if logging is disabled
 		if ($true -eq $DisableLogging) {
@@ -1438,7 +1440,8 @@ function Write-Log {
 		}
 		## Exit function function if it is an [Initialization] message and the toolkit has been relaunched
 		if (($AsyncToolkitLaunch) -and ($ScriptSection -eq 'Initialization')) {
-			[bool]$ExitLoggingFunction = $true; return
+			[bool]$ExitLoggingFunction = $true
+			return
 		}
 
 		## Create the directory where the log file will be saved
@@ -1483,7 +1486,7 @@ function Write-Log {
 				}
 				if ($false -eq [string]::IsNullOrEmpty($Source)) {
 					[String]$ConsoleLogLine = "$LegacyMsg [$Source] :: $Msg"
-					Switch ($Severity) {
+					switch ($Severity) {
 						3 {
 							[String]$LegacyTextLogLine = "$LegacyMsg [$Source] [Error] :: $Msg"
 						}
@@ -1497,7 +1500,7 @@ function Write-Log {
 				}
 				else {
 					[String]$ConsoleLogLine = "$LegacyMsg :: $Msg"
-					Switch ($Severity) {
+					switch ($Severity) {
 						3 {
 							[String]$LegacyTextLogLine = "$LegacyMsg [Error] :: $Msg"
 						}
@@ -1547,7 +1550,18 @@ function Write-Log {
 				if (($LogFileSizeMB -gt $MaxLogFileSizeMB) -and ($MaxLogFileSizeMB -gt 0)) {
 					## Change the file extension to "lo_"
 					[String]$ArchivedOutLogFile = [IO.Path]::ChangeExtension($LogFilePath, 'lo_')
-					[Hashtable]$ArchiveLogParams = @{ ScriptSection = $ScriptSection; Source = ${CmdletName}; Severity = 2; LogFileDirectory = $LogFileDirectory; LogFileName = $LogFileName; LogType = $LogType; MaxLogFileSizeMB = 0; WriteHost = $WriteHost; ContinueOnError = $ContinueOnError; PassThru = $false }
+					[Hashtable]$ArchiveLogParams = @{
+						ScriptSection = $ScriptSection
+						Source = ${CmdletName}
+						Severity = 2
+						LogFileDirectory = $LogFileDirectory
+						LogFileName = $LogFileName
+						LogType = $LogType
+						MaxLogFileSizeMB = 0
+						WriteHost = $WriteHost
+						ContinueOnError = $ContinueOnError
+						PassThru = $false
+					}
 
 					## Log message about archiving the log file
 					[string]$ArchiveLogMessage = "Maximum log file size [$MaxLogFileSizeMB MB] reached. Rename log file to [$ArchivedOutLogFile]."
@@ -2091,17 +2105,17 @@ $control_PopupCloseWithoutSavingText.Text = $xmlUIMessages.NxtWelcomePrompt_PopU
 $control_PopupSureToCloseText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpSureToCloseText
 $control_PopupCloseApplication.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
 $control_PopupCancel.Content = $xmlUIMessages.NxtWelcomePrompt_Close
-Switch ($deploymentType) {
+switch ($deploymentType) {
 	'Uninstall' {
 		if ($ContinueType -eq 0) {
 			$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Uninstall)
 		}
 		else {
 			$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Uninstall)
-		};
-		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_UninstallVerb);
-		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Uninstall);
-		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Uninstall);
+		}
+		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_UninstallVerb)
+		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Uninstall)
+		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Uninstall)
 		break
 	}
 	'Repair' {
@@ -2110,10 +2124,10 @@ Switch ($deploymentType) {
 		}
 		else {
 			$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Repair)
-		};
-		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_RepairVerb);
-		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Repair);
-		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Repair);
+		}
+		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_RepairVerb)
+		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Repair)
+		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Repair)
 		break
 	}
 	Default {
@@ -2122,10 +2136,10 @@ Switch ($deploymentType) {
 		}
 		else {
 			$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Install)
-		};
-		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_InstallVerb);
-		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Install);
-		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Install);
+		}
+		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_InstallVerb)
+		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Install)
+		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Install)
 		break
 	}
 }
@@ -2151,7 +2165,7 @@ else {
 	}
 }
 [ScriptBlock]$fillCloseApplicationList = {
-	param($runningProcessesParam)
+	Param ($runningProcessesParam)
 	$control_CloseApplicationList.Items.Clear()
 	[psobject[]]$processUIItems = foreach ($runningProcessItem in $runningProcessesParam) {
 		Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($runningProcessItem.Id)'" | ForEach-Object {
@@ -2306,8 +2320,8 @@ if ($true -eq $PersistPrompt) {
 	[System.Windows.Threading.DispatcherTimer]$welcomeTimerPersist = New-Object System.Windows.Threading.DispatcherTimer
 	$welcomeTimerPersist.Interval = [timespan]::fromseconds($configInstallationPersistInterval)
 	[ScriptBlock]$welcomeTimerPersist_Tick = {
-		$control_MainWindow.Topmost = $true;
-		$control_MainWindow.Topmost = $TopMost;
+		$control_MainWindow.Topmost = $true
+		$control_MainWindow.Topmost = $TopMost
 	}
 	$welcomeTimerPersist.add_Tick($welcomeTimerPersist_Tick)
 	$welcomeTimerPersist.Start()
@@ -2374,26 +2388,26 @@ if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 switch ($control_MainWindow.Tag) {
 	'Close' {
 		Write-Log -Message 'The user chose to close the applications.' -Source ${CmdletName} -Severity 1
-		Exit 1001
+		exit 1001
 	}
 	'Cancel' {
 		Write-Log -Message 'The user chose to cancel the installation.' -Source ${CmdletName} -Severity 1
-		Exit 1002
+		exit 1002
 	}
 	'Defer' {
 		Write-Log -Message 'The user chose to defer the installation.' -Source ${CmdletName} -Severity 1
-		Exit 1003
+		exit 1003
 	}
 	'Timeout' {
 		Write-Log -Message 'The installation timed out.' -Source ${CmdletName} -Severity 1
-		Exit 1004
+		exit 1004
 	}
 	'Continue' {
 		Write-Log -Message 'The user chose to continue the installation.' -Source ${CmdletName} -Severity 1
-		Exit 1005
+		exit 1005
 	}
 	default {
-		Exit 1005
+		exit 1005
 	}
 }
 #endregion
