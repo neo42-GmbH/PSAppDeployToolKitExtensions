@@ -10,6 +10,9 @@ Describe "Coding Guidelines" -ForEach @(
             [string]$contentRaw = Get-Content -Path "$path" -Raw
             [System.Management.Automation.Language.Ast]$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
         }
+        It "Should have no errors" {
+            $errors | Should -BeNullOrEmpty
+        }
         It "Should have the correct capaitalization on keywords" {
             $spelling = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
             $tokens | Where-Object {$_.TokenFlags -contains 'Keyword' -and $_.Text -in $spelling} | ForEach-Object {
