@@ -182,6 +182,7 @@ switch ($DeploymentType) {
 ## Global default variables
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
+[string]$global:ToolkitConfigPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitConfig.xml"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeployApplicationPath = "$PSScriptRoot\Deploy-Application.ps1"
@@ -190,14 +191,21 @@ switch ($DeploymentType) {
 [string]$global:UserPartDir = "User"
 ## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
 [string[]]$script:NxtTempDirectories = @()
-## We temporarily load the package config to get the appVendor, appName and appVersion variables which are also required to define the AppLogFolder.
-$tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
+## We temporarily load the package and toolkit config to get the appVendor, appName, appVersion and AppRootFolder variables.
+$tempLoadPackageConfig = ( Get-Content "$global:Neo42PackageConfigPath" -Raw ) | ConvertFrom-Json
+[xml]$tempLoadToolkitConfig = ( Get-Content "$global:ToolkitConfigPath" -Raw )
 ## Several PSADT-functions do not work, if these variables are not set here.
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
 [string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
+## If the toolkit config is not a self reference of $AppLogFolder, we use the value from the toolkit config.
+if ($tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_LogPath -ne '$AppLogFolder'){
+    $global:AppLogFolder = $tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_LogPath
+}
+## We do not need these variables anymore.
 Remove-Variable -Name tempLoadPackageConfig
+Remove-Variable -Name tempLoadToolkitConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
