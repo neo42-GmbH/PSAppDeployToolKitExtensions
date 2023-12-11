@@ -8613,7 +8613,7 @@ function Show-NxtInstallationWelcome {
 		$IsInstall,
 		[Parameter(Mandatory = $false)]
 		[array]
-		$AskKillProcessApps = $($global:PackageConfig.AppKillProcesses),
+		$AskKillProcessApps = $global:PackageConfig.AppKillProcesses,
 		## this window is automatically closed after the timeout and the further behavior can be influenced with the ContinueType.
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
