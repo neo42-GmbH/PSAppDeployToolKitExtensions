@@ -246,17 +246,11 @@ function Add-NxtLocalGroupMember {
 	.PARAMETER MemberName
 		Name of the member that needs to be added to the specified group.
 		This parameter is mandatory.
-	.PARAMETER MemberType
-		Defines the type of the member. Valid options are "Group" or "User".
-		This parameter is mandatory.
 	.PARAMETER Computername
 		Specifies the name of the computer where the group exists. Defaults to the name of the current computer.
 	.EXAMPLE
-		Add-NxtLocalGroupMember -GroupName "Administrators" -MemberName "JohnDoe" -MemberType "User"
+		Add-NxtLocalGroupMember -GroupName "Administrators" -MemberName "JohnDoe"
 		This example adds the local user "JohnDoe" to the "Administrators" group.
-	.EXAMPLE
-		Add-NxtLocalGroupMember -GroupName "Administrators" -MemberName "Managers" -MemberType "Group"
-		This example adds the local group "Managers" to the "Administrators" group.
 	.OUTPUTS
 		System.Boolean.
 	.LINK
@@ -272,10 +266,6 @@ function Add-NxtLocalGroupMember {
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$MemberName,
-		[Parameter(Mandatory = $true)]
-		[ValidateSet('Group', 'User')]
-		[string]
-		$MemberType,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$COMPUTERNAME = $env:COMPUTERNAME
@@ -292,32 +282,18 @@ function Add-NxtLocalGroupMember {
 				return
 			}
 			[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$COMPUTERNAME/$GroupName,group"
-			if ($MemberType -eq "Group") {
-				[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $MemberName
-				if ($false -eq $groupExists) {
-					Write-Output $false
-					return
-				}
-				[System.DirectoryServices.DirectoryEntry]$memberGroup = [ADSI]"WinNT://$COMPUTERNAME/$MemberName,group"
-				$targetGroup.psbase.Invoke("Add", $memberGroup.path)
-				Write-Output $true
+			[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName
+			if ($false -eq $userExists ) {
+				Write-Output $false
 				return
 			}
-			elseif ($MemberType -eq "User") {
-				[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName
-				if ($false -eq $userExists ) {
-					Write-Output $false
-					return
-				}
-				[System.DirectoryServices.DirectoryEntry]$memberUser = [ADSI]"WinNT://$COMPUTERNAME/$MemberName,user"
-				$targetGroup.psbase.Invoke("Add", $memberUser.path)
-				Write-Output $true
-				return
-			}
-			Write-Output $false
+			[System.DirectoryServices.DirectoryEntry]$memberUser = [ADSI]"WinNT://$COMPUTERNAME/$MemberName,user"
+			$targetGroup.psbase.Invoke("Add", $memberUser.path) | Out-Null
+			Write-Output $true
+			return
 		}
 		catch {
-			Write-Log -Message "Failed to add $MemberName of type $MemberType to $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to add $MemberName to $GroupName. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			Write-Output $false
 		}
 	}
@@ -6941,10 +6917,6 @@ function Remove-NxtLocalGroupMember {
 		This parameter is mandatory.
 	.PARAMETER MemberName
 		Name of the specific member to remove.
-	.PARAMETER AllUsers
-		If this switch is defined, all users will be removed from the specified GroupName.
-	.PARAMETER AllGroups
-		If this switch is defined, all groups will be removed from the specified GroupName.
 	.PARAMETER AllMember
 		If this switch is defined, all members will be removed from the specified GroupName.
 	.PARAMETER COMPUTERNAME
@@ -6968,12 +6940,6 @@ function Remove-NxtLocalGroupMember {
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$MemberName,
-		[Parameter(ParameterSetName = 'Users')]
-		[Switch]
-		$AllUsers,
-		[Parameter(ParameterSetName = 'Groups')]
-		[Switch]
-		$AllGroups,
 		[Parameter(ParameterSetName = 'All')]
 		[Switch]
 		$AllMember,
@@ -6990,26 +6956,11 @@ function Remove-NxtLocalGroupMember {
 			[bool]$groupExists = ([ADSI]::Exists("WinNT://$COMPUTERNAME/$GroupName,group"))
 			if ($true -eq $groupExists) {
 				[System.DirectoryServices.DirectoryEntry]$group = [ADSI]"WinNT://$COMPUTERNAME/$GroupName,group"
-				if ($true -eq ([string]::IsNullOrEmpty($MemberName))) {
+				if ($true -eq $AllMember) {
 					[int]$count = 0
 					foreach ($member in $group.psbase.Invoke("Members")) {
-						[string]$class = $member.GetType().InvokeMember("Class", 'GetProperty', $Null, $member, $Null)
-						if ($true -eq $AllMember) {
-							$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
-							$count++
-						}
-						elseif ($true -eq $AllUsers) {
-							if ($class -eq "user") {
-								$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
-								$count++
-							}
-						}
-						elseif ($true -eq $AllGroups) {
-							if ($class -eq "group") {
-								$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
-								$count++
-							}
-						}
+						$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null))) | Out-Null
+						$count++
 					}
 					Write-Output $count
 				}
@@ -7017,7 +6968,7 @@ function Remove-NxtLocalGroupMember {
 					foreach ($member in $group.psbase.Invoke("Members")) {
 						[string]$name = $member.GetType().InvokeMember("Name", 'GetProperty', $Null, $member, $Null)
 						if ($name -eq $MemberName) {
-							$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null)))
+							$group.Remove($($member.GetType().InvokeMember("Adspath", 'GetProperty', $Null, $member, $Null))) | Out-Null
 							Write-Output 1
 							return
 						}
