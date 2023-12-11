@@ -7921,6 +7921,12 @@ function Set-NxtIniValue {
 		$Key,
 		# Don't strongly type this variable as [string] b/c PowerShell replaces [string]$Value = $null with an empty string
 		[Parameter(Mandatory = $true)]
+        [ValidateScript({
+            if ($false -eq ($_.GetType().Name -eq "String" -or $_ -eq $null)) {
+                throw "'$_' is not a string or null."
+            }
+            $true
+        })]
 		[AllowNull()]
 		$Value,
 		[Parameter(Mandatory = $false)]
