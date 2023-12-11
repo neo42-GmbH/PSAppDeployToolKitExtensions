@@ -202,7 +202,7 @@ $tempLoadPackageConfig = ( Get-Content "$global:Neo42PackageConfigPath" -Raw ) |
 ## If the toolkit config is not a self reference of $AppLogFolder, we use the value from the toolkit config.
 if (
     $tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_LogPath -ne '$AppLogFolder'-and 
-    $null -ne $tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_LogPath
+    $false -eq [string]::IsNullOrEmpty($tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_LogPath)
 ){
     $global:AppLogFolder = $tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_LogPath
 }
