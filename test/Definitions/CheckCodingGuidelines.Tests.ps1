@@ -1,7 +1,9 @@
+$baseDir = Split-Path -Path (Resolve-Path $MyInvocation.MyCommand.Definition) -Parent
+
 Describe "Coding Guidelines" -ForEach @(
-    @{path = (Resolve-Path -Path "$PSScriptRoot\..\..\Deploy-Application.ps1") },
-    @{path = (Resolve-Path -Path "$PSScriptRoot\..\..\AppDeployToolkit\AppDeployToolkitExtensions.ps1") },
-    @{path = (Resolve-Path -Path "$PSScriptRoot\..\..\AppDeployToolkit\CustomAppDeployToolkitUi.ps1") }
+    @{path = (Resolve-Path -Path "$baseDir\..\..\Deploy-Application.ps1") },
+    @{path = (Resolve-Path -Path "$baseDir\..\..\AppDeployToolkit\AppDeployToolkitExtensions.ps1") },
+    @{path = (Resolve-Path -Path "$baseDir\..\..\AppDeployToolkit\CustomAppDeployToolkitUi.ps1") }
 ) {
     Context "$(Split-Path $path -Leaf)" {
         BeforeAll {
