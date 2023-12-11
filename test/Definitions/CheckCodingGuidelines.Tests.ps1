@@ -5,36 +5,31 @@ Describe "Coding Guidelines" -ForEach @(
 ) {
     Context "$(Split-Path $path -Leaf)" {
         BeforeAll {
+            $tokens = $errors = $null
             [string[]]$content = Get-Content -Path "$path"
             [string]$contentRaw = Get-Content -Path "$path" -Raw
-            [System.Management.Automation.Language.Ast]$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
+            [System.Management.Automation.Language.Ast]$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
         }
-        It "Should have the correct capaitalization on statements" {
-            # Currently not reliable. Needs rework
-            $statements = $ast.FindAll({ param($ast)
-                (
-                    $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
-                    $ast -is [System.Management.Automation.Language.StatementAst] -or
-                    $ast -is [System.Management.Automation.Language.NamedBlockAst]
-                ) -and
-                $true -ne $ast.Unnamed
+        It "Should have the correct capaitalization on keywords" {
+            $spelling = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
+            $tokens | Where-Object {$_.TokenFlags -contains 'Keyword' -and $_.Text -in $spelling} | ForEach-Object {
+                $token = $_
+                $matchingSpelling = $spelling | Where-Object {$_ -eq $token.Text}
+                $_.Text | Should -BeExactly $matchingSpelling "the keyword $($_.Text) is not capaitalized correctly $($_.Extent.StartLineNumber)"
+            }
+        }
+        It "All commandlets should be capaitalized correctly" {
+            $commands = $ast.FindAll({
+                param($ast)
+                $ast -is [System.Management.Automation.Language.CommandAst]
             }, $true)
-            $spelling = @('function', 'if', 'else', 'elseif', 'foreach', 'for', 'while', 'do', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
-            $statements | ForEach-Object {
-                if (
-                    $_ -is [System.Management.Automation.Language.DoWhileStatementAst] -or
-                    $_ -is [System.Management.Automation.Language.DoUntilStatementAst]
-                ){
-                    $text = $_.Extent.Text -split "`n" | Select-Object -Last 1
-                }
-                else {
-                    $text = $_.Extent.Text -split "`n" | Select-Object -First 1
-                }
-                $spelling | ForEach-Object {
-                    if ($text -imatch "^\s*$_(?!\-)\b") {
-                        $text | Should -MatchExactly "^\s*$_" -Because "the statement '$_' is not capitalized correctly (line $($_.Extent.StartLineNumber))"
-                    }
-                }
+            $commands | ForEach-Object {
+                if ($_.InvocationOperator -ne "Unknown") { return }
+                $usedCommandName = $_.GetCommandName()
+                $command = (Get-Command -Name $usedCommandName -CommandType Cmdlet -Module @("CimCmdlets", "Microsoft.PowerShell.Management", "Microsoft.PowerShell.Security", "Microsoft.PowerShell.Utility", "PowerShellEditorServices.Commands", "PSReadLine") -ErrorAction SilentlyContinue).Name
+                if ($null -eq $command){ return }
+
+                $usedCommandName | Should -BeExactly $command -Because "the command $usedCommandName is not capaitalized correctly $($_.Extent.StartLineNumber)"
             }
         }
         It "Parameter variables should be capitalized" {
@@ -87,7 +82,7 @@ Describe "Coding Guidelines" -ForEach @(
             $currentLine = 1
             $content | ForEach-Object {
                 if ($_ -imatch "\)\s*\{") {
-                    $_ | Should -Match "\)\s\{" -Because "the parentheses spacing is not correct (line $currentLine)"
+                    $_ | Should -Match "\) \{" -Because "the parentheses spacing is not correct (line $currentLine)"
                 }
                 $currentLine++
             }
@@ -250,6 +245,16 @@ Describe "Coding Guidelines" -ForEach @(
                 if ($_.Extent.Text -notmatch "^{}$"){
                     $_.Extent.StartLineNumber | Should -Not -Be $_.Extent.EndLineNumber -Because "scriptblocks should not be single line (line $($_.Extent.StartLineNumber))"
                 }
+            }
+        }
+        It "Token ; should not be used as a line seperator" {
+            $seperatorTokens = $tokens | Where-Object {$_.Kind -eq 'Semi'}
+            $seperatorTokens | ForEach-Object {
+                $token = $_
+                $context = $content[$token.Extent.StartLineNumber - 1]
+                # Skip for loops
+                if ($context -match "^\s*for\s*\(") { return }
+                $token | Should -BeNullOrEmpty -Because "the ';' token should not be used a seperator (line $($token.Extent.StartLineNumber))"
             }
         }
     }
