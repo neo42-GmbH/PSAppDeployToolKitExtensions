@@ -57,6 +57,14 @@ Describe "Coding Guidelines" -ForEach @(
                 if ($null -eq $paramBlockAst) { return }
                 $paramBlockAst.Parameters | ForEach-Object {
                     $parameterAst = $_
+                    # Skip when string is required that allows null. Make sure it uses validation attribute
+                    if ($parameterAst.Attributes.TypeName.FullName -contains "AllowNull" -and $parameterAst.Attributes.TypeName.FullName -match "Validate.*"){
+                        return
+                    }
+                    # Skip when self defined type is used
+                    elseif ($parameterAst.Attributes.TypeName.FullName -match "PSADTNXT.*"){
+                        return
+                    }
                     $parameterAst.StaticType | Should -Not -Be 'System.Object' -Because "the parameter variable '$($parameterAst.Name.VariablePath.UserPath)' is not typed (line $($parameterAst.Extent.StartLineNumber))"
                 }
             }
