@@ -1900,6 +1900,7 @@ function Execute-NxtInnoSetup {
 		[string]
 		$MergeTasks,
 		[Parameter(Mandatory = $false)]
+        [ValidatePattern("((?<DRIVE>^\w:\\[\d\w\-\. \\]+\\)|(?<NOROOT>^))(?<FILENAME>[\d\w\-\. ]+)(?<EXTENSION>(\.log|\.txt))?$")]
 		[string]
 		$Log,
 		[Parameter(Mandatory = $false)]
@@ -2028,10 +2029,8 @@ function Execute-NxtInnoSetup {
 			[string]$argsInnoSetup += " /MERGETASKS=`"$MergeTasks`""
 		}
 
-		[string]$fullLogPath = [string]::Empty
-
 		## Logging
-		if ($false -eq ([string]::IsNullOrWhiteSpace($Log))) {
+		if ($true -eq ([string]::IsNullOrWhiteSpace($Log))) {
 			## create Log file name if non is specified
 			if ($Action -eq 'Install') {
 				$Log = "Install_$(((Get-Item $innoSetupPath).Basename) -replace ' ', [string]::Empty)_$DeploymentTimestamp"
@@ -2041,19 +2040,37 @@ function Execute-NxtInnoSetup {
 			}
 		}
 
-		[string]$logFileExtension = [System.IO.Path]::GetExtension($Log)
-
 		## Append file extension if necessary
-		if (($logFileExtension -ne '.txt') -and ($logFileExtension -ne '.log')) {
+		[string]$logFileExtension = [System.IO.Path]::GetExtension($Log)
+		if ($true -eq ([string]::IsNullOrEmpty($logFileExtension))) {
 			$Log = $Log + '.log'
 		}
 
-		## Check, if $Log is a full path
-		if ($false -eq ($Log.Contains('\'))) {
-			$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
+		## Create log folders if necessary. But only if the folder is not a relative path and the log folder has not been created yet.
+		[string[]]@($Log, $configNxtInnoSetupLogPath) | ForEach-Object {
+			$folderPath = (Split-Path $_ -Parent)
+			if (
+				$true -eq ([string]::IsNullOrEmpty($folderPath)) -or 
+				$false -eq ([System.IO.Path]::IsPathRooted($folderPath)) -or 
+				$true -eq (Test-Path $folderPath -PathType Container)
+			) {
+				return
+			}
+			try {
+				New-Item $folderPath -Force -ItemType Directory -ErrorAction Stop | Out-Null
+			}
+			catch {
+				Write-Log -Message "Failed to create folder [$folderPath]. Error: $(Resolve-Error)" -Severity 2 -Source ${CmdletName}
+			}
+		}
+
+		## Determine full log path
+		[string]$fullLogPath = [string]::Empty
+		if ($true -eq ([System.IO.Path]::IsPathRooted($Log))) {
+			$fullLogPath = $Log
 		}
 		else {
-			$fullLogPath = $Log
+			$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
 		}
 
 		[string]$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
@@ -2162,7 +2179,9 @@ function Execute-NxtMSI {
 	.PARAMETER LoggingOptions
 		Overrides the default logging options specified in the XML configuration file. Default options are: "/L*v".
 	.PARAMETER Log
-		Sets the Log Path either as Full Path or as logname
+		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$($global:DeploymentTimestamp).log"')
+		If only a name is specified the log path is taken from AppDeployToolkitConfig.xml (node "MSI_LogPath").
+		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "MSI_LogPath").
 	.PARAMETER WorkingDirectory
 		Overrides the working directory. The working directory is set to the location of the MSI file.
 	.PARAMETER SkipMSIAlreadyInstalledCheck
@@ -2223,7 +2242,7 @@ function Execute-NxtMSI {
 		$DisplayNamesToExclude,
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
-		[ValidatePattern("\.log$|^$|^[^\\/]+$")]
+		[ValidatePattern("((?<DRIVE>^\w:\\[\d\w\-\. \\]+\\)|(?<NOROOT>^))(?<FILENAME>[\d\w\-\. ]+)(?<EXTENSION>\.log)?$")]
 		[string]
 		$Log,
 		[Parameter(Mandatory = $false)]
@@ -2357,15 +2376,32 @@ function Execute-NxtMSI {
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
 		[PSObject]$executeResult = Execute-MSI @PSBoundParameters
+		## Create log folders if necessary. But only if the folder is not a relative path and the log folder has not been created yet.
+		[string[]]@($Log, $xmlConfigMSIOptionsLogPath) | ForEach-Object {
+			$folderPath = (Split-Path $_ -Parent)
+			if (
+				$true -eq ([string]::IsNullOrEmpty($folderPath)) -or 
+				$false -eq ([System.IO.Path]::IsPathRooted($folderPath)) -or 
+				$true -eq (Test-Path $folderPath -PathType Container)
+			) {
+				return
+			}
+			try {
+				New-Item $folderPath -Force -ItemType Directory -ErrorAction Stop | Out-Null
+			}
+			catch {
+				Write-Log -Message "Failed to create folder [$folderPath]. Error: $(Resolve-Error)" -Severity 2 -Source ${CmdletName}
+			}
+		}
 		## Move Logs to correct destination
 		if ($true -eq ([System.IO.Path]::IsPathRooted($Log))) {
-			[string]$msiLogName = "$($msiLogName -replace "\.log$",[string]::Empty)_$($action).log"
-			[String]$logPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiLogName
-			if ($true -eq (Test-Path -Path $logPath)) {
-				Move-NxtItem $logPath -Destination $Log -Force
+			[string]$msiActionLogName = "${msiLogName}_$($action).log"
+			[string]$sourceLogPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiActionLogName
+			if ($true -eq (Test-Path $sourceLogPath -PathType Leaf)) {
+				Move-NxtItem $sourceLogPath -Destination $Log -Force
 			}
 			else {
-				Write-Log -Message "MSI log [$logPath] not found. Skipped moving it to [$Log]." -Severity 2 -Source ${CmdletName}
+				Write-Log -Message "Log file [$sourceLogPath] not found. Skipping move of log file..." -Source ${CmdletName}
 			}
 		}
 		if ($executeResult.ExitCode -in ($AcceptedRebootCodes -split ',')) {
