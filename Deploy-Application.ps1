@@ -198,6 +198,13 @@ $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | 
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
 [string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
 Remove-Variable -Name tempLoadPackageConfig
+## Set the Toolkit_TempPath based on whether admin privileges are held or not
+if ((([Security.Principal.WindowsIdentity]::GetCurrent()).groups) -contains "S-1-5-32-544"){
+	[string]$global:toolKitTempPath = [Environment]::GetEnvironmentVariable("TEMP", "Machine")
+}
+else {
+	[string]$global:toolKitTempPath = $env:TEMP
+}
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
