@@ -10554,8 +10554,8 @@ function Test-NxtXmlNodeExists {
 	}
 }
 #endregion
-#region Function Unblock-AppExecution
-Function Unblock-AppExecution {
+#region Function Unblock-NxtAppExecution
+Function Unblock-NxtAppExecution {
     <#
 	.SYNOPSIS
 		Unblocks the execution of applications performed by the Block-AppExecution function
