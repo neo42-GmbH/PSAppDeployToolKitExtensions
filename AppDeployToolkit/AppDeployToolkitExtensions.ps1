@@ -699,7 +699,7 @@ Function Block-NxtAppExecution {
 
 		## Remove illegal characters from the scheduled task arguments string
 		[char[]]$invalidScheduledTaskChars = '$', '!', '''', '"', '(', ')', ';', '\', '`', '*', '?', '{', '}', '[', ']', '<', '>', '|', '&', '%', '#', '~', '@', ' '
-		[string]$schInstallName = $installName
+		[string]$schInstallName = $InstallName
 		foreach ($invalidChar in $invalidScheduledTaskChars) {
 			$schInstallName = $schInstallName -replace [regex]::Escape($invalidChar),''
 		}
@@ -754,17 +754,17 @@ Function Block-NxtAppExecution {
 			Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
 			return
 		}
+        [string]$schTaskBlockedAppsName = $InstallName + '_BlockedApps'
 		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
 			Remove-Folder -Path $blockExecutionTempPath
 		}
-		New-NxtFolderWithPermissions -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid
 		try {
-			$null = New-Item -Path $blockExecutionTempPath -ItemType 'Directory' -ErrorAction 'Stop'
+            New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid
 		}
 		catch {
 			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Possible attempt to gain elevated rights." -Source ${CmdletName}
 		}
-		Copy-NxItem -Path "$scriptRoot\*.*" -Destination $blockExecutionTempPath -Exclude 'thumbs.db' -Force -Recurse -ErrorAction 'SilentlyContinue'
+		Copy-Item -Path "$scriptRoot\*.*" -Destination $blockExecutionTempPath -Exclude 'thumbs.db' -Force -Recurse -ErrorAction 'SilentlyContinue'
 		## Build the debugger block value script
 		[string[]]$debuggerBlockScript = "strCommand = `"$PSHome\powershell.exe -ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -File `" & chr(34) & `"$blockExecutionTempPath\$scriptFileName`" & chr(34) & `" -ShowBlockedAppDialog -AsyncToolkitLaunch -ReferredInstallTitle `" & chr(34) & `"$installTitle`" & chr(34)"
 		$debuggerBlockScript += 'set oWShell = CreateObject("WScript.Shell")'
@@ -797,7 +797,7 @@ Function Block-NxtAppExecution {
 				return
 			}
 		}
-		[string[]]$blockProcessName = $processName
+		[string[]]$blockProcessName = $ProcessName
 		## Append .exe to match registry keys
 		[string[]]$blockProcessName = $blockProcessName | ForEach-Object {
 			$_ + '.exe'
