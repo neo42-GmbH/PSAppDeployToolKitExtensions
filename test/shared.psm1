@@ -32,7 +32,13 @@ Try { Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -Err
 If (Test-Path -LiteralPath 'variable:HostInvocation') { $InvocationInfo = $HostInvocation } Else { $InvocationInfo = $MyInvocation }
 [string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
 [string]$global:AppLogFolder = $scriptDirectory
-[int]$env:nxtScriptDepth += 1
+## Set the Toolkit_TempPath based on whether admin privileges are held or not
+if ((([Security.Principal.WindowsIdentity]::GetCurrent()).groups) -contains "S-1-5-32-544"){
+	[string]$global:toolKitTempPath = [Environment]::GetEnvironmentVariable("TEMP", "Machine")
+}
+else {
+	[string]$global:toolKitTempPath = $env:TEMP
+}
 ## dot source the required AppDeploy Toolkit functions
 Try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
