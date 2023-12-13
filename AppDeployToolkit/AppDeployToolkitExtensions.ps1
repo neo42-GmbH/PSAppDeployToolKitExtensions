@@ -754,39 +754,28 @@ Function Block-NxtAppExecution {
 			Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
 			return
 		}
-
-		if (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container') {
+		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
 			Remove-Folder -Path $blockExecutionTempPath
 		}
-
+		New-NxtFolderWithPermissions -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid
 		try {
 			$null = New-Item -Path $blockExecutionTempPath -ItemType 'Directory' -ErrorAction 'Stop'
 		}
 		catch {
 			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Possible attempt to gain elevated rights." -Source ${CmdletName}
 		}
-
-		Copy-Item -Path "$scriptRoot\*.*" -Destination $blockExecutionTempPath -Exclude 'thumbs.db' -Force -Recurse -ErrorAction 'SilentlyContinue'
-
+		Copy-NxItem -Path "$scriptRoot\*.*" -Destination $blockExecutionTempPath -Exclude 'thumbs.db' -Force -Recurse -ErrorAction 'SilentlyContinue'
 		## Build the debugger block value script
 		[string[]]$debuggerBlockScript = "strCommand = `"$PSHome\powershell.exe -ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -File `" & chr(34) & `"$blockExecutionTempPath\$scriptFileName`" & chr(34) & `" -ShowBlockedAppDialog -AsyncToolkitLaunch -ReferredInstallTitle `" & chr(34) & `"$installTitle`" & chr(34)"
 		$debuggerBlockScript += 'set oWShell = CreateObject("WScript.Shell")'
 		$debuggerBlockScript += 'oWShell.Run strCommand, 0, false'
 		$debuggerBlockScript | Out-File -FilePath "$blockExecutionTempPath\AppDeployToolkit_BlockAppExecutionMessage.vbs" -Force -Encoding 'Default' -ErrorAction 'SilentlyContinue'
 		[string]$debuggerBlockValue = "$envWinDir\System32\wscript.exe `"$blockExecutionTempPath\AppDeployToolkit_BlockAppExecutionMessage.vbs`""
-
-		## Set contents to be readable for all users (BUILTIN\USERS)
-		try {
-			$Users = ConvertTo-NTAccountOrSID -SID 'S-1-5-32-545'
-			Set-ItemPermission -Path $blockExecutionTempPath -User $Users -Permission 'Read' -Inheritance ('ObjectInherit', 'ContainerInherit')
-		}
-		catch {
-			Write-Log -Message "Failed to set read permissions on path [$blockExecutionTempPath]. The function might not be able to work correctly." -Source ${CmdletName} -Severity 2
-		}
-
 		## Create a scheduled task to run on startup to call this script and clean up blocked applications in case the installation is interrupted, e.g. user shuts down during installation"
 		Write-Log -Message 'Creating scheduled task to cleanup blocked applications in case the installation is interrupted.' -Source ${CmdletName}
-		if (Get-SchedulerTask -ContinueOnError $true | Select-Object -Property 'TaskName' | Where-Object { $_.TaskName -eq "\$schTaskBlockedAppsName" }) {
+		if ($null -ne (Get-SchedulerTask -ContinueOnError $true | Select-Object -Property 'TaskName' | Where-Object {
+			$_.TaskName -eq "\$schTaskBlockedAppsName"
+		})) {
 			Write-Log -Message "Scheduled task [$schTaskBlockedAppsName] already exists." -Source ${CmdletName}
 		}
 		else {
@@ -801,7 +790,6 @@ Function Block-NxtAppExecution {
 				Write-Log -Message "Failed to export the scheduled task XML file [$xmlSchTaskFilePath]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				return
 			}
-
 			## Import the Scheduled Task XML file to create the Scheduled Task
 			[PSObject]$schTaskResult = Execute-Process -Path $exeSchTasks -Parameters "/create /f /tn $schTaskBlockedAppsName /xml `"$xmlSchTaskFilePath`"" -WindowStyle 'Hidden' -CreateNoWindow -PassThru -ExitOnProcessFailure $false
 			if ($schTaskResult.ExitCode -ne 0) {
@@ -809,11 +797,11 @@ Function Block-NxtAppExecution {
 				return
 			}
 		}
-
 		[string[]]$blockProcessName = $processName
 		## Append .exe to match registry keys
-		[string[]]$blockProcessName = $blockProcessName | ForEach-Object { $_ + '.exe' } -ErrorAction 'SilentlyContinue'
-
+		[string[]]$blockProcessName = $blockProcessName | ForEach-Object {
+			$_ + '.exe'
+		} -ErrorAction 'SilentlyContinue'
 		## Enumerate each process and set the debugger value to block application execution
 		foreach ($blockProcess in $blockProcessName) {
 			Write-Log -Message "Setting the Image File Execution Option registry key to block execution of [$blockProcess]." -Source ${CmdletName}
@@ -10591,7 +10579,6 @@ Function Unblock-NxtAppExecution {
             Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
             return
         }
-
         ## Remove Debugger values to unblock processes
         [PSObject[]]$unblockProcesses = $null
         $unblockProcesses += (
@@ -10606,13 +10593,11 @@ Function Unblock-NxtAppExecution {
             Write-Log -Message "Removing the Image File Execution Options registry key to unblock execution of [$($unblockProcess.PSChildName)]." -Source ${CmdletName}
             $unblockProcess | Remove-ItemProperty -Name 'Debugger' -ErrorAction 'SilentlyContinue'
         }
-
         ## If block execution variable is $true, set it to $false
         if ($true -eq $BlockExecution) {
             #  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
             Set-Variable -Name 'BlockExecution' -Value $false -Scope 'Script'
         }
-
         ## Remove the scheduled task if it exists
         [string]$schTaskBlockedAppsName = $installName + '_BlockedApps'
         try {
@@ -10626,13 +10611,11 @@ Function Unblock-NxtAppExecution {
         catch {
             Write-Log -Message "Error retrieving/deleting Scheduled Task.`r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
         }
-
         ## Remove BlockAppExecution Schedule Task XML file
         [string]$xmlSchTaskFilePath = Join-Path -Path $BlockScriptLocation -ChildPath "SchTaskUnBlockApps.xml"
         if ($true -eq (Test-Path -LiteralPath $xmlSchTaskFilePath)) {
             Remove-Item -LiteralPath $xmlSchTaskFilePath -Force -ErrorAction 'SilentlyContinue' | Out-Null
         }
-
         ## Remove BlockAppExection Temporary directory
         [string]$blockExecutionTempPath = Join-Path -Path $BlockScriptLocation -ChildPath 'BlockExecution'
         if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
