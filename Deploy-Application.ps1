@@ -360,6 +360,7 @@ function Main {
 				if ($false -eq $mainNxtResult.Success) {
 					Clear-NxtTempFolder
 					Close-BlockExecutionWindow
+					Unblock-NxtAppExecution
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
 				Unregister-NxtOld
@@ -542,6 +543,7 @@ function Main {
 		Close-BlockExecutionWindow
 		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
 		Clear-NxtTempFolder
+		Unblock-NxtAppExecution
 		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {

@@ -659,8 +659,6 @@ Function Block-NxtAppExecution {
 	.SYNOPSIS
 		Block the execution of an application(s)
 	.DESCRIPTION
-		This function is called when you pass the -BlockExecution parameter to the Stop-RunningApplications function. It does the following:
-
 		1.  Makes a copy of this script in a temporary directory on the local machine.
 		2.  Checks for an existing scheduled task from previous failed installation attempt where apps were blocked and if found, calls the Unblock-AppExecution function to restore the original IFEO registry keys.
 				This is to prevent the function from overriding the backup of the original IFEO options.
@@ -671,14 +669,14 @@ Function Block-NxtAppExecution {
 	.PARAMETER ProcessName
 		Name of the process or processes separated by commas.
 	.PARAMETER BlockScriptLocation
-		The location where the block script will be placed.
+		The location where the block script will be placed. Defaults to $global:PackageConfig.App.
 	.OUTPUTS
 		none.
 	.EXAMPLE
 		Block-NxtAppExecution -ProcessName ('winword','excel')
 	.NOTES
 		This is an internal script function and should typically not be called directly.
-		It is used when the -BlockExecution parameter is specified with the Show-InstallationWelcome function to block applications.
+		It is used when the -BlockExecution parameter is specified with the Show-NxtInstallationWelcome function to block applications.
 	.LINK
 		https://psappdeploytoolkit.com
 	#>
@@ -689,14 +687,12 @@ Function Block-NxtAppExecution {
 		[string[]]$ProcessName,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[string]$BlockScriptLocation = $dirAppDeployTemp
+		[string]$BlockScriptLocation = $global:PackageConfig.App
 	)
-
 	Begin {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-
 		## Remove illegal characters from the scheduled task arguments string
 		[char[]]$invalidScheduledTaskChars = '$', '!', '''', '"', '(', ')', ';', '\', '`', '*', '?', '{', '}', '[', ']', '<', '>', '|', '&', '%', '#', '~', '@', ' '
 		[string]$schInstallName = $InstallName
@@ -754,15 +750,16 @@ Function Block-NxtAppExecution {
 			Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
 			return
 		}
-        [string]$schTaskBlockedAppsName = $InstallName + '_BlockedApps'
+		[string]$schTaskBlockedAppsName = $InstallName + '_BlockedApps'
 		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
 			Remove-Folder -Path $blockExecutionTempPath
 		}
 		try {
-            New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid
+			New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
 		}
 		catch {
-			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Possible attempt to gain elevated rights." -Source ${CmdletName}
+			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Source ${CmdletName}
+			throw "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script."
 		}
 		Copy-Item -Path "$scriptRoot\*.*" -Destination $blockExecutionTempPath -Exclude 'thumbs.db' -Force -Recurse -ErrorAction 'SilentlyContinue'
 		## Build the debugger block value script
@@ -3112,6 +3109,7 @@ function Exit-NxtScriptWithError {
 		}
 		Clear-NxtTempFolder
 		Close-BlockExecutionWindow
+		Unblock-NxtAppExecution -BlockScriptLocation $App
 		Exit-Script -ExitCode $MainExitCode
 	}
 	End {
@@ -8579,6 +8577,8 @@ Function Show-NxtInstallationWelcome {
 		Defines the parent directory of the script. Defaults to the script root variable set by AppDeployToolkitMain.ps1. This parameter is optional.
 	.PARAMETER ProcessIdToIgnore
 		Specifies a process ID to ignore during operations. Defaults to the current process ID. This parameter is optional.
+	.PARAMETER BlockAppExecutionPath
+		Path to the BlockAppExecutionPath folder used to place the BlockExecution file. Defaults to the variable $global:PackageConfig.App. This parameter is optional.
 	.EXAMPLE
 		Show-NxtInstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"; Description = "Internet Explorer"}, [pscustomobject]@{Name = "winword"; Description = "Microsoft Word"}, [pscustomobject]@{Name = "excel"; Description = "Microsoft Excel"}) -CloseAppsCountdown 600 -Silent
 		Silently closes Internet Explorer, Microsoft Word, and Microsoft Excel without user interaction, with a countdown of 10 minutes (600 seconds).
@@ -8699,7 +8699,10 @@ Function Show-NxtInstallationWelcome {
 		$ScriptRoot = $scriptRoot,
 		[Parameter(Mandatory = $false)]
 		[int]
-		$ProcessIdToIgnore = $PID
+		$ProcessIdToIgnore = $PID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$BlockAppExecutionPath = $global:PackageConfig.App
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -8713,7 +8716,6 @@ Function Show-NxtInstallationWelcome {
 		if ($false -eq $IsInstall) {
 			$DeferDays = 0
 		}
-
 		[string]$fileExtension = ".exe"
 		foreach ( $processAppsItem in $AskKillProcessApps ) {
 			if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
@@ -8779,7 +8781,6 @@ Function Show-NxtInstallationWelcome {
 					}
 				}
 			}
-
 		}
 		## Check Deferral history and calculate remaining deferrals
 		if (($true -eq $AllowDefer) -or ($true -eq $AllowDeferCloseApps)) {
@@ -8853,7 +8854,6 @@ Function Show-NxtInstallationWelcome {
 		if (($deferTimes -lt 0) -and ($false -eq $deferDeadlineUniversal)) {
 			$AllowDefer = $false
 		}
-
 		[string]$promptResult = [string]::Empty
 		## Prompt the user to close running applications and optionally defer if enabled
 		if ($false -eq $silent) {
@@ -8899,7 +8899,6 @@ Function Show-NxtInstallationWelcome {
 				else {
 					break
 				}
-
 				if ($true -eq ($promptResult.Contains('Cancel'))) {
 					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${CmdletName}
 
@@ -8909,7 +8908,6 @@ Function Show-NxtInstallationWelcome {
 					Write-Output $configInstallationUIExitCode
 					return
 				}
-
 				#  If the user has clicked OK, wait a few seconds for the process to terminate before evaluating the running processes again
 				if ($true -eq ($promptResult.Contains('Continue'))) {
 					Write-Log -Message 'The user selected to continue...' -Source ${CmdletName}
@@ -9005,10 +9003,8 @@ Function Show-NxtInstallationWelcome {
 						catch {
 						}
 					}
-
 					#  Restore minimized windows
 					$shellApp.UndoMinimizeAll() | Out-Null
-
 					Write-Output $configInstallationUIExitCode
 					return
 				}
@@ -9090,11 +9086,12 @@ Function Show-NxtInstallationWelcome {
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
 			if (($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
 				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
-				Block-AppExecution -ProcessName ($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName')
-				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
+				Block-NxtAppExecution -ProcessName ($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName') -BlockScriptLocation $BlockAppExecutionPath
+				if ($true -eq (Test-Path -Path "$BlockAppExecutionPath\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
-					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$dirAppDeployTemp\BlockExecution\AppDeployToolkitLogo.ico"
-					Update-NxtXmlNode -FilePath "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockAppExecutionPath\BlockExecution\AppDeployToolkitLogo.ico"
+					Update-NxtXmlNode -FilePath "$BlockAppExecutionPath\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+					Update-NxtXmlNode -FilePath "$BlockAppExecutionPath\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_TempPath" -InnerText "$BlockAppExecutionPath\BlockExecution"
 				}
 			}
 		}
@@ -10544,7 +10541,7 @@ function Test-NxtXmlNodeExists {
 #endregion
 #region Function Unblock-NxtAppExecution
 Function Unblock-NxtAppExecution {
-    <#
+	<#
 	.SYNOPSIS
 		Unblocks the execution of applications performed by the Block-AppExecution function
 	.DESCRIPTION
@@ -10555,76 +10552,85 @@ Function Unblock-NxtAppExecution {
 		Unblock-AppExecution
 	.PARAMETER BlockScriptLocation
 		The location where the block script was placed.
+		Defaults to $global:PackageConfig.App.
+	.PARAMETER BlockExecution
+		Indicates if the execution of applications has been blocked. This function will only unblock applications if this variable is set to $true.
+		Defaults to $Script:BlockExecution.
 	.NOTES
 		This is an internal script function and should typically not be called directly.
 		It is used when the -BlockExecution parameter is specified with the Show-InstallationWelcome function to undo the actions performed by Block-AppExecution.
 	.LINK
 		https://psappdeploytoolkit.com
 	#>
-    [CmdletBinding()]
-    Param (
+	[CmdletBinding()]
+	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[string]$BlockScriptLocation = $dirAppDeployTemp
-    )
-
-    Begin {
-        ## Get the name of this function and write header
-        [string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-    }
-    Process {
-        ## Bypass if no Admin rights
-        if ($false -eq $configToolkitRequireAdmin) {
-            Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
-            return
-        }
-        ## Remove Debugger values to unblock processes
-        [PSObject[]]$unblockProcesses = $null
-        $unblockProcesses += (
+		[string]$BlockScriptLocation = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[bool]$BlockExecution = $Script:BlockExecution
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
+	Process {
+		## Bypass if no Admin rights
+		if ($false -eq $configToolkitRequireAdmin) {
+			Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
+			return
+		}
+		if ($false -eq $BlockExecution) {
+			Write-Log -Message "Bypassing Function [${CmdletName}], because [BlockExecution: $BlockExecution]." -Source ${CmdletName}
+			return
+		}
+		## Remove Debugger values to unblock processes
+		[PSObject[]]$unblockProcesses = $null
+		$unblockProcesses += (
 			Get-ChildItem -LiteralPath $regKeyAppExecution -Recurse -ErrorAction 'SilentlyContinue' |
 			ForEach-Object {
 				Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction 'SilentlyContinue'
 			}
 		)
-        foreach ($unblockProcess in ($unblockProcesses | Where-Object {
+		foreach ($unblockProcess in ($unblockProcesses | Where-Object {
 			$_.Debugger -like '*AppDeployToolkit_BlockAppExecutionMessage*'
 		})) {
-            Write-Log -Message "Removing the Image File Execution Options registry key to unblock execution of [$($unblockProcess.PSChildName)]." -Source ${CmdletName}
-            $unblockProcess | Remove-ItemProperty -Name 'Debugger' -ErrorAction 'SilentlyContinue'
-        }
-        ## If block execution variable is $true, set it to $false
-        if ($true -eq $BlockExecution) {
-            #  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
-            Set-Variable -Name 'BlockExecution' -Value $false -Scope 'Script'
-        }
-        ## Remove the scheduled task if it exists
-        [string]$schTaskBlockedAppsName = $installName + '_BlockedApps'
-        try {
-            if ($null -ne (Get-SchedulerTask -ContinueOnError $true | Select-Object -Property 'TaskName' | Where-Object {
+			Write-Log -Message "Removing the Image File Execution Options registry key to unblock execution of [$($unblockProcess.PSChildName)]." -Source ${CmdletName}
+			$unblockProcess | Remove-ItemProperty -Name 'Debugger' -ErrorAction 'SilentlyContinue'
+		}
+		## If block execution variable is $true, set it to $false
+		if ($true -eq $BlockExecution) {
+			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
+			Set-Variable -Name 'BlockExecution' -Value $false -Scope 'Script'
+		}
+		## Remove the scheduled task if it exists
+		[string]$schTaskBlockedAppsName = $installName + '_BlockedApps'
+		try {
+			if ($null -ne (Get-SchedulerTask -ContinueOnError $true | Select-Object -Property 'TaskName' | Where-Object {
 				$_.TaskName -eq "\$schTaskBlockedAppsName"
 			})) {
-                Write-Log -Message "Deleting Scheduled Task [$schTaskBlockedAppsName]." -Source ${CmdletName}
-                Execute-Process -Path $exeSchTasks -Parameters "/Delete /TN $schTaskBlockedAppsName /F"
-            }
-        }
-        catch {
-            Write-Log -Message "Error retrieving/deleting Scheduled Task.`r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-        }
-        ## Remove BlockAppExecution Schedule Task XML file
-        [string]$xmlSchTaskFilePath = Join-Path -Path $BlockScriptLocation -ChildPath "SchTaskUnBlockApps.xml"
-        if ($true -eq (Test-Path -LiteralPath $xmlSchTaskFilePath)) {
-            Remove-Item -LiteralPath $xmlSchTaskFilePath -Force -ErrorAction 'SilentlyContinue' | Out-Null
-        }
-        ## Remove BlockAppExection Temporary directory
-        [string]$blockExecutionTempPath = Join-Path -Path $BlockScriptLocation -ChildPath 'BlockExecution'
-        if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
-            Remove-Folder -Path $blockExecutionTempPath | Out-Null
-        }
-    }
-    End {
-        Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
-    }
+				Write-Log -Message "Deleting Scheduled Task [$schTaskBlockedAppsName]." -Source ${CmdletName}
+				Execute-Process -Path $exeSchTasks -Parameters "/Delete /TN $schTaskBlockedAppsName /F"
+			}
+		}
+		catch {
+			Write-Log -Message "Error retrieving/deleting Scheduled Task.`r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+		}
+		## Remove BlockAppExecution Schedule Task XML file
+		[string]$xmlSchTaskFilePath = Join-Path -Path $BlockScriptLocation -ChildPath "SchTaskUnBlockApps.xml"
+		if ($true -eq (Test-Path -LiteralPath $xmlSchTaskFilePath)) {
+			Remove-Item -LiteralPath $xmlSchTaskFilePath -Force -ErrorAction 'SilentlyContinue' | Out-Null
+		}
+		## Remove BlockAppExection Temporary directory
+		[string]$blockExecutionTempPath = Join-Path -Path $BlockScriptLocation -ChildPath 'BlockExecution'
+		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
+			Remove-Folder -Path $blockExecutionTempPath | Out-Null
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
 }
 #endregion
 #region Function Uninstall-NxtApplication
