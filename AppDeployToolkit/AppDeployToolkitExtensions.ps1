@@ -693,14 +693,21 @@ Function Block-NxtAppExecution {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		## Remove illegal characters from the scheduled task arguments string
-		[char[]]$invalidScheduledTaskChars = '$', '!', '''', '"', '(', ')', ';', '\', '`', '*', '?', '{', '}', '[', ']', '<', '>', '|', '&', '%', '#', '~', '@', ' '
-		[string]$schInstallName = $InstallName
-		foreach ($invalidChar in $invalidScheduledTaskChars) {
-			$schInstallName = $schInstallName -replace [regex]::Escape($invalidChar),''
-		}
 		[string]$blockExecutionTempPath = Join-Path -Path $BlockScriptLocation -ChildPath 'BlockExecution'
-		[string]$schTaskUnblockAppsCommand += "-ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -File `"$blockExecutionTempPath\$scriptFileName`" -CleanupBlockedApps -ReferredInstallName `"$SchInstallName`" -ReferredInstallTitle `"$installTitle`" -ReferredLogName `"$logName`" -AsyncToolkitLaunch"
+		[string]$schTaskBlockedAppsName = $InstallName + '_BlockedApps'
+		## Append .exe to match registry keys
+		[string[]]$blockProcessName = $ProcessName | ForEach-Object {
+			($_ -replace "\.exe$") + '.exe'
+		}
+		[string]$commandToEncode =@"
+		'$($blockProcessName -join "','")' | ForEach-Object {
+			Remove-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\`$_" -Name "Debugger"
+		}
+		Remove-Item -Recurse -Path "$blockExecutionTempPath"
+		Unregister-ScheduledTask -TaskPath "\" -TaskName "$schTaskBlockedAppsName" -Confirm:`$false
+"@
+		[string]$encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($commandToEncode))
+		[string]$schTaskUnblockAppsCommand += "-ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -EncodedCommand $encodedCommand"
 		## Specify the scheduled task configuration in XML format
 		[string]$xmlUnblockAppsSchTask = @"
 <?xml version="1.0" encoding="UTF-16"?>
@@ -750,7 +757,6 @@ Function Block-NxtAppExecution {
 			Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
 			return
 		}
-		[string]$schTaskBlockedAppsName = $InstallName + '_BlockedApps'
 		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
 			Remove-Folder -Path $blockExecutionTempPath
 		}
@@ -794,11 +800,6 @@ Function Block-NxtAppExecution {
 				return
 			}
 		}
-		[string[]]$blockProcessName = $ProcessName
-		## Append .exe to match registry keys
-		[string[]]$blockProcessName = $blockProcessName | ForEach-Object {
-			$_ + '.exe'
-		} -ErrorAction 'SilentlyContinue'
 		## Enumerate each process and set the debugger value to block application execution
 		foreach ($blockProcess in $blockProcessName) {
 			Write-Log -Message "Setting the Image File Execution Option registry key to block execution of [$blockProcess]." -Source ${CmdletName}
@@ -9091,7 +9092,6 @@ Function Show-NxtInstallationWelcome {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockAppExecutionPath\BlockExecution\AppDeployToolkitLogo.ico"
 					Update-NxtXmlNode -FilePath "$BlockAppExecutionPath\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
-					Update-NxtXmlNode -FilePath "$BlockAppExecutionPath\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/Toolkit_Options/Toolkit_TempPath" -InnerText "$BlockAppExecutionPath\BlockExecution"
 				}
 			}
 		}
