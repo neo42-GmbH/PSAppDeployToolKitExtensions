@@ -2059,7 +2059,6 @@ If ($configInstallationUILanguageOverride) {
 	[String]$xmlUIMessageLanguage = "UI_Messages_$configInstallationUILanguageOverride"
 }
 [Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
-$xmlUIMessages | Out-File -FilePath C:\test.txt
 if ($true -eq $UserCanCloseAll) {
 	$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWork
 }
