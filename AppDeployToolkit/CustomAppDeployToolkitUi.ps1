@@ -1991,14 +1991,75 @@ if ($true -eq $isLightTheme) {
 else {
 	$control_Banner.Source = $appDeployLogoBannerDark
 }
-
-if ($xmlUIMessageLanguage -ne "UI_Messages_EN" -and $xmlUIMessageLanguage -ne "UI_Messages_DE") {
-	## until we not support same languages in dialogues like ADT, we switch to english as default
-	[Xml.XmlElement]$xmlUIMessages = $xmlConfig."UI_Messages_EN"
+## try to find the correct language for the current sessions user
+[int]$ownSessionId = (Get-Process -Id $PID).SessionId
+[PSObject]$RunAsActiveUser = Get-LoggedOnUser | Where-Object {$_.SessionId -eq $ownSessionId}
+## Get current Sessions UI Language
+#  If a user is logged on, then get primary UI language for logged on user (even if running in session 0)
+If ($RunAsActiveUser) {
+	#  Read language defined by Group Policy
+	If (-not $HKULanguages) {
+		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings' -Value 'PreferredUILanguages'
+	}
+	If (-not $HKULanguages) {
+		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $RunAsActiveUser.SID
+	}
+	#  Read language for Win Vista & higher machines
+	If (-not $HKULanguages) {
+		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $RunAsActiveUser.SID
+	}
+	If (-not $HKULanguages) {
+		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached' -Value 'MachinePreferredUILanguages' -SID $RunAsActiveUser.SID
+	}
+	If (-not $HKULanguages) {
+		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'LocaleName' -SID $RunAsActiveUser.SID
+	}
+	#  Read language for Win XP machines
+	If (-not $HKULanguages) {
+		[String]$HKULocale = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'Locale' -SID $RunAsActiveUser.SID
+		If ($HKULocale) {
+			[Int32]$HKULocale = [Convert]::ToInt32('0x' + $HKULocale, 16)
+			[String[]]$HKULanguages = ([Globalization.CultureInfo]($HKULocale)).Name
+		}
+	}
+	If ($HKULanguages) {
+		[Globalization.CultureInfo]$PrimaryWindowsUILanguage = [Globalization.CultureInfo]($HKULanguages[0])
+		[String]$HKUPrimaryLanguageShort = $PrimaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
+		#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
+		If ($HKUPrimaryLanguageShort -eq 'ZH') {
+			If ($PrimaryWindowsUILanguage.EnglishName -match 'Simplified') {
+				[String]$HKUPrimaryLanguageShort = 'ZH-Hans'
+			}
+			If ($PrimaryWindowsUILanguage.EnglishName -match 'Traditional') {
+				[String]$HKUPrimaryLanguageShort = 'ZH-Hant'
+			}
+		}
+		#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
+		If ($HKUPrimaryLanguageShort -eq 'PT') {
+			If ($PrimaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
+				[String]$HKUPrimaryLanguageShort = 'PT-BR'
+			}
+		}
+	}
 }
-else {
-	[Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
+If ($HKUPrimaryLanguageShort) {
+	#  Use the primary UI language of the logged in user
+	[String]$xmlUIMessageLanguage = "UI_Messages_$HKUPrimaryLanguageShort"
 }
+Else {
+	#  Default to UI language of the account executing current process (even if it is the SYSTEM account)
+	[String]$xmlUIMessageLanguage = "UI_Messages_$currentLanguage"
+}
+#  Default to English if the detected UI language is not available in the XMl config file
+If (-not ($xmlConfig.$xmlUIMessageLanguage)) {
+	[String]$xmlUIMessageLanguage = 'UI_Messages_EN'
+}
+#  Override the detected language if the override option was specified in the XML config file
+If ($configInstallationUILanguageOverride) {
+	[String]$xmlUIMessageLanguage = "UI_Messages_$configInstallationUILanguageOverride"
+}
+[Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
+$xmlUIMessages | Out-File -FilePath C:\test.txt
 if ($true -eq $UserCanCloseAll) {
 	$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWork
 }
