@@ -1993,58 +1993,58 @@ else {
 }
 ## try to find the correct language for the current sessions user
 [int]$ownSessionId = (Get-Process -Id $PID).SessionId
-[PSObject]$RunAsActiveUser = Get-LoggedOnUser | Where-Object {$_.SessionId -eq $ownSessionId}
-## Get current Sessions UI Language
-#  If a user is logged on, then get primary UI language for logged on user (even if running in session 0)
-If ($RunAsActiveUser) {
+[PSObject]$runAsActiveUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
+## Get current sessions UI language
+#  Get primary UI language for current sessions user (even if running as system)
+If ($null -ne $runAsActiveUser) {
 	#  Read language defined by Group Policy
-	If (-not $HKULanguages) {
-		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings' -Value 'PreferredUILanguages'
+	If ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[String[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings' -Value 'PreferredUILanguages'
 	}
-	If (-not $HKULanguages) {
-		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $RunAsActiveUser.SID
+	If ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[String[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $runAsActiveUser.SID
 	}
 	#  Read language for Win Vista & higher machines
-	If (-not $HKULanguages) {
-		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $RunAsActiveUser.SID
+	If ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[String[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $runAsActiveUser.SID
 	}
-	If (-not $HKULanguages) {
-		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached' -Value 'MachinePreferredUILanguages' -SID $RunAsActiveUser.SID
+	If ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[String[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached' -Value 'MachinePreferredUILanguages' -SID $runAsActiveUser.SID
 	}
-	If (-not $HKULanguages) {
-		[String[]]$HKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'LocaleName' -SID $RunAsActiveUser.SID
+	If ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[String[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'LocaleName' -SID $runAsActiveUser.SID
 	}
 	#  Read language for Win XP machines
-	If (-not $HKULanguages) {
-		[String]$HKULocale = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'Locale' -SID $RunAsActiveUser.SID
-		If ($HKULocale) {
-			[Int32]$HKULocale = [Convert]::ToInt32('0x' + $HKULocale, 16)
-			[String[]]$HKULanguages = ([Globalization.CultureInfo]($HKULocale)).Name
+	If ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[String]$hKULocale = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'Locale' -SID $runAsActiveUser.SID
+		If ($hKULocale) {
+			[Int32]$hKULocale = [Convert]::ToInt32('0x' + $hKULocale, 16)
+			[String[]]$hKULanguages = ([Globalization.CultureInfo]($hKULocale)).Name
 		}
 	}
-	If ($HKULanguages) {
-		[Globalization.CultureInfo]$PrimaryWindowsUILanguage = [Globalization.CultureInfo]($HKULanguages[0])
-		[String]$HKUPrimaryLanguageShort = $PrimaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
+	If ($false -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[Globalization.CultureInfo]$primaryWindowsUILanguage = [Globalization.CultureInfo]($hKULanguages[0])
+		[String]$hKUPrimaryLanguageShort = $primaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
 		#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
-		If ($HKUPrimaryLanguageShort -eq 'ZH') {
-			If ($PrimaryWindowsUILanguage.EnglishName -match 'Simplified') {
-				[String]$HKUPrimaryLanguageShort = 'ZH-Hans'
+		If ($hKUPrimaryLanguageShort -eq 'ZH') {
+			If ($primaryWindowsUILanguage.EnglishName -match 'Simplified') {
+				[String]$hKUPrimaryLanguageShort = 'ZH-Hans'
 			}
-			If ($PrimaryWindowsUILanguage.EnglishName -match 'Traditional') {
-				[String]$HKUPrimaryLanguageShort = 'ZH-Hant'
+			If ($primaryWindowsUILanguage.EnglishName -match 'Traditional') {
+				[String]$hKUPrimaryLanguageShort = 'ZH-Hant'
 			}
 		}
 		#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
-		If ($HKUPrimaryLanguageShort -eq 'PT') {
-			If ($PrimaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
-				[String]$HKUPrimaryLanguageShort = 'PT-BR'
+		If ($hKUPrimaryLanguageShort -eq 'PT') {
+			If ($primaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
+				[String]$hKUPrimaryLanguageShort = 'PT-BR'
 			}
 		}
 	}
 }
-If ($HKUPrimaryLanguageShort) {
-	#  Use the primary UI language of the logged in user
-	[String]$xmlUIMessageLanguage = "UI_Messages_$HKUPrimaryLanguageShort"
+If ($hKUPrimaryLanguageShort) {
+	#  Use the primary UI language of the current sessions user
+	[String]$xmlUIMessageLanguage = "UI_Messages_$hKUPrimaryLanguageShort"
 }
 Else {
 	#  Default to UI language of the account executing current process (even if it is the SYSTEM account)
