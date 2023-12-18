@@ -654,7 +654,7 @@ function Add-NxtXmlNode {
 }
 #endregion
 #region Function Block-NxtAppExecution
-Function Block-NxtAppExecution {
+function Block-NxtAppExecution {
 	<#
 	.SYNOPSIS
 		Block the execution of an application(s)
@@ -8578,8 +8578,8 @@ Function Show-NxtInstallationWelcome {
 		Defines the parent directory of the script. Defaults to the script root variable set by AppDeployToolkitMain.ps1. This parameter is optional.
 	.PARAMETER ProcessIdToIgnore
 		Specifies a process ID to ignore during operations. Defaults to the current process ID. This parameter is optional.
-	.PARAMETER BlockAppExecutionPath
-		Path to the BlockAppExecutionPath folder used to place the BlockExecution file. Defaults to the variable $global:PackageConfig.App. This parameter is optional.
+	.PARAMETER BlockScriptLocation
+		Path to the BlockScriptLocation folder used to place the BlockExecution file. Defaults to the variable $global:PackageConfig.App. This parameter is optional.
 	.EXAMPLE
 		Show-NxtInstallationWelcome -AskKillProcessApps @([pscustomobject]@{Name = "iexplore"; Description = "Internet Explorer"}, [pscustomobject]@{Name = "winword"; Description = "Microsoft Word"}, [pscustomobject]@{Name = "excel"; Description = "Microsoft Excel"}) -CloseAppsCountdown 600 -Silent
 		Silently closes Internet Explorer, Microsoft Word, and Microsoft Excel without user interaction, with a countdown of 10 minutes (600 seconds).
@@ -8703,7 +8703,7 @@ Function Show-NxtInstallationWelcome {
 		$ProcessIdToIgnore = $PID,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$BlockAppExecutionPath = $global:PackageConfig.App
+		$BlockScriptLocation = $global:PackageConfig.App
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -9087,11 +9087,11 @@ Function Show-NxtInstallationWelcome {
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
 			if (($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
 				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
-				Block-NxtAppExecution -ProcessName ($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName') -BlockScriptLocation $BlockAppExecutionPath
-				if ($true -eq (Test-Path -Path "$BlockAppExecutionPath\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
+				Block-NxtAppExecution -ProcessName ($processObjects | Where-Object {$_.IsWql -ne $true} | Select-Object -ExpandProperty 'ProcessName') -BlockScriptLocation $BlockScriptLocation
+				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
-					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockAppExecutionPath\BlockExecution\AppDeployToolkitLogo.ico"
-					Update-NxtXmlNode -FilePath "$BlockAppExecutionPath\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
+					Update-NxtXmlNode -FilePath "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
 				}
 			}
 		}
@@ -10540,7 +10540,7 @@ function Test-NxtXmlNodeExists {
 }
 #endregion
 #region Function Unblock-NxtAppExecution
-Function Unblock-NxtAppExecution {
+function Unblock-NxtAppExecution {
 	<#
 	.SYNOPSIS
 		Unblocks the execution of applications performed by the Block-AppExecution function
@@ -10599,11 +10599,8 @@ Function Unblock-NxtAppExecution {
 			Write-Log -Message "Removing the Image File Execution Options registry key to unblock execution of [$($unblockProcess.PSChildName)]." -Source ${CmdletName}
 			$unblockProcess | Remove-ItemProperty -Name 'Debugger' -ErrorAction 'SilentlyContinue'
 		}
-		## If block execution variable is $true, set it to $false
-		if ($true -eq $BlockExecution) {
-			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
-			Set-Variable -Name 'BlockExecution' -Value $false -Scope 'Script'
-		}
+		#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
+		Set-Variable -Name 'BlockExecution' -Value $false -Scope 'Script'
 		## Remove the scheduled task if it exists
 		[string]$schTaskBlockedAppsName = $installName + '_BlockedApps'
 		try {
