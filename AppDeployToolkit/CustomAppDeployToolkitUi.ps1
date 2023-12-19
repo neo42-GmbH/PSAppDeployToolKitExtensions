@@ -1127,27 +1127,33 @@ function Test-NxtPersonalizationLightTheme {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[PSObject[]]$LoggedOnUserSessions = Get-LoggedOnUser
-		[String[]]$usersLoggedOn = $LoggedOnUserSessions | ForEach-Object { $_.NTAccount }
-		[String]$sid = (New-Object System.Security.Principal.NTAccount($usersLoggedOn)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+		[int]$ownSessionId = (Get-Process -Id $PID).SessionId
+		[PSObject[]]$currentSessionUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
+		[String]$sid = $currentSessionUser.SID
 		[bool]$lightThemeResult = $true
-		if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
-			if ((Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
-				[bool]$lightThemeResult = $true
-			} 
-			else {
-				[bool]$lightThemeResult = $false
-			}
-		} 
+		if ([string]::IsNullOrEmpty($sid)) {
+			Write-Log -Message 'Failed to get SID of current sessions user, skipping theme check and using lighttheme.' -Source ${cmdletName} -Severity 2
+			[bool]$lightThemeResult = $true
+		}
 		else {
-			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
-				if ((Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
+			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
+				if ((Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
 					[bool]$lightThemeResult = $true
 				} 
 				else {
 					[bool]$lightThemeResult = $false
 				}
 			} 
+			else {
+				if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
+					if ((Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
+						[bool]$lightThemeResult = $true
+					} 
+					else {
+						[bool]$lightThemeResult = $false
+					}
+				} 
+			}
 		}
 		Write-Output $lightThemeResult
 	}
@@ -1995,7 +2001,7 @@ else {
 [int]$ownSessionId = (Get-Process -Id $PID).SessionId
 [PSObject]$runAsActiveUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
 ## Get current sessions UI language
-#  Get primary UI language for current sessions user (even if running as system)
+## Get primary UI language for current sessions user (even if running as system)
 if ($null -ne $runAsActiveUser) {
 	#  Read language defined by Group Policy
 	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
