@@ -24,7 +24,7 @@ if([string]::IsNullOrEmpty($workingDir) -or $true -ne [System.IO.Directory]::Exi
 ## Define basic variables
 [string]$scriptName = "ApplySetupInfWrapper.ps1"
 [string]$adtSubFolder = "$workingDir\PSADT"
-[string]$wrapperUrl = "https://adtdev.neo42.de/api/app/SetupInfWrapper/Latest"
+[string]$wrapperUrl = "https://portal.neo42.de/api/app/SetupInfWrapper/Latest"
 [string]$wrapperPath = "$workingDir\SetupInfWrapper_{VERSION}.zip"
 [string]$jsonPath = "$adtSubFolder\neo42PackageConfig.json"
 [string]$infPath = "$workingDir\neoInstall\Setup.inf"
