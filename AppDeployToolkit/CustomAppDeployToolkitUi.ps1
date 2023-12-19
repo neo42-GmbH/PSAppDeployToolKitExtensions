@@ -1137,22 +1137,10 @@ function Test-NxtPersonalizationLightTheme {
 		}
 		else {
 			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
-				if ((Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
-					[bool]$lightThemeResult = $true
-				} 
-				else {
-					[bool]$lightThemeResult = $false
-				}
+				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1
 			} 
-			else {
-				if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
-					if ((Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
-						[bool]$lightThemeResult = $true
-					} 
-					else {
-						[bool]$lightThemeResult = $false
-					}
-				} 
+			elseif ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
+				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1
 			}
 		}
 		Write-Output $lightThemeResult
