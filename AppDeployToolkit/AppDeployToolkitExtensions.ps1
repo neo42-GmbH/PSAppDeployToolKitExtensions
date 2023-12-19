@@ -1900,7 +1900,7 @@ function Execute-NxtInnoSetup {
 		[string]
 		$MergeTasks,
 		[Parameter(Mandatory = $false)]
-        [ValidatePattern("((?<DRIVE>^\w:\\[\d\w\-\. \\]+\\)|(?<NOROOT>^))(?<FILENAME>[\d\w\-\. ]+)(?<EXTENSION>(\.log|\.txt))?$")]
+		[ValidatePattern("^\[A-Za-z]\:\\.*\.(log|txt)$|^$|^[^\\/]+$")]
 		[string]
 		$Log,
 		[Parameter(Mandatory = $false)]
@@ -2042,7 +2042,7 @@ function Execute-NxtInnoSetup {
 
 		## Append file extension if necessary
 		[string]$logFileExtension = [System.IO.Path]::GetExtension($Log)
-		if ($true -eq ([string]::IsNullOrEmpty($logFileExtension))) {
+		if ($true -eq ([string]::IsNullOrEmpty($logFileExtension)) -or $logFileExtension -notin @('.log', '.txt')) {
 			$Log = $Log + '.log'
 		}
 
@@ -2242,7 +2242,7 @@ function Execute-NxtMSI {
 		$DisplayNamesToExclude,
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
-		[ValidatePattern("((?<DRIVE>^\w:\\[\d\w\-\. \\]+\\)|(?<NOROOT>^))(?<FILENAME>[\d\w\-\. ]+)(?<EXTENSION>\.log)?$")]
+		[ValidatePattern("^\[A-Za-z]\:\\.*\.(log|txt)$|^$|^[^\\/]+$")]
 		[string]
 		$Log,
 		[Parameter(Mandatory = $false)]
@@ -2372,7 +2372,7 @@ function Execute-NxtMSI {
 			[string]$PSBoundParameters["IgnoreExitCodes"] = "$ignoreExitCodes"
 		}
 		if ($false -eq ([string]::IsNullOrEmpty($Log))) {
-			[string]$msiLogName = ($Log | Split-Path -Leaf) -replace '\.log$', [string]::Empty
+			[string]$msiLogName = ($Log | Split-Path -Leaf) -replace '\.log$|\.txt$', [string]::Empty
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
 		[PSObject]$executeResult = Execute-MSI @PSBoundParameters
