@@ -2060,6 +2060,10 @@ else {
 if ($null -eq $xmlConfig.$xmlUIMessageLanguage) {
 	[string]$xmlUIMessageLanguage = 'UI_Messages_EN'
 }
+##  Also default to English if the detected UI language has no nxt messages
+if (($xmlConfig.$xmlUIMessageLanguage.ChildNodes.Name -imatch "^NxtWelcomePrompt_.*").Count -eq 0) {
+	[string]$xmlUIMessageLanguage = 'UI_Messages_EN'
+}
 #  Override the detected language if the override option was specified in the XML config file
 if ($configInstallationUILanguageOverride) {
 	[string]$xmlUIMessageLanguage = "UI_Messages_$configInstallationUILanguageOverride"
