@@ -1161,17 +1161,19 @@ function Test-NxtPersonalizationLightTheme {
 	}
 	Process {
 		[int]$ownSessionId = (Get-Process -Id $PID).SessionId
-		[PSObject[]]$currentSessionUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
+		[PSObject[]]$currentSessionUser = Get-LoggedOnUser | Where-Object {
+			$_.SessionId -eq $ownSessionId
+		}
 		[String]$sid = $currentSessionUser.SID
 		[bool]$lightThemeResult = $true
-		if ([string]::IsNullOrEmpty($sid)) {
+		if ($true -eq [string]::IsNullOrEmpty($sid)) {
 			Write-Log -Message 'Failed to get SID of current sessions user, skipping theme check and using lighttheme.' -Source ${cmdletName} -Severity 2
 			[bool]$lightThemeResult = $true
 		}
 		else {
 			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
 				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1
-			} 
+			}
 			elseif ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
 				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1
 			}
@@ -2077,7 +2079,9 @@ else {
 }
 ## try to find the correct language for the current sessions user
 [int]$ownSessionId = (Get-Process -Id $PID).SessionId
-[PSObject]$runAsActiveUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
+[PSObject]$runAsActiveUser = Get-LoggedOnUser | Where-Object {
+	$_.SessionId -eq $ownSessionId
+}
 ## Get current sessions UI language
 ## Get primary UI language for current sessions user (even if running as system)
 if ($null -ne $runAsActiveUser) {
@@ -2101,7 +2105,7 @@ if ($null -ne $runAsActiveUser) {
 	#  Read language for Win XP machines
 	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
 		[string]$hKULocale = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'Locale' -SID $runAsActiveUser.SID
-		if ($hKULocale) {
+		if ($false -eq [string]::IsNullOrEmpty($hKULocale)) {
 			[Int32]$hKULocale = [Convert]::ToInt32('0x' + $hKULocale, 16)
 			[string[]]$hKULanguages = ([Globalization.CultureInfo]($hKULocale)).Name
 		}
@@ -2143,7 +2147,7 @@ if (($xmlConfig.$xmlUIMessageLanguage.ChildNodes.Name -imatch "^NxtWelcomePrompt
 	[string]$xmlUIMessageLanguage = 'UI_Messages_EN'
 }
 #  Override the detected language if the override option was specified in the XML config file
-if ($configInstallationUILanguageOverride) {
+if ($false -eq [string]::IsNullOrEmpty($configInstallationUILanguageOverride)) {
 	[string]$xmlUIMessageLanguage = "UI_Messages_$configInstallationUILanguageOverride"
 }
 [Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage

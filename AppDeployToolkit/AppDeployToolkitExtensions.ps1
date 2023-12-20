@@ -691,7 +691,8 @@ function Block-NxtAppExecution {
 		[string[]]$ProcessName,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[string]$BlockScriptLocation = $global:PackageConfig.App
+		[string]
+		$BlockScriptLocation = $global:PackageConfig.App
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -757,7 +758,7 @@ function Block-NxtAppExecution {
 	}
 	Process {
 		## Bypass if no Admin rights
-		if ($configToolkitRequireAdmin -eq $false) {
+		if ($false -eq $configToolkitRequireAdmin) {
 			Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
 			return
 		}
@@ -10661,9 +10662,11 @@ function Unblock-NxtAppExecution {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[string]$BlockScriptLocation = $global:PackageConfig.App,
+		[string]
+		$BlockScriptLocation = $global:PackageConfig.App,
 		[Parameter(Mandatory = $false)]
-		[bool]$BlockExecution = $Script:BlockExecution
+		[bool]
+		$BlockExecution = $Script:BlockExecution
 	)
 	Begin {
 		## Get the name of this function and write header
