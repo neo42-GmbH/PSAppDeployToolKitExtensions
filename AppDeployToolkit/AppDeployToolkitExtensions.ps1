@@ -2008,7 +2008,7 @@ function Execute-NxtInnoSetup {
 		Use "!" before a task name for deselecting a specific task, otherwise it is selected.
 		For specific information see: https://jrsoftware.org/ishelp/topic_setupcmdline.htm
 	.PARAMETER Log
-		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$app\Install.$($global:DeploymentTimestamp).log"')
+		Log file name or full path including it's name and file format (eg. '-Log "InstLogFile"', '-Log "UninstLog.txt"' or '-Log "$configToolkitLogDir\Install.$($global:DeploymentTimestamp).log"')
 		If only a name is specified the log path is taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 		If this parameter is not specified a log name is generated automatically and the log path is again taken from AppDeployToolkitConfig.xml (node "NxtInnoSetup_LogPath").
 	.PARAMETER AcceptedExitCodes
@@ -2030,7 +2030,7 @@ function Execute-NxtInnoSetup {
 	.EXAMPLE
 		Execute-NxtInnoSetup -UninstallKey "This Application_is1" -Path "ThisAppSetup.exe" -AddParameters "/LOADINF=`"$dirSupportFiles\Comp.inf`"" -Log "InstallationLog"
 	.EXAMPLE
-		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$app\Uninstall.$($global:deploymentTimestamp).log"
+		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "This Application_is1" -Log "$configToolkitLogDir\Uninstall.$($global:deploymentTimestamp).log"
 	.EXAMPLE
 		Execute-NxtInnoSetup -Action "Uninstall" -UninstallKey "SomeApp - Version *" -UninstallKeyIsDisplayName $true -UninstallKeyContainsWildCards $true -DisplayNamesToExclude "SomeApp - Version 1.0","SomeApp - Version 1.1",$global:PackageConfig.UninstallDisplayName
 	.EXAMPLE
