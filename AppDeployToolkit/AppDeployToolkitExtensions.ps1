@@ -1900,7 +1900,7 @@ function Execute-NxtInnoSetup {
 		[string]
 		$MergeTasks,
 		[Parameter(Mandatory = $false)]
-		[ValidatePattern("^\[A-Za-z]\:\\.*\.(log|txt)$|^$|^[^\\/]+$")]
+		[ValidatePattern("^[A-Za-z]\:\\.*\.(log|txt)$|^$|^[^\\/]+$")]
 		[string]
 		$Log,
 		[Parameter(Mandatory = $false)]
@@ -2242,7 +2242,7 @@ function Execute-NxtMSI {
 		$DisplayNamesToExclude,
 		[Parameter(Mandatory = $false)]
 		[AllowEmptyString()]
-		[ValidatePattern("^\[A-Za-z]\:\\.*\.(log|txt)$|^$|^[^\\/]+$")]
+		[ValidatePattern("^[A-Za-z]\:\\.*\.(log|txt)$|^$|^[^\\/]+$")]
 		[string]
 		$Log,
 		[Parameter(Mandatory = $false)]
