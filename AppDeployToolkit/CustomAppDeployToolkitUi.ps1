@@ -1160,26 +1160,20 @@ function Test-NxtPersonalizationLightTheme {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[PSObject[]]$LoggedOnUserSessions = Get-LoggedOnUser
-		[String[]]$usersLoggedOn = $LoggedOnUserSessions | Select-Object -ExpandProperty NTAccount
-		[String]$sid = (New-Object System.Security.Principal.NTAccount($usersLoggedOn)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+		[int]$ownSessionId = (Get-Process -Id $PID).SessionId
+		[PSObject[]]$currentSessionUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
+		[String]$sid = $currentSessionUser.SID
 		[bool]$lightThemeResult = $true
-		if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
-			if ((Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1) {
-				[bool]$lightThemeResult = $true
-			}
-			else {
-				[bool]$lightThemeResult = $false
-			}
+		if ([string]::IsNullOrEmpty($sid)) {
+			Write-Log -Message 'Failed to get SID of current sessions user, skipping theme check and using lighttheme.' -Source ${cmdletName} -Severity 2
+			[bool]$lightThemeResult = $true
 		}
 		else {
-			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
-				if ((Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1) {
-					[bool]$lightThemeResult = $true
-				}
-				else {
-					[bool]$lightThemeResult = $false
-				}
+			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
+				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1
+			} 
+			elseif ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
+				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1
 			}
 		}
 		Write-Output $lightThemeResult
@@ -2081,14 +2075,78 @@ if ($true -eq $isLightTheme) {
 else {
 	$control_Banner.Source = $appDeployLogoBannerDark
 }
-
-if ($xmlUIMessageLanguage -ne "UI_Messages_EN" -and $xmlUIMessageLanguage -ne "UI_Messages_DE") {
-	## until we not support same languages in dialogues like ADT, we switch to english as default
-	[Xml.XmlElement]$xmlUIMessages = $xmlConfig."UI_Messages_EN"
+## try to find the correct language for the current sessions user
+[int]$ownSessionId = (Get-Process -Id $PID).SessionId
+[PSObject]$runAsActiveUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
+## Get current sessions UI language
+## Get primary UI language for current sessions user (even if running as system)
+if ($null -ne $runAsActiveUser) {
+	#  Read language defined by Group Policy
+	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings' -Value 'PreferredUILanguages'
+	}
+	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $runAsActiveUser.SID
+	}
+	#  Read language for Win Vista & higher machines
+	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $runAsActiveUser.SID
+	}
+	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached' -Value 'MachinePreferredUILanguages' -SID $runAsActiveUser.SID
+	}
+	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'LocaleName' -SID $runAsActiveUser.SID
+	}
+	#  Read language for Win XP machines
+	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
+		[string]$hKULocale = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'Locale' -SID $runAsActiveUser.SID
+		if ($hKULocale) {
+			[Int32]$hKULocale = [Convert]::ToInt32('0x' + $hKULocale, 16)
+			[string[]]$hKULanguages = ([Globalization.CultureInfo]($hKULocale)).Name
+		}
+	}
+	if ($hKULanguages.Count -gt 0 -and ($false -eq [string]::IsNullOrWhiteSpace($hKULanguages[0]))) {
+		[Globalization.CultureInfo]$primaryWindowsUILanguage = [Globalization.CultureInfo]($hKULanguages[0])
+		[string]$hKUPrimaryLanguageShort = $primaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
+		#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
+		if ($hKUPrimaryLanguageShort -eq 'ZH') {
+			if ($primaryWindowsUILanguage.EnglishName -match 'Simplified') {
+				[string]$hKUPrimaryLanguageShort = 'ZH-Hans'
+			}
+			if ($primaryWindowsUILanguage.EnglishName -match 'Traditional') {
+				[string]$hKUPrimaryLanguageShort = 'ZH-Hant'
+			}
+		}
+		#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
+		if ($hKUPrimaryLanguageShort -eq 'PT') {
+			if ($primaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
+				[string]$hKUPrimaryLanguageShort = 'PT-BR'
+			}
+		}
+	}
+}
+if ($false -eq [string]::IsNullOrEmpty($hKUPrimaryLanguageShort)) {
+	#  Use the primary UI language of the current sessions user
+	[string]$xmlUIMessageLanguage = "UI_Messages_$hKUPrimaryLanguageShort"
 }
 else {
-	[Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
+	#  Default to UI language of the account executing current process (even if it is the SYSTEM account)
+	[string]$xmlUIMessageLanguage = "UI_Messages_$currentLanguage"
 }
+#  Default to English if the detected UI language is not available in the XMl config file
+if ($null -eq $xmlConfig.$xmlUIMessageLanguage) {
+	[string]$xmlUIMessageLanguage = 'UI_Messages_EN'
+}
+##  Also default to English if the detected UI language has no nxt messages
+if (($xmlConfig.$xmlUIMessageLanguage.ChildNodes.Name -imatch "^NxtWelcomePrompt_.*").Count -eq 0) {
+	[string]$xmlUIMessageLanguage = 'UI_Messages_EN'
+}
+#  Override the detected language if the override option was specified in the XML config file
+if ($configInstallationUILanguageOverride) {
+	[string]$xmlUIMessageLanguage = "UI_Messages_$configInstallationUILanguageOverride"
+}
+[Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
 if ($true -eq $UserCanCloseAll) {
 	$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWork
 }
