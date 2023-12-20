@@ -176,9 +176,10 @@ function ConvertFrom-NxtEncodedObject {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	param (
+	Param (
 		[Parameter(Mandatory=$true)]
-		[string]$EncodedObject
+		[string]
+		$EncodedObject
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -206,7 +207,7 @@ function ConvertFrom-NxtEncodedObject {
 }
 #endregion
 #region Function Convert-RegistryPath
-Function Convert-RegistryPath {
+function Convert-RegistryPath {
 	<#
 		.SYNOPSIS
 			Converts the specified registry key path to a format that is compatible with built-in PowerShell cmdlets.
@@ -239,13 +240,16 @@ Function Convert-RegistryPath {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
-		[String]$Key,
+		[String]
+		$Key,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[String]$SID,
+		[String]
+		$SID,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[bool]$DisableFunctionLogging = $true
+		[bool]
+		$DisableFunctionLogging = $true
 	)
 
 	Begin {
@@ -298,7 +302,7 @@ Function Convert-RegistryPath {
 		}
 		else {
 			#  If key string is not properly formatted, throw an error
-			Throw "Unable to detect target registry hive in string [$Key]."
+			throw "Unable to detect target registry hive in string [$Key]."
 		}
 	}
 	End {
@@ -307,7 +311,7 @@ Function Convert-RegistryPath {
 }
 #endregion
 #region Function Get-LoggedOnUser
-Function Get-LoggedOnUser {
+function Get-LoggedOnUser {
 	<#
 		.SYNOPSIS
 			Get session details for all local and RDP logged on users.
@@ -376,7 +380,7 @@ Function Get-LoggedOnUser {
 }
 #endregion
 #region Function Get-RegistryKey
-Function Get-RegistryKey {
+function Get-RegistryKey {
 	<#
 		.SYNOPSIS
 			Retrieves value names and value data for a specified registry key or optionally, a specific value.
@@ -422,22 +426,28 @@ Function Get-RegistryKey {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
-		[String]$Key,
+		[String]
+		$Key,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[String]$Value,
+		[String]
+		$Value,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[String]$SID,
+		[String]
+		$SID,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Switch]$ReturnEmptyKeyIfExists = $false,
+		[Switch]
+		$ReturnEmptyKeyIfExists = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
-		[Switch]$DoNotExpandEnvironmentNames = $false,
+		[Switch]
+		$DoNotExpandEnvironmentNames = $false,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
-		[bool]$ContinueOnError = $true
+		[bool]
+		$ContinueOnError = $true
 	)
 
 	Begin {
@@ -530,13 +540,13 @@ Function Get-RegistryKey {
 			if ($true -eq [string]::IsNullOrEmpty($Value)) {
 				Write-Log -Message "Failed to read registry key [$key]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				if ($false -eq $ContinueOnError) {
-					Throw "Failed to read registry key [$key]: $($_.Exception.Message)"
+					throw "Failed to read registry key [$key]: $($_.Exception.Message)"
 				}
 			}
 			else {
 				Write-Log -Message "Failed to read registry key [$key] value [$value]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				if ($false -eq  $ContinueOnError) {
-					Throw "Failed to read registry key [$key] value [$value]: $($_.Exception.Message)"
+					throw "Failed to read registry key [$key] value [$value]: $($_.Exception.Message)"
 				}
 			}
 		}
@@ -552,7 +562,7 @@ function Get-NxtProcessTree {
 	.SYNOPSIS
 		Get the process tree for a given process ID
 	.DESCRIPTION
-		This function gets the process tree for a given process ID. 
+		This function gets the process tree for a given process ID.
 		It uses WMI to get the process, its child processes and the parent processes.
 	.PARAMETER ProcessId
 		The process ID for which to get the process tree
@@ -575,7 +585,7 @@ function Get-NxtProcessTree {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	param (
+	Param (
 		[Parameter(Mandatory=$true)]
 		[int]
 		$ProcessId,
@@ -623,11 +633,11 @@ function Get-NxtRunningProcesses {
 	.SYNOPSIS
 		Retrieves a list of running processes based on provided process objects, adding a 'ProcessDescription' property to each.
 	.DESCRIPTION
-		This function scans for running processes that match the names specified in the provided process objects. 
-		It enhances the output by appending a 'ProcessDescription' property to each identified process. 
+		This function scans for running processes that match the names specified in the provided process objects.
+		It enhances the output by appending a 'ProcessDescription' property to each identified process.
 		This function is particularly useful for monitoring specific processes or applications.
 	.PARAMETER ProcessObjects
-		An array of custom objects, each representing a process to check for. 
+		An array of custom objects, each representing a process to check for.
 		These objects should contain at least a 'ProcessName' property. If not supplied, the function returns $null.
 	.PARAMETER DisableLogging
 		If specified, disables logging within the function, making its execution silent.
@@ -648,11 +658,14 @@ function Get-NxtRunningProcesses {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false, Position = 0)]
-		[PSObject[]]$ProcessObjects,
+		[PSObject[]]
+		$ProcessObjects,
 		[Parameter(Mandatory = $false, Position = 1)]
-		[Switch]$DisableLogging,
+		[Switch]
+		$DisableLogging,
 		[Parameter(Mandatory = $false)]
-		[int[]]$ProcessIdsToIgnore
+		[int[]]
+		$ProcessIdsToIgnore
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -665,12 +678,16 @@ function Get-NxtRunningProcesses {
 			if ($false -eq $DisableLogging) {
 				Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
 			}
-			[array]$wqlProcessObjects = $processObjects | Where-Object { $_.IsWql -eq $true }
+			[array]$wqlProcessObjects = $processObjects | Where-Object {
+				$true -eq $_.IsWql
+			}
 			[array]$processesFromWmi = $(
 				foreach ($wqlProcessObject in $wqlProcessObjects) {
 					Get-WmiObject -Class Win32_Process -Filter $wqlProcessObject.ProcessName | Select-Object name,ProcessId,@{
 						n = "QueryUsed"
-						e = { $wqlProcessObject.ProcessName }
+						e = {
+							$wqlProcessObject.ProcessName
+						}
 					}
 				}
 			)
@@ -696,11 +713,11 @@ function Get-NxtRunningProcesses {
 						$processFound = $true
 					}
 					if ($true -eq $processFound) {
-						if ($processObject.ProcessDescription) {
+						if ($false -eq [string]::IsNullOrEmpty($processObject.ProcessDescription)) {
 							#  The description of the process provided as a parameter to the function, e.g. -ProcessName "winword=Microsoft Office Word".
 							Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $processObject.ProcessDescription -Force -PassThru -ErrorAction 'SilentlyContinue'
 						}
-						elseif ($_.Description) {
+						elseif ($false -eq [string]::IsNullOrEmpty($_.Description)) {
 							#  If the process already has a description field specified, then use it
 							Add-Member -InputObject $_ -MemberType 'NoteProperty' -Name 'ProcessDescription' -Value $_.Description -Force -PassThru -ErrorAction 'SilentlyContinue'
 						}
@@ -720,7 +737,7 @@ function Get-NxtRunningProcesses {
 			[Diagnostics.Process[]]$runningProcesses = Get-Process | Where-Object -FilterScript $whereObjectFilter | Sort-Object -Property 'ProcessName'
 
 			if ($false -eq $DisableLogging) {
-				if ($runningProcesses) {
+				if ($runningProcesses.Count -ne 0) {
 					[String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
 					Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
 				}
@@ -740,7 +757,7 @@ function Get-NxtRunningProcesses {
 }
 #endregion
 #region Function Get-WindowTitle
-Function Get-WindowTitle {
+function Get-WindowTitle {
 	<#
 	.SYNOPSIS
 		Search for an open window title and return details about the window.
@@ -778,10 +795,12 @@ Function Get-WindowTitle {
 	Param (
 		[Parameter(Mandatory = $true, ParameterSetName = 'SearchWinTitle')]
 		[AllowEmptyString()]
-		[String]$WindowTitle,
+		[String]
+		$WindowTitle,
 		[Parameter(Mandatory = $true, ParameterSetName = 'GetAllWinTitles')]
 		[ValidateNotNullorEmpty()]
-		[Switch]$GetAllWindowTitles = $false
+		[Switch]
+		$GetAllWindowTitles = $false
 	)
 
 	Begin {
@@ -803,37 +822,41 @@ Function Get-WindowTitle {
 			}
 
 			## Get all window handles for visible windows
-			[IntPtr[]]$VisibleWindowHandles = [PSADT.UiAutomation]::EnumWindows() | Where-Object { [PSADT.UiAutomation]::IsWindowVisible($_) }
+			[IntPtr[]]$visibleWindowHandles = [PSADT.UiAutomation]::EnumWindows() | Where-Object {
+				[PSADT.UiAutomation]::IsWindowVisible($_)
+			}
 
 			## Discover details about each visible window that was discovered
-			foreach ($VisibleWindowHandle in $VisibleWindowHandles) {
-				if (-not $VisibleWindowHandle) {
-					Continue
+			foreach ($visibleWindowHandle in $visibleWindowHandles) {
+				if ($null -eq $visibleWindowHandle) {
+					continue
 				}
 				## Get the window title
-				[String]$VisibleWindowTitle = [PSADT.UiAutomation]::GetWindowText($VisibleWindowHandle)
-				if ($VisibleWindowTitle) {
+				[String]$visibleWindowTitle = [PSADT.UiAutomation]::GetWindowText($visibleWindowHandle)
+				if ($false -eq [string]::IsNullOrEmpty($VisibleWindowTitle)) {
 					## Get the process that spawned the window
-					[Diagnostics.Process]$Process = Get-Process -ErrorAction 'Stop' | Where-Object { $_.Id -eq [PSADT.UiAutomation]::GetWindowThreadProcessId($VisibleWindowHandle) }
-					if ($Process) {
+					[Diagnostics.Process]$process = Get-Process -ErrorAction 'Stop' | Where-Object {
+						$_.Id -eq [PSADT.UiAutomation]::GetWindowThreadProcessId($visibleWindowHandle)
+					}
+					if ($null -ne $process) {
 						## Build custom object with details about the window and the process
-						[PSObject]$VisibleWindow = New-Object -TypeName 'PSObject' -Property @{
-							WindowTitle				   = $VisibleWindowTitle
-							WindowHandle				  = $VisibleWindowHandle
-							ParentProcess				 = $Process.ProcessName
-							ParentProcessMainWindowHandle = $Process.MainWindowHandle
-							ParentProcessId			   = $Process.Id
+						[PSObject]$visibleWindow = New-Object -TypeName 'PSObject' -Property @{
+							WindowTitle				   = $visibleWindowTitle
+							WindowHandle				  = $visibleWindowHandle
+							ParentProcess				 = $process.ProcessName
+							ParentProcessMainWindowHandle = $process.MainWindowHandle
+							ParentProcessId			   = $process.Id
 						}
 
 						## Only save/return the window and process details which match the search criteria
 						if ($PSCmdlet.ParameterSetName -eq 'SearchWinTitle') {
-							[bool]$MatchResult = $VisibleWindow.WindowTitle -match $WindowTitle
-							if ($true -eq $MatchResult) {
-								[PSObject[]]$VisibleWindows += $VisibleWindow
+							[bool]$matchResult = $visibleWindow.WindowTitle -match $WindowTitle
+							if ($true -eq $matchResult) {
+								[PSObject[]]$visibleWindows += $visibleWindow
 							}
 						}
 						elseif ($PSCmdlet.ParameterSetName -eq 'GetAllWinTitles') {
-							[PSObject[]]$VisibleWindows += $VisibleWindow
+							[PSObject[]]$visibleWindows += $visibleWindow
 						}
 					}
 				}
@@ -846,7 +869,7 @@ Function Get-WindowTitle {
 		}
 	}
 	End {
-		Write-Output -InputObject ($VisibleWindows)
+		Write-Output -InputObject ($visibleWindows)
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
@@ -854,14 +877,16 @@ Function Get-WindowTitle {
 #region Function New-NxtWpfControl
 function New-NxtWpfControl() {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Creates a WPF control.
+	.DESCRIPTION
+		Creates a WPF control using an xml as input.
 	.PARAMETER InputXml
 		Xml input that is converted to a WPF control.
 	.EXAMPLE
 		New-NxtWpfControl -InputXml $inputXml
 	.OUTPUTS
-		none.
+		System.Windows.Window
 	.NOTES
 		This is an internal script function and should typically not be called directly. It is used by the Show-NxtWelcomePrompt to create the WPF control.
 	.LINK
@@ -879,14 +904,14 @@ function New-NxtWpfControl() {
 	}
 	Process {
 		[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-		$InputXml = $InputXml -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+		$InputXml = $InputXml -replace 'mc:Ignorable="d"', [string]::Empty -replace "x:N", 'N' -replace '^<Win.*', '<Window'
 		#Read XAML
 		[xml]$xaml = $InputXml
 		[System.Xml.XmlNodeReader]$reader = (New-Object System.Xml.XmlNodeReader $xaml)
 		try {
 			[System.Windows.Window]$control = [Windows.Markup.XamlReader]::Load($reader)
 		}
-		catch {  
+		catch {
 			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
 			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
 		}
@@ -898,7 +923,7 @@ function New-NxtWpfControl() {
 }
 #endregion
 #region Function Resolve-Error
-Function Resolve-Error {
+function Resolve-Error {
 	<#
 	.SYNOPSIS
 		Enumerate error record details.
@@ -940,26 +965,32 @@ Function Resolve-Error {
 	Param (
 		[Parameter(Mandatory = $false, Position = 0, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
 		[AllowEmptyCollection()]
-		[Array]$ErrorRecord,
+		[Array]
+		$ErrorRecord,
 		[Parameter(Mandatory = $false, Position = 1)]
 		[ValidateNotNullorEmpty()]
-		[String[]]$Property = ('Message', 'InnerException', 'FullyQualifiedErrorId', 'ScriptStackTrace', 'PositionMessage'),
+		[String[]]
+		$Property = ('Message', 'InnerException', 'FullyQualifiedErrorId', 'ScriptStackTrace', 'PositionMessage'),
 		[Parameter(Mandatory = $false, Position = 2)]
-		[Switch]$GetErrorRecord = $true,
+		[Switch]
+		$GetErrorRecord = $true,
 		[Parameter(Mandatory = $false, Position = 3)]
-		[Switch]$GetErrorInvocation = $true,
+		[Switch]
+		$GetErrorInvocation = $true,
 		[Parameter(Mandatory = $false, Position = 4)]
-		[Switch]$GetErrorException = $true,
+		[Switch]
+		$GetErrorException = $true,
 		[Parameter(Mandatory = $false, Position = 5)]
-		[Switch]$GetErrorInnerException = $true
+		[Switch]
+		$GetErrorInnerException = $true
 	)
 
 	Begin {
 		## If function was called without specifying an error record, then choose the latest error that occurred
-		if (-not $ErrorRecord) {
+		if ($ErrorRecord.Count -eq 0) {
 			if ($global:Error.Count -eq 0) {
 				#Write-Warning -Message "The `$Error collection is empty"
-				Return
+				return
 			}
 			else {
 				[Array]$ErrorRecord = $global:Error[0]
@@ -981,7 +1012,7 @@ Function Resolve-Error {
 			foreach ($Prop in $Property) {
 				if ($Prop -eq '*') {
 					[String[]]$PropertySelection = $ObjectProperty
-					Break
+					break
 				}
 				elseif ($ObjectProperty -contains $Prop) {
 					[String[]]$PropertySelection += $Prop
@@ -998,8 +1029,8 @@ Function Resolve-Error {
 		$LogInnerMessage = $null
 	}
 	Process {
-		if (-not $ErrorRecord) {
-			Return
+		if ($ErrorRecord.Count -eq 0) {
+			return
 		}
 		foreach ($ErrRecord in $ErrorRecord) {
 			## Capture Error Record
@@ -1010,7 +1041,7 @@ Function Resolve-Error {
 
 			## Error Invocation Information
 			if ($true -eq $GetErrorInvocation) {
-				if ($ErrRecord.InvocationInfo) {
+				if ($null -ne $ErrRecord.InvocationInfo) {
 					[String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrRecord.InvocationInfo -Property $Property
 					$LogErrorInvocationMsg = $ErrRecord.InvocationInfo | Select-Object -Property $SelectedProperties
 				}
@@ -1018,7 +1049,7 @@ Function Resolve-Error {
 
 			## Capture Error Exception
 			if ($true -eq $GetErrorException) {
-				if ($ErrRecord.Exception) {
+				if ($null -ne $ErrRecord.Exception) {
 					[String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrRecord.Exception -Property $Property
 					$LogErrorExceptionMsg = $ErrRecord.Exception | Select-Object -Property $SelectedProperties
 				}
@@ -1066,7 +1097,7 @@ Function Resolve-Error {
 					$ErrorInnerException = $ErrRecord.Exception.InnerException
 					[int]$Count = 0
 
-					While ($ErrorInnerException) {
+					while ($null -ne $ErrorInnerException) {
 						[String]$InnerExceptionSeperator = '~' * 40
 
 						[String[]]$SelectedProperties = & $SelectProperty -InputObject $ErrorInnerException -Property $Property
@@ -1113,8 +1144,10 @@ Function Resolve-Error {
 #region Function Test-NxtPersonalizationLightTheme
 function Test-NxtPersonalizationLightTheme {
 	<#
-	.DESCRIPTION
+	.SYNOPSIS
 		Tests if a user has the light theme enabled.
+	.DESCRIPTION
+		Tests if a user has the light theme enabled by checking the system configuration
 	.OUTPUTS
 		System.Boolean.
 	.EXAMPLE
@@ -1128,17 +1161,19 @@ function Test-NxtPersonalizationLightTheme {
 	}
 	Process {
 		[int]$ownSessionId = (Get-Process -Id $PID).SessionId
-		[PSObject[]]$currentSessionUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
+		[PSObject[]]$currentSessionUser = Get-LoggedOnUser | Where-Object {
+			$_.SessionId -eq $ownSessionId
+		}
 		[String]$sid = $currentSessionUser.SID
 		[bool]$lightThemeResult = $true
-		if ([string]::IsNullOrEmpty($sid)) {
+		if ($true -eq [string]::IsNullOrEmpty($sid)) {
 			Write-Log -Message 'Failed to get SID of current sessions user, skipping theme check and using lighttheme.' -Source ${cmdletName} -Severity 2
 			[bool]$lightThemeResult = $true
 		}
 		else {
 			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
 				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1
-			} 
+			}
 			elseif ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
 				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1
 			}
@@ -1151,7 +1186,7 @@ function Test-NxtPersonalizationLightTheme {
 }
 #endregion
 #region function Write-FunctionHeaderOrFooter
-Function Write-FunctionHeaderOrFooter {
+function Write-FunctionHeaderOrFooter {
 	<#
 	.SYNOPSIS
 		Write the function header or footer to the log upon first entering or exiting a function.
@@ -1187,22 +1222,45 @@ Function Write-FunctionHeaderOrFooter {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
-		[String]$CmdletName,
+		[String]
+		$CmdletName,
 		[Parameter(Mandatory = $true, ParameterSetName = 'Header')]
 		[AllowEmptyCollection()]
-		[Hashtable]$CmdletBoundParameters,
+		[Hashtable]
+		$CmdletBoundParameters,
 		[Parameter(Mandatory = $true, ParameterSetName = 'Header')]
-		[Switch]$Header,
+		[Switch]
+		$Header,
 		[Parameter(Mandatory = $true, ParameterSetName = 'Footer')]
-		[Switch]$Footer
+		[Switch]
+		$Footer
 	)
 
 	if ($true -eq $Header) {
 		Write-Log -Message 'Function Start' -Source ${CmdletName} -DebugMessage
 
 		## Get the parameters that the calling function was invoked with
-		[String]$CmdletBoundParameters = $CmdletBoundParameters | Format-Table -Property @{ Label = 'Parameter'; Expression = { "[-$($_.Key)]" } }, @{ Label = 'Value'; Expression = { $_.Value }; Alignment = 'Left' }, @{ Label = 'Type'; Expression = { $_.Value.GetType().Name }; Alignment = 'Left' } -AutoSize -Wrap | Out-String
-		if ($CmdletBoundParameters) {
+		[String]$CmdletBoundParameters = $CmdletBoundParameters | Format-Table -Property @{
+			Label = 'Parameter'
+			Expression = {
+				"[-$($_.Key)]"
+			}
+		},
+		@{
+			Label = 'Value'
+			Expression = {
+				$_.Value
+			}
+			Alignment = 'Left'
+		},
+		@{
+			Label = 'Type'
+			Expression = {
+				$_.Value.GetType().Name
+			}
+			Alignment = 'Left'
+		} -AutoSize -Wrap | Out-String
+		if ($false -eq [string]::IsNullOrEmpty($CmdletBoundParameters)) {
 			Write-Log -Message "Function invoked with bound parameter(s): `r`n$CmdletBoundParameters" -Source ${CmdletName} -DebugMessage
 		}
 		else {
@@ -1225,6 +1283,8 @@ function Write-Log {
 		The message to write to the log file or output to the console.
 	.PARAMETER Source
 		The source of the message being logged.
+	.OUTPUTS
+		none.
 	.NOTES
 		This function is a modified version of Convert-RegistryPath from the PSAppDeployToolkit licensed under the LGPLv3.
 	#>
@@ -1233,45 +1293,61 @@ function Write-Log {
 		[Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
 		[AllowEmptyCollection()]
 		[Alias('Text')]
-		[String[]]$Message,
+		[String[]]
+		$Message,
 		[Parameter(Mandatory = $false, Position = 1)]
 		[ValidateRange(1, 3)]
-		[Int16]$Severity = 1,
+		[Int16]
+		$Severity = 1,
 		[Parameter(Mandatory = $false, Position = 2)]
 		[ValidateNotNull()]
-		[String]$Source = $([String]$parentFunctionName = [IO.Path]::GetFileNameWithoutExtension((Get-Variable -Name 'MyInvocation' -Scope 1 -ErrorAction 'SilentlyContinue').Value.MyCommand.Name); if ($parentFunctionName) {
+		[String]
+		$Source = $([String]$parentFunctionName = [IO.Path]::GetFileNameWithoutExtension(
+			(Get-Variable -Name 'MyInvocation' -Scope 1 -ErrorAction 'SilentlyContinue').Value.MyCommand.Name)
+			if ($false -eq [string]::IsNullOrEmpty($parentFunctionName)) {
 				$parentFunctionName
 			}
 			else {
 				'Unknown'
-			}),
+			}
+		),
 		[Parameter(Mandatory = $false, Position = 3)]
 		[ValidateNotNullorEmpty()]
-		[String]$ScriptSection = $script:installPhase,
+		[String]
+		$ScriptSection = $script:installPhase,
 		[Parameter(Mandatory = $false, Position = 4)]
 		[ValidateSet('CMTrace', 'Legacy')]
-		[String]$LogType = $configToolkitLogStyle,
+		[String]
+		$LogType = $configToolkitLogStyle,
 		[Parameter(Mandatory = $false, Position = 5)]
 		[ValidateNotNullorEmpty()]
-		[String]$LogFileDirectory = $configToolkitLogDir,
+		[String]
+		$LogFileDirectory = $configToolkitLogDir,
 		[Parameter(Mandatory = $false, Position = 6)]
 		[ValidateNotNullorEmpty()]
-		[String]$LogFileName = $LogName,
+		[String]
+		$LogFileName = $LogName,
 		[Parameter(Mandatory = $false, Position = 7)]
 		[ValidateNotNullorEmpty()]
-		[Decimal]$MaxLogFileSizeMB = $configToolkitLogMaxSize,
+		[Decimal]
+		$MaxLogFileSizeMB = $configToolkitLogMaxSize,
 		[Parameter(Mandatory = $false, Position = 8)]
 		[ValidateNotNullorEmpty()]
-		[bool]$WriteHost = $configToolkitLogWriteToHost,
+		[bool]
+		$WriteHost = $configToolkitLogWriteToHost,
 		[Parameter(Mandatory = $false, Position = 9)]
 		[ValidateNotNullorEmpty()]
-		[bool]$ContinueOnError = $true,
+		[bool]
+		$ContinueOnError = $true,
 		[Parameter(Mandatory = $false, Position = 10)]
-		[Switch]$PassThru = $false,
+		[Switch]
+		$PassThru = $false,
 		[Parameter(Mandatory = $false, Position = 11)]
-		[Switch]$DebugMessage = $false,
+		[Switch]
+		$DebugMessage = $false,
 		[Parameter(Mandatory = $false, Position = 12)]
-		[bool]$LogDebugMessage = $configToolkitLogDebugMessage
+		[bool]
+		$LogDebugMessage = $configToolkitLogDebugMessage
 	)
 	Begin {
 		## Get the name of this function
@@ -1292,10 +1368,10 @@ function Write-Log {
 			[bool]$DisableLogging = $false
 		}
 		#  Check if the script section is defined
-		[bool]$ScriptSectionDefined = [bool](-not [String]::IsNullOrEmpty($ScriptSection))
+		[bool]$ScriptSectionDefined = [bool]($false -eq [String]::IsNullOrEmpty($ScriptSection))
 		#  Get the file name of the source script
 		try {
-			if ($script:MyInvocation.Value.ScriptName) {
+			if ($false -eq [string]::IsNullOrEmpty($script:MyInvocation.Value.ScriptName)) {
 				[String]$ScriptSource = Split-Path -Path $script:MyInvocation.Value.ScriptName -Leaf -ErrorAction 'Stop'
 			}
 			else {
@@ -1303,7 +1379,7 @@ function Write-Log {
 			}
 		}
 		catch {
-			[string]$ScriptSource = ''
+			[string]$ScriptSource = [string]::Empty
 		}
 
 		## Create script block for generating CMTrace.exe compatible log entry
@@ -1324,8 +1400,8 @@ function Write-Log {
 			)
 			if ($true -eq $WriteHost) {
 				#  Only output using color options if running in a host which supports colors.
-				if ($Host.UI.RawUI.ForegroundColor) {
-					Switch ($lSeverity) {
+				if ($null -ne $Host.UI.RawUI.ForegroundColor) {
+					switch ($lSeverity) {
 						3 {
 							Write-Host -Object $lTextLogLine -ForegroundColor 'Red' -BackgroundColor 'Black'
 						}
@@ -1345,20 +1421,23 @@ function Write-Log {
 		}
 
 		## Exit function if it is a debug message and logging debug messages is not enabled in the config XML file
-		if (($true -eq $DebugMessage) -and (-not $LogDebugMessage)) {
-			[bool]$ExitLoggingFunction = $true; Return
+		if (($true -eq $DebugMessage) -and ($false -eq $LogDebugMessage)) {
+			[bool]$ExitLoggingFunction = $true
+			return
 		}
 		## Exit function if logging to file is disabled and logging to console host is disabled
 		if (($true -eq $DisableLogging) -and ($false -eq $WriteHost)) {
-			[bool]$ExitLoggingFunction = $true; Return
+			[bool]$ExitLoggingFunction = $true
+			return
 		}
 		## Exit Begin block if logging is disabled
 		if ($true -eq $DisableLogging) {
-			Return
+			return
 		}
 		## Exit function function if it is an [Initialization] message and the toolkit has been relaunched
 		if (($AsyncToolkitLaunch) -and ($ScriptSection -eq 'Initialization')) {
-			[bool]$ExitLoggingFunction = $true; Return
+			[bool]$ExitLoggingFunction = $true
+			return
 		}
 
 		## Create the directory where the log file will be saved
@@ -1372,7 +1451,7 @@ function Write-Log {
 				if ($false -eq $ContinueOnError) {
 					Write-Host -Object "[$LogDate $LogTime] [${CmdletName}] $ScriptSection :: Failed to create the log directory [$LogFileDirectory]. `r`n$(Resolve-Error)" -ForegroundColor 'Red'
 				}
-				Return
+				return
 			}
 		}
 
@@ -1382,14 +1461,14 @@ function Write-Log {
 	Process {
 		## Exit function if logging is disabled
 		if ($true -eq $ExitLoggingFunction) {
-			Return
+			return
 		}
 
 		foreach ($Msg in $Message) {
 			## If the message is not $null or empty, create the log entry for the different logging methods
-			[String]$CMTraceMsg = ''
-			[String]$ConsoleLogLine = ''
-			[String]$LegacyTextLogLine = ''
+			[String]$CMTraceMsg = [string]::Empty
+			[String]$ConsoleLogLine = [string]::Empty
+			[String]$LegacyTextLogLine = [string]::Empty
 			if ($false -eq [string]::IsNullOrEmpty($Msg)) {
 				#  Create the CMTrace log message
 				if ($true -eq $ScriptSectionDefined) {
@@ -1403,7 +1482,7 @@ function Write-Log {
 				}
 				if ($false -eq [string]::IsNullOrEmpty($Source)) {
 					[String]$ConsoleLogLine = "$LegacyMsg [$Source] :: $Msg"
-					Switch ($Severity) {
+					switch ($Severity) {
 						3 {
 							[String]$LegacyTextLogLine = "$LegacyMsg [$Source] [Error] :: $Msg"
 						}
@@ -1417,7 +1496,7 @@ function Write-Log {
 				}
 				else {
 					[String]$ConsoleLogLine = "$LegacyMsg :: $Msg"
-					Switch ($Severity) {
+					switch ($Severity) {
 						3 {
 							[String]$LegacyTextLogLine = "$LegacyMsg [Error] :: $Msg"
 						}
@@ -1467,7 +1546,18 @@ function Write-Log {
 				if (($LogFileSizeMB -gt $MaxLogFileSizeMB) -and ($MaxLogFileSizeMB -gt 0)) {
 					## Change the file extension to "lo_"
 					[String]$ArchivedOutLogFile = [IO.Path]::ChangeExtension($LogFilePath, 'lo_')
-					[Hashtable]$ArchiveLogParams = @{ ScriptSection = $ScriptSection; Source = ${CmdletName}; Severity = 2; LogFileDirectory = $LogFileDirectory; LogFileName = $LogFileName; LogType = $LogType; MaxLogFileSizeMB = 0; WriteHost = $WriteHost; ContinueOnError = $ContinueOnError; PassThru = $false }
+					[Hashtable]$ArchiveLogParams = @{
+						ScriptSection = $ScriptSection
+						Source = ${CmdletName}
+						Severity = 2
+						LogFileDirectory = $LogFileDirectory
+						LogFileName = $LogFileName
+						LogType = $LogType
+						MaxLogFileSizeMB = 0
+						WriteHost = $WriteHost
+						ContinueOnError = $ContinueOnError
+						PassThru = $false
+					}
 
 					## Log message about archiving the log file
 					[string]$ArchiveLogMessage = "Maximum log file size [$MaxLogFileSizeMB MB] reached. Rename log file to [$ArchivedOutLogFile]."
@@ -1494,7 +1584,7 @@ function Write-Log {
 }
 #endregion
 #region Function Test-RegistryValue
-Function Test-RegistryValue {
+function Test-RegistryValue {
 	<#
 	.SYNOPSIS
 	Test if a registry value exists.
@@ -1524,13 +1614,15 @@ Function Test-RegistryValue {
 	Param (
 		[Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
 		[ValidateNotNullOrEmpty()]
+		[string]
 		$Key,
 		[Parameter(Mandatory = $true, Position = 1)]
 		[ValidateNotNullOrEmpty()]
+		[string]
 		$Value,
 		[Parameter(Mandatory = $false, Position = 2)]
 		[ValidateNotNullorEmpty()]
-		[String]
+		[string]
 		$SID
 	)
 
@@ -1550,7 +1642,7 @@ Function Test-RegistryValue {
 			}
 		}
 		catch {
-			Throw
+			throw
 		}
 		[bool]$isRegistryValueExists = $false
 		try {
@@ -1577,7 +1669,7 @@ Function Test-RegistryValue {
 	}
 }
 #endregion
-## global default variables 
+## global default variables
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\..\neo42PackageConfig.json"
 ## Several PSADT-functions do not work, if these variables are not set here.
 $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
@@ -1603,14 +1695,14 @@ $script:installPhase = "AskKillProcesses"
 [bool]$configToolkitLogDebugMessage = [bool]::Parse($xmlToolkitOptions.Toolkit_LogDebugMessage)
 [String]$appDeployCustomTypesSourceCode = Join-Path -Path $scriptRoot -ChildPath 'AppDeployToolkitMain.cs'
 if ($false -eq (Test-Path -LiteralPath $appDeployConfigFile -PathType 'Leaf')) {
-	Throw 'App Deploy XML configuration file not found.'
+	throw 'App Deploy XML configuration file not found.'
 }
 if ($false -eq (Test-Path -LiteralPath $appDeployCustomTypesSourceCode -PathType 'Leaf')) {
-	Throw 'App Deploy custom types source code file not found.'
+	throw 'App Deploy custom types source code file not found.'
 }
 
 ## Add the custom types required for the toolkit
-if (-not ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
+if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 	[String[]]$referencedAssemblies = 'System.Drawing', 'System.Windows.Forms', 'System.DirectoryServices'
 	Add-Type -Path $appDeployCustomTypesSourceCode -ReferencedAssemblies $referencedAssemblies -IgnoreWarnings -ErrorAction 'Stop'
 }
@@ -1628,20 +1720,20 @@ if (-not ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 Set-Variable -Name 'closeAppsCountdownGlobal' -Value $CloseAppsCountdown -Scope 'Script'
 ## Check if the countdown was specified
 if ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeout)) {
-	Throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
+	throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
 }
 [PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -EncodedObject $ProcessObjectsEncoded
 ## Initial form layout: Close Applications / Allow Deferral
-if ($ProcessDescriptions) {
+if ($false -eq [string]::IsNullOrEmpty($ProcessDescriptions)) {
 	Write-Log -Message "Prompting the user to close application(s) [$ProcessDescriptions]..." -Source ${CmdletName}
 	[bool]$showCloseApps = $true
 }
 if (($true -eq $AllowDefer) -and (($DeferTimes -ge 0) -or $DeferDeadline)) {
 	Write-Log -Message 'The user has the option to defer.' -Source ${CmdletName}
 	[bool]$showDefer = $true
-	if ($DeferDeadline) {
+	if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 		#  Remove the Z from universal sortable date time format, otherwise it could be converted to a different time zone
-		$DeferDeadline = $DeferDeadline -replace 'Z', ''
+		$DeferDeadline = $DeferDeadline -replace 'Z', [string]::Empty
 		#  Convert the deadline date to a string
 		$DeferDeadline = (Get-Date -Date $DeferDeadline).ToString()
 	}
@@ -1987,7 +2079,9 @@ else {
 }
 ## try to find the correct language for the current sessions user
 [int]$ownSessionId = (Get-Process -Id $PID).SessionId
-[PSObject]$runAsActiveUser = Get-LoggedOnUser | Where-Object { $_.SessionId -eq $ownSessionId }
+[PSObject]$runAsActiveUser = Get-LoggedOnUser | Where-Object {
+	$_.SessionId -eq $ownSessionId
+}
 ## Get current sessions UI language
 ## Get primary UI language for current sessions user (even if running as system)
 if ($null -ne $runAsActiveUser) {
@@ -2011,7 +2105,7 @@ if ($null -ne $runAsActiveUser) {
 	#  Read language for Win XP machines
 	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
 		[string]$hKULocale = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'Locale' -SID $runAsActiveUser.SID
-		if ($hKULocale) {
+		if ($false -eq [string]::IsNullOrEmpty($hKULocale)) {
 			[Int32]$hKULocale = [Convert]::ToInt32('0x' + $hKULocale, 16)
 			[string[]]$hKULanguages = ([Globalization.CultureInfo]($hKULocale)).Name
 		}
@@ -2053,7 +2147,7 @@ if (($xmlConfig.$xmlUIMessageLanguage.ChildNodes.Name -imatch "^NxtWelcomePrompt
 	[string]$xmlUIMessageLanguage = 'UI_Messages_EN'
 }
 #  Override the detected language if the override option was specified in the XML config file
-if ($configInstallationUILanguageOverride) {
+if ($false -eq [string]::IsNullOrEmpty($configInstallationUILanguageOverride)) {
 	[string]$xmlUIMessageLanguage = "UI_Messages_$configInstallationUILanguageOverride"
 }
 [Xml.XmlElement]$xmlUIMessages = $xmlConfig.$xmlUIMessageLanguage
@@ -2073,18 +2167,18 @@ $control_PopupCloseWithoutSavingText.Text = $xmlUIMessages.NxtWelcomePrompt_PopU
 $control_PopupSureToCloseText.Text = $xmlUIMessages.NxtWelcomePrompt_PopUpSureToCloseText
 $control_PopupCloseApplication.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
 $control_PopupCancel.Content = $xmlUIMessages.NxtWelcomePrompt_Close
-Switch ($deploymentType) {
+switch ($deploymentType) {
 	'Uninstall' {
 		if ($ContinueType -eq 0) {
 			$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Abort -f $xmlUIMessages.DeploymentType_Uninstall)
 		}
 		else {
 			$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Uninstall)
-		};
-		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_UninstallVerb);
-		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Uninstall);
-		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Uninstall);
-		Break
+		}
+		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_UninstallVerb)
+		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Uninstall)
+		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Uninstall)
+		break
 	}
 	'Repair' {
 		if ($ContinueType -eq 0) {
@@ -2092,11 +2186,11 @@ Switch ($deploymentType) {
 		}
 		else {
 			$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Repair)
-		};
-		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_RepairVerb);
-		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Repair);
-		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Repair);
-		Break
+		}
+		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_RepairVerb)
+		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Repair)
+		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Repair)
+		break
 	}
 	Default {
 		if ($ContinueType -eq 0) {
@@ -2104,11 +2198,11 @@ Switch ($deploymentType) {
 		}
 		else {
 			$control_TimerText.Text = ($xmlUIMessages.NxtWelcomePrompt_CloseWithoutSaving_Continue -f $xmlUIMessages.DeploymentType_Install)
-		};
-		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_InstallVerb);
-		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Install);
-		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Install);
-		Break
+		}
+		$control_FollowApplicationText.Text = ($xmlUIMessages.NxtWelcomePrompt_FollowApplication -f $xmlUIMessages.DeploymentType_InstallVerb)
+		$control_ApplicationCloseText.Text = ($xmlUIMessages.NxtWelcomePrompt_ApplicationClose -f $xmlUIMessages.DeploymentType_Install)
+		$control_DeferTextOne.Text = ($xmlUIMessages.NxtWelcomePrompt_ChooseDefer -f $xmlUIMessages.DeploymentType_Install)
+		break
 	}
 }
 if ($CustomText -and $configWelcomePromptCustomMessage) {
@@ -2128,10 +2222,12 @@ else {
 	[int[]]$processIdsToIgnore = @()
 }
 [PSObject[]]$runningProcesses = foreach ($processObject in $processObjects) {
-	Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $ProcessIdsToIgnore | Where-Object { $false -eq [string]::IsNullOrEmpty($_.id) }
+	Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $ProcessIdsToIgnore | Where-Object {
+		$false -eq [string]::IsNullOrEmpty($_.id)
+	}
 }
 [ScriptBlock]$fillCloseApplicationList = {
-	param($runningProcessesParam)
+	Param ($runningProcessesParam)
 	$control_CloseApplicationList.Items.Clear()
 	[psobject[]]$processUIItems = foreach ($runningProcessItem in $runningProcessesParam) {
 		Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($runningProcessItem.Id)'" | ForEach-Object {
@@ -2139,7 +2235,7 @@ else {
 				Name	  = $runningProcessItem.ProcessDescription
 				StartedBy = $null
 			}
-			if ($_.GetOwner().User -eq $null) {
+			if ($null -eq $_.GetOwner().User) {
 				$item.StartedBy = "N/A"
 			}
 			else {
@@ -2148,7 +2244,7 @@ else {
 			Write-Output $item
 		}
 	}
-	foreach ($processUIItem in ($processUIItems |Select-Object * -Unique)) {
+	foreach ($processUIItem in ($processUIItems | Select-Object * -Unique)) {
 		$control_CloseApplicationList.Items.Add($processUIItem) | Out-Null
 	}
 }
@@ -2162,7 +2258,7 @@ $control_PopupListText.Text = $names.Trim()
 if ([Int32]::TryParse($DeferTimes, [ref]$outNumber) -and $DeferTimes -ge 0) {
 	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
 }
-if ($DeferDeadline) {
+if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 	$control_DeferDeadlineText.Text = $xmlUIMessages.DeferPrompt_Deadline + " " + $DeferDeadline
 }
 
@@ -2172,11 +2268,11 @@ if ($true -eq [string]::IsNullOrEmpty($control_DeferTimerText.Text)) {
 	$control_DeferButton.Visibility = "Collapsed"
 	$control_DeferDeadlineText.Visibility = "Collapsed"
 }
-else {  
+else {
 	$control_DeferTextOne.Visibility = "Visible"
 	$control_DeferTextTwo.Visibility = "Visible"
 	$control_DeferButton.Visibility = "Visible"
-	if ($DeferDeadline) {
+	if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 		$control_DeferDeadlineText.Visibility = "Visible"
 	}
 	else {
@@ -2198,7 +2294,7 @@ if ($true -eq $showCloseApps) {
 }
 
 ## Add the timer if it doesn't already exist - this avoids the timer being reset if the continue button is clicked
-if (-not $script:welcomeTimer) {
+if ($null -eq $script:welcomeTimer) {
 	[System.Windows.Threading.DispatcherTimer]$script:welcomeTimer = New-Object System.Windows.Threading.DispatcherTimer
 }
 
@@ -2227,13 +2323,13 @@ if (-not $script:welcomeTimer) {
 		$control_PopupCloseApplication.remove_Click($popupCloseApplicationClickHandler)
 		$control_PopupCancel.remove_Click($popupCancelClickHandler)
 		$control_HeaderPanel.remove_MouseLeftButtonDown($windowLeftButtonDownHandler)
-		if ($null -ne $welcomeTimerPersist.IsEnabled -eq $true) {
+		if ($true -eq $welcomeTimerPersist.IsEnabled) {
 			$welcomeTimerPersist.remove_Tick($welcomeTimerPersist_Tick)
 		}
-		if ($null -ne $timerRunningProcesses.IsEnabled -eq $true) {
+		if ($true -eq $timerRunningProcesses.IsEnabled) {
 			$timerRunningProcesses.remove_Tick($timerRunningProcesses_Tick)
 		}
-		if ($script:welcomeTimer.IsEnabled -eq $true) {
+		if ($true -eq $script:welcomeTimer.IsEnabled) {
 			$script:welcomeTimer.remove_Tick($welcomeTimer_Tick)
 		}
 		$control_MainWindow.remove_Loaded($mainWindowLoaded)
@@ -2262,7 +2358,7 @@ $script:welcomeTimer.Interval = [timespan]::fromseconds(1)
 				else {
 					$control_MainWindow.Tag = "Close"
 				}
-			}   
+			}
 			else {
 				$control_MainWindow.Tag = "Timeout"
 			}
@@ -2286,14 +2382,14 @@ if ($true -eq $PersistPrompt) {
 	[System.Windows.Threading.DispatcherTimer]$welcomeTimerPersist = New-Object System.Windows.Threading.DispatcherTimer
 	$welcomeTimerPersist.Interval = [timespan]::fromseconds($configInstallationPersistInterval)
 	[ScriptBlock]$welcomeTimerPersist_Tick = {
-		$control_MainWindow.Topmost = $true;  
-		$control_MainWindow.Topmost = $TopMost;
+		$control_MainWindow.Topmost = $true
+		$control_MainWindow.Topmost = $TopMost
 	}
 	$welcomeTimerPersist.add_Tick($welcomeTimerPersist_Tick)
 	$welcomeTimerPersist.Start()
 }
 ## Process Re-Enumeration Timer
-if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
+if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	[System.Windows.Threading.DispatcherTimer]$timerRunningProcesses = New-Object System.Windows.Threading.DispatcherTimer
 	$timerRunningProcesses.Interval = [timespan]::fromseconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
 	[int]$tickCounter = 0
@@ -2306,11 +2402,13 @@ if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 			$tickCounter++
 			[PSObject[]]$dynamicRunningProcesses = $null
 			[System.Diagnostics.Process[]]$dynamicRunningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore
-			[String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object { $_.ProcessDescription } | Select-Object -ExpandProperty 'ProcessDescription') -join ','
+			[String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object {
+				$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
+			} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 			if ($dynamicRunningProcessDescriptions -ne $script:runningProcessDescriptions) {
 				# Update the runningProcessDescriptions variable for the next time this function runs
 				Set-Variable -Name 'runningProcessDescriptions' -Value $dynamicRunningProcessDescriptions -Force -Scope 'Script'
-				if ($dynamicRunningProcesses) {
+				if ($dynamicRunningProcesses.Count -ne 0) {
 					Write-Log -Message "The running processes have changed. Updating the apps to close: [$script:runningProcessDescriptions]..." -Source ${CmdletName}
 				}
 				# Update the list box with the processes to close
@@ -2318,15 +2416,15 @@ if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 				& $FillCloseApplicationList $dynamicRunningProcesses
 			}
 			# If CloseApps processes were running when the prompt was shown, and they are subsequently detected to be closed while the form is showing, then close the form. The deferral and CloseApps conditions will be re-evaluated.
-			if ($ProcessDescriptions) {
-				if (-not $dynamicRunningProcesses) {
+			if ($false -eq [string]::IsNullOrEmpty($ProcessDescriptions)) {
+				if ($dynamicRunningProcesses.Count -eq 0) {
 					Write-Log -Message 'Previously detected running processes are no longer running.' -Source ${CmdletName}
 					$control_MainWindow.Close()
 				}
 			}
 			# If CloseApps processes were not running when the prompt was shown, and they are subsequently detected to be running while the form is showing, then close the form for relaunch. The deferral and CloseApps conditions will be re-evaluated.
 			else {
-				if ($dynamicRunningProcesses) {
+				if ($dynamicRunningProcesses.Count -ne 0) {
 					Write-Log -Message 'New running processes detected. Updating the form to prompt to close the running applications.' -Source ${CmdletName}
 					$control_MainWindow.Close()
 				}
@@ -2346,32 +2444,32 @@ if ($true -eq $MinimizeWindows) {
 # Open dialog and Wait
 $control_MainWindow.ShowDialog() | Out-Null
 
-if ($configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
+if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$timerRunningProcesses.Stop()
 }
 switch ($control_MainWindow.Tag) {
 	'Close' {
 		Write-Log -Message 'The user chose to close the applications.' -Source ${CmdletName} -Severity 1
-		Exit 1001
+		exit 1001
 	}
 	'Cancel' {
 		Write-Log -Message 'The user chose to cancel the installation.' -Source ${CmdletName} -Severity 1
-		Exit 1002
+		exit 1002
 	}
 	'Defer' {
 		Write-Log -Message 'The user chose to defer the installation.' -Source ${CmdletName} -Severity 1
-		Exit 1003
+		exit 1003
 	}
 	'Timeout' {
 		Write-Log -Message 'The installation timed out.' -Source ${CmdletName} -Severity 1
-		Exit 1004
+		exit 1004
 	}
 	'Continue' {
 		Write-Log -Message 'The user chose to continue the installation.' -Source ${CmdletName} -Severity 1
-		Exit 1005
+		exit 1005
 	}
 	default {
-		Exit 1005
+		exit 1005
 	}
 }
 #endregion
