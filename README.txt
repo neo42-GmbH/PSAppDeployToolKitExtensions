@@ -12,7 +12,7 @@ Please be aware of the following:
 
 You can find the sources without bundled installers here:
 PSAppDeploymentToolkit:         https://github.com/PSAppDeployToolkit/PSAppDeployToolkit
-PSAppDeployToolKitExtensions:   https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions
+PSAppDeployToolKitExtensions:   Sources are provided via the Toolbox of your neo42 package subscription. You can also request them via mail at neosupport@neo42.de if you have a valid subscription.
 
 
 If you have questions or any of the above sources are not available feel free to contact us:
