@@ -1577,10 +1577,15 @@ function Copy-NxtDesktopShortcuts {
 	Process {
 		try {
 			foreach ($value in $StartMenuShortcutsToCopyToDesktop) {
-				Write-Log -Message "Copying start menu shortcut'$StartMenu\$($value.Source)' to [$Desktop]..." -Source ${cmdletName}
-				Copy-File -Path "$StartMenu\$($value.Source)" -Destination "$Desktop\$($value.TargetName)"
-				Write-Log -Message "Shortcut succesfully copied." -Source ${cmdletName}
-			}
+				Write-Log -Message "Copying start menu shortcut'$StartMenu$($value.Source)' to [$Desktop]..." -Source ${cmdletName}
+				if ($true -eq $(Test-Path -Path "$StartMenu$($value.Source)")) {
+					Copy-File -Path "$StartMenu$($value.Source)" -Destination "$Desktop$($value.TargetName)"
+					Write-Log -Message "Shortcut succesfully copied." -Source ${cmdletName}
+				}
+				else {
+					Write-Log -Message "Shortcut '$StartMenu$($value.Source)' not found. Skipping copy." -Severity 2 -Source ${cmdletName}
+				}
+				}
 		}
 		catch {
 			Write-Log -Message "Failed to copy shortcuts to [$Desktop]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
