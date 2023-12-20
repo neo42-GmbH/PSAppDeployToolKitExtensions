@@ -11013,10 +11013,19 @@ function Uninstall-NxtOld {
 												[string]$appendAW = " /AW"
 											}
 											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
-											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
-											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
-											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
-											$uninstallOldResult.ApplicationExitCode = $LastExitCode
+											[string[]]$appEmpUninstallStringParts = $appEmpUninstallString -split '\" \"'
+											[string]$setupExePath = $appEmpUninstallStringParts[0].Trim('"')
+											[string[]]$setupInfParts = $parts[1] -split '" /'
+											[string]$setupInfPath = $setupInfParts[0].Trim('"')
+											if ($true -eq (Test-Path -Path $setupInfPath) -and $true -eq (Test-Path -Path $setupExePath)) {
+												[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
+												[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
+												cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
+												$uninstallOldResult.ApplicationExitCode = $LastExitCode
+											}
+											else {
+												Write-Log -Message "Setup.exe or Setup.inf not found. Skip uninstall of '$("$($appEmpirumPackageVersion.name)")'" -Source ${cmdletName}
+											}
 										}
 										catch {
 										}
@@ -11080,10 +11089,19 @@ function Uninstall-NxtOld {
 												[string]$appendAW = " /AW"
 											}
 											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
-											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
-											[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
-											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
-											$uninstallOldResult.ApplicationExitCode = $LastExitCode
+											[string[]]$appEmpUninstallStringParts = $appEmpUninstallString -split '\" \"'
+											[string]$setupExePath = $appEmpUninstallStringParts[0].Trim('"')
+											[string[]]$setupInfParts = $parts[1] -split '" /'
+											[string]$setupInfPath = $setupInfParts[0].Trim('"')
+											if ($true -eq (Test-Path -Path $setupInfPath) -and $true -eq (Test-Path -Path $setupExePath)) {
+												[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
+												[string]$appEmpLogDate = $currentDateTime | get-date -Format "yyyy-MM-dd_HH-mm-ss"
+												cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
+												$uninstallOldResult.ApplicationExitCode = $LastExitCode
+											}
+											else {
+												Write-Log -Message "Setup.exe or Setup.inf not found. Skip uninstall of '$("$($appEmpirumPackageVersion.name)")'" -Source ${cmdletName}
+											}
 										}
 										catch {
 										}
