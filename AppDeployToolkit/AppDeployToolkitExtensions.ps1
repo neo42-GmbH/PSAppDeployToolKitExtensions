@@ -6643,7 +6643,9 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'SoftMigrationOccurred' -Value $SoftMigrationOccurred
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'SoftMigrationOccurred' -Value $SoftMigrationOccurred
 			}
-			Remove-RegistryKey "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")"
+			if ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")")) {
+				Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")"
+			}
 			Write-Log -Message "Package registration successful." -Source ${cmdletName}
 		}
 		catch {
@@ -11416,6 +11418,9 @@ function Unregister-NxtPackage {
 						}
 						Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID"
 						Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID"
+						if ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID$("_Error")")) {
+							Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$assignedPackageGUID$("_Error")"
+						}
 					}
 					Write-Log -Message "All folder and registry entries of assigned product member application packages with 'ProductGUID' [$ProductGUID] are cleaned." -Source ${CmdletName}
 					if ($removalCounter = 0) {
@@ -11460,6 +11465,9 @@ function Unregister-NxtPackage {
 				}
 				Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID"
 				Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID"
+				if ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")")) {
+					Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")"
+				}
 				Write-Log -Message "Package unregistration successful." -Source ${cmdletName}
 			}
 		}
