@@ -2045,25 +2045,6 @@ function Execute-NxtInnoSetup {
 		if ($true -eq ([string]::IsNullOrEmpty($logFileExtension)) -or $logFileExtension -notin @('.log', '.txt')) {
 			$Log = $Log + '.log'
 		}
-
-		## Create log folders if necessary. But only if the folder is not a relative path and the log folder has not been created yet.
-		[string[]]@($Log, $configNxtInnoSetupLogPath) | ForEach-Object {
-			$folderPath = (Split-Path $_ -Parent)
-			if (
-				$true -eq ([string]::IsNullOrEmpty($folderPath)) -or 
-				$false -eq ([System.IO.Path]::IsPathRooted($folderPath)) -or 
-				$true -eq (Test-Path $folderPath -PathType Container)
-			) {
-				return
-			}
-			try {
-				New-Item $folderPath -Force -ItemType Directory -ErrorAction Stop | Out-Null
-			}
-			catch {
-				Write-Log -Message "Failed to create folder [$folderPath]. Error: $(Resolve-Error)" -Severity 2 -Source ${CmdletName}
-			}
-		}
-
 		## Determine full log path
 		[string]$fullLogPath = [string]::Empty
 		if ($true -eq ([System.IO.Path]::IsPathRooted($Log))) {
@@ -2073,6 +2054,11 @@ function Execute-NxtInnoSetup {
 			$fullLogPath = Join-Path -Path $configNxtInnoSetupLogPath -ChildPath $($Log -replace ' ', [string]::Empty)
 		}
 
+		## Create log folder if necessary.
+		[string]$logFolder = Split-Path -Path $fullLogPath -Parent
+		if ($false -eq (Test-Path -Path $logFolder -PathType Container)) {
+			New-Folder -Path $logFolder -ContinueOnError $false
+		}
 		[string]$argsInnoSetup = "$argsInnoSetup /LOG=`"$fullLogPath`""
 
 		[hashtable]$executeProcessSplat = @{
@@ -2376,27 +2362,15 @@ function Execute-NxtMSI {
 			$PSBoundParameters.add("LogName", $msiLogName )
 		}
 		[PSObject]$executeResult = Execute-MSI @PSBoundParameters
-		## Create log folders if necessary. But only if the folder is not a relative path and the log folder has not been created yet.
-		[string[]]@($Log, $xmlConfigMSIOptionsLogPath) | ForEach-Object {
-			$folderPath = (Split-Path $_ -Parent)
-			if (
-				$true -eq ([string]::IsNullOrEmpty($folderPath)) -or 
-				$false -eq ([System.IO.Path]::IsPathRooted($folderPath)) -or 
-				$true -eq (Test-Path $folderPath -PathType Container)
-			) {
-				return
-			}
-			try {
-				New-Item $folderPath -Force -ItemType Directory -ErrorAction Stop | Out-Null
-			}
-			catch {
-				Write-Log -Message "Failed to create folder [$folderPath]. Error: $(Resolve-Error)" -Severity 2 -Source ${CmdletName}
-			}
-		}
 		## Move Logs to correct destination
 		if ($true -eq ([System.IO.Path]::IsPathRooted($Log))) {
 			[string]$msiActionLogName = "${msiLogName}_$($action).log"
 			[string]$sourceLogPath = Join-Path -Path $xmlConfigMSIOptionsLogPath -ChildPath $msiActionLogName
+			## Create log folder if necessary.
+			[string]$logFolder = Split-Path -Path $Log -Parent
+			if ($false -eq (Test-Path -Path $logFolder -PathType Container)) {
+				New-Folder -Path $logFolder -ContinueOnError $false
+			}
 			if ($true -eq (Test-Path $sourceLogPath -PathType Leaf)) {
 				Move-NxtItem $sourceLogPath -Destination $Log -Force
 			}
