@@ -5473,6 +5473,10 @@ function Initialize-NxtAppRootFolder {
 				Set-Content -Path "$env:ProgramData\$appRootFolderName\readme.txt" -Value "This directory is required for software deployment and should not be deleted or altered." -Encoding "UTF8"
 				Write-Log -Message "Created readme file in $env:ProgramData\$appRootFolderName" -Source ${CmdletName}
 			}
+			if ($false -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\n42Config")) {
+				New-Item -Path "HKLM:\Software\$RegPackagesKey\n42Config" -Force | Out-Null
+				New-ItemProperty -Path "HKLM:\Software\$RegPackagesKey\n42Config" -Name "CreationDate" -Value (Get-Date).ToString("yyyy-MM-dd HH:mm:ss") -PropertyType String -Force | Out-Null
+			}
 			Write-Output "$env:ProgramData\$appRootFolderName"
 		}
 		else {
