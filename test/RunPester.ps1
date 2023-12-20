@@ -17,6 +17,7 @@ Import-Module Pester
 $config.TestResult.Enabled = $true
 $config.TestResult.OutputPath = "$PSScriptRoot\testresults.xml"
 $config.TestResult.OutputFormat = 'NUnitXml'
+$config.Should.ErrorAction = 'Continue'
 Import-Module $PSScriptRoot\shared.psm1
 Set-Location $PSScriptRoot
 Invoke-Pester -Configuration $config
