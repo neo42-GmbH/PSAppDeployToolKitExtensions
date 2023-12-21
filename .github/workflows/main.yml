@@ -15,6 +15,16 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: ./PSAppDeployToolkitExtensions
+      - name: Checkout Develop including merge commit history
+        uses: actions/checkout@v3
+        with:
+          path: ./PSAppDeployToolkitExtensions_Develop
+          ref: develop
+          fetch-depth: 0
+      - name: Remove Origin URL
+        run: |
+            cd ./PSAppDeployToolkitExtensions_Develop
+            git remote remove origin
       - name: Checkout Public Repo
         uses: actions/checkout@v3
         with:
