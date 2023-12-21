@@ -424,7 +424,9 @@ note: this package system registration is done additionally to a regular manufac
 parent: /
 ```
 default value: "neo42Pkgs"
-Base name of the 'AppRootFolder', storing persistent files for installed packages. The variable global:PackageConfig.AppRootFolder expands to either Env:Programdata\<startvalue> or Env:Programdata\<startvalue>+{8RandomCharacters}. It's registered as a secure path in the registry for persistent package files. The unexpanded basename is also used to build log paths.
+base name of the package cache folder on client system, storing persistent files for installed packages; unexpanded basename is also used to build log paths by default
+resulting variable '$global:PackageConfig.AppRootFolder' expands to either 'Env:Programdata<startvalue>' or 'Env:Programdata<startvalue>+{8RandomCharacters}'.
+note: it is registered as a secure path in the registry for persistent package files
 ```
 
 **"App"** *mandatory string value*
@@ -433,7 +435,7 @@ Base name of the 'AppRootFolder', storing persistent files for installed package
 
 parent: /
 ```
-default value: "$($env:ProgramData)\\neoPackages\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)"
+default value: "$($global:PackageConfig.AppRootFolder\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)"
 package cache folder on client system (i.e. possible user parts of package are executed from there)
 ```
  
@@ -589,7 +591,7 @@ parent: /
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
-default value: "$($global:PackageConfig.app)\\Install.$global:DeploymentTimestamp.log"
+default value: "$($global:PackageConfig.AppRootFolder)\\Install.$global:DeploymentTimestamp.log"
 setup log file name for installation process
 note: by default a logfile always will be appended internally (if value "InstallMethod" is set to a well-know type of setups and logging is supported/applied by setup), even if no name is provided in this variable!
 ```
@@ -600,7 +602,7 @@ parent: /
 
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
-default value: "$($global:PackageConfig.app)\\Uninstall.$global:DeploymentTimestamp.log"
+default value: "$($global:PackageConfig.AppRootFolder)\\Uninstall.$global:DeploymentTimestamp.log"
 setup log file name for uninstallation process
 note: by default a logfile always will be appended internally (if value "UninstallMethod" is set to a well-know type of setups and logging is supported/applied by setup), even if no name is provided in this variable!
 ```
