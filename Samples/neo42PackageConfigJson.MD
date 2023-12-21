@@ -419,6 +419,14 @@ registered display name of uninstall registry entry of installed application pac
 note: this package system registration is done additionally to a regular manufacturer setup own registration in registry and may be suppressed by deployment system (if variable '$env:registerPackage' is set to '$false')
 ```
 
+**"AppRootFolder"** *mandatory string value*
+
+parent: /
+```
+default value: "neo42Pkgs"
+Base name of the 'AppRootFolder', storing persistent files for installed packages. The variable global:PackageConfig.AppRootFolder expands to either Env:Programdata\<startvalue> or Env:Programdata\<startvalue>+{8RandomCharacters}. It's registered as a secure path in the registry for persistent package files. The unexpanded basename is also used to build log paths.
+```
+
 **"App"** *mandatory string value*
 
 *(note: may contain reference to other defined variables, content will be expanded)*
