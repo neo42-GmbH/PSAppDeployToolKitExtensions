@@ -18,11 +18,16 @@ jobs:
         ref: ${{ vars.TARGET_ADT_VERSION }}
         sparse-checkout: 'Toolkit/AppDeployToolkit/*'
         sparse-checkout-cone-mode: false
+        path: '${{ github.workspace }}\Toolkit'
 
     - name: Checkout Extensions
       uses: actions/checkout@v3
       with:
-        path: '${{ github.workspace }}\Toolkit'
+        path: '${{ github.workspace }}\Extensions'
+
+    - name: Merge Extensions
+      run: |
+        Copy-Item -Recurse -Path ${{ github.workspace }}\Extensions\* -Destination ${{ github.workspace }}\Toolkit\ -Force
 
     - name: Run Pester Tests
       shell: powershell
