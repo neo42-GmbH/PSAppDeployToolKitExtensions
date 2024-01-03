@@ -10349,7 +10349,7 @@ function Test-NxtFolderPermissions {
 			[System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
-				Write-Warning "Expected owner to be $Owner but found $($actualAcl.Owner)."
+				Write-Log -Message "Expected owner to be $Owner but found $($actualAcl.Owner)." -Severity 2
 				$results += [PSCustomObject]@{
 					'Rule'			= "$($actualAcl.Owner)"
 					'SideIndicator' = "<="
