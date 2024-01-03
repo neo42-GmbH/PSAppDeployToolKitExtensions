@@ -26,8 +26,7 @@ $compilerArgs = "/target:winexe /out:$testWorkFolder\simple.exe $PSScriptRoot\si
 Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait
 
 # Import PSADT
-[string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
-[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
+[string]$moduleAppDeployToolkitMain = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitMain.ps1"
 . $moduleAppDeployToolkitMain -DisableLogging
 
 # Run Pester
