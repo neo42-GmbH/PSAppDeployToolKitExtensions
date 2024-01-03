@@ -40,13 +40,12 @@ Describe "Move-NxtItem" {
             Move-NxtItem -Path "$folder\TestFolder" -Destination "$folder\TestFolder2"
             Test-Path "$folder\TestFolder2\TestFile" | Should -Be $true
         }
-        It "Should not overwrite contents of folders" -Skip {
-            # Issue #632 has to be altered depending on desicion
+        It "Should merge contents of folders" {
             New-Item "$folder\TestFolder" -ItemType Directory -Force | Out-Null
             New-Item "$folder\TestFolder\TestFile" -ItemType File -Force | Out-Null
             New-Item "$folder\TestFolder2" -ItemType Directory -Force | Out-Null
             New-Item "$folder\TestFolder2\TestFile2" -ItemType File -Force | Out-Null
-            Move-NxtItem -Path "$folder\TestFolder" -Destination "$folder\TestFolder2"
+            Move-NxtItem -Path "$folder\TestFolder\*" -Destination "$folder\TestFolder2"
             Test-Path "$folder\TestFolder2\TestFile" | Should -Be $true
             Test-Path "$folder\TestFolder2\TestFile2" | Should -Be $true
         }
