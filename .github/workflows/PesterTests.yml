@@ -16,7 +16,8 @@ jobs:
       with:
         repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
         ref: ${{ vars.TARGET_ADT_VERSION }}
-        sparse-checkout: 'Toolkit/AppDeployToolkit'
+        sparse-checkout: 'Toolkit/AppDeployToolkit/*'
+        sparse-checkout-cone-mode: false
 
     - name: Checkout Extensions
       uses: actions/checkout@v3
