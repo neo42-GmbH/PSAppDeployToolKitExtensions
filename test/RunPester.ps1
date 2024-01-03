@@ -19,11 +19,19 @@ $config.TestResult.Enabled = $true
 $config.TestResult.OutputPath = "$PSScriptRoot\testresults.xml"
 $config.TestResult.OutputFormat = 'NUnitXml'
 $config.Should.ErrorAction = 'Continue'
+$config.Output.Verbosity = 'Detailed'
+
+# Set location
+Set-Location $PSScriptRoot\..\
 
 # Create process test binary
 $compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
 $compilerArgs = "/target:winexe /out:$testWorkFolder\simple.exe $PSScriptRoot\simple.cs"
 Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait
+
+# Mute Toolkit logging
+(Get-Content "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitConfig.xml" -Raw).Replace('<Toolkit_LogWriteToHost>True</Toolkit_LogWriteToHost>', '<Toolkit_LogWriteToHost>False</Toolkit_LogWriteToHost>') | 
+    Out-File "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitConfig.xml"
 
 # Import PSADT
 [string]$moduleAppDeployToolkitMain = "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitMain.ps1"
