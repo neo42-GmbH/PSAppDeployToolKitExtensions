@@ -10,18 +10,19 @@ jobs:
     runs-on: PSAppDeployToolKitExtensions-Runner
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        path: ./NxtExtensions
 
-    - name: Checkout Public Repo
+    - name: Checkout PSADT
       uses: actions/checkout@v3
       with:
         repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
         ref: ${{ vars.TARGET_ADT_VERSION }}
-        path: ./PSADT
-        
+        sparse-checkout: 'Toolkit/AppDeployToolkit'
+
+    - name: Checkout Extensions
+      uses: actions/checkout@v3
+      with:
+        path: '${{ github.workspace }}\Toolkit'
+
     - name: Run Pester Tests
       shell: powershell
-      run: .\NxtExtensions\test\PesterTestsStarter.ps1
+      run: ${{ github.workspace }}\Toolkit\test\RunPester.ps1
