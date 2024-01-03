@@ -2,6 +2,7 @@ Describe "Get-NxtRunningProcesses" {
     Context "When running processes are present" {
         BeforeAll {
             [System.Diagnostics.Process]$childProcess = Start-Process -FilePath ./test/simple.exe -PassThru
+            [System.Diagnostics.Process]$lsassProcess = Get-Process -Name lsass
         }
         AfterAll {
             $childProcess.Kill()
@@ -11,11 +12,15 @@ Describe "Get-NxtRunningProcesses" {
                 @{
                     ProcessName = $childProcess.Name
                 }
+                @{
+                    ProcessName = $lsassProcess.Name
+                }
             )
             $result = Get-NxtRunningProcesses -ProcessObjects $processes
             $result.GetType().BaseType.Name | Should -Be 'Array'
             $result.ProcessName | Should -Contain $childProcess.Name
-            $result.Count | Should -Be 1
+            $result.ProcessName | Should -Contain $lsassProcess.Name
+            $result.Count | Should -Be 2
         }
         It "Should return only the running processes" {
             [array]$processes = @(
@@ -27,9 +32,8 @@ Describe "Get-NxtRunningProcesses" {
                 }
             )
             $result = Get-NxtRunningProcesses -ProcessObjects $processes
-            $result.GetType().BaseType.Name | Should -Be 'Array'
-            $result.ProcessName | Should -Contain $childProcess.Name
-            $result.Count | Should -Be 1
+            $result.GetType().Name | Should -Be 'Process'
+            $result.ProcessName | Should -Be $childProcess.Name
         }
         It "Should return empty array if no running processes are found" {
             [array]$processes = @(
