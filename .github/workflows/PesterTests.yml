@@ -24,8 +24,8 @@ jobs:
       with:
         path: '${{ github.workspace }}\Extensions'
         sparse-checkout: | 
-          'Extensions/*'
-          'test/*'
+          'test'
+          'Extensions'
 
     - name: Merge Extensions into PSADT
       shell: powershell
