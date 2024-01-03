@@ -167,7 +167,7 @@
                 "HelpText": "AppKillProcesses.Name is mandatory in each item below AppKillProcesses and must be a string.",
                 "Type": "System.String",
                 "Regex": {
-                    "Pattern": "^(\\*+|\\*\\.(\\*|exe))$",
+                    "Pattern": "^\\*+(\\.(\\*+|exe)|)$",
                     "Operator": "notmatch"
                 },
                 "AllowEmpty": false
