@@ -30,7 +30,7 @@ jobs:
     - name: Merge Extensions into PSADT
       shell: powershell
       run: |
-        Copy-Item -Recurse -Path ${{ github.workspace }}\Extensions -Destination ${{ github.workspace }}\Toolkit\Toolkit\
+        Copy-Item -Recurse -Path ${{ github.workspace }}\Extensions\* -Destination ${{ github.workspace }}\Toolkit\Toolkit\
 
     - name: Run Pester Tests
       shell: powershell
