@@ -9171,15 +9171,13 @@ function Show-NxtInstallationWelcome {
 			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
-			if (($processObjects | Where-Object {
-				$true -ne $_.IsWql
-			} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
-				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {
-					$true -ne $_.IsWql
-				} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
-				Block-NxtAppExecution -ProcessName ($processObjects | Where-Object {
-					$true -ne $_.IsWql
-				} | Select-Object -ExpandProperty 'ProcessName')
+            [Array]$blockableProcesses = ($processObjects | Where-Object {
+                $true -ne $_.IsWql -and
+                $false -eq [string]::IsNullOrEmpty($_.ProcessName)
+            })
+			if ($blockableProcesses.count -gt 0) {
+				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
+				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName
 				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
