@@ -9171,10 +9171,10 @@ function Show-NxtInstallationWelcome {
 			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
-            [Array]$blockableProcesses = ($processObjects | Where-Object {
-                $true -ne $_.IsWql -and
-                $false -eq [string]::IsNullOrEmpty($_.ProcessName)
-            })
+			[Array]$blockableProcesses = ($processObjects | Where-Object {
+				$true -ne $_.IsWql -and
+				$false -eq [string]::IsNullOrEmpty($_.ProcessName)
+			})
 			if ($blockableProcesses.count -gt 0) {
 				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
 				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName
