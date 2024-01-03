@@ -11,13 +11,24 @@
 #>
 
 #requires -module Pester -version 5
-##Install-Module pester -SkipPublisherCheck -force
 Import-Module Pester
+
+# Pester config
 [PesterConfiguration]$config = [PesterConfiguration]::Default
 $config.TestResult.Enabled = $true
 $config.TestResult.OutputPath = "$PSScriptRoot\testresults.xml"
 $config.TestResult.OutputFormat = 'NUnitXml'
 $config.Should.ErrorAction = 'Continue'
-Import-Module $PSScriptRoot\shared.psm1
-Set-Location $PSScriptRoot
+
+# Create process test binary
+$compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
+$compilerArgs = "/target:winexe /out:$testWorkFolder\simple.exe $PSScriptRoot\simple.cs"
+Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait
+
+# Import PSADT
+[string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
+[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
+. $moduleAppDeployToolkitMain -DisableLogging
+
+# Run Pester
 Invoke-Pester -Configuration $config
