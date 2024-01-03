@@ -23,13 +23,14 @@ jobs:
       uses: actions/checkout@v4
       with:
         path: '${{ github.workspace }}\Extensions'
+        sparse-checkout: | 
+          'Extensions/*'
+          'test/*'
 
     - name: Merge Extensions into PSADT
       shell: powershell
       run: |
-        Remove-Item -Recurse -Path ${{ github.workspace }}\Merged -Force -ErrorAction SilentlyContinue
-        Copy-Item -Recurse -Path ${{ github.workspace }}\Toolkit\* -Destination ${{ github.workspace }}\Merged\
-        Copy-Item -Recurse -Path ${{ github.workspace }}\Extensions\* -Destination ${{ github.workspace }}\Merged\
+        Copy-Item -Recurse -Path ${{ github.workspace }}\Extensions -Destination ${{ github.workspace }}\Toolkit\Toolkit\
 
     - name: Run Pester Tests
       shell: powershell
