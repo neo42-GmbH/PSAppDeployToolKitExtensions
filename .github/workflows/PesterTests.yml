@@ -10,9 +10,8 @@ jobs:
     runs-on: PSAppDeployToolKitExtensions-Runner
 
     steps:
-
     - name: Checkout PSADT
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
         ref: ${{ vars.TARGET_ADT_VERSION }}
@@ -21,13 +20,16 @@ jobs:
         path: '${{ github.workspace }}\Toolkit'
 
     - name: Checkout Extensions
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         path: '${{ github.workspace }}\Extensions'
 
-    - name: Merge Extensions
+    - name: Merge Extensions into PSADT
+      shell: powershell
       run: |
-        Copy-Item -Recurse -Path ${{ github.workspace }}\Extensions\* -Destination ${{ github.workspace }}\Toolkit\ -Force
+        Remove-Item -Recurse -Path ${{ github.workspace }}\Merged -Force
+        Copy-Item -Recurse -Path ${{ github.workspace }}\Toolkit\* -Destination ${{ github.workspace }}\Merged\
+        Copy-Item -Recurse -Path ${{ github.workspace }}\Extensions\* -Destination ${{ github.workspace }}\Merged\
 
     - name: Run Pester Tests
       shell: powershell
