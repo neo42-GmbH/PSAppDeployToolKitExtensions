@@ -166,6 +166,10 @@
                 "Mandatory": true,
                 "HelpText": "AppKillProcesses.Name is mandatory in each item below AppKillProcesses and must be a string.",
                 "Type": "System.String",
+                "Regex": {
+                    "Pattern": "^\\*$",
+                    "Operator": "notmatch"
+                },
                 "AllowEmpty": false
             },
             "Description": {
