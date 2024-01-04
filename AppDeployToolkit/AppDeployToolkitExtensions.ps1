@@ -8814,8 +8814,8 @@ function Show-NxtInstallationWelcome {
 			}
 		}
 		## Prevent empty process names when wildcards dont match any process
-		$AskKillProcessApps = $AskKillProcessApps | Where-Object { 
-			$false -eq [string]::IsNullOrEmpty($_.Name) 
+		$AskKillProcessApps = $AskKillProcessApps | Where-Object {
+			$false -eq [string]::IsNullOrEmpty($_.Name)
 		}
 		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
 			## prevent BlockExecution function if there is no process to kill
