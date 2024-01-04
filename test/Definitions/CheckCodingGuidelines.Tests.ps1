@@ -73,6 +73,30 @@ Describe "Coding Guidelines" -ForEach @(
                 }
             }
         }
+        It "Capitalized variables should be defined in the param block" {
+            $parameterBlocks = $ast.FindAll({
+                param($ast) 
+                $ast -is [System.Management.Automation.Language.ParamBlockAst]
+                $ast.Parameters.Count -gt 0
+            }, $true)
+            $parameterBlocks | ForEach-Object {
+                $paramBlockAst = $_
+                @('BeginBlock', 'ProcessBlock', 'EndBlock') | ForEach-Object {
+                    $namedBlockAst = $paramBlockAst.Parent | Select-Object -ExpandProperty $_
+                    if($null -eq $namedBlockAst){ return }
+                    
+                    $capitalizedVariables = $namedBlockAst.FindAll({
+                        param($ast)
+                        $ast -is [System.Management.Automation.Language.VariableExpressionAst] -and
+                        $ast.VariablePath.UserPath -cmatch "^[A-Z]"
+                    }, $true)
+                    $capitalizedVariables | ForEach-Object {
+                        $_ | Should -BeIn $paramBlockAst.Parameters.Name.VariablePath.UserPath -Because "the capitalized variable '$($_.VariablePath.UserPath)' is not defined in the param block (line $($_.Extent.StartLineNumber))"
+                    }
+                    
+                }
+            }
+        }
         It "Indentations should be made using tabulator" {
             $currentLine = 1
             $content | ForEach-Object {
