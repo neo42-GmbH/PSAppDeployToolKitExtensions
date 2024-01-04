@@ -8813,6 +8813,8 @@ function Show-NxtInstallationWelcome {
 				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", [string]::Empty
 			}
 		}
+        ## Prevent empty process names when wildcards dont match any process
+        $AskKillProcessApps = $AskKillProcessApps | Where-Object { $false -eq [string]::IsNullOrEmpty($_.Name) }
 		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
 			## prevent BlockExecution function if there is no process to kill
 			$BlockExecution = $false
@@ -9172,12 +9174,12 @@ function Show-NxtInstallationWelcome {
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
 			[Array]$blockableProcesses = ($processObjects | Where-Object {
-				$true -ne $_.IsWql -and
-				$false -eq [string]::IsNullOrEmpty($_.ProcessName)
+				$true -ne $_.IsWql
 			})
 			if ($blockableProcesses.count -gt 0) {
 				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
-				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName
+                ## Convert result of wildcard list back to array for block execution
+				Block-NxtAppExecution -ProcessName ($blockableProcesses.ProcessName -split ',')
 				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
