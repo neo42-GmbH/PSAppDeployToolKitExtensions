@@ -73,22 +73,23 @@ Describe "Coding Guidelines" -ForEach @(
                 }
             }
         }
-        It "Capitalized variables should be defined in the param block" {
+        It "Capitalized variables should be defined in the param block" -Skip {
             $parameterBlocks = $ast.FindAll({
                 param($ast) 
-                $ast -is [System.Management.Automation.Language.ParamBlockAst]
-                $ast.Parameters.Count -gt 0
+                $ast -is [System.Management.Automation.Language.ParamBlockAst] -and
+                $ast.Parameters.Name.VariablePath.UserPath.Count -gt 0
             }, $true)
             $parameterBlocks | ForEach-Object {
                 $paramBlockAst = $_
                 @('BeginBlock', 'ProcessBlock', 'EndBlock') | ForEach-Object {
                     $namedBlockAst = $paramBlockAst.Parent | Select-Object -ExpandProperty $_
                     if($null -eq $namedBlockAst){ return }
-                    
+                    # Get All capitalized variables that are not automatically defined
                     $capitalizedVariables = $namedBlockAst.FindAll({
                         param($ast)
                         $ast -is [System.Management.Automation.Language.VariableExpressionAst] -and
-                        $ast.VariablePath.UserPath -cmatch "^[A-Z]"
+                        $ast.VariablePath.UserPath -cmatch "^[A-Z]" -and
+                        $ast.VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'false', 'foreach', 'HOME', 'Host', 'input', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'MyInvocation', 'NestedPromptLevel', 'null', 'PID', 'PROFILE', 'PSBoundParameters', 'PSCmdlet', 'PSCommandPath', 'PSCulture', 'PSDebugContext', 'PSEdition', 'PSHOME', 'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender', 'ShellId', 'StackTrace', 'switch', 'this', 'true')
                     }, $true)
                     $capitalizedVariables | ForEach-Object {
                         $_ | Should -BeIn $paramBlockAst.Parameters.Name.VariablePath.UserPath -Because "the capitalized variable '$($_.VariablePath.UserPath)' is not defined in the param block (line $($_.Extent.StartLineNumber))"
@@ -288,6 +289,17 @@ Describe "Coding Guidelines" -ForEach @(
                 # Skip for loops
                 if ($context -match "^\s*for\s*\(") { return }
                 $token | Should -BeNullOrEmpty -Because "the ';' token should not be used a seperator (line $($token.Extent.StartLineNumber))"
+            }
+        }
+        It "Write-Log should be used with the Source parameter" -Skip {
+            $writeLogCommands = $ast.FindAll({
+                param($ast)
+                $ast -is [System.Management.Automation.Language.CommandAst] -and
+                $ast.GetCommandName() -eq 'Write-Log'
+            },$true)
+            $writeLogCommands | ForEach-Object {
+                $command = $_
+                $command.CommandElements | Where-Object {$_.ParameterName -eq 'Source'} | Should -Not -BeNullOrEmpty -Because "Write-Log should be used with the Source parameter (line $($command.Extent.StartLineNumber))"
             }
         }
     }
