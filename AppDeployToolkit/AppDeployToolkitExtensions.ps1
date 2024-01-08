@@ -8789,21 +8789,21 @@ function Show-NxtInstallationWelcome {
 			$DeferDays = 0
 		}
 		[string]$fileExtension = ".exe"
-        [PSObject[]]$processObjects = @()
+		[PSObject[]]$processObjects = @()
 		foreach ( $processAppsItem in $AskKillProcessApps ) {
-            if ( $processAppsItem.Name -match '^\\*+(\\.(\\*+|exe)|)$' ) {
-				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
-				throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
+			if ( $processAppsItem.Name -match '^\\*+(\\.(\\*+|exe)|)$' ) {
+				Write-Log -Message "Not supported wildcard list entry '$($processAppsItem.Name)' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
+				throw "Not supported list entry '$($processAppsItem.Name)' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
 			}
 			if ($true -eq ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name))) {
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
 				## Get-WmiObject Win32_Process always requires an extension, so we add one in case there is none
 				[string]$query = $($($processAppsItem.Name -replace "\$fileExtension$", "") + $fileExtension).Replace("*","%")
 				[System.Management.ManagementBaseObject[]]$processes = Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$query'"
-				[string[]]$processNames = $processes | Select-Object -ExpandProperty 'Name' -ErrorAction 'SilentlyContinue' | ForEach-Object { 
-					$_ -replace "\$fileExtension$", [string]::Empty 
-				} | Where-Object { 
-					$false -eq [string]::IsNullOrEmpty($_) 
+				[string[]]$processNames = $processes | Select-Object -ExpandProperty 'Name' -ErrorAction 'SilentlyContinue' | ForEach-Object {
+					$_ -replace "\$fileExtension$", [string]::Empty
+				} | Where-Object {
+					$false -eq [string]::IsNullOrEmpty($_)
 				} | Select-Object -Unique
 				if ( $processNames.Count -eq 0 ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
@@ -8825,7 +8825,7 @@ function Show-NxtInstallationWelcome {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
 				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", [string]::Empty
 
-                if ($true -eq ($processAppsItem.Name.Contains('='))) {
+				if ($true -eq ($processAppsItem.Name.Contains('='))) {
 					[String[]]$processSplit = $processAppsItem.Name -split '='
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
 						ProcessName			= $processSplit[0]
@@ -8833,13 +8833,13 @@ function Show-NxtInstallationWelcome {
 						IsWql				= $false
 					}
 				}
-                else {
-                    $processObjects += New-Object -TypeName 'PSObject' -Property @{
+				else {
+					$processObjects += New-Object -TypeName 'PSObject' -Property @{
 						ProcessName			= $processAppsItem.Name
 						ProcessDescription	= $processAppsItem.Description
 						IsWql				= [bool]$processAppsItem.IsWQL
 					}
-                }
+				}
 			}
 		}
 		if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)) {
