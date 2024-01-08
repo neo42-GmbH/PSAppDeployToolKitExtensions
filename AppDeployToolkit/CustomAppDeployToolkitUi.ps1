@@ -2250,7 +2250,7 @@ else {
 }
 & $fillCloseApplicationList $runningProcesses
 
-[string]$names = $runningProcesses | Select-Object -ExpandProperty Name
+[string]$names = $runningProcesses | Select-Object -ExpandProperty Name -Unique
 $control_PopupListText.Text = $names.Trim()
 
 [Int32]$outNumber = $null
