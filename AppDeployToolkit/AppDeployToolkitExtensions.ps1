@@ -3139,7 +3139,7 @@ function Exit-NxtScriptWithError {
 		catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
-		if ($MainExitCode -in 0,1641,3010) {
+		if ($MainExitCode -in 0) {
 			$MainExitCode = 70000
 		}
 		Clear-NxtTempFolder
