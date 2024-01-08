@@ -1294,7 +1294,7 @@ function Complete-NxtPackageInstallation {
 			## note: we always use the script from current application package source folder (it is basically identical in each package)
 			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
-			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
+			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait -ExitOnProcessFailure $false
 		}
 		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots) {
@@ -3139,7 +3139,7 @@ function Exit-NxtScriptWithError {
 		catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
-		if ($MainExitCode -in 0,1641,3010) {
+		if ($MainExitCode -in 0) {
 			$MainExitCode = 70000
 		}
 		Clear-NxtTempFolder
@@ -9175,9 +9175,8 @@ function Show-NxtInstallationWelcome {
 			})
 			if ($blockableProcesses.count -gt 0) {
 				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
-				## Convert result of wildcard list back to array for block execution
 				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName
-				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
+				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
 					Update-NxtXmlNode -FilePath "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
@@ -10346,7 +10345,7 @@ function Test-NxtFolderPermissions {
 			[System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
-				Write-Warning "Expected owner to be $Owner but found $($actualAcl.Owner)."
+				Write-Log -Message "Expected owner to be $Owner but found $($actualAcl.Owner)." -Severity 2
 				$results += [PSCustomObject]@{
 					'Rule'			= "$($actualAcl.Owner)"
 					'SideIndicator' = "<="
@@ -10713,7 +10712,7 @@ function Unblock-NxtAppExecution {
 				$_.TaskName -eq "\$schTaskBlockedAppsName"
 			})) {
 				Write-Log -Message "Deleting Scheduled Task [$schTaskBlockedAppsName]." -Source ${CmdletName}
-				Execute-Process -Path $exeSchTasks -Parameters "/Delete /TN $schTaskBlockedAppsName /F"
+				Execute-Process -Path $exeSchTasks -Parameters "/Delete /TN $schTaskBlockedAppsName /F" -ExitOnProcessFailure $false
 			}
 		}
 		catch {
@@ -11528,7 +11527,7 @@ function Unregister-NxtPackage {
 								## note: we always use the script from current application package source folder (it is basically identical in each package)
 								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
-								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
+								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait -ExitOnProcessFailure $false
 								$removalCounter += 1
 							}
 							else {
@@ -11568,6 +11567,7 @@ function Unregister-NxtPackage {
 							Parameters = "-File `"$App\Clean-Neo42AppFolder.ps1`""
 							NoWait = $true
 							WorkingDirectory = $env:TEMP
+							ExitOnProcessFailure = $false
 						}
 						## we use temp es workingdirectory to avoid issues with locked directories
 						if (
