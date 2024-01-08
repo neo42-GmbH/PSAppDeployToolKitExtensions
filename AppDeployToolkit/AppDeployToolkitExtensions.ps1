@@ -9180,7 +9180,7 @@ function Show-NxtInstallationWelcome {
 				Block-NxtAppExecution -ProcessName ($processObjects | Where-Object {
 					$true -ne $_.IsWql
 				} | Select-Object -ExpandProperty 'ProcessName')
-				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
+				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
 					Update-NxtXmlNode -FilePath "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
