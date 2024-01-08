@@ -11,7 +11,7 @@
         You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 
         # COPYRIGHT #
-        Copyright (c) 2023 neo42 GmbH, Germany.
+        Copyright (c) 2024 neo42 GmbH, Germany.
 	.LINK
 		http://psappdeploytoolkit.com
 #>
