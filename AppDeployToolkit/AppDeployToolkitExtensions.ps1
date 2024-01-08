@@ -8791,7 +8791,7 @@ function Show-NxtInstallationWelcome {
 		[string]$fileExtension = ".exe"
 		[PSObject[]]$processObjects = @()
 		foreach ( $processAppsItem in $AskKillProcessApps ) {
-			if ( $processAppsItem.Name -match '^\*+(\.(\*+|exe)|)|\.exe$' ) {
+			if ( $processAppsItem.Name -match '^[\*\.]+((?:[^\*]exe)|)$|^\.exe$' ) {
 				Write-Log -Message "Not supported app list entry '$($processAppsItem.Name)' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
 				throw "Not supported app entry '$($processAppsItem.Name)' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
 			}
