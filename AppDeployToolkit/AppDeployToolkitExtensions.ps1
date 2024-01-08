@@ -8791,6 +8791,10 @@ function Show-NxtInstallationWelcome {
 		[string]$fileExtension = ".exe"
         [PSObject[]]$processObjects = @()
 		foreach ( $processAppsItem in $AskKillProcessApps ) {
+            if ( $processAppsItem.Name -match '^\\*+(\\.(\\*+|exe)|)$' ) {
+				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
+				throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
+			}
 			if ($true -eq ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name))) {
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
 				## Get-WmiObject Win32_Process always requires an extension, so we add one in case there is none
