@@ -8789,21 +8789,34 @@ function Show-NxtInstallationWelcome {
 			$DeferDays = 0
 		}
 		[string]$fileExtension = ".exe"
+		[PSObject[]]$processObjects = @()
 		foreach ( $processAppsItem in $AskKillProcessApps ) {
-			if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
-				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
-				throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
+			if ( $processAppsItem.Name -match '^[\*\.]+((?:[^\*]exe)|)$|^\.exe$' ) {
+				Write-Log -Message "Not supported app list entry '$($processAppsItem.Name)' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
+				throw "Not supported app entry '$($processAppsItem.Name)' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
 			}
-			elseif ($true -eq ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name))) {
+			if ($true -eq ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name))) {
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
 				## Get-WmiObject Win32_Process always requires an extension, so we add one in case there is none
-				[string]$processAppsItem.Name = $($processAppsItem.Name -replace "\$fileExtension$", "") + $fileExtension
-				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension$", [string]::Empty) -join ","
-				if ( $true -eq [String]::IsNullOrEmpty($processAppsItem.Name) ) {
+				[string]$query = $($($processAppsItem.Name -replace "\$fileExtension$", "") + $fileExtension).Replace("*","%")
+				[System.Management.ManagementBaseObject[]]$processes = Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$query'"
+				[string[]]$processNames = $processes | Select-Object -ExpandProperty 'Name' -ErrorAction 'SilentlyContinue' | ForEach-Object {
+					$_ -replace "\$fileExtension$", [string]::Empty
+				} | Where-Object {
+					$false -eq [string]::IsNullOrEmpty($_)
+				} | Select-Object -Unique
+				if ( $processNames.Count -eq 0 ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
 				else {
-					Write-Log -Message "... found processes (with file extensions removed): $($processAppsItem.Name)" -Source ${cmdletName}
+					Write-Log -Message "... found processes (with file extensions removed): $processNames" -Source ${cmdletName}
+					foreach ( $processName in $processNames ) {
+						$processObjects += New-Object -TypeName 'PSObject' -Property @{
+							ProcessName			= $processName
+							ProcessDescription	= [string]::Empty
+							IsWql				= $false
+						}
+					}
 				}
 				## be sure there is no description to add in case of process name with wildcards
 				[string]$processAppsItem.Description = [string]::Empty
@@ -8811,25 +8824,9 @@ function Show-NxtInstallationWelcome {
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
 				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", [string]::Empty
-			}
-		}
-		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
-			## prevent BlockExecution function if there is no process to kill
-			$BlockExecution = $false
-		}
-		else {
-			## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
-			[PSObject[]]$processObjects = @()
-			foreach ($AskKillProcessApp in $AskKillProcessApps) {
-				if ($true -eq $AskKillProcessApp.IsWQL) {
-					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName			= $AskKillProcessApp.Name
-						ProcessDescription	= $AskKillProcessApp.Description
-						IsWql				= $true
-					}
-				}
-				elseif ($true -eq ($AskKillProcessApp.Name.Contains('='))) {
-					[String[]]$processSplit = $AskKillProcessApp.Name -split '='
+
+				if ($true -eq ($processAppsItem.Name.Contains('='))) {
+					[String[]]$processSplit = $processAppsItem.Name -split '='
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
 						ProcessName			= $processSplit[0]
 						ProcessDescription	= $processSplit[1]
@@ -8838,22 +8835,28 @@ function Show-NxtInstallationWelcome {
 				}
 				else {
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName			= $AskKillProcessApp.Name
-						ProcessDescription	= $AskKillProcessApp.Description
-						IsWql				= $false
-					}
-				}
-			}
-			if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)) {
-				foreach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ",")) {
-					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName			= $defaultMsiExecutable
-						ProcessDescription	= [string]::Empty
-						IsWql				= $false
+						ProcessName			= $processAppsItem.Name
+						ProcessDescription	= $processAppsItem.Description
+						IsWql				= [bool]$processAppsItem.IsWQL
 					}
 				}
 			}
 		}
+		if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)) {
+			foreach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ",")) {
+				$processObjects += New-Object -TypeName 'PSObject' -Property @{
+					ProcessName			= $defaultMsiExecutable
+					ProcessDescription	= [string]::Empty
+					IsWql				= $false
+				}
+			}
+		}
+
+		## prevent BlockExecution function if there is no process to kill
+		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $processObjects.Count -eq 0) {
+			$BlockExecution = $false
+		}
+
 		## Check Deferral history and calculate remaining deferrals
 		if (($true -eq $AllowDefer) -or ($true -eq $AllowDeferCloseApps)) {
 			#  Set $AllowDefer to true if $AllowDeferCloseApps is true
@@ -9171,15 +9174,12 @@ function Show-NxtInstallationWelcome {
 			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
-			if (($processObjects | Where-Object {
+			[Array]$blockableProcesses = ($processObjects | Where-Object {
 				$true -ne $_.IsWql
-			} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
-				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {
-					$true -ne $_.IsWql
-				} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
-				Block-NxtAppExecution -ProcessName ($processObjects | Where-Object {
-					$true -ne $_.IsWql
-				} | Select-Object -ExpandProperty 'ProcessName')
+			})
+			if ($blockableProcesses.count -gt 0) {
+				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
+				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName
 				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
