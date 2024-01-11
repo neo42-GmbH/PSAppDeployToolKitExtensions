@@ -23,7 +23,7 @@
 	Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
 
 	# MODIFICATION COPYRIGHT #
-	Copyright (c) 2023 neo42 GmbH, Germany.
+	Copyright (c) 2024 neo42 GmbH, Germany.
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
@@ -1294,7 +1294,7 @@ function Complete-NxtPackageInstallation {
 			## note: we always use the script from current application package source folder (it is basically identical in each package)
 			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
-			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait
+			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait -ExitOnProcessFailure $false
 		}
 		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots) {
@@ -3139,7 +3139,7 @@ function Exit-NxtScriptWithError {
 		catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 		}
-		if ($MainExitCode -in 0,1641,3010) {
+		if ($MainExitCode -in 0) {
 			$MainExitCode = 70000
 		}
 		Clear-NxtTempFolder
@@ -4841,7 +4841,7 @@ function Get-NxtRunningProcesses {
 	.PARAMETER ProcessObjects
 		An array of custom objects, each representing a process to check for.
 		These objects should contain at least a 'ProcessName' property. If not supplied, the function returns $null.
-	.PARAMETER Silent
+	.PARAMETER DisableLogging
 		If specified, disables logging within the function, making its execution silent.
 	.PARAMETER ProcessIdToIgnore
 		An array of process IDs. Processes with these IDs, and their child processes, will be excluded from the search.
@@ -4864,7 +4864,7 @@ function Get-NxtRunningProcesses {
 		$ProcessObjects,
 		[Parameter(Mandatory = $false, Position = 1)]
 		[Switch]
-		$Silent,
+		$DisableLogging = $DisableLogging,
 		[Parameter(Mandatory = $false)]
 		[int[]]
 		$ProcessIdsToIgnore
@@ -4877,9 +4877,9 @@ function Get-NxtRunningProcesses {
 	Process {
 		if ($processObjects -and $processObjects[0].ProcessName) {
 			[string]$runningAppsCheck = $processObjects.ProcessName -join ','
-            if ($false -eq $Silent) {
-                Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
-            }
+			if ($false -eq $DisableLogging) {
+				Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
+			}
 			[array]$wqlProcessObjects = $processObjects | Where-Object {
 				$true -eq $_.IsWql
 			}
@@ -4938,7 +4938,7 @@ function Get-NxtRunningProcesses {
 			## Get all running processes and escape special characters. Match against the process names to search for to find running processes.
 			[Diagnostics.Process[]]$runningProcesses = Get-Process | Where-Object -FilterScript $whereObjectFilter | Sort-Object -Property 'ProcessName'
 
-			if ($false -eq $Silent) {
+			if ($false -eq $DisableLogging) {
 				if ($runningProcesses.Count -ne 0) {
 					[String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
 					Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
@@ -8789,21 +8789,34 @@ function Show-NxtInstallationWelcome {
 			$DeferDays = 0
 		}
 		[string]$fileExtension = ".exe"
+		[PSObject[]]$processObjects = @()
 		foreach ( $processAppsItem in $AskKillProcessApps ) {
-			if ( "*$fileExtension" -eq "$($processAppsItem.Name)" ) {
-				Write-Log -Message "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
-				throw "Not supported list entry '*.exe' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
+			if ( $processAppsItem.Name -match '^[\*\.]+((?:[^\*]exe)|)$|^\.exe$' ) {
+				Write-Log -Message "Not supported app list entry '$($processAppsItem.Name)' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!" -Severity 3 -Source ${cmdletName}
+				throw "Not supported app entry '$($processAppsItem.Name)' for 'CloseApps' process collection found, please check the parameter for processes ask to kill in config file!"
 			}
-			elseif ($true -eq ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name))) {
+			if ($true -eq ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name))) {
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
 				## Get-WmiObject Win32_Process always requires an extension, so we add one in case there is none
-				[string]$processAppsItem.Name = $($processAppsItem.Name -replace "\$fileExtension$", "") + $fileExtension
-				[string]$processAppsItem.Name = (($(Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$(($processAppsItem.Name).Replace("*","%"))'").name) -replace "\$fileExtension$", [string]::Empty) -join ","
-				if ( $true -eq [String]::IsNullOrEmpty($processAppsItem.Name) ) {
+				[string]$query = $($($processAppsItem.Name -replace "\$fileExtension$", "") + $fileExtension).Replace("*","%")
+				[System.Management.ManagementBaseObject[]]$processes = Get-WmiObject -Query "Select * from Win32_Process Where Name LIKE '$query'"
+				[string[]]$processNames = $processes | Select-Object -ExpandProperty 'Name' -ErrorAction 'SilentlyContinue' | ForEach-Object {
+					$_ -replace "\$fileExtension$", [string]::Empty
+				} | Where-Object {
+					$false -eq [string]::IsNullOrEmpty($_)
+				} | Select-Object -Unique
+				if ( $processNames.Count -eq 0 ) {
 					Write-Log -Message "... no processes found." -Source ${cmdletName}
 				}
 				else {
-					Write-Log -Message "... found processes (with file extensions removed): $($processAppsItem.Name)" -Source ${cmdletName}
+					Write-Log -Message "... found processes (with file extensions removed): $processNames" -Source ${cmdletName}
+					foreach ( $processName in $processNames ) {
+						$processObjects += New-Object -TypeName 'PSObject' -Property @{
+							ProcessName			= $processName
+							ProcessDescription	= [string]::Empty
+							IsWql				= $false
+						}
+					}
 				}
 				## be sure there is no description to add in case of process name with wildcards
 				[string]$processAppsItem.Description = [string]::Empty
@@ -8811,25 +8824,9 @@ function Show-NxtInstallationWelcome {
 			else {
 				## default item improvement: for later calling of ADT CMDlet no file extension is allowed (remove extension if exist)
 				[string]$processAppsItem.Name = $processAppsItem.Name -replace "\$fileExtension$", [string]::Empty
-			}
-		}
-		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $AskKillProcessApps.Count -eq 0) {
-			## prevent BlockExecution function if there is no process to kill
-			$BlockExecution = $false
-		}
-		else {
-			## Create a Process object with custom descriptions where they are provided (split on an '=' sign)
-			[PSObject[]]$processObjects = @()
-			foreach ($AskKillProcessApp in $AskKillProcessApps) {
-				if ($true -eq $AskKillProcessApp.IsWQL) {
-					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName			= $AskKillProcessApp.Name
-						ProcessDescription	= $AskKillProcessApp.Description
-						IsWql				= $true
-					}
-				}
-				elseif ($true -eq ($AskKillProcessApp.Name.Contains('='))) {
-					[String[]]$processSplit = $AskKillProcessApp.Name -split '='
+
+				if ($true -eq ($processAppsItem.Name.Contains('='))) {
+					[String[]]$processSplit = $processAppsItem.Name -split '='
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
 						ProcessName			= $processSplit[0]
 						ProcessDescription	= $processSplit[1]
@@ -8838,22 +8835,28 @@ function Show-NxtInstallationWelcome {
 				}
 				else {
 					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName			= $AskKillProcessApp.Name
-						ProcessDescription	= $AskKillProcessApp.Description
-						IsWql				= $false
-					}
-				}
-			}
-			if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)) {
-				foreach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ",")) {
-					$processObjects += New-Object -TypeName 'PSObject' -Property @{
-						ProcessName			= $defaultMsiExecutable
-						ProcessDescription	= [string]::Empty
-						IsWql				= $false
+						ProcessName			= $processAppsItem.Name
+						ProcessDescription	= $processAppsItem.Description
+						IsWql				= [bool]$processAppsItem.IsWQL
 					}
 				}
 			}
 		}
+		if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)) {
+			foreach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ",")) {
+				$processObjects += New-Object -TypeName 'PSObject' -Property @{
+					ProcessName			= $defaultMsiExecutable
+					ProcessDescription	= [string]::Empty
+					IsWql				= $false
+				}
+			}
+		}
+        
+		## prevent BlockExecution function if there is no process to kill
+		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $processObjects.Count -eq 0) {
+			$BlockExecution = $false
+		}
+
 		## Check Deferral history and calculate remaining deferrals
 		if (($true -eq $AllowDefer) -or ($true -eq $AllowDeferCloseApps)) {
 			#  Set $AllowDefer to true if $AllowDeferCloseApps is true
@@ -9059,7 +9062,7 @@ function Show-NxtInstallationWelcome {
 					if ($processIdToIgnore -gt 0) {
 						[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 					}
-					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -Silent -ProcessIdsToIgnore $processIdsToIgnore) {
+					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
 						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
 						Start-Sleep -Seconds 2
@@ -9171,16 +9174,13 @@ function Show-NxtInstallationWelcome {
 			#  Make this variable globally available so we can check whether we need to call Unblock-AppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
 			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
-			if (($processObjects | Where-Object {
+			[Array]$blockableProcesses = ($processObjects | Where-Object {
 				$true -ne $_.IsWql
-			} | Select-Object -ExpandProperty 'ProcessName').count -gt 0) {
-				Write-Log -Message "Blocking execution of the following processes: $($processObjects | Where-Object {
-					$true -ne $_.IsWql
-				} | Select-Object -ExpandProperty 'ProcessName')" -Source ${CmdletName}
-				Block-NxtAppExecution -ProcessName ($processObjects | Where-Object {
-					$true -ne $_.IsWql
-				} | Select-Object -ExpandProperty 'ProcessName')
-				if ($true -eq (Test-Path -Path "$dirAppDeployTemp\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
+			})
+			if ($blockableProcesses.count -gt 0) {
+				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
+				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName
+				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
 					Update-NxtXmlNode -FilePath "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
@@ -10349,7 +10349,7 @@ function Test-NxtFolderPermissions {
 			[System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
-				Write-Warning "Expected owner to be $Owner but found $($actualAcl.Owner)."
+				Write-Log -Message "Expected owner to be $Owner but found $($actualAcl.Owner)." -Severity 2
 				$results += [PSCustomObject]@{
 					'Rule'			= "$($actualAcl.Owner)"
 					'SideIndicator' = "<="
@@ -10716,7 +10716,7 @@ function Unblock-NxtAppExecution {
 				$_.TaskName -eq "\$schTaskBlockedAppsName"
 			})) {
 				Write-Log -Message "Deleting Scheduled Task [$schTaskBlockedAppsName]." -Source ${CmdletName}
-				Execute-Process -Path $exeSchTasks -Parameters "/Delete /TN $schTaskBlockedAppsName /F"
+				Execute-Process -Path $exeSchTasks -Parameters "/Delete /TN $schTaskBlockedAppsName /F" -ExitOnProcessFailure $false
 			}
 		}
 		catch {
@@ -11531,7 +11531,7 @@ function Unregister-NxtPackage {
 								## note: we always use the script from current application package source folder (it is basically identical in each package)
 								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
-								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait
+								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait -ExitOnProcessFailure $false
 								$removalCounter += 1
 							}
 							else {
@@ -11571,6 +11571,7 @@ function Unregister-NxtPackage {
 							Parameters = "-File `"$App\Clean-Neo42AppFolder.ps1`""
 							NoWait = $true
 							WorkingDirectory = $env:TEMP
+							ExitOnProcessFailure = $false
 						}
 						## we use temp es workingdirectory to avoid issues with locked directories
 						if (
