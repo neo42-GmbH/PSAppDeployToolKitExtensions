@@ -4862,9 +4862,6 @@ function Get-NxtRunningProcesses {
 		[Parameter(Mandatory = $false, Position = 0)]
 		[PSObject[]]
 		$ProcessObjects,
-		[Parameter(Mandatory = $false, Position = 1)]
-		[Switch]
-		$DisableLogging = $DisableLogging,
 		[Parameter(Mandatory = $false)]
 		[int[]]
 		$ProcessIdsToIgnore
@@ -4877,9 +4874,7 @@ function Get-NxtRunningProcesses {
 	Process {
 		if ($processObjects -and $processObjects[0].ProcessName) {
 			[string]$runningAppsCheck = $processObjects.ProcessName -join ','
-			if ($false -eq $DisableLogging) {
-				Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
-			}
+			Write-Log -Message "Checking for running applications: [$runningAppsCheck]" -Source ${CmdletName}
 			[array]$wqlProcessObjects = $processObjects | Where-Object {
 				$true -eq $_.IsWql
 			}
@@ -4937,16 +4932,13 @@ function Get-NxtRunningProcesses {
 			}
 			## Get all running processes and escape special characters. Match against the process names to search for to find running processes.
 			[Diagnostics.Process[]]$runningProcesses = Get-Process | Where-Object -FilterScript $whereObjectFilter | Sort-Object -Property 'ProcessName'
-
-			if ($false -eq $DisableLogging) {
-				if ($runningProcesses.Count -ne 0) {
-					[String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
-					Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
-				}
-				else {
-					Write-Log -Message 'Specified applications are not running.' -Source ${CmdletName}
-				}
-			}
+			if ($runningProcesses.Count -ne 0) {
+                [String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
+                Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${CmdletName}
+            }
+            else {
+                Write-Log -Message 'Specified applications are not running.' -Source ${CmdletName}
+            }
 			Write-Output -InputObject ($runningProcesses)
 		}
 		else {
@@ -9059,7 +9051,7 @@ function Show-NxtInstallationWelcome {
 					if ($processIdToIgnore -gt 0) {
 						[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 					}
-					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore) {
+					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -ProcessIdsToIgnore $processIdsToIgnore) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
 						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
 						Start-Sleep -Seconds 2
