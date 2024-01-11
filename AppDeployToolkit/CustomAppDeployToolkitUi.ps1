@@ -89,7 +89,7 @@
 	Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
 
 	# MODIFICATION COPYRIGHT #
-	Copyright (c) 2023 neo42 GmbH, Germany.
+	Copyright (c) 2024 neo42 GmbH, Germany.
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
@@ -2250,7 +2250,7 @@ else {
 }
 & $fillCloseApplicationList $runningProcesses
 
-[string]$names = $runningProcesses | Select-Object -ExpandProperty Name
+[string]$names = $runningProcesses | Select-Object -ExpandProperty Name -Unique
 $control_PopupListText.Text = $names.Trim()
 
 [Int32]$outNumber = $null

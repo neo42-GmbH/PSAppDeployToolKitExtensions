@@ -24,6 +24,7 @@
 
 	# MODIFICATION COPYRIGHT #
 	Copyright (c) 2024 neo42 GmbH, Germany.
+	Copyright (c) 2024 neo42 GmbH, Germany.
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
@@ -8856,6 +8857,7 @@ function Show-NxtInstallationWelcome {
 		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $processObjects.Count -eq 0) {
 			$BlockExecution = $false
 		}
+
 
 		## Check Deferral history and calculate remaining deferrals
 		if (($true -eq $AllowDefer) -or ($true -eq $AllowDeferCloseApps)) {
