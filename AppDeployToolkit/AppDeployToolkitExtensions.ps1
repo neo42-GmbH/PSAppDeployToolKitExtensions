@@ -8852,12 +8852,11 @@ function Show-NxtInstallationWelcome {
 				}
 			}
 		}
-        
+
 		## prevent BlockExecution function if there is no process to kill
 		if ($true -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList) -and $processObjects.Count -eq 0) {
 			$BlockExecution = $false
 		}
-
 
 		## Check Deferral history and calculate remaining deferrals
 		if (($true -eq $AllowDefer) -or ($true -eq $AllowDeferCloseApps)) {
