@@ -4864,7 +4864,7 @@ function Get-NxtRunningProcesses {
 		$ProcessObjects,
 		[Parameter(Mandatory = $false, Position = 1)]
 		[Switch]
-		$DisableLogging,
+		$DisableLogging = $DisableLogging,
 		[Parameter(Mandatory = $false)]
 		[int[]]
 		$ProcessIdsToIgnore
