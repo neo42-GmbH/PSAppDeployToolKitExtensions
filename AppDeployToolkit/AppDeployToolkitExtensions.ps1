@@ -3437,7 +3437,7 @@ function Format-NxtPackageSpecificVariables {
 	}
 	Process {
 		## Get String from object and Expand String if requested
-		[System.Collections.Generic.Dictionary[string, string]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[string,string]"
+		[System.Collections.Generic.Dictionary[string, string]]$packageSpecificVariableDictionary = [Collections.Generic.Dictionary[string, string]]::new( [StringComparer]::InvariantCultureIgnoreCase )
 		foreach ($packageSpecificVariable in $PackageConfig.PackageSpecificVariablesRaw) {
 			if ($null -ne $packageSpecificVariable.ExpandVariables) {
 				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name, $ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
