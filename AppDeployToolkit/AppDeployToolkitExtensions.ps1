@@ -6635,7 +6635,7 @@ function Register-NxtPackage {
 			) | ForEach-Object {
 				Copy-File -Path "$_" -Destination "$App\neo42-Install\"
 			}
-			if ($true -eq (Test-Path "$ScriptParentPath\DeployNxtApplication.exe")){
+			if ($true -eq (Test-Path "$ScriptParentPath\DeployNxtApplication.exe")) {
 				Copy-File -Path "$ScriptParentPath\DeployNxtApplication.exe" -ContinueOnError $true
 			}
 
