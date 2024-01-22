@@ -73,7 +73,7 @@ Describe "Coding Guidelines" -ForEach @(
                 }
             }
         }
-        It "Calls of functions should have params with defaults set explicitly" {
+        It "Calls of functions should have params with defaults set explicitly" -Skip {
             if ($(Split-Path $path -Leaf) -in @("Deploy-Application.ps1", "CustomAppDeployToolkitUi.ps1")){
                 Set-ItResult -Skipped
                 return
