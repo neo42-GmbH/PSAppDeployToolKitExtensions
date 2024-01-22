@@ -7751,7 +7751,7 @@ function Resolve-NxtDependentPackage {
 							throw "Removal of dependent application package failed."
 						}
 						## we must now explicitly unregister, because only an uninstall call with the '-SkipUnregister' parameter also prevents product member packages from being removed on recursive calls
-						Unregister-NxtPackage -RemovePackagesWithSameProductGUID $false -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey "$RegPackagesKey"
+						Unregister-NxtPackage -RemovePackagesWithSameProductGUID $false -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey "$RegPackagesKey" -ProductGUID $global:PackageConfig.ProductGUID -App $global:PackageConfig.App -ScriptRoot $scriptRoot -AppRootFolder $global:PackageConfig.AppRootFolder -AppVendor $global:PackageConfig.AppVendor
 						if ( ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists)) -or ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists )) ) {
 							Write-Log -Message "Removal of dependent application package was done not successful." -Severity 3 -Source ${CmdletName}
 							throw "Removal of dependent application package not successful."
@@ -11484,30 +11484,22 @@ function Unregister-NxtPackage {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory = $false)]
-		[String]
-		$ProductGUID = $global:PackageConfig.ProductGUID,
-		[Parameter(Mandatory = $false)]
-		[bool]
-		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$PackageGUID = $global:PackageConfig.PackageGUID,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$App = $global:PackageConfig.App,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$ScriptRoot = $scriptRoot,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$AppRootFolder = $global:PackageConfig.AppRootFolder,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$AppVendor = $global:PackageConfig.AppVendor
+		[Parameter(Mandatory = $true)]
+		[String]$ProductGUID,
+		[Parameter(Mandatory = $true)]
+		[bool]$RemovePackagesWithSameProductGUID,
+		[Parameter(Mandatory = $true)]
+		[string]$PackageGUID,
+		[Parameter(Mandatory = $true)]
+		[string]$RegPackagesKey,
+		[Parameter(Mandatory = $true)]
+		[string]$App,
+		[Parameter(Mandatory = $true)]
+		[string]$ScriptRoot,
+		[Parameter(Mandatory = $true)]
+		[string]$AppRootFolder,
+		[Parameter(Mandatory = $true)]
+		[string]$AppVendor
 	)
 	Begin {
 		## Get the name of this function and write header
