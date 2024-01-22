@@ -206,7 +206,7 @@ function Add-NxtLocalGroup {
 	Process {
 		try {
 			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
-			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName -COMPUTERNAME $COMPUTERNAME
 			if ($false -eq $groupExists) {
 				[System.DirectoryServices.DirectoryEntry]$objGroup = $adsiObj.Create("Group", $GroupName)
 				$objGroup.SetInfo() | Out-Null
@@ -276,13 +276,13 @@ function Add-NxtLocalGroupMember {
 	}
 	Process {
 		try {
-			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName -COMPUTERNAME $COMPUTERNAME
 			if ($false -eq $groupExists) {
 				Write-Output $false
 				return
 			}
 			[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$COMPUTERNAME/$GroupName,group"
-			[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName
+			[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName -ComputerName $COMPUTERNAME
 			if ($false -eq $userExists ) {
 				Write-Output $false
 				return
@@ -375,7 +375,7 @@ function Add-NxtLocalUser {
 	Process {
 		try {
 			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
-			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName -ComputerName $COMPUTERNAME
 			if ($false -eq $userExists) {
 				[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
 				$objUser.SetInfo() | Out-Null
@@ -766,7 +766,7 @@ function Block-NxtAppExecution {
 			Remove-Folder -Path $blockExecutionTempPath
 		}
 		try {
-			New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+			New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -ProtectRules $true | Out-Null
 		}
 		catch {
 			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Source ${CmdletName}
