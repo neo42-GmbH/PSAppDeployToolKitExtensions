@@ -547,7 +547,7 @@ function Main {
 				}
 				if ($false -eq $SkipUnregister) {
 					[string]$script:installPhase = 'Package-Unregistration'
-					Unregister-NxtPackage
+					Unregister-NxtPackage -RemovePackagesWithSameProductGUID $global:PackageConfig.RemovePackagesWithSameProductGUID -PackageGUID $global:PackageConfig.ProductGUID -RegPackagesKey $global:PackageConfig.RegPackagesKey -ProductGUID $global:PackageConfig.ProductGUID -App $global:PackageConfig.App -ScriptRoot $scriptRoot -AppRootFolder $global:PackageConfig.AppRootFolder -AppVendor $global:PackageConfig.AppVendor
 				}
 				else {
 					Write-Log -Message "No need to unregister package(s) now..." -Source $deployAppScriptFriendlyName
