@@ -6640,14 +6640,21 @@ function Register-NxtPackage {
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
 		try {
-			Copy-File -Path "$ScriptRoot" -Destination "$App\neo42-Install\" -Recurse
-			Copy-File -Path "$ScriptParentPath\Deploy-Application.ps1" -Destination "$App\neo42-Install\"
+			@(
+				"$ScriptRoot",
+				"$ScriptParentPath\Deploy-Application.ps1",
+				"$ScriptParentPath\COPYING",
+				"$ScriptParentPath\COPYING.lesser",
+				"$ScriptParentPath\README.txt",
+				"$global:Neo42PackageConfigPath",
+				"$global:Neo42PackageConfigValidationPath",
+				"$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)"
+			) | ForEach-Object {
+				Copy-File -Path "$_" -Destination "$App\neo42-Install\"
+			}
 			if ($true -eq (Test-Path "$ScriptParentPath\DeployNxtApplication.exe")) {
 				Copy-File -Path "$ScriptParentPath\DeployNxtApplication.exe" -Destination "$App\neo42-Install\" -ContinueOnError $true
 			}
-			Copy-File -Path "$global:Neo42PackageConfigPath" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$global:Neo42PackageConfigValidationPath" -Destination "$App\neo42-Install\"
-			Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$App\neo42-Install\"
 
 			Write-Log -message "Re-write all management registry entries for the application package..." -Source ${cmdletName}
 			## to prevent obsolete entries from old VBS packages
