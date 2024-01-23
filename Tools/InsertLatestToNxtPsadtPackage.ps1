@@ -315,6 +315,7 @@ function Update-NxtPSAdtPackage {
     Copy-Item -Path "$LatestVersionPath\DeployNxtApplication.exe" -Destination "$PackageToUpdatePath\DeployNxtApplication.exe" -Force
     Copy-Item -Path "$LatestVersionPath\COPYING.Lesser" -Destination "$PackageToUpdatePath\COPYING.Lesser" -Force
     Copy-Item -Path "$LatestVersionPath\COPYING" -Destination "$PackageToUpdatePath\COPYING" -Force
+    Copy-Item -Path "$LatestVersionPath\README.txt" -Destination "$PackageToUpdatePath\README.txt" -Force
 
             #also update packageconfig.json so it contains all default values
             ## remove entries: "AcceptedRepairExitCodes" and "AcceptedMSIRepairExitCodes" (just to be sure!)
