@@ -4,16 +4,9 @@
 .DESCRIPTION
 	The script is automatically dot-sourced by the AppDeployToolkitMain.ps1 script.
 .NOTES
-	Version: ##REPLACEVERSION##
-	ConfigVersion: 2023.10.31.1
-	Toolkit Exit Code Ranges:
-	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
-	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
-	70000 - 79999: Recommended for user customized exit codes in AppDeployToolkitExtensions.ps1
-.NOTES
 	This script has been extensively modified by neo42 GmbH, building upon the template provided by the PowerShell App Deployment Toolkit.
 	The "*-Nxt*" function name pattern is used by "neo42 GmbH" to avoid naming conflicts with the built-in functions of the toolkit.
-.NOTES
+
 	# LICENSE #
 	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 	You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
@@ -24,7 +17,13 @@
 
 	# MODIFICATION COPYRIGHT #
 	Copyright (c) 2024 neo42 GmbH, Germany.
-	Copyright (c) 2024 neo42 GmbH, Germany.
+
+	Version: ##REPLACEVERSION##
+	ConfigVersion: 2023.10.31.1
+	Toolkit Exit Code Ranges:
+	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
+	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
+	70000 - 79999: Recommended for user customized exit codes in AppDeployToolkitExtensions.ps1
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
@@ -207,7 +206,7 @@ function Add-NxtLocalGroup {
 	Process {
 		try {
 			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
-			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName -COMPUTERNAME $COMPUTERNAME
 			if ($false -eq $groupExists) {
 				[System.DirectoryServices.DirectoryEntry]$objGroup = $adsiObj.Create("Group", $GroupName)
 				$objGroup.SetInfo() | Out-Null
@@ -277,13 +276,13 @@ function Add-NxtLocalGroupMember {
 	}
 	Process {
 		try {
-			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName -COMPUTERNAME $COMPUTERNAME
 			if ($false -eq $groupExists) {
 				Write-Output $false
 				return
 			}
 			[System.DirectoryServices.DirectoryEntry]$targetGroup = [ADSI]"WinNT://$COMPUTERNAME/$GroupName,group"
-			[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName
+			[bool]$userExists = Test-NxtLocalUserExists -UserName $MemberName -ComputerName $COMPUTERNAME
 			if ($false -eq $userExists ) {
 				Write-Output $false
 				return
@@ -376,7 +375,7 @@ function Add-NxtLocalUser {
 	Process {
 		try {
 			[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
-			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName -ComputerName $COMPUTERNAME
 			if ($false -eq $userExists) {
 				[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
 				$objUser.SetInfo() | Out-Null
@@ -767,7 +766,7 @@ function Block-NxtAppExecution {
 			Remove-Folder -Path $blockExecutionTempPath
 		}
 		try {
-			New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+			New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -ProtectRules $true | Out-Null
 		}
 		catch {
 			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Source ${CmdletName}
@@ -1254,14 +1253,18 @@ function Complete-NxtPackageInstallation {
 					[bool]$thisUninstallKeyToHideIs64Bit = $false
 				}
 			}
-			Write-Log -Message "Hiding uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$thisUninstallKeyToHideIs64Bit], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
+			Write-Log -Message "Searching for uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$thisUninstallKeyToHideIs64Bit], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
 			[array]$installedAppResults = Get-NxtInstalledApplication @hideNxtParams | Where-Object Is64BitApplication -eq $thisUninstallKeyToHideIs64Bit
 			if ($installedAppResults.Count -eq 1) {
+				Write-Log -Message "Hiding uninstall key with KeyName [$($installedAppResults.UninstallSubkey)]" -Source ${CmdletName}
 				[string]$wowEntry = [string]::Empty
 				if ($false -eq $thisUninstallKeyToHideIs64Bit -and $true -eq $Is64Bit) {
 					[string]$wowEntry = "\Wow6432Node"
 				}
 				Set-RegistryKey -Key "HKLM:\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent" -Type "Dword" -Value "1"
+			}
+			else {
+				Write-Log -Message "Uninstall key search resulted in $($installedAppResults.Count) findings. No uninstall key will be hidden because unique result is required." -Severity 2 -Source ${CmdletName}
 			}
 		}
 		if ($true -eq $UserPartOnInstallation) {
@@ -1295,7 +1298,7 @@ function Complete-NxtPackageInstallation {
 			## note: we always use the script from current application package source folder (it is basically identical in each package)
 			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
-			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait -ExitOnProcessFailure $false
+			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait -ExitOnProcessFailure $false -PassThru | Out-Null
 		}
 		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots) {
@@ -1585,7 +1588,11 @@ function Copy-NxtDesktopShortcuts {
 	Process {
 		try {
 			foreach ($value in $StartMenuShortcutsToCopyToDesktop) {
-				Write-Log -Message "Copying start menu shortcut'$StartMenu\$($value.Source)' to '$Desktop'..." -Source ${cmdletName}
+				if ($true -eq [string]::IsNullOrEmpty($value.Source)) {
+					Write-Log -Message "Source is empty. Skipping copy of shortcut." -Severity 1 -Source ${cmdletName}
+					continue
+				}
+				Write-Log -Message "Copying start menu shortcut '$StartMenu\$($value.Source)' to '$Desktop'..." -Source ${cmdletName}
 				if ($true -eq $(Test-Path -Path "$StartMenu\$($value.Source)")) {
 					Copy-File -Path "$StartMenu\$($value.Source)" -Destination "$Desktop\$($value.TargetName)"
 					Write-Log -Message "Shortcut succesfully copied." -Source ${cmdletName}
@@ -2794,9 +2801,14 @@ function Execute-NxtNullsoft {
 		if ($Action -eq 'Uninstall') {
 			## Wait until all uninstallation processes hopefully terminated
 			Write-Log -Message "Wait while one of the possible uninstallation processes is still running..." -Source ${CmdletName}
-			[bool]$resultAU_process = Watch-NxtProcessIsStopped -ProcessName "AU_.exe" -Timeout "500"
-			[bool]$resultUn_Aprocess = Watch-NxtProcessIsStopped -ProcessName "Un_A.exe" -Timeout "500"
-			if (($false -eq $resultAU_process) -or ($false -eq $resultUn_Aprocess)) {
+			[bool]$uninstallProcessDidNotTerminate = $false
+			foreach ($process in @("AU_.exe", "Un_A.exe", "Un.exe")) {
+				$uninstallProcessDidNotTerminate = $false -eq (Watch-NxtProcessIsStopped -ProcessName $process -Timeout "500")
+				if ($true -eq $uninstallProcessDidNotTerminate) {
+					break
+				}
+			}
+			if ($true -eq $uninstallProcessDidNotTerminate) {
 				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of 500s!" -Severity 2 -Source ${CmdletName}
 			}
 			else {
@@ -3438,7 +3450,7 @@ function Format-NxtPackageSpecificVariables {
 	}
 	Process {
 		## Get String from object and Expand String if requested
-		[System.Collections.Generic.Dictionary[string, string]]$packageSpecificVariableDictionary = New-Object "System.Collections.Generic.Dictionary[string,string]"
+		[System.Collections.Generic.Dictionary[string, string]]$packageSpecificVariableDictionary = [Collections.Generic.Dictionary[string, string]]::new( [StringComparer]::InvariantCultureIgnoreCase )
 		foreach ($packageSpecificVariable in $PackageConfig.PackageSpecificVariablesRaw) {
 			if ($null -ne $packageSpecificVariable.ExpandVariables) {
 				$packageSpecificVariableDictionary.Add($packageSpecificVariable.Name, $ExecutionContext.InvokeCommand.ExpandString($packageSpecificVariable.Value))
@@ -5612,13 +5624,17 @@ function Initialize-NxtEnvironment {
 		Get-NxtPackageConfig -Path $PackageConfigPath
 		## $App and $SetupCfgPathOverride are not expanded at this point so we have to reset them after the Get-NxtPackageConfig.
 		## $AppRootFolder and $RegPackagesKey have to be taken from the newly set $global:PackageConfig.
+		if ($true -eq [string]::IsNullOrEmpty($global:PackageConfig.AppRootFolder)) {
+			Write-Log -Message "Required parameter 'AppRootFolder' is not set. Please check your PackageConfig.json" -Severity 1 -Source ${CmdletName}
+			throw "Required parameter 'AppRootFolder' is not set. Please check your PackageConfig.json"
+		}
 		[string]$global:PackageConfig.AppRootFolder = Initialize-NxtAppRootFolder -BaseName $global:PackageConfig.AppRootFolder -RegPackagesKey $global:PackageConfig.RegPackagesKey
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
 		$SetupCfgPathOverride = "$env:SystemRoot\system32\config\systemprofile\AppData\Roaming\neo42\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 		## if $App still is not valid we have to throw an error.
 		if ($false -eq [System.IO.Path]::IsPathRooted($App)) {
-			Write-Log -Message "$App is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-			throw "App is not set correctly. Please check your PackageConfig.json"
+			Write-Log -Message "'$App' is not a valid path. Please check your PackageConfig.json" -Severity 1 -Source ${CmdletName}
+			throw "'App' is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
 			if ($DeploymentType -eq "Install") {
@@ -11532,7 +11548,7 @@ function Unregister-NxtPackage {
 								## note: we always use the script from current application package source folder (it is basically identical in each package)
 								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
-								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait -ExitOnProcessFailure $false
+								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait -ExitOnProcessFailure $false -PassThru | Out-Null
 								$removalCounter += 1
 							}
 							else {
@@ -11573,6 +11589,7 @@ function Unregister-NxtPackage {
 							NoWait = $true
 							WorkingDirectory = $env:TEMP
 							ExitOnProcessFailure = $false
+							PassThru = $true
 						}
 						## we use temp es workingdirectory to avoid issues with locked directories
 						if (
@@ -11581,7 +11598,7 @@ function Unregister-NxtPackage {
 							) {
 							$executeProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $executeProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
 						}
-						Execute-Process @executeProcessSplat
+						Execute-Process @executeProcessSplat | Out-Null
 					}
 					else {
 						Write-Log -Message "No current 'App' path [$App] available, cleanup script will not be executed." -Source ${CmdletName}
