@@ -11,13 +11,31 @@
 #>
 
 #requires -module Pester -version 5
-##Install-Module pester -SkipPublisherCheck -force
 Import-Module Pester
+
+# Pester config
 [PesterConfiguration]$config = [PesterConfiguration]::Default
 $config.TestResult.Enabled = $true
 $config.TestResult.OutputPath = "$PSScriptRoot\testresults.xml"
 $config.TestResult.OutputFormat = 'NUnitXml'
 $config.Should.ErrorAction = 'Continue'
-Import-Module $PSScriptRoot\shared.psm1
-Set-Location $PSScriptRoot
+$config.Output.Verbosity = 'Detailed'
+
+# Set location
+Set-Location $PSScriptRoot\..\
+
+# Create process test binary
+$compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
+$compilerArgs = "/target:winexe /out:$PSScriptRoot\simple.exe $PSScriptRoot\simple.cs"
+Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait
+
+# Mute Toolkit logging
+(Get-Content "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitConfig.xml" -Raw).Replace('<Toolkit_LogWriteToHost>True</Toolkit_LogWriteToHost>', '<Toolkit_LogWriteToHost>False</Toolkit_LogWriteToHost>') | 
+    Out-File "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitConfig.xml"
+
+# Import PSADT
+[string]$moduleAppDeployToolkitMain = "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitMain.ps1"
+. $moduleAppDeployToolkitMain -DisableLogging
+
+# Run Pester
 Invoke-Pester -Configuration $config

@@ -2,7 +2,7 @@ Describe "Get-NxtProcessTree" {
     Context "When given a valid process ID" {
         BeforeAll {
             [System.Diagnostics.Process]$process = [System.Diagnostics.Process]::GetCurrentProcess()
-            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath simple.exe -PassThru
+            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath ./test/simple.exe -PassThru
             [ciminstance]$service = Get-CimInstance -Class Win32_Service -Filter "State = 'Running'" | Select-Object -First 1
             [System.Diagnostics.Process]$serviceProcess = Get-Process -Id $service.ProcessId
         }
