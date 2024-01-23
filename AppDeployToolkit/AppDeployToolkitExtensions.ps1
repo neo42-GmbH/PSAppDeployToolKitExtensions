@@ -6636,7 +6636,7 @@ function Register-NxtPackage {
 				Copy-File -Path "$_" -Destination "$App\neo42-Install\"
 			}
 			if ($true -eq (Test-Path "$ScriptParentPath\DeployNxtApplication.exe")) {
-				Copy-File -Path "$ScriptParentPath\DeployNxtApplication.exe" -ContinueOnError $true
+				Copy-File -Path "$ScriptParentPath\DeployNxtApplication.exe" -Destination "$App\neo42-Install\" -ContinueOnError $true
 			}
 
 			Write-Log -message "Re-write all management registry entries for the application package..." -Source ${cmdletName}
