@@ -26,10 +26,10 @@ following VariableSets of config files are useable (in order of availability):
 | useable script variable | set content | resulting variable value |
 | ----------------------------------- | ----------------------------------- | ----------------------------------- |
 | *- filesystem -* |||
-| $global:ProgramFilesDir | ${ProgramFiles} | C:\Program Files |
+| $global:ProgramFilesDir | $ProgramFiles | C:\Program Files |
 | $global:ProgramFilesDirx86 | ${ProgramFiles(x86)} | C:\Program Files |
 | $global:ProgramW6432 | '' | |
-| $global:CommonFilesDir | ${CommonProgramFiles(x86)} | C:\Program Files\Common Files |
+| $global:CommonFilesDir | ${CommonProgramFiles} | C:\Program Files\Common Files |
 | $global:CommonFilesDirx86 | ${CommonProgramFiles(x86)} | C:\Program Files\Common Files |
 | $global:CommonProgramW6432 | '' | |
 | $global:System | $SystemRoot\System32 | C:\Windows\System32 |
