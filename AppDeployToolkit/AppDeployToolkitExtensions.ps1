@@ -6639,9 +6639,9 @@ function Register-NxtPackage {
 	}
 	Process {
 		Write-Log -Message "Registering package..." -Source ${cmdletName}
+		Copy-File "$ScriptRoot" -Destination "$App\neo42-Install" -Recurse
 		try {
 			@(
-				"$ScriptRoot",
 				"$ScriptParentPath\Deploy-Application.ps1",
 				"$ScriptParentPath\COPYING",
 				"$ScriptParentPath\COPYING.lesser",
