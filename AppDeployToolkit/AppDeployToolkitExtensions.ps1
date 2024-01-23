@@ -4,16 +4,9 @@
 .DESCRIPTION
 	The script is automatically dot-sourced by the AppDeployToolkitMain.ps1 script.
 .NOTES
-	Version: ##REPLACEVERSION##
-	ConfigVersion: 2023.10.31.1
-	Toolkit Exit Code Ranges:
-	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
-	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
-	70000 - 79999: Recommended for user customized exit codes in AppDeployToolkitExtensions.ps1
-.NOTES
 	This script has been extensively modified by neo42 GmbH, building upon the template provided by the PowerShell App Deployment Toolkit.
 	The "*-Nxt*" function name pattern is used by "neo42 GmbH" to avoid naming conflicts with the built-in functions of the toolkit.
-.NOTES
+
 	# LICENSE #
 	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 	You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
@@ -24,6 +17,13 @@
 
 	# MODIFICATION COPYRIGHT #
 	Copyright (c) 2024 neo42 GmbH, Germany.
+
+	Version: ##REPLACEVERSION##
+	ConfigVersion: 2023.10.31.1
+	Toolkit Exit Code Ranges:
+	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
+	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
+	70000 - 79999: Recommended for user customized exit codes in AppDeployToolkitExtensions.ps1
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
