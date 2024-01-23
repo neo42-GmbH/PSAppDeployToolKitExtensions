@@ -98,6 +98,33 @@ Describe "Coding Guidelines" -ForEach @(
                 }
             }
         }
+        It "Calls of functions should have params with defaults set explicitly" -Skip {
+            if ($(Split-Path $path -Leaf) -in @("Deploy-Application.ps1", "CustomAppDeployToolkitUi.ps1")){
+                Set-ItResult -Skipped
+                return
+            }
+            [System.Management.Automation.Language.FunctionDefinitionAst[]]$extensionFunctions = $ast.FindAll({ 
+                $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] 
+            }, $true)
+            [System.Management.Automation.Language.CommandAst[]]$commandCallsAsts = $ast.FindAll({ 
+                param($ast)
+                $ast -is [System.Management.Automation.Language.CommandAst] -and 
+                $ast.GetCommandName() -in $extensionFunctions.Name -and
+                $ast.GetCommandName() -notin @("Write-Log")
+            }, $true)
+            foreach ($commandAst in $commandCallsAsts) {
+                [System.Management.Automation.Language.FunctionDefinitionAst]$calledFunction = $extensionFunctions | Where-Object {$_.Name -eq $commandAst.GetCommandName()}
+                [System.Management.Automation.Language.ParameterAst[]]$calledFunctionRequiredParameters = $calledFunction.Body.ParamBlock.Parameters | Where-Object { 
+                    $null -ne $_.DefaultValue
+                }
+                foreach ($parameterAst in $calledFunctionRequiredParameters) {
+                    if ($true -in $commandAst.CommandElements.Splatted) { #TODO resolve splatting
+                        return
+                    }
+                    $commandAst.CommandElements.ParameterName | Should -Contain $parameterAst.Name.VariablePath.UserPath -Because "the parameter '$($parameterAst.Name.VariablePath.UserPath)' of function '$($calledFunction.Name)' has default value but is not set explicitly (line $($commandAst.Extent.StartLineNumber))"
+                }
+            }
+        }
         It "Indentations should be made using tabulator" {
             $currentLine = 1
             $content | ForEach-Object {

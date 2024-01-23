@@ -74,12 +74,11 @@
 .EXAMPLE
 	Show-WelcomePrompt -ProcessDescriptions 'Lotus Notes, Microsoft Word' -CloseAppsCountdown 600 -AllowDefer -DeferTimes 10 -ProcessObjectsNames "code" -ProcessObjectsDescriptions "visual studio code"
 .NOTES
-	This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
-.NOTES
 	This script is based on the PSAppDeployToolkit Show-InstallationWelcome function.
 	Significant changes have been applied by neo42 GmbH to enhance capabilities and user experience.
 	This script includes mainly modified code extracted from the PSAppDeployToolkit.
-.NOTES
+	This is an internal script function and should typically not be called directly. It is used by the Show-NxtInstallationWelcome prompt to display a custom prompt.
+
 	# LICENSE #
 	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 	You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
@@ -89,7 +88,7 @@
 	Copyright (C) 2017 - Sean Lillis, Dan Cunningham, Muhammad Mashwani, Aman Motazedian.
 
 	# MODIFICATION COPYRIGHT #
-	Copyright (c) 2023 neo42 GmbH, Germany.
+	Copyright (c) 2024 neo42 GmbH, Germany.
 .LINK
 	https://neo42.de/psappdeploytoolkit
 #>
@@ -2250,7 +2249,7 @@ else {
 }
 & $fillCloseApplicationList $runningProcesses
 
-[string]$names = $runningProcesses | Select-Object -ExpandProperty Name
+[string]$names = $runningProcesses | Select-Object -ExpandProperty Name -Unique
 $control_PopupListText.Text = $names.Trim()
 
 [Int32]$outNumber = $null
