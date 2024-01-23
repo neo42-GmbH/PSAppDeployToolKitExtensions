@@ -2793,9 +2793,14 @@ function Execute-NxtNullsoft {
 		if ($Action -eq 'Uninstall') {
 			## Wait until all uninstallation processes hopefully terminated
 			Write-Log -Message "Wait while one of the possible uninstallation processes is still running..." -Source ${CmdletName}
-			[bool]$resultAU_process = Watch-NxtProcessIsStopped -ProcessName "AU_.exe" -Timeout "500"
-			[bool]$resultUn_Aprocess = Watch-NxtProcessIsStopped -ProcessName "Un_A.exe" -Timeout "500"
-			if (($false -eq $resultAU_process) -or ($false -eq $resultUn_Aprocess)) {
+			[bool]$uninstallProcessDidNotTerminate = $false
+			foreach ($process in @("AU_.exe", "Un_A.exe", "Un.exe")) {
+				$uninstallProcessDidNotTerminate = $false -eq (Watch-NxtProcessIsStopped -ProcessName $process -Timeout "500")
+				if ($true -eq $uninstallProcessDidNotTerminate) {
+					break
+				}
+			}
+			if ($true -eq $uninstallProcessDidNotTerminate) {
 				Write-Log -Message "Note: an uninstallation process was still running after the waiting period of 500s!" -Severity 2 -Source ${CmdletName}
 			}
 			else {
