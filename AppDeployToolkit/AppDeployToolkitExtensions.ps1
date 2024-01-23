@@ -7952,6 +7952,15 @@ function Set-NxtFolderPermissions {
 			Write-Log -Message "Folder '$Path' does not exist!" -Source ${cmdletName} -Severity 3
 			throw "Folder '$Path' does not exist!"
 		}
+		if ($null -eq (Get-Module Microsoft.PowerShell.Security)) {
+			try {
+				Import-Module -Name Microsoft.PowerShell.Security -ErrorAction Stop
+			}
+			catch {
+				Write-Log -Message "Failed to import Microsoft.PowerShell.Security module. `n$(Resolve-Error)" -Severity 1 -Source ${cmdletName}
+				throw "Failed to import Microsoft.PowerShell.Security module. `n$(Resolve-Error)"
+			}
+		}
 		if ($false -eq [string]::IsNullOrEmpty($CustomDirectorySecurity)) {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
 		}
@@ -10287,6 +10296,15 @@ function Test-NxtFolderPermissions {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		if ($null -eq (Get-Module Microsoft.PowerShell.Security)) {
+			try {
+				Import-Module -Name Microsoft.PowerShell.Security -ErrorAction Stop
+			}
+			catch {
+				Write-Log -Message "Failed to import Microsoft.PowerShell.Security module. `n$(Resolve-Error)" -Severity 1 -Source ${cmdletName}
+				throw "Failed to import Microsoft.PowerShell.Security module. `n$(Resolve-Error)"
+			}
+		}
 		if ($null -ne $CustomDirectorySecurity) {
 			[System.Security.AccessControl.DirectorySecurity]$directorySecurity = $CustomDirectorySecurity
 		}
