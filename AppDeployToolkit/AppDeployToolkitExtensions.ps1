@@ -5624,13 +5624,17 @@ function Initialize-NxtEnvironment {
 		Get-NxtPackageConfig -Path $PackageConfigPath
 		## $App and $SetupCfgPathOverride are not expanded at this point so we have to reset them after the Get-NxtPackageConfig.
 		## $AppRootFolder and $RegPackagesKey have to be taken from the newly set $global:PackageConfig.
+		if ($true -eq [string]::IsNullOrEmpty($global:PackageConfig.AppRootFolder)) {
+			Write-Log -Message "Required parameter 'AppRootFolder' is not set. Please check your PackageConfig.json" -Severity 1 -Source ${CmdletName}
+			throw "Required parameter 'AppRootFolder' is not set. Please check your PackageConfig.json"
+		}
 		[string]$global:PackageConfig.AppRootFolder = Initialize-NxtAppRootFolder -BaseName $global:PackageConfig.AppRootFolder -RegPackagesKey $global:PackageConfig.RegPackagesKey
 		$App = $ExecutionContext.InvokeCommand.ExpandString($global:PackageConfig.App)
 		$SetupCfgPathOverride = "$env:SystemRoot\system32\config\systemprofile\AppData\Roaming\neo42\$($global:Packageconfig.RegPackagesKey)\$($global:Packageconfig.PackageGUID)"
 		## if $App still is not valid we have to throw an error.
 		if ($false -eq [System.IO.Path]::IsPathRooted($App)) {
-			Write-Log -Message "$App is not a valid path. Please check your PackageConfig.json" -Severity 3 -Source ${CmdletName}
-			throw "App is not set correctly. Please check your PackageConfig.json"
+			Write-Log -Message "'$App' is not a valid path. Please check your PackageConfig.json" -Severity 1 -Source ${CmdletName}
+			throw "'App' is not set correctly. Please check your PackageConfig.json"
 		}
 		if ($DeploymentType -notlike "*Userpart*") {
 			if ($DeploymentType -eq "Install") {
