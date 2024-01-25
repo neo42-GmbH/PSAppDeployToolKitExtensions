@@ -10092,7 +10092,7 @@ function Test-NxtObjectValidation {
 						}
 						## check for sub objects
 						foreach ($subkey in $ValidationRule.$validationRuleKey.SubKeys.PSObject.Properties.Name) {
-							Test-NxtObjectValidation -ValidationRule $ValidationRule.$validationRuleKey.SubKeys.$subkey.SubKeys -ObjectToValidate $ObjectToValidate.$validationRuleKey.$subkey -ParentObjectName $validationRuleKey -ContinueOnError $ContinueOnError -ContainsDirectValues $false
+							Test-NxtObjectValidation -ValidationRule $ValidationRule.$validationRuleKey.SubKeys.$subkey.SubKeys -ObjectToValidate $ObjectToValidate.$validationRuleKey.$subkey -ParentObjectName $validationRuleKey -ContinueOnError $ContinueOnError -ContainsDirectValues:$false
 						}
 					}
 					{
@@ -10278,7 +10278,7 @@ function Test-NxtPackageConfig {
 		[PSCustomObject]$validationRules = Get-Content $ValidationRulePath -Raw | Out-String | ConvertFrom-Json
 	}
 	Process {
-			Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError $ContinueOnError -ParentObjectName "PackageConfig" -ContainsDirectValues $false
+			Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError $ContinueOnError -ParentObjectName "PackageConfig" -ContainsDirectValues:$false
 		}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
