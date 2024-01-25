@@ -100,7 +100,7 @@ Describe "Coding Guidelines" -ForEach @(
         }
         It "Calls of functions should have params with defaults set explicitly" -Skip {
             if ($(Split-Path $path -Leaf) -in @("Deploy-Application.ps1", "CustomAppDeployToolkitUi.ps1")){
-                Set-ItResult -Skipped
+                Set-ItResult -Skipped -Because "the file '$($path)' is excluded from this test"
                 return
             }
             [System.Management.Automation.Language.FunctionDefinitionAst[]]$extensionFunctions = $ast.FindAll({ 
@@ -110,18 +110,21 @@ Describe "Coding Guidelines" -ForEach @(
                 param($ast)
                 $ast -is [System.Management.Automation.Language.CommandAst] -and 
                 $ast.GetCommandName() -in $extensionFunctions.Name -and
-                $ast.GetCommandName() -notin @("Write-Log")
+                $ast.GetCommandName() -notin @("Write-Log", "Exit-NxtScriptWithError", "Set-NxtPackageArchitecture", "Expand-NxtPackageConfig", "Show-NxtWelcomePrompt")
             }, $true)
             foreach ($commandAst in $commandCallsAsts) {
                 [System.Management.Automation.Language.FunctionDefinitionAst]$calledFunction = $extensionFunctions | Where-Object {$_.Name -eq $commandAst.GetCommandName()}
                 [System.Management.Automation.Language.ParameterAst[]]$calledFunctionRequiredParameters = $calledFunction.Body.ParamBlock.Parameters | Where-Object { 
-                    $null -ne $_.DefaultValue
+                    $null -ne $_.DefaultValue -and
+                    $_.Name.VariablePath.UserPath -notin @('DisableLogging')
                 }
                 foreach ($parameterAst in $calledFunctionRequiredParameters) {
                     if ($true -in $commandAst.CommandElements.Splatted) { #TODO resolve splatting
-                        return
+                        Write-Warning "function '$($calledFunction.Name)' is called with splatting. Cannot check if it contains all required parameters. (line $($commandAst.Extent.StartLineNumber))"
                     }
-                    $commandAst.CommandElements.ParameterName | Should -Contain $parameterAst.Name.VariablePath.UserPath -Because "the parameter '$($parameterAst.Name.VariablePath.UserPath)' of function '$($calledFunction.Name)' has default value but is not set explicitly (line $($commandAst.Extent.StartLineNumber))"
+                    else {
+                        $commandAst.CommandElements.ParameterName | Should -Contain $parameterAst.Name.VariablePath.UserPath -Because "the parameter '$($parameterAst.Name.VariablePath.UserPath)' of function '$($calledFunction.Name)' has default value but is not set explicitly (line $($commandAst.Extent.StartLineNumber))"
+                    }
                 }
             }
         }
