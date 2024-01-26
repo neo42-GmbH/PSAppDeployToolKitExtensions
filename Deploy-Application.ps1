@@ -124,7 +124,10 @@ function Start-NxtProcess {
 	}
 }
 #endregion
-## Only use PowerShell Desktop system paths for dynamic module loading
+## Only use system environment variables and modules during script execution
+foreach ($variable in [System.Environment]::GetEnvironmentVariables("User").Keys) {
+    [System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, "Machine"), "Process")
+}
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules","$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
 if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
