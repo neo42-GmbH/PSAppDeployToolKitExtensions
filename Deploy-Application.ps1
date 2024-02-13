@@ -124,6 +124,13 @@ function Start-NxtProcess {
 	}
 }
 #endregion
+## Only use system environment variables and modules during script execution
+if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
+	foreach ($variable in [System.Environment]::GetEnvironmentVariables("User").Keys) {
+		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, "Machine"), "Process")
+	}
+}
+$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules","$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
 if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
 	Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
