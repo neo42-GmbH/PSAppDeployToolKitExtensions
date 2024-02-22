@@ -4031,7 +4031,7 @@ function Get-NxtIsSystemProcess {
 		System.Boolean.
 	.EXAMPLE
 		Get-NxtIsSystemProcess 1004
-	.LINKP
+	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
