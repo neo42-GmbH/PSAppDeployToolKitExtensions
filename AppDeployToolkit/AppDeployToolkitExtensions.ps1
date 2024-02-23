@@ -1158,6 +1158,12 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER StartMenuShortcutsToCopyToDesktop
 		Specifies the links from the start menu which should be copied to the desktop.
 		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the neo42PackageConfig.json.
+	.PARAMETER Desktop
+		Determines the path to the Desktop, e.g., $envCommonDesktop or $envUserDesktop.
+		Defaults to $envCommonDesktop.
+	.PARAMETER StartMenu
+		Defines the path to the Start Menu, e.g., $envCommonStartMenu or $envUserStartMenu.
+		Defaults to $envCommonStartMenu.T
 	.PARAMETER UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
@@ -3057,11 +3063,17 @@ function Exit-NxtScriptWithError {
 	.PARAMETER TempRootFolder
 		The path to the temporary folder targeted for cleaning. To ensure that all internal processes work correctly it is highly recommended to keep the default value!
 		Defaults to $env:SystemDrive\n42Tmp.
+	.PARAMETER HoursToKeep
+		The age threshold, in hours, for retaining files and folders in the temporary folder. Files and folders older than this threshold will be deleted.
+		Defaults to 96 (4 days).
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
 	.PARAMETER NxtTempDirectories
 		Defines a list of TempFolders to be cleared.
 		Defaults to $script:NxtTempDirectories defined in the AppDeployToolkitMain.
+	.PARAMETER BlockExecution
+		Indicates if the execution of applications has been blocked. This function will only unblock applications if this variable is set to $true.
+		Defaults to $Script:BlockExecution.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
 	.OUTPUTS
@@ -5501,6 +5513,11 @@ function Initialize-NxtAppRootFolder {
 		This function is designed to prepare the application root directory (AppRootFolder) by verifying paths, setting appropriate permissions, and creating necessary directories.
 		It should be invoked by the 'Initialize-NxtEnvironment' function as part of a broader initialization process.
 		The function ensures that the AppRootFolder is correctly configured.
+	.PARAMETER BaseName
+		The base name of the folder. This parameter is mandatory.
+	.PARAMETER RegPackagesKey
+		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Initialize-NxtAppRootFolder
 	.OUTPUTS
@@ -7771,6 +7788,15 @@ function Resolve-NxtDependentPackage {
 	.PARAMETER PackageGUID
 		Specifies the registry key name used for the package's wrapper uninstall entry.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files. This parameter is essential for locating and removing the actual application files. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppVendor
+		Defines the name of the application vendor.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppRootFolder
+		Defines the root folder of the application package. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ScriptRoot
+		Defines the parent directory of the script. It is essential for locating associated scripts and resources used during the uninstallation process. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Resolve-NxtDependentPackages -DependentPackages $global:PackageConfig.DependentPackages
 		This example resolves the installation status of dependent packages using the global package configuration.
