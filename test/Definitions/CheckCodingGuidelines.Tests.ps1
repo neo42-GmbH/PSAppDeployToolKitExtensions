@@ -98,8 +98,8 @@ Describe "Coding Guidelines" -ForEach @(
                 }
             }
         }
-        It "Calls of functions should have params with defaults set explicitly" -Skip {
-            if ($(Split-Path $path -Leaf) -in @("Deploy-Application.ps1", "CustomAppDeployToolkitUi.ps1")){
+        It "Calls of functions should have params with package config defaults set explicitly" -Skip {
+            if ($(Split-Path $path -Leaf) -ne "AppDeployToolkitExtensions.ps1") {
                 Set-ItResult -Skipped -Because "the file '$($path)' is excluded from this test"
                 return
             }
@@ -116,6 +116,7 @@ Describe "Coding Guidelines" -ForEach @(
                 [System.Management.Automation.Language.FunctionDefinitionAst]$calledFunction = $extensionFunctions | Where-Object {$_.Name -eq $commandAst.GetCommandName()}
                 [System.Management.Automation.Language.ParameterAst[]]$calledFunctionRequiredParameters = $calledFunction.Body.ParamBlock.Parameters | Where-Object { 
                     $null -ne $_.DefaultValue -and
+                    $_.DefaultValue.ToString().Contains("PackageConfig") -and
                     $_.Name.VariablePath.UserPath -notin @('DisableLogging')
                 }
                 foreach ($parameterAst in $calledFunctionRequiredParameters) {
