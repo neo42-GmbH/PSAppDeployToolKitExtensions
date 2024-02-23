@@ -1155,7 +1155,10 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER DesktopShortcut
 		Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
 		Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
-	.PARAMETER $UserPartDir
+	.PARAMETER StartMenuShortcutsToCopyToDesktop
+		Specifies the links from the start menu which should be copied to the desktop.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the neo42PackageConfig.json.
+	.PARAMETER UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
 	.PARAMETER Wow6432Node
@@ -1352,7 +1355,7 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER UserPartRevision
 		Specifies the UserPartRevision for this installation.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER $UserPartDir
+	.PARAMETER UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
 	.PARAMETER ScriptRoot
@@ -1569,7 +1572,7 @@ function Copy-NxtDesktopShortcuts {
 		By default it copies the shortcuts defined under "CommonStartMenuShortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop.
 	.PARAMETER StartMenuShortcutsToCopyToDesktop
 		Specifies the links from the start menu which should be copied to the desktop.
-		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the eo42PackageConfig.json.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the neo42PackageConfig.json.
 	.PARAMETER Desktop
 		Determines the path to the Desktop, e.g., $envCommonDesktop or $envUserDesktop.
 		Defaults to $envCommonDesktop.
@@ -1940,7 +1943,7 @@ function Execute-NxtBitRockInstaller {
 			Write-Log -Message "Wait while an uninstallation process is still running..." -Source ${CmdletName}
 			## wait for process 5 times, BitRock uninstaller can close and reappear several times
 			for ($i = 0; $i -lt 5; $i++) {
-				[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout 500 -IsWql:$false
+				[bool]$result_UninstallProcess = Watch-NxtProcessIsStopped -ProcessName "_Uninstall*" -Timeout 500
 				Start-Sleep 1
 			}
 			if ($false -eq $result_UninstallProcess) {
@@ -2576,7 +2579,7 @@ function Execute-NxtMSI {
 				New-Folder -Path $logFolder -ContinueOnError $false
 			}
 			if ($true -eq (Test-Path $sourceLogPath -PathType Leaf)) {
-				Move-NxtItem $sourceLogPath -Destination $Log -Force -ContinueOnError $true
+				Move-NxtItem $sourceLogPath -Destination $Log -Force
 			}
 			else {
 				Write-Log -Message "Log file [$sourceLogPath] not found. Skipping move of log file..." -Source ${CmdletName}
@@ -2821,7 +2824,7 @@ function Execute-NxtNullsoft {
 			Write-Log -Message "Wait while one of the possible uninstallation processes is still running..." -Source ${CmdletName}
 			[bool]$uninstallProcessDidNotTerminate = $false
 			foreach ($process in @("AU_.exe", "Un_A.exe", "Un.exe")) {
-				$uninstallProcessDidNotTerminate = $false -eq (Watch-NxtProcessIsStopped -ProcessName $process -Timeout "500" -IsWql:$false)
+				$uninstallProcessDidNotTerminate = $false -eq (Watch-NxtProcessIsStopped -ProcessName $process -Timeout "500")
 				if ($true -eq $uninstallProcessDidNotTerminate) {
 					break
 				}
@@ -3051,6 +3054,9 @@ function Exit-NxtScriptWithError {
 	.PARAMETER UserPartOnUnInstallation
 		Specifies if a Userpart should take place during uninstallation.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER TempRootFolder
+		The path to the temporary folder targeted for cleaning. To ensure that all internal processes work correctly it is highly recommended to keep the default value!
+		Defaults to $env:SystemDrive\n42Tmp.
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
 	.PARAMETER NxtTempDirectories
@@ -4740,6 +4746,9 @@ function Get-NxtRegisterOnly {
 	.PARAMETER ProductGUID
 		Specifies the ProductGUID of the software package.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 		This example detects if the target application is already installed and verifies conditions for a soft migration based on the values from the PackageConfig object.
@@ -4820,7 +4829,7 @@ function Get-NxtRegisterOnly {
 				if ( $false -eq ([string]::IsNullOrEmpty($SoftMigrationFileVersion)) ) {
 					[string]$currentlyDetectedFileVersion = (Get-Item -Path "$SoftMigrationFileName").VersionInfo.FileVersionRaw
 					Write-Log -Message "Currently detected file version [$($currentlyDetectedFileVersion)] for SoftMigration detection file [$SoftMigrationFileName] with expected version [$SoftMigrationFileVersion]." -Source ${cmdletName}
-					if ( (Compare-NxtVersion -DetectedVersion $currentlyDetectedFileVersion -TargetVersion $SoftMigrationFileVersion -HexMode $false) -ne "Update" ) {
+					if ( (Compare-NxtVersion -DetectedVersion $currentlyDetectedFileVersion -TargetVersion $SoftMigrationFileVersion) -ne "Update" ) {
 						Write-Log -Message "Application is already present (checked by FileVersion). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ..." -Source ${cmdletName}
 						Write-Output $true
 					}
@@ -4852,7 +4861,7 @@ function Get-NxtRegisterOnly {
 				Write-Log -Message 'Currently detected DisplayVersion is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
 				Write-Output $false
 			}
-			elseif ( (Compare-NxtVersion -DetectedVersion $currentlyDetectedDisplayVersion -TargetVersion $DisplayVersion -HexMode $false) -ne "Update" ) {
+			elseif ( (Compare-NxtVersion -DetectedVersion $currentlyDetectedDisplayVersion -TargetVersion $DisplayVersion) -ne "Update" ) {
 				Write-Log -Message 'Application is already present (checked by DisplayVersion). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
 				Write-Output $true
 			}
@@ -7759,6 +7768,9 @@ function Resolve-NxtDependentPackage {
 	.PARAMETER RegPackagesKey
 		The name of the Registry Key where all the packages are tracked.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageGUID
+		Specifies the registry key name used for the package's wrapper uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Resolve-NxtDependentPackages -DependentPackages $global:PackageConfig.DependentPackages
 		This example resolves the installation status of dependent packages using the global package configuration.
@@ -9072,7 +9084,7 @@ function Show-NxtInstallationWelcome {
 					}
 					# Update the process list right before closing, in case it changed
 					if ($processIdToIgnore -gt 0) {
-						[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore -IncludeChildProcesses $true -IncludeParentProcesses $true).ProcessId
+						[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 					}
 					[System.Diagnostics.Process[]]$runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -ProcessIdsToIgnore $processIdsToIgnore
 					# Close running processes
@@ -9129,7 +9141,7 @@ function Show-NxtInstallationWelcome {
 						}
 					}
 					if ($processIdToIgnore -gt 0) {
-						[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore -IncludeChildProcesses $true -IncludeParentProcesses $true).ProcessId
+						[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
 					}
 					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
@@ -9416,7 +9428,7 @@ function Show-NxtWelcomePrompt {
 	Process {
 		[int]$contiuneTypeValue = $ContinueType
 		# Convert to JSON in compressed form
-		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects -Depth 2
+		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects
 		[string]$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
 		[string]$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferTimes" -Value $DeferTimes
@@ -9696,7 +9708,7 @@ function Switch-NxtMSIReinstallMode {
 				}
 				else {
 					Write-Log -Message "Processing msi setup: double check ReinstallMode for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
-					switch ($(Compare-NxtVersion -DetectedVersion ($displayVersionResult.DisplayVersion) -TargetVersion $DisplayVersion -HexMode $false)) {
+					switch ($(Compare-NxtVersion -DetectedVersion ($displayVersionResult.DisplayVersion) -TargetVersion $DisplayVersion)) {
 						"Equal" {
 							Write-Log -Message "Found the expected display version." -Source ${cmdletName}
 						}
@@ -10092,7 +10104,7 @@ function Test-NxtObjectValidation {
 						}
 						## check for sub objects
 						foreach ($subkey in $ValidationRule.$validationRuleKey.SubKeys.PSObject.Properties.Name) {
-							Test-NxtObjectValidation -ValidationRule $ValidationRule.$validationRuleKey.SubKeys.$subkey.SubKeys -ObjectToValidate $ObjectToValidate.$validationRuleKey.$subkey -ParentObjectName $validationRuleKey -ContinueOnError $ContinueOnError -ContainsDirectValues:$false
+							Test-NxtObjectValidation -ValidationRule $ValidationRule.$validationRuleKey.SubKeys.$subkey.SubKeys -ObjectToValidate $ObjectToValidate.$validationRuleKey.$subkey -ParentObjectName $validationRuleKey -ContinueOnError $ContinueOnError
 						}
 					}
 					{
@@ -10278,7 +10290,7 @@ function Test-NxtPackageConfig {
 		[PSCustomObject]$validationRules = Get-Content $ValidationRulePath -Raw | Out-String | ConvertFrom-Json
 	}
 	Process {
-			Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError $ContinueOnError -ParentObjectName "PackageConfig" -ContainsDirectValues:$false
+			Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError $ContinueOnError -ParentObjectName "PackageConfig"
 		}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -11329,7 +11341,7 @@ function Uninstall-NxtOld {
 					}
 					if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
 						## Check if the installed package's version is lower than the current one's (else we don't remove old package)
-						if ("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "$regPackageGUID" -Value 'Version')" -TargetVersion "$AppVersion" -HexMode $false)" -ne "Update") {
+						if ("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "$regPackageGUID" -Value 'Version')" -TargetVersion "$AppVersion")" -ne "Update") {
 							[string]$regPackageGUID = $null
 						}
 					}
@@ -11443,12 +11455,12 @@ function Unregister-NxtOld {
 			($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) ) {
 				[string]$currentGUID = $PackageGUID
 				if ( ($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -and
-				(("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion" -HexMode $false)") -eq "Update") -and
+				(("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and
 				($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) ) {
 					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')
 				}
 				elseif ( ($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) -and
-				(("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion" -HexMode $false)") -eq "Update") -and
+				(("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and
 				($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')) ) {
 					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')
 				}
@@ -12000,11 +12012,11 @@ function Wait-NxtRegistryAndProcessCondition {
 			## Check Process Conditions
 			foreach ($processToWaitFor in ($ProcessesToWaitFor | Where-Object success -ne $true)) {
 				if ($true -eq $processToWaitFor.ShouldExist) {
-					$processToWaitFor.success = Watch-NxtProcess -ProcessName $processToWaitFor.Name -Timeout 0 -IsWql:$false
+					$processToWaitFor.success = Watch-NxtProcess -ProcessName $processToWaitFor.Name -Timeout 0
 					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
 				}
 				else {
-					$processToWaitFor.success = Watch-NxtProcessIsStopped -ProcessName $processToWaitFor.Name -Timeout 0 -IsWql:$false
+					$processToWaitFor.success = Watch-NxtProcessIsStopped -ProcessName $processToWaitFor.Name -Timeout 0
 					Write-Log -Message "Check if Process `"$($processToWaitFor.Name)`" not exists: $($processToWaitFor.success)" -Severity 1 -Source ${cmdletName}
 				}
 			}
