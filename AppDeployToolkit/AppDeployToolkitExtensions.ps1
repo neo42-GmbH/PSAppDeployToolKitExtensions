@@ -4058,7 +4058,7 @@ function Get-NxtIsSystemProcess {
 					Write-Log -Message "Process with ID '$ProcessId' is the system process." -Severity 3 -Source ${cmdletName}
 					return $true
 				}
-				else{
+				else {
 					Write-Log -Message "Failed to get owner of process with ID '$ProcessId'." -Severity 2 -Source ${cmdletName}
 					return $false
 				}
