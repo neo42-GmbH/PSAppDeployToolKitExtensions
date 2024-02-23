@@ -4046,9 +4046,6 @@ function Get-NxtIsSystemProcess {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($ProcessId -eq 4) {
-			return $true
-		}
 		[System.Management.ManagementObject]$process = Get-WmiObject -Class Win32_Process -Filter "ProcessID = $ProcessId"
 		if ($null -eq $process) {
 			Write-Log -Message "Failed to get process with ID '$ProcessId'." -Severity 2 -Source ${cmdletName}
@@ -4057,8 +4054,14 @@ function Get-NxtIsSystemProcess {
 		else {
 			[psobject]$owner = $process.GetOwner()
 			if ($null -eq $owner) {
-				Write-Log -Message "Failed to get owner of process with ID '$ProcessId'." -Severity 2 -Source ${cmdletName}
-				return $false
+				if ($ProcessId -eq 4 -and $process.Name -eq "System") {
+					Write-Log -Message "Process with ID '$ProcessId' is the system process." -Severity 3 -Source ${cmdletName}
+					return $true
+				}
+				else{
+					Write-Log -Message "Failed to get owner of process with ID '$ProcessId'." -Severity 2 -Source ${cmdletName}
+					return $false
+				}
 			}
 			else {
 				[System.Security.Principal.NTAccount]$account = New-Object System.Security.Principal.NTAccount("$($owner.Domain)\$($owner.User)")
