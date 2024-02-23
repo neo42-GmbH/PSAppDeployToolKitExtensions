@@ -692,7 +692,11 @@ function Block-NxtAppExecution {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$BlockScriptLocation = $global:PackageConfig.App
+		$BlockScriptLocation = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$PackageRoot = $scriptDirectory
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -706,7 +710,7 @@ function Block-NxtAppExecution {
 		}
 		[string]$commandToEncode =@"
 		'$($blockProcessName -join "','")' | ForEach-Object {
-			Remove-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\`$_" -Name "Debugger"
+			Remove-ItemProperty -Path "$regKeyAppExecution\`$_" -Name "Debugger"
 		}
 		Remove-Item -Recurse -Path "$blockExecutionTempPath"
 		Unregister-ScheduledTask -TaskPath "\" -TaskName "$schTaskBlockedAppsName" -Confirm:`$false
@@ -772,18 +776,15 @@ function Block-NxtAppExecution {
 			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Source ${CmdletName}
 			throw "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script."
 		}
-		Copy-Item -Path "$scriptRoot\*.*" -Destination $blockExecutionTempPath -Exclude 'thumbs.db' -Force -Recurse -ErrorAction 'SilentlyContinue'
-		## Build the debugger block value script
-		[string[]]$debuggerBlockScript = "strCommand = `"$PSHome\powershell.exe -ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -File `" & chr(34) & `"$blockExecutionTempPath\$scriptFileName`" & chr(34) & `" -ShowBlockedAppDialog -AsyncToolkitLaunch -ReferredInstallTitle `" & chr(34) & `"$installTitle`" & chr(34)"
-		$debuggerBlockScript += 'set oWShell = CreateObject("WScript.Shell")'
-		$debuggerBlockScript += 'oWShell.Run strCommand, 0, false'
-		$debuggerBlockScript | Out-File -FilePath "$blockExecutionTempPath\AppDeployToolkit_BlockAppExecutionMessage.vbs" -Force -Encoding 'Default' -ErrorAction 'SilentlyContinue'
-		[string]$debuggerBlockValue = "$envWinDir\System32\wscript.exe `"$blockExecutionTempPath\AppDeployToolkit_BlockAppExecutionMessage.vbs`""
+		## Copy the block execution required files to the persistent location
+		Copy-Item -Path "$PackageRoot\AppDeployToolkit\" -Destination "$blockExecutionTempPath\AppDeployToolkit\" -Exclude 'thumbs.db' -Recurse -Force -ErrorAction 'SilentlyContinue'
+		Copy-Item -Path "$PackageRoot\DeployNxtApplication.exe" -Destination $blockExecutionTempPath -Force -ErrorAction 'SilentlyContinue'
+		Copy-Item -Path "$PackageRoot\Setup.ico" -Destination $blockExecutionTempPath -Force -ErrorAction 'SilentlyContinue'
+		## Enable block execution mode
+		Set-Content -Path "$blockExecutionTempPath\DeployNxtApplication.exe.config" -Force -Value "<?xml version=`"1.0`" encoding=`"utf-8`" ?><configuration><appSettings><add key=`"OperationMode`" value=`"BlockExecution`"/><add key=`"BlockExecution_Title`" value=`"$installTitle`"/></appSettings></configuration>"
 		## Create a scheduled task to run on startup to call this script and clean up blocked applications in case the installation is interrupted, e.g. user shuts down during installation"
 		Write-Log -Message 'Creating scheduled task to cleanup blocked applications in case the installation is interrupted.' -Source ${CmdletName}
-		if ($null -ne (Get-SchedulerTask -ContinueOnError $true | Select-Object -Property 'TaskName' | Where-Object {
-			$_.TaskName -eq "\$schTaskBlockedAppsName"
-		})) {
+		if ($null -ne (Get-SchedulerTask -TaskName $schTaskBlockedAppsName -ContinueOnError $true)) {
 			Write-Log -Message "Scheduled task [$schTaskBlockedAppsName] already exists." -Source ${CmdletName}
 		}
 		else {
@@ -808,7 +809,7 @@ function Block-NxtAppExecution {
 		## Enumerate each process and set the debugger value to block application execution
 		foreach ($blockProcess in $blockProcessName) {
 			Write-Log -Message "Setting the Image File Execution Option registry key to block execution of [$blockProcess]." -Source ${CmdletName}
-			Set-RegistryKey -Key (Join-Path -Path $regKeyAppExecution -ChildPath $blockProcess) -Name 'Debugger' -Value $debuggerBlockValue -ContinueOnError $true
+			Set-RegistryKey -Key (Join-Path -Path $regKeyAppExecution -ChildPath $blockProcess) -Name 'Debugger' -Value "$blockExecutionTempPath\DeployNxtApplication.exe" -ContinueOnError $true
 		}
 	}
 	End {
@@ -10726,7 +10727,7 @@ function Unblock-NxtAppExecution {
 			}
 		)
 		foreach ($unblockProcess in ($unblockProcesses | Where-Object {
-			$_.Debugger -like '*AppDeployToolkit_BlockAppExecutionMessage*'
+			$_.Debugger -match '.*AppDeployToolkit_BlockAppExecutionMessage.*|.*DeployNxtApplication.*'
 		})) {
 			Write-Log -Message "Removing the Image File Execution Options registry key to unblock execution of [$($unblockProcess.PSChildName)]." -Source ${CmdletName}
 			$unblockProcess | Remove-ItemProperty -Name 'Debugger' -ErrorAction 'SilentlyContinue'
@@ -10736,9 +10737,7 @@ function Unblock-NxtAppExecution {
 		## Remove the scheduled task if it exists
 		[string]$schTaskBlockedAppsName = $installName + '_BlockedApps'
 		try {
-			if ($null -ne (Get-SchedulerTask -ContinueOnError $true | Select-Object -Property 'TaskName' | Where-Object {
-				$_.TaskName -eq "\$schTaskBlockedAppsName"
-			})) {
+			if ($null -ne (Get-SchedulerTask -TaskName $schTaskBlockedAppsName -ContinueOnError $true)) {
 				Write-Log -Message "Deleting Scheduled Task [$schTaskBlockedAppsName]." -Source ${CmdletName}
 				Execute-Process -Path $exeSchTasks -Parameters "/Delete /TN $schTaskBlockedAppsName /F" -ExitOnProcessFailure $false
 			}
