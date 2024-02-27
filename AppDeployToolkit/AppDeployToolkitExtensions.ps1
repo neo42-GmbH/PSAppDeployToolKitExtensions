@@ -3038,6 +3038,9 @@ function Exit-NxtScriptWithError {
 	.PARAMETER NxtTempDirectories
 		Defines a list of TempFolders to be cleared.
 		Defaults to $script:NxtTempDirectories defined in the AppDeployToolkitMain.
+	.PARAMETER DeploymentType
+		Defines the DeploymentType. Used to determine the registry key to write the error entry to.
+		Defaults to DeploymentType defined defined by the Deploy-Application param block.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
 	.OUTPUTS
@@ -3118,9 +3121,9 @@ function Exit-NxtScriptWithError {
 		[string[]]
 		$NxtTempDirectories = $script:NxtTempDirectories,
 		[Parameter(Mandatory = $false)]
-		[ValidateSet('System', 'User')]
+		[ValidateNotNullOrEmpty()]
 		[string]
-		$Context = "System"
+		$DeploymentType = $DeploymentType
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3131,7 +3134,7 @@ function Exit-NxtScriptWithError {
 			Write-Log -Message "RegisterPackage is set to 'false', skip writing '_Error' key in registry..." -Source ${cmdletName}
 		}
 		Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
-		if ($Context -eq "User") {
+		if ($true -eq $DeploymentType.Contains("UserPart")) {
 			$hive = "HKCU"
 		}
 		else {
@@ -3165,7 +3168,7 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -in 0) {
 			$MainExitCode = 70000
 		}
-		if ($Context -ne "User") {
+		if ($false -eq $DeploymentType.Contains("UserPart")) {
 			Close-BlockExecutionWindow
 			Clear-NxtTempFolder
 			Unblock-NxtAppExecution -BlockScriptLocation $App
