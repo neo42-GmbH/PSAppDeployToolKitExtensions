@@ -774,8 +774,8 @@ function Block-NxtAppExecution {
 			Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
 			return
 		}
-		if ($false -eq (Test-Path -LiteralPath "$BlockScriptLocation\DeployNxtApplication.exe" -PathType 'Leaf')) {
-			Write-Log -Message "Unable to find [$BlockScriptLocation\DeployNxtApplication.exe]. Cannot block app execution." -Severity 2 -Source ${CmdletName}
+		if ($false -eq (Test-Path -LiteralPath "$ScriptDirectory\DeployNxtApplication.exe" -PathType 'Leaf')) {
+			Write-Log -Message "Unable to find [$ScriptDirectory\DeployNxtApplication.exe]. Cannot block app execution." -Severity 2 -Source ${CmdletName}
 			return
 		}
 		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
