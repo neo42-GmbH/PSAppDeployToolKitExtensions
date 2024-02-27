@@ -3040,7 +3040,7 @@ function Exit-NxtScriptWithError {
 		Defaults to $script:NxtTempDirectories defined in the AppDeployToolkitMain.
 	.PARAMETER DeploymentType
 		Defines the DeploymentType. Used to determine the registry key to write the error entry to.
-		Defaults to DeploymentType defined defined by the Deploy-Application param block.
+		Defaults to DeploymentType defined by the Deploy-Application param block.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
 	.OUTPUTS
