@@ -706,7 +706,7 @@ function Block-NxtAppExecution {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$RegKeyAppExecution = $regKeyAppExecution
+		$RegKeyAppExecution = $regKeyAppExecution,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
