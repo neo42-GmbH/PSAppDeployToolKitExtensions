@@ -674,6 +674,10 @@ function Block-NxtAppExecution {
 		Name of the process or processes separated by commas.
 	.PARAMETER BlockScriptLocation
 		The location where the block script will be placed. Defaults to $global:PackageConfig.App.
+	.PARAMETER ScriptDirectory
+		The directory where the script is located. Defaults to $scriptDirectory.
+	.PARAMETER RegKeyAppExecution
+		The registry key where the application execution options are stored. Defaults to $regKeyAppExecution.
 	.OUTPUTS
 		none.
 	.EXAMPLE
@@ -696,7 +700,11 @@ function Block-NxtAppExecution {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$PackageRoot = $scriptDirectory
+		$ScriptDirectory = $scriptDirectory,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
+		[string]
+		$RegKeyAppExecution = $regKeyAppExecution
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -710,7 +718,7 @@ function Block-NxtAppExecution {
 		}
 		[string]$commandToEncode =@"
 		'$($blockProcessName -join "','")' | ForEach-Object {
-			Remove-ItemProperty -Path "$regKeyAppExecution\`$_" -Name "Debugger"
+			Remove-ItemProperty -Path "$RegKeyAppExecution\`$_" -Name "Debugger"
 		}
 		Remove-Item -Recurse -Path "$blockExecutionTempPath"
 		Unregister-ScheduledTask -TaskPath "\" -TaskName "$schTaskBlockedAppsName" -Confirm:`$false
@@ -777,9 +785,9 @@ function Block-NxtAppExecution {
 			throw "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script."
 		}
 		## Copy the block execution required files to the persistent location
-		Copy-Item -Path "$PackageRoot\AppDeployToolkit\" -Destination "$blockExecutionTempPath\AppDeployToolkit\" -Exclude 'thumbs.db' -Recurse -Force -ErrorAction 'SilentlyContinue'
-		Copy-Item -Path "$PackageRoot\DeployNxtApplication.exe" -Destination $blockExecutionTempPath -Force -ErrorAction 'SilentlyContinue'
-		Copy-Item -Path "$PackageRoot\Setup.ico" -Destination $blockExecutionTempPath -Force -ErrorAction 'SilentlyContinue'
+		Copy-Item -Path "$ScriptDirectory\AppDeployToolkit\" -Destination "$blockExecutionTempPath\AppDeployToolkit\" -Exclude 'thumbs.db' -Recurse -Force -ErrorAction 'SilentlyContinue'
+		Copy-Item -Path "$ScriptDirectory\DeployNxtApplication.exe" -Destination $blockExecutionTempPath -Force -ErrorAction 'SilentlyContinue'
+		Copy-Item -Path "$ScriptDirectory\Setup.ico" -Destination $blockExecutionTempPath -Force -ErrorAction 'SilentlyContinue'
 		## Enable block execution mode
 		Set-Content -Path "$blockExecutionTempPath\DeployNxtApplication.exe.config" -Force -Value "<?xml version=`"1.0`" encoding=`"utf-8`" ?><configuration><appSettings><add key=`"OperationMode`" value=`"BlockExecution`"/><add key=`"BlockExecution_Title`" value=`"$installTitle`"/></appSettings></configuration>"
 		## Create a scheduled task to run on startup to call this script and clean up blocked applications in case the installation is interrupted, e.g. user shuts down during installation"
@@ -809,7 +817,7 @@ function Block-NxtAppExecution {
 		## Enumerate each process and set the debugger value to block application execution
 		foreach ($blockProcess in $blockProcessName) {
 			Write-Log -Message "Setting the Image File Execution Option registry key to block execution of [$blockProcess]." -Source ${CmdletName}
-			Set-RegistryKey -Key (Join-Path -Path $regKeyAppExecution -ChildPath $blockProcess) -Name 'Debugger' -Value "$blockExecutionTempPath\DeployNxtApplication.exe" -ContinueOnError $true
+			Set-RegistryKey -Key (Join-Path -Path $RegKeyAppExecution -ChildPath $blockProcess) -Name 'Debugger' -Value "$blockExecutionTempPath\DeployNxtApplication.exe" -ContinueOnError $true
 		}
 	}
 	End {
@@ -10687,6 +10695,8 @@ function Unblock-NxtAppExecution {
 	.PARAMETER BlockExecution
 		Indicates if the execution of applications has been blocked. This function will only unblock applications if this variable is set to $true.
 		Defaults to $Script:BlockExecution.
+	.PARAMETER RegKeyAppExecution
+		The registry key used to block the execution of applications. Defaults to $regKeyAppExecution.
 	.NOTES
 		This is an internal script function and should typically not be called directly.
 		It is used when the -BlockExecution parameter is specified with the Show-InstallationWelcome function to undo the actions performed by Block-AppExecution.
@@ -10701,7 +10711,10 @@ function Unblock-NxtAppExecution {
 		$BlockScriptLocation = $global:PackageConfig.App,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$BlockExecution = $Script:BlockExecution
+		$BlockExecution = $Script:BlockExecution,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegKeyAppExecution = $regKeyAppExecution
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -10721,7 +10734,7 @@ function Unblock-NxtAppExecution {
 		## Remove Debugger values to unblock processes
 		[PSObject[]]$unblockProcesses = $null
 		$unblockProcesses += (
-			Get-ChildItem -LiteralPath $regKeyAppExecution -Recurse -ErrorAction 'SilentlyContinue' |
+			Get-ChildItem -LiteralPath $RegKeyAppExecution -Recurse -ErrorAction 'SilentlyContinue' |
 			ForEach-Object {
 				Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction 'SilentlyContinue'
 			}
