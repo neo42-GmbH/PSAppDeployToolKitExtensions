@@ -674,6 +674,8 @@ function Block-NxtAppExecution {
 		Name of the process or processes separated by commas.
 	.PARAMETER BlockScriptLocation
 		The location where the block script will be placed. Defaults to $global:PackageConfig.App.
+	.PARAMETER ExecutionPolicy
+		The execution policy to use when running the scheduled task. Defaults to the value obtained from the XML configuration file.
 	.OUTPUTS
 		none.
 	.EXAMPLE
@@ -692,7 +694,10 @@ function Block-NxtAppExecution {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$BlockScriptLocation = $global:PackageConfig.App
+		$BlockScriptLocation = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -712,7 +717,7 @@ function Block-NxtAppExecution {
 		Unregister-ScheduledTask -TaskPath "\" -TaskName "$schTaskBlockedAppsName" -Confirm:`$false
 "@
 		[string]$encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($commandToEncode))
-		[string]$schTaskUnblockAppsCommand += "-ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -EncodedCommand $encodedCommand"
+		[string]$schTaskUnblockAppsCommand += "-ExecutionPolicy $ExecutionPolicy -NoProfile -NoLogo -WindowStyle Hidden -EncodedCommand $encodedCommand"
 		## Specify the scheduled task configuration in XML format
 		[string]$xmlUnblockAppsSchTask = @"
 <?xml version="1.0" encoding="UTF-16"?>
@@ -1173,6 +1178,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER LegacyAppRoots
 		Defines the legacy application roots.
 		Defaults to $envProgramFiles and $envProgramFilesX86.
+	.PARAMETER ExecutionPolicy
+		Defines the execution policy of the active setup PowerShell script.
+		Defaults to the corresponding value from the XML configuration file.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.OUTPUTS
@@ -1217,7 +1225,10 @@ function Complete-NxtPackageInstallation {
 		$AppVendor = $global:PackageConfig.AppVendor,
 		[Parameter(Mandatory = $false)]
 		[string[]]
-		$LegacyAppRoots= @("$envProgramFiles\neoPackages", "$envProgramFilesX86\neoPackages")
+		$LegacyAppRoots= @("$envProgramFiles\neoPackages", "$envProgramFilesX86\neoPackages"),
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1291,14 +1302,14 @@ function Complete-NxtPackageInstallation {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments "TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 			}
 			else {
-				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
+				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 			}
 		}
 		foreach ($oldAppFolder in $((Get-ChildItem -Path (Get-Item -Path $App).Parent.FullName | Where-Object Name -ne (Get-Item -Path $App).Name).FullName)) {
 			## note: we always use the script from current application package source folder (it is basically identical in each package)
 			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
-			Execute-Process -Path powershell.exe -Parameters "-File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait -ExitOnProcessFailure $false -PassThru | Out-Null
+			Execute-Process -Path powershell.exe -Parameters "-ExecutionPolicy $ExecutionPolicy -File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait -ExitOnProcessFailure $false -PassThru | Out-Null
 		}
 		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots) {
@@ -1346,6 +1357,9 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER ExecutionPolicy
+		Defines the execution policy of the active setup PowerShell script.
+		Defaults to the corresponding value from the XML configuration file.
 	.EXAMPLE
 		Complete-NxtPackageUninstallation
 	.EXAMPLE
@@ -1374,7 +1388,10 @@ function Complete-NxtPackageUninstallation {
 		$UserPartDir = $global:UserPartDir,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptRoot
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1406,7 +1423,7 @@ function Complete-NxtPackageUninstallation {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments "TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 			else {
-				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy Bypass -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
+				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 		}
 	}
@@ -6532,6 +6549,9 @@ function Register-NxtPackage {
 	.PARAMETER SoftMigrationOccurred
 		Defines if a SoftMigration occurred.
 		Defaults to [string]::Empty.
+	.PARAMETER ExecutionPolicy
+		Defines the ExecutionPolicy of the UninstallString.
+		Defaults to the value from the Toolkit_Options.Toolkit_ExecutionPolicy in the XML Config file.
 	.EXAMPLE
 		Register-NxtPackage
 	.NOTES
@@ -6635,7 +6655,10 @@ function Register-NxtPackage {
 		$UserPartDir = $global:UserPartDir,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$SoftMigrationOccurred = [string]::Empty
+		$SoftMigrationOccurred = [string]::Empty,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
 
 	Begin {
@@ -6685,7 +6708,7 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$App\neo42-Install\DeployNxtApplication.exe"" uninstall")
 			}
 			else {
-				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
+				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			}
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
@@ -6718,7 +6741,7 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$App\neo42-Install\DeployNxtApplication.exe"" uninstall")
 			}
 			else {
-				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ex bypass -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
+				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			}
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'Installed' -Type 'Dword' -Value '1'
 			if ($false -eq [string]::IsNullOrEmpty($SoftMigrationOccurred)) {
@@ -9277,6 +9300,8 @@ function Show-NxtWelcomePrompt {
 		Name of the log file, defaulting to the Deploy-Application.ps1 script's parameter.
 	.PARAMETER ProcessIdToIgnore
 		Process ID to ignore, defaulting to the current process ID $PID.
+	.PARAMETER ExecutionPolicy
+		Execution policy for the script, defaulting to the value in the AppDeployToolkitConfig.xml.
 	.EXAMPLE
 		Show-NxtWelcomePrompt -ProcessDescriptions "Notepad, Calculator" -CloseAppsCountdown 300 -AllowDefer $true
 		This example shows a prompt to close Notepad and Calculator, with a 5-minute countdown and the option to defer.
@@ -9365,7 +9390,10 @@ function Show-NxtWelcomePrompt {
 		$Logname = $logName,
 		[Parameter(Mandatory = $false)]
 		[int]
-		$ProcessIdToIgnore
+		$ProcessIdToIgnore,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
 
 	Begin {
@@ -9378,7 +9406,7 @@ function Show-NxtWelcomePrompt {
 		# Convert to JSON in compressed form
 		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects
 		[string]$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
-		[string]$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
+		[string]$powershellCommand = "-ExecutionPolicy $ExecutionPolicy -File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferTimes" -Value $DeferTimes
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferDeadline" -Value $DeferDeadline
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ContinueType" -Value $contiuneTypeValue
@@ -11498,6 +11526,8 @@ function Unregister-NxtPackage {
 		Defines the root folder of the application package, used for determining the scope of file removal. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AppVendor
 		Identifies the vendor of the application package, which can be used for logging or reporting purposes. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ExecutionPolicy
+		Defines the execution policy for the PowerShell script. Defaults to the corresponding value from the AppDeployToolkit_Config.xml file.
 	.EXAMPLE
 		Unregister-NxtPackage -ProductGUID "{12345678-90ab-cdef-1234-567890abcdef}" -RemovePackagesWithSameProductGUID $true -PackageGUID "{abcdefgh-1234-5678-90ab-cdef012345678}" -RegPackagesKey "MyPackages" -App "C:\Apps\MyApp" -ScriptRoot "C:\Scripts" -AppRootFolder "C:\Apps" -AppVendor "MyCompany"
 		This example unregisters a package with the specified GUID, removing all related files and registry entries.
@@ -11536,7 +11566,10 @@ function Unregister-NxtPackage {
 		$AppRootFolder = $global:PackageConfig.AppRootFolder,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AppVendor = $global:PackageConfig.AppVendor
+		$AppVendor = $global:PackageConfig.AppVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -11560,7 +11593,7 @@ function Unregister-NxtPackage {
 								## note: we always use the script from current application package source folder (it is basically identical in each package)
 								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
-								Execute-Process -Path powershell.exe -Parameters "-File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait -ExitOnProcessFailure $false -PassThru | Out-Null
+								Execute-Process -Path powershell.exe -Parameters "-ExecutionPolicy $ExecutionPolicy -File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait -ExitOnProcessFailure $false -PassThru | Out-Null
 								$removalCounter += 1
 							}
 							else {
@@ -11597,7 +11630,7 @@ function Unregister-NxtPackage {
 						Start-Sleep -Seconds 1
 						[hashtable]$executeProcessSplat = @{
 							Path = 'powershell.exe'
-							Parameters = "-File `"$App\Clean-Neo42AppFolder.ps1`""
+							Parameters = "-ExecutionPolicy $ExecutionPolicy -File `"$App\Clean-Neo42AppFolder.ps1`""
 							NoWait = $true
 							WorkingDirectory = $env:TEMP
 							ExitOnProcessFailure = $false
