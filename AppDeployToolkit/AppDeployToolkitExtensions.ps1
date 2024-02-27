@@ -698,79 +698,37 @@ function Block-NxtAppExecution {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	Process {
 		[string]$blockExecutionTempPath = Join-Path -Path $BlockScriptLocation -ChildPath 'BlockExecution'
 		[string]$schTaskBlockedAppsName = $InstallName + '_BlockedApps'
 		## Append .exe to match registry keys
-		[string[]]$blockProcessName = $ProcessName | ForEach-Object {
+		[string[]]$blockProcessNames = $ProcessName | ForEach-Object {
 			($_ -replace "\.exe$") + '.exe'
 		}
-		[string]$commandToEncode =@"
-		'$($blockProcessName -join "','")' | ForEach-Object {
-			Remove-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\`$_" -Name "Debugger"
-		}
-		Remove-Item -Recurse -Path "$blockExecutionTempPath"
-		Unregister-ScheduledTask -TaskPath "\" -TaskName "$schTaskBlockedAppsName" -Confirm:`$false
-"@
-		[string]$encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($commandToEncode))
-		[string]$schTaskUnblockAppsCommand += "-ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -EncodedCommand $encodedCommand"
-		## Specify the scheduled task configuration in XML format
-		[string]$xmlUnblockAppsSchTask = @"
-<?xml version="1.0" encoding="UTF-16"?>
-<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-	<RegistrationInfo></RegistrationInfo>
-	<Triggers>
-		<BootTrigger>
-			<Enabled>true</Enabled>
-		</BootTrigger>
-	</Triggers>
-	<Principals>
-		<Principal id="Author">
-			<UserId>S-1-5-18</UserId>
-		</Principal>
-	</Principals>
-	<Settings>
-		<MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-		<DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-		<StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-		<AllowHardTerminate>true</AllowHardTerminate>
-		<StartWhenAvailable>false</StartWhenAvailable>
-		<RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
-		<IdleSettings>
-			<StopOnIdleEnd>false</StopOnIdleEnd>
-			<RestartOnIdle>false</RestartOnIdle>
-		</IdleSettings>
-		<AllowStartOnDemand>true</AllowStartOnDemand>
-		<Enabled>true</Enabled>
-		<Hidden>false</Hidden>
-		<RunOnlyIfIdle>false</RunOnlyIfIdle>
-		<WakeToRun>false</WakeToRun>
-		<ExecutionTimeLimit>PT1H</ExecutionTimeLimit>
-		<Priority>7</Priority>
-	</Settings>
-	<Actions Context="Author">
-		<Exec>
-			<Command>$PSHome\powershell.exe</Command>
-			<Arguments>$schTaskUnblockAppsCommand</Arguments>
-		</Exec>
-	</Actions>
-</Task>
-"@
-	}
-	Process {
-		## Bypass if no Admin rights
-		if ($false -eq $configToolkitRequireAdmin) {
-			Write-Log -Message "Bypassing Function [${CmdletName}], because [Require Admin: $configToolkitRequireAdmin]." -Source ${CmdletName}
-			return
-		}
+
+		## Specify the scheduled task configuration
+		[CimInstance[]]$scheduledTaskTriggers = @(New-ScheduledTaskTrigger -AtStartup)
+		[CimInstance]$scheduledTaskSetting = New-ScheduledTaskSettingsSet -MultipleInstances "IgnoreNew" -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Hours 1) -Priority 7
+		[CimInstance]$scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'S-1-5-18'
+		[CimInstance[]]$scheduledTaskActions = @(
+			foreach ($processName in $blockProcessNames) {
+				New-ScheduledTaskAction -Execute "reg.exe" -Argument "/delete 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName' /v 'Debugger' /f" # Remove the IFEO key
+			}
+			New-ScheduledTaskAction -Execute "$env:COMSPEC" -Argument "/c 'rd /s /q '$blockExecutionTempPath'" # Remove the temp folder
+			New-ScheduledTaskAction -Execute "$env:windir\system32\schtasks.exe" -Argument "/delete /tn /$schTaskBlockedAppsName /f" # Remove the scheduled task
+		)
+		[CimInstance]$scheduledTask = New-ScheduledTask -TaskName $schTaskBlockedAppsName -Trigger $scheduledTaskTriggers -Settings $scheduledTaskSetting -Principal $scheduledTaskPrincipal -Action $scheduledTaskActions
+
 		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
+			Write-Log -Message "Previous block execution script folder found. Removing it." -Source ${CmdletName}
 			Remove-Folder -Path $blockExecutionTempPath
 		}
 		try {
 			New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -ProtectRules $true | Out-Null
 		}
 		catch {
-			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Source ${CmdletName}
-			throw "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script."
+			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Severity 1 -Source ${CmdletName}
+			return
 		}
 		Copy-Item -Path "$scriptRoot\*.*" -Destination $blockExecutionTempPath -Exclude 'thumbs.db' -Force -Recurse -ErrorAction 'SilentlyContinue'
 		## Build the debugger block value script
