@@ -1155,7 +1155,16 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER DesktopShortcut
 		Specifies, if desktop shortcuts should be copied (1/$true) or deleted (0/$false).
 		Defaults to the DESKTOPSHORTCUT value from the Setup.cfg.
-	.PARAMETER $UserPartDir
+	.PARAMETER StartMenuShortcutsToCopyToDesktop
+		Specifies the links from the start menu which should be copied to the desktop.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the neo42PackageConfig.json.
+	.PARAMETER Desktop
+		Determines the path to the Desktop, e.g., $envCommonDesktop or $envUserDesktop.
+		Defaults to $envCommonDesktop.
+	.PARAMETER StartMenu
+		Defines the path to the Start Menu, e.g., $envCommonStartMenu or $envUserStartMenu.
+		Defaults to $envCommonStartMenu.T
+	.PARAMETER UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
 	.PARAMETER Wow6432Node
@@ -1201,6 +1210,18 @@ function Complete-NxtPackageInstallation {
 		[bool]
 		$DesktopShortcut = [bool]([int]$global:SetupCfg.Options.DesktopShortcut),
 		[Parameter(Mandatory = $false)]
+		[array]
+		$StartMenuShortcutsToCopyToDesktop = $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop,
+		[Parameter(Mandatory = $false)]
+		[string[]]
+		$DesktopShortcutsToDelete = $global:PackageConfig.CommonDesktopShortcutsToDelete,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Desktop = $envCommonDesktop,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$StartMenu = $envCommonStartMenu,
+		[Parameter(Mandatory = $false)]
 		[string]
 		$Wow6432Node = $global:Wow6432Node,
 		[Parameter(Mandatory = $false)]
@@ -1225,10 +1246,10 @@ function Complete-NxtPackageInstallation {
 	}
 	Process {
 		if ($true -eq $DesktopShortcut) {
-			Copy-NxtDesktopShortcuts
+			Copy-NxtDesktopShortcuts -StartMenuShortcutsToCopyToDesktop $StartMenuShortcutsToCopyToDesktop -Desktop $Desktop -StartMenu $StartMenu
 		}
 		else {
-			Remove-NxtDesktopShortcuts
+			Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
 		}
 		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 			[hashtable]$hideNxtParams = @{
@@ -1340,7 +1361,7 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER UserPartRevision
 		Specifies the UserPartRevision for this installation.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER $UserPartDir
+	.PARAMETER UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
 	.PARAMETER ScriptRoot
@@ -1374,14 +1395,20 @@ function Complete-NxtPackageUninstallation {
 		$UserPartDir = $global:UserPartDir,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptRoot
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string[]]
+		$DesktopShortcutsToDelete = $global:PackageConfig.CommonDesktopShortcutsToDelete,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Desktop = $envCommonDesktop
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Remove-NxtDesktopShortcuts
+		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID"
 		if ($true -eq $UserPartOnUninstallation) {
 			if ($true -eq ([string]::IsNullOrEmpty($UserPartRevision))) {
@@ -1551,7 +1578,7 @@ function Copy-NxtDesktopShortcuts {
 		By default it copies the shortcuts defined under "CommonStartMenuShortcutsToCopyToCommonDesktop" in the neo42PackageConfig.json to the common desktop.
 	.PARAMETER StartMenuShortcutsToCopyToDesktop
 		Specifies the links from the start menu which should be copied to the desktop.
-		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the eo42PackageConfig.json.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the neo42PackageConfig.json.
 	.PARAMETER Desktop
 		Determines the path to the Desktop, e.g., $envCommonDesktop or $envUserDesktop.
 		Defaults to $envCommonDesktop.
@@ -2146,7 +2173,7 @@ function Execute-NxtInnoSetup {
 			}
 			'Uninstall' {
 				[string]$innoSetupDefaultParams = $configNxtInnoSetupUninstallParams
-				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCard $innoUninstallKeyContainsWildCards -DisplayNamesToExclude $innoDisplayNamesToExclude
+				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $innoUninstallKeyContainsWildCards -DisplayNamesToExclude $innoDisplayNamesToExclude
 				if ($installedAppResults.Count -eq 0) {
 					Write-Log -Message "Found no Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards] and DisplayNamesToExclude [$($innoDisplayNamesToExclude -join "][")]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 					return
@@ -2271,7 +2298,7 @@ function Execute-NxtInnoSetup {
 
 		## Copy uninstallation file from $uninsfolder to $UninsBackupPath after a successful installation
 		if ($Action -eq 'Install') {
-			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCard $innoUninstallKeyContainsWildCards -DisplayNamesToExclude $innoDisplayNamesToExclude
+			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $innoUninstallKey -UninstallKeyIsDisplayName $innoUninstallKeyIsDisplayName -UninstallKeyContainsWildCards $innoUninstallKeyContainsWildCards -DisplayNamesToExclude $innoDisplayNamesToExclude
 			if ($installedAppResults.Count -eq 0) {
 				Write-Log -Message "Found no Application with UninstallKey [$innoUninstallKey], UninstallKeyIsDisplayName [$innoUninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$innoUninstallKeyContainsWildCards] and DisplayNamesToExclude [$($innoDisplayNamesToExclude -join "][")]. Skipping [copy uninstallation file to backup]..." -Severity 2 -Source ${CmdletName}
 			}
@@ -3033,11 +3060,20 @@ function Exit-NxtScriptWithError {
 	.PARAMETER UserPartOnUnInstallation
 		Specifies if a Userpart should take place during uninstallation.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER TempRootFolder
+		The path to the temporary folder targeted for cleaning. To ensure that all internal processes work correctly it is highly recommended to keep the default value!
+		Defaults to $env:SystemDrive\n42Tmp.
+	.PARAMETER HoursToKeep
+		The age threshold, in hours, for retaining files and folders in the temporary folder. Files and folders older than this threshold will be deleted.
+		Defaults to 96 (4 days).
 	.PARAMETER ContinueOnError
 		Continue if an error is encountered. Default is: $true.
 	.PARAMETER NxtTempDirectories
 		Defines a list of TempFolders to be cleared.
 		Defaults to $script:NxtTempDirectories defined in the AppDeployToolkitMain.
+	.PARAMETER BlockExecution
+		Indicates if the execution of applications has been blocked. This function will only unblock applications if this variable is set to $true.
+		Defaults to $Script:BlockExecution.
 	.EXAMPLE
 		Exit-NxtScriptWithError -ErrorMessage "The Installer returned the following Exit Code $someExitcode, installation failed!" -MainExitCode 69001 -PackageStatus "InternalInstallerError"
 	.OUTPUTS
@@ -3115,8 +3151,17 @@ function Exit-NxtScriptWithError {
 		[bool]
 		$UserPartOnUnInstallation = $global:PackageConfig.UserPartOnUnInstallation,
 		[Parameter(Mandatory = $false)]
+		[string]
+		$TempRootFolder = "$env:SystemDrive\n42Tmp",
+		[Parameter(Mandatory = $false)]
+		[int]
+		$HoursToKeep = 96,
+		[Parameter(Mandatory = $false)]
 		[string[]]
-		$NxtTempDirectories = $script:NxtTempDirectories
+		$NxtTempDirectories = $script:NxtTempDirectories,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$BlockExecution = $Script:BlockExecution
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3155,9 +3200,9 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -in 0) {
 			$MainExitCode = 70000
 		}
-		Clear-NxtTempFolder
+		Clear-NxtTempFolder -TempRootFolder $TempRootFolder -HoursToKeep $HoursToKeep -NxtTempDirectories $NxtTempDirectories
 		Close-BlockExecutionWindow
-		Unblock-NxtAppExecution -BlockScriptLocation $App
+		Unblock-NxtAppExecution -BlockScriptLocation $App -BlockExecution $BlockExecution
 		Exit-Script -ExitCode $MainExitCode
 	}
 	End {
@@ -4727,6 +4772,9 @@ function Get-NxtRegisterOnly {
 	.PARAMETER ProductGUID
 		Specifies the ProductGUID of the software package.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 		This example detects if the target application is already installed and verifies conditions for a soft migration based on the values from the PackageConfig object.
@@ -4781,7 +4829,10 @@ function Get-NxtRegisterOnly {
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ProductGUID = $global:PackageConfig.ProductGUID
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
@@ -4791,7 +4842,7 @@ function Get-NxtRegisterOnly {
 		($true -eq $SoftMigration) -and
 		$false -eq (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
 			(
-				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID).count -eq 0) -or
+				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID -RegPackagesKey $RegPackagesKey).count -eq 0) -or
 				$false -eq $RemovePackagesWithSameProductGUID
 			)
 		) {
@@ -5476,6 +5527,11 @@ function Initialize-NxtAppRootFolder {
 		This function is designed to prepare the application root directory (AppRootFolder) by verifying paths, setting appropriate permissions, and creating necessary directories.
 		It should be invoked by the 'Initialize-NxtEnvironment' function as part of a broader initialization process.
 		The function ensures that the AppRootFolder is correctly configured.
+	.PARAMETER BaseName
+		The base name of the folder. This parameter is mandatory.
+	.PARAMETER RegPackagesKey
+		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Initialize-NxtAppRootFolder
 	.OUTPUTS
@@ -5526,7 +5582,7 @@ function Initialize-NxtAppRootFolder {
 		if ($true -eq ([string]::IsNullOrEmpty($appRootFolderName))) {
 			## Claim an ApprootFolder
 			if ($false -eq (Test-Path -Path $env:ProgramData\$BaseName)) {
-				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -ProtectRules $true | Out-Null
 				$appRootFolderNames += $BaseName
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey" -Name "AppRootFolderNames" -Value $appRootFolderNames -Type MultiString -ContinueOnError $false
 				$appRootFolderName = $BaseName
@@ -5534,7 +5590,7 @@ function Initialize-NxtAppRootFolder {
 			else {
 				## use a foldername with a random suffix
 				[string]$randomSuffix = [System.Guid]::NewGuid().ToString().Substring(0,8)
-				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName$randomSuffix -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+				New-NxtFolderWithPermissions -Path $env:ProgramData\$BaseName$randomSuffix -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -ProtectRules $true | Out-Null
 				$appRootFolderNames += "$BaseName$randomSuffix"
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey" -Name "AppRootFolderNames" -Value $appRootFolderNames -Type MultiString -ContinueOnError $false
 				$appRootFolderName = "$BaseName$randomSuffix"
@@ -5542,7 +5598,7 @@ function Initialize-NxtAppRootFolder {
 		}
 		if ($appRootFolderName.length -ne 0) {
 			if ($false -eq (Test-Path -PathType Container "$env:ProgramData\$appRootFolderName")) {
-				New-NxtFolderWithPermissions -Path $env:ProgramData\$appRootFolderName -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid | Out-Null
+				New-NxtFolderWithPermissions -Path $env:ProgramData\$appRootFolderName -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -ProtectRules $true | Out-Null
 				Write-Log -Message "Recreated AppRootFolder '$appRootFolderName' in $env:ProgramData\$appRootFolderName, this directory is required for software deployment and should not be deleted or altered." -Source ${CmdletName} -Severity 2
 			}
 			if ($false -eq (Test-Path -PathType Leaf "$env:ProgramData\$appRootFolderName\readme.txt")) {
@@ -5696,14 +5752,14 @@ function Initialize-NxtEnvironment {
 				}
 			}
 		}
-		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg"
-		Set-NxtCustomSetupCfg -Path "$App\neo42-Install\CustomSetup.cfg"
+		Set-NxtSetupCfg -Path "$App\neo42-Install\setup.cfg" -AddDefaultOptions $true -ContinueOnError $true
+		Set-NxtCustomSetupCfg -Path "$App\neo42-Install\CustomSetup.cfg" -ContinueOnError $true
 		if (0 -ne $(Set-NxtPackageArchitecture)) {
 			throw "Error during setting package architecture variables."
 		}
 		[string]$global:DeploymentTimestamp = Get-Date -format "yyyy-MM-dd_HH-mm-ss"
-		Expand-NxtPackageConfig
-		Format-NxtPackageSpecificVariables
+		Expand-NxtPackageConfig -PackageConfig $global:PackageConfig
+		Format-NxtPackageSpecificVariables -PackageConfig $global:PackageConfig
 		## In Userpart deployments we don't want to show Balloon Notifications.
 		if ($DeploymentType -notlike "*Userpart*") {
 			switch ($SetupCfg.Options.ShowBalloonNotifications) {
@@ -7109,7 +7165,7 @@ function Remove-NxtLocalGroup {
 	}
 	Process {
 		try {
-			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName
+			[bool]$groupExists = Test-NxtLocalGroupExists -GroupName $GroupName -COMPUTERNAME $COMPUTERNAME
 			if ($true -eq $groupExists) {
 				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
 				$adsiObj.Delete("Group", $GroupName) | Out-Null
@@ -7251,7 +7307,7 @@ function Remove-NxtLocalUser {
 	}
 	Process {
 		try {
-			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName
+			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName -ComputerName $COMPUTERNAME
 			if ($true -eq $userExists) {
 				[System.DirectoryServices.DirectoryEntry]$adsiObj = [ADSI]"WinNT://$COMPUTERNAME"
 				$adsiObj.Delete("User", $UserName) | Out-Null
@@ -7462,7 +7518,7 @@ function Remove-NxtProductMember {
 	Process {
 		[int]$removalCounter = 0
 		if ($true -eq $RemovePackagesWithSameProductGUID) {
-			(Get-NxtRegisteredPackage -ProductGUID $ProductGUID -InstalledState 1).PackageGUID | Where-Object {
+			(Get-NxtRegisteredPackage -ProductGUID $ProductGUID -InstalledState 1 -RegPackagesKey $RegPackagesKey).PackageGUID | Where-Object {
 				$null -ne $($_)
 			} | ForEach-Object {
 				[string]$assignedPackageGUID = $_
@@ -7665,7 +7721,7 @@ function Repair-NxtApplication {
 			[int]$logMessageSeverity = 3
 		}
 		else {
-			$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName).ProductCode
+			$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude).ProductCode
 			if ($true -eq ([string]::IsNullOrEmpty($executeNxtParams.Path))) {
 				$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
 				$repairResult.Success = $null
@@ -7748,6 +7804,18 @@ function Resolve-NxtDependentPackage {
 	.PARAMETER RegPackagesKey
 		The name of the Registry Key where all the packages are tracked.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageGUID
+		Specifies the registry key name used for the package's wrapper uninstall entry.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER App
+		Defines the path to a local persistent cache for installation files. This parameter is essential for locating and removing the actual application files. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppVendor
+		Defines the name of the application vendor.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppRootFolder
+		Defines the root folder of the application package. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER ScriptRoot
+		Defines the parent directory of the script. It is essential for locating associated scripts and resources used during the uninstallation process. This parameter is mandatory. Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Resolve-NxtDependentPackages -DependentPackages $global:PackageConfig.DependentPackages
 		This example resolves the installation status of dependent packages using the global package configuration.
@@ -7767,7 +7835,22 @@ function Resolve-NxtDependentPackage {
 		$DependentPackages = $global:PackageConfig.DependentPackages,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageGUID = $global:PackageConfig.PackageGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$App = $global:PackageConfig.App,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ScriptRoot = $scriptRoot,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppRootFolder = $global:PackageConfig.AppRootFolder,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVendor = $global:PackageConfig.AppVendor
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -7775,7 +7858,7 @@ function Resolve-NxtDependentPackage {
 	}
 	Process {
 		foreach ($dependentPackage in $DependentPackages) {
-			[PSADTNXT.NxtRegisteredApplication]$registeredDependentPackage = Get-NxtRegisteredPackage -PackageGUID "$($dependentPackage.GUID)"
+			[PSADTNXT.NxtRegisteredApplication]$registeredDependentPackage = Get-NxtRegisteredPackage -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey $RegPackagesKey
 			Write-Log -message "Processing tasks for dependent application package with PackageGUID [$($dependentPackage.GUID)]..."  -Source ${CmdletName}
 			if ($true -eq $registeredDependentPackage.Installed) {
 				Write-Log -Message "...is installed." -Source ${CmdletName}
@@ -7794,7 +7877,7 @@ function Resolve-NxtDependentPackage {
 							throw "Removal of dependent application package failed."
 						}
 						## we must now explicitly unregister, because only an uninstall call with the '-SkipUnregister' parameter also prevents product member packages from being removed on recursive calls
-						Unregister-NxtPackage -RemovePackagesWithSameProductGUID $false -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey "$RegPackagesKey"
+						Unregister-NxtPackage -RemovePackagesWithSameProductGUID $false -PackageGUID "$($dependentPackage.GUID)" -RegPackagesKey "$RegPackagesKey" -ProductGUID $PackageGUID -App $App -ScriptRoot $ScriptRoot -AppRootFolder $AppRootFolder -AppVendor $AppVendor
 						if ( ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists)) -or ($true -eq $(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$($dependentPackage.GUID)" -ReturnEmptyKeyIfExists )) ) {
 							Write-Log -Message "Removal of dependent application package was done not successful." -Severity 3 -Source ${CmdletName}
 							throw "Removal of dependent application package not successful."
@@ -8990,7 +9073,7 @@ function Show-NxtInstallationWelcome {
 			Set-Variable -Name 'closeAppsCountdownGlobal' -Value $closeAppsCountdown -Scope 'Script'
 			[int[]]$processIdsToIgnore = @()
 			if ($processIdToIgnore -gt 0) {
-				[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore).ProcessId
+				[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore -IncludeParentProcesses $true -IncludeChildProcesses $true).ProcessId
 			}
 			while ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses' -ProcessIdsToIgnore $processIdsToIgnore) -or (($false -eq ($promptResult.Contains('Defer'))) -and ($false -eq ($promptResult.Contains('Close'))))) {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object {
@@ -9222,7 +9305,7 @@ function Show-NxtInstallationWelcome {
 			})
 			if ($blockableProcesses.count -gt 0) {
 				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
-				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName
+				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName -BlockScriptLocation $BlockScriptLocation
 				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
@@ -10448,7 +10531,7 @@ function Test-NxtProcessExists {
 		Test-NxtProcessExists "Notepad.exe"
 		Checks if the process 'Notepad.exe' is currently running.
 	.EXAMPLE
-		Test-NxtProcessExists -ProcessName "Name LIKE '%chrome%'" -IsWql $true
+		Test-NxtProcessExists -ProcessName "Name LIKE '%chrome%'" -IsWql:$true
 		Uses a WQL query to check if any process with 'chrome' in its name is running.
 	.OUTPUTS
 		System.Boolean.
@@ -11320,7 +11403,7 @@ function Uninstall-NxtOld {
 						}
 					}
 					## if the current package is a new ADT package, but is actually only registered because it is a product member package, we cannot uninstall it again now
-					if ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" -InstalledState 0).PackageGUID -contains "$PackageGUID") {
+					if ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" -InstalledState 0 -RegPackagesKey $RegPackagesKey).PackageGUID -contains "$PackageGUID") {
 						[string]$regPackageGUID = $null
 					}
 					if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
@@ -11563,7 +11646,7 @@ function Unregister-NxtPackage {
 				[int]$removalCounter = 0
 				if ($false -eq [string]::IsNullOrEmpty($ProductGUID)) {
 					Write-Log -Message "Cleanup registry entries and folder of assigned product member application packages with 'ProductGUID' [$ProductGUID]..." -Source ${CmdletName}
-					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID).PackageGUID | Where-Object {
+					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID -RegPackagesKey $RegPackagesKey).PackageGUID | Where-Object {
 						$null -ne $($_)
 					} | ForEach-Object {
 						[string]$assignedPackageGUID = $_
@@ -12274,12 +12357,7 @@ function Watch-NxtProcess {
 					Start-Sleep -Seconds 1
 				}
 				$waited += 1
-				if ($true -eq $IsWql) {
-					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
-				}
-				else {
-					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName
-				}
+				[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql:$IsWql
 
 				if ($true -eq $result) {
 					Write-Output $true
@@ -12355,12 +12433,7 @@ function Watch-NxtProcessIsStopped {
 					Start-Sleep -Seconds 1
 				}
 				$waited += 1
-				if ($true -eq $IsWql) {
-					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql
-				}
-				else {
-					[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName
-				}
+				[bool]$result = Test-NxtProcessExists -ProcessName $ProcessName -IsWql:$IsWql
 
 				if ($false -eq $result) {
 					Write-Output $true
