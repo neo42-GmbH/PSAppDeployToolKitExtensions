@@ -9,11 +9,10 @@ Describe "Get-NxtIsSystemProcess" {
             $result | Should -BeOfType 'bool'
             $result | Should -Be $true
         }
-        It "Should throw on access denied" -Skip {
-            # Issue #628
+        It "Should throw on access denied" {
             Get-NxtIsSystemProcess -ProcessId $systemProcessId | Should -Be $true
         }
-        It "Should return true for user prorcess" -Skip {
+        It "Should return true for user process" -Skip {
             "@
                 It is currently hard to reliably create a user process for this test.
                 On self-hosted runners this process runs as System. System cannot impersonate a user.

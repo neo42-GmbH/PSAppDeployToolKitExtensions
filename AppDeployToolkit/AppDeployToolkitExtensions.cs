@@ -67,36 +67,6 @@ namespace PSADTNXT
             // you may wish to return null instead of defaulting to ASCII
             return null;
         }
-
-        public static ProcessIdentity GetProcessIdentity(int processId)
-        {
-            var processHandle = IntPtr.Zero;
-            WindowsIdentity wi = null;
-            try
-            {
-                var process = Process.GetProcessById(processId);
-                OpenProcessToken(process.Handle, 8, out processHandle);
-                wi = new WindowsIdentity(processHandle);
-                return new ProcessIdentity(wi);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                if (wi != null)
-                {
-                    wi.Dispose();
-                }
-
-                if (processHandle != IntPtr.Zero)
-                {
-                    CloseHandle(processHandle);
-                }
-            }
-        }
-
         public static int StartPowershellScriptAndWaitForExitCode(string arguments)
         {
             var startInfo = new ProcessStartInfo
@@ -170,20 +140,6 @@ namespace PSADTNXT
         public bool Installed { get; set; }
         public string PackageGuid { get; set; }
         public string ProductGuid { get; set; }
-    }
-
-    public class ProcessIdentity
-    {
-        public ProcessIdentity(WindowsIdentity identity)
-        {
-            Name = identity.Name;
-            SID = identity.Owner.Value;
-            IsSystem = identity.IsSystem;
-        }
-
-        public bool IsSystem { get; private set; }
-        public string Name { get; private set; }
-        public string SID { get; private set; }
     }
 
     public class SessionHelper
