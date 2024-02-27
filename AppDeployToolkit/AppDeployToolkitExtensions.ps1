@@ -3084,6 +3084,9 @@ function Exit-NxtScriptWithError {
 	.PARAMETER NxtTempDirectories
 		Defines a list of TempFolders to be cleared.
 		Defaults to $script:NxtTempDirectories defined in the AppDeployToolkitMain.
+	.PARAMETER DeploymentType
+		Defines the DeploymentType. Used to determine the registry key to write the error entry to.
+		Defaults to DeploymentType defined by the Deploy-Application param block.
 	.PARAMETER BlockExecution
 		Indicates if the execution of applications has been blocked. This function will only unblock applications if this variable is set to $true.
 		Defaults to $Script:BlockExecution.
@@ -3174,7 +3177,11 @@ function Exit-NxtScriptWithError {
 		$NxtTempDirectories = $script:NxtTempDirectories,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$BlockExecution = $Script:BlockExecution
+		$BlockExecution = $Script:BlockExecution,
+		[Parameter(Mandatory = $false)]
+		[ValidateNotNullOrEmpty()]
+		[string]
+		$DeploymentType = $DeploymentType
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3185,27 +3192,33 @@ function Exit-NxtScriptWithError {
 			Write-Log -Message "RegisterPackage is set to 'false', skip writing '_Error' key in registry..." -Source ${cmdletName}
 		}
 		Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
+		if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
+			$hive = "HKLM"
+		}
+		else {
+			$hive = "HKCU"
+		}
 		try {
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'AppPath' -Value $App
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DebugLogFile' -Value $DebugLogFile
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DeploymentStartTime' -Value $DeploymentTimestamp
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DeveloperName' -Value $AppVendor
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'ErrorTimeStamp' -Value $(Get-Date -format "yyyy-MM-dd_HH-mm-ss")
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'ErrorMessage' -Value $ErrorMessage
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'ErrorMessagePSADT' -Value $ErrorMessagePSADT
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'LastExitCode' -Value $MainExitCode
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'PackageArchitecture' -Value $AppArch
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'PackageStatus' -Value $PackageStatus
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'ProductName' -Value $AppName
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'Revision' -Value $AppRevision
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'SrcPath' -Value $ScriptParentPath
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'StartupProcessor_Architecture' -Value $EnvArchitecture
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
-			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'Version' -Value $AppVersion
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'AppPath' -Value $App
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DebugLogFile' -Value $DebugLogFile
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DeploymentStartTime' -Value $DeploymentTimestamp
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'DeveloperName' -Value $AppVendor
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'ErrorTimeStamp' -Value $(Get-Date -format "yyyy-MM-dd_HH-mm-ss")
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'ErrorMessage' -Value $ErrorMessage
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'ErrorMessagePSADT' -Value $ErrorMessagePSADT
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'LastExitCode' -Value $MainExitCode
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'PackageArchitecture' -Value $AppArch
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'PackageStatus' -Value $PackageStatus
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'ProductName' -Value $AppName
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'Revision' -Value $AppRevision
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'SrcPath' -Value $ScriptParentPath
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'StartupProcessor_Architecture' -Value $EnvArchitecture
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'StartupProcessOwner' -Value $EnvUserDomain\$EnvUserName
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'StartupProcessOwnerSID' -Value $ProcessNTAccountSID
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UninstallOld' -Type 'Dword' -Value $UninstallOld
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
+			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'Version' -Value $AppVersion
 		}
 		catch {
 			Write-Log -Message "Failed to create error key in registry. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -3213,9 +3226,11 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -in 0) {
 			$MainExitCode = 70000
 		}
-		Clear-NxtTempFolder -TempRootFolder $TempRootFolder -HoursToKeep $HoursToKeep -NxtTempDirectories $NxtTempDirectories
-		Close-BlockExecutionWindow
-		Unblock-NxtAppExecution -BlockScriptLocation $App -BlockExecution $BlockExecution
+		if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
+			Clear-NxtTempFolder -TempRootFolder $TempRootFolder -HoursToKeep $HoursToKeep -NxtTempDirectories $NxtTempDirectories
+			Close-BlockExecutionWindow
+			Unblock-NxtAppExecution -BlockScriptLocation $App -BlockExecution $BlockExecution
+		}
 		Exit-Script -ExitCode $MainExitCode
 	}
 	End {
