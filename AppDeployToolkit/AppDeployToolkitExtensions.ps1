@@ -3192,11 +3192,11 @@ function Exit-NxtScriptWithError {
 			Write-Log -Message "RegisterPackage is set to 'false', skip writing '_Error' key in registry..." -Source ${cmdletName}
 		}
 		Write-Log -Message $ErrorMessage -Severity 3 -Source ${CmdletName}
-		if ($true -eq $DeploymentType.Contains("UserPart")) {
-			$hive = "HKCU"
+		if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
+			$hive = "HKLM"
 		}
 		else {
-			$hive = "HKLM"
+			$hive = "HKCU"
 		}
 		try {
 			Set-RegistryKey -Key "${hive}:\Software\$RegPackagesKey\$PackageGUID$("_Error")" -Name 'AppPath' -Value $App
@@ -3226,7 +3226,7 @@ function Exit-NxtScriptWithError {
 		if ($MainExitCode -in 0) {
 			$MainExitCode = 70000
 		}
-		if ($false -eq $DeploymentType.Contains("UserPart")) {
+		if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
 			Clear-NxtTempFolder -TempRootFolder $TempRootFolder -HoursToKeep $HoursToKeep -NxtTempDirectories $NxtTempDirectories
 			Close-BlockExecutionWindow
 			Unblock-NxtAppExecution -BlockScriptLocation $App -BlockExecution $BlockExecution
