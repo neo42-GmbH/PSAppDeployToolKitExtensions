@@ -45,10 +45,10 @@
     <!--SetupCfg Parameters-->
 
     <!--PowerSehll Options-->
-    <PowerShell_Options>
-        <PowerShell_ExecutionPolicy>Bypass</PowerShell_ExecutionPolicy>
+    <NxtPowerShell_Options>
+        <NxtPowerShell_ExecutionPolicy>Bypass</NxtPowerShell_ExecutionPolicy>
         <!-- Specify the default excution policy with which the toolkit tries to invoke PowerShell. This can be one of the following: Unrestricted, RemoteSigned, AllSigned, Restricted, Undefined, Bypass. Setting the GPO/CSP for the execution policy will override this setting. -->
-    </PowerShell_Options>
+    </NxtPowerShell_Options>
     <!--PowerShell Options-->
 
     <!--Toolkit Options-->
