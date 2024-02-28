@@ -211,10 +211,17 @@ Remove-Variable -Name tempLoadPackageConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
+[xml]$tempLoadToolkitConfig = Get-Content "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitConfig.xml" -raw
 try {
-	Set-ExecutionPolicy -ExecutionPolicy $executionPolicyFromInvocationOrBypass -Scope 'Process' -Force -ErrorAction 'Stop'
+	if ($false -eq [string]::IsNullOrEmpty($tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy)) {
+		Set-ExecutionPolicy -ExecutionPolicy $tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
+	}
+	else {
+		Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop'
+	}
 }
 catch {}
+Remove-Variable -Name tempLoadToolkitConfig
 ## Variables: Exit Code
 [int32]$mainExitCode = 0
 ## Variables: Script
