@@ -10789,7 +10789,7 @@ function Unblock-NxtAppExecution {
 			return
 		}
 		## Close the Block-NxtAppExecution message box
-		Close-BlockNxtExecutionWindow
+		Close-NxtBlockExecutionWindow
 		## Remove Debugger values to unblock processes
 		[PSObject[]]$unblockProcesses = $null
 		$unblockProcesses += (
