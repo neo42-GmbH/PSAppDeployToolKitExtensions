@@ -10810,7 +10810,7 @@ function Unblock-NxtAppExecution {
 		## Remove the scheduled task if it exists
 		[string]$schTaskBlockedAppsName = $installName + '_BlockedApps'
 		try {
-			Unregister-ScheduledTask -TaskPath '\' -TaskName $schTaskBlockedAppsName -ErrorAction Stop
+			Unregister-ScheduledTask -TaskPath '\' -TaskName $schTaskBlockedAppsName -Confirm:$false -ErrorAction Stop
 		}
 		catch {
 			if ( $_.CategoryInfo.Category -eq "ObjectNotFound" ){
