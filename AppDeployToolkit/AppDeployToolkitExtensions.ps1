@@ -720,6 +720,7 @@ function Block-NxtAppExecution {
 		}
 		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
 			Write-Log -Message "Previous block execution script folder found. Removing it." -Source ${CmdletName}
+			Close-BlockExecutionWindow
 			Remove-Folder -Path $blockExecutionTempPath
 		}
 		try {
