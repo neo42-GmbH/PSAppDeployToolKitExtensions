@@ -787,7 +787,6 @@ function Close-NxtBlockExecutionWindow {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	[alias("Close-BlockExecutionWindow")]
 	Param (
 	)
 	Begin {
