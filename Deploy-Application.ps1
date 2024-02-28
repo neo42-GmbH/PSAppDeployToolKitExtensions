@@ -397,7 +397,6 @@ function Main {
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
 				if ($false -eq $mainNxtResult.Success) {
 					Clear-NxtTempFolder
-					Close-BlockExecutionWindow
 					Unblock-NxtAppExecution
 					Exit-Script -ExitCode $mainNxtResult.MainExitCode
 				}
@@ -580,7 +579,6 @@ function Main {
 		[string]$script:installPhase = 'Package-Finish'
 		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
 		if ($DeploymentType -notin @("InstallUserPart", "UninstallUserPart")) {
-			Close-BlockExecutionWindow
 			Clear-NxtTempFolder
 			Unblock-NxtAppExecution
 		}
