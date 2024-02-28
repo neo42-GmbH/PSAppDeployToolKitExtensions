@@ -718,7 +718,6 @@ function Block-NxtAppExecution {
 		[string[]]$blockProcessNames = $ProcessName | ForEach-Object {
 			($_ -replace "\.exe$") + '.exe'
 		}
-
 		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
 			Write-Log -Message "Previous block execution script folder found. Removing it." -Source ${CmdletName}
 			Remove-Folder -Path $blockExecutionTempPath
@@ -727,7 +726,7 @@ function Block-NxtAppExecution {
 			New-NxtFolderWithPermissions -Path $blockExecutionTempPath -FullControlPermissions BuiltinAdministratorsSid,LocalSystemSid -ReadAndExecutePermissions BuiltinUsersSid -Owner BuiltinAdministratorsSid -ProtectRules $true | Out-Null
 		}
 		catch {
-			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Severity 1 -Source ${CmdletName}
+			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Severity 3 -Source ${CmdletName}
 			throw "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script."
 		}
 		## Copy the block execution required files to the persistent location
@@ -745,10 +744,10 @@ function Block-NxtAppExecution {
 			[CimInstance]$scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'S-1-5-18' -LogonType ServiceAccount -RunLevel Highest
 			[CimInstance[]]$scheduledTaskActions = @(
 				foreach ($processName in $blockProcessNames) {
-					New-ScheduledTaskAction -Execute "$env:windir\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v `"Debugger`" /f" # Remove the IFEO key
+					New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v `"Debugger`" /f" # Remove the IFEO key
 				}
 				New-ScheduledTaskAction -Execute "$env:COMSPEC" -Argument "/c rd /s /q `"$blockExecutionTempPath`"" # Remove the temp folder
-				New-ScheduledTaskAction -Execute "$env:windir\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f" # Remove the scheduled task
+				New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f" # Remove the scheduled task
 			)
 			[CimInstance]$scheduledTask = New-ScheduledTask -Trigger $scheduledTaskTriggers -Settings $scheduledTaskSetting -Principal $scheduledTaskPrincipal -Action $scheduledTaskActions
 			Register-ScheduledTask -InputObject $scheduledTask -TaskName $schTaskBlockedAppsName -TaskPath '\' -ErrorAction 'Stop' -Force | Out-Null
