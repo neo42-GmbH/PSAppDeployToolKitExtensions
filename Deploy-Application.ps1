@@ -306,7 +306,9 @@ catch {
 	[int32]$mainExitCode = 60001
 	[string]$mainErrorMessage = "$(Resolve-Error)"
 	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-	Clear-NxtTempFolder
+	if ($DeploymentType -notin @("InstallUserPart", "UninstallUserPart")) {
+		Clear-NxtTempFolder
+	}
 	Exit-Script -ExitCode $mainExitCode
 }
 
@@ -576,10 +578,12 @@ function Main {
 			Default {}
 		}
 		[string]$script:installPhase = 'Package-Finish'
-		Close-BlockExecutionWindow
 		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
-		Clear-NxtTempFolder
-		Unblock-NxtAppExecution
+		if ($DeploymentType -notin @("InstallUserPart", "UninstallUserPart")) {
+			Close-BlockExecutionWindow
+			Clear-NxtTempFolder
+			Unblock-NxtAppExecution
+		}
 		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {
