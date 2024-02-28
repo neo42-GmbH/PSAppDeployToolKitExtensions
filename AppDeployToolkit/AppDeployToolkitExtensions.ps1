@@ -710,6 +710,7 @@ function Block-NxtAppExecution {
 		## Get the name of this function and write header
 		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+	}
 	Process {
 		[string]$blockExecutionTempPath = Join-Path -Path $BlockScriptLocation -ChildPath 'BlockExecution'
 		[string]$schTaskBlockedAppsName = $InstallName + '_BlockedApps'
@@ -717,19 +718,6 @@ function Block-NxtAppExecution {
 		[string[]]$blockProcessNames = $ProcessName | ForEach-Object {
 			($_ -replace "\.exe$") + '.exe'
 		}
-
-		## Specify the scheduled task configuration
-		[CimInstance[]]$scheduledTaskTriggers = @(New-ScheduledTaskTrigger -AtStartup)
-		[CimInstance]$scheduledTaskSetting = New-ScheduledTaskSettingsSet -MultipleInstances "IgnoreNew" -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Hours 1) -Priority 7
-		[CimInstance]$scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'S-1-5-18'
-		[CimInstance[]]$scheduledTaskActions = @(
-			foreach ($processName in $blockProcessNames) {
-				New-ScheduledTaskAction -Execute "reg.exe" -Argument "/delete 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName' /v 'Debugger' /f" # Remove the IFEO key
-			}
-			New-ScheduledTaskAction -Execute "$env:COMSPEC" -Argument "/c 'rd /s /q '$blockExecutionTempPath'" # Remove the temp folder
-			New-ScheduledTaskAction -Execute "$env:windir\system32\schtasks.exe" -Argument "/delete /tn /$schTaskBlockedAppsName /f" # Remove the scheduled task
-		)
-		[CimInstance]$scheduledTask = New-ScheduledTask -TaskName $schTaskBlockedAppsName -Trigger $scheduledTaskTriggers -Settings $scheduledTaskSetting -Principal $scheduledTaskPrincipal -Action $scheduledTaskActions
 
 		if ($true -eq (Test-Path -LiteralPath $blockExecutionTempPath -PathType 'Container')) {
 			Write-Log -Message "Previous block execution script folder found. Removing it." -Source ${CmdletName}
@@ -740,7 +728,7 @@ function Block-NxtAppExecution {
 		}
 		catch {
 			Write-Log -Message "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script." -Severity 1 -Source ${CmdletName}
-			return
+			throw "Unable to create [$blockExecutionTempPath]. Cannot securely place the Block-Execution script."
 		}
 		## Copy the block execution required files to the persistent location
 		Copy-Item -Path "$ScriptDirectory\AppDeployToolkit\" -Destination "$blockExecutionTempPath\AppDeployToolkit\" -Exclude 'thumbs.db' -Recurse -Force -ErrorAction 'SilentlyContinue'
@@ -750,30 +738,26 @@ function Block-NxtAppExecution {
 		Set-Content -Path "$blockExecutionTempPath\DeployNxtApplication.exe.config" -Force -Value "<?xml version=`"1.0`" encoding=`"utf-8`" ?><configuration><appSettings><add key=`"OperationMode`" value=`"BlockExecution`"/><add key=`"BlockExecution_Title`" value=`"$installTitle`"/></appSettings></configuration>"
 		## Create a scheduled task to run on startup to call this script and clean up blocked applications in case the installation is interrupted, e.g. user shuts down during installation"
 		Write-Log -Message 'Creating scheduled task to cleanup blocked applications in case the installation is interrupted.' -Source ${CmdletName}
-		if ($null -ne (Get-SchedulerTask -TaskName $schTaskBlockedAppsName -ContinueOnError $true)) {
-			Write-Log -Message "Scheduled task [$schTaskBlockedAppsName] already exists." -Source ${CmdletName}
+		try {
+			## Specify the scheduled task configuration
+			[CimInstance[]]$scheduledTaskTriggers = New-ScheduledTaskTrigger -AtStartup
+			[CimInstance]$scheduledTaskSetting = New-ScheduledTaskSettingsSet -MultipleInstances "IgnoreNew" -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -Priority 7
+			[CimInstance]$scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'S-1-5-18' -LogonType ServiceAccount -RunLevel Highest
+			[CimInstance[]]$scheduledTaskActions = @(
+				foreach ($processName in $blockProcessNames) {
+					New-ScheduledTaskAction -Execute "$env:windir\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v `"Debugger`" /f" # Remove the IFEO key
+				}
+				New-ScheduledTaskAction -Execute "$env:COMSPEC" -Argument "/c rd /s /q `"$blockExecutionTempPath`"" # Remove the temp folder
+				New-ScheduledTaskAction -Execute "$env:windir\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f" # Remove the scheduled task
+			)
+			[CimInstance]$scheduledTask = New-ScheduledTask -Trigger $scheduledTaskTriggers -Settings $scheduledTaskSetting -Principal $scheduledTaskPrincipal -Action $scheduledTaskActions
+			Register-ScheduledTask -InputObject $scheduledTask -TaskName $schTaskBlockedAppsName -TaskPath '\' -ErrorAction 'Stop' -Force | Out-Null
 		}
-		else {
-			## Export the scheduled task XML to file
-			try {
-				## Specify the filename to export the XML to
-				## XML does not need to be user readable to stays in protected TEMP folder
-				[String]$xmlSchTaskFilePath = "$blockExecutionTempPath\SchTaskUnBlockApps.xml"
-				[String]$xmlUnblockAppsSchTask | Out-File -FilePath $xmlSchTaskFilePath -Force -ErrorAction 'Stop'
-			}
-			catch {
-				Write-Log -Message "Failed to export the scheduled task XML file [$xmlSchTaskFilePath]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-				return
-			}
-			## Import the Scheduled Task XML file to create the Scheduled Task
-			[PSObject]$schTaskResult = Execute-Process -Path $exeSchTasks -Parameters "/create /f /tn $schTaskBlockedAppsName /xml `"$xmlSchTaskFilePath`"" -WindowStyle 'Hidden' -CreateNoWindow -PassThru -ExitOnProcessFailure $false
-			if ($schTaskResult.ExitCode -ne 0) {
-				Write-Log -Message "Failed to create the scheduled task [$schTaskBlockedAppsName] by importing the scheduled task XML file [$xmlSchTaskFilePath]." -Severity 3 -Source ${CmdletName}
-				return
-			}
+		catch {
+			Write-Log -Message "Failed to create scheduled task to cleanup blocked applications. `n$(Resolve-Error)" -Severity 1 -Source ${CmdletName}
 		}
 		## Enumerate each process and set the debugger value to block application execution
-		foreach ($blockProcess in $blockProcessName) {
+		foreach ($blockProcess in $blockProcessNames) {
 			Write-Log -Message "Setting the Image File Execution Option registry key to block execution of [$blockProcess]." -Source ${CmdletName}
 			Set-RegistryKey -Key (Join-Path -Path $RegKeyAppExecution -ChildPath $blockProcess) -Name 'Debugger' -Value "$blockExecutionTempPath\DeployNxtApplication.exe" -ContinueOnError $true
 		}
