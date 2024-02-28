@@ -708,6 +708,7 @@ function Block-NxtAppExecution {
 		[string]
 		$RegKeyAppExecution = $regKeyAppExecution,
 		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[string]
 		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
@@ -1261,6 +1262,7 @@ function Complete-NxtPackageInstallation {
 		[string[]]
 		$LegacyAppRoots= @("$envProgramFiles\neoPackages", "$envProgramFilesX86\neoPackages"),
 		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[string]
 		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
@@ -1430,6 +1432,7 @@ function Complete-NxtPackageUninstallation {
 		[string]
 		$Desktop = $envCommonDesktop,
 		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[string]
 		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
@@ -6755,6 +6758,7 @@ function Register-NxtPackage {
 		[string]
 		$SoftMigrationOccurred = [string]::Empty,
 		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[string]
 		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
@@ -9517,6 +9521,7 @@ function Show-NxtWelcomePrompt {
 		[int]
 		$ProcessIdToIgnore,
 		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[string]
 		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
@@ -11696,6 +11701,7 @@ function Unregister-NxtPackage {
 		[string]
 		$AppVendor = $global:PackageConfig.AppVendor,
 		[Parameter(Mandatory = $false)]
+		[ValidateNotNullorEmpty()]
 		[string]
 		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
 	)
