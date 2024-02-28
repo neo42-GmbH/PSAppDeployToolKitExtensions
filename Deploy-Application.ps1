@@ -196,6 +196,7 @@ switch ($DeploymentType) {
 [string]$global:CustomSetupCfgPath = "$PSScriptRoot\CustomSetup.cfg"
 [string]$global:DeployApplicationPath = "$PSScriptRoot\Deploy-Application.ps1"
 [string]$global:AppDeployToolkitExtensionsPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitExtensions.ps1"
+[string]$global:AppDeployToolkitConfigPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitConfig.xml"
 [string]$global:DeploymentSystem = $DeploymentSystem
 [string]$global:UserPartDir = "User"
 ## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
@@ -211,14 +212,14 @@ Remove-Variable -Name tempLoadPackageConfig
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
-[xml]$tempLoadToolkitConfig = Get-Content "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitConfig.xml" -raw
+[xml]$tempLoadToolkitConfig = Get-Content "$global:AppDeployToolkitConfigPath" -Raw
 try {
-	if ($false -eq [string]::IsNullOrEmpty($tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy)) {
-		Set-ExecutionPolicy -ExecutionPolicy $tempLoadToolkitConfig.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
+	[string]$powerShellOptionsExecutionPolicy = $tempLoadToolkitConfig.AppDeployToolkit_Config.PowerShell_Options.PowerShell_ExecutionPolicy
+	if ([string]::IsNullOrEmpty($powerShellOptionsExecutionPolicy) -or ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $powerShellOptionsExecutionPolicy)) {
+		throw "Invalid value for 'Toolkit_ExecutionPolicy' property in 'AppDeployToolkitConfig.xml'."
 	}
-	else {
-		Set-ExecutionPolicy -ExecutionPolicy 'Bypass' -Scope 'Process' -Force -ErrorAction 'Stop'
-	}
+	Set-ExecutionPolicy -ExecutionPolicy $powerShellOptionsExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
+	Remove-Variable -Name powerShellOptionsExecutionPolicy
 }
 catch {}
 Remove-Variable -Name tempLoadToolkitConfig

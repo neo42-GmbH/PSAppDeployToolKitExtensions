@@ -1195,7 +1195,7 @@ function Complete-NxtPackageInstallation {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.PowerShell_Options.PowerShell_ExecutionPolicy
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1365,7 +1365,7 @@ function Complete-NxtPackageUninstallation {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.PowerShell_Options.PowerShell_ExecutionPolicy
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6691,7 +6691,7 @@ function Register-NxtPackage {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.PowerShell_Options.PowerShell_ExecutionPolicy
 	)
 
 	Begin {
@@ -9454,7 +9454,7 @@ function Show-NxtWelcomePrompt {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.PowerShell_Options.PowerShell_ExecutionPolicy
 	)
 
 	Begin {
@@ -11634,7 +11634,7 @@ function Unregister-NxtPackage {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.Toolkit_Options.Toolkit_ExecutionPolicy
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.PowerShell_Options.PowerShell_ExecutionPolicy
 	)
 	Begin {
 		## Get the name of this function and write header

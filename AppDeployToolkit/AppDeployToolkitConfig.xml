@@ -44,10 +44,15 @@
     </SetupCfg_Parameters>
     <!--SetupCfg Parameters-->
 
+    <!--PowerSehll Options-->
+    <PowerShell_Options>
+        <PowerShell_ExecutionPolicy>Bypass</PowerShell_ExecutionPolicy>
+        <!-- Specify the default excution policy with which the toolkit tries to invoke PowerShell. This can be one of the following: Unrestricted, RemoteSigned, AllSigned, Restricted, Undefined, Bypass. Setting the GPO/CSP for the execution policy will override this setting. -->
+    </PowerShell_Options>
+    <!--PowerShell Options-->
+
     <!--Toolkit Options-->
     <Toolkit_Options>
-        <Toolkit_ExecutionPolicy>Bypass</Toolkit_ExecutionPolicy>
-        <!-- Specify the default excution policy with which the toolkit tries to invoke PowerShell. This can be one of the following: Unrestricted, RemoteSigned, AllSigned, Restricted, Undefined, Bypass. Setting the GPO/CSP for the execution policy will override this setting. -->
         <Toolkit_RequireAdmin>True</Toolkit_RequireAdmin>
         <!-- Specify if Administrator Rights are required. NB: Some functions won't work if this is set to false, such as deferral, blockexecution, file & registry RW access and potentially logging. -->
         <Toolkit_TempPath>$envTemp</Toolkit_TempPath>
