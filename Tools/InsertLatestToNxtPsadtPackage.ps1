@@ -443,7 +443,7 @@ function Update-NxtPSAdtPackage {
                 if ($line -match "Close-BlockExecutionWindow") {
                     [bool]$contentChanged = $true
                     $content = $content.Replace($line, $line.Replace("Close-BlockExecutionWindow","Close-NxtBlockExecutionWindow"))
-                    Write-Warning "Replaced Close-BlockExecutionWindow with Close-NxtBlockExecutionWindow in $PackageToUpdatePath in line: $line"
+                    Write-Warning "Replaced Close-BlockExecutionWindow with Close-NxtBlockExecutionWindow in $PackageToUpdatePath."
                 }
             }
             if ($true -eq $contentChanged) {
