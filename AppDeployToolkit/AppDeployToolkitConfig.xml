@@ -47,7 +47,7 @@
     <!--PowerSehll Options-->
     <NxtPowerShell_Options>
         <NxtPowerShell_ExecutionPolicy>Bypass</NxtPowerShell_ExecutionPolicy>
-        <!-- Specify the default excution policy with which the toolkit tries to invoke PowerShell. This can be one of the following: Unrestricted, RemoteSigned, AllSigned, Restricted, Undefined, Bypass. Setting the GPO/CSP for the execution policy will override this setting. -->
+        <!-- Specify the default excution policy with which the toolkit tries to invoke PowerShell. Please choose one of these non interactive settings: Bypass, AllSigned, RemoteSigned. Setting the GPO/CSP for the execution policy will override this setting. -->
     </NxtPowerShell_Options>
     <!--PowerShell Options-->
 
