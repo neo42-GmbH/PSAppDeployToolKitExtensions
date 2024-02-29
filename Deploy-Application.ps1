@@ -222,7 +222,8 @@ try {
 	Remove-Variable -Name powerShellOptionsExecutionPolicy
 }
 catch {
-	throw "Failed to set the execution policy for this process: `n$($_.Exception.Message)"
+	Write-Error -Message "Failed to set the execution policy for this process: `n$($_.Exception.Message)"
+	exit 60014
 }
 Remove-Variable -Name tempLoadToolkitConfig
 ## Variables: Exit Code
