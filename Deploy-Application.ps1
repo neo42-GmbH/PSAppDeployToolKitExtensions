@@ -214,14 +214,16 @@ Remove-Variable -Name tempLoadPackageConfig
 ## Set the script execution policy for this process
 [xml]$tempLoadToolkitConfig = Get-Content "$global:AppDeployToolkitConfigPath" -Raw
 try {
-	[string]$powerShellOptionsExecutionPolicy = $tempLoadToolkitConfig.AppDeployToolkit_Config.PowerShell_Options.PowerShell_ExecutionPolicy
-	if ([string]::IsNullOrEmpty($powerShellOptionsExecutionPolicy) -or ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $powerShellOptionsExecutionPolicy)) {
+	[string]$powerShellOptionsExecutionPolicy = $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy
+	if (($true -eq [string]::IsNullOrEmpty($powerShellOptionsExecutionPolicy)) -or ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $powerShellOptionsExecutionPolicy)) {
 		throw "Invalid value for 'Toolkit_ExecutionPolicy' property in 'AppDeployToolkitConfig.xml'."
 	}
 	Set-ExecutionPolicy -ExecutionPolicy $powerShellOptionsExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
 	Remove-Variable -Name powerShellOptionsExecutionPolicy
 }
-catch {}
+catch {
+	throw "Failed to set the execution policy for this process: `n$($_.Exception.Message)"
+}
 Remove-Variable -Name tempLoadToolkitConfig
 ## Variables: Exit Code
 [int32]$mainExitCode = 0
