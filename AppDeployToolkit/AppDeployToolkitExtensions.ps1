@@ -744,9 +744,9 @@ function Block-NxtAppExecution {
 			[CimInstance]$scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'S-1-5-18' -LogonType ServiceAccount -RunLevel Highest
 			[CimInstance[]]$scheduledTaskActions = @(
 				foreach ($processName in $blockProcessNames) {
-					New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v `"Debugger`" /f" # Remove the IFEO key
+					New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v Debugger /f" # Remove the IFEO key
 				}
-				New-ScheduledTaskAction -Execute "$env:COMSPEC" -Argument "/c rd /s /q `"$blockExecutionTempPath`"" # Remove the temp folder
+				New-ScheduledTaskAction -Execute "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`"" # Remove the temp folder
 				New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f" # Remove the scheduled task
 			)
 			[CimInstance]$scheduledTask = New-ScheduledTask -Trigger $scheduledTaskTriggers -Settings $scheduledTaskSetting -Principal $scheduledTaskPrincipal -Action $scheduledTaskActions
