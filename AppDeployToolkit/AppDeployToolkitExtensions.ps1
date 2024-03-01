@@ -4201,7 +4201,10 @@ function Get-NxtPackageConfig {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[PSObject]$global:PackageConfig = Get-Content $Path | Out-String | ConvertFrom-Json
+		if ((Get-NxtFileEncoding -Path $Path -DefaultEncoding "UTF8") -notin @("UTF8", "UTF8withBOM")) {
+			throw "Failed to parse package configuration: File encoding is not UTF8."
+		}
+		[PSObject]$global:PackageConfig = Get-Content $Path -Raw -Encoding "UTF8" | ConvertFrom-Json
 		Write-Log -Message "Package configuration successfully parsed into global:PackageConfig object." -Source ${CmdletName}
 	}
 	End {
@@ -8687,7 +8690,6 @@ function Set-NxtXmlNode {
 function Show-NxtInstallationWelcome {
 	<#
 	.SYNOPSIS
-	.SYNOPSIS
 	Displays a customizable welcome dialog for software installations, offering options like closing specified applications, deferring installation, and blocking application execution during installation.
 	.DESCRIPTION
 		Show-NxtInstallationWelcome is a versatile PowerShell function designed to interact with users during software installations. It provides a range of features:
@@ -10297,11 +10299,11 @@ function Test-NxtPackageConfig {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
-		[PSCustomObject]$validationRules = Get-Content $ValidationRulePath -Raw | Out-String | ConvertFrom-Json
+		[PSCustomObject]$validationRules = Get-Content $ValidationRulePath -Raw | ConvertFrom-Json
 	}
 	Process {
-			Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError $ContinueOnError -ParentObjectName "PackageConfig"
-		}
+		Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError $ContinueOnError -ParentObjectName "PackageConfig"
+	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
