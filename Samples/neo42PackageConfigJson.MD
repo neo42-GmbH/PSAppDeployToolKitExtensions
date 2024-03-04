@@ -265,7 +265,7 @@ parent: /
 ```
 default value: ""
 comma separated list of depending applications, Windows features or services in one string (if any)
-note: usually these dependencies should be pre-checked in a custom function (i.e. 'CustomInstallAndReinstallBegin') of script too
+note: usually these dependencies should be pre-checked in a custom function (i.e. 'CustomInstallAndReinstallAndSoftMigrationBegin') of script too
 ```
 
 **"LastChange"** *mandatory informational string value*

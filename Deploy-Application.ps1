@@ -391,7 +391,7 @@ function Main {
 			{
 				($_ -eq "Install") -or ($_ -eq "Repair")
 			} {
-				CustomInstallAndReinstallBegin
+				CustomInstallAndReinstallAndSoftMigrationBegin
 				## START OF INSTALL
 				[string]$script:installPhase = 'Package-PreCleanup'
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
@@ -605,13 +605,13 @@ function CustomBegin {
 	#endregion CustomBegin content
 }
 
-function CustomInstallAndReinstallBegin {
-	[string]$script:installPhase = 'CustomInstallAndReinstallBegin'
+function CustomInstallAndReinstallAndSoftMigrationBegin {
+	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationBegin'
 
 	## executes before any installation, reinstallation or soft migration tasks are performed
-	#region CustomInstallAndReinstallBegin content
+	#region CustomInstallAndReinstallAndSoftMigrationBegin content
 
-	#endregion CustomInstallAndReinstallBegin content
+	#endregion CustomInstallAndReinstallAndSoftMigrationBegin content
 }
 
 function CustomSoftMigrationBegin {
