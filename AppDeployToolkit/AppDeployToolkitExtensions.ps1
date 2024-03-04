@@ -11143,6 +11143,10 @@ function Uninstall-NxtOld {
 		Will uninstall previous Versions before Installation if set to $true. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DeploymentSystem
 		Defines the deployment system used for the deployment. Defaults to the corresponding value of the DeployApplication.ps1 parameter.
+	.PARAMETER AppLang
+		Defines the language of the application. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RemovePackagesWithSameProductGUID
+		Defines if packages with the same ProductGUID should be removed. Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Uninstall-NxtOld -UninstallOld $true
 		Uninstalls old versions of the package based on the settings in the PackageConfig object.
@@ -11184,7 +11188,13 @@ function Uninstall-NxtOld {
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentSystem = $global:DeploymentSystem
+		$DeploymentSystem = $global:DeploymentSystem,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppLang = $global:PackageConfig.AppLang,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -11196,13 +11206,20 @@ function Uninstall-NxtOld {
 			Write-Log -Message "Checking for old package installed..." -Source ${cmdletName}
 			try {
 				[bool]$returnWithError = $false
+				## Necessary for old "neoLanguage"-packages
+				if ($true -eq $RemovePackagesWithSameProductGUID) {
+					[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))",[string]::Empty)).TrimEnd())"
+				}
+				else {
+					[string]$appNameWithoutAppLang = $AppName
+				}
 				## Check for Empirum packages under "HKLM:\Software\WOW6432Node\"
 				if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor")) {
-					if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName")) {
-						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
+					if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) {
+						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
 						if (($appEmpirumPackageVersions).Count -eq 0) {
-							Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
-							Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
+							Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+							Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang" -Source ${cmdletName}
 						}
 						else {
 							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
@@ -11256,15 +11273,15 @@ function Uninstall-NxtOld {
 									}
 								}
 							}
-							if ( ($false -eq $returnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName")) ) {
-								Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
-								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$AppName"
+							if ( ($false -eq $returnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) ) {
+								Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
 								$uninstallOldResult.Success = $null
 								Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 							}
 						}
 					}
-					if ( ($false -eq $returnWithError) -and ((Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
+					if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor")) -and ((Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
 						Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.Success = $null
@@ -11273,11 +11290,11 @@ function Uninstall-NxtOld {
 				}
 				## Check for Empirum packages under "HKLM:\Software\"
 				if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor")) ) {
-					if ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName")) {
-						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName"
+					if ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) {
+						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
 						if (($appEmpirumPackageVersions).Count -eq 0) {
-							Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName"
-							Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName" -Source ${cmdletName}
+							Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+							Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang" -Source ${cmdletName}
 						}
 						else {
 							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
@@ -11331,15 +11348,15 @@ function Uninstall-NxtOld {
 									}
 								}
 							}
-							if ( ($false -eq $returnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName")) ) {
-								Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName"
-								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$AppName"
+							if ( ($false -eq $returnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) ) {
+								Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
 								$uninstallOldResult.Success = $null
 								Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 							}
 						}
 					}
-					if ( ($false -eq $returnWithError) -and ((Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
+					if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor")) -and ((Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
 						Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:\Software\$RegPackagesKey\$AppVendor"
 						$uninstallOldResult.Success = $null
