@@ -743,11 +743,14 @@ function Block-NxtAppExecution {
 			[CimInstance]$scheduledTaskSetting = New-ScheduledTaskSettingsSet -MultipleInstances "IgnoreNew" -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -DontStopOnIdleEnd -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -Priority 7
 			[CimInstance]$scheduledTaskPrincipal = New-ScheduledTaskPrincipal -UserId 'S-1-5-18' -LogonType ServiceAccount -RunLevel Highest
 			[CimInstance[]]$scheduledTaskActions = @(
+				## Remove the IFEO key
 				foreach ($processName in $blockProcessNames) {
-					New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v Debugger /f" # Remove the IFEO key
+					New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v Debugger /f"
 				}
-				New-ScheduledTaskAction -Execute "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`"" # Remove the temp folder
-				New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f" # Remove the scheduled task
+				## Remove the temp block exec folder
+				New-ScheduledTaskAction -Execute "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`""
+				## Remove the scheduled task
+				New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f"
 			)
 			[CimInstance]$scheduledTask = New-ScheduledTask -Trigger $scheduledTaskTriggers -Settings $scheduledTaskSetting -Principal $scheduledTaskPrincipal -Action $scheduledTaskActions
 			Register-ScheduledTask -InputObject $scheduledTask -TaskName $schTaskBlockedAppsName -TaskPath '\' -ErrorAction 'Stop' -Force | Out-Null
