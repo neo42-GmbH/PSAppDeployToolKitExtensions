@@ -11208,7 +11208,7 @@ function Uninstall-NxtOld {
 				[bool]$returnWithError = $false
 				## Necessary for old "neoLanguage"-packages
 				if ($true -eq $RemovePackagesWithSameProductGUID) {
-					[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))",[string]::Empty)).TrimEnd())"
+					[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
 				}
 				else {
 					[string]$appNameWithoutAppLang = $AppName
