@@ -437,6 +437,19 @@ function Update-NxtPSAdtPackage {
                 Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
                 [bool]$contentChanged = $false
             }
+            # rename: "Close-BlockExecutionWindow" to "Close-NxtBlockExecutionWindow"
+            [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+            foreach ($line in ($content -split "`n")){
+                if ($line -match "Close-BlockExecutionWindow") {
+                    [bool]$contentChanged = $true
+                    $content = $content.Replace($line, $line.Replace("Close-BlockExecutionWindow","Close-NxtBlockExecutionWindow"))
+                    Write-Warning "Replaced Close-BlockExecutionWindow with Close-NxtBlockExecutionWindow in $PackageToUpdatePath."
+                }
+            }
+            if ($true -eq $contentChanged) {
+                Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
+                [bool]$contentChanged = $false
+            }
             ## check for MINMIZEALLWINDOWS in setup.cfg
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\setup.cfg"
             if ($content -like "*MINMIZEALLWINDOWS*") {
