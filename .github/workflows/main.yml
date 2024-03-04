@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ./PSAppDeployToolkitExtensions
       - name: Checkout Develop including merge commit history
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: ./PSAppDeployToolkitExtensions_Develop
           ref: develop
@@ -26,7 +26,7 @@ jobs:
             cd ./PSAppDeployToolkitExtensions_Develop
             git remote remove origin
       - name: Checkout Public Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
           ref: ${{ vars.TARGET_ADT_VERSION }}
@@ -35,7 +35,7 @@ jobs:
         shell: pwsh
         run: ./PSAppDeployToolkitExtensions/.github/scripts/script.ps1
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: PSAppDeployToolKitExtensions-${{ vars.RELEASE_VERSION }}-${{ github.run_number }}
           path: ${{ vars.RELEASE_VERSION }}-${{ github.run_number }}
