@@ -268,18 +268,16 @@ try {
 	##* VARIABLE DECLARATION
 	##*===============================================
 
-	## app global variables
-	[string]$global:DetectedDisplayVersion = (Get-NxtCurrentDisplayVersion).DisplayVersion
-
+	## App global variables
 	Get-NxtVariablesFromDeploymentSystem
 
 	[bool]$global:SoftMigrationCustomResult = $false
 	[bool]$global:AppInstallDetectionCustomResult = $false
 
-	## validate package config variables
+	## Validate package config variables
 	Test-NxtPackageConfig
 
-	## write variables to verbose channel to prevent warnings issued by PSScriptAnalyzer
+	## Write variables to verbose channel to prevent warnings issued by PSScriptAnalyzer
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigValidationPath: $global:Neo42PackageConfigValidationPath"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigPath: $global:Neo42PackageConfigPath"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SetupCfgPath: $global:SetupCfgPath"

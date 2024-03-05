@@ -450,6 +450,13 @@ function Update-NxtPSAdtPackage {
                 Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
                 [bool]$contentChanged = $false
             }
+            # Prevent usage of $global:DetectedDisplayVersion.
+            [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+            foreach ($line in ($content -split "`n")){
+                if ($line -match '(\$global:|\$)DetectedDisplayVersion') {
+                    throw "'DetectedDisplayVersion' was removed in $PackageToUpdatePath, please make use of (Get-NxtCurrentDisplayVersion).DisplayVersion instead."
+                }
+            }
             ## check for MINMIZEALLWINDOWS in setup.cfg
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\setup.cfg"
             if ($content -like "*MINMIZEALLWINDOWS*") {
