@@ -9060,12 +9060,12 @@ function Show-NxtInstallationWelcome {
 					}
 					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
 					elseif (($false -eq ($promptResult.Contains('Close'))) -or (($runningProcessDescriptions) -and ($false -eq ($promptResult.Contains('Continue'))))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
+						[String]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
 					}
 				}
 				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
 				elseif (($true -eq $runningProcessDescriptions) -or ($true -eq $forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
+					[String]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
 				}
 				#  If there is no deferral and no processes running, break the while loop
 				else {
@@ -9299,6 +9299,8 @@ function Show-NxtWelcomePrompt {
 		This function is based on the PSAppDeployToolkit Show-InstallationWelcome function from the PSAppDeployToolkit licensed under the LGPLv3 license.
 	.DESCRIPTION
 		Show-NxtWelcomePrompt presents a dialog for managing application installations. Features include closing specified applications, deferring installation, and handling installation timeouts. Customization options for the prompt appearance and behavior are available.
+	.PARAMETER ProcessObjects
+		Custom objects containing process find conditions and descriptions. This parameter is mandatory.
 	.PARAMETER ProcessDescriptions
 		Descriptive names of applications that need to be closed for installation. This parameter is mandatory.
 	.PARAMETER CloseAppsCountdown
@@ -9360,7 +9362,10 @@ function Show-NxtWelcomePrompt {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $true)]
+		[PSCustomObject[]]
+		$ProcessObjects,
+		[Parameter(Mandatory = $true)]
 		[String]
 		$ProcessDescriptions,
 		[Parameter(Mandatory = $false)]
@@ -9442,7 +9447,7 @@ function Show-NxtWelcomePrompt {
 	Process {
 		[int]$contiuneTypeValue = $ContinueType
 		# Convert to JSON in compressed form
-		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $processObjects
+		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $ProcessObjects
 		[string]$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
 		[string]$powershellCommand = "-File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferTimes" -Value $DeferTimes
