@@ -297,11 +297,18 @@ function Update-NxtPSAdtPackage {
             $line -split " " | Select-Object -Index 1
         }
     }
-
+    [hashtable]$customFunctionRenameMap = @{
+        "CustomInstallAndReinstallBegin" = "CustomInstallAndReinstallAndSoftMigrationBegin"
+    }
     foreach ($customFunctionName in $customFunctionNames) {
         [string]$startTag = "#region $customFunctionName content"
         [string]$endTag = "#endregion $customFunctionName content"
         [string]$contentBetweenTags = Get-NxtContentBetweenTags -Content $existingContent -StartTag $startTag -EndTag $endTag
+        if ($customFunctionName -in $customFunctionRenameMap.Keys){
+            $customRenameFunctionName = $customFunctionRenameMap[$customFunctionName]
+            [string]$startTag = "#region $customRenameFunctionName content"
+            [string]$endTag = "#endregion $customRenameFunctionName content"
+        }
         $resultContent = Set-NxtContentBetweenTags -Content $resultContent -StartTag $startTag -EndTag $endTag -ContentBetweenTags $contentBetweenTags
     }
     Write-Output "Updating $PackageToUpdatePath$versionInfo"
