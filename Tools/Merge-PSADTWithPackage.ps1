@@ -29,10 +29,6 @@ Param (
 	[System.IO.DirectoryInfo]
 	$PSADTPath,
 	[Parameter(Mandatory = $false)]
-	[ValidateScript({ $false -eq $_.Exists })]
-	[System.IO.DirectoryInfo]
-	$OutputPath = (Join-Path $PackagePath.Parent.FullName "$($PackagePath.Name)_Updated"),
-	[Parameter(Mandatory = $false)]
 	[string]
 	$ConfigVersion = "2023.10.31.1"
 )
@@ -41,22 +37,14 @@ Param (
 ## Minimum build version of the PSADT that is compatible with this script
 [int]$minimumCompatibleBuild = 53
 
-## Files that should be copied from the PSADT to the output directory. Migration tasks will be performed on these files afterwards. Order is important if files are supposed to be overwritten.
+## Files that should be copied from the PSADT to the packge directory. Migration tasks will be performed on these files afterwards. Order is important if files are supposed to be overwritten.
 $copyFromPSADT = @(
 	"AppDeployToolkit",
 	"COPYING",
 	"COPYING.Lesser",
 	"README.txt",
-	"Deploy-Application.ps1"
 	"DeployNxtApplication.exe",
 	"neo42PackageConfigValidationRules.json"
-)
-## Files that should be copied from the source package to the output directory. Migration tasks will be performed on these files afterwards. Order is important if files are supposed to be overwritten.
-$copyFromPackage = @(
-	"Files",
-	"neo42PackageConfig.json",
-	"Setup.cfg",
-	"Setup.ico"
 )
 
 ## Functions that should be migrated to the new PSADT name format
@@ -351,17 +339,9 @@ Write-Host @"
 ## Copy jobs ##
 ###############
 "@
-if ($false -eq $OutputPath.Exists) {
-	Write-Host "Creating the output directory '$($OutputPath.FullName)'."
-	$OutputPath.Create() | Out-Null
-}
 $copyFromPSADT | ForEach-Object {
 	Write-Host "Copying '$($_)' from the PSADT"
-	Copy-Item -Path (Join-Path $PSADTPath.FullName $_) -Destination (Join-Path $OutputPath.FullName $_) -Recurse -Force
-}
-$copyFromPackage | ForEach-Object {
-	Write-Host "Copying '$($_)' from the source package"
-	Copy-Item -Path (Join-Path $PackagePath.FullName $_) -Destination (Join-Path $OutputPath.FullName $_) -Recurse -Force
+	Copy-Item -Path (Join-Path $PSADTPath.FullName $_) -Destination (Join-Path $PackagePath.FullName $_) -Recurse -Force
 }
 Write-Host -ForegroundColor Green "Finished copying files."
 #endregion
@@ -373,7 +353,7 @@ Write-Host @"
 ## Function migration ##
 ########################
 "@
-[string]$outputDeployApplicationContent = Get-Content -Raw -Path $OutputPath.GetFiles("Deploy-Application.ps1").FullName
+[string]$deployApplicationContent = Get-Content -Raw -Path $template.Ast.Script.Extent.Text
 [string[]]$migratableFunctionNames = $template.Ast.CustomFunctions.Name + $functionNameMigrations.Keys
 
 ## Check if all functions are present in the PSADT template or the configuration
@@ -403,19 +383,19 @@ foreach ($functionName in $template.Ast.CustomFunctions.Name) {
 	}
 
 	## Copy the function to the working copy
-	[System.Management.Automation.Language.Ast]$outputDeployApplicationAst = [System.Management.Automation.Language.Parser]::ParseInput($outputDeployApplicationContent, [ref]$null, [ref]$null)
+	[System.Management.Automation.Language.Ast]$outputDeployApplicationAst = [System.Management.Automation.Language.Parser]::ParseInput($deployApplicationContent, [ref]$null, [ref]$null)
 	[System.Management.Automation.Language.FunctionDefinitionAst]$outputDeployApplicationTargetFunctionAst = $outputDeployApplicationAst.Find({
 			$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and 
 			$args[0].Name -eq $functionName
 		}, $false)
 	if ($null -eq ($functionSource.Body.Extent.Text | Select-String -Pattern '\[string\]\$script\:installPhase')) {
-		Write-Host -ForegroundColor Yellow "Function $($functionSource.Name) does not contain the variable `$script:installPhase. Please add it manually to the output copy if needed."
+		Write-Host -ForegroundColor Red "Function $($functionSource.Name) does not contain the variable `$script:installPhase. Please add it manually to the output copy if needed."
 	}
 
-	$outputDeployApplicationContent = $outputDeployApplicationContent.Remove($outputDeployApplicationTargetFunctionAst.Extent.StartOffset, $outputDeployApplicationTargetFunctionAst.Extent.EndOffset - $outputDeployApplicationTargetFunctionAst.Extent.StartOffset)
-	$outputDeployApplicationContent = $outputDeployApplicationContent.Insert($outputDeployApplicationTargetFunctionAst.Extent.StartOffset, $functionSource.Extent.Text)
+	$deployApplicationContent = $deployApplicationContent.Remove($outputDeployApplicationTargetFunctionAst.Extent.StartOffset, $outputDeployApplicationTargetFunctionAst.Extent.EndOffset - $outputDeployApplicationTargetFunctionAst.Extent.StartOffset)
+	$deployApplicationContent = $deployApplicationContent.Insert($outputDeployApplicationTargetFunctionAst.Extent.StartOffset, $functionSource.Extent.Text)
 }
-Set-Content -Path (Join-Path $OutputPath.FullName "Deploy-Application.ps1") -Value $outputDeployApplicationContent -Encoding UTF8 -Force
+Set-Content -Path (Join-Path $PackagePath.FullName "Deploy-Application.ps1") -Value $deployApplicationContent -Encoding UTF8 -Force
 Write-Host -ForegroundColor Green "Finished migrating functions."
 #endregion
 
@@ -427,7 +407,7 @@ Write-Host @"
 ###################
 "@
 foreach ($regexRule in $regexReplacements) {
-	[System.IO.FileInfo]$file = $OutputPath.GetFiles($regexRule.File) | Select-Object -First 1
+	[System.IO.FileInfo]$file = $PackagePath.GetFiles($regexRule.File) | Select-Object -First 1
 	if ($false -eq $file.Exists) {
 		Write-Host -ForegroundColor Red "File '$($file.Name)' does not exist. Skipping regex replacements."
 		return
@@ -454,7 +434,7 @@ Write-Host @"
 ########################
 "@
 ## Import the configuration files
-[System.Collections.Specialized.OrderedDictionary]$packageConfig = Get-Content -Raw ($OutputPath.GetFiles("neo42PackageConfig.json").FullName | Select-Object -First 1) | ConvertFrom-Json | Convert-PSObjectToOrderedDictionary
+[System.Collections.Specialized.OrderedDictionary]$packageConfig = Get-Content -Raw ($PackagePath.GetFiles("neo42PackageConfig.json").FullName | Select-Object -First 1) | ConvertFrom-Json | Convert-PSObjectToOrderedDictionary
 
 ## Add missing configuration options in order
 foreach ($configOption in $addConfigOptionWhenMissing) {
@@ -486,7 +466,7 @@ foreach ($configOption in $replaceConfigOptionOnPatternMatch) {
 }
 
 ## Output ordered dictionary to JSON
-$packageConfig | ConvertTo-Json -Depth 10 | Format-Json | Set-Content -Path (Join-Path $OutputPath.FullName "neo42PackageConfig.json") -Encoding UTF8 -Force
+$packageConfig | ConvertTo-Json -Depth 10 | Format-Json | Set-Content -Path (Join-Path $PackagePath.FullName "neo42PackageConfig.json") -Encoding UTF8 -Force
 Write-Host -ForegroundColor Green "Finished configuration adjustments."
 #endregion
 
@@ -497,7 +477,7 @@ Write-Host @"
 ## Custom tasks ##
 ###################
 "@
-[PSCustomObject]$iniContent = Import-NxtIniFileWithComments -Path (Join-Path $OutputPath.FullName "Setup.cfg" | Select-Object -First 1)
+[PSCustomObject]$iniContent = Import-NxtIniFileWithComments -Path (Join-Path $PackagePath.FullName "Setup.cfg" | Select-Object -First 1)
 foreach ($section in $iniContent.Keys) {
 	foreach ($key in ($iniContent.$section.Keys | Where-Object {$_ -ne "DesktopShortcut"})) {
 		if ($true -eq [string]::IsNullOrEmpty($iniContent.$section.$key.Value)) {
