@@ -272,7 +272,8 @@ function Import-NxtIniFileWithComments {
 ## Create a template object from the PSADT source files
 [PSCustomObject]$template = @{
 	Files = @{
-		DeployApplication = $PSADTPath.GetFiles("Deploy-Application.ps1")
+		DeployApplication	= $PSADTPath.GetFiles("Deploy-Application.ps1")
+		PackageConfig		= $PSADTPath.GetFiles("neo42PackageConfig.json")
 	}
 	Ast   = @{
 		Script = [System.Management.Automation.Language.Parser]::ParseFile($PSADTPath.GetFiles("Deploy-Application.ps1").FullName, [ref]$null, [ref]$null)
@@ -287,7 +288,8 @@ $template.Version = $template.Ast.Script.GetHelpContent().Notes | Select-String 
 ## Import the package information
 [PSCustomObject]$package = @{
 	Files = @{
-		DeployApplication = $PackagePath.GetFiles("Deploy-Application.ps1")
+		DeployApplication	= $PackagePath.GetFiles("Deploy-Application.ps1")
+		PackageConfig		= $PackagePath.GetFiles("neo42PackageConfig.json")
 	}
 	Ast   = @{
 		Script = [System.Management.Automation.Language.Parser]::ParseFile($PackagePath.GetFiles("Deploy-Application.ps1").FullName, [ref]$null, [ref]$null)
@@ -432,7 +434,7 @@ Write-Host @"
 ########################
 "@
 ## Import the configuration files
-[System.Collections.Specialized.OrderedDictionary]$packageConfig = Get-Content -Raw ($PackagePath.GetFiles("neo42PackageConfig.json").FullName | Select-Object -First 1) | ConvertFrom-Json | Convert-PSObjectToOrderedDictionary
+[System.Collections.Specialized.OrderedDictionary]$packageConfig = Get-Content -Raw -Path $package.Files.PackageConfig.FullName | Select-Object -First 1 | ConvertFrom-Json | Convert-PSObjectToOrderedDictionary
 
 ## Add missing configuration options in order
 foreach ($configOption in $addConfigOptionWhenMissing) {
