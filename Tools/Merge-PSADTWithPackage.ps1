@@ -11,13 +11,13 @@
 		By default a copy will be create next to the source package with the suffix '_Updated'.
 	.PARAMETER ConfigVersion
 		The version number that should be used to update the package configuration.
-    .NOTES
-        # LICENSE #
-        This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-        You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+	.NOTES
+		# LICENSE #
+		This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+		You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-        # COPYRIGHT #
-        Copyright (c) 2024 neo42 GmbH, Germany.
+		# COPYRIGHT #
+		Copyright (c) 2024 neo42 GmbH, Germany.
 #>
 Param (
 	[Parameter(Mandatory = $true)]
@@ -159,12 +159,17 @@ $regexReplacements = @(
 	},
 	@{
 		File        = "Deploy-Application.ps1"
-		Pattern     = "Close-BlockExecutionWindow"
+		Pattern     = "Close-BlockExecutionWindow(?=\b)"
 		Replacement = "Close-NxtBlockExecutionWindow"
 	},
 	@{
+		File        = "Deploy-Application.ps1"
+		Pattern     = "(\`$global:|\$)DetectedDisplayVersion(?=\b)"
+		Replacement = "(Get-NxtCurrentDisplayVersion).DisplayVersion"
+	}
+	@{
 		File        = "Setup.cfg"
-		Pattern     = "MINMIZEALLWINDOWS"
+		Pattern     = "(<?\b)MINMIZEALLWINDOWS(?=\b)"
 		Replacement = "MINIMIZEALLWINDOWS"
 	}
 	@{
@@ -217,29 +222,29 @@ function Format-Json {
 		[String]
 		$json
 	)
-    $indent = 0;
-    ($json -Split "`n" | ForEach-Object {
-        if ($_ -match '[\}\]]\s*,?\s*$') {
-            # This line ends with ] or }, decrement the indentation level
-            $indent--
-        }
-        $line = ('	' * $indent) + $($_.TrimStart() -replace '":  (["{[])', '": $1' -replace ':  ', ': ')
-        if ($_ -match '[\{\[]\s*$') {
-            # This line ends with [ or {, increment the indentation level
-            $indent++
-        }
-        $line
-    }) -join "`n" -replace '(?m)\[[\s\n\r]+\]', '[]' -replace '(?m)\{[\s\n\r]+\}', '{}'
+	$indent = 0;
+	($json -Split "`n" | ForEach-Object {
+		if ($_ -match '[\}\]]\s*,?\s*$') {
+			# This line ends with ] or }, decrement the indentation level
+			$indent--
+		}
+		$line = ('	' * $indent) + $($_.TrimStart() -replace '":  (["{[])', '": $1' -replace ':  ', ': ')
+		if ($_ -match '[\{\[]\s*$') {
+			# This line ends with [ or {, increment the indentation level
+			$indent++
+		}
+		$line
+	}) -join "`n" -replace '(?m)\[[\s\n\r]+\]', '[]' -replace '(?m)\{[\s\n\r]+\}', '{}'
 }
 function Import-NxtIniFileWithComments {
-    Param (
-        [Parameter(Mandatory, ValueFromPipeline)]
-        [String]
-        $Path,
-        [Parameter(Mandatory = $false)]
-        [bool]
-        $ContinueOnError = $true
-    )
+	Param (
+		[Parameter(Mandatory, ValueFromPipeline)]
+		[String]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContinueOnError = $true
+	)
 	Process {
 		try {
 			[hashtable]$ini = @{}
