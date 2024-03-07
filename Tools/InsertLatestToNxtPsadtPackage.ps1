@@ -428,9 +428,6 @@ function Update-NxtPSAdtPackage {
                     Read-Host "Press to check again or CTRL+C to exit"
                 }
             }
-            if ($jsonContent.Reboot -isnot [int]){
-                throw "Reboot value is not an integer, please update manually"
-            }
             ## rename : "-Ignore-ExitCodes to -AcceptedExitCodes in case it is in the same line as Execute-NxtMSI"
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
             foreach ($line in ($content -split "`n")){
@@ -451,6 +448,19 @@ function Update-NxtPSAdtPackage {
                     [bool]$contentChanged = $true
                     $content = $content.Replace($line, $line.Replace("Close-BlockExecutionWindow","Close-NxtBlockExecutionWindow"))
                     Write-Warning "Replaced Close-BlockExecutionWindow with Close-NxtBlockExecutionWindow in $PackageToUpdatePath."
+                }
+            }
+            if ($true -eq $contentChanged) {
+                Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
+                [bool]$contentChanged = $false
+            }
+            # Prevent usage of $global:DetectedDisplayVersion.
+            [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+            foreach ($line in ($content -split "`n")){
+                if ($line -match '(\$global:|\$)DetectedDisplayVersion') {
+                    [bool]$contentChanged = $true
+                    $content = $content.Replace($line, $line -replace '(\$global:|\$)DetectedDisplayVersion(?=\b)', "(Get-NxtCurrentDisplayVersion).DisplayVersion")
+                    Write-Warning "Replaced `$DetectedDisplayVersion with (Get-NxtCurrentDisplayVersion).DisplayVersion in $PackageToUpdatePath in line: $line"
                 }
             }
             if ($true -eq $contentChanged) {
