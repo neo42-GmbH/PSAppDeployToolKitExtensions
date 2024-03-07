@@ -421,9 +421,6 @@ function Update-NxtPSAdtPackage {
                     Read-Host "Press to check again or CTRL+C to exit"
                 }
             }
-            if ($jsonContent.Reboot -isnot [int]){
-                throw "Reboot value is not an integer, please update manually"
-            }
             ## rename : "-Ignore-ExitCodes to -AcceptedExitCodes in case it is in the same line as Execute-NxtMSI"
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
             foreach ($line in ($content -split "`n")){
@@ -454,8 +451,14 @@ function Update-NxtPSAdtPackage {
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
             foreach ($line in ($content -split "`n")){
                 if ($line -match '(\$global:|\$)DetectedDisplayVersion') {
-                    throw "'DetectedDisplayVersion' was removed in $PackageToUpdatePath, please make use of (Get-NxtCurrentDisplayVersion).DisplayVersion instead."
+                    [bool]$contentChanged = $true
+                    $content = $content.Replace($line, $line -replace '(\$global:|\$)DetectedDisplayVersion(?=\b)', "(Get-NxtCurrentDisplayVersion).DisplayVersion")
+                    Write-Warning "Replaced `$DetectedDisplayVersion with (Get-NxtCurrentDisplayVersion).DisplayVersion in $PackageToUpdatePath in line: $line"
                 }
+            }
+            if ($true -eq $contentChanged) {
+                Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
+                [bool]$contentChanged = $false
             }
             ## check for MINMIZEALLWINDOWS in setup.cfg
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\setup.cfg"
