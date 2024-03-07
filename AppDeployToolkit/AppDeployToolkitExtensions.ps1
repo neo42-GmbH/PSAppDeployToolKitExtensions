@@ -5808,11 +5808,15 @@ function Initialize-NxtUninstallApplication {
 			if ($false -eq $uninstallKeyToHide.Is64Bit -and $true -eq $Is64Bit) {
 				$wowEntry = "\Wow6432Node"
 			}
-			[PSCustomObject]$getInstalledApplicationSplatted = @{
-				UninstallKey = $uninstallKeyToHide.KeyName
-				UninstallKeyIsDisplayName = $uninstallKeyToHide.KeyNameIsDisplayName
-				UninstallKeyContainsWildCards = $uninstallKeyToHide.KeyNameContainsWildCards
-				DisplayNamesToExclude = $UninstallKeysToHide.DisplayNamesToExcludeFromHiding
+			[hashtable]$getInstalledApplicationSplatted = @{
+				UninstallKey			= $uninstallKeyToHide.KeyName
+				DisplayNamesToExclude	= $uninstallKeyToHide.DisplayNamesToExcludeFromHiding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
+				$getInstalledApplicationSplatted["UninstallKeyIsDisplayName"] = $uninstallKeyToHide.KeyNameIsDisplayName
+			}
+			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
+				$getInstalledApplicationSplatted["UninstallKeyContainsWildCards"] = $uninstallKeyToHide.KeyNameContainsWildCards
 			}
 			[string[]]$currentKeyName = (Get-NxtInstalledApplication @getInstalledApplicationSplatted).UninstallSubkey
 			if ($currentKeyName.Count -ne 1) {
