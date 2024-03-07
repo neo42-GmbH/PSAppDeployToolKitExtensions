@@ -171,7 +171,6 @@ $regexReplacements = @(
 		Replacement = ""
 	}
 )
-
 #endregion
 
 
@@ -203,7 +202,6 @@ function Convert-PSObjectToOrderedDictionary {
 		}
 	}
 }
-
 function Format-Json {
 	Param(
 		[Parameter(Mandatory, ValueFromPipeline)]
@@ -332,7 +330,7 @@ else {
 Write-Host -ForegroundColor Green "Finished version check."
 #endregion
 
-#region Output creation
+#region Copy jobs
 Write-Host @"
 
 ###############
@@ -495,4 +493,18 @@ if ($iniContent.AskKillProcesses.APPLYCONTINUETYPEONERROR.Comments -notlike "*Va
 	Write-Host -ForegroundColor Red "Please correct the comments in 'Setup.cfg' APPLYCONTINUETYPEONERROR to 'Values    = 0,1'"
 }
 Write-Host -ForegroundColor Green "Finished custom tasks."
+#endregion
+
+#region End
+Write-Host @"
+###################
+Finished merging the PSADT with the package. The updated package is located at '$($PackagePath.FullName)'.
+If any red messages were displayed, please check the output copy for the mentioned issues and correct them manually.
+You can run the script again to perform the migrations and checks again.
+
+"@
+# Prevent accidental closing
+while($true) {
+	Read-Host "Press Ctrl+C to exit."
+}
 #endregion
