@@ -11598,8 +11598,8 @@ function Unregister-NxtOld {
 						Remove-NxtEmptyRegistryKey -Path $regProductKey.PSParentPath
 						continue
 					}
-					[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object { 
-						$true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID")) 
+					[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object {
+						$true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID"))
 					}
 					foreach ($regVersionKey in $regVersionKeysOfNonADTPackages) {
 						[Microsoft.Win32.RegistryKey]$regSetupKey = $regVersionKey.OpenSubKey("Setup")
