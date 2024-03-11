@@ -11574,8 +11574,55 @@ function Unregister-NxtOld {
 					Write-Log -Message "Unregister of old package was incomplete! Note: Some orphaned registry keys might remain on the client." -Severity 2 -Source ${cmdletName}
 				}
 			}
-			else {
-				Write-Log -Message "No need to cleanup old package registration." -Source ${cmdletName}
+			## cleanup registering of traditional Empirum package (of former versions)
+			[string[]]$regPackageRootPaths = @()
+			switch -Regex ("x86") {
+				"^(x86|\*)$" { 
+					$regPackageRootPaths += "HKLM:\Software\Wow6432Node\"
+				}
+				"^(x64|\*)$" { 
+					$regPackageRootPaths += "HKLM:\Software\"
+				}
+			}
+			[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
+			[string[]]$appNameList = @(($appNameWithoutAppLang, $AppName) | Sort-Object -Unique)
+			foreach ($regPackageRoot in $regPackageRootPaths) {
+				foreach ($appName in $appNameList) {
+					[Microsoft.Win32.RegistryKey]$regProductKey = Get-Item -Path "$regPackageRoot\$RegPackagesKey\$AppVendor\$appName" -ErrorAction SilentlyContinue
+					if ($null -eq $regProductKey) {
+						continue
+					}
+					[Microsoft.Win32.RegistryKey[]]$regVersionKeys = Get-ChildItem -Path $regProductKey.PSPath -ErrorAction SilentlyContinue
+					if ($regVersionKeys.Count -eq 0) {
+						Remove-NxtEmptyRegistryKey -Path $regProductKey.PSPath
+						Remove-NxtEmptyRegistryKey -Path $regProductKey.PSParentPath
+						continue
+					}
+					[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object { $true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID")) }
+					foreach ($regVersionKey in $regVersionKeysOfNonADTPackages) {
+						[Microsoft.Win32.RegistryKey]$regSetupKey = $regVersionKey.OpenSubKey("Setup")
+						## Remove this entry if the setup information is not available
+						if ($null -eq $regSetupKey -or $regSetupKey.GetValue("Version")) {
+							Write-Log "The setup information for the package '$appName' could not be found. Removing old entry." -Source ${CmdletName} -Severity 2
+							Remove-Item -Path $regVersionKey.PSPath
+							Remove-NxtEmptyRegistryKey -Path $regVersionKey.PSParentPath
+							continue
+						}
+						[string]$packageVersion = $regSetupKey.GetValue("Version")
+						## Obtain the uninstall key for the package
+						[Microsoft.Win32.RegistryKey]$regUninstallKey = Get-Item -Path "$regPackageRoot\Microsoft\Windows\CurrentVersion\Uninstall\neoPackage $appName $packageVersion" -ErrorAction SilentlyContinue
+						if ($null -ne $regUninstallKey) {
+							Write-Log -Message "Removing the uninstall key for the package '$appName' with version '$packageVersion'." -Source ${CmdletName}
+							Remove-Item -Path $regUninstallKey.PSPath
+						}
+						else {
+							Write-Log -Message "The uninstall key for the package '$appName' with version '$packageVersion' could not be found." -Source ${CmdletName} -Severity 2
+						}
+						Remove-Item -Path $regVersionKey.PSPath
+						Remove-NxtEmptyRegistryKey -Path $regProductKey.PSPath
+						Remove-NxtEmptyRegistryKey -Path $regProductKey.PSParentPath
+					}
+				}
 			}
 			if ($false -eq [string]::IsNullOrEmpty($currentAppPath)) {
 				if ($true -eq (Test-Path -Path "$currentAppPath")) {
