@@ -11577,10 +11577,10 @@ function Unregister-NxtOld {
 			## cleanup registering of traditional Empirum package (of former versions)
 			[string[]]$regPackageRootPaths = @()
 			switch -Regex ("x86") {
-				"^(x86|\*)$" { 
+				"^(x86|\*)$" {
 					$regPackageRootPaths += "HKLM:\Software\Wow6432Node\"
 				}
-				"^(x64|\*)$" { 
+				"^(x64|\*)$" {
 					$regPackageRootPaths += "HKLM:\Software\"
 				}
 			}
@@ -11598,7 +11598,9 @@ function Unregister-NxtOld {
 						Remove-NxtEmptyRegistryKey -Path $regProductKey.PSParentPath
 						continue
 					}
-					[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object { $true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID")) }
+					[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object { 
+						$true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID")) 
+					}
 					foreach ($regVersionKey in $regVersionKeysOfNonADTPackages) {
 						[Microsoft.Win32.RegistryKey]$regSetupKey = $regVersionKey.OpenSubKey("Setup")
 						## Remove this entry if the setup information is not available
