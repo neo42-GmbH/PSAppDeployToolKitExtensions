@@ -11506,6 +11506,18 @@ function Unregister-NxtOld {
 		[string]
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
 		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $global:PackageConfig.AppName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVendor = $global:PackageConfig.AppVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppLang = $global:PackageConfig.AppLang,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppArch = $global:PackageConfig.AppArch,
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld
 	)
@@ -11576,7 +11588,7 @@ function Unregister-NxtOld {
 			}
 			## cleanup registering of traditional Empirum package (of former versions)
 			[string[]]$regPackageRootPaths = @()
-			switch -Regex ("x86") {
+			switch -Regex ($AppArch) {
 				"^(x86|\*)$" {
 					$regPackageRootPaths += "HKLM:\Software\Wow6432Node\"
 				}
@@ -11601,12 +11613,13 @@ function Unregister-NxtOld {
 					[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object {
 						$true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID"))
 					}
+					Write-Log -Message "Detected $($regVersionKeysOfNonADTPackages.Count) old installations of '$appName'." -Severity 3 -Source ${cmdletName}
 					foreach ($regVersionKey in $regVersionKeysOfNonADTPackages) {
 						[Microsoft.Win32.RegistryKey]$regSetupKey = $regVersionKey.OpenSubKey("Setup")
 						## Remove this entry if the setup information is not available
 						if ($null -eq $regSetupKey -or $regSetupKey.GetValue("Version")) {
 							Write-Log "The setup information for the package '$appName' could not be found. Removing old entry." -Source ${CmdletName} -Severity 2
-							Remove-Item -Path $regVersionKey.PSPath
+							Remove-Item -Path $regVersionKey.PSPath -Recurse
 							Remove-NxtEmptyRegistryKey -Path $regVersionKey.PSParentPath
 							continue
 						}
@@ -11620,7 +11633,7 @@ function Unregister-NxtOld {
 						else {
 							Write-Log -Message "The uninstall key for the package '$appName' with version '$packageVersion' could not be found." -Source ${CmdletName} -Severity 2
 						}
-						Remove-Item -Path $regVersionKey.PSPath
+						Remove-Item -Path $regVersionKey.PSPath -Recurse
 						Remove-NxtEmptyRegistryKey -Path $regProductKey.PSPath
 						Remove-NxtEmptyRegistryKey -Path $regProductKey.PSParentPath
 					}
