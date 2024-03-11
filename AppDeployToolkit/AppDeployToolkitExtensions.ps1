@@ -1302,7 +1302,6 @@ function Complete-NxtPackageInstallation {
 				$executeProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $executeProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
 			}
 			Execute-Process @executeProcessSplat | Out-Null
-
 		}
 		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots) {
