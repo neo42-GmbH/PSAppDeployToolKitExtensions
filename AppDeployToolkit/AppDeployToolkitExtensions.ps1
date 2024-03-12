@@ -11486,6 +11486,12 @@ function Unregister-NxtOld {
 		Defines the name of the registry key for tracking all packages delivered by the packaging framework. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallOld
 		If set to $false, previous versions will be unregistered before installation. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppName
+		Specifies the Application Name used in the registry etc. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppVendor
+		Specifies the Application Vendor used in the registry etc. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppLang
+		Defines the language of the application. Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Unregister-NxtOld
 		Executes the function with default parameters from the PackageConfig object to unregister old package versions.
@@ -11517,9 +11523,6 @@ function Unregister-NxtOld {
 		[string]
 		$AppLang = $global:PackageConfig.AppLang,
 		[Parameter(Mandatory = $false)]
-		[string]
-		$AppArch = $global:PackageConfig.AppArch,
-		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld
 	)
@@ -11532,23 +11535,28 @@ function Unregister-NxtOld {
 		if ($true -eq $UninstallOld) {
 			return
 		}
-
 		Write-Log -Message "Checking for old package registered..." -Source ${cmdletName}
 		[string]$currentGUID = [string]::Empty
 		## process an old application package
-		if ( ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -or
-		($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -or
-		($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) -or
-		($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) ) {
+		if ( 
+			$true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$PackageGUID" -PathType 'Container') -or
+			$true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container') -or
+			$true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container') -or
+			$true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container') 
+		) {
 			[string]$currentGUID = $PackageGUID
-			if ( ($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -and
-			(("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and
-			($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) ) {
+			if (
+				$true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container') -and
+				("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update" -and
+				$true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')
+			) {
 				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')
 			}
-			elseif ( ($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) -and
-			(("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and
-			($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')) ) {
+			elseif ( 
+				$true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container') -and
+				("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update" -and
+				$true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')
+			) {
 				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')
 			}
 			else {
@@ -11556,22 +11564,24 @@ function Unregister-NxtOld {
 			}
 		}
 		## process old product group member
-		elseif ( ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
-		($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
-		($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) -or
-		($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) ) {
+		elseif ( 
+			$true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$ProductGUID" -PathType 'Container') -or
+			$true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -PathType 'Container') -or
+			$true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container') -or
+			$true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')
+		) {
 			[string]$currentGUID = $ProductGUID
 			## retrieve AppPath for former VBS package (only here: old $PackageFamilyGUID is stored in $ProductGUID)
 			if ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
 				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')
-				if ($true -eq ([string]::IsNullOrEmpty($currentAppPath))) {
+				if ($true -eq [string]::IsNullOrEmpty($currentAppPath)) {
 					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -Value 'PackageApplicationDir')
 				}
 			}
 			elseif ($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
 				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')
 				if ($true -eq [string]::IsNullOrEmpty($currentAppPath)) {
-					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUIDv" -Value 'PackageApplicationDir')
+					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -Value 'PackageApplicationDir')
 				}
 				## for an old product member we always remove these registry keys (in case of x86 packages we do it later anyway)
 				Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID"
@@ -11581,30 +11591,23 @@ function Unregister-NxtOld {
 				[string]$currentGUID = [string]::Empty
 			}
 		}
+		## note: the x64 uninstall registry keys are still the same as for old package and remains there if the old package should not to be uninstalled (not true for old product member packages, see above!)
 		if ($false -eq [string]::IsNullOrEmpty($currentGUID)) {
-			## note: the x64 uninstall registry keys are still the same as for old package and remains there if the old package should not to be uninstalled (not true for old product member packages, see above!)
 			Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID"
 			Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
-			if ( ($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
-			($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')) ) {
+			if ( 
+				$true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -PathType 'Container') -or
+				$true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container') -or
+				$true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$currentGUID" -PathType 'Container') -or
+				$true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')
+			) {
 				Write-Log -Message "Unregister of old package was incomplete! Note: Some orphaned registry keys might remain on the client." -Severity 2 -Source ${cmdletName}
 			}
 		}
-		## cleanup registering of traditional Empirum package (of former versions)
-		[string[]]$regPackageRootPaths = @()
-		switch -Regex ($AppArch) {
-			"^(x86|\*)$" {
-				$regPackageRootPaths += "HKLM:\Software\Wow6432Node"
-			}
-			"^(x64|\*)$" {
-				$regPackageRootPaths += "HKLM:\Software"
-			}
-		}
+		## cleanup registering of traditional Empirum package (of former versions) and Empirum uninstall key
 		[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
 		[string[]]$appNameList = @(($appNameWithoutAppLang, $AppName) | Sort-Object -Unique)
-		foreach ($regPackageRoot in $regPackageRootPaths) {
+		foreach ($regPackageRoot in @("HKLM:\Software\Wow6432Node", "HKLM:\Software")) {
 			foreach ($appName in $appNameList) {
 				[Microsoft.Win32.RegistryKey]$regProductKey = Get-Item -Path "$regPackageRoot\$RegPackagesKey\$AppVendor\$appName" -ErrorAction SilentlyContinue
 				if ($null -eq $regProductKey) {
