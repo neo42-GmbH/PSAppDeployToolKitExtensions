@@ -11604,7 +11604,7 @@ function Unregister-NxtOld {
 				Write-Log -Message "Unregister of old package was incomplete! Note: Some orphaned registry keys might remain on the client." -Severity 2 -Source ${cmdletName}
 			}
 		}
-		## cleanup registering of traditional Empirum package (of former versions) and Empirum uninstall key
+		## cleanup registry of traditional Empirum package
 		[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
 		[string[]]$appNameList = @(($appNameWithoutAppLang, $AppName) | Sort-Object -Unique)
 		foreach ($regPackageRoot in @("HKLM:\Software\Wow6432Node", "HKLM:\Software")) {
@@ -11648,6 +11648,26 @@ function Unregister-NxtOld {
 				}
 			}
 		}
+		## cleanup Empirum specific install key
+		@(
+			## Get all keys on which detection should be performed (x86 and x64)
+			Get-ChildItem -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" -ErrorAction SilentlyContinue
+			Get-ChildItem -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\" -ErrorAction SilentlyContinue
+		) | Where-Object {
+			## Only check keys that match the vendor
+			$_.PSChildName -like "neoPackage $AppVendor $AppName*" -and
+			## Only get keys that match GUID or AppVendor\AppName
+			(
+				$_.GetValue("MachineKeyName") -eq "$RegPackagesKey\$ProductGuid" -or
+				$_.GetValue("MachineKeyName") -like "$RegPackagesKey\$AppVendor\$AppName\*"
+			) #-and
+			## Only get keys which are lower version than the current one
+			#("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key $_.Name -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update"
+		} | ForEach-Object {
+			Write-Log "Removing the Empirum specific uninstall key '$($_.PSChildName)' with version '$($_.GetValue('DisplayVersion'))'." -Source ${CmdletName}
+			Remove-RegistryKey $_.Name
+		}
+		## Remove the old package cache
 		if ($false -eq [string]::IsNullOrEmpty($currentAppPath)) {
 			if ($true -eq (Test-Path -Path "$currentAppPath")) {
 				Remove-Folder -Path "$currentAppPath\neoInstall"
