@@ -11238,229 +11238,231 @@ function Uninstall-NxtOld {
 	}
 	Process {
 		[PSADTNXT.NxtApplicationResult]$uninstallOldResult = New-Object -TypeName PSADTNXT.NxtApplicationResult
-		if ($true -eq $UninstallOld) {
-			Write-Log -Message "Checking for old package installed..." -Source ${cmdletName}
-			try {
-				[bool]$returnWithError = $false
-				## Necessary for old "neoLanguage"-packages
-				if ($true -eq $RemovePackagesWithSameProductGUID) {
-					[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
-				}
-				else {
-					[string]$appNameWithoutAppLang = $AppName
-				}
-				## Check for Empirum packages under "HKLM:\Software\WOW6432Node\"
-				if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor")) {
-					if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) {
-						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
-						if (($appEmpirumPackageVersions).Count -eq 0) {
-							Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
-							Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang" -Source ${cmdletName}
-						}
-						else {
-							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
-								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
-									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
-								}
-								if ( ($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
-									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
-									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
-										try {
-											[string]$appendAW = [string]::Empty
-											if ((Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'MachineSetup') -eq "1") {
-												[string]$appendAW = " /AW"
-											}
-											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
-											[string]$pattern = '^\"(?<SETUPEXE>[^"]*)\" +\"(?<SETUPINF>[^"]*)\" *(?<PARAMETER>.+)?$'
-											[regex]$regex = [System.Text.RegularExpressions.Regex]::new($pattern)
-											[System.Text.RegularExpressions.Match]$match = $regex.Match($appEmpUninstallString)
-											if ($true -eq $match.Success -and $true -eq (Test-Path -Path $match.Groups["SETUPEXE"].Value) -and $true -eq (Test-Path -Path $match.Groups["SETUPINF"].Value)) {
-												[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
-												[string]$appEmpLogDate = $currentDateTime | Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-												cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
-												$uninstallOldResult.ApplicationExitCode = $LastExitCode
-											}
-											else {
-												Write-Log -Message "Setup.exe or Setup.inf not found. Skip uninstall of '$($appEmpirumPackageVersion.name)'" -Source ${cmdletName}
-											}
-										}
-										catch {
-										}
-										if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
-											$uninstallOldResult.MainExitCode = 70001
-											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
-											$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-											$uninstallOldResult.Success = $false
-											$returnWithError = $true
-											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
-											break
-										}
-										else {
-											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
-											$uninstallOldResult.Success = $true
-											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-										}
-									}
-									else {
-										$appEmpirumPackageVersion | Remove-Item -Recurse
-										$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
-										$uninstallOldResult.Success = $null
-										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-									}
-								}
-							}
-							if ( ($false -eq $returnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) ) {
-								Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
-								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
-								$uninstallOldResult.Success = $null
-								Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-							}
-						}
-					}
-					if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor")) -and ((Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
-						Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor"
-						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor"
-						$uninstallOldResult.Success = $null
-						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-					}
-				}
-				## Check for Empirum packages under "HKLM:\Software\"
-				if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor")) ) {
-					if ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) {
-						[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
-						if (($appEmpirumPackageVersions).Count -eq 0) {
-							Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
-							Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang" -Source ${cmdletName}
-						}
-						else {
-							foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
-								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
-									[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
-								}
-								if (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
-									Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
-									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
-										try {
-											[string]$appendAW = [string]::Empty
-											if ((Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'MachineSetup') -eq "1") {
-												[string]$appendAW = " /AW"
-											}
-											[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
-											[string]$pattern = '^\"(?<SETUPEXE>[^"]*)\" +\"(?<SETUPINF>[^"]*)\" *(?<PARAMETER>.+)?$'
-											[regex]$regex = [System.Text.RegularExpressions.Regex]::new($pattern)
-											[System.Text.RegularExpressions.Match]$match = $regex.Match($appEmpUninstallString)
-											if ($true -eq $match.Success -and $true -eq (Test-Path -Path $match.Groups["SETUPEXE"].Value) -and $true -eq (Test-Path -Path $match.Groups["SETUPINF"].Value)) {
-												[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
-												[string]$appEmpLogDate = $currentDateTime | Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-												cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
-												$uninstallOldResult.ApplicationExitCode = $LastExitCode
-											}
-											else {
-												Write-Log -Message "Setup.exe or Setup.inf not found. Skip uninstall of '$($appEmpirumPackageVersion.name)'" -Source ${cmdletName}
-											}
-										}
-										catch {
-										}
-										if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
-											$uninstallOldResult.MainExitCode = 70001
-											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
-											$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-											$uninstallOldResult.Success = $false
-											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
-											$returnWithError = $true
-											break
-										}
-										else {
-											$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
-											$uninstallOldResult.Success = $true
-											Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-										}
-									}
-									else {
-										$appEmpirumPackageVersion | Remove-Item -Recurse
-										$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
-										$uninstallOldResult.Success = $null
-										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-									}
-								}
-							}
-							if ( ($false -eq $returnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) ) {
-								Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
-								$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
-								$uninstallOldResult.Success = $null
-								Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-							}
-						}
-					}
-					if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor")) -and ((Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
-						Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor"
-						$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:\Software\$RegPackagesKey\$AppVendor"
-						$uninstallOldResult.Success = $null
-						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
-					}
-				}
-				if ($false -eq $returnWithError) {
-					[string]$regPackageGUID = $null
-					## Check for VBS or PSADT packages
-					if ($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Value 'UninstallString')) {
-						[string]$regPackageGUID = "HKLM:\Software\$RegPackagesKey\$PackageGUID"
-					}
-					elseif ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -Value 'UninstallString')) {
-						[string]$regPackageGUID = "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID"
-					}
-					if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
-						## Check if the installed package's version is lower than the current one's (else we don't remove old package)
-						if ("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "$regPackageGUID" -Value 'Version')" -TargetVersion "$AppVersion")" -ne "Update") {
-							[string]$regPackageGUID = $null
-						}
+		if ($false -eq $UninstallOld) {
+			Write-Output $uninstallOldResult
+			return
+		}
+		Write-Log -Message "Checking for old package installed..." -Source ${cmdletName}
+		try {
+			[bool]$returnWithError = $false
+			## Necessary for old "neoLanguage"-packages
+			if ($true -eq $RemovePackagesWithSameProductGUID) {
+				[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
+			}
+			else {
+				[string]$appNameWithoutAppLang = $AppName
+			}
+			## Check for Empirum packages under "HKLM:\Software\WOW6432Node\"
+			if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor")) {
+				if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) {
+					[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+					if (($appEmpirumPackageVersions).Count -eq 0) {
+						Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+						Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang" -Source ${cmdletName}
 					}
 					else {
-						## Check for old VBS product member package (only here: old $PackageFamilyGUID is stored in $ProductGUID)
-						if ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -Value 'UninstallString')) {
-							[string]$regPackageGUID = "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID"
+						foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
+							if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
+								[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
+							}
+							if ( ($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
+								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
+									try {
+										[string]$appendAW = [string]::Empty
+										if ((Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'MachineSetup') -eq "1") {
+											[string]$appendAW = " /AW"
+										}
+										[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
+										[string]$pattern = '^\"(?<SETUPEXE>[^"]*)\" +\"(?<SETUPINF>[^"]*)\" *(?<PARAMETER>.+)?$'
+										[regex]$regex = [System.Text.RegularExpressions.Regex]::new($pattern)
+										[System.Text.RegularExpressions.Match]$match = $regex.Match($appEmpUninstallString)
+										if ($true -eq $match.Success -and $true -eq (Test-Path -Path $match.Groups["SETUPEXE"].Value) -and $true -eq (Test-Path -Path $match.Groups["SETUPINF"].Value)) {
+											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
+											[string]$appEmpLogDate = $currentDateTime | Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
+											$uninstallOldResult.ApplicationExitCode = $LastExitCode
+										}
+										else {
+											Write-Log -Message "Setup.exe or Setup.inf not found. Skip uninstall of '$($appEmpirumPackageVersion.name)'" -Source ${cmdletName}
+										}
+									}
+									catch {
+									}
+									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
+										$uninstallOldResult.MainExitCode = 70001
+										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
+										$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+										$uninstallOldResult.Success = $false
+										$returnWithError = $true
+										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
+										break
+									}
+									else {
+										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
+										$uninstallOldResult.Success = $true
+										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+									}
+								}
+								else {
+									$appEmpirumPackageVersion | Remove-Item -Recurse
+									$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
+									$uninstallOldResult.Success = $null
+									Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+								}
+							}
 						}
-						elseif ($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID" -Value 'UninstallString')) {
-							[string]$regPackageGUID = "HKLM:\Software\$RegPackagesKey\$ProductGUID"
-						}
-						if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
-							Write-Log -Message "A former product member application package was found." -Source ${cmdletName}
-						}
-					}
-					## if the current package is a new ADT package, but is actually only registered because it is a product member package, we cannot uninstall it again now
-					if ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" -InstalledState 0 -RegPackagesKey $RegPackagesKey).PackageGUID -contains "$PackageGUID") {
-						[string]$regPackageGUID = $null
-					}
-					if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
-						Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package with PackageGUID [$(Split-Path -Path `"$regPackageGUID`" -Leaf)]..." -Source ${cmdletName}
-						cmd /c (Get-RegistryKey -Key "$regPackageGUID" -Value 'UninstallString') | Out-Null
-						$uninstallOldResult.ApplicationExitCode = $LastExitCode
-						if ($true -eq (Test-RegistryValue -Key "$regPackageGUID" -Value 'UninstallString')) {
-							$uninstallOldResult.MainExitCode = 70001
-							$uninstallOldResult.ErrorMessage = "ERROR: Uninstallation of old package failed. Abort!"
-							$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-							$uninstallOldResult.Success = $false
-							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
-						}
-						else {
-							$uninstallOldResult.ErrorMessage = "Uninstallation of old package successful."
-							$uninstallOldResult.Success = $true
+						if ( ($false -eq $returnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) ) {
+							Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+							$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+							$uninstallOldResult.Success = $null
 							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 						}
 					}
+				}
+				if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor")) -and ((Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
+					Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor"
+					$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor"
+					$uninstallOldResult.Success = $null
+					Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+				}
+			}
+			## Check for Empirum packages under "HKLM:\Software\"
+			if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor")) ) {
+				if ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) {
+					[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+					if (($appEmpirumPackageVersions).Count -eq 0) {
+						Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+						Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang" -Source ${cmdletName}
+					}
 					else {
-						$uninstallOldResult.ErrorMessage = "No need to uninstall old package."
-						$uninstallOldResult.Success = $null
+						foreach ($appEmpirumPackageVersion in $appEmpirumPackageVersions) {
+							if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) {
+								[string]$appEmpirumPackageGUID = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID'
+							}
+							if (($false -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'PackageGUID')) -or ($appEmpirumPackageGUID -ne $PackageGUID) ) {
+								Write-Log -Message "Found an old Empirum package version key: $($appEmpirumPackageVersion.name)" -Source ${cmdletName}
+								if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
+									try {
+										[string]$appendAW = [string]::Empty
+										if ((Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'MachineSetup') -eq "1") {
+											[string]$appendAW = " /AW"
+										}
+										[string]$appEmpUninstallString = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString'
+										[string]$pattern = '^\"(?<SETUPEXE>[^"]*)\" +\"(?<SETUPINF>[^"]*)\" *(?<PARAMETER>.+)?$'
+										[regex]$regex = [System.Text.RegularExpressions.Regex]::new($pattern)
+										[System.Text.RegularExpressions.Match]$match = $regex.Match($appEmpUninstallString)
+										if ($true -eq $match.Success -and $true -eq (Test-Path -Path $match.Groups["SETUPEXE"].Value) -and $true -eq (Test-Path -Path $match.Groups["SETUPINF"].Value)) {
+											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
+											[string]$appEmpLogDate = $currentDateTime | Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
+											$uninstallOldResult.ApplicationExitCode = $LastExitCode
+										}
+										else {
+											Write-Log -Message "Setup.exe or Setup.inf not found. Skip uninstall of '$($appEmpirumPackageVersion.name)'" -Source ${cmdletName}
+										}
+									}
+									catch {
+									}
+									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
+										$uninstallOldResult.MainExitCode = 70001
+										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
+										$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+										$uninstallOldResult.Success = $false
+										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
+										$returnWithError = $true
+										break
+									}
+									else {
+										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
+										$uninstallOldResult.Success = $true
+										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+									}
+								}
+								else {
+									$appEmpirumPackageVersion | Remove-Item -Recurse
+									$uninstallOldResult.ErrorMessage = "This key contained no value 'UninstallString' and was deleted: $($appEmpirumPackageVersion.name)"
+									$uninstallOldResult.Success = $null
+									Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+								}
+							}
+						}
+						if ( ($false -eq $returnWithError) -and (($appEmpirumPackageVersions).Count -eq 0) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) ) {
+							Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+							$uninstallOldResult.ErrorMessage = "Deleted the now empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+							$uninstallOldResult.Success = $null
+							Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+						}
+					}
+				}
+				if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor")) -and ((Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor").Count -eq 0) ) {
+					Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor"
+					$uninstallOldResult.ErrorMessage = "Deleted empty Empirum vendor key: HKLM:\Software\$RegPackagesKey\$AppVendor"
+					$uninstallOldResult.Success = $null
+					Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+				}
+			}
+			if ($false -eq $returnWithError) {
+				[string]$regPackageGUID = $null
+				## Check for VBS or PSADT packages
+				if ($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Value 'UninstallString')) {
+					[string]$regPackageGUID = "HKLM:\Software\$RegPackagesKey\$PackageGUID"
+				}
+				elseif ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -Value 'UninstallString')) {
+					[string]$regPackageGUID = "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID"
+				}
+				if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
+					## Check if the installed package's version is lower than the current one's (else we don't remove old package)
+					if ("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "$regPackageGUID" -Value 'Version')" -TargetVersion "$AppVersion")" -ne "Update") {
+						[string]$regPackageGUID = $null
+					}
+				}
+				else {
+					## Check for old VBS product member package (only here: old $PackageFamilyGUID is stored in $ProductGUID)
+					if ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -Value 'UninstallString')) {
+						[string]$regPackageGUID = "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID"
+					}
+					elseif ($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$ProductGUID" -Value 'UninstallString')) {
+						[string]$regPackageGUID = "HKLM:\Software\$RegPackagesKey\$ProductGUID"
+					}
+					if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
+						Write-Log -Message "A former product member application package was found." -Source ${cmdletName}
+					}
+				}
+				## if the current package is a new ADT package, but is actually only registered because it is a product member package, we cannot uninstall it again now
+				if ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" -InstalledState 0 -RegPackagesKey $RegPackagesKey).PackageGUID -contains "$PackageGUID") {
+					[string]$regPackageGUID = $null
+				}
+				if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
+					Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package with PackageGUID [$(Split-Path -Path `"$regPackageGUID`" -Leaf)]..." -Source ${cmdletName}
+					cmd /c (Get-RegistryKey -Key "$regPackageGUID" -Value 'UninstallString') | Out-Null
+					$uninstallOldResult.ApplicationExitCode = $LastExitCode
+					if ($true -eq (Test-RegistryValue -Key "$regPackageGUID" -Value 'UninstallString')) {
+						$uninstallOldResult.MainExitCode = 70001
+						$uninstallOldResult.ErrorMessage = "ERROR: Uninstallation of old package failed. Abort!"
+						$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+						$uninstallOldResult.Success = $false
+						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Severity 3 -Source ${cmdletName}
+					}
+					else {
+						$uninstallOldResult.ErrorMessage = "Uninstallation of old package successful."
+						$uninstallOldResult.Success = $true
 						Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
 					}
 				}
+				else {
+					$uninstallOldResult.ErrorMessage = "No need to uninstall old package."
+					$uninstallOldResult.Success = $null
+					Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
+				}
 			}
-			catch {
-				$uninstallOldResult.MainExitCode = 70001
-				$uninstallOldResult.ErrorMessage = "The function '${cmdletName}' threw an error."
-				$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
-				$uninstallOldResult.Success = $false
-				Write-Log -Message "$($uninstallOldResult.ErrorMessage)`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			}
+		}
+		catch {
+			$uninstallOldResult.MainExitCode = 70001
+			$uninstallOldResult.ErrorMessage = "The function '${cmdletName}' threw an error."
+			$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
+			$uninstallOldResult.Success = $false
+			Write-Log -Message "$($uninstallOldResult.ErrorMessage)`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 		Write-Output $uninstallOldResult
 	}
@@ -11470,6 +11472,197 @@ function Uninstall-NxtOld {
 }
 #endregion
 #region Function Unregister-NxtOld
+function Unregister-NxtOld {
+	<#
+	.SYNOPSIS
+		Unregisters old versions of a package without uninstalling them, based on PackageConfig object settings.
+	.DESCRIPTION
+		The Unregister-NxtOld function is used to unregister older versions of a software package without uninstalling them, applicable when the UninstallOld parameter is set to $false. It identifies older package versions using ProductGUID and PackageGUID from the registry and removes their registration information.
+	.PARAMETER ProductGUID
+		Specifies a membership GUID for a product of an application package. Can be found under "HKLM:\Software\<RegPackagesKey>\<PackageGUID>" for an application package with product membership. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER PackageGUID
+		Specifies the registry key name used for the package's wrapper uninstall entry. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER RegPackagesKey
+		Defines the name of the registry key for tracking all packages delivered by the packaging framework. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallOld
+		If set to $false, previous versions will be unregistered before installation. Defaults to the corresponding value from the PackageConfig object.
+	.EXAMPLE
+		Unregister-NxtOld
+		Executes the function with default parameters from the PackageConfig object to unregister old package versions.
+	.OUTPUTS
+		none.
+	.NOTES
+		Should be executed during package Initialization only.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$PackageGUID = $global:PackageConfig.PackageGUID,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppName = $global:PackageConfig.AppName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVendor = $global:PackageConfig.AppVendor,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppLang = $global:PackageConfig.AppLang,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppArch = $global:PackageConfig.AppArch,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$UninstallOld = $global:PackageConfig.UninstallOld
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		## Only unregister old packages if UninstallOld is set to $false
+		if ($true -eq $UninstallOld) {
+			return
+		}
+
+		Write-Log -Message "Checking for old package registered..." -Source ${cmdletName}
+		[string]$currentGUID = [string]::Empty
+		## process an old application package
+		if ( ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -or
+		($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -or
+		($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) -or
+		($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) ) {
+			[string]$currentGUID = $PackageGUID
+			if ( ($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$PackageGUID" -PathType 'Container')) -and
+			(("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and
+			($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) ) {
+				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')
+			}
+			elseif ( ($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -PathType 'Container')) -and
+			(("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update") -and
+			($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')) ) {
+				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')
+			}
+			else {
+				[string]$currentGUID = [string]::Empty
+			}
+		}
+		## process old product group member
+		elseif ( ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
+		($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$ProductGUID" -PathType 'Container')) -or
+		($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) -or
+		($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$ProductGUID" -PathType 'Container')) ) {
+			[string]$currentGUID = $ProductGUID
+			## retrieve AppPath for former VBS package (only here: old $PackageFamilyGUID is stored in $ProductGUID)
+			if ($true -eq (Test-RegistryValue -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
+				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -Value 'AppPath')
+				if ($true -eq ([string]::IsNullOrEmpty($currentAppPath))) {
+					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -Value 'PackageApplicationDir')
+				}
+			}
+			elseif ($true -eq (Test-RegistryValue -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')) {
+				[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID" -Value 'AppPath')
+				if ($true -eq [string]::IsNullOrEmpty($currentAppPath)) {
+					[string]$currentAppPath = (Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUIDv" -Value 'PackageApplicationDir')
+				}
+				## for an old product member we always remove these registry keys (in case of x86 packages we do it later anyway)
+				Remove-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$currentGUID"
+				Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
+			}
+			else {
+				[string]$currentGUID = [string]::Empty
+			}
+		}
+		if ($false -eq [string]::IsNullOrEmpty($currentGUID)) {
+			## note: the x64 uninstall registry keys are still the same as for old package and remains there if the old package should not to be uninstalled (not true for old product member packages, see above!)
+			Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID"
+			Remove-RegistryKey -Key "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID"
+			if ( ($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$currentGUID" -PathType 'Container')) -or
+			($true -eq (Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$currentGUID" -PathType 'Container')) ) {
+				Write-Log -Message "Unregister of old package was incomplete! Note: Some orphaned registry keys might remain on the client." -Severity 2 -Source ${cmdletName}
+			}
+		}
+		## cleanup registering of traditional Empirum package (of former versions)
+		[string[]]$regPackageRootPaths = @()
+		switch -Regex ($AppArch) {
+			"^(x86|\*)$" {
+				$regPackageRootPaths += "HKLM:\Software\Wow6432Node"
+			}
+			"^(x64|\*)$" {
+				$regPackageRootPaths += "HKLM:\Software"
+			}
+		}
+		[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
+		[string[]]$appNameList = @(($appNameWithoutAppLang, $AppName) | Sort-Object -Unique)
+		foreach ($regPackageRoot in $regPackageRootPaths) {
+			foreach ($appName in $appNameList) {
+				[Microsoft.Win32.RegistryKey]$regProductKey = Get-Item -Path "$regPackageRoot\$RegPackagesKey\$AppVendor\$appName" -ErrorAction SilentlyContinue
+				if ($null -eq $regProductKey) {
+					continue
+				}
+				[Microsoft.Win32.RegistryKey[]]$regVersionKeys = Get-ChildItem -Path $regProductKey.PSPath -ErrorAction SilentlyContinue
+				if ($regVersionKeys.Count -eq 0) {
+					Remove-NxtEmptyRegistryKey -Path $regProductKey.Name
+					Remove-NxtEmptyRegistryKey -Path (Split-Path -Parent -Path $regProductKey.Name)
+					continue
+				}
+				[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object {
+					$true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID"))
+				}
+				Write-Log -Message "Detected $($regVersionKeysOfNonADTPackages.Count) old Empirum installation(s) of '$appName'." -Source ${cmdletName}
+				foreach ($regVersionKey in $regVersionKeysOfNonADTPackages) {
+					[Microsoft.Win32.RegistryKey]$regSetupKey = Get-Item -Path (Join-Path $regVersionKey.PSPath "Setup")
+					## Remove this entry if the setup information is not available
+					if (($null -eq $regSetupKey) -or ($true -eq [string]::IsNullOrEmpty($regSetupKey.GetValue("Version")))) {
+						Write-Log "The setup information for the package '$appName' could not be found. Removing old entry." -Source ${CmdletName} -Severity 2
+						Remove-Item -Path $regVersionKey.PSPath -Recurse
+						Remove-NxtEmptyRegistryKey -Path (Split-Path -Parent -Path $regVersionKey.Name)
+						continue
+					}
+					[string]$packageVersion = $regSetupKey.GetValue("Version")
+					## Obtain the uninstall key for the package
+					[Microsoft.Win32.RegistryKey]$regUninstallKey = Get-Item -Path "$regPackageRoot\Microsoft\Windows\CurrentVersion\Uninstall\neoPackage $AppVendor $appName $packageVersion" -ErrorAction SilentlyContinue
+					if ($null -ne $regUninstallKey) {
+						Write-Log -Message "Removing the uninstall key for the package '$appName' with version '$packageVersion'." -Source ${CmdletName}
+						Remove-Item -Path $regUninstallKey.PSPath
+					}
+					else {
+						Write-Log -Message "The uninstall key for the package '$appName' with version '$packageVersion' could not be found." -Source ${CmdletName} -Severity 2
+					}
+					Remove-Item -Path $regVersionKey.PSPath -Recurse
+					Remove-NxtEmptyRegistryKey -Path $regProductKey.Name
+					Remove-NxtEmptyRegistryKey -Path (Split-Path -Parent -Path $regProductKey.Name)
+				}
+			}
+		}
+		if ($false -eq [string]::IsNullOrEmpty($currentAppPath)) {
+			if ($true -eq (Test-Path -Path "$currentAppPath")) {
+				Remove-Folder -Path "$currentAppPath\neoInstall"
+				Remove-Folder -Path "$currentAppPath\neoSource"
+				if ( ($true -eq (Test-Path -Path "$currentAppPath\neoInstall")) -or ($true -eq (Test-Path -Path "$currentAppPath\neoSource")) ) {
+					Write-Log -Message "Unregister of old package was incomplete! Note: Some orphaned files and folders might remain on the client." -Severity 2 -Source ${cmdletName}
+				}
+			}
+		}
+		else {
+			Write-Log -Message "No need to cleanup old package cached app folder." -Source ${cmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 function Unregister-NxtOld {
 	<#
 	.SYNOPSIS
