@@ -11660,9 +11660,9 @@ function Unregister-NxtOld {
 			(
 				$_.GetValue("MachineKeyName") -eq "$RegPackagesKey\$ProductGuid" -or
 				$_.GetValue("MachineKeyName") -like "$RegPackagesKey\$AppVendor\$AppName\*"
-			) #-and
-			## Only get keys which are lower version than the current one
-			#("$(Compare-NxtVersion -DetectedVersion "$(Get-RegistryKey -Key $_.Name -Value 'Version')" -TargetVersion "$AppVersion")") -eq "Update"
+			) -and
+			## Only get keys that dont have the same version
+			$_.GetValue("DisplayVersion") -ne $AppVersion
 		} | ForEach-Object {
 			Write-Log "Removing the Empirum specific uninstall key '$($_.PSChildName)' with version '$($_.GetValue('DisplayVersion'))'." -Source ${CmdletName}
 			Remove-RegistryKey $_.Name
