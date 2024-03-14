@@ -115,7 +115,12 @@ Write-Output "Apply the input data to '$infPath'"
 [string]$textContent = Get-Content -Path $infPath -Raw
 foreach ($property in $jsonContent.PSObject.Properties) {
     $placeholder = "!" + $property.Name + "!"
-    $value = [string]$property.Value
+    if ($property.TypeNameOfValue -eq "System.Boolean") {
+        $value = [string][int]$property.Value
+    }
+    else{
+        $value = [string]$property.Value
+    }
     if($property.Name -ieq "apparch" -and $value -ine "x64"){
         $value = "*"
     }
