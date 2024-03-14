@@ -1139,6 +1139,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER ExecutionPolicy
 		Defines the execution policy of the active setup PowerShell script.
 		Defaults to the corresponding value from the XML configuration file.
+	.PARAMETER AppRootFolder
+		Defines the root folder of the application package. This parameter is mandatory.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.OUTPUTS
@@ -1199,7 +1202,10 @@ function Complete-NxtPackageInstallation {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy
+		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppRootFolder = $global:PackageConfig.AppRootFolder
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1280,7 +1286,22 @@ function Complete-NxtPackageInstallation {
 			## note: we always use the script from current application package source folder (it is basically identical in each package)
 			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
-			Execute-Process -Path powershell.exe -Parameters "-ExecutionPolicy $ExecutionPolicy -File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$oldAppFolder" -NoWait -ExitOnProcessFailure $false -PassThru | Out-Null
+			[hashtable]$executeProcessSplat = @{
+				Path = 'powershell.exe'
+				Parameters = "-ExecutionPolicy $ExecutionPolicy -File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`""
+				NoWait = $true
+				WorkingDirectory = $env:TEMP
+				ExitOnProcessFailure = $false
+				PassThru = $true
+			}
+			## we use $env:temp es workingdirectory to avoid issues with locked directories
+			if (
+				$false -eq [string]::IsNullOrEmpty($AppRootFolder) -and
+				$false -eq [string]::IsNullOrEmpty($AppVendor)
+			) {
+				$executeProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $executeProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
+			}
+			Execute-Process @executeProcessSplat | Out-Null
 		}
 		## Cleanup legacy package folders
 		foreach ($legacyAppRoot in $LegacyAppRoots) {
@@ -11777,7 +11798,22 @@ function Unregister-NxtPackage {
 								## note: we always use the script from current application package source folder (it is basically identical in each package)
 								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
-								Execute-Process -Path powershell.exe -Parameters "-ExecutionPolicy $ExecutionPolicy -File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`"" -WorkingDirectory "$assignedPackageGUIDAppPath" -NoWait -ExitOnProcessFailure $false -PassThru | Out-Null
+								[hashtable]$executeProcessSplat = @{
+									Path = 'powershell.exe'
+									Parameters = "-ExecutionPolicy $ExecutionPolicy -File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`""
+									NoWait = $true
+									WorkingDirectory = $env:TEMP
+									ExitOnProcessFailure = $false
+									PassThru = $true
+								}
+								## we use $env:TEMP es workingdirectory to avoid issues with locked directories
+								if (
+									$false -eq [string]::IsNullOrEmpty($AppRootFolder) -and
+									$false -eq [string]::IsNullOrEmpty($AppVendor)
+								) {
+									$executeProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $executeProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
+								}
+								Execute-Process @executeProcessSplat | Out-Null
 								$removalCounter += 1
 							}
 							else {
@@ -11820,7 +11856,7 @@ function Unregister-NxtPackage {
 							ExitOnProcessFailure = $false
 							PassThru = $true
 						}
-						## we use temp es workingdirectory to avoid issues with locked directories
+						## we use $env:TEMP es workingdirectory to avoid issues with locked directories
 						if (
 							$false -eq [string]::IsNullOrEmpty($AppRootFolder) -and
 							$false -eq [string]::IsNullOrEmpty($AppVendor)
