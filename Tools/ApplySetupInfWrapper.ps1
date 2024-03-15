@@ -42,7 +42,7 @@ $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 Write-Output ""
 
 ## Test for some basic requirements
-[array]$files = @("Deploy-Application.ps1", "neo42PackageConfig.json", "neo42PackageConfigValidationRules.json", "AppDeployToolkit\AppDeployToolkitExtensions.ps1", "AppDeployToolkit\AppDeployToolkitMain.ps1", "AppDeployToolkit\AppDeployToolkitLogo.ico")
+[array]$files = @("Deploy-Application.ps1", "neo42PackageConfig.json", "neo42PackageConfigValidationRules.json", "AppDeployToolkit\AppDeployToolkitExtensions.ps1", "AppDeployToolkit\AppDeployToolkitMain.ps1", "Setup.ico")
 $files | ForEach-Object {
     if ($false -eq (Test-Path (Join-Path $workingDir $_))) {
         Write-Warning "$_ does not exist. This script is designed to work with proper neo42 APD packages. Abort!"
@@ -144,7 +144,7 @@ Set-Content -Path $infPath -Value $textContent -Encoding UTF8
 
 ## Copy ico File to neoInstall Folder
 Write-Output "Copy ico file to neoInstall folder"
-Copy-Item -Path "$adtSubFolder\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$workingDir\neoInstall\AppDeployToolkitLogo.ico" -Force
+Copy-Item -Path "$adtSubFolder\Setup.ico" -Destination "$workingDir\neoInstall\Setup.ico" -Force
 
 ## Self destruct the current script
 Write-Output ""
