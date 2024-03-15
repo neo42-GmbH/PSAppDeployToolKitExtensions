@@ -459,7 +459,7 @@ function Update-NxtPSAdtPackage {
             foreach ($line in ($content -split "`n")){
                 if ($line -match '(\$global:|\$)DetectedDisplayVersion') {
                     [bool]$contentChanged = $true
-                    $content = $content.Replace($line, $line -replace '(\$global:|\$)DetectedDisplayVersion(?=\b)', "(Get-NxtCurrentDisplayVersion).DisplayVersion")
+                    $content = $content.Replace($line, ($line -replace '(\$global:|\$)DetectedDisplayVersion(?=\b)', "(Get-NxtCurrentDisplayVersion).DisplayVersion"))
                     Write-Warning "Replaced `$DetectedDisplayVersion with (Get-NxtCurrentDisplayVersion).DisplayVersion in $PackageToUpdatePath in line: $line"
                 }
             }
