@@ -11311,8 +11311,8 @@ function Uninstall-NxtOld {
 									catch {
 									}
 									if (
-										$true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') -or 
-										$true -eq (Test-Path -Path "$($appEmpirumPackageVersion.PSPath)\Setup\Options") -or 
+										$true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') -or
+										$true -eq (Test-Path -Path "$($appEmpirumPackageVersion.PSPath)\Setup\Options") -or
 										$true -eq (Test-Path -Path "$($appEmpirumPackageVersion.PSPath)\Setup\Sections")
 									) {
 										$uninstallOldResult.MainExitCode = 70001
@@ -11392,8 +11392,8 @@ function Uninstall-NxtOld {
 									catch {
 									}
 									if (
-										$true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') -or 
-										$true -eq (Test-Path -Path "$($appEmpirumPackageVersion.PSPath)\Setup\Options") -or 
+										$true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') -or
+										$true -eq (Test-Path -Path "$($appEmpirumPackageVersion.PSPath)\Setup\Options") -or
 										$true -eq (Test-Path -Path "$($appEmpirumPackageVersion.PSPath)\Setup\Sections")
 									) {
 										$uninstallOldResult.MainExitCode = 70001
