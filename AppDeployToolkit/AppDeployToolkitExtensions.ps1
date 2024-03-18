@@ -11758,7 +11758,7 @@ function Unregister-NxtPackage {
 						## note: we always use the script from current application package source folder (it is basically identical in each package)
 						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
 						Start-Sleep -Seconds 1
-						[hashtable]$executeProcessSplat = @{
+						[hashtable]$executeSplat = @{
 							Path = 'powershell.exe'
 							Parameters = "-ExecutionPolicy $ExecutionPolicy -File `"$App\Clean-Neo42AppFolder.ps1`""
 							NoWait = $true
@@ -11771,9 +11771,9 @@ function Unregister-NxtPackage {
 							$false -eq [string]::IsNullOrEmpty($AppRootFolder) -and
 							$false -eq [string]::IsNullOrEmpty($AppVendor)
 							) {
-							$executeProcessSplat["Parameters"] = Add-NxtParameterToCommand -Command $executeProcessSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
+							$executeSplat["Parameters"] = Add-NxtParameterToCommand -Command $executeSplat["Parameters"] -Name "RootPathToRecurseUpTo" -Value "$AppRootFolder\$AppVendor"
 						}
-						Execute-Process @executeProcessSplat | Out-Null
+						Execute-Process @executeSplat | Out-Null
 					}
 					else {
 						Write-Log -Message "No current 'App' path [$App] available, cleanup script will not be executed." -Source ${CmdletName}
