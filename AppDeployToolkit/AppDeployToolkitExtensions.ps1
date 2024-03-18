@@ -11385,7 +11385,11 @@ function Uninstall-NxtOld {
 									}
 									catch {
 									}
-									if ($true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString')) {
+									if (
+										$true -eq (Test-RegistryValue -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'UninstallString') -or 
+										$true -eq (Test-Path -Path "$($appEmpirumPackageVersion.PSPath)\Setup\Options") -or 
+										$true -eq (Test-Path -Path "$($appEmpirumPackageVersion.PSPath)\Setup\Sections")
+									) {
 										$uninstallOldResult.MainExitCode = 70001
 										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' failed."
 										$uninstallOldResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
@@ -11395,6 +11399,7 @@ function Uninstall-NxtOld {
 										break
 									}
 									else {
+										Remove-Item -Recurse -Path "$($appEmpirumPackageVersion.PSPath)"
 										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
 										$uninstallOldResult.Success = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
