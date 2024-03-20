@@ -11276,7 +11276,7 @@ function Uninstall-NxtOld {
 			## Check for Empirum packages under "HKLM:\Software\WOW6432Node\"
 			if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor")) {
 				if ($true -eq (Test-Path -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) {
-					[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+					[Microsoft.Win32.RegistryKey[]]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
 					if (($appEmpirumPackageVersions).Count -eq 0) {
 						Remove-Item -Path "HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
 						Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\WOW6432Node\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang" -Source ${cmdletName}
@@ -11324,8 +11324,8 @@ function Uninstall-NxtOld {
 										break
 									}
 									else {
-										## Remove the rest of the keys that are not cleaned up by the uninstaller
-										Remove-Item -Recurse -Path $appEmpirumPackageVersion.PSPath
+										## Remove the rest of the keys that are not cleaned up by the uninstaller (can be empty so no display no error...)
+										$appEmpirumPackageVersion | Remove-Item -Recurse -ErrorAction SilentlyContinue
 										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package: '$($appEmpirumPackageVersion.name)' was successful."
 										$uninstallOldResult.Success = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
@@ -11357,7 +11357,7 @@ function Uninstall-NxtOld {
 			## Check for Empirum packages under "HKLM:\Software\"
 			if ( ($false -eq $returnWithError) -and ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor")) ) {
 				if ($true -eq (Test-Path -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang")) {
-					[array]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
+					[Microsoft.Win32.RegistryKey[]]$appEmpirumPackageVersions = Get-ChildItem "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
 					if (($appEmpirumPackageVersions).Count -eq 0) {
 						Remove-Item -Path "HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang"
 						Write-Log -Message "Deleted an empty Empirum application key: HKLM:\Software\$RegPackagesKey\$AppVendor\$appNameWithoutAppLang" -Source ${cmdletName}
@@ -11405,8 +11405,8 @@ function Uninstall-NxtOld {
 										break
 									}
 									else {
-										## Remove the rest of the keys that are not cleaned up by the uninstaller
-										Remove-Item -Recurse -Path $appEmpirumPackageVersion.PSPath
+										## Remove the rest of the keys that are not cleaned up by the uninstaller (can be empty so no display no error...)
+										$appEmpirumPackageVersion | Remove-Item -Recurse -ErrorAction SilentlyContinue
 										$uninstallOldResult.ErrorMessage = "Uninstallation of found Empirum package '$($appEmpirumPackageVersion.name)' was successful."
 										$uninstallOldResult.Success = $true
 										Write-Log -Message $($uninstallOldResult.ErrorMessage) -Source ${cmdletName}
