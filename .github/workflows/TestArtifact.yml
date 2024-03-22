@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: PSAppDeployToolKitExtensions-Runner
     steps:
     - name: download-artifact
       id: download-artifact-test
