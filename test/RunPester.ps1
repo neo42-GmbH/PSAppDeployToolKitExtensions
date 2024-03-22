@@ -22,7 +22,8 @@ $config.Should.ErrorAction = 'Continue'
 $config.Output.Verbosity = 'Detailed'
 
 # Set location
-Set-Location $PSScriptRoot\..\
+[FileInfo]$toolkitMain = Get-ChildItem -Path .. -Recurse -Filter "AppDeployToolkitMain.ps1" | Select-Object -First 1
+Set-Location $toolkitMain.Directory.Parent.FullName
 
 # Create process test binary
 $compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
@@ -30,12 +31,11 @@ $compilerArgs = "/target:winexe /out:$PSScriptRoot\simple.exe $PSScriptRoot\simp
 Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait
 
 # Mute Toolkit logging
-(Get-Content "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitConfig.xml" -Raw).Replace('<Toolkit_LogWriteToHost>True</Toolkit_LogWriteToHost>', '<Toolkit_LogWriteToHost>False</Toolkit_LogWriteToHost>') | 
-    Out-File "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitConfig.xml"
+(Get-Content "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml" -Raw).Replace('<Toolkit_LogWriteToHost>True</Toolkit_LogWriteToHost>', '<Toolkit_LogWriteToHost>False</Toolkit_LogWriteToHost>') | 
+    Out-File "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml"
 
 # Import PSADT
-[string]$moduleAppDeployToolkitMain = "$PSScriptRoot\..\AppDeployToolkit\AppDeployToolkitMain.ps1"
-. $moduleAppDeployToolkitMain -DisableLogging
+. $toolkitMain.FullName -DisableLogging
 
 # Run Pester
 Invoke-Pester -Configuration $config

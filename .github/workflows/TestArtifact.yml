@@ -1,0 +1,26 @@
+name: Test Artifact
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+    - name: download-artifact
+      id: download-artifact-test
+      uses: actions/download-artifact@v4
+    
+    - name: checkout-tests
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        sparse-checkout: test/*
+        sparse-checkout-cone-mode: true
+
+    - name: run-pester
+      shell: powershell
+      run: |
+        Set-Location -Path ${{ steps.download-artifact-test.outputs.download-path }}
+        Copy-Item -Path ".\PSAppDeployToolkit\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination ".\PSAppDeployToolkit\Setup.ico"
+        . "..\test\RunPester.ps1"

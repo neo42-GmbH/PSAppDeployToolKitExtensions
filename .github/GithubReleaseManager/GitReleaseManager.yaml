@@ -1,0 +1,50 @@
+create:
+    # Please see
+    # https://gittools.github.io/GitReleaseManager/docs/configuration/template-configuration#editing-the-templates
+    # configuration for configuring footers
+    include-footer: false
+    include-sha-section: true
+    sha-section-heading: "SHA256 Hashes of the release artifacts"
+    sha-section-line-format: "- `{1}\t{0}`"
+    allow-update-to-published: false
+default-branch: main
+labels:
+    - name: Breaking Change
+      description: Functionality breaking changes
+      color: b60205
+    - name: Bug
+      description: Something isn't working
+      color: ee0701
+    - name: Build
+      description: Build pipeline
+      color: 009800
+    - name: Documentation
+      description: Improvements or additions to documentation
+      color: d4c5f9
+    - name: Feature
+      description: Request for a new feature
+      color: 84b6eb
+    - name: Good First Issue
+      description: Good for newcomers
+      color: 7057ff
+    - name: Help Wanted
+      description: Extra attention is needed
+      color: 33aa3f
+    - name: Improvement
+      description: Improvement of an existing feature
+      color: 207de5
+    - name: Question
+      description: Further information is requested
+      color: cc317c
+issue-labels-include:
+    - Breaking Change
+    - Bug
+    - Documentation
+    - Feature
+    - Good First Issue
+    - Help Wanted
+    - Improvement
+    - Question
+issue-labels-exclude:
+    - Build
+issue-labels-alias: []
