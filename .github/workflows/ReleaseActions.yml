@@ -13,9 +13,10 @@ jobs:
       PSADT_VERSION: ${{ vars.PSADT_VERSION }}
 
   test:
+    needs: artifact
     uses: ./.github/workflows/TestArtifact.yml
 
-  release:
+  release: 
     needs: 
       - artifact
       - test
@@ -54,7 +55,7 @@ jobs:
           $params = @(
             'create',
             '--owner', '${{ github.repository_owner }}',
-            '--repository', '${{ github.event.repository.name }}',
+            '--repository', '${{ github.repository }}',
             '--token', '${{ secrets.GITHUB_TOKEN }}',
             '--targetcommitish', '${{ github.sha }}',
             '--targetDirectory', '${{ github.workspace }}/ghm/.github/GithubReleaseManager',
@@ -68,7 +69,7 @@ jobs:
           }
           else {
             Write-Host "Creating pre-release from ref '${{ github.ref_name }}'"
-            "This is a pre-release build form '${{ github.ref_name }}'. Releases like this are not intended for production use.
+            "This is a pre-release build form '[${{ github.ref_name }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})'. Releases like this are not intended for production use.
             There will be no changelog or release notes for this build. Please refer to the latest stable release for more information.
 
             If you have any questions or concerns, please contact the development team.
