@@ -14,7 +14,6 @@ jobs:
     - name: checkout-tests
       uses: actions/checkout@v4
       with:
-        ref: main
         sparse-checkout: test/*
         sparse-checkout-cone-mode: true
 

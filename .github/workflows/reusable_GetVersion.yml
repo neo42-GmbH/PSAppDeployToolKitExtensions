@@ -1,0 +1,32 @@
+name: Get Build Version
+
+on:
+  workflow_call:
+    outputs:
+      RELEASE_VERSION: 
+        value: ${{ jobs.get-release-version.outputs.RELEASE_VERSION }}
+
+jobs:
+  get-release-version:
+    runs-on: ubuntu-latest
+    outputs:
+      RELEASE_VERSION: ${{ steps.release-info.outputs.RELEASE_VERSION }}
+
+    steps:
+      - name: get-release-info
+        id: release-info
+        shell: pwsh
+        run: |
+          # Default version is the current date and the run number. This allows for debugging and testing without a milestone
+          $date = Get-Date -Format 'yyyy.MM.dd'
+          $number = '${{ github.run_number }}'
+
+          # If the release is a milestone, use the milestone number and created_at date
+          if ('${{ github.event_name }}' -eq 'milestone') {
+            $number = '${{ github.event.milestone.number }}'
+            $date = Get-Date -Date '${{ github.event.milestone.created_at }}' -Format 'yyyy.MM.dd'
+          }
+
+          $version = "$date.$number"
+          "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Auto-generated release version: $version"

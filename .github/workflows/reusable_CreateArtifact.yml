@@ -8,24 +8,33 @@ on:
         required: true
         type: string
     outputs:
-      RELEASE_VERSION:
-        description: 'The version of the release'
-        value: ${{ jobs.artifact.outputs.RELEASE_VERSION }}
+      ARTIFACT_VERSION: 
+        value: ${{ jobs.artifact.outputs.VERSION }}
 
 jobs:
   artifact:
     runs-on: ubuntu-latest
     outputs:
-      RELEASE_VERSION: ${{ steps.release-info.outputs.RELEASE_VERSION }}
+      VERSION: ${{ steps.release-info.outputs.VERSION }}
 
     steps:
       - name: get-release-info
         id: release-info
         shell: pwsh
         run: |
-          $version = "$(Get-Date -Format 'yyyy-MM-dd')-${{ github.run_number }}"
+          # Default version is the current date and the run number. This allows for debugging and testing without a milestone
+          $date = Get-Date -Format 'yyyy.MM.dd'
+          $number = '${{ github.run_number }}'
+
+          # If the release is a milestone, use the milestone number and created_at date
+          if ('${{ github.event_name }}' -eq 'milestone') {
+            $number = '${{ github.event.milestone.number }}'
+            $date = Get-Date -Date '${{ github.event.milestone.created_at }}' -Format 'yyyy.MM.dd'
+          }
+
+          $version = "$date.$number"
           "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
-          Write-Host "Set RELEASE_VERSION to $version"
+          Write-Host "Auto-generated release version: $version"
 
       - name: checkout-psadt
         uses: actions/checkout@v4
@@ -85,11 +94,11 @@ jobs:
             "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.ps1"
             "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.cs"
           ) | ForEach-Object {
-            (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_
+            (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.VERSION }}' | Set-Content -Path $_
           }
 
       - name: upload-artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PSAppDeployToolKitExtensions-$version-${{ github.ref_name }}
+          name: PSAppDeployToolKitExtensions-${{ steps.release-info.outputs.VERSION }}
           path: .

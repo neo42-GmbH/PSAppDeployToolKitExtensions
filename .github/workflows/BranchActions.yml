@@ -1,18 +1,22 @@
 name: Branch Workflows
 
 on:
-  workflow_dispatch:
   pull_request:
     branches:
       - develop
       - main
 
 jobs:
+  version:
+    uses: ./.github/workflows/reusable_GetVersion.yml
+
   artifact:
-    uses: ./.github/workflows/CreateArtifact.yml
+    uses: ./.github/workflows/reusable_CreateArtifact.yml
+    needs: version
     with:
       PSADT_VERSION: ${{ vars.PSADT_VERSION }}
+      RELEASE_VERSION: ${{ needs.version.outputs.RELEASE_VERSION }}
 
   test:
     needs: artifact
-    uses: ./.github/workflows/TestArtifact.yml
+    uses: ./.github/workflows/reusable_TestArtifact.yml

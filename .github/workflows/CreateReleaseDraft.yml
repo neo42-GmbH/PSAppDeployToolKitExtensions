@@ -8,13 +8,13 @@ on:
 
 jobs:
   artifact:
-    uses: ./.github/workflows/CreateArtifact.yml
+    uses: ./.github/workflows/reusable_CreateArtifact.yml
     with:
       PSADT_VERSION: ${{ vars.PSADT_VERSION }}
 
   test:
     needs: artifact
-    uses: ./.github/workflows/TestArtifact.yml
+    uses: ./.github/workflows/reusable_TestArtifact.yml
 
   release: 
     needs: 
@@ -65,7 +65,7 @@ jobs:
           if ('${{ github.event.milestone.title }}' -ne '') {
             Write-Host "Creating release from milestone '${{ github.event.milestone.title }}' on '$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')'."
             $params += '--milestone', '"${{ github.event.milestone.title }}"'
-            $params += '--name', '${{ needs.artifact.outputs.RELEASE_VERSION }}'
+            $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
           }
           else {
             Write-Host "Creating pre-release from ref '${{ github.ref_name }}'"
@@ -76,7 +76,7 @@ jobs:
             " >> '${{ github.workspace }}/ghm/.github/GithubReleaseManager/pre-release.md'
             $params += '--pre'
             $params += '--inputFilePath', '${{ github.workspace }}/ghm/.github/GithubReleaseManager/pre-release.md'
-            $params += '--name', '${{ needs.artifact.outputs.RELEASE_VERSION }}-${{ github.ref_name }}-unstable'
+            $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}-${{ github.ref_name }}-unstable'
           }
           
           $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
