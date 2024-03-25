@@ -28,7 +28,7 @@ Set-Location $toolkitMain.Directory.Parent.FullName
 # Create process test binary
 $compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
 $compilerArgs = "/target:winexe /out:$PSScriptRoot\simple.exe $PSScriptRoot\simple.cs"
-Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait
+Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait -NoNewWindow
 
 # Mute Toolkit logging
 (Get-Content "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml" -Raw).Replace('<Toolkit_LogWriteToHost>True</Toolkit_LogWriteToHost>', '<Toolkit_LogWriteToHost>False</Toolkit_LogWriteToHost>') | 
