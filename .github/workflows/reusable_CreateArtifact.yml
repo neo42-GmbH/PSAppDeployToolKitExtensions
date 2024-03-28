@@ -15,7 +15,7 @@ jobs:
   artifact:
     runs-on: ubuntu-latest
     outputs:
-      VERSION: ${{ steps.release-info.outputs.VERSION }}
+      VERSION: ${{ steps.release-info.outputs.RELEASE_VERSION }}
 
     steps:
       - name: get-release-info
@@ -98,5 +98,5 @@ jobs:
       - name: upload-artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PSAppDeployToolKitExtensions-${{ steps.release-info.outputs.VERSION }}
+          name: PSAppDeployToolKitExtensions-${{ steps.release-info.outputs.RELEASE_VERSION }}
           path: .
