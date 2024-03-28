@@ -805,6 +805,14 @@ function Close-NxtBlockExecutionWindow {
 			## Stop-NxtProcess does not yet support Id as Parameter
 			Stop-Process -Id $blockexecutionWindowId -Force
 		}
+		[int[]]$blockexecutionWindowId = (Get-Process powershell | Where-Object {
+			$_.Path -like "*\BlockExecution\DeoployNxtApplication.exe"}
+		).Id
+		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
+			Write-Log "The background process of BlockExecution functionality will be closed now ..."
+			## Stop-NxtProcess does not yet support Id as Parameter
+			Stop-Process -Id $blockexecutionWindowId -Force
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
