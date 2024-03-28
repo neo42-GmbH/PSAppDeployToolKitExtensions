@@ -6980,6 +6980,67 @@ function Remove-NxtEmptyFolder {
 	}
 }
 #endregion
+#region Function Remove-NxtEmptyIniFile
+function Remove-NxtEmptyIniFile {
+	<#
+	.SYNOPSIS
+		Removes only empty INI files.
+	.DESCRIPTION
+		This function is designed to remove INI files if and only if they are empty. If the specified INI file contains any sections or key-value pairs, the function continues without taking any action.
+	.PARAMETER Path
+		Specifies the path to the empty INI file to remove.
+		This parameter is mandatory.
+	.EXAMPLE
+		Remove-NxtEmptyIniFile -Path "$installLocation\SomeEmptyIniFile.ini"
+		This example removes the specified empty INI file located at "$installLocation\SomeEmptyIniFile.ini".
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.IO.FileInfo]
+		$Path
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
+		if ($false -eq $Path.Exists -or $Path.Extension -ne ".ini") {
+			Write-Log -Message "File [$Path] does not exist or is not an INI file..." -Severity 2 -Source ${CmdletName}
+			return
+		}
+		try {
+			[hashtable]$content = Import-NxtIniFile -Path $Path
+			## If any section exists that contains keys, the INI file is not considered empty
+			foreach ($section in $content.GetEnumerator()) {
+				if ($section.Value.Keys.Count -gt 0) {
+					Write-Log -Message "INI file [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
+					return
+				}
+			}
+			Remove-Item -Path $Path.FullName -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveIniFile'
+			if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveIniFile)) {
+				Write-Log -Message "The following error(s) took place while deleting the empty INI file [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveIniFile)" -Severity 2 -Source ${CmdletName}
+			}
+			else {
+				Write-Log -Message "Empty INI file [$Path] was deleted successfully..." -Source ${CmdletName}
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to import or delete INI file [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Remove-NxtEmptyRegistryKey
 function Remove-NxtEmptyRegistryKey {
 	<#
