@@ -29,11 +29,11 @@ $compilerArgs = "/target:winexe /out:$global:simpleExe $PSScriptRoot\simple.cs"
 Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait -NoNewWindow
 
 # Mute Toolkit logging
+[System.IO.FileInfo]$toolkitMain = Get-ChildItem -Recurse -Filter "AppDeployToolkitMain.ps1" | Select-Object -First 1
 (Get-Content "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml" -Raw).Replace('<Toolkit_LogWriteToHost>True</Toolkit_LogWriteToHost>', '<Toolkit_LogWriteToHost>False</Toolkit_LogWriteToHost>') | 
     Out-File "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml"
 
 # Import PSADT
-[System.IO.FileInfo]$toolkitMain = Get-ChildItem -Recurse -Filter "AppDeployToolkitMain.ps1" | Select-Object -First 1
 . $toolkitMain.FullName -DisableLogging
 
 # Run Pester
