@@ -25,4 +25,4 @@ jobs:
       run: |
         Set-Location -Path "${{ steps.download-artifact-test.outputs.download-path }}\*\PSAppDeployToolkit"
         Copy-Item -Path ".\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination ".\Setup.ico"
-        . ..\..\..\test\RunPester.ps1
+        . ..\..\..\test\test\RunPester.ps1
