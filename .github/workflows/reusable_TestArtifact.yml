@@ -23,7 +23,7 @@ jobs:
     - name: run-pester
       shell: powershell
       run: |
-        [System.IO.FileInfo]$deployAppPath = Get-ChildItem -Recurse -Path "${{ steps.download-artifact-test.outputs.download-path }}" -Filter "Deploy-Application.ps1" | Select-Object -First 1
+        [System.IO.FileInfo]$deployAppPath = Get-ChildItem -Recurse -Path "${{ steps.download-artifact-test.outputs.download-path }}" -Filter "PSAppDeployToolkit\Deploy-Application.ps1" | Select-Object -First 1
         [System.IO.FileInfo]$pesterTest = Get-ChildItem -Recurse -Path "test" -Filter "RunPester.ps1" | Select-Object -First 1
         Set-Location -Path $deployAppPath.DirectoryName
         Copy-Item -Path ".\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination ".\Setup.ico"
