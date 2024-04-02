@@ -22,10 +22,6 @@ $config.Run.Path = "$PSScriptRoot\Definitions"
 $config.Should.ErrorAction = 'Continue'
 $config.Output.Verbosity = 'Detailed'
 
-# Set location
-[System.IO.FileInfo]$toolkitMain = Get-ChildItem -Recurse -Filter "AppDeployToolkitMain.ps1" | Select-Object -First 1
-Set-Location $toolkitMain.Directory.Parent.FullName
-
 # Create process test binary
 $global:simpleExe = "$PSScriptRoot\simple.exe"
 $compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
@@ -37,6 +33,7 @@ Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait -NoNewWi
     Out-File "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml"
 
 # Import PSADT
+[System.IO.FileInfo]$toolkitMain = Get-ChildItem -Recurse -Filter "AppDeployToolkitMain.ps1" | Select-Object -First 1
 . $toolkitMain.FullName -DisableLogging
 
 # Run Pester
