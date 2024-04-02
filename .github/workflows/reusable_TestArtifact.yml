@@ -10,6 +10,8 @@ jobs:
     - name: download-artifact
       id: download-artifact-test
       uses: actions/download-artifact@v4
+      with:
+        path: artifact
     
     - name: checkout-tests
       uses: actions/checkout@v4
