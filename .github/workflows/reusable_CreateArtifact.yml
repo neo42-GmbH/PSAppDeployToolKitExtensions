@@ -92,7 +92,7 @@ jobs:
             "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.ps1"
             "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.cs"
           ) | ForEach-Object {
-            (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.VERSION }}' | Set-Content -Path $_
+            (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_
           }
 
       - name: upload-artifact

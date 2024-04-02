@@ -20,7 +20,7 @@ $config.TestResult.OutputPath = "$PSScriptRoot\testresults.xml"
 $config.TestResult.OutputFormat = 'NUnitXml'
 $config.Run.Path = "$PSScriptRoot\Definitions"
 $config.Should.ErrorAction = 'Continue'
-$config.Output.StackTraceVerbosity = 'FirstLine'
+$config.Output.StackTraceVerbosity = 'None'
 $config.Output.Verbosity = 'Detailed'
 
 # Create process test binary
