@@ -23,6 +23,6 @@ jobs:
     - name: run-pester
       shell: powershell
       run: |
-        Set-Location -Path "${{ steps.download-artifact-test.outputs.download-path }}/*/PSAppDeployToolkit"
+        Set-Location -Path "${{ steps.download-artifact-test.outputs.download-path }}\*\PSAppDeployToolkit"
         Copy-Item -Path ".\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination ".\Setup.ico"
         . ../../../test/Run-Pester.ps1
