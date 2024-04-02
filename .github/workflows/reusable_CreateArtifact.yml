@@ -32,7 +32,7 @@ jobs:
             $date = Get-Date -Date '${{ github.event.milestone.created_at }}' -Format 'yyyy.MM.dd'
           }
 
-          $version = "$date.$number"
+          $version = "$date.$number".Trim()
           "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
           Write-Host "Auto-generated release version: $version"
 
