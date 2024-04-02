@@ -22,7 +22,7 @@ $config.Should.ErrorAction = 'Continue'
 $config.Output.Verbosity = 'Detailed'
 
 # Set location
-[FileInfo]$toolkitMain = Get-ChildItem -Path .. -Recurse -Filter "AppDeployToolkitMain.ps1" | Select-Object -First 1
+[System.IO.FileInfo]$toolkitMain = Get-ChildItem -Path .. -Recurse -Filter "AppDeployToolkitMain.ps1" | Select-Object -First 1
 Set-Location $toolkitMain.Directory.Parent.FullName
 
 # Create process test binary
