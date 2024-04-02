@@ -26,3 +26,7 @@ jobs:
         Set-Location -Path "${{ steps.download-artifact-test.outputs.download-path }}\*\PSAppDeployToolkit"
         Copy-Item -Path ".\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination ".\Setup.ico"
         . ..\..\..\test\test\RunPester.ps1
+    
+    - name: remove-artifact
+      if: always()
+      run: Remove-Item -Path "${{ steps.download-artifact-test.outputs.download-path }}" -Recurse -Force
