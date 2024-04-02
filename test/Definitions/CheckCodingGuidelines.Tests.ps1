@@ -1,13 +1,7 @@
-# Check if we are in the Definitions folder. Pester tests via PesterTestsStarter.ps1 are executed from the root folder
-$baseDir = Split-Path -Path (Resolve-Path $MyInvocation.MyCommand.Definition) -Parent
-if ((Split-Path $baseDir -Leaf) -eq "Definitions"){
-    $baseDir = Resolve-Path "$baseDir\..\..\"
-}
-
 Describe "Coding Guidelines" -ForEach @(
-    @{path = "$baseDir\Deploy-Application.ps1" },
-    @{path = "$baseDir\AppDeployToolkit\AppDeployToolkitExtensions.ps1" },
-    @{path = "$baseDir\AppDeployToolkit\CustomAppDeployToolkitUi.ps1" }
+    @{path = "Deploy-Application.ps1" },
+    @{path = "AppDeployToolkit\AppDeployToolkitExtensions.ps1" },
+    @{path = "AppDeployToolkit\CustomAppDeployToolkitUi.ps1" }
 ) {
     Context "$(Split-Path $path -Leaf)" {
         BeforeAll {
