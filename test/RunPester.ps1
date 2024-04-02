@@ -18,7 +18,7 @@ Import-Module Pester
 $config.TestResult.Enabled = $true
 $config.TestResult.OutputPath = "$PSScriptRoot\testresults.xml"
 $config.TestResult.OutputFormat = 'NUnitXml'
-$config.Run.Path = "$PSScriptRoot\tests"
+$config.Run.Path = "$PSScriptRoot\Definitions"
 $config.Should.ErrorAction = 'Continue'
 $config.Output.Verbosity = 'Detailed'
 
