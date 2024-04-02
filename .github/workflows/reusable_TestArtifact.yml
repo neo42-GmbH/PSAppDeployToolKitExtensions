@@ -10,8 +10,6 @@ jobs:
     - name: download-artifact
       id: download-artifact-test
       uses: actions/download-artifact@v4
-      with:
-        path: artifact
     
     - name: checkout-tests
       uses: actions/checkout@v4
@@ -22,6 +20,7 @@ jobs:
     - name: run-pester
       shell: powershell
       run: |
-        Set-Location -Path "${{ steps.download-artifact-test.outputs.download-path }}\PSAppDeployToolkit"
+        [FileInfo]$deployAppPath = Get-ChildItem -Recurse -Path "${{ steps.download-artifact-test.outputs.download-path }}" -Filter "Deploy-Application.ps1" | Select-Object -First 1
+        Set-Location -Path $deployAppPath.DirectoryName
         Copy-Item -Path ".\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination ".\Setup.ico"
         . "..\test\RunPester.ps1"
