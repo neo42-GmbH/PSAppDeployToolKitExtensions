@@ -34,6 +34,8 @@ Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait -NoNewWi
     Out-File "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml"
 
 # Import PSADT
+Write-Host "Importing AppDeployToolkitMain.ps1 from [$($toolkitMain.FullName)]"
+Set-Location $toolkitMain.Directory.Parent.FullName
 . $toolkitMain.FullName -DisableLogging
 
 # Run Pester
