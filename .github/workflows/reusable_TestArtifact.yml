@@ -29,4 +29,5 @@ jobs:
     
     - name: remove-artifact
       if: always()
+      shell: powershell
       run: Remove-Item -Path "${{ steps.download-artifact-test.outputs.download-path }}" -Recurse -Force
