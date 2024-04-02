@@ -20,10 +20,11 @@ $config.TestResult.OutputPath = "$PSScriptRoot\testresults.xml"
 $config.TestResult.OutputFormat = 'NUnitXml'
 $config.Run.Path = "$PSScriptRoot\Definitions"
 $config.Should.ErrorAction = 'Continue'
+$config.Output.StackTraceVerbosity = 'FirstLine'
 $config.Output.Verbosity = 'Detailed'
 
 # Create process test binary
-$global:simpleExe = "$PSScriptRoot\simple.exe"
+[string]$global:simpleExe = "$PSScriptRoot\simple.exe"
 $compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
 $compilerArgs = "/target:winexe /out:$global:simpleExe $PSScriptRoot\simple.cs"
 Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait -NoNewWindow
@@ -34,8 +35,8 @@ Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait -NoNewWi
     Out-File "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml"
 
 # Import PSADT
+[string]$global:PSADTPath = $toolkitMain.Directory.Parent.FullName
 Write-Host "Importing AppDeployToolkitMain.ps1 from [$($toolkitMain.FullName)]"
-Set-Location $toolkitMain.Directory.Parent.FullName
 . $toolkitMain.FullName -DisableLogging
 
 # Run Pester

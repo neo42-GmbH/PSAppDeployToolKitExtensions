@@ -1,13 +1,13 @@
 Describe "Coding Guidelines" -ForEach @(
-    @{path = "Deploy-Application.ps1" },
-    @{path = "AppDeployToolkit\AppDeployToolkitExtensions.ps1" },
-    @{path = "AppDeployToolkit\CustomAppDeployToolkitUi.ps1" }
+    @{path = "$global:PSADTPath\Deploy-Application.ps1" },
+    @{path = "$global:PSADTPath\AppDeployToolkit\AppDeployToolkitExtensions.ps1" },
+    @{path = "$global:PSADTPath\AppDeployToolkit\CustomAppDeployToolkitUi.ps1" }
 ) {
     Context "$(Split-Path $path -Leaf)" {
         BeforeAll {
             $tokens = $errors = $null
-            [string[]]$content = Get-Content -Path "$path"
-            [string]$contentRaw = Get-Content -Path "$path" -Raw
+            [string[]]$content = Get-Content -Path $path
+            [string]$contentRaw = Get-Content -Path $path -Raw
             [System.Management.Automation.Language.Ast]$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
         }
         It "Should have no errors" {
