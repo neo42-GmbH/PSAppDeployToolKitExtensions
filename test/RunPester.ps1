@@ -27,8 +27,9 @@ $config.Output.Verbosity = 'Detailed'
 Set-Location $toolkitMain.Directory.Parent.FullName
 
 # Create process test binary
+$global:simpleExe = "$PSScriptRoot\simple.exe"
 $compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + "csc.exe"
-$compilerArgs = "/target:winexe /out:$PSScriptRoot\simple.exe $PSScriptRoot\simple.cs"
+$compilerArgs = "/target:winexe /out:$global:simpleExe $PSScriptRoot\simple.cs"
 Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait -NoNewWindow
 
 # Mute Toolkit logging
