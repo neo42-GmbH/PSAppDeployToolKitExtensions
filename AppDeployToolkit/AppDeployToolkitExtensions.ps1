@@ -4112,7 +4112,7 @@ function Get-NxtIsSystemProcess {
 			}
 			else {
 				[System.Security.Principal.NTAccount]$account = New-Object System.Security.Principal.NTAccount("$($owner.Domain)\$($owner.User)")
-				Write-Output $account.Translate([System.Security.Principal.SecurityIdentifier]).Value -eq "S-1-5-18"
+				Write-Output $($account.Translate([System.Security.Principal.SecurityIdentifier]).Value -eq "S-1-5-18")
 			}
 		}
 	}
