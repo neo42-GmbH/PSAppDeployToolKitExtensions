@@ -126,7 +126,7 @@ function Start-NxtProcess {
 #endregion
 ## Only use system environment variables and modules during script execution
 if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart', 'InstallUserPart', 'UninstallUserPart')) {
-	foreach ($variable in ([System.Environment]::GetEnvironmentVariables("User").Keys | Where-Object { $_ -notin @("TMP", "TEMP") })) {
+	foreach ($variable in [System.Environment]::GetEnvironmentVariables("User").Keys) {
 		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, "Machine"), "Process")
 	}
 }
