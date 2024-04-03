@@ -112,6 +112,9 @@ $replaceConfigOptionOnPatternMatch = @(
 		Pattern  = "[^01]"
 	}
 )
+$removeConfigOptionWhenFound = @(
+	"AcceptedRepairExitCodes"
+)
 
 ## Regex replacements
 $regexReplacements = @(
@@ -462,6 +465,14 @@ foreach ($configOption in $replaceConfigOptionOnPatternMatch) {
 	}
 	else {
 		Write-Host -ForegroundColor Red "The configuration option '$($configOption.Property)' does not exist. Please check the configuration options and add the missing configuration option manually."
+	}
+}
+
+## Remove configuration options when found
+foreach ($configOption in $removeConfigOptionWhenFound) {
+	if ($true -eq $packageConfig.Contains($configOption)) {
+		Write-Host -ForegroundColor Yellow "Removing configuration option '$($configOption)' from the configuration."
+		$packageConfig.Remove($configOption)
 	}
 }
 
