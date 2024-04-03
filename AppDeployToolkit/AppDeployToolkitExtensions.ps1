@@ -7015,35 +7015,37 @@ function Remove-NxtEmptyRegistryKey {
 	Process {
 		try {
 			## Try path directly
-			[Microsoft.Win32.RegistryKey]$key = Get-Item -Path $Path -ErrorAction Stop
+			[Microsoft.Win32.RegistryKey[]]$keys = Get-Item -Path $Path -ErrorAction Stop
 		}
 		catch {
 			## Try path with registry provider
-			[Microsoft.Win32.RegistryKey]$key = Get-Item -Path "Registry::$Path" -ErrorAction SilentlyContinue
+			[Microsoft.Win32.RegistryKey[]]$keys = Get-Item -Path "Registry::$Path" -ErrorAction SilentlyContinue
 		}
-		if ($null -eq $key) {
+		if ($keys.Count -eq 0) {
 			Write-Log -Message "Key [$Path] does not exist or is not a registry address..." -Source ${CmdletName} -Severity 2
 			return
 		}
-		Write-Log -Message "Check if [$key] exists and is empty..." -Source ${CmdletName}
-		try {
-			if ( ((Get-ChildItem -LiteralPath $key.PSPath | Measure-Object).Count -eq 0) -and ($null -eq (Get-ItemProperty -LiteralPath $key.PSPath)) ) {
-				Write-Log -Message "Delete empty key [$key]..." -Source ${CmdletName}
-				Remove-Item -LiteralPath $key.PSPath -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveKey'
-				if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveKey)) {
-					Write-Log -Message "The following error(s) took place while deleting the empty key [$key]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveKey)" -Severity 2 -Source ${CmdletName}
+		foreach ($key in $keys) {
+			Write-Log -Message "Check if [$key] exists and is empty..." -Source ${CmdletName}
+			try {
+				if ( ((Get-ChildItem -LiteralPath $key.PSPath | Measure-Object).Count -eq 0) -and ($null -eq (Get-ItemProperty -LiteralPath $key.PSPath)) ) {
+					Write-Log -Message "Delete empty key [$key]..." -Source ${CmdletName}
+					Remove-Item -LiteralPath $key.PSPath -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveKey'
+					if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveKey)) {
+						Write-Log -Message "The following error(s) took place while deleting the empty key [$key]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveKey)" -Severity 2 -Source ${CmdletName}
+					}
+					else {
+						Write-Log -Message "Empty key [$key] was deleted successfully..." -Source ${CmdletName}
+					}
 				}
 				else {
-					Write-Log -Message "Empty key [$key] was deleted successfully..." -Source ${CmdletName}
+					Write-Log -Message "Key [$key] is not empty, so it was not deleted..." -Source ${CmdletName}
 				}
 			}
-			else {
-				Write-Log -Message "Key [$key] is not empty, so it was not deleted..." -Source ${CmdletName}
+			catch {
+				Write-Log -Message "Failed to delete empty key [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+				throw
 			}
-		}
-		catch {
-			Write-Log -Message "Failed to delete empty key [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
-			throw
 		}
 	}
 	End {
