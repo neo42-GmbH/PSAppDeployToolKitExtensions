@@ -506,6 +506,18 @@ if ($iniContent.AskKillProcesses.APPLYCONTINUETYPEONERROR.Comments -notlike "*Va
 	Write-Host -ForegroundColor Red "Please correct the comments in 'Setup.cfg' APPLYCONTINUETYPEONERROR to 'Values    = 0,1'"
 }
 Write-Host -ForegroundColor Green "Finished custom tasks."
+
+## Convert files to CRLF with UTF8 encoding
+Get-ChildItem -Path $PackagePath.FullName -Recurse -File -Include @(
+	"Deploy-Application.ps1",
+	"neo42PackageConfig.json",
+	"Setup.cfg"
+) | ForEach-Object {
+	$filePath = $_.FullName
+	$contents = Get-Content -Path $filePath -Raw
+	$contents = $contents -replace "`r`n", "`n" -replace "`n", "`r`n"
+	Set-Content -Path $filePath -Value $contents -Encoding UTF8
+}
 #endregion
 
 #region End
