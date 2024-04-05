@@ -43,12 +43,12 @@ function neo42PSUseCorrectTokenCapitalization {
 					$token.Extent.EndColumnNumber,
 					$spelling,
 					$MyInvocation.MyCommand.Definition,
-					"Use '$spelling' instead of '$($token.Text)'."
+					'Apply the correct capitalization.'
 				)
 			) | Out-Null
 			## Return the diagnostic record
 			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'              = "The token '$($token.Text)' is not capitalized correctly."
+				'Message'              = "The token is not capitalized correctly."
 				'Extent'               = $token.Extent
 				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
 				'Severity'             = 'Warning'
@@ -106,12 +106,12 @@ function neo42PSUseCorrectCmdtletCapitalization {
 					$commandNameAst.Extent.EndColumnNumber,
 					$spelling,
 					$MyInvocation.MyCommand.Definition,
-					"Use '$spelling' instead of '$($commandNameAst.Value)'."
+					"Apply the correct capitalization."
 				)
 			) | Out-Null
 			## Return the diagnostic record
 			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'              = "The token '$($commandNameAst.Value)' is not capitalized correctly."
+				'Message'              = "The commandlet is not capitalized correctly."
 				'Extent'               = $commandNameAst.Extent
 				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
 				'Severity'             = 'Warning'
@@ -156,7 +156,7 @@ function neo42PSVariablesFromParamBlockShouldBeCapitalized {
 				}
 				## Return the diagnostic record
 				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'  = "The parameter block variable '$($parameterVariableAst.VariablePath.UserPath)' needs to start with a capital letter"
+					'Message'  = "A parameter block variable needs to start with a capital letter"
 					'Extent'   = $parameterVariableAst.Extent
 					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
 					'Severity' = 'Warning'

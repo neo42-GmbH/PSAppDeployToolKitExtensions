@@ -75,7 +75,7 @@ Describe "Coding Guidelines" -ForEach @(
         }
         It "Capitalized variables should be defined in the param block" -Skip {
             $parameterBlocks = $ast.FindAll({
-                param($ast) 
+                Param($ast)
                 $ast -is [System.Management.Automation.Language.ParamBlockAst] -and
                 $ast.Parameters.Name.VariablePath.UserPath.Count -gt 0
             }, $true)
@@ -94,7 +94,6 @@ Describe "Coding Guidelines" -ForEach @(
                     $capitalizedVariables | ForEach-Object {
                         $_ | Should -BeIn $paramBlockAst.Parameters.Name.VariablePath.UserPath -Because "the capitalized variable '$($_.VariablePath.UserPath)' is not defined in the param block (line $($_.Extent.StartLineNumber))"
                     }
-                    
                 }
             }
         }
@@ -103,18 +102,18 @@ Describe "Coding Guidelines" -ForEach @(
                 Set-ItResult -Skipped -Because "the file '$($path)' is excluded from this test"
                 return
             }
-            [System.Management.Automation.Language.FunctionDefinitionAst[]]$extensionFunctions = $ast.FindAll({ 
-                $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] 
+            [System.Management.Automation.Language.FunctionDefinitionAst[]]$extensionFunctions = $ast.FindAll({
+                $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
             }, $true)
-            [System.Management.Automation.Language.CommandAst[]]$commandCallsAsts = $ast.FindAll({ 
+            [System.Management.Automation.Language.CommandAst[]]$commandCallsAsts = $ast.FindAll({
                 param($ast)
-                $ast -is [System.Management.Automation.Language.CommandAst] -and 
+                $ast -is [System.Management.Automation.Language.CommandAst] -and
                 $ast.GetCommandName() -in $extensionFunctions.Name -and
                 $ast.GetCommandName() -notin @("Write-Log", "Exit-NxtScriptWithError", "Set-NxtPackageArchitecture", "Expand-NxtPackageConfig", "Show-NxtWelcomePrompt")
             }, $true)
             foreach ($commandAst in $commandCallsAsts) {
                 [System.Management.Automation.Language.FunctionDefinitionAst]$calledFunction = $extensionFunctions | Where-Object {$_.Name -eq $commandAst.GetCommandName()}
-                [System.Management.Automation.Language.ParameterAst[]]$calledFunctionRequiredParameters = $calledFunction.Body.ParamBlock.Parameters | Where-Object { 
+                [System.Management.Automation.Language.ParameterAst[]]$calledFunctionRequiredParameters = $calledFunction.Body.ParamBlock.Parameters | Where-Object {
                     $null -ne $_.DefaultValue -and
                     $_.DefaultValue.ToString().Contains("PackageConfig") -and
                     $_.Name.VariablePath.UserPath -notin @('DisableLogging')
@@ -335,3 +334,5 @@ Describe "Coding Guidelines" -ForEach @(
         }
     }
 }
+
+
