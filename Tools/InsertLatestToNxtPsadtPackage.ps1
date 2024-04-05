@@ -457,7 +457,7 @@ function Update-NxtPSAdtPackage {
             # Prevent usage of $global:DetectedDisplayVersion.
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
             foreach ($line in ($content -split "`n")){
-                if ($line -match '(\$global:|\$)DetectedDisplayVersion') {
+                if ($line -match '(\$global:|\$)DetectedDisplayVersion(?=\b)') {
                     [bool]$contentChanged = $true
                     $content = $content.Replace($line, ($line -replace '(\$global:|\$)DetectedDisplayVersion(?=\b)', "(Get-NxtCurrentDisplayVersion).DisplayVersion"))
                     Write-Warning "Replaced `$DetectedDisplayVersion with (Get-NxtCurrentDisplayVersion).DisplayVersion in $PackageToUpdatePath in line: $line"
