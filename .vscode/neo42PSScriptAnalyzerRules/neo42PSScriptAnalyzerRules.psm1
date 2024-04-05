@@ -1,37 +1,3 @@
-function New-GenericAnalyzerSuggestion {
-	<#
-	.SYNOPSIS
-	Creates a new suggestion object for the ScriptAnalyzer.
-	#>
-	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent])]
-	Param(
-		[Parameter(Mandatory = $true, Position = 0, ParameterSetName = 'Token')]
-		[ValidateNotNullOrEmpty()]
-		[System.Management.Automation.Language.IScriptExtent]
-		$Extent,
-		[Parameter(Mandatory = $true, Position = 1)]
-		[string]
-		$Correction,
-		[Parameter(Mandatory = $false, Position = 2)]
-		[string]
-		$Description
-	)
-
-	[int]$startLineNumber = $Extent.StartLineNumber
-	[int]$endLineNumber = $Extent.EndLineNumber
-	[int]$startColumnNumber = $Extent.StartColumnNumber
-	[int]$endColumnNumber = $Extent.EndColumnNumber
-	[string]$correction = $Correction
-	[string]$file = $MyInvocation.MyCommand.Definition
-	[string]$optionalDescription = $Description
-	$objParams = @{
-		TypeName     = 'Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent'
-		ArgumentList = $startLineNumber, $endLineNumber, $startColumnNumber,
-		$endColumnNumber, $correction, $file, $Description
-	}
-	return New-Object @objParams
-}
-
 function neo42PSUseCorrectTokenCapitalization {
 	<#
 	.SYNOPSIS
@@ -69,12 +35,83 @@ function neo42PSUseCorrectTokenCapitalization {
 			## Create a suggestion object
 			$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
 			$suggestedCorrections.add(
-				(New-GenericAnalyzerSuggestion -Extent $token.Extent -Correction $spelling -Description "Use '$spelling' instead of '$($token.Text)'.")
+				[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+					$token.Extent.StartLineNumber,
+					$token.Extent.EndLineNumber,
+					$token.Extent.StartColumnNumber,
+					$token.Extent.EndColumnNumber,
+					$spelling,
+					$MyInvocation.MyCommand.Definition,
+					"Use '$spelling' instead of '$($token.Text)'."
+				)
 			) | Out-Null
 			## Return the diagnostic record
 			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 				'Message'              = "The token '$($token.Text)' is not capitalized correctly."
 				'Extent'               = $token.Extent
+				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
+				'Severity'             = 'Warning'
+				'SuggestedCorrections' = $suggestedCorrections
+			}
+		}
+		return $results
+	}
+}
+
+function neo42PSUseCorrectCmdtletCapitalization {
+	<#
+	.SYNOPSIS
+	Checks that cmndlets are capitalized correctly.
+	.DESCRIPTION
+	Checks that cmndlets are capitalized correctly.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$testAst
+	)
+	Begin {
+		[string[]]$cmdtletNames = (Get-Command -CommandType Cmdlet -Module * -ErrorAction SilentlyContinue).Name
+	}
+	Process {
+		[System.Management.Automation.Language.CommandAst[]]$commandAsts = $testAst.FindAll({
+			$args[0] -is [System.Management.Automation.Language.CommandAst]
+		}, $false)
+
+		foreach ($commandAst in $commandAsts) {
+			if ($commandAst.InvocationOperator -ne 'Unknown') {
+				continue
+			}
+			[System.Management.Automation.Language.StringConstantExpressionAst]$commandNameAst = $commandAst.CommandElements[0]
+			[string]$spelling = $cmdtletNames | Where-Object { $_ -ieq $commandNameAst.Value } | Select-Object -First 1
+
+			if ($null -eq $spelling -or $spelling -ceq $commandNameAst.Value) {
+				continue
+			}
+			## Create a suggestion object
+			$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
+			$suggestedCorrections.add(
+				[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+					$commandNameAst.Extent.StartLineNumber,
+					$commandNameAst.Extent.EndLineNumber,
+					$commandNameAst.Extent.StartColumnNumber,
+					$commandNameAst.Extent.EndColumnNumber,
+					$spelling,
+					$MyInvocation.MyCommand.Definition,
+					"Use '$spelling' instead of '$($commandNameAst.Value)'."
+				)
+			) | Out-Null
+			## Return the diagnostic record
+			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				'Message'              = "The token '$($commandNameAst.Value)' is not capitalized correctly."
+				'Extent'               = $commandNameAst.Extent
 				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
 				'Severity'             = 'Warning'
 				'SuggestedCorrections' = $suggestedCorrections
