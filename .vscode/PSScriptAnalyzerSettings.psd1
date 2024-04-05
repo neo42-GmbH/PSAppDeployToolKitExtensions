@@ -6,10 +6,11 @@
 		'Warning'
 	)
 	ExcludeRules   = @(
-		'PSUseDeclaredVarsMoreThanAssignments',
-		'PSAvoidUsingWriteHost',
-		'PSAvoidGlobalVars',
-		'PSUseShouldProcessForStateChangingFunctions'
+		'PSUseDeclaredVarsMoreThanAssignments', # PSADT uses global variables
+		'PSAvoidGlobalVars', # PSADT uses global variables
+		'PSUseShouldProcessForStateChangingFunctions', # We don't use ShouldProcess in our scripts
+		'PSUseOutputTypeCorrectly', # Does not work good with array types
+		'PSAvoidUsingWriteHost' # Ignored because we use Write-Host in tools
 	)
 	Rules          = @{
 		PSUseCompatibleCmdlets = @{
