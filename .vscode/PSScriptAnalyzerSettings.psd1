@@ -51,6 +51,18 @@
 		PSUseCorrectCasing = @{
 			Enabled = $true
 		}
+		PSPlaceOpenBrace = @{
+			Enable             = $true
+			OnSameLine         = $true
+			NewLineAfter       = $true
+			IgnoreOneLineBlock = $false
+		}
+		PSPlaceCloseBrace = @{
+			Enable             = $true
+			NewLineAfter       = $false
+			IgnoreOneLineBlock = $true
+			NoEmptyLineBefore  = $true
+		}
 	}
 	CustomRulePath      = @(
 		'.vscode\neo42PSScriptAnalyzerRules'
