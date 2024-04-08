@@ -63,6 +63,9 @@
 			IgnoreOneLineBlock = $true
 			NoEmptyLineBefore  = $true
 		}
+		AvoidSemicolonsAsLineTerminators = @{
+			Enable = $true
+		}
 	}
 	CustomRulePath      = @(
 		'.vscode\neo42PSScriptAnalyzerRules'
