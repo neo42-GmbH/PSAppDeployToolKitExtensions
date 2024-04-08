@@ -15,7 +15,7 @@
 		'PSUseSingularNouns' # Ignored because we use plural nouns
 	)
 	Rules               = @{
-		PSUseCompatibleCmdlets    = @{
+		PSUseCompatibleCmdlets     = @{
 			Enabled        = $true
 			TargetProfiles = @(
 				'desktop-5.1.14393.206-windows'
@@ -24,15 +24,15 @@
 				'Write-Log'
 			)
 		}
-		PSProvideCommentHelp      = @{
+		PSProvideCommentHelp       = @{
 			Enabled                 = $true
 			ExportedOnly            = $false
 			BlockComment            = $true
 			VSCodeSnippetCorrection	= $true
 			Placement               = 'begin'
 		}
-		PSUseConsistentWhitespace = @{
-			Enabled                                 = $true
+		PSUseConsistentWhitespace  = @{
+			Enable                                  = $true
 			CheckInnerBrace                         = $true
 			CheckOpenBrace                          = $true
 			CheckOpenParen                          = $true
@@ -41,25 +41,25 @@
 			CheckPipeForRedundantWhitespace         = $true
 			CheckSeparator                          = $true
 			CheckParameter                          = $true
-			IgnoreAssignmentOperatorInsideHashTable	= $true
+			IgnoreAssignmentOperatorInsideHashTable = $true
 		}
 		PSUseConsistentIndentation = @{
-			Enable = $true
+			Enable              = $true
 			PipelineIndentation = 'IncreaseIndentationForFirstPipeline'
-			Kind = 'tab'
+			Kind                = 'tab'
 		}
-		PSUseCorrectCasing = @{
+		PSUseCorrectCasing         = @{
 			Enabled = $true
 		}
-		PSPlaceOpenBrace = @{
+		PSPlaceOpenBrace           = @{
 			Enable             = $true
 			OnSameLine         = $true
 			NewLineAfter       = $true
 			IgnoreOneLineBlock = $false
 		}
-		PSPlaceCloseBrace = @{
+		PSPlaceCloseBrace          = @{
 			Enable             = $true
-			NewLineAfter       = $false
+			NewLineAfter       = $true
 			IgnoreOneLineBlock = $true
 			NoEmptyLineBefore  = $true
 		}
