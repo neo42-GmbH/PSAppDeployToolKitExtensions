@@ -132,9 +132,9 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 }
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules","$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
-if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
+if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstance Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
 	Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
-	Write-Host "OSArchitecture: $((Get-WmiObject Win32_OperatingSystem).OSArchitecture)"
+	Write-Host "OSArchitecture: $((Get-CimInstance Win32_OperatingSystem).OSArchitecture)"
 	Write-Host $($MyInvocation.BoundParameters)
 	Write-Host "Will restart script in 64bit PowerShell"
 	[string]$file = $MyInvocation.MyCommand.Path
@@ -235,12 +235,12 @@ Remove-Variable -Name tempLoadToolkitConfig
 [hashtable]$deployAppScriptParameters = $psBoundParameters
 ## Variables: Environment
 if (Test-Path -LiteralPath 'variable:HostInvocation') {
-	$InvocationInfo = $HostInvocation
+	$invocationInfo = $HostInvocation
 }
 else {
-	$InvocationInfo = $MyInvocation
+	$invocationInfo = $MyInvocation
 }
-[string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
+[string]$scriptDirectory = Split-Path -Path $invocationInfo.MyCommand.Definition -Parent
 ## dot source the required AppDeploy Toolkit functions
 try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
