@@ -48,7 +48,7 @@ function neo42PSUseCorrectTokenCapitalization {
 			) | Out-Null
 			## Return the diagnostic record
 			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'              = "The token is not capitalized correctly."
+				'Message'              = 'The token is not capitalized correctly.'
 				'Extent'               = $token.Extent
 				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
 				'Severity'             = 'Warning'
@@ -83,8 +83,8 @@ function neo42PSUseCorrectCmdtletCapitalization {
 	}
 	Process {
 		[System.Management.Automation.Language.CommandAst[]]$commandAsts = $TestAst.FindAll({
-			$args[0] -is [System.Management.Automation.Language.CommandAst]
-		}, $false)
+				$args[0] -is [System.Management.Automation.Language.CommandAst]
+			}, $false)
 		$results = @()
 		foreach ($commandAst in $commandAsts) {
 			if ($commandAst.InvocationOperator -ne 'Unknown') {
@@ -106,12 +106,12 @@ function neo42PSUseCorrectCmdtletCapitalization {
 					$commandNameAst.Extent.EndColumnNumber,
 					$spelling,
 					$MyInvocation.MyCommand.Definition,
-					"Apply the correct capitalization."
+					'Apply the correct capitalization.'
 				)
 			) | Out-Null
 			## Return the diagnostic record
 			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'              = "The commandlet is not capitalized correctly."
+				'Message'              = 'The commandlet is not capitalized correctly.'
 				'Extent'               = $commandNameAst.Extent
 				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
 				'Severity'             = 'Warning'
@@ -122,7 +122,7 @@ function neo42PSUseCorrectCmdtletCapitalization {
 	}
 }
 
-function neo42PSVariablesFromParamBlockShouldBeCapitalized {
+function neo42PSVariablesInParamBlockShouldBeCapitalized {
 	<#
 	.SYNOPSIS
 	Checks that parameter variables are capitalized.
@@ -156,7 +156,7 @@ function neo42PSVariablesFromParamBlockShouldBeCapitalized {
 				}
 				## Return the diagnostic record
 				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'  = "A parameter block variable needs to start with a capital letter"
+					'Message'  = 'A parameter block variable needs to start with a capital letter'
 					'Extent'   = $parameterVariableAst.Extent
 					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
 					'Severity' = 'Warning'
@@ -167,4 +167,101 @@ function neo42PSVariablesFromParamBlockShouldBeCapitalized {
 	}
 }
 
-Export-ModuleMember -Function "neo42*"
+function neo42PSVariablesInParamBlockShouldBeTyped {
+	<#
+	.SYNOPSIS
+	Checks that parameter variables are typed.
+	.DESCRIPTION
+	Checks that parameter variables are typed.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Process {
+		[System.Management.Automation.Language.FunctionDefinitionAst[]]$functions = $TestAst.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $false)
+		$results = @()
+		foreach ($functionAst in $functions) {
+			[System.Management.Automation.Language.ParamBlockAst]$paramBlockAst = $functionAst.Body.ParamBlock
+			if ($null -eq $paramBlockAst) {
+				continue
+			}
+			foreach ($parameterAst in $paramBlockAst.Parameters) {
+				if ($parameterAst.StaticType -ne 'System.Object') {
+					continue
+				}
+				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+					'Message'  = 'A parameter block variable needs to be typed'
+					'Extent'   = $parameterAst.Extent
+					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+					'Severity' = 'Warning'
+				}
+			}
+		}
+		return $results
+	}
+}
+
+function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
+	<#
+	.SYNOPSIS
+	Checks that variables are capitalized and originate from the param block.
+	.DESCRIPTION
+	Checks that variables are capitalized and originate from the param block.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Process {
+		[System.Management.Automation.Language.ParamBlockAst[]]$parameterBlocks = $TestAst.FindAll({
+				$args[0] -is [System.Management.Automation.Language.ParamBlockAst] -and
+				$args[0].Parameters.Count -gt 0
+			}, $false)
+
+		$results = @()
+		foreach ($paramBlockAst in $parameterBlocks) {
+			foreach ($block in @('BeginBlock', 'ProcessBlock', 'EndBlock')) {
+				[System.Management.Automation.Language.NamedBlockAst]$namedBlockAst = $paramBlockAst.Parent | Select-Object -ExpandProperty $block -ErrorAction SilentlyContinue
+				if ($null -eq $namedBlockAst) { continue }
+				# Get All capitalized variables that are not automatically defined
+				[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $namedBlockAst.FindAll({
+						$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
+						$args[0].VariablePath.UserPath -cmatch '^[A-Z]' -and
+						$args[0].VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'false', 'foreach', 'HOME', 'Host', 'input', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'MyInvocation', 'NestedPromptLevel', 'null', 'PID', 'PROFILE', 'PSBoundParameters', 'PSCmdlet', 'PSCommandPath', 'PSCulture', 'PSDebugContext', 'PSEdition', 'PSHOME', 'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender', 'ShellId', 'StackTrace', 'switch', 'this', 'true')
+					}, $false)
+
+				foreach ($variableAst in $capitalizedVariables) {
+					if ($variableAst.Name -in $paramBlockAst.Parameters.Name.VariablePath.UserPath) {
+						continue
+					}
+					$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+						'Message'  = 'A capatalized variable needs to be defined in the param block'
+						'Extent'   = $variableAst.Extent
+						'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+						'Severity' = 'Warning'
+					}
+				}
+			}
+		}
+		return $results
+	}
+}
+
+Export-ModuleMember -Function 'neo42*'
