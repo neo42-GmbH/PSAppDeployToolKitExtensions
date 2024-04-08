@@ -18,7 +18,7 @@ function neo42PSUseCorrectTokenCapitalization {
 		$TestToken
 	)
 	Begin {
-		[string[]]$keywordList = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
+		[string[]]$keywordList = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
 	}
 	Process {
 		$results = @()
@@ -273,34 +273,91 @@ function neo42PSEnforceConsistantConditionalStatements {
 		$TestAst
 	)
 	$results = @()
-	[System.Management.Automation.Language.BinaryExpressionAst[]]$wrongSideOperators = $TestAst.Find({
+	[System.Management.Automation.Language.BinaryExpressionAst[]]$wrongSideOperators = $TestAst.FindAll({
 			$args[0] -is [System.Management.Automation.Language.BinaryExpressionAst] -and
 			$args[0].Right.Extent.Text -in @('$true', '$false')
 		}, $false)
 	foreach ($wrongSideOperator in $wrongSideOperators) {
+		$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
+		$suggestedCorrections.add(
+			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+				$wrongSideOperator.Extent.StartLineNumber,
+				$wrongSideOperator.Extent.EndLineNumber,
+				$wrongSideOperator.Extent.StartColumnNumber,
+				$wrongSideOperator.Extent.EndColumnNumber,
+				$wrongSideOperator.Right.Extent.Text + ' -' + $wrongSideOperator.Operator + ' ' + $wrongSideOperator.Left.Extent.Text,
+				$MyInvocation.MyCommand.Definition,
+				'Switch the boolean literal to the left side of the comparison.'
+			)
+		) | Out-Null
 		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-			'Message'  = 'Boolean literals should be on the left side of a comparison'
-			'Extent'   = $wrongSideOperator.Extent
-			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
-			'Severity' = 'Warning'
+			'Message'              = 'Boolean literals should be on the left side of a comparison'
+			'Extent'               = $wrongSideOperator.Extent
+			'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
+			'Severity'             = 'Warning'
+			'SuggestedCorrections' = $suggestedCorrections
 		}
 	}
 
-	$unaryExpressions = $TestAst.Find({
-			$args[0] -is [System.Management.Automation.Language.UnaryExpressionAst] -and
-			$args[0].Extent.Text -notmatch '\$\w+\+\+' -and
-			$args[0].Extent.Text -notmatch '\$\w+\-\-'
+	$unaryExpressions = $TestAst.FindAll({
+			$args[0] -is [System.Management.Automation.Language.UnaryExpressionAst]
 		}, $false)
 	foreach ($unaryExpression in $unaryExpressions) {
+		$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
+		switch ($unaryExpression.TokenKind) {
+			'PostfixPlusPlus' {
+				$suggestedCorrections.add(
+					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+						$unaryExpression.Extent.StartLineNumber,
+						$unaryExpression.Extent.EndLineNumber,
+						$unaryExpression.Extent.StartColumnNumber,
+						$unaryExpression.Extent.EndColumnNumber,
+						$unaryExpression + ' + 1',
+						$MyInvocation.MyCommand.Definition,
+						'Use the increment operator instead of the unary plus operator.'
+					)
+				) | Out-Null
+			}
+			'PostfixMinusMinus' {
+				$suggestedCorrections.add(
+					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+						$unaryExpression.Extent.StartLineNumber,
+						$unaryExpression.Extent.EndLineNumber,
+						$unaryExpression.Extent.StartColumnNumber,
+						$unaryExpression.Extent.EndColumnNumber,
+						$unaryExpression + ' - 1',
+						$MyInvocation.MyCommand.Definition,
+						'Use the decrement operator instead of the unary minus operator.'
+					)
+				) | Out-Null
+			}
+			@('Exclaim', 'Not') {
+				$suggestedCorrections.add(
+					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+						$unaryExpression.Extent.StartLineNumber,
+						$unaryExpression.Extent.EndLineNumber,
+						$unaryExpression.Extent.StartColumnNumber,
+						$unaryExpression.Extent.EndColumnNumber,
+						'$false -eq ' + $unaryExpression.Child,
+						$MyInvocation.MyCommand.Definition,
+						'Use the -eq operator to compare against $false instead of the exclaim operator.'
+					)
+				) | Out-Null
+			}
+			default {
+			}
+		}
 		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 			'Message'  = 'Unary expressions should not be used'
 			'Extent'   = $unaryExpression.Extent
 			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
 			'Severity' = 'Warning'
+			'SuggestedCorrections' = $suggestedCorrections
 		}
 	}
 
-	$noOperators = $TestAst.Find({
+	<# Currently very basic... Can only detect conditions without any operator
+	$noOperators = $TestAst.FindAll({
 			(
 				$args[0] -is [System.Management.Automation.Language.IfStatementAst] -and
 				$args[0].Clauses.Item1.Extent.Text -notmatch ('-')
@@ -315,6 +372,18 @@ function neo42PSEnforceConsistantConditionalStatements {
 			)
 		}, $false)
 	foreach ($noOperator in $noOperators) {
+		$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
+		$suggestedCorrections.add(
+			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+				$noOperator.Extent.StartLineNumber,
+				$noOperator.Extent.EndLineNumber,
+				$noOperator.Extent.StartColumnNumber,
+				$noOperator.Extent.EndColumnNumber,
+				'$true -eq ' + $noOperator.Extent.Text,
+				$MyInvocation.MyCommand.Definition,
+				'Evaluate the condition with an operator against a boolean literal.'
+			)
+		) | Out-Null
 		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 			'Message'  = 'Conditional statements should be used in conjunction with an operator'
 			'Extent'   = $noOperator.Extent
@@ -322,6 +391,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 			'Severity' = 'Warning'
 		}
 	}
+	#>
 
 	return $results
 }
