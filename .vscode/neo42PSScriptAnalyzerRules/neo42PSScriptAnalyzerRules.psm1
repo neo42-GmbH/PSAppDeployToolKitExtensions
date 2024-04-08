@@ -201,4 +201,165 @@ function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
 	}
 }
 
+function neo42PSParamBlockVariablesShouldBeTyped {
+	<#
+	.SYNOPSIS
+	Checks that parameter variables are typed.
+	.DESCRIPTION
+	Checks that parameter variables are typed.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Process {
+		[System.Management.Automation.Language.ParamBlockAst]$parameterBlock = $TestAst.ParamBlock
+		if ($null -eq $parameterBlock) {
+			return
+		}
+
+		$results = @()
+		foreach ($parameterAst in $parameterBlock.Parameters) {
+			if ($null -ne $parameterAst.Attributes.TypeName) {
+				continue
+			}
+			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				'Message'  = 'A parameter block variable needs to be typed'
+				'Extent'   = $parameterAst.Extent
+				'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+				'Severity' = 'Warning'
+			}
+		}
+		return $results
+	}
+}
+
+function neo42PSDontUseEmptyStringLiterals {
+	<#
+	.SYNOPSIS
+	Checks that empty strings are not used.
+	.DESCRIPTION
+	Checks that empty strings are not used.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Process {
+		[System.Management.Automation.Language.StringConstantExpressionAst[]]$stringConstants = $TestAst.FindAll({ $args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $args[0].Value -eq '' }, $false)
+		$results = @()
+		foreach ($stringConstant in $stringConstants) {
+			$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
+			$suggestedCorrections.add(
+				[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+					$stringConstant.Extent.StartLineNumber,
+					$stringConstant.Extent.EndLineNumber,
+					$stringConstant.Extent.StartColumnNumber,
+					$stringConstant.Extent.EndColumnNumber,
+					'[string]::Empty',
+					$MyInvocation.MyCommand.Definition,
+					'Use .NET string empty instead of empty string literal.'
+				)
+			) | Out-Null
+			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				'Message'              = 'Empty strings should not be used'
+				'Extent'               = $stringConstant.Extent
+				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
+				'Severity'             = 'Warning'
+				'SuggestedCorrections' = $suggestedCorrections
+			}
+		}
+		return $results
+	}
+}
+
+function neo42PSEnforceConsistantConditionalStatements {
+	<#
+	.SYNOPSIS
+	Checks that conditional statements are consistent.
+	.DESCRIPTION
+	Checks that conditional statements are consistent.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	$results = @()
+	[System.Management.Automation.Language.BinaryExpressionAst[]]$wrongSideOperators = $TestAst.Find({
+			$args[0] -is [System.Management.Automation.Language.BinaryExpressionAst] -and
+			$args[0].Right.Extent.Text -in @('$true', '$false')
+		}, $false)
+	foreach ($wrongSideOperator in $wrongSideOperators) {
+		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+			'Message'  = 'Boolean literals should be on the left side of a comparison'
+			'Extent'   = $wrongSideOperator.Extent
+			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+			'Severity' = 'Warning'
+		}
+	}
+
+	$unaryExpressions = $TestAst.Find({
+			$args[0] -is [System.Management.Automation.Language.UnaryExpressionAst] -and
+			$args[0].Extent.Text -notmatch '\$\w+\+\+' -and
+			$args[0].Extent.Text -notmatch '\$\w+\-\-'
+		}, $false)
+	foreach ($unaryExpression in $unaryExpressions) {
+		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+			'Message'  = 'Unary expressions should not be used'
+			'Extent'   = $unaryExpression.Extent
+			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+			'Severity' = 'Warning'
+		}
+	}
+
+	$noOperators = $TestAst.Find({
+			(
+				$args[0] -is [System.Management.Automation.Language.IfStatementAst] -and
+				$args[0].Clauses.Item1.Extent.Text -notmatch ('-')
+			) -or
+			(
+				(
+					$args[0] -is [System.Management.Automation.Language.DoUntilStatementAst] -or
+					$args[0] -is [System.Management.Automation.Language.DoWhileStatementAst] -or
+					$args[0] -is [System.Management.Automation.Language.WhileStatementAst]
+				) -and
+				$args[0].Condition.Extent.Text -notmatch ('-')
+			)
+		}, $false)
+	foreach ($noOperator in $noOperators) {
+		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+			'Message'  = 'Conditional statements should be used in conjunction with an operator'
+			'Extent'   = $noOperator.Extent
+			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+			'Severity' = 'Warning'
+		}
+	}
+
+	return $results
+}
+
 Export-ModuleMember -Function 'neo42*'
