@@ -303,7 +303,56 @@ function neo42PSUseTabulatorIntendation {
 			$scriptPositionStart = [System.Management.Automation.Language.ScriptPosition]::new($TestAst.Extent.File, $lineNumber, 1, $line)
 			$scriptPositionEnd = [System.Management.Automation.Language.ScriptPosition]::new($TestAst.Extent.File, $lineNumber, 1 + $count, $line)
 			$extent = [System.Management.Automation.Language.ScriptExtent]::new($scriptPositionStart, $scriptPositionEnd)
-			Write-Host ($extent | ConvertTo-Json -Depth 10)
+			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				'Message'  = 'Use tabulator intendation'
+				'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+				'Extent'   = $extent
+				'Severity' = 'Warning'
+			}
+		}
+		return $results
+	}
+}
+
+function neo42PSUseTabulatorIntendation {
+	<#
+	.SYNOPSIS
+	Checks that intendation is done with tabulators.
+	.DESCRIPTION
+	Checks that intendation is done with tabulators.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Begin {
+		[regex]$whitespaceRegex = '^[\s]*'
+	}
+	Process {
+		## Only check the root script block
+		if ($TestAst.Extent.StartLineNumber -ne 1 -or $TestAst.Extent.StartColumnNumber -ne 1) {
+			return
+		}
+		$results = @()
+		[string[]]$lines = $TestAst.Extent.Text -split "$([Environment]::NewLine)"
+		[int]$lineNumber = 0
+		foreach ($line in $lines) {
+			$lineNumber++
+			if ($line -match '^\t+(?:[^\s])|^[^\s]|^$') {
+				continue
+			}
+			[int]$count = $whitespaceRegex.Matches($line).Value.Length
+			$scriptPositionStart = [System.Management.Automation.Language.ScriptPosition]::new($TestAst.Extent.File, $lineNumber, 1, $line)
+			$scriptPositionEnd = [System.Management.Automation.Language.ScriptPosition]::new($TestAst.Extent.File, $lineNumber, 1 + $count, $line)
+			$extent = [System.Management.Automation.Language.ScriptExtent]::new($scriptPositionStart, $scriptPositionEnd)
 			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 				'Message'  = 'Use tabulator intendation'
 				'RuleName' = $PSCmdlet.MyInvocation.InvocationName
