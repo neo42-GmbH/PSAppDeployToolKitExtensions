@@ -587,35 +587,47 @@ function Main {
 ## naming pattern:
 ## {functionType}{Phase}{PrePosition}{SubPhase}
 function CustomBegin {
+	<#
+	.SYNOPSIS
+		Executes always at the beginning of the script regardless of the DeploymentType ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart')
+	#>
 	[string]$script:installPhase = 'CustomBegin'
-
-	## executes always at the beginning of the script regardless of the DeploymentType ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart')
 	#region CustomBegin content
 
 	#endregion CustomBegin content
 }
 
 function CustomInstallAndReinstallAndSoftMigrationBegin {
+	<#
+	.SYNOPSIS
+		Executes before any installation, reinstallation or soft migration tasks are performed
+	#>
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationBegin'
 
-	## executes before any installation, reinstallation or soft migration tasks are performed
 	#region CustomInstallAndReinstallAndSoftMigrationBegin content
 
 	#endregion CustomInstallAndReinstallAndSoftMigrationBegin content
 }
 
 function CustomSoftMigrationBegin {
+	<#
+	.SYNOPSIS
+	Executes before a default check of soft migration runs
+	After successful individual checks for soft migration the following variable has to be set at the end of this section:
+	[bool]$global:SoftMigrationCustomResult = $true
+	#>
 	[string]$script:installPhase = 'CustomSoftMigrationBegin'
 
-	## executes before a default check of soft migration runs
-	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
-	## [bool]$global:SoftMigrationCustomResult = $true
 	#region CustomSoftMigrationBegin content
 
 	#endregion CustomSoftMigrationBegin content
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
+	<#
+	.SYNOPSIS
+		Executes after the completed install or reinstall process and on soft migration
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -623,33 +635,42 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
 
-	## executes after the completed install or reinstall process and on soft migration
 	#region CustomInstallAndReinstallAndSoftMigrationEnd content
 
 	#endregion CustomInstallAndReinstallAndSoftMigrationEnd content
 }
 
 function CustomInstallAndReinstallPreInstallAndReinstall {
+	<#
+	.SYNOPSIS
+		Executes before any installation or reinstallation tasks are performed
+		after successful individual checks for installed application state the following variable has to be set at the end of this section:
+		[bool]$global:AppInstallDetectionCustomResult = $true
+	#>
 	[string]$script:installPhase = 'CustomInstallAndReinstallPreInstallAndReinstall'
 
-	## executes before any installation or reinstallation tasks are performed
-	## after successful individual checks for installed application state the following variable has to be set at the end of this section:
-	## [bool]$global:AppInstallDetectionCustomResult = $true
 	#region CustomInstallAndReinstallPreInstallAndReinstall content
 
 	#endregion CustomInstallAndReinstallPreInstallAndReinstall content
 }
 
 function CustomReinstallPreUninstall {
+	<#
+	.SYNOPSIS
+		Executes before the uninstallation in the reinstall process
+	#>
 	[string]$script:installPhase = 'CustomReinstallPreUninstall'
 
-	## executes before the uninstallation in the reinstall process
 	#region CustomReinstallPreUninstall content
 
 	#endregion CustomReinstallPreUninstall content
 }
 
 function CustomReinstallPostUninstallOnError {
+	<#
+	.SYNOPSIS
+		Executes right after the uninstallation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -657,13 +678,16 @@ function CustomReinstallPostUninstallOnError {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstallOnError'
 
-	## executes right after the uninstallation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
 	#region CustomReinstallPostUninstallOnError content
 
 	#endregion CustomReinstallPostUninstallOnError content
 }
 
 function CustomReinstallPostUninstall {
+	<#
+	.SYNOPSIS
+		Executes after the successful uninstallation in the reinstall process
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -671,22 +695,28 @@ function CustomReinstallPostUninstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstall'
 
-	## executes after the successful uninstallation in the reinstall process
 	#region CustomReinstallPostUninstall content
 
 	#endregion CustomReinstallPostUninstall content
 }
 
 function CustomReinstallPreInstall {
+	<#
+	.SYNOPSIS
+		Executes before the installation in the reinstall process
+	#>
 	[string]$script:installPhase = 'CustomReinstallPreInstall'
 
-	## executes before the installation in the reinstall process
 	#region CustomReinstallPreInstall content
 
 	#endregion CustomReinstallPreInstall content
 }
 
 function CustomReinstallPostInstallOnError {
+	<#
+	.SYNOPSIS
+		Executes right after the installation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -694,13 +724,16 @@ function CustomReinstallPostInstallOnError {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstallOnError'
 
-	## executes right after the installation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
 	#region CustomReinstallPostInstallOnError content
 
 	#endregion CustomReinstallPostInstallOnError content
 }
 
 function CustomReinstallPostInstall {
+	<#
+	.SYNOPSIS
+		Executes after the successful installation in the reinstall process
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -708,22 +741,28 @@ function CustomReinstallPostInstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstall'
 
-	## executes after the successful installation in the reinstall process
 	#region CustomReinstallPostInstall content
 
 	#endregion CustomReinstallPostInstall content
 }
 
 function CustomInstallBegin {
+	<#
+	.SYNOPSIS
+		Executes before the installation in the install process
+	#>
 	[string]$script:installPhase = 'CustomInstallBegin'
 
-	## executes before the installation in the install process
 	#region CustomInstallBegin content
 
 	#endregion CustomInstallBegin content
 }
 
 function CustomInstallEndOnError {
+	<#
+	.SYNOPSIS
+		Executes right after the installation in the install process (just add possible cleanup steps here, because scripts exits right after this function!)
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -731,13 +770,16 @@ function CustomInstallEndOnError {
 	)
 	[string]$script:installPhase = 'CustomInstallEndOnError'
 
-	## executes right after the installation in the install process (just add possible cleanup steps here, because scripts exits right after this function!)
 	#region CustomInstallEndOnError content
 
 	#endregion CustomInstallEndOnError content
 }
 
 function CustomInstallEnd {
+	<#
+	.SYNOPSIS
+		Executes after the successful installation in the install process
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -745,13 +787,16 @@ function CustomInstallEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallEnd'
 
-	## executes after the successful installation in the install process
 	#region CustomInstallEnd content
 
 	#endregion CustomInstallEnd content
 }
 
 function CustomInstallAndReinstallEnd {
+	<#
+	.SYNOPSIS
+		Executes after the completed install or reinstall process
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -759,22 +804,28 @@ function CustomInstallAndReinstallEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallEnd'
 
-	## executes after the completed install or reinstall process
 	#region CustomInstallAndReinstallEnd content
 
 	#endregion CustomInstallAndReinstallEnd content
 }
 
 function CustomUninstallBegin {
+	<#
+	.SYNOPSIS
+		Executes before the uninstallation in the uninstall process
+	#>
 	[string]$script:installPhase = 'CustomUninstallBegin'
 
-	## executes before the uninstallation in the uninstall process
 	#region CustomUninstallBegin content
 
 	#endregion CustomUninstallBegin content
 }
 
 function CustomUninstallEndOnError {
+	<#
+	.SYNOPSIS
+		Executes right after the uninstallation in the uninstall process (just add possible cleanup steps here, because scripts exits right after this function!)
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -782,13 +833,16 @@ function CustomUninstallEndOnError {
 	)
 	[string]$script:installPhase = 'CustomUninstallEndOnError'
 
-	## executes right after the uninstallation in the uninstall process (just add possible cleanup steps here, because scripts exits right after this function!)
 	#region CustomUninstallEndOnError content
 
 	#endregion CustomUninstallEndOnError content
 }
 
 function CustomUninstallEnd {
+	<#
+	.SYNOPSIS
+		Executes after the successful uninstallation in the uninstall process
+	#>
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -796,48 +850,58 @@ function CustomUninstallEnd {
 	)
 	[string]$script:installPhase = 'CustomUninstallEnd'
 
-	## executes after the successful uninstallation in the uninstall process
 	#region CustomUninstallEnd content
 
 	#endregion CustomUninstallEnd content
 }
 
 function CustomInstallUserPartBegin {
+	<#
+	.SYNOPSIS
+		Executes at the beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	#>
 	[string]$script:installPhase = 'CustomInstallUserPartBegin'
 
-	## executes at the beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
 	#region CustomInstallUserPartBegin content
 
 	#endregion CustomInstallUserPartBegin content
 }
 
 function CustomInstallUserPartEnd {
+	<#
+	.SYNOPSIS
+		Executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	#>
 	[string]$script:installPhase = 'CustomInstallUserPartEnd'
 
-	## executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
 	#region CustomInstallUserPartEnd content
 
 	#endregion CustomInstallUserPartEnd content
 }
 
 function CustomUninstallUserPartBegin {
+	<#
+	.SYNOPSIS
+		Executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
+	#>
 	[string]$script:installPhase = 'CustomUninstallUserPartBegin'
 
-	## executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
 	#region CustomUninstallUserPartBegin content
 
 	#endregion CustomUninstallUserPartBegin content
 }
 
 function CustomUninstallUserPartEnd {
+	<#
+	.SYNOPSIS
+		Executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
+	#>
 	[string]$script:installPhase = 'CustomUninstallUserPartEnd'
 
-	## executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
 	#region CustomUninstallUserPartEnd content
 
 	#endregion CustomUninstallUserPartEnd content
 }
-
 #endregion
 
 ## execute the main function to start the process
