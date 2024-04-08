@@ -104,49 +104,6 @@ function neo42PSVariablesInParamBlockShouldBeCapitalized {
 	}
 }
 
-function neo42PSVariablesInParamBlockShouldBeTyped {
-	<#
-	.SYNOPSIS
-	Checks that parameter variables are typed.
-	.DESCRIPTION
-	Checks that parameter variables are typed.
-	.INPUTS
-	[System.Management.Automation.Language.ScriptBlockAst]
-	.OUTPUTS
-	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
-	#>
-	[CmdletBinding()]
-	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
-	Param (
-		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
-		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
-	)
-	Process {
-		[System.Management.Automation.Language.FunctionDefinitionAst[]]$functions = $TestAst.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $false)
-		$results = @()
-		foreach ($functionAst in $functions) {
-			[System.Management.Automation.Language.ParamBlockAst]$paramBlockAst = $functionAst.Body.ParamBlock
-			if ($null -eq $paramBlockAst) {
-				continue
-			}
-			foreach ($parameterAst in $paramBlockAst.Parameters) {
-				if ($parameterAst.StaticType -ne 'System.Object') {
-					continue
-				}
-				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'  = 'A parameter block variable needs to be typed'
-					'Extent'   = $parameterAst.Extent
-					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
-					'Severity' = 'Warning'
-				}
-			}
-		}
-		return $results
-	}
-}
-
 function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
 	<#
 	.SYNOPSIS
@@ -228,14 +185,21 @@ function neo42PSParamBlockVariablesShouldBeTyped {
 
 		$results = @()
 		foreach ($parameterAst in $parameterBlock.Parameters) {
-			if ($null -ne $parameterAst.Attributes.TypeName) {
-				continue
+			if ($null -eq $parameterAst.Attributes.TypeName) {
+				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+					'Message'  = 'A parameter block variable needs to be typed'
+					'Extent'   = $parameterAst.Extent
+					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+					'Severity' = 'Warning'
+				}
 			}
-			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'  = 'A parameter block variable needs to be typed'
-				'Extent'   = $parameterAst.Extent
-				'RuleName' = $PSCmdlet.MyInvocation.InvocationName
-				'Severity' = 'Warning'
+			elseif ($parameterAst.Attributes.TypeName.Extent.StartLineNumber -eq $parameterAst.Name.Extent.StartLineNumber) {
+				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+					'Message'  = 'The type definition should be on a seperate line'
+					'Extent'   = $parameterAst.Attributes.TypeName.Extent
+					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+					'Severity' = 'Warning'
+				}
 			}
 		}
 		return $results
@@ -361,5 +325,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 
 	return $results
 }
+
+
 
 Export-ModuleMember -Function 'neo42*'
