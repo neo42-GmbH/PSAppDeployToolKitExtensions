@@ -1,19 +1,19 @@
 # PSAppDeployToolkitExtension default rules for PSScriptAnalyser, to ensure compatibility with PowerSHell 5.1 and ensure coding standards are met.
 @{
 	IncludeDefaultRules = $true
-	Severity       = @(
+	Severity            = @(
 		'Error',
 		'Warning'
 	)
-	ExcludeRules   = @(
+	ExcludeRules        = @(
 		'PSUseDeclaredVarsMoreThanAssignments', # PSADT uses global variables
 		'PSAvoidGlobalVars', # PSADT uses global variables
 		'PSUseShouldProcessForStateChangingFunctions', # We don't use ShouldProcess in our scripts
 		'PSUseOutputTypeCorrectly', # Does not work good with array types
 		'PSAvoidUsingWriteHost' # Ignored because we use Write-Host in tools
 	)
-	Rules          = @{
-		PSUseCompatibleCmdlets = @{
+	Rules               = @{
+		PSUseCompatibleCmdlets    = @{
 			TargetProfiles = @(
 				'desktop-5.1.14393.206-windows'
 			)
@@ -21,14 +21,25 @@
 				'Write-Log'
 			)
 		}
-		PSProvideCommentHelp   = @{
+		PSProvideCommentHelp      = @{
 			ExportedOnly            = $false
 			BlockComment            = $true
-			VSCodeSnippetCorrection = $true
+			VSCodeSnippetCorrection	= $true
 			Placement               = 'begin'
 		}
+		PSUseConsistentWhitespace = @{
+			CheckInnerBrace                         = $true
+			CheckOpenBrace                          = $true
+			CheckOpenParen                          = $true
+			CheckOperator                           = $true
+			CheckPipe                               = $true
+			CheckPipeForRedundantWhitespace         = $true
+			CheckSeparator                          = $true
+			CheckParameter                          = $true
+			IgnoreAssignmentOperatorInsideHashTable	= $true
+		}
 	}
-	CustomRulePath = @(
+	CustomRulePath      = @(
 		'.vscode\neo42PSScriptAnalyzerRules'
-	);
+	)
 }
