@@ -16,7 +16,7 @@
 	)
 	Rules               = @{
 		PSUseCompatibleCmdlets     = @{
-			Enabled        = $true
+			Enable        = $true
 			TargetProfiles = @(
 				'desktop-5.1.14393.206-windows'
 			)
@@ -25,7 +25,7 @@
 			)
 		}
 		PSProvideCommentHelp       = @{
-			Enabled                 = $true
+			Enable                 = $true
 			ExportedOnly            = $false
 			BlockComment            = $true
 			VSCodeSnippetCorrection	= $true
@@ -49,7 +49,7 @@
 			Kind                = 'tab'
 		}
 		PSUseCorrectCasing         = @{
-			Enabled = $true
+			Enable = $true
 		}
 		PSPlaceOpenBrace           = @{
 			Enable             = $true
