@@ -158,7 +158,7 @@ function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
 	}
 }
 
-function neo43PSParamBlockVariablesShouldBeTyped {
+function neo42PSParamBlockVariablesShouldBeTyped {
 	<#
 	.SYNOPSIS
 	Checks that parameter variables are typed.
@@ -195,8 +195,8 @@ function neo43PSParamBlockVariablesShouldBeTyped {
 			}
 			elseif ($parameterAst.Attributes.TypeName.Extent.StartLineNumber -eq $parameterAst.Name.Extent.StartLineNumber) {
 				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'  = 'The type definition should be on a seperate line'
-					'Extent'   = $parameterAst.Attributes.TypeName.Extent
+					'Message'  = 'The type definition and variable should be on a seperate lines'
+					'Extent'   = $parameterAst.Extent
 					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 					'Severity' = 'Warning'
 				}
@@ -312,7 +312,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 						$unaryExpression.Extent.EndLineNumber,
 						$unaryExpression.Extent.StartColumnNumber,
 						$unaryExpression.Extent.EndColumnNumber,
-						$unaryExpression.Child + ' + 1',
+						$unaryExpression.Child.Extent.Text + ' + 1',
 						$MyInvocation.MyCommand.Definition,
 						'Use the increment operator instead of the unary plus operator.'
 					)
@@ -325,7 +325,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 						$unaryExpression.Extent.EndLineNumber,
 						$unaryExpression.Extent.StartColumnNumber,
 						$unaryExpression.Extent.EndColumnNumber,
-						$unaryExpression.Child + ' - 1',
+						$unaryExpression.Child.Extent.Text + ' - 1',
 						$MyInvocation.MyCommand.Definition,
 						'Use the decrement operator instead of the unary minus operator.'
 					)
@@ -338,7 +338,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 						$unaryExpression.Extent.EndLineNumber,
 						$unaryExpression.Extent.StartColumnNumber,
 						$unaryExpression.Extent.EndColumnNumber,
-						'$false -eq ' + $unaryExpression.Child,
+						'$false -eq ' + $unaryExpression.Child.Extent.Text,
 						$MyInvocation.MyCommand.Definition,
 						'Use the -eq operator to compare against $false instead of the exclaim operator.'
 					)
