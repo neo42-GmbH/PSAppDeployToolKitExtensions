@@ -50,7 +50,7 @@ function neo42PSUseCorrectTokenCapitalization {
 			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 				'Message'              = 'The token is not capitalized correctly.'
 				'Extent'               = $token.Extent
-				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
+				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 				'Severity'             = 'Warning'
 				'SuggestedCorrections' = $suggestedCorrections
 			}
@@ -95,7 +95,7 @@ function neo42PSVariablesInParamBlockShouldBeCapitalized {
 				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 					'Message'  = 'A parameter block variable needs to start with a capital letter'
 					'Extent'   = $parameterVariableAst.Extent
-					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 					'Severity' = 'Warning'
 				}
 			}
@@ -148,7 +148,7 @@ function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
 					$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'  = 'A capatalized variable needs to be defined in the param block'
 						'Extent'   = $variableAst.Extent
-						'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 						'Severity' = 'Warning'
 					}
 				}
@@ -158,7 +158,7 @@ function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
 	}
 }
 
-function neo42PSParamBlockVariablesShouldBeTyped {
+function neo43PSParamBlockVariablesShouldBeTyped {
 	<#
 	.SYNOPSIS
 	Checks that parameter variables are typed.
@@ -189,7 +189,7 @@ function neo42PSParamBlockVariablesShouldBeTyped {
 				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 					'Message'  = 'A parameter block variable needs to be typed'
 					'Extent'   = $parameterAst.Extent
-					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 					'Severity' = 'Warning'
 				}
 			}
@@ -197,7 +197,7 @@ function neo42PSParamBlockVariablesShouldBeTyped {
 				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 					'Message'  = 'The type definition should be on a seperate line'
 					'Extent'   = $parameterAst.Attributes.TypeName.Extent
-					'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 					'Severity' = 'Warning'
 				}
 			}
@@ -244,7 +244,7 @@ function neo42PSDontUseEmptyStringLiterals {
 			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 				'Message'              = 'Empty strings should not be used'
 				'Extent'               = $stringConstant.Extent
-				'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
+				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 				'Severity'             = 'Warning'
 				'SuggestedCorrections' = $suggestedCorrections
 			}
@@ -293,7 +293,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 			'Message'              = 'Boolean literals should be on the left side of a comparison'
 			'Extent'               = $wrongSideOperator.Extent
-			'RuleName'             = $PSCmdlet.MyInvocation.InvocationName
+			'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 			'Severity'             = 'Warning'
 			'SuggestedCorrections' = $suggestedCorrections
 		}
@@ -312,7 +312,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 						$unaryExpression.Extent.EndLineNumber,
 						$unaryExpression.Extent.StartColumnNumber,
 						$unaryExpression.Extent.EndColumnNumber,
-						$unaryExpression + ' + 1',
+						$unaryExpression.Child + ' + 1',
 						$MyInvocation.MyCommand.Definition,
 						'Use the increment operator instead of the unary plus operator.'
 					)
@@ -325,7 +325,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 						$unaryExpression.Extent.EndLineNumber,
 						$unaryExpression.Extent.StartColumnNumber,
 						$unaryExpression.Extent.EndColumnNumber,
-						$unaryExpression + ' - 1',
+						$unaryExpression.Child + ' - 1',
 						$MyInvocation.MyCommand.Definition,
 						'Use the decrement operator instead of the unary minus operator.'
 					)
@@ -350,7 +350,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 			'Message'  = 'Unary expressions should not be used'
 			'Extent'   = $unaryExpression.Extent
-			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+			'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 			'Severity' = 'Warning'
 			'SuggestedCorrections' = $suggestedCorrections
 		}
@@ -387,7 +387,7 @@ function neo42PSEnforceConsistantConditionalStatements {
 		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 			'Message'  = 'Conditional statements should be used in conjunction with an operator'
 			'Extent'   = $noOperator.Extent
-			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+			'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 			'Severity' = 'Warning'
 		}
 	}
@@ -435,7 +435,7 @@ function neo42PSEnforceNewLineAtEndOfFile {
 				'Add a new line at the end of the file.'
 			)
 		) | Out-Null
-		[System.Management.Automation.Language.ScriptExtent]$extent = [System.Management.Automation.Language.ScriptExtent]::new(
+		$extent = [System.Management.Automation.Language.ScriptExtent]::new(
 			[System.Management.Automation.Language.ScriptPosition]::new(
 				$TestAst.Extent.File,
 				$TestAst.Extent.EndLineNumber,
@@ -452,7 +452,7 @@ function neo42PSEnforceNewLineAtEndOfFile {
 		return [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 			'Message'  = 'There should be a new line at the end of the file'
 			'Extent'   = $extent
-			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+			'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 			'Severity' = 'Warning'
 			'SuggestedCorrections' = $suggestedCorrections
 		}
