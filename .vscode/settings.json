@@ -13,9 +13,13 @@
     "files.trimTrailingWhitespace": true,
     //-------- PowerShell configuration --------
     "powershell.codeFormatting.addWhitespaceAroundPipe": true,
+    "powershell.codeFormatting.alignPropertyValuePairs": true,
+    "powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
+    "powershell.codeFormatting.ignoreOneLineBlock": false,
+    "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
     "powershell.codeFormatting.autoCorrectAliases": true,
-    "powershell.codeFormatting.openBraceOnSameLine":true, 
-    "powershell.codeFormatting.newLineAfterOpenBrace": true, 
+    "powershell.codeFormatting.openBraceOnSameLine":true,
+    "powershell.codeFormatting.newLineAfterOpenBrace": true,
     "powershell.codeFormatting.newLineAfterCloseBrace": true,
     "powershell.codeFormatting.trimWhitespaceAroundPipe": true,
     "powershell.codeFormatting.useConstantStrings": true,
@@ -24,7 +28,15 @@
     "powershell.codeFormatting.whitespaceAroundOperator": true,
     "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
     "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
+    "powershell.codeFormatting.whitespaceBetweenParameters": true,
+    "powershell.codeFormatting.whitespaceInsideBrace": true,
     "powershell.powerShellDefaultVersion": "Windows PowerShell (x64)",
+    "powershell.scriptAnalysis.enable": true,
     "powershell.scriptAnalysis.settingsPath": ".\\.vscode\\PSScriptAnalyzerSettings.psd1",
-    "dotnet.preferCSharpExtension": true
+    "powershell.helpCompletion": "BlockComment",
+    "dotnet.preferCSharpExtension": true,
+    //-------- Pester configuration --------
+    "powershell.pester.useLegacyCodeLens": false,
+    "powershell.pester.outputVerbosity": "Diagnostic",
+    "powershell.pester.codeLens": true
 }
