@@ -13,6 +13,8 @@
 		'PSUseOutputTypeCorrectly', # Does not work good with array types
 		'PSAvoidUsingWriteHost' # Ignored because we use Write-Host in tools
 		'PSUseSingularNouns' # Ignored because we use plural nouns
+		'PSUseApprovedVerbs' # Ignored because we use historical functions use unapproved verbs
+		'PSAvoidUsingEmptyCatchBlock' # Ignored because we use empty catch blocks
 	)
 	Rules               = @{
 		PSUseCompatibleCmdlets             = @{
@@ -89,6 +91,10 @@
 		}
 		PSAvoidExclaimOperator             = @{
 			Enable = $true
+		}
+		PSAvoidUsingPositionalParameters   = @{
+			Enable           = $true
+			CommandAllowList = @()
 		}
 	}
 	CustomRulePath      = @(
