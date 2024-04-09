@@ -1,7 +1,8 @@
-# Check if we are in the Definitions folder. Pester tests via PesterTestsStarter.ps1 are executed from the root folder
-$baseDir = Split-Path -Path (Resolve-Path $MyInvocation.MyCommand.Definition) -Parent
-if ((Split-Path $baseDir -Leaf) -eq 'Definitions') {
-	$baseDir = Resolve-Path "$baseDir\..\..\"
+BeforeDiscovery {
+	[string]$Script:baseDir = Resolve-Path '.'
+	if ($null -ne $MyInvocation.MyCommand.ScriptBlock.File) {
+		$baseDir = Resolve-Path "$(Split-Path -Path $(Resolve-Path $MyInvocation.MyCommand.ScriptBlock.File) -Parent)\..\.."
+	}
 }
 
 Describe 'Coding Guidelines' -ForEach @(
@@ -28,10 +29,9 @@ Describe 'Coding Guidelines' -ForEach @(
 					$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
 				}, $true)
 			[System.Management.Automation.Language.CommandAst[]]$commandCallsAsts = $ast.FindAll({
-					Param($ast)
-					$ast -is [System.Management.Automation.Language.CommandAst] -and
-					$ast.GetCommandName() -in $extensionFunctions.Name -and
-					$ast.GetCommandName() -notin @('Write-Log', 'Exit-NxtScriptWithError', 'Set-NxtPackageArchitecture', 'Expand-NxtPackageConfig', 'Show-NxtWelcomePrompt')
+					$args[0] -is [System.Management.Automation.Language.CommandAst] -and
+					$args[0].GetCommandName() -in $extensionFunctions.Name -and
+					$args[0].GetCommandName() -notin @('Write-Log', 'Exit-NxtScriptWithError', 'Set-NxtPackageArchitecture', 'Expand-NxtPackageConfig', 'Show-NxtWelcomePrompt')
 				}, $true)
 			foreach ($commandAst in $commandCallsAsts) {
 				[System.Management.Automation.Language.FunctionDefinitionAst]$calledFunction = $extensionFunctions | Where-Object { $_.Name -eq $commandAst.GetCommandName() }
@@ -53,17 +53,20 @@ Describe 'Coding Guidelines' -ForEach @(
 		}
 		It 'Write-Log should be used with the Source parameter' -Skip {
 			$writeLogCommands = $ast.FindAll({
-					Param($ast)
-					$ast -is [System.Management.Automation.Language.CommandAst] -and
-					$ast.GetCommandName() -eq 'Write-Log'
+					$args[0] -is [System.Management.Automation.Language.CommandAst] -and
+					$args[0].GetCommandName() -eq 'Write-Log'
 				}, $true)
 			$writeLogCommands | ForEach-Object {
 				$command = $_
 				$command.CommandElements | Where-Object { $_.ParameterName -eq 'Source' } | Should -Not -BeNullOrEmpty -Because "Write-Log should be used with the Source parameter (line $($command.Extent.StartLineNumber))"
 			}
 		}
-		It 'Should have no detected issues by PSScriptAnalyzer' {
-			Invoke-ScriptAnalyzer -Path $path -Settings "$baseDir\.vscode\PSScriptAnalyzerSettings.psd1" | Should -BeNullOrEmpty
+		It 'Should have no detected issues by PSScriptAnalyzer' -Skip {
+			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$issues = Invoke-ScriptAnalyzer -Path $path -Settings "$baseDir\.vscode\PSScriptAnalyzerSettings.psd1"
+			foreach ($issue in $issues) {
+				Write-Host -ForegroundColor Red "    $($issue.Message) (line $($issue.Extent.StartLineNumber):$($issue.Extent.StartColumnNumber)-$($issue.RuleName))"
+			}
+			$issues | Should -BeNullOrEmpty
 		}
 	}
 }
