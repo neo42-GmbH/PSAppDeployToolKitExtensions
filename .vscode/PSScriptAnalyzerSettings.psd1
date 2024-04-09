@@ -15,8 +15,8 @@
 		'PSUseSingularNouns' # Ignored because we use plural nouns
 	)
 	Rules               = @{
-		PSUseCompatibleCmdlets     = @{
-			Enable        = $true
+		PSUseCompatibleCmdlets             = @{
+			Enable         = $true
 			TargetProfiles = @(
 				'desktop-5.1.14393.206-windows'
 			)
@@ -24,14 +24,35 @@
 				'Write-Log'
 			)
 		}
-		PSProvideCommentHelp       = @{
+		PSUseCompatibleCommands            = @{
+			Enable         = $true
+			TargetProfiles = @(
+				'win-48_x64_10.0.17763.0_5.1.17763.316_x64_4.0.30319.42000_framework'
+			)
+			IgnoreCommands = @(
+				'Write-Log'
+			)
+		}
+		PSUseCompatibleSyntax              = @{
+			Enable         = $true
+			TargetVersions = @(
+				'5.1'
+			)
+		}
+		PSUSeCompatibleTypes               = @{
+			Enable         = $true
+			TargetProfiles = @(
+				'win-48_x64_10.0.17763.0_5.1.17763.316_x64_4.0.30319.42000_framework'
+			)
+		}
+		PSProvideCommentHelp               = @{
 			Enable                  = $true
 			ExportedOnly            = $false
 			BlockComment            = $true
 			VSCodeSnippetCorrection	= $true
 			Placement               = 'begin'
 		}
-		PSUseConsistentWhitespace  = @{
+		PSUseConsistentWhitespace          = @{
 			Enable                                  = $true
 			CheckInnerBrace                         = $true
 			CheckOpenBrace                          = $true
@@ -43,27 +64,30 @@
 			CheckParameter                          = $true
 			IgnoreAssignmentOperatorInsideHashTable = $true
 		}
-		PSUseConsistentIndentation = @{
+		PSUseConsistentIndentation         = @{
 			Enable              = $true
 			PipelineIndentation = 'IncreaseIndentationForFirstPipeline'
 			Kind                = 'tab'
 		}
-		PSUseCorrectCasing         = @{
+		PSUseCorrectCasing                 = @{
 			Enable = $true
 		}
-		PSPlaceOpenBrace           = @{
+		PSPlaceOpenBrace                   = @{
 			Enable             = $true
 			OnSameLine         = $true
 			NewLineAfter       = $true
 			IgnoreOneLineBlock = $false
 		}
-		PSPlaceCloseBrace          = @{
+		PSPlaceCloseBrace                  = @{
 			Enable             = $true
 			NewLineAfter       = $true
 			IgnoreOneLineBlock = $true
 			NoEmptyLineBefore  = $true
 		}
 		PSAvoidSemicolonsAsLineTerminators = @{
+			Enable = $true
+		}
+		PSAvoidExclaimOperator             = @{
 			Enable = $true
 		}
 	}

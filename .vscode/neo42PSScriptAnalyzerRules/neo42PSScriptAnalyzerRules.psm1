@@ -299,63 +299,6 @@ function neo42PSEnforceConsistantConditionalStatements {
 		}
 	}
 
-	$unaryExpressions = $TestAst.FindAll({
-			$args[0] -is [System.Management.Automation.Language.UnaryExpressionAst]
-		}, $false)
-	foreach ($unaryExpression in $unaryExpressions) {
-		$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
-		switch ($unaryExpression.TokenKind) {
-			'PostfixPlusPlus' {
-				$suggestedCorrections.add(
-					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
-						$unaryExpression.Extent.StartLineNumber,
-						$unaryExpression.Extent.EndLineNumber,
-						$unaryExpression.Extent.StartColumnNumber,
-						$unaryExpression.Extent.EndColumnNumber,
-						$unaryExpression.Child.Extent.Text + ' + 1',
-						$MyInvocation.MyCommand.Definition,
-						'Use the increment operator instead of the unary plus operator.'
-					)
-				) | Out-Null
-			}
-			'PostfixMinusMinus' {
-				$suggestedCorrections.add(
-					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
-						$unaryExpression.Extent.StartLineNumber,
-						$unaryExpression.Extent.EndLineNumber,
-						$unaryExpression.Extent.StartColumnNumber,
-						$unaryExpression.Extent.EndColumnNumber,
-						$unaryExpression.Child.Extent.Text + ' - 1',
-						$MyInvocation.MyCommand.Definition,
-						'Use the decrement operator instead of the unary minus operator.'
-					)
-				) | Out-Null
-			}
-			@('Exclaim', 'Not') {
-				$suggestedCorrections.add(
-					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
-						$unaryExpression.Extent.StartLineNumber,
-						$unaryExpression.Extent.EndLineNumber,
-						$unaryExpression.Extent.StartColumnNumber,
-						$unaryExpression.Extent.EndColumnNumber,
-						'$false -eq ' + $unaryExpression.Child.Extent.Text,
-						$MyInvocation.MyCommand.Definition,
-						'Use the -eq operator to compare against $false instead of the exclaim operator.'
-					)
-				) | Out-Null
-			}
-			default {
-			}
-		}
-		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-			'Message'  = 'Unary expressions should not be used'
-			'Extent'   = $unaryExpression.Extent
-			'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-			'Severity' = 'Warning'
-			'SuggestedCorrections' = $suggestedCorrections
-		}
-	}
-
 	<# Currently very basic... Can only detect conditions without any operator
 	$noOperators = $TestAst.FindAll({
 			(
