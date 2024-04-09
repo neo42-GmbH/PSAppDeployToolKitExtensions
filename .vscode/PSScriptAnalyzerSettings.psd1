@@ -25,7 +25,7 @@
 			)
 		}
 		PSProvideCommentHelp       = @{
-			Enable                 = $true
+			Enable                  = $true
 			ExportedOnly            = $false
 			BlockComment            = $true
 			VSCodeSnippetCorrection	= $true
