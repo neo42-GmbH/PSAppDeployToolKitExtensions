@@ -63,7 +63,7 @@
 			IgnoreOneLineBlock = $true
 			NoEmptyLineBefore  = $true
 		}
-		AvoidSemicolonsAsLineTerminators = @{
+		PSAvoidSemicolonsAsLineTerminators = @{
 			Enable = $true
 		}
 	}

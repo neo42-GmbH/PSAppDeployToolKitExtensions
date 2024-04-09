@@ -66,7 +66,7 @@ Describe 'Coding Guidelines' -ForEach @(
 			foreach ($issue in $issues) {
 				Write-Host -ForegroundColor Red "    $($issue.Message) (line $($issue.Extent.StartLineNumber):$($issue.Extent.StartColumnNumber)-$($issue.RuleName))"
 			}
-			$issues | Should -BeNullOrEmpty
+			$issues.Count | Should -Be 0
 		}
 	}
 }

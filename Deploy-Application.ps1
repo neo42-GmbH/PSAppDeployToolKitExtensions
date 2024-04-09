@@ -65,20 +65,27 @@
 Param (
 	[Parameter(Mandatory = $false)]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
-	[string]$DeploymentType = 'Install',
+	[string]
+	$DeploymentType = 'Install',
 	[Parameter(Mandatory = $false)]
 	[ValidateSet('Interactive', 'Silent', 'NonInteractive')]
-	[string]$DeployMode = 'Interactive',
+	[string]
+	$DeployMode = 'Interactive',
 	[Parameter(Mandatory = $false)]
-	[bool]$AllowRebootPassThru = $true,
+	[bool]
+	$AllowRebootPassThru = $true,
 	[Parameter(Mandatory = $false)]
-	[switch]$TerminalServerMode = $false,
+	[switch]
+	$TerminalServerMode = $false,
 	[Parameter(Mandatory = $false)]
-	[switch]$DisableLogging = $false,
+	[switch]
+	$DisableLogging = $false,
 	[Parameter(Mandatory = $false)]
-	[switch]$SkipUnregister = $false,
+	[switch]
+	$SkipUnregister = $false,
 	[Parameter(Mandatory = $false)]
-	[string]$DeploymentSystem = [string]::Empty
+	[string]
+	$DeploymentSystem = [string]::Empty
 )
 #region Function Start-NxtProcess
 function Start-NxtProcess {
@@ -130,7 +137,10 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, "Machine"), "Process")
 	}
 }
-$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules","$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
+$env:PSModulePath = @(
+	"$env:ProgramFiles\WindowsPowerShell\Modules",
+	"$env:windir\system32\WindowsPowerShell\v1.0\Modules"
+) -join ";"
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
 if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstance Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
 	Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
@@ -187,7 +197,8 @@ switch ($DeploymentType) {
 		}
 		exit
 	}
-	Default {}
+	Default {
+	}
 }
 ## Global default variables
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
@@ -202,7 +213,7 @@ switch ($DeploymentType) {
 ## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
 [string[]]$script:NxtTempDirectories = @()
 ## We temporarily load the package config to get the appVendor, appName and appVersion variables which are also required to define the AppLogFolder.
-$tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
+$tempLoadPackageConfig = (Get-Content -Raw -Path $global:Neo42PackageConfigPath ) | ConvertFrom-Json
 ## Several PSADT-functions do not work, if these variables are not set here.
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
@@ -249,7 +260,8 @@ try {
 	}
 	if ($true -eq $DisableLogging) {
 		. $moduleAppDeployToolkitMain -DisableLogging
-	} else {
+	}
+	else {
 		. $moduleAppDeployToolkitMain
 	}
 	## add custom 'Nxt' variables
@@ -565,7 +577,8 @@ function Main {
 				CustomUninstallUserPartEnd
 				## END OF USERPARTUNINSTALL
 			}
-			Default {}
+			Default {
+			}
 		}
 		[string]$script:installPhase = 'Package-Finish'
 		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
@@ -612,9 +625,9 @@ function CustomInstallAndReinstallAndSoftMigrationBegin {
 function CustomSoftMigrationBegin {
 	<#
 	.SYNOPSIS
-	Executes before a default check of soft migration runs
-	After successful individual checks for soft migration the following variable has to be set at the end of this section:
-	[bool]$global:SoftMigrationCustomResult = $true
+		Executes before a default check of soft migration runs
+		After successful individual checks for soft migration the following variable has to be set at the end of this section:
+		[bool]$global:SoftMigrationCustomResult = $true
 	#>
 	[string]$script:installPhase = 'CustomSoftMigrationBegin'
 
