@@ -396,6 +396,67 @@ function neo42PSEnforceConsistantConditionalStatements {
 	return $results
 }
 
-
+function neo42PSEnforceNewLineAtEndOfFile {
+	<#
+	.SYNOPSIS
+	Checks that there is a new line at the end of the file.
+	.DESCRIPTION
+	Checks that there is a new line at the end of the file.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Process {
+		if ($null -ne $TestAst.Parent) {
+			return
+		}
+		[string]$lastLine = $TestAst.Extent.Text -split [System.Environment]::NewLine | Select-Object -Last 1
+		if ($true -eq [string]::IsNullOrWhiteSpace($lastLine)) {
+			return
+		}
+		$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
+		$suggestedCorrections.add(
+			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+				$TestAst.Extent.EndLineNumber,
+				$TestAst.Extent.EndLineNumber,
+				1,
+				$TestAst.Extent.EndColumnNumber,
+				$lastLine + "`r`n",
+				$MyInvocation.MyCommand.Definition,
+				'Add a new line at the end of the file.'
+			)
+		) | Out-Null
+		[System.Management.Automation.Language.ScriptExtent]$extent = [System.Management.Automation.Language.ScriptExtent]::new(
+			[System.Management.Automation.Language.ScriptPosition]::new(
+				$TestAst.Extent.File,
+				$TestAst.Extent.EndLineNumber,
+				1,
+				$lastLine
+			),
+			[System.Management.Automation.Language.ScriptPosition]::new(
+				$TestAst.Extent.File,
+				$TestAst.Extent.EndLineNumber,
+				$lastLine.Length,
+				$lastLine
+			)
+		)
+		return [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+			'Message'  = 'There should be a new line at the end of the file'
+			'Extent'   = $extent
+			'RuleName' = $PSCmdlet.MyInvocation.InvocationName
+			'Severity' = 'Warning'
+			'SuggestedCorrections' = $suggestedCorrections
+		}
+	}
+}
 
 Export-ModuleMember -Function 'neo42*'
