@@ -87,17 +87,17 @@ function Add-NxtContent {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[String]
 		$Path,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[String]
 		$Value,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$Encoding,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$DefaultEncoding
@@ -141,7 +141,7 @@ function Add-NxtContent {
 				[string]$contentParams['Encoding'] = $intEncoding
 			}
 			if ($noBOMDetected -and ($intEncoding -eq 'UTF8')) {
-				[System.IO.File]::AppendAllLines($Path, $Content)
+				[System.IO.File]::AppendAllLines($Path, $Value)
 			}
 			else {
 				Add-Content @contentParams
@@ -337,6 +337,8 @@ function Add-NxtLocalUser {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'Default')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingUsernameAndPasswordParams')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword')]
 	Param (
 		[Parameter(ParameterSetName = 'Default', Mandatory = $true)]
 		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $true)]
@@ -705,7 +707,10 @@ function Block-NxtAppExecution {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
 		[string]
-		$RegKeyAppExecution = $regKeyAppExecution
+		$RegKeyAppExecution = $regKeyAppExecution,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallName = $InstallName
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -931,13 +936,13 @@ function Compare-NxtVersion {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[String]
 		$DetectedVersion,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[String]
 		$TargetVersion,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$HexMode = $false
 	)
@@ -1009,13 +1014,13 @@ function Compare-NxtVersionPart {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$DetectedVersionPart,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$TargetVersionPart,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$HexMode
 	)
@@ -1122,9 +1127,6 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
-	.PARAMETER Wow6432Node
-		Switches between 32/64 Bit Registry Keys.
-		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
@@ -1151,7 +1153,6 @@ function Complete-NxtPackageInstallation {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock', Justification = '$Is64Bit is a global PSADT variable')]
 	Param (
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -1185,10 +1186,10 @@ function Complete-NxtPackageInstallation {
 		$StartMenu = $envCommonStartMenu,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$Wow6432Node = $global:Wow6432Node,
-		[Parameter(Mandatory = $false)]
-		[string]
 		$UserPartDir = $global:UserPartDir,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Is64Bit = $Is64Bit,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$ScriptRoot = $scriptRoot,
@@ -3105,6 +3106,12 @@ function Exit-NxtScriptWithError {
 		$DebugLogFile = "$ConfigToolkitLogDir\$LogName",
 		[Parameter(Mandatory = $false)]
 		[string]
+		$AppName = $global:PackageConfig.AppName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVersion = $global:PackageConfig.AppVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$AppVendor = $global:PackageConfig.AppVendor,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -3284,13 +3291,13 @@ function Expand-NxtPackageConfig {
 				}
 			}
 		}
-		[array]$global:PackageConfig.CommonDesktopShortcutsToDelete = foreach ($CommonDesktopShortcutToDelete in $global:PackageConfig.CommonDesktopShortcutsToDelete) {
-			$ExecutionContext.InvokeCommand.ExpandString($CommonDesktopShortcutToDelete)
+		[array]$global:PackageConfig.CommonDesktopShortcutsToDelete = foreach ($commonDesktopShortcutToDelete in $global:PackageConfig.CommonDesktopShortcutsToDelete) {
+			$ExecutionContext.InvokeCommand.ExpandString($commonDesktopShortcutToDelete)
 		}
-		foreach ($CommonStartMenuShortcutToCopyToCommonDesktop in $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop) {
-			$CommonStartMenuShortcutToCopyToCommonDesktop.Source = $ExecutionContext.InvokeCommand.ExpandString($CommonStartMenuShortcutToCopyToCommonDesktop.Source)
-			if ($false -eq [string]::IsNullOrEmpty($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)) {
-				$CommonStartMenuShortcutToCopyToCommonDesktop.TargetName = $ExecutionContext.InvokeCommand.ExpandString($CommonStartMenuShortcutToCopyToCommonDesktop.TargetName)
+		foreach ($commonStartMenuShortcutToCopyToCommonDesktop in $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop) {
+			$commonStartMenuShortcutToCopyToCommonDesktop.Source = $ExecutionContext.InvokeCommand.ExpandString($commonStartMenuShortcutToCopyToCommonDesktop.Source)
+			if ($false -eq [string]::IsNullOrEmpty($commonStartMenuShortcutToCopyToCommonDesktop.TargetName)) {
+				$commonStartMenuShortcutToCopyToCommonDesktop.TargetName = $ExecutionContext.InvokeCommand.ExpandString($commonStartMenuShortcutToCopyToCommonDesktop.TargetName)
 			}
 		}
 		[string]$global:PackageConfig.SoftMigration.File.FullNameToCheck = $ExecutionContext.InvokeCommand.ExpandString($PackageConfig.SoftMigration.File.FullNameToCheck)
@@ -3830,7 +3837,7 @@ function Get-NxtFileEncoding {
 		[Parameter(Mandatory = $true)]
 		[String]
 		$Path,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$DefaultEncoding
@@ -4278,10 +4285,10 @@ function Get-NxtParentProcess {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[int]
 		$Id = $global:PID,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[switch]
 		$Recurse = $false,
 		[Parameter(Mandatory = $false)]
@@ -4437,7 +4444,7 @@ function Get-NxtProcessorArchiteW6432 {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet($null, 'AMD64')]
 		[string]
 		$PROCESSOR_ARCHITEW6432 = $env:PROCESSOR_ARCHITEW6432
@@ -5305,7 +5312,7 @@ function Get-NxtWindowsBits {
 	#>
 	[CmdletBinding()]
 	Param (
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$ProcessorArchitecture = $env:PROCESSOR_ARCHITECTURE
 	)
@@ -5578,7 +5585,7 @@ function Initialize-NxtAppRootFolder {
 				$name
 				break
 			}
-			if ($Name -match "^$BaseName.{8}$") {
+			if ($name -match "^$BaseName.{8}$") {
 				Write-Log -Message "AppRootFolderName with Name '$name' found." -Source ${cmdletName}
 				$name
 				break
@@ -5689,7 +5696,10 @@ function Initialize-NxtEnvironment {
 		$DeploymentType = $DeploymentType,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$ScriptRoot = $scriptroot
+		$ScriptRoot = $scriptroot,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$SetupCfg = $global:SetupCfg
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -5817,7 +5827,10 @@ function Initialize-NxtUninstallApplication {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
-		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Is64Bit = $Is64Bit
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6304,6 +6317,7 @@ function New-NxtFolderWithPermissions {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Justification = 'Parameters are dynamically obtained via Get-Variable')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -6641,9 +6655,6 @@ function Register-NxtPackage {
 		[string]
 		$AppArch = $global:PackageConfig.AppArch,
 		[Parameter(Mandatory = $false)]
-		[string]
-		$DisplayVersion = $global:PackageConfig.DisplayVersion,
-		[Parameter(Mandatory = $false)]
 		[String]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
@@ -6909,7 +6920,10 @@ function Remove-NxtEmptyFolder {
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullOrEmpty()]
 		[string]
-		$RootPathToRecurseUpTo
+		$RootPathToRecurseUpTo,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$ContinueOnError = $false
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6928,7 +6942,7 @@ function Remove-NxtEmptyFolder {
 					Write-Log -Message "Delete empty folder [$Path]..." -Source ${cmdletName}
 					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+errorRemoveFolder'
 					if ($false -eq [string]::IsNullOrEmpty($errorRemoveFolder)) {
-						Write-Log -Message "The following error(s) took place while deleting the empty folder [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveFolder)" -Severity 2 -Source ${cmdletName}
+						Write-Log -Message "The following error(s) took place while deleting the empty folder [$Path]. `n$(Resolve-Error -ErrorRecord $errorRemoveFolder)" -Severity 2 -Source ${cmdletName}
 					}
 					else {
 						Write-Log -Message "Empty folder [$Path] was deleted successfully..." -Source ${cmdletName}
@@ -7044,7 +7058,7 @@ function Remove-NxtEmptyRegistryKey {
 					Write-Log -Message "Delete empty key [$Path]..." -Source ${cmdletName}
 					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+errorRemoveKey'
 					if ($false -eq [string]::IsNullOrEmpty($errorRemoveKey)) {
-						Write-Log -Message "The following error(s) took place while deleting the empty key [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveKey)" -Severity 2 -Source ${cmdletName}
+						Write-Log -Message "The following error(s) took place while deleting the empty key [$Path]. `n$(Resolve-Error -ErrorRecord $errorRemoveKey)" -Severity 2 -Source ${cmdletName}
 					}
 					else {
 						Write-Log -Message "Empty key [$Path] was deleted successfully..." -Source ${cmdletName}
@@ -7683,9 +7697,6 @@ function Repair-NxtApplication {
 		$AppName = $global:PackageConfig.AppName,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-		[Parameter(Mandatory = $false)]
-		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -7710,6 +7721,12 @@ function Repair-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$AppendRepairParaToDefaultParameters = $global:PackageConfig.AppendInstParaToDefaultParameters,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedInstallExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AcceptedInstallRebootCodes = $global:PackageConfig.AcceptedInstallRebootCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AcceptedRepairExitCodes = $global:PackageConfig.AcceptedInstallExitCodes,
@@ -8058,6 +8075,7 @@ function Set-NxtFolderPermissions {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Justification = 'Parameters are dynamically obtained via Get-Variable')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -8915,6 +8933,18 @@ function Show-NxtInstallationWelcome {
 		[Parameter(Mandatory = $false)]
 		[int]
 		$ProcessIdToIgnore = $PID,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IsProcessUserInteractive = $IsProcessUserInteractive,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$IsLocalSystemAccount = $IsLocalSystemAccount,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$SessionZero = $SessionZero,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppDeployConfigFile = $AppDeployConfigFile,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$BlockScriptLocation = $global:PackageConfig.App
@@ -10100,6 +10130,7 @@ function Test-NxtObjectValidation {
 		private
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Justification = 'Detection does not work correctly in this function for "ContainsDirectValues"')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -10180,17 +10211,17 @@ function Test-NxtObjectValidation {
 				} {
 					## cast the object to an array in case it is a single value
 					foreach ($directValue in [array]$ObjectToValidate) {
-						Test-NxtObjectValidationHelper -ValidationRule $ValidationRule.$ValidationRuleKey -ObjectToValidate $directValue -ValidationRuleKey $validationRuleKey -ParentObjectName $ParentObjectName -ContinueOnError $ContinueOnError
+						Test-NxtObjectValidationHelper -ValidationRule $ValidationRule.$validationRuleKey -ObjectToValidate $directValue -ValidationRuleKey $validationRuleKey -ParentObjectName $ParentObjectName -ContinueOnError $ContinueOnError
 					}
 				}
 				Default {
-					Test-NxtObjectValidationHelper -ValidationRule $ValidationRule.$ValidationRuleKey -ObjectToValidate $ObjectToValidate.$validationRuleKey -ValidationRuleKey $validationRuleKey -ParentObjectName $ParentObjectName -ContinueOnError $ContinueOnError
+					Test-NxtObjectValidationHelper -ValidationRule $ValidationRule.$validationRuleKey -ObjectToValidate $ObjectToValidate.$validationRuleKey -ValidationRuleKey $validationRuleKey -ParentObjectName $ParentObjectName -ContinueOnError $ContinueOnError
 				}
 			}
 		}
 	}
 	End {
-
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -10402,6 +10433,7 @@ function Test-NxtFolderPermissions {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Justification = 'Parameters are dynamically obtained via Get-Variable')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -10566,7 +10598,7 @@ function Test-NxtProcessExists {
 		[Parameter(Mandatory = $true)]
 		[string]
 		$ProcessName,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[switch]
 		$IsWql = $false
 	)
@@ -10644,13 +10676,13 @@ function Test-NxtStringInFile {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$IgnoreCase = $true,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
-		[String]
+		[string]
 		$Encoding,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
-		[String]
+		[string]
 		$DefaultEncoding
 	)
 	Begin {
@@ -10675,7 +10707,7 @@ function Test-NxtStringInFile {
 				if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
 					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
 				if ($intEncoding -eq 'UTF8') {
 					[bool]$noBOMDetected = $true
 				}
@@ -11195,8 +11227,6 @@ function Uninstall-NxtOld {
 		Defines the name of the registry key keeping track of all packages delivered by this packaging framework. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER UninstallOld
 		Will uninstall previous Versions before Installation if set to $true. Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER DeploymentSystem
-		Defines the deployment system used for the deployment. Defaults to the corresponding value of the DeployApplication.ps1 parameter.
 	.PARAMETER AppLang
 		Defines the language of the application. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER RemovePackagesWithSameProductGUID
@@ -11232,6 +11262,9 @@ function Uninstall-NxtOld {
 		[string]
 		$AppVersion = $global:PackageConfig.AppVersion,
 		[Parameter(Mandatory = $false)]
+		[String]
+		$ProductGUID = $global:PackageConfig.ProductGUID,
+		[Parameter(Mandatory = $false)]
 		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
@@ -11240,9 +11273,6 @@ function Uninstall-NxtOld {
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$DeploymentSystem = $global:DeploymentSystem,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AppLang = $global:PackageConfig.AppLang,
@@ -11546,6 +11576,9 @@ function Unregister-NxtOld {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AppName = $global:PackageConfig.AppName,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVersion = $global:PackageConfig.AppVersion,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$AppVendor = $global:PackageConfig.AppVendor,
@@ -11942,20 +11975,17 @@ function Update-NxtTextInFile {
 		[AllowEmptyString()]
 		[String]
 		$ReplaceString,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[Int]
 		$Count = [int]::MaxValue,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$Encoding,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
-		$DefaultEncoding,
-		[Parameter()]
-		[Bool]
-		$AddBOMIfUTF8 = $true
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -11974,7 +12004,7 @@ function Update-NxtTextInFile {
 				if ($false -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
 					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
 				if ($intEncoding -eq 'UTF8') {
 					[bool]$noBOMDetected = $true
 				}
@@ -12374,7 +12404,7 @@ function Watch-NxtFile {
 		[Parameter(Mandatory = $true)]
 		[string]
 		$FileName,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[int]
 		$Timeout = 60
 	)
@@ -12645,7 +12675,7 @@ function Watch-NxtRegistryKey {
 		[Parameter(Mandatory = $true)]
 		[string]
 		$RegistryKey,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[int]
 		$Timeout = 60
 	)
@@ -12705,7 +12735,7 @@ function Watch-NxtRegistryKeyIsRemoved {
 		[Parameter(Mandatory = $true)]
 		[string]
 		$RegistryKey,
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[int]
 		$Timeout = 60
 	)
@@ -12815,11 +12845,11 @@ function Write-NxtXmlNode {
 					[void]$xmlNode.AppendChild($node)
 				}
 
-				Write-Log -Message "Write a new node in xml file '$XmlFilePath'." -Source ${cmdletName}
 				return $xmlNode
 			}
 
 			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
+			Write-Log -Message "Write a new node in xml file '$XmlFilePath'." -Source ${cmdletName}
 			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
 			[void]$xmlDoc.Save($XmlFilePath)
 		}
