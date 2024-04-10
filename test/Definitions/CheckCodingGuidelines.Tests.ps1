@@ -58,7 +58,7 @@ Describe 'Coding Guidelines' -ForEach @(
 				}, $true)
 			$writeLogCommands | ForEach-Object {
 				$command = $_
-				$command.CommandElements | Where-Object { $_.ParameterName -eq 'Source' } | Should -Not -BeNullOrEmpty -Because "Write-Log should be used with the Source parameter (line $($command.Extent.StartLineNumber))"
+				$command.CommandElements | Where-Object { $_.ParameterName -eq 'Source' -or $_.Splatted } | Should -Not -BeNullOrEmpty -Because "Write-Log should be used with the Source parameter (line $($command.Extent.StartLineNumber))"
 			}
 		}
 		It 'Should have no detected issues by PSScriptAnalyzer' {
