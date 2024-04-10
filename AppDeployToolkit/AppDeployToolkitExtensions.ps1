@@ -1127,6 +1127,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER UserPartDir
 		Defines the subpath to the UserPart directory.
 		Defaults to $global:UserPartDir.
+	.PARAMETER Is64Bit
+		Specifies whether this process is running in a 64-bit environment.
+		Value is defined automatically by PSADT.
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
@@ -3013,6 +3016,12 @@ function Exit-NxtScriptWithError {
 	.PARAMETER DebugLogFile
 		Path to the Debuglogfile which should be added as information to the error registry key.
 		Defaults to "$ConfigToolkitLogDir\$LogName".
+	.PARAMETER AppName
+		Specifies the Application Name used in the registry etc.
+		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER AppVersion
+		Specifies the Application Version used in the registry etc.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER AppVendor
 		Specifies the Application Vendor used in the registry etc.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -5814,6 +5823,9 @@ function Initialize-NxtUninstallApplication {
 	.PARAMETER UninstallKeysToHide
 		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
 		Defaults to the corresponding values from the PackageConfig object.
+	.PARAMETER Is64Bit
+		Specifies whether this process is running in a 64-bit environment.
+		Value is defined automatically by PSADT.
 	.EXAMPLE
 		Initialize-NxtUninstallApplication
 	.EXAMPLE
