@@ -133,7 +133,9 @@ function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
 		foreach ($paramBlockAst in $parameterBlocks) {
 			foreach ($block in @('BeginBlock', 'ProcessBlock', 'EndBlock')) {
 				[System.Management.Automation.Language.NamedBlockAst]$namedBlockAst = $paramBlockAst.Parent | Select-Object -ExpandProperty $block -ErrorAction SilentlyContinue
-				if ($null -eq $namedBlockAst) { continue }
+				if ($null -eq $namedBlockAst) {
+					continue
+    }
 				# Get All capitalized variables that are not automatically defined
 				[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $namedBlockAst.FindAll({
 						$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
@@ -226,7 +228,10 @@ function neo42PSDontUseEmptyStringLiterals {
 		$TestAst
 	)
 	Process {
-		[System.Management.Automation.Language.StringConstantExpressionAst[]]$stringConstants = $TestAst.FindAll({ $args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $args[0].Value -eq '' }, $false)
+		[System.Management.Automation.Language.StringConstantExpressionAst[]]$stringConstants = $TestAst.FindAll({
+				$args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $args[0].Value -eq [string]::Empty -and
+				$args[0].Parent.TypeName.Name -ne 'Diagnostics.CodeAnalysis.SuppressMessageAttribute'
+			}, $false)
 		$results = @()
 		foreach ($stringConstant in $stringConstants) {
 			$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
@@ -393,10 +398,10 @@ function neo42PSEnforceNewLineAtEndOfFile {
 			)
 		)
 		return [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-			'Message'  = 'There should be a new line at the end of the file'
-			'Extent'   = $extent
-			'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-			'Severity' = 'Warning'
+			'Message'              = 'There should be a new line at the end of the file'
+			'Extent'               = $extent
+			'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+			'Severity'             = 'Warning'
 			'SuggestedCorrections' = $suggestedCorrections
 		}
 	}

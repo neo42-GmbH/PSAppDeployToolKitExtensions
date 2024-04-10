@@ -337,8 +337,8 @@ function Add-NxtLocalUser {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'Default')]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingUsernameAndPasswordParams')]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingUsernameAndPasswordParams', '', Justification = 'Data is stored in plaintext anyway.')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', '', Justification = 'Data is stored in plaintext anyway.')]
 	Param (
 		[Parameter(ParameterSetName = 'Default', Mandatory = $true)]
 		[Parameter(ParameterSetName = 'SetPwdNeverExpires', Mandatory = $true)]
@@ -6329,7 +6329,7 @@ function New-NxtFolderWithPermissions {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Justification = 'Parameters are dynamically obtained via Get-Variable')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Parameters are dynamically obtained via Get-Variable')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -8087,7 +8087,7 @@ function Set-NxtFolderPermissions {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Justification = 'Parameters are dynamically obtained via Get-Variable')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Parameters are dynamically obtained via Get-Variable')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -10142,7 +10142,7 @@ function Test-NxtObjectValidation {
 		private
 	#>
 	[CmdletBinding()]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Justification = 'Detection does not work correctly in this function for "ContainsDirectValues"')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Detection does not work correctly in this function for "ContainsDirectValues"')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -10445,7 +10445,7 @@ function Test-NxtFolderPermissions {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Justification = 'Parameters are dynamically obtained via Get-Variable')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Parameters are dynamically obtained via Get-Variable')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[string]
