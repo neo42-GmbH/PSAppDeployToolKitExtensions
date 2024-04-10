@@ -31,6 +31,7 @@ jobs:
         path: '${{ github.workspace }}\Extensions'
         sparse-checkout: |
           test
+          .vscode
           AppDeployToolkit
 
     - name: Merge Extensions into PSADT
