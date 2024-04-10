@@ -501,9 +501,9 @@ function Add-NxtSystemPathVariable {
 	.PARAMETER AddToBeginning
 		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
 	.EXAMPLE
-		Add-NxtProcessPathVariable -Path "C:\Temp"
+		Add-NxtSystemPathVariable -Path "C:\Temp"
 	.EXAMPLE
-		Add-NxtProcessPathVariable -Path "C:\Temp" -AddToBeginning $true
+		Add-NxtSystemPathVariable -Path "C:\Temp" -AddToBeginning $true
 	.OUTPUTS
 		none.
 	.LINK
