@@ -615,7 +615,7 @@ function Add-NxtXmlNode {
 	Process {
 		try {
 			if ($false -eq (Test-Path -Path $FilePath)) {
-				Write-Log -Message "File $FilePath does not exist" -Severity 3
+				Write-Log -Message "File $FilePath does not exist" -Severity 3 -Source ${cmdletName}
 				throw "File $FilePath does not exist"
 			}
 			[xml]$xml = [xml]::new()
@@ -807,7 +807,7 @@ function Close-NxtBlockExecutionWindow {
 				$_.MainWindowTitle -eq $installTitle
 			} ).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
-			Write-Log 'The informational window of BlockExecution functionality will be closed now ...'
+			Write-Log 'The informational window of BlockExecution functionality will be closed now ...' -Source ${cmdletName}
 			## Stop-NxtProcess does not yet support Id as Parameter
 			Stop-Process -Id $blockexecutionWindowId -Force
 		}
@@ -7447,10 +7447,10 @@ function Remove-NxtProcessPathVariable {
 		try {
 			[string]$pathString = ($pathEntries -join ';') + ';'
 			Set-NxtProcessEnvironmentVariable -Key 'PATH' -Value $pathString
-			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
+			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable." -Source ${cmdletName}
 		}
 		catch {
-			Write-Log -Message "Failed to remove path '$Path' from PATH environment variable." -Severity 3
+			Write-Log -Message "Failed to remove path '$Path' from PATH environment variable." -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -7494,10 +7494,10 @@ function Remove-NxtSystemPathVariable {
 		try {
 			[string]$pathString = ($pathEntries -join ';') + ';'
 			Set-NxtSystemEnvironmentVariable -Key 'PATH' -Value $pathString
-			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
+			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable." -Source ${cmdletName}
 		}
 		catch {
-			Write-Log -Message "Failed to remove path '$Path' from PATH environment variable." -Severity 3
+			Write-Log -Message "Failed to remove path '$Path' from PATH environment variable." -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -8171,7 +8171,7 @@ function Set-NxtFolderPermissions {
 			}
 		}
 		else {
-			Write-Log -Message "BreakInheritance is set to `$False cannot test for correct permissions" -Severity 2
+			Write-Log -Message "BreakInheritance is set to `$False cannot test for correct permissions" -Severity 2 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -8727,7 +8727,7 @@ function Set-NxtXmlNode {
 			$testNxtXmlNodeParams.Add('FilterAttributes', $FilterAttributes)
 		}
 		if ($false -eq (Test-Path -Path $FilePath)) {
-			Write-Log -Message "File $FilePath does not exist" -Severity 3
+			Write-Log -Message "File $FilePath does not exist" -Severity 3 -Source ${cmdletName}
 			throw "File $FilePath does not exist"
 		}
 		# Test for Node
@@ -9576,12 +9576,12 @@ function Show-NxtWelcomePrompt {
 			if ($activeSessions.Count -gt 0) {
 				try {
 					[UInt32[]]$sessionIds = $activeSessions | Select-Object -ExpandProperty SessionId
-					Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
+					Write-Log "Start AskKillProcessesUI for sessions $sessionIds" -Source ${cmdletName}
 					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds)
 					[int]$welcomeExitCode = $askKillProcessesResult.ExitCode
 					[string]$logDomainName = $activeSessions | Where-Object sessionid -EQ $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
 					[string]$logUserName = $activeSessions | Where-Object sessionid -EQ $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
-					Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName"
+					Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName" -Source ${cmdletName}
 				}
 				catch {
 					if ($true -eq $ApplyContinueTypeOnError) {
@@ -9602,7 +9602,7 @@ function Show-NxtWelcomePrompt {
 		}
 		else {
 			[int]$welcomeExitCode = [PSADTNXT.Extensions]::StartPowershellScriptAndWaitForExitCode($powershellCommand)
-			Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $env:USERNAME\$env:USERDOMAIN"
+			Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $env:USERNAME\$env:USERDOMAIN" -Source ${cmdletName}
 		}
 
 		[string]$returnCode = [string]::Empty
@@ -10171,7 +10171,7 @@ function Test-NxtObjectValidation {
 		foreach ($validationRuleKey in ($ValidationRule | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty name)) {
 			if ($true -eq $ValidationRule.$validationRuleKey.Mandatory) {
 				if ($false -eq ([bool]($ObjectToValidate.psobject.Properties.Name -contains $validationRuleKey))) {
-					Write-Log -Message "The mandatory variable '$ParentObjectName $validationRuleKey' is missing." -severity 3
+					Write-Log -Message "The mandatory variable '$ParentObjectName $validationRuleKey' is missing." -Severity 3 -Source ${cmdletName}
 				}
 				else {
 					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is present."
@@ -10184,7 +10184,7 @@ function Test-NxtObjectValidation {
 						Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.$validationRuleKey.GetType().BaseType.FullName)"
 					}
 					else {
-						Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object."-severity 3
+						Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object."-Severity 3 -Source ${cmdletName}
 						if ($false -eq $ContinueOnError) {
 							throw "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object. $($ValidationRule.$validationRuleKey.HelpText)"
 						}
@@ -10208,7 +10208,7 @@ function Test-NxtObjectValidation {
 						Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $validationRuleKey' is of the allowed type $($ObjectToValidate.$validationRuleKey.GetType().FullName)"
 					}
 					else {
-						Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object." -severity 3
+						Write-Log -Message "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object." -Severity 3 -Source ${cmdletName}
 						if ($false -eq $ContinueOnError) {
 							throw "The variable '$ParentObjectName $validationRuleKey' is not of the allowed type $($ValidationRule.$validationRuleKey.Type) in the package configuration object. $($ValidationRule.$validationRuleKey.HelpText)"
 						}
@@ -10293,7 +10293,7 @@ function Test-NxtObjectValidationHelper {
 			Write-Verbose "[${cmdletName}]The variable '$ParentObjectName $ValidationRuleKey' is of the allowed type $($ObjectToValidate.GetType().FullName)"
 		}
 		else {
-			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object." -severity 3
+			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object." -Severity 3 -Source ${cmdletName}
 			if ($false -eq $ContinueOnError) {
 				throw "The variable '$ParentObjectName $ValidationRuleKey' is not of the allowed type $($ValidationRule.Type) in the package configuration object. $($ValidationRule.HelpText)"
 			}
@@ -10305,7 +10305,7 @@ function Test-NxtObjectValidationHelper {
 			Write-Verbose "[${cmdletName}]'$ParentObjectName $ValidationRuleKey' is allowed to be empty"
 		}
 		elseif ($true -eq ([string]::IsNullOrEmpty($ObjectToValidate)) ) {
-			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object." -severity 3
+			Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object." -Severity 3 -Source ${cmdletName}
 			if ($false -eq $ContinueOnError) {
 				throw "The variable '$ParentObjectName $ValidationRuleKey' is not allowed to be empty in the package configuration object. $($ValidationRule.HelpText)"
 			}
@@ -10315,7 +10315,7 @@ function Test-NxtObjectValidationHelper {
 			## CheckInvalidFileNameChars
 			if ($true -eq $ValidationRule.Regex.CheckInvalidFileNameChars) {
 				if ($ObjectToValidate.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0) {
-					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)" -severity 3
+					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)" -Severity 3 -Source ${cmdletName}
 					if ($false -eq $ContinueOnError) {
 						throw "The variable '$ParentObjectName $ValidationRuleKey' contains invalid characters in the package configuration object. $($ValidationRule.HelpText)"
 					}
@@ -10333,7 +10333,7 @@ function Test-NxtObjectValidationHelper {
 					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' matches the regex $($ValidationRule.Regex.Pattern)"
 				}
 				else {
-					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object." -severity 3
+					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object." -Severity 3 -Source ${cmdletName}
 					if ($false -eq $ContinueOnError) {
 						throw "The variable '$ParentObjectName $ValidationRuleKey' does not match the regex $($ValidationRule.Regex.Pattern) in the package configuration object. $($ValidationRule.HelpText)"
 					}
@@ -10345,7 +10345,7 @@ function Test-NxtObjectValidationHelper {
 					Write-Verbose "[${cmdletName}] The variable '$ParentObjectName $ValidationRuleKey' is in the allowed set $($ValidationRule.ValidateSet)"
 				}
 				else {
-					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object." -severity 3
+					Write-Log -Message "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object." -Severity 3 -Source ${cmdletName}
 					if ($false -eq $ContinueOnError) {
 						throw "The variable '$ParentObjectName $ValidationRuleKey' is not in the allowed set $($ValidationRule.ValidateSet) in the package configuration object. $($ValidationRule.HelpText)"
 					}
@@ -10542,7 +10542,7 @@ function Test-NxtFolderPermissions {
 			[System.Security.Principal.SecurityIdentifier]$actualOwnerSid = (New-Object System.Security.Principal.NTAccount($actualAcl.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = (New-Object System.Security.Principal.NTAccount($directorySecurity.Owner)).Translate([System.Security.Principal.SecurityIdentifier])
 			if ($actualOwnerSid.Value -ne $expectedOwnerSid.Value) {
-				Write-Log -Message "Expected owner to be $Owner but found $($actualAcl.Owner)." -Severity 2
+				Write-Log -Message "Expected owner to be $Owner but found $($actualAcl.Owner)." -Severity 2 -Source ${cmdletName}
 				$results += [PSCustomObject]@{
 					'Rule'          = "$($actualAcl.Owner)"
 					'SideIndicator' = '<='
@@ -10558,17 +10558,17 @@ function Test-NxtFolderPermissions {
 				switch ($result.Resulttype) {
 					'Permission' {
 						if ($result.SideIndicator -eq '<=') {
-							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
+							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2 -Source ${cmdletName}
 						}
 						elseif ($result.SideIndicator -eq '=>') {
-							Write-Log -Message "Missing permission $($result.Rule) on $Path." -Severity 2
+							Write-Log -Message "Missing permission $($result.Rule) on $Path." -Severity 2 -Source ${cmdletName}
 						}
 						else {
-							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2
+							Write-Log -Message "Found unexpected permission $($result.Rule) on $Path." -Severity 2 -Source ${cmdletName}
 						}
 					}
 					'Owner' {
-						Write-Log -Message "Found unexpected owner $($result.Rule) instead of $Owner on $Path." -Severity 2
+						Write-Log -Message "Found unexpected owner $($result.Rule) instead of $Owner on $Path." -Severity 2 -Source ${cmdletName}
 					}
 				}
 			}
@@ -10808,7 +10808,7 @@ function Test-NxtXmlNodeExists {
 	}
 	Process {
 		if ($false -eq (Test-Path -Path $FilePath)) {
-			Write-Log -Message "File $FilePath does not exist" -Severity 3
+			Write-Log -Message "File $FilePath does not exist" -Severity 3 -Source ${cmdletName}
 			throw "File $FilePath does not exist"
 		}
 		[xml]$xml = [xml]::new()
@@ -12040,11 +12040,11 @@ function Update-NxtTextInFile {
 			[regex]$pattern = $SearchString
 			[array]$regexMatches = $pattern.Matches($content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
-				Write-Log -Message "Did not find anything to replace in file '$Path'."
+				Write-Log -Message "Did not find anything to replace in file '$Path'." -Source ${cmdletName}
 				return
 			}
 			else {
-				Write-Log -Message "Replace found text in file '$Path'."
+				Write-Log -Message "Replace found text in file '$Path'." -Source ${cmdletName}
 			}
 			[array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
@@ -12127,7 +12127,7 @@ function Update-NxtXmlNode {
 			$testNxtXmlNodeExistsParams.Add('FilterAttributes', $FilterAttributes)
 		}
 		if ($false -eq (Test-Path -Path $FilePath)) {
-			Write-Log -Message "File $FilePath does not exist" -Severity 3
+			Write-Log -Message "File $FilePath does not exist" -Severity 3 -Source ${cmdletName}
 			throw "File $FilePath does not exist"
 		}
 		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeExistsParams)) {
@@ -12144,7 +12144,7 @@ function Update-NxtXmlNode {
 			}
 			## Ensure we only have one node
 			if ($nodes.count -gt 1) {
-				Write-Log -Message "More than one node found for $NodePath" -Severity 3
+				Write-Log -Message "More than one node found for $NodePath" -Severity 3 -Source ${cmdletName}
 				throw "More than one node found for $NodePath"
 			}
 			[psobject]$node = $nodes | Select-Object -First 1
@@ -12165,7 +12165,7 @@ function Update-NxtXmlNode {
 			$xml.Save("$FilePath")
 		}
 		else {
-			Write-Log -Message "Node $NodePath does not exist" -Severity 3
+			Write-Log -Message "Node $NodePath does not exist" -Severity 3 -Source ${cmdletName}
 			throw "Node $NodePath does not exist"
 		}
 	}

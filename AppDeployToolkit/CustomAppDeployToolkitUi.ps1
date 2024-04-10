@@ -911,7 +911,7 @@ function New-NxtWpfControl() {
 			[System.Windows.Window]$control = [Windows.Markup.XamlReader]::Load($reader)
 		}
 		catch {
-			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
+			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3 -Source ${cmdletName}
 			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
 		}
 		return $control
