@@ -20,7 +20,7 @@ Describe 'Coding Guidelines' -ForEach @(
 		It 'AST should have no errors' {
 			$errors | Should -BeNullOrEmpty
 		}
-		It 'Calls of functions should have params with package config defaults set explicitly' -Skip {
+		It 'Calls of functions should have params with package config defaults set explicitly' {
 			if ($(Split-Path $path -Leaf) -ne 'AppDeployToolkitExtensions.ps1') {
 				Set-ItResult -Skipped -Because "the file '$($path)' is excluded from this test"
 				return
@@ -51,7 +51,7 @@ Describe 'Coding Guidelines' -ForEach @(
 				}
 			}
 		}
-		It 'Write-Log should be used with the Source parameter' -Skip {
+		It 'Write-Log should be used with the Source parameter' {
 			$writeLogCommands = $ast.FindAll({
 					$args[0] -is [System.Management.Automation.Language.CommandAst] -and
 					$args[0].GetCommandName() -eq 'Write-Log'
@@ -61,7 +61,7 @@ Describe 'Coding Guidelines' -ForEach @(
 				$command.CommandElements | Where-Object { $_.ParameterName -eq 'Source' } | Should -Not -BeNullOrEmpty -Because "Write-Log should be used with the Source parameter (line $($command.Extent.StartLineNumber))"
 			}
 		}
-		It 'Should have no detected issues by PSScriptAnalyzer' -Skip {
+		It 'Should have no detected issues by PSScriptAnalyzer' {
 			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$issues = Invoke-ScriptAnalyzer -Path $path -Settings "$baseDir\.vscode\PSScriptAnalyzerSettings.psd1"
 			foreach ($issue in $issues) {
 				Write-Host -ForegroundColor Red "    $($issue.Message) (line $($issue.Extent.StartLineNumber):$($issue.Extent.StartColumnNumber)-$($issue.RuleName))"
