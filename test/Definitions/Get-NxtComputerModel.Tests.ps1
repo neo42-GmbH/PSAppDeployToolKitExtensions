@@ -4,7 +4,7 @@ Describe "Get-NxtComputerModel" {
             Remove-Item Function:\Get-WmiObject
         }
         It "Should return the correct computer model" {
-            function global:Get-WmiObject {
+            function global:Get-CimInstance {
                 return [PSCustomObject]@{
                     Model = 'Test'
                 }

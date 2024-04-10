@@ -4,7 +4,7 @@ Describe "Get-NxtComputerManufacturer" {
             Remove-Item Function:\Get-WmiObject
         }
         It "Should return the correct computer manufacturer" {
-            function global:Get-WmiObject {
+            function global:Get-CimInstance {
                 return [PSCustomObject]@{
                     Manufacturer = 'Test'
                 }

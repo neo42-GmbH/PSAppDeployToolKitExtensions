@@ -12,7 +12,7 @@ Describe "Get-NxtProcessTree" {
         It "Should return a correct list of processes" {
             $processes = Get-NxtProcessTree -ProcessId $childProcess.Id
             $processes.GetType().BaseType.Name | Should -Be 'Array'
-            $processes | ForEach-Object { $_ | Should -BeOfType 'System.Management.ManagementObject' }
+            $processes | ForEach-Object { $_ | Should -BeOfType 'ciminstance' }
             $processes.Length | Should -BeGreaterThan 1
             $processes.ProcessId | Should -Contain $childProcess.Id
             $processes.ProcessId | Should -Contain $process.Id

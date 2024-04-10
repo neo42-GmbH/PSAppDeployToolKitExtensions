@@ -11,7 +11,7 @@ Describe 'Get-NxtParentProcess' {
         }
         It 'Should return the parent process ID' {
             $process = Get-NxtParentProcess -Id $childProcess.Id
-            $process | Should -BeOfType 'System.Management.ManagementBaseObject'
+            $process | Should -BeOfType 'ciminstance'
             $process.ProcessId | Should -Be $selfPID
         }
         It 'Should return multiple parent process IDs' {
