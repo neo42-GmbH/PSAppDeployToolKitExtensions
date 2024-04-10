@@ -88,18 +88,18 @@ function Add-NxtContent {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$Value,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
-		[String]
+		[string]
 		$Encoding,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
-		[String]
+		[string]
 		$DefaultEncoding
 	)
 	Begin {
@@ -107,11 +107,11 @@ function Add-NxtContent {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[String]$intEncoding = $Encoding
-		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq [String]::IsNullOrEmpty($intEncoding))) {
-			[String]$intEncoding = 'UTF8'
+		[string]$intEncoding = $Encoding
+		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq [string]::IsNullOrEmpty($intEncoding))) {
+			[string]$intEncoding = 'UTF8'
 		}
-		elseif (($false -eq (Test-Path -Path $Path)) -and ($true -eq [String]::IsNullOrEmpty($intEncoding))) {
+		elseif (($false -eq (Test-Path -Path $Path)) -and ($true -eq [string]::IsNullOrEmpty($intEncoding))) {
 			try {
 				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
@@ -444,7 +444,7 @@ function Add-NxtProcessPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -514,7 +514,7 @@ function Add-NxtSystemPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -937,10 +937,10 @@ function Compare-NxtVersion {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$DetectedVersion,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$TargetVersion,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -3340,7 +3340,7 @@ function Expand-NxtVariablesInFile {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path
 	)
 	Begin {
@@ -3844,11 +3844,11 @@ function Get-NxtFileEncoding {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
-		[String]
+		[string]
 		$DefaultEncoding
 	)
 	Begin {
@@ -4970,7 +4970,7 @@ function Get-NxtRunningProcesses {
 	)
 	Begin {
 		## Get the name of this function and write header
-		[String]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
@@ -5039,7 +5039,7 @@ function Get-NxtRunningProcesses {
 
 			if ($false -eq $DisableLogging) {
 				if ($runningProcesses.Count -ne 0) {
-					[String]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
+					[string]$runningProcessList = ($runningProcesses.ProcessName | Select-Object -Unique) -join ','
 					Write-Log -Message "The following processes are running: [$runningProcessList]." -Source ${cmdletName}
 				}
 				else {
@@ -5412,7 +5412,7 @@ function Import-NxtIniFile {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -5486,7 +5486,7 @@ function Import-NxtIniFileWithComments {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -5970,7 +5970,7 @@ function Install-NxtApplication {
 		[string]
 		$AppName = $global:PackageConfig.AppName,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -5982,7 +5982,7 @@ function Install-NxtApplication {
 		[array]
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$InstLogFile = $global:PackageConfig.InstLogFile,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -6247,10 +6247,10 @@ function Move-NxtItem {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Destination,
 		[Parameter(Mandatory = $false)]
 		[switch]
@@ -6667,7 +6667,7 @@ function Register-NxtPackage {
 		[string]
 		$AppArch = $global:PackageConfig.AppArch,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -7130,15 +7130,15 @@ function Remove-NxtIniValue {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
-		[String]
+		[string]
 		$FilePath,
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
-		[String]
+		[string]
 		$Section,
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullorEmpty()]
-		[String]
+		[string]
 		$Key,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
@@ -7147,7 +7147,7 @@ function Remove-NxtIniValue {
 	)
 	Begin {
 		## Get the name of this function and write header
-		[String]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
 		try {
@@ -7431,7 +7431,7 @@ function Remove-NxtProcessPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path
 	)
 	Begin {
@@ -7478,7 +7478,7 @@ function Remove-NxtSystemPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path
 	)
 	Begin {
@@ -7542,13 +7542,13 @@ function Remove-NxtProductMember {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
 		$RemovePackagesWithSameProductGUID = $global:PackageConfig.RemovePackagesWithSameProductGUID,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$PackageGUID = $global:PackageConfig.PackageGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -8008,7 +8008,7 @@ function Set-NxtCustomSetupCfg {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -8557,7 +8557,7 @@ function Set-NxtSetupCfg {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -8894,7 +8894,7 @@ function Show-NxtInstallationWelcome {
 		$DeferDays = $global:SetupCfg.AskKillProcesses.DeferDays,
 		## Specify the deadline (in format dd/mm/yyyy) for which deferral will expire as an option
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$DeferDeadline = [string]::Empty,
 		## Specify whether to minimize other windows when displaying prompt
 		[Parameter(Mandatory = $false)]
@@ -8963,7 +8963,7 @@ function Show-NxtInstallationWelcome {
 	)
 	Begin {
 		## Get the name of this function and write header
-		[String]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
@@ -9084,10 +9084,10 @@ function Show-NxtInstallationWelcome {
 			if (($true -eq $checkDeferDays) -and ($true -eq $AllowDefer)) {
 				if ($null -ne $deferHistoryDeadline) {
 					Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${cmdletName}
-					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
+					[string]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
 				}
 				else {
-					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime (Get-Date -Date ((Get-Date).AddDays($deferDays)) -Format ($culture).DateTimeFormat.UniversalDateTimePattern).ToString()
+					[string]$deferDeadlineUniversal = Get-UniversalDate -DateTime (Get-Date -Date ((Get-Date).AddDays($deferDays)) -Format ($culture).DateTimeFormat.UniversalDateTimePattern).ToString()
 				}
 				Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${cmdletName}
 				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
@@ -9098,7 +9098,7 @@ function Show-NxtInstallationWelcome {
 			if (($true -eq $checkDeferDeadline) -and ($true -eq $AllowDefer)) {
 				#  Validate Date
 				try {
-					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferDeadline -ErrorAction 'Stop'
+					[string]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferDeadline -ErrorAction 'Stop'
 				}
 				catch {
 					Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -9135,7 +9135,7 @@ function Show-NxtInstallationWelcome {
 				[int[]]$processIdsToIgnore = (Get-NxtProcessTree -ProcessId $processIdToIgnore -IncludeParentProcesses $true -IncludeChildProcesses $true).ProcessId
 			}
 			while ((Get-NxtRunningProcesses -ProcessObjects $processObjects -OutVariable 'runningProcesses' -ProcessIdsToIgnore $processIdsToIgnore) -or (($false -eq ($promptResult.Contains('Defer'))) -and ($false -eq ($promptResult.Contains('Close'))))) {
-				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object {
+				[string]$runningProcessDescriptions = ($runningProcesses | Where-Object {
 						$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
 					} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				#  If no proccesses are running close
@@ -9150,12 +9150,12 @@ function Show-NxtInstallationWelcome {
 					}
 					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
 					elseif (($false -eq ($promptResult.Contains('Close'))) -or (($runningProcessDescriptions) -and ($false -eq ($promptResult.Contains('Continue'))))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
+						[string]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
 					}
 				}
 				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
 				elseif (($true -eq $runningProcessDescriptions) -or ($true -eq $forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
+					[string]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
 				}
 				#  If there is no deferral and no processes running, break the while loop
 				else {
@@ -9296,7 +9296,7 @@ function Show-NxtInstallationWelcome {
 			[Array]$runningProcesses = $null
 			[Array]$runningProcesses = Get-NxtRunningProcesses $processObjects
 			if ($runningProcesses.Count -ne 0) {
-				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object {
+				[string]$runningProcessDescriptions = ($runningProcesses | Where-Object {
 						$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
 					} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${cmdletName}
@@ -9310,7 +9310,7 @@ function Show-NxtInstallationWelcome {
 		## Force nsd.exe to stop if Notes is one of the required applications to close
 		if (($processObjects | Select-Object -ExpandProperty 'ProcessName') -contains 'notes') {
 			## Get the path where Notes is installed
-			[String]$notesPath = Get-Item -LiteralPath $regKeyLotusNotes -ErrorAction 'SilentlyContinue' | Get-ItemProperty | Select-Object -ExpandProperty 'Path'
+			[string]$notesPath = Get-Item -LiteralPath $regKeyLotusNotes -ErrorAction 'SilentlyContinue' | Get-ItemProperty | Select-Object -ExpandProperty 'Path'
 
 			## Ensure we aren't running as a Local System Account and Notes install directory was found
 			if (($false -eq $IsLocalSystemAccount) -and ($notesPath)) {
@@ -9319,7 +9319,7 @@ function Show-NxtInstallationWelcome {
 				## Check for running Notes executables and run NSD if any are found
 				$notesPathExes | ForEach-Object {
 					if ((Get-Process | Select-Object -ExpandProperty 'Name') -contains $_) {
-						[String]$notesNSDExecutable = Join-Path -Path $notesPath -ChildPath 'NSD.exe'
+						[string]$notesNSDExecutable = Join-Path -Path $notesPath -ChildPath 'NSD.exe'
 						try {
 							if ($true -eq (Test-Path -LiteralPath $notesNSDExecutable -PathType 'Leaf' -ErrorAction 'Stop')) {
 								Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${cmdletName}
@@ -9458,7 +9458,7 @@ function Show-NxtWelcomePrompt {
 		[PSCustomObject[]]
 		$ProcessObjects,
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$ProcessDescriptions,
 		[Parameter(Mandatory = $false)]
 		[Int32]
@@ -9471,10 +9471,10 @@ function Show-NxtWelcomePrompt {
 		[Switch]
 		$AllowDefer = $false,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$DeferTimes,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$DeferDeadline,
 		[Parameter(Mandatory = $false)]
 		[ValidateNotNullorEmpty()]
@@ -9537,7 +9537,7 @@ function Show-NxtWelcomePrompt {
 
 	Begin {
 		## Get the name of this function and write header
-		[String]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
@@ -9765,7 +9765,7 @@ function Switch-NxtMSIReinstallMode {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -9897,7 +9897,7 @@ function Test-NxtAppIsInstalled {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$UninstallKey = $global:PackageConfig.UninstallKey,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -10708,10 +10708,10 @@ function Test-NxtStringInFile {
 			throw "File $Path does not exist"
 		}
 		[string]$intEncoding = $Encoding
-		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq ([String]::IsNullOrEmpty($intEncoding)))) {
+		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq ([string]::IsNullOrEmpty($intEncoding)))) {
 			[string]$intEncoding = 'UTF8'
 		}
-		elseif (($true -eq (Test-Path -Path $Path)) -and ($true -eq ([String]::IsNullOrEmpty($intEncoding)))) {
+		elseif (($true -eq (Test-Path -Path $Path)) -and ($true -eq ([string]::IsNullOrEmpty($intEncoding)))) {
 			try {
 				[hashtable]$getFileEncodingParams = @{
 					Path = $Path
@@ -11274,7 +11274,7 @@ function Uninstall-NxtOld {
 		[string]
 		$AppVersion = $global:PackageConfig.AppVersion,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -11804,7 +11804,7 @@ function Unregister-NxtPackage {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -11978,25 +11978,25 @@ function Update-NxtTextInFile {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$SearchString,
 		[Parameter(Mandatory = $true)]
 		[AllowEmptyString()]
-		[String]
+		[string]
 		$ReplaceString,
 		[Parameter(Mandatory = $false)]
 		[Int]
 		$Count = [int]::MaxValue,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
-		[String]
+		[string]
 		$Encoding,
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
-		[String]
+		[string]
 		$DefaultEncoding
 	)
 	Begin {
@@ -12004,11 +12004,11 @@ function Update-NxtTextInFile {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[String]$intEncoding = $Encoding
-		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq ([String]::IsNullOrEmpty($intEncoding)))) {
+		[string]$intEncoding = $Encoding
+		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq ([string]::IsNullOrEmpty($intEncoding)))) {
 			[string]$intEncoding = 'UTF8'
 		}
-		elseif (($true -eq (Test-Path -Path $Path)) -and ($true -eq ([String]::IsNullOrEmpty($intEncoding)))) {
+		elseif (($true -eq (Test-Path -Path $Path)) -and ($true -eq ([string]::IsNullOrEmpty($intEncoding)))) {
 			try {
 				[hashtable]$getFileEncodingParams = @{
 					Path = $Path

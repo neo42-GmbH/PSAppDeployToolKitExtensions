@@ -368,7 +368,7 @@ function Main {
 		[bool]
 		$SkipUnregister = $SkipUnregister,
 		[Parameter(Mandatory = $false)]
-		[String]
+		[string]
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[bool]
