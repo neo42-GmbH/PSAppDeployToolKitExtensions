@@ -1,7 +1,7 @@
 Describe "Get-NxtComputerManufacturer" {
     Context "When running the function with working WMI" {
         AfterAll {
-            Remove-Item Function:\Get-WmiObject
+            Remove-Item Function:\Get-CimInstance
         }
         It "Should return the correct computer manufacturer" {
             function global:Get-CimInstance {

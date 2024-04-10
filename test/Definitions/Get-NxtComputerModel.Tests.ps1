@@ -1,7 +1,7 @@
 Describe "Get-NxtComputerModel" {
     Context "When running the function" {
         AfterAll {
-            Remove-Item Function:\Get-WmiObject
+            Remove-Item Function:\Get-CimInstance
         }
         It "Should return the correct computer model" {
             function global:Get-CimInstance {
