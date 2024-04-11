@@ -7013,14 +7013,18 @@ function Remove-NxtEmptyRegistryKey {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		try {
-			## Try path directly
-			[Microsoft.Win32.RegistryKey[]]$keys = Get-Item -Path $Path -ErrorAction Stop
+		[hashtable]$hiveMap = @{
+			"^HKLM:?" = "HKEY_LOCAL_MACHINE"
+			"^HKCU:?" = "HKEY_CURRENT_USER"
+			"^HKU:?" = "HKEY_USERS"
+			"^HKCC:?" = "HKEY_CURRENT_CONFIG"
+			"^HKCR:?" = "HKEY_CLASSES_ROOT"
+			"^(Microsoft.PowerShell.Core\\)?Registry::" = [string]::Empty
 		}
-		catch {
-			## Try path with registry provider
-			[Microsoft.Win32.RegistryKey[]]$keys = Get-Item -Path "Registry::$Path" -ErrorAction SilentlyContinue
+		foreach ($key in $hiveMap.Keys) {
+			$Path = $Path -replace $key, $hiveMap[$key]
 		}
+		[Microsoft.Win32.RegistryKey[]]$keys = Get-Item -Path "Registry::$Path" -ErrorAction 'SilentlyContinue'
 		if ($keys.Count -eq 0) {
 			Write-Log -Message "Key [$Path] does not exist or is not a registry address..." -Source ${CmdletName} -Severity 2
 			return
