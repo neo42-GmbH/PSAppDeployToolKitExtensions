@@ -1779,6 +1779,7 @@ function Execute-NxtBitRockInstaller {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Justification = 'Historical naming convention.')]
 	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
@@ -2073,6 +2074,7 @@ function Execute-NxtInnoSetup {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Justification = 'Historical naming convention.')]
 	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
@@ -2416,6 +2418,7 @@ function Execute-NxtMSI {
 		http://psappdeploytoolkit.com
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Justification = 'Historical naming convention.')]
 	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall', 'Patch', 'Repair', 'ActiveSetup')]
@@ -2661,6 +2664,7 @@ function Execute-NxtNullsoft {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Justification = 'Historical naming convention.')]
 	Param (
 		[Parameter(Mandatory = $false)]
 		[ValidateSet('Install', 'Uninstall')]
