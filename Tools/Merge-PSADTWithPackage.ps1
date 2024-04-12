@@ -155,7 +155,7 @@ $regexReplacements = @(
 	},
 	@{
 		File        = "Deploy-Application.ps1"
-		Pattern     = "(\`$global:|\$)DetectedDisplayVersion(?=\b)"
+		Pattern     = "(\`$global:|\$)DetectedDisplayVersion(?=\b)(?!.*\=)"
 		Replacement = "(Get-NxtCurrentDisplayVersion).DisplayVersion"
 	}
 	@{
@@ -174,6 +174,15 @@ $regexReplacements = @(
 		Replacement = ""
 	}
 )
+
+## Error when Regex pattern is found
+$regexErrors = @(
+	@{
+		File        = "Deploy-Application.ps1"
+		Pattern     = "(\`$global:|\$)DetectedDisplayVersion(?=\b)"
+	}
+)
+
 #endregion
 
 
@@ -305,8 +314,6 @@ $package.Ast.CustomFunctions = $package.Ast.Script.FindAll({
 $package.Version = $template.Ast.Script.GetHelpContent().Notes | Select-String -Pattern '\s*Version:\s*(?<Version>.*)' | Select-Object -First 1 -ExpandProperty Matches | Select-Object -ExpandProperty Groups | Where-Object { $_.Name -eq "Version" } | Select-Object -ExpandProperty Value
 #endregion
 
-
-
 #region Version checks
 Write-Host @"
 
@@ -402,33 +409,6 @@ Set-Content -Path (Join-Path $PackagePath.FullName "Deploy-Application.ps1") -Va
 Write-Host -ForegroundColor Green "Finished migrating functions."
 #endregion
 
-#region Regex replacements
-Write-Host @"
-
-###################
-## Regex replace ##
-###################
-"@
-foreach ($regexRule in $regexReplacements) {
-	[System.IO.FileInfo]$file = $PackagePath.GetFiles($regexRule.File) | Select-Object -First 1
-	if ($false -eq $file.Exists) {
-		Write-Host -ForegroundColor Red "File '$($file.Name)' does not exist. Skipping regex replacements."
-		return
-	}
-	
-	[string[]]$content = Get-Content -Path $file.FullName
-	foreach ($line in $content) {
-		[Microsoft.PowerShell.Commands.MatchInfo]$matchInfo = $line | Select-String -Pattern $regexRule.Pattern
-		if ($matchInfo.Matches.Count -gt 0) {
-			Write-Host -ForegroundColor Yellow "The following regex replace was applied:`n	- Found: '$($matchInfo.Matches[0].Value)'`n	- Pattern: '$($regexRule.Pattern)'`n	- File: '$($file.Name)'`n	- Replacement: '$($regexRule.Replacement)'."
-			$content[$content.IndexOf($line)] = $line -replace $regexRule.Pattern, $regexRule.Replacement
-		}
-	}
-	Set-Content -Path $file.FullName -Value $content -Encoding UTF8 -Force
-}
-Write-Host -ForegroundColor Green "Finished regex replacements."
-#endregion
-
 #region Configuration adjustments
 Write-Host @"
 
@@ -479,6 +459,58 @@ foreach ($configOption in $removeConfigOptionWhenFound) {
 ## Output ordered dictionary to JSON
 $packageConfig | ConvertTo-Json -Depth 10 | Format-Json | Set-Content -Path (Join-Path $PackagePath.FullName "neo42PackageConfig.json") -Encoding UTF8 -Force
 Write-Host -ForegroundColor Green "Finished configuration adjustments."
+#endregion
+
+#region Regex replacements
+Write-Host @"
+
+###################
+## Regex replace ##
+###################
+"@
+foreach ($regexRule in $regexReplacements) {
+	[System.IO.FileInfo]$file = $PackagePath.GetFiles($regexRule.File) | Select-Object -First 1
+	if ($false -eq $file.Exists) {
+		Write-Host -ForegroundColor Red "File '$($file.Name)' does not exist. Skipping regex replacements."
+		continue
+	}
+	
+	[string[]]$content = Get-Content -Path $file.FullName
+	foreach ($line in $content) {
+		[Microsoft.PowerShell.Commands.MatchInfo]$matchInfo = $line | Select-String -Pattern $regexRule.Pattern
+		if ($matchInfo.Matches.Count -gt 0) {
+			Write-Host -ForegroundColor Yellow "The following regex replace was applied:`n	- Found: '$($matchInfo.Matches[0].Value)'`n	- Pattern: '$($regexRule.Pattern)'`n	- File: '$($file.Name)'`n	- Replacement: '$($regexRule.Replacement)'."
+			$content[$content.IndexOf($line)] = $line -replace $regexRule.Pattern, $regexRule.Replacement
+		}
+	}
+	Set-Content -Path $file.FullName -Value $content -Encoding UTF8 -Force
+}
+Write-Host -ForegroundColor Green "Finished regex replacements."
+#endregion
+
+#region Regex errors
+Write-Host @"
+
+##################
+## Regex errors ##
+##################
+"@
+foreach ($regexRule in $regexErrors) {
+	[System.IO.FileInfo]$file = $PackagePath.GetFiles($regexRule.File) | Select-Object -First 1
+	if ($false -eq $file.Exists) {
+		Write-Host -ForegroundColor Red "File '$($file.Name)' does not exist. Skipping regex error check."
+		continue
+	}
+	
+	[string[]]$content = Get-Content -Path $file.FullName
+	foreach ($line in $content) {
+		[Microsoft.PowerShell.Commands.MatchInfo]$matchInfo = $line | Select-String -Pattern $regexRule.Pattern
+		if ($matchInfo.Matches.Count -gt 0) {
+			Write-Host -ForegroundColor Red "The regex error pattern '$($regexRule.Pattern)' was found in file '$($file.Name)'. Please check the output copy for the mentioned issues and correct them manually."
+		}
+	}
+}
+Write-Host -ForegroundColor Green "Finished regex replacements."
 #endregion
 
 #region Custom tasks
