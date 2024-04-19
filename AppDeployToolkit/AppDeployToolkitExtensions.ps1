@@ -7431,7 +7431,7 @@ function Remove-NxtProcessPathVariable {
 	}
 }
 #endregion
-#region Function Remove-NxtProcessPathVariable
+#region Function Remove-NxtSystemPathVariable
 function Remove-NxtSystemPathVariable {
 	<#
 	.SYNOPSIS
@@ -7440,7 +7440,7 @@ function Remove-NxtSystemPathVariable {
 		Removes a path to the systems PATH environment variable.
 		Empty entries will be removed.
 	.PARAMETER Path
-		Path to be added to the systems PATH environment variable.
+		Path to be removed from the systems PATH environment variable.
 	.EXAMPLE
 		Remove-NxtSystemPathVariable -Path "C:\Temp"
 	.OUTPUTS
