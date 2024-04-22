@@ -5841,7 +5841,7 @@ function Initialize-NxtUninstallApplication {
 			}
 			[string[]]$currentKeyName = (Get-NxtInstalledApplication @getInstalledApplicationSplatted).UninstallSubkey
 			if ($currentKeyName.Count -ne 1) {
-				Write-Log -Message "Did not find unique uninstall registry key with name [$($uninstallKeyToHide.KeyName)]. Skipped hiding the entry for this key." -Source ${CmdletName} -Severity 2
+				Write-Log -Message "Did not find unique uninstall registry key with name [$($uninstallKeyToHide.KeyName)]. Skipped unhiding the entry for this key." -Source ${CmdletName} -Severity 2
 				continue
 			}
 			if (Get-RegistryKey -Key "HKLM:\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName" -Value SystemComponent) {
