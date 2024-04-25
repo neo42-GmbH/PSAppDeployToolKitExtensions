@@ -4288,7 +4288,7 @@ function Get-NxtParentProcess {
 		Get-NxtParentProcess -Id 1234 -Recurse
 		This example retrieves the entire parent hierarchy of the process with ID 1234.
 	.OUTPUTS
-		System.Management.ManagementBaseObject.
+		ciminstance
 	.EXAMPLE
 		Get-NxtParentProcess -Id 1234 -Recurse
 	.EXAMPLE
@@ -8986,7 +8986,7 @@ function Show-NxtInstallationWelcome {
 			}
 			if ($true -eq ([System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($processAppsItem.Name))) {
 				Write-Log -Message "Wildcard in list entry for 'CloseApps' process collection detected, retrieving all matching running processes for '$($processAppsItem.Name)' ..." -Source ${cmdletName}
-				## Get-WmiObject Win32_Process always requires an extension, so we add one in case there is none
+				## Get-CimInstance Win32_Process always requires an extension, so we add one in case there is none
 				[string]$query = $($($processAppsItem.Name -replace "\$fileExtension$", [string]::Empty) + $fileExtension).Replace('*', '%')
 				[ciminstance[]]$processes = Get-CimInstance -Query "Select * from Win32_Process Where Name LIKE '$query'"
 				[string[]]$processNames = $processes | Select-Object -ExpandProperty 'Name' -ErrorAction 'SilentlyContinue' | ForEach-Object {
