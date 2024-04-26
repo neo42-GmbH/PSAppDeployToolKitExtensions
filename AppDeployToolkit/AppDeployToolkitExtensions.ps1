@@ -9098,24 +9098,28 @@ function Show-NxtInstallationWelcome {
 				if ($true -eq ([string]::IsNullOrEmpty($runningProcessDescriptions))) {
 					break
 				}
-				#  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
-				if ($true -eq $AllowDefer) {
-					#  If there is deferral and closing apps is allowed but there are no apps to be closed, break the while loop
-					if (($true -eq $AllowDeferCloseApps) -and ($true -eq ([string]::IsNullOrEmpty($runningProcessDescriptions)))) {
+				if ($CloseAppsCountdown -gt 0) {
+					#  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
+					if (($true -eq $AllowDefer) -and (($false -eq ($promptResult.Contains('Close'))) -or (($runningProcessDescriptions) -and ($false -eq ($promptResult.Contains('Continue')))))) {
+						$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
+					}
+					#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
+					elseif (($true -eq $runningProcessDescriptions) -or ($true -eq $forceCountdown)) {
+						$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
+					}
+					#  If there is no deferral and no processes running, break the while loop
+					else {
 						break
 					}
-					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
-					elseif (($false -eq ($promptResult.Contains('Close'))) -or (($runningProcessDescriptions) -and ($false -eq ($promptResult.Contains('Continue'))))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
-					}
 				}
-				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
-				elseif (($true -eq $runningProcessDescriptions) -or ($true -eq $forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
-				}
-				#  If there is no deferral and no processes running, break the while loop
 				else {
-					break
+					# These results are equivalent the results of Show-NxtWelcomePrompt
+					if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
+						$promptResult = 'Cancel'
+					}
+					else {
+						$promptResult = 'Close'
+					}
 				}
 				if ($true -eq ($promptResult.Contains('Cancel'))) {
 					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${CmdletName}
@@ -9138,7 +9142,7 @@ function Show-NxtInstallationWelcome {
 				}
 				#  Force the applications to close
 				elseif ($true -eq ($promptResult.Contains('Close'))) {
-					Write-Log -Message 'The user selected to force the application(s) to close...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to force the application(s) to close or timeout was reached with ContinueType set to Continue...' -Source ${CmdletName}
 					if (($true -eq $PromptToSave) -and (($true -eq $SessionZero) -and ($false -eq $IsProcessUserInteractive))) {
 						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
 					}
