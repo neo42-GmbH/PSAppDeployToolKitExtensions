@@ -1212,11 +1212,9 @@ function Complete-NxtPackageInstallation {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
 		if ($true -eq $DesktopShortcut) {
 			Copy-NxtDesktopShortcuts -StartMenuShortcutsToCopyToDesktop $StartMenuShortcutsToCopyToDesktop -Desktop $Desktop -StartMenu $StartMenu
-		}
-		else {
-			Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
 		}
 		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 			[hashtable]$hideNxtParams = @{
@@ -1349,6 +1347,12 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER DesktopShortcutsToDelete
+		Specifies the desktop shortcuts that should be deleted.
+		Defaults to the CommonDesktopShortcutsToDelete array defined in the neo42PackageConfig.json.
+	.PARAMETER StartMenuShortcuts
+		Specifies the links from the start menu which were copied to the desktop and should be deleted as well.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the neo42PackageConfig.json.
 	.PARAMETER ExecutionPolicy
 		Defines the execution policy of the active setup PowerShell script.
 		Defaults to the corresponding value from the XML configuration file.
@@ -1385,6 +1389,9 @@ function Complete-NxtPackageUninstallation {
 		[string[]]
 		$DesktopShortcutsToDelete = $global:PackageConfig.CommonDesktopShortcutsToDelete,
 		[Parameter(Mandatory = $false)]
+		[object[]]
+		$StartMenuShortcuts = $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop,
+		[Parameter(Mandatory = $false)]
 		[string]
 		$Desktop = $envCommonDesktop,
 		[Parameter(Mandatory = $false)]
@@ -1398,6 +1405,16 @@ function Complete-NxtPackageUninstallation {
 	}
 	Process {
 		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
+		## Cleanup our shortcuts 
+		[string[]]$shortCutsFromCopyToDesktop = $StartMenuShortcuts | ForEach-Object { 
+			if ($false -eq [string]::IsNullOrEmpty($_.TargetName)) {
+				Write-Output $_.TargetName
+			}
+			else {
+				Write-Output (Split-Path -Path $_.Source -Leaf)
+			}
+		}
+		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $shortCutsFromCopyToDesktop -Desktop $Desktop
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID"
 		if ($true -eq $UserPartOnUninstallation) {
 			if ($true -eq ([string]::IsNullOrEmpty($UserPartRevision))) {
