@@ -180,6 +180,12 @@ $regexErrors = @(
 	@{
 		File        = "Deploy-Application.ps1"
 		Pattern     = "(\`$global:|\$)DetectedDisplayVersion(?=\b)"
+		Reason	  	= "The variable `$DetectedDisplayVersion was removed. Please use `(Get-NxtCurrentDisplayVersion).DisplayVersion` instead."
+	}
+	@{
+		File        = "Deploy-Application.ps1"
+		Pattern     = "Update-SessionEnvironmentVariables|Refresh-SessionEnvironmentVariables"
+		Reason	  	= "The functions `Update-SessionEnvironmentVariables` and `Refresh-SessionEnvironmentVariables` interfere with environment variable handling. Please remove them."
 	}
 )
 
@@ -507,6 +513,7 @@ foreach ($regexRule in $regexErrors) {
 		[Microsoft.PowerShell.Commands.MatchInfo]$matchInfo = $line | Select-String -Pattern $regexRule.Pattern
 		if ($matchInfo.Matches.Count -gt 0) {
 			Write-Host -ForegroundColor Red "The regex error pattern '$($regexRule.Pattern)' was found in file '$($file.Name)'. Please check the output copy for the mentioned issues and correct them manually."
+			Write-Host -ForegroundColor Red "Reason: $($regexRule.Reason)"
 		}
 	}
 }
