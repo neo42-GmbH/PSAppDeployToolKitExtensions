@@ -407,4 +407,52 @@ function neo42PSEnforceNewLineAtEndOfFile {
 	}
 }
 
+function neo42PSIncompatibleFunctions {
+	<#
+	.SYNOPSIS
+	Dont allow usage of PSADT functions which are not compatible with our extensions.
+	.DESCRIPTION
+	Dont allow usage of PSADT functions which are not compatible with our extensions.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[CmdletBinding()]
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[ValidateNotNullOrEmpty()]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Begin {
+		[psobject[]]$incompatibleFunctions = @(
+			@{
+				Functions = @('Update-SessionEnvironmentVariables', 'Refresh-SessionEnvironmentVariables')
+				Reason    = 'Due to security reasons we clear the environment at the start of the Deploy-Application.ps1. Reloading the environment would mitigate this security measure.'
+			}
+		)
+	}
+	Process {
+		[System.Management.Automation.Language.CommandAst[]]$commandAsts = $TestAst.FindAll({
+				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
+				$args[0].GetCommandName() -in @($incompatibleFunctions.Functions)
+			}, $false)
+
+		[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results = @()
+
+		foreach ($commandAst in $commandAsts) {
+			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				'Message'              = ($incompatibleFunctions | Where-Object { $_.Functions -contains $commandAst.GetCommandName() }).Reason
+				'Extent'               = $commandAst.Extent
+				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+				'Severity'             = 'Warning'
+			}
+		}
+
+		return $results
+	}
+}
+
 Export-ModuleMember -Function 'neo42*'
