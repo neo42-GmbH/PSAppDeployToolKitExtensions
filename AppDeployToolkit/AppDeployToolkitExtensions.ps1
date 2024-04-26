@@ -1405,8 +1405,8 @@ function Complete-NxtPackageUninstallation {
 	}
 	Process {
 		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
-		## Cleanup our shortcuts 
-		[string[]]$shortCutsFromCopyToDesktop = $StartMenuShortcuts | ForEach-Object { 
+		## Cleanup our shortcuts
+		[string[]]$shortCutsFromCopyToDesktop = $StartMenuShortcuts | ForEach-Object {
 			if ($false -eq [string]::IsNullOrEmpty($_.TargetName)) {
 				Write-Output $_.TargetName
 			}
