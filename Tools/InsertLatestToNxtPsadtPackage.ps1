@@ -499,6 +499,12 @@ function Update-NxtPSAdtPackage {
                     Read-Host "Press to check again or CTRL+C to exit"
                 }
             }
+            ## check incompatible function is not used
+            [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+            if ($content -match 'Update-SessionEnvironmentVariables|Refresh-SessionEnvironmentVariables') {
+                Write-Error "Please remove Update-SessionEnvironmentVariables or Refresh-SessionEnvironmentVariables from $PackageToUpdatePath\Deploy-Application.ps1. This function will interfere with the new environment handling."
+            }
+
             ## check comment value of TOPMOSTWINOW MINIMIZEALLWINDOWS APPLYCONTINUETYPEONERROR
             [bool]$incorrectIniComment = $true
             while ($incorrectIniComment) {
