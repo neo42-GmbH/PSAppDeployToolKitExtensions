@@ -1,5 +1,5 @@
 BeforeDiscovery {
-	[string]$Script:baseDir = Resolve-Path '..'
+	[string]$Script:baseDir = Resolve-Path '.'
 	if ($null -ne $MyInvocation.MyCommand.ScriptBlock.File) {
 		$baseDir = Resolve-Path "$(Split-Path -Path $(Resolve-Path $MyInvocation.MyCommand.ScriptBlock.File) -Parent)\..\..\.."
 	}
