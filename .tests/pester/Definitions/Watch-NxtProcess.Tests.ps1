@@ -3,7 +3,7 @@ Describe "Watch-NxtProcess" {
         BeforeAll {
             [System.Diagnostics.Process]$process = [System.Diagnostics.Process]::GetCurrentProcess()
             function Start-TestProcess {
-                return Start-Job -ScriptBlock { Start-Sleep -Seconds 2; $proc = Start-Process -FilePath $args[0] -PassThru; Start-Sleep 2; Stop-Process  $proc } -ArgumentList "$PWD\test\simple.exe"
+                return Start-Job -ScriptBlock { Start-Sleep -Seconds 2; $proc = Start-Process -FilePath $args[0] -PassThru; Start-Sleep 2; Stop-Process  $proc } -ArgumentList "$PWD\.tests\pester\simple.exe"
             }
         }
         It "Should return true if process exists" {

@@ -124,7 +124,7 @@ Describe "Wait-NxtRegistryAndProcessCondition" {
 "@|ConvertFrom-Json
             [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $object.TotalSecondsToWaitFor -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor
             $result | Should -BeTrue
-            $process = Start-Process -FilePath ./test/simple.exe -PassThru
+            $process = Start-Process -FilePath ./.tests/pester/simple.exe -PassThru
             [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $object.TotalSecondsToWaitFor -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor
             $result | Should -BeFalse
             Stop-Process -Id $process.Id
@@ -146,8 +146,8 @@ Describe "Wait-NxtRegistryAndProcessCondition" {
 "@|ConvertFrom-Json
             [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor $object.TotalSecondsToWaitFor -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor
             $result | Should -BeFalse
-            $process = Start-Process -FilePath ./test/simple.exe -PassThru
-            [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 1 -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor 
+            $process = Start-Process -FilePath ./.tests/pester/simple.exe -PassThru
+            [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 1 -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor
             $result | Should -BeTrue
             Stop-Process -Id $process.Id
         }
@@ -178,11 +178,11 @@ Describe "Wait-NxtRegistryAndProcessCondition" {
             New-Item -Path "HKLM:\\SOFTWARE\\DeploymentSystem\\Agent\\sub5" -Force
             [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 1 -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor
             $result | Should -BeFalse
-            $process = Start-Process -FilePath ./test/simple.exe -PassThru
-            [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 1 -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor 
+            $process = Start-Process -FilePath ./.tests/pester/simple.exe -PassThru
+            [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 1 -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor
             $result | Should -BeFalse
             Remove-Item -Path "HKLM:\\SOFTWARE\\DeploymentSystem\\Agent\\sub5" -Force
-            [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 1 -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor 
+            [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 1 -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor
             $result | Should -BeFalse
             Stop-Process -Id $process.Id
             [bool]$result = Wait-NxtRegistryAndProcessCondition -TotalSecondsToWaitFor 1 -ProcessOperator $object.ProcessOperator -ProcessesToWaitFor $object.ProcessesToWaitFor -RegKeyOperator $object.RegKeyOperator -RegKeysToWaitFor $object.RegKeysToWaitFor

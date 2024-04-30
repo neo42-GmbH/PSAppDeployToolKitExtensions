@@ -1,7 +1,7 @@
 Describe "Test-NxtProcessExists" {
     Context "When function is called" {
         BeforeAll {
-            [System.Diagnostics.Process]$process = Start-Process -FilePath ./test/simple.exe -PassThru
+            [System.Diagnostics.Process]$process = Start-Process -FilePath ./.tests/pester/simple.exe -PassThru
         }
         AfterAll {
             if (-not $process.HasExited) {
