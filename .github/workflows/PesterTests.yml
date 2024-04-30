@@ -30,8 +30,7 @@ jobs:
       with:
         path: '${{ github.workspace }}\Extensions'
         sparse-checkout: |
-          test
-          .vscode
+          .tests
           AppDeployToolkit
 
     - name: Merge Extensions into PSADT
@@ -41,4 +40,4 @@ jobs:
 
     - name: Run Pester Tests
       shell: powershell
-      run: ${{ github.workspace }}\Toolkit\Toolkit\test\RunPester.ps1
+      run: ${{ github.workspace }}\Toolkit\Toolkit\.tests\pester\RunPester.ps1

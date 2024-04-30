@@ -32,7 +32,7 @@
     "powershell.codeFormatting.whitespaceInsideBrace": true,
     "powershell.powerShellDefaultVersion": "Windows PowerShell (x64)",
     "powershell.scriptAnalysis.enable": true,
-    "powershell.scriptAnalysis.settingsPath": ".\\.vscode\\PSScriptAnalyzerSettings.psd1",
+    "powershell.scriptAnalysis.settingsPath": "./.tests/PSScriptAnalyzer/PSScriptAnalyzerSettings.psd1",
     "powershell.helpCompletion": "BlockComment",
     "dotnet.preferCSharpExtension": true,
     //-------- Pester configuration --------
@@ -45,7 +45,7 @@
             "fileMatch": [
                 "/neo42PackageConfig.json"
             ],
-            "url": "./.vscode/neo42PackageConfig.schema.json"
+            "url": "./.tests/schemas/neo42PackageConfig.schema.json"
         }
     ]
 }

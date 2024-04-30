@@ -97,6 +97,6 @@
 		}
 	}
 	CustomRulePath      = @(
-		'.vscode\neo42PSScriptAnalyzerRules'
+		'.\.tests\PSScriptAnalyzer\neo42PSScriptAnalyzerRules'
 	)
 }

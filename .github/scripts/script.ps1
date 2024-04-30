@@ -1,8 +1,9 @@
 ## Remove unneeded files from PSAppDeployToolkit and Extensions
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.git
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.github
-Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/test
-Remove-Item -force ./PSAppDeployToolkitExtensions/.gitignore
+Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.tests
+Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.vscode
+Remove-Item -Force ./PSAppDeployToolkitExtensions/.gitignore
 Remove-Item ./PSAppDeployToolkitExtensions/README.MD
 Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
 Remove-Item ./PSAppDeployToolkitExtensions/neo42PackageConfig.json
