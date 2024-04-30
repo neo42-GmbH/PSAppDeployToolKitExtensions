@@ -38,5 +38,14 @@
     //-------- Pester configuration --------
     "powershell.pester.useLegacyCodeLens": false,
     "powershell.pester.outputVerbosity": "Diagnostic",
-    "powershell.pester.codeLens": true
+    "powershell.pester.codeLens": true,
+    //-------- Json configuration --------
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/neo42PackageConfig.json"
+            ],
+            "url": "./.vscode/neo42PackageConfig.schema.json"
+        }
+    ]
 }
