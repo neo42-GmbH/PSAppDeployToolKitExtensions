@@ -1,7 +1,7 @@
 BeforeDiscovery {
 	[string]$Script:baseDir = Resolve-Path '.'
 	if ($null -ne $MyInvocation.MyCommand.ScriptBlock.File) {
-		$baseDir = Resolve-Path "$(Split-Path -Path $(Resolve-Path $MyInvocation.MyCommand.ScriptBlock.File) -Parent)\..\..\.."
+		$baseDir = Resolve-Path "$(Split-Path -Path $(Resolve-Path $MyInvocation.MyCommand.ScriptBlock.File) -Parent)\..\.."
 	}
 }
 
@@ -62,7 +62,7 @@ Describe 'Coding Guidelines' -ForEach @(
 			}
 		}
 		It 'Should have no detected issues by PSScriptAnalyzer' {
-			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$issues = Invoke-ScriptAnalyzer -Path $path -Settings "$baseDir\.vscode\PSScriptAnalyzerSettings.psd1"
+			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$issues = Invoke-ScriptAnalyzer -Path $path -Settings "$baseDir\.tests\PSScriptAnalyzer\PSScriptAnalyzerSettings.psd1"
 			foreach ($issue in $issues) {
 				Write-Host -ForegroundColor Red "    $($issue.Message) (line $($issue.Extent.StartLineNumber):$($issue.Extent.StartColumnNumber)-$($issue.RuleName))"
 			}

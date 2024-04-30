@@ -22,8 +22,8 @@ $config.Should.ErrorAction = 'Continue'
 $config.Output.Verbosity = 'Detailed'
 $config.Output.StackTraceVerbosity = 'None'
 
-# Set location
-Set-Location $PSScriptRoot\..\
+# Set location to root of the project
+Set-Location $PSScriptRoot\..\..\
 
 # Create process test binary
 $compilerPath = [System.Runtime.InteropServices.RuntimeEnvironment]::GetRuntimeDirectory() + 'csc.exe'
