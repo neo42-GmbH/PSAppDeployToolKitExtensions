@@ -457,10 +457,15 @@ function Update-NxtPSAdtPackage {
             # Prevent usage of $global:DetectedDisplayVersion.
             [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
             foreach ($line in ($content -split "`n")){
-                if ($line -match '(\$global:|\$)DetectedDisplayVersion') {
+                if ($line -match '(\$global:|\$)DetectedDisplayVersion(?=\b)(?!.*\=)') {
                     [bool]$contentChanged = $true
                     $content = $content.Replace($line, ($line -replace '(\$global:|\$)DetectedDisplayVersion(?=\b)', "(Get-NxtCurrentDisplayVersion).DisplayVersion"))
                     Write-Warning "Replaced `$DetectedDisplayVersion with (Get-NxtCurrentDisplayVersion).DisplayVersion in $PackageToUpdatePath in line: $line"
+                }
+            }
+            foreach ($line in ($content -split "`n")){
+                if ($line -match '(\$global:|\$)DetectedDisplayVersion(?=\b)') {
+                    Write-Error "Manual action required. The file contains old use of DetectedDisplayVersion in $PackageToUpdatePath in line: $line"
                 }
             }
             if ($true -eq $contentChanged) {
@@ -499,6 +504,12 @@ function Update-NxtPSAdtPackage {
                     Read-Host "Press to check again or CTRL+C to exit"
                 }
             }
+            ## check incompatible function is not used
+            [string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+            if ($content -match 'Update-SessionEnvironmentVariables|Refresh-SessionEnvironmentVariables') {
+                Write-Error "Please remove Update-SessionEnvironmentVariables or Refresh-SessionEnvironmentVariables from $PackageToUpdatePath\Deploy-Application.ps1. This function will interfere with the new environment handling."
+            }
+
             ## check comment value of TOPMOSTWINOW MINIMIZEALLWINDOWS APPLYCONTINUETYPEONERROR
             [bool]$incorrectIniComment = $true
             while ($incorrectIniComment) {
