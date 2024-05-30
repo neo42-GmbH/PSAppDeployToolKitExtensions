@@ -423,13 +423,13 @@ function Main {
 					if ($showInstallationWelcomeResult -ne 0) {
 						switch ($showInstallationWelcomeResult) {
 							'1618' {
-								[string]$currentShowInstallationWelcomeMessageInstall = "Aborted by dialog window action or timeout of waiting for processes."
+								[string]$currentShowInstallationWelcomeMessageInstall = "AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached."
 							}
 							'60012' {
 								[string]$currentShowInstallationWelcomeMessageInstall = "User deferred installation request."
 							}
 							default {
-								[string]$currentShowInstallationWelcomeMessageInstall = "Show installation welcome window exit code: $showInstallationWelcomeResult"
+								[string]$currentShowInstallationWelcomeMessageInstall = "AskKillProcesses window returned unexpected exit code: $showInstallationWelcomeResult"
 							}
 						}
 						Exit-NxtScriptWithError -ErrorMessage $currentShowInstallationWelcomeMessageInstall -MainExitCode $showInstallationWelcomeResult
@@ -539,13 +539,13 @@ function Main {
 					if ($showUnInstallationWelcomeResult -ne 0) {
 						switch ($showUnInstallationWelcomeResult) {
 							'1618' {
-								[string]$currentShowInstallationWelcomeMessageUninstall = "Aborted by dialog window action or timeout of waiting for processes."
+								[string]$currentShowInstallationWelcomeMessageUninstall = "AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached."
 							}
 							'60012' {
 								[string]$currentShowInstallationWelcomeMessageUninstall = "User deferred installation request."
 							}
 							default {
-								[string]$currentShowInstallationWelcomeMessageUninstall = "Show installation welcome window exit code: $showInstallationWelcomeResult"
+								[string]$currentShowInstallationWelcomeMessageUninstall = "AskKillProcesses window returned unexpected exit code: $showInstallationWelcomeResult"
 							}
 						}
 						Exit-NxtScriptWithError -ErrorMessage $currentShowInstallationWelcomeMessageUninstall -MainExitCode $showUnInstallationWelcomeResult
