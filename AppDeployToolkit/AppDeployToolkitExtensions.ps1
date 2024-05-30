@@ -501,9 +501,9 @@ function Add-NxtSystemPathVariable {
 	.PARAMETER AddToBeginning
 		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
 	.EXAMPLE
-		Add-NxtProcessPathVariable -Path "C:\Temp"
+		Add-NxtSystemPathVariable -Path "C:\Temp"
 	.EXAMPLE
-		Add-NxtProcessPathVariable -Path "C:\Temp" -AddToBeginning $true
+		Add-NxtSystemPathVariable -Path "C:\Temp" -AddToBeginning $true
 	.OUTPUTS
 		none.
 	.LINK
@@ -5849,7 +5849,7 @@ function Initialize-NxtUninstallApplication {
 			}
 			[string[]]$currentKeyName = (Get-NxtInstalledApplication @getInstalledApplicationSplatted).UninstallSubkey
 			if ($currentKeyName.Count -ne 1) {
-				Write-Log -Message "Did not find unique uninstall registry key with name [$($uninstallKeyToHide.KeyName)]. Skipped hiding the entry for this key." -Source ${CmdletName} -Severity 2
+				Write-Log -Message "Did not find unique uninstall registry key with name [$($uninstallKeyToHide.KeyName)]. Skipped unhiding the entry for this key." -Source ${CmdletName} -Severity 2
 				continue
 			}
 			if (Get-RegistryKey -Key "HKLM:\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName" -Value SystemComponent) {
@@ -7426,7 +7426,7 @@ function Remove-NxtProcessPathVariable {
 	}
 }
 #endregion
-#region Function Remove-NxtProcessPathVariable
+#region Function Remove-NxtSystemPathVariable
 function Remove-NxtSystemPathVariable {
 	<#
 	.SYNOPSIS
@@ -7435,7 +7435,7 @@ function Remove-NxtSystemPathVariable {
 		Removes a path to the systems PATH environment variable.
 		Empty entries will be removed.
 	.PARAMETER Path
-		Path to be added to the systems PATH environment variable.
+		Path to be removed from the systems PATH environment variable.
 	.EXAMPLE
 		Remove-NxtSystemPathVariable -Path "C:\Temp"
 	.OUTPUTS
