@@ -1478,7 +1478,7 @@ function ConvertFrom-NxtEncodedObject {
 			[string]$decompressedString = $reader.ReadToEnd()
 			$reader.Close()
 			[System.Object]$psObject = $decompressedString | ConvertFrom-Json
-			return $psObject
+			Write-Output $psObject
 		}
 		catch {
 			Write-Log -Message "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -1552,7 +1552,7 @@ function ConvertTo-NxtEncodedObject {
 			$writer.Write($jsonString)
 			$writer.Close()
 			[string]$encodedObject = [Convert]::ToBase64String($compressedData.ToArray())
-			return $encodedObject
+			Write-Output $encodedObject
 		}
 		catch {
 			Write-Log -Message "Failed to convert PowerShell object to Base64-encoded string. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -4104,23 +4104,23 @@ function Get-NxtIsSystemProcess {
 		[System.Management.ManagementObject]$process = Get-WmiObject -Class Win32_Process -Filter "ProcessID = $ProcessId"
 		if ($null -eq $process) {
 			Write-Log -Message "Failed to get process with ID '$ProcessId'." -Severity 2 -Source ${cmdletName}
-			return $false
+			Write-Output $false
 		}
 		else {
 			[psobject]$owner = $process.GetOwner()
 			if ($null -eq $owner) {
 				if ($ProcessId -eq 4 -and $process.Name -eq "System") {
 					Write-Log -Message "Process with ID '$ProcessId' is the system process." -Severity 3 -Source ${cmdletName}
-					return $true
+					Write-Output $true
 				}
 				else {
 					Write-Log -Message "Failed to get owner of process with ID '$ProcessId'." -Severity 2 -Source ${cmdletName}
-					return $false
+					Write-Output $false
 				}
 			}
 			else {
 				[System.Security.Principal.NTAccount]$account = New-Object System.Security.Principal.NTAccount("$($owner.Domain)\$($owner.User)")
-				return $account.Translate([System.Security.Principal.SecurityIdentifier]).Value -eq "S-1-5-18"
+				Write-Output $($account.Translate([System.Security.Principal.SecurityIdentifier]).Value -eq "S-1-5-18")
 			}
 		}
 	}
@@ -6193,7 +6193,7 @@ function Merge-NxtExitCodes {
 			$exitCodeObj = $exitCodeObj | Select-Object -Unique
 			[string]$exitCodeString = $exitCodeObj -join ","
 		}
-		return $exitCodeString
+		Write-Output $exitCodeString
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -10786,17 +10786,18 @@ function Test-NxtXmlNodeExists {
 				if ($true -eq ([string]::IsNullOrEmpty(($nodes | Where-Object {
 					$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
 				} )))) {
-					return $false
+					Write-Output $false
+					return
 				}
 			}
-			return $true
+			Write-Output $true
 		}
 		else {
 			if ($false -eq [string]::IsNullOrEmpty($nodes)) {
-				return $true
+				Write-Output $true
 			}
 			else {
-				return $false
+				Write-Output $false
 			}
 		}
 	}
@@ -12822,7 +12823,7 @@ function Write-NxtXmlNode {
 				}
 
 				Write-Log -Message "Write a new node in xml file '$XmlFilePath'." -Source ${cmdletName}
-				return $xmlNode
+				Write-Output $xmlNode
 			}
 
 			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model

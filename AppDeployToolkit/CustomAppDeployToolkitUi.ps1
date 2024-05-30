@@ -193,7 +193,7 @@ function ConvertFrom-NxtEncodedObject {
 			[string]$decompressedString = $reader.ReadToEnd()
 			$reader.Close()
 			[System.Object]$psObject = $decompressedString | ConvertFrom-Json
-			return $psObject
+			Write-Output $psObject
 		}
 		catch {
 			Write-Log -Message "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -914,7 +914,7 @@ function New-NxtWpfControl() {
 			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
 			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
 		}
-		return $control
+		Write-Output $control
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
