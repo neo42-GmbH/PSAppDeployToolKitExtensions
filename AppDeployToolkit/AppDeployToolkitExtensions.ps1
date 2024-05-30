@@ -9585,6 +9585,7 @@ function Show-NxtWelcomePrompt {
 			}
 			default
 			{
+				Write-Log "CustomAppDeployToolkitUi.ps1 returned an unknown exit code: $welcomeExitCode. Defaulting to 'Continue'..." -Severity 3 -Source ${CmdletName}
 				$returnCode = 'Continue'
 			}
 		}
