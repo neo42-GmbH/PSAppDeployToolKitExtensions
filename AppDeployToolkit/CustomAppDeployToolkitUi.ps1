@@ -193,7 +193,7 @@ function ConvertFrom-NxtEncodedObject {
 			[string]$decompressedString = $reader.ReadToEnd()
 			$reader.Close()
 			[System.Object]$psObject = $decompressedString | ConvertFrom-Json
-			return $psObject
+			Write-Output $psObject
 		}
 		catch {
 			Write-Log -Message "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -914,7 +914,7 @@ function New-NxtWpfControl() {
 			Write-Log "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed." -Severity 3
 			throw "Unable to load Windows.Markup.XamlReader. Double-check syntax and ensure .net is installed."
 		}
-		return $control
+		Write-Output $control
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -1671,7 +1671,7 @@ function Test-RegistryValue {
 ## global default variables
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\..\neo42PackageConfig.json"
 ## Several PSADT-functions do not work, if these variables are not set here.
-$tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
+$tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -Raw ) | ConvertFrom-Json
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
@@ -1694,16 +1694,24 @@ $script:installPhase = "AskKillProcesses"
 [bool]$configToolkitLogDebugMessage = [bool]::Parse($xmlToolkitOptions.Toolkit_LogDebugMessage)
 [String]$appDeployCustomTypesSourceCode = Join-Path -Path $scriptRoot -ChildPath 'AppDeployToolkitMain.cs'
 if ($false -eq (Test-Path -LiteralPath $appDeployConfigFile -PathType 'Leaf')) {
-	throw 'App Deploy XML configuration file not found.'
+	Write-Log "App Deploy XML configuration file [$appDeployConfigFile] not found." -Source ${CmdletName} -Severity 3
+	throw "App Deploy XML configuration file [$appDeployConfigFile] not found."
 }
 if ($false -eq (Test-Path -LiteralPath $appDeployCustomTypesSourceCode -PathType 'Leaf')) {
-	throw 'App Deploy custom types source code file not found.'
+	Write-Log "App Deploy custom types source code file [$appDeployCustomTypesSourceCode] not found." -Source ${CmdletName} -Severity 3
+	throw "App Deploy custom types source code file [$appDeployCustomTypesSourceCode] not found."
 }
 
 ## Add the custom types required for the toolkit
 if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 	[String[]]$referencedAssemblies = 'System.Drawing', 'System.Windows.Forms', 'System.DirectoryServices'
-	Add-Type -Path $appDeployCustomTypesSourceCode -ReferencedAssemblies $referencedAssemblies -IgnoreWarnings -ErrorAction 'Stop'
+	try {
+		Add-Type -Path $appDeployCustomTypesSourceCode -ReferencedAssemblies $referencedAssemblies -IgnoreWarnings -ErrorAction 'Stop'
+	}
+	catch {
+		Write-Log -Message "Failed to load custom types from source code file [$appDeployCustomTypesSourceCode] or any of [$referencedAssemblies]. `r`n$(Resolve-Error)" -Source ${CmdletName} -Severity 3
+		throw 'Failed to load custom types from source code file.'
+	}
 }
 
 #  Get UI Options
@@ -1719,6 +1727,7 @@ if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 Set-Variable -Name 'closeAppsCountdownGlobal' -Value $CloseAppsCountdown -Scope 'Script'
 ## Check if the countdown was specified
 if ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeout)) {
+	Write-Log -Message "The close applications countdown time [$CloseAppsCountdown] is longer than the timeout specified in the XML configuration [$configInstallationUITimeout] for installation UI dialogs to timeout." -Source ${CmdletName} -Severity 3
 	throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
 }
 [PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -EncodedObject $ProcessObjectsEncoded

@@ -501,9 +501,9 @@ function Add-NxtSystemPathVariable {
 	.PARAMETER AddToBeginning
 		If set to true, the path will be added to the beginning of the PATH environment variable, defaults to false.
 	.EXAMPLE
-		Add-NxtProcessPathVariable -Path "C:\Temp"
+		Add-NxtSystemPathVariable -Path "C:\Temp"
 	.EXAMPLE
-		Add-NxtProcessPathVariable -Path "C:\Temp" -AddToBeginning $true
+		Add-NxtSystemPathVariable -Path "C:\Temp" -AddToBeginning $true
 	.OUTPUTS
 		none.
 	.LINK
@@ -802,6 +802,14 @@ function Close-NxtBlockExecutionWindow {
 		).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
 			Write-Log "The informational window of BlockExecution functionality will be closed now ..."
+			## Stop-NxtProcess does not yet support Id as Parameter
+			Stop-Process -Id $blockexecutionWindowId -Force
+		}
+		[int[]]$blockexecutionWindowId = (Get-Process powershell | Where-Object {
+			$_.Path -like "*\BlockExecution\DeoployNxtApplication.exe"}
+		).Id
+		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
+			Write-Log "The background process of BlockExecution functionality will be closed now ..."
 			## Stop-NxtProcess does not yet support Id as Parameter
 			Stop-Process -Id $blockexecutionWindowId -Force
 		}
@@ -1470,7 +1478,7 @@ function ConvertFrom-NxtEncodedObject {
 			[string]$decompressedString = $reader.ReadToEnd()
 			$reader.Close()
 			[System.Object]$psObject = $decompressedString | ConvertFrom-Json
-			return $psObject
+			Write-Output $psObject
 		}
 		catch {
 			Write-Log -Message "Failed to convert Base64-encoded string to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -1544,7 +1552,7 @@ function ConvertTo-NxtEncodedObject {
 			$writer.Write($jsonString)
 			$writer.Close()
 			[string]$encodedObject = [Convert]::ToBase64String($compressedData.ToArray())
-			return $encodedObject
+			Write-Output $encodedObject
 		}
 		catch {
 			Write-Log -Message "Failed to convert PowerShell object to Base64-encoded string. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
@@ -2957,13 +2965,13 @@ function Exit-NxtAbortReboot {
 			Remove-RegistryKey -Key "HKLM:\Software\$PackageMachineKey" -Recurse
 			Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageUninstallKey" -Recurse
 			if (
-				(Test-Path -Path "HKLM:Software\$EmpirumMachineKey") -and
+				(Test-Path -Path "HKLM:\Software\$EmpirumMachineKey") -and
 				$false -eq [string]::IsNullOrEmpty($EmpirumMachineKey)
 			) {
 				Remove-RegistryKey -Key "HKLM:\Software\$EmpirumMachineKey" -Recurse
 			}
 			if (
-				(Test-Path -Path "HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") -and
+				(Test-Path -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey") -and
 				$false -eq ([string]::IsNullOrEmpty($EmpirumUninstallKey))
 			) {
 				Remove-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$EmpirumUninstallKey" -Recurse
@@ -4096,23 +4104,23 @@ function Get-NxtIsSystemProcess {
 		[System.Management.ManagementObject]$process = Get-WmiObject -Class Win32_Process -Filter "ProcessID = $ProcessId"
 		if ($null -eq $process) {
 			Write-Log -Message "Failed to get process with ID '$ProcessId'." -Severity 2 -Source ${cmdletName}
-			return $false
+			Write-Output $false
 		}
 		else {
 			[psobject]$owner = $process.GetOwner()
 			if ($null -eq $owner) {
 				if ($ProcessId -eq 4 -and $process.Name -eq "System") {
 					Write-Log -Message "Process with ID '$ProcessId' is the system process." -Severity 3 -Source ${cmdletName}
-					return $true
+					Write-Output $true
 				}
 				else {
 					Write-Log -Message "Failed to get owner of process with ID '$ProcessId'." -Severity 2 -Source ${cmdletName}
-					return $false
+					Write-Output $false
 				}
 			}
 			else {
 				[System.Security.Principal.NTAccount]$account = New-Object System.Security.Principal.NTAccount("$($owner.Domain)\$($owner.User)")
-				return $account.Translate([System.Security.Principal.SecurityIdentifier]).Value -eq "S-1-5-18"
+				Write-Output $($account.Translate([System.Security.Principal.SecurityIdentifier]).Value -eq "S-1-5-18")
 			}
 		}
 	}
@@ -5408,14 +5416,15 @@ function Import-NxtIniFile {
 	}
 	Process {
 		try {
-			[hashtable]$ini = @{default=@{}}
+			[hashtable]$ini = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
+			$ini.default = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 			[string]$section = 'default'
-			[Array]$content = Get-Content -Path $Path
+			[string[]]$content = Get-Content -Path $Path
 			foreach ($line in $content) {
 				if ($line -match '^\[(.+)\]$') {
 					[string]$section = $matches[1]
 					if ($false -eq ($ini.ContainsKey($section))) {
-						[hashtable]$ini[$section] = @{}
+						[hashtable]$ini[$section] = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 					}
 				}
 				elseif ($line -match '^(;|#)') {
@@ -5482,15 +5491,16 @@ function Import-NxtIniFileWithComments {
 	}
 	Process {
 		try {
-			[hashtable]$ini = @{default=@{}}
+			[hashtable]$ini = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
+			$ini.default = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 			[string]$section = 'default'
-			[array]$commentBuffer = @()
-			[Array]$content = Get-Content -Path $Path
+			[string[]]$commentBuffer = @()
+			[string[]]$content = Get-Content -Path $Path
 			foreach ($line in $content) {
 				if ($line -match '^\[(.+)\]$') {
 					[string]$section = $matches[1]
 					if ($false -eq $ini.ContainsKey($section)) {
-						[hashtable]$ini[$section] = @{}
+						[hashtable]$ini[$section] = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 					}
 				}
 				elseif ($line -match '^(;|#)\s*(.*)') {
@@ -5499,10 +5509,9 @@ function Import-NxtIniFileWithComments {
 				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
 					[string]$variableName = $matches[1]
 					[string]$value = $matches[2].Trim()
-					[hashtable]$ini[$section][$variableName] = @{
-						Value	= $value
-						Comments = $commentBuffer -join "`r`n"
-					}
+					[hashtable]$ini[$section][$variableName] = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
+					$ini[$section][$variableName]["Value"] = $value
+					$ini[$section][$variableName]["Comments"] = $commentBuffer -join "`r`n"
 					[array]$commentBuffer = @()
 				}
 			}
@@ -5841,7 +5850,7 @@ function Initialize-NxtUninstallApplication {
 			}
 			[string[]]$currentKeyName = (Get-NxtInstalledApplication @getInstalledApplicationSplatted).UninstallSubkey
 			if ($currentKeyName.Count -ne 1) {
-				Write-Log -Message "Did not find unique uninstall registry key with name [$($uninstallKeyToHide.KeyName)]. Skipped hiding the entry for this key." -Source ${CmdletName} -Severity 2
+				Write-Log -Message "Did not find unique uninstall registry key with name [$($uninstallKeyToHide.KeyName)]. Skipped unhiding the entry for this key." -Source ${CmdletName} -Severity 2
 				continue
 			}
 			if (Get-RegistryKey -Key "HKLM:\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$currentKeyName" -Value SystemComponent) {
@@ -6185,7 +6194,7 @@ function Merge-NxtExitCodes {
 			$exitCodeObj = $exitCodeObj | Select-Object -Unique
 			[string]$exitCodeString = $exitCodeObj -join ","
 		}
-		return $exitCodeString
+		Write-Output $exitCodeString
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -6790,7 +6799,7 @@ function Register-NxtPackage {
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayIcon' -Value $App\neo42-Install\$(Split-Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Leaf)
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayName' -Value $UninstallDisplayName
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'DisplayVersion' -Value $AppVersion
-			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'MachineKeyName' -Value $RegPackagesKey\$PackageGUID
+			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'neoRegPackagesKeyRef' -Value $RegPackagesKey\$PackageGUID
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'NoModify' -Type 'Dword' -Value 1
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'NoRemove' -Type 'Dword' -Value $HidePackageUninstallButton
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'NoRepair' -Type 'Dword' -Value 1
@@ -7074,56 +7083,43 @@ function Remove-NxtEmptyRegistryKey {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		$hiveMap = @{
-			"HKLM" = "HKEY_LOCAL_MACHINE"
-			"HKCU" = "HKEY_CURRENT_USER"
-			"HKU" = "HKEY_USERS"
-			"HKCC" = "HKEY_CURRENT_CONFIG"
-			"HKCR" = "HKEY_CLASSES_ROOT"
+		[hashtable]$hiveMap = @{
+			"^HKLM:?" = "HKEY_LOCAL_MACHINE"
+			"^HKCU:?" = "HKEY_CURRENT_USER"
+			"^HKU:?" = "HKEY_USERS"
+			"^HKCC:?" = "HKEY_CURRENT_CONFIG"
+			"^HKCR:?" = "HKEY_CLASSES_ROOT"
+			"^(Microsoft.PowerShell.Core\\)?Registry::" = [string]::Empty
 		}
-		$Path = $Path -replace "^HKEY_CURRENT_USER", "HKCU:" -replace "^HKEY_USERS", "HKU:" -replace "^HKEY_LOCAL_MACHINE", "HKLM:" -replace "^HKEY_CURRENT_CONFIG", "HKCC:" -replace "^HKEY_CLASSES_ROOT", "HKCR:"
-		[string]$hiveRoot = $Path.Split(":") | Select-Object -First 1
-		[string[]]$mountedHives = Get-PSDrive -PSProvider Registry | Select-Object -ExpandProperty Name
-		if ($hiveMap.Keys -notcontains $hiveRoot) {
-			Write-Log -Message "Hive [$hiveRoot] is not a legitimite root." -Severity 3 -Source ${CmdletName}
+		foreach ($key in $hiveMap.Keys) {
+			$Path = $Path -replace $key, $hiveMap[$key]
+		}
+		[Microsoft.Win32.RegistryKey[]]$keys = Get-Item -Path "Registry::$Path" -ErrorAction 'SilentlyContinue'
+		if ($keys.Count -eq 0) {
+			Write-Log -Message "Key [$Path] does not exist or is not a registry address..." -Source ${CmdletName} -Severity 2
 			return
 		}
-		elseif ($mountedHives -notcontains $hiveRoot) {
+		foreach ($key in $keys) {
+			Write-Log -Message "Check if [$key] exists and is empty..." -Source ${CmdletName}
 			try {
-				Write-Log "Have to mount registry hive [$hiveRoot]." -Source ${CmdletName}
-				[System.Management.Automation.PSDriveInfo]$mountedDrive = New-PSDrive -PSProvider "Registry" -Name $hiveRoot -Root $hiveMap[$hiveRoot] -ErrorAction Stop
-			} catch {
-				Write-Log -Message "Failed to mount hive root [$hiveRoot] or cannot find mountpount." -Severity 3 -Source ${CmdletName}
-				return
-			}
-		}
-		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
-		if ($true -eq (Test-Path -LiteralPath "$Path" -PathType 'Container')) {
-			try {
-				if ( ((Get-ChildItem -LiteralPath $Path | Measure-Object).Count -eq 0) -and ($null -eq (Get-ItemProperty -LiteralPath $Path)) ) {
-					Write-Log -Message "Delete empty key [$Path]..." -Source ${CmdletName}
-					Remove-Item -LiteralPath $Path -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveKey'
+				if ( ((Get-ChildItem -LiteralPath $key.PSPath | Measure-Object).Count -eq 0) -and ($null -eq (Get-ItemProperty -LiteralPath $key.PSPath)) ) {
+					Write-Log -Message "Delete empty key [$key]..." -Source ${CmdletName}
+					Remove-Item -LiteralPath $key.PSPath -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveKey'
 					if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveKey)) {
-						Write-Log -Message "The following error(s) took place while deleting the empty key [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveKey)" -Severity 2 -Source ${CmdletName}
+						Write-Log -Message "The following error(s) took place while deleting the empty key [$key]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveKey)" -Severity 2 -Source ${CmdletName}
 					}
 					else {
-						Write-Log -Message "Empty key [$Path] was deleted successfully..." -Source ${CmdletName}
+						Write-Log -Message "Empty key [$key] was deleted successfully..." -Source ${CmdletName}
 					}
 				}
 				else {
-					Write-Log -Message "Key [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
+					Write-Log -Message "Key [$key] is not empty, so it was not deleted..." -Source ${CmdletName}
 				}
 			}
 			catch {
 				Write-Log -Message "Failed to delete empty key [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
 				throw
 			}
-		}
-		else {
-			Write-Log -Message "Key [$Path] does not exist..." -Source ${CmdletName}
-		}
-		if ($null -ne $mountedDrive) {
-			$mountedDrive | Remove-PSDrive
 		}
 	}
 	End {
@@ -7492,7 +7488,7 @@ function Remove-NxtProcessPathVariable {
 	}
 }
 #endregion
-#region Function Remove-NxtProcessPathVariable
+#region Function Remove-NxtSystemPathVariable
 function Remove-NxtSystemPathVariable {
 	<#
 	.SYNOPSIS
@@ -7501,7 +7497,7 @@ function Remove-NxtSystemPathVariable {
 		Removes a path to the systems PATH environment variable.
 		Empty entries will be removed.
 	.PARAMETER Path
-		Path to be added to the systems PATH environment variable.
+		Path to be removed from the systems PATH environment variable.
 	.EXAMPLE
 		Remove-NxtSystemPathVariable -Path "C:\Temp"
 	.OUTPUTS
@@ -8613,7 +8609,7 @@ function Set-NxtSetupCfg {
 		## provide all expected predefined values from ADT framework config file if they are missing/undefined in a default file 'setup.cfg' only
 		if ($true -eq $AddDefaultOptions) {
 			if ($null -eq $global:SetupCfg) {
-				[hashtable]$global:SetupCfg = @{}
+				[hashtable]$global:SetupCfg = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 			}
 			## note: xml nodes are case-sensitive
 			foreach ( $xmlSection in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.ChildNodes.Name | Where-Object {
@@ -8624,7 +8620,7 @@ function Set-NxtSetupCfg {
 				}) ) {
 					if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
 						if ($null -eq $global:SetupCfg.$xmlSection) {
-							[hashtable]$global:SetupCfg.$xmlSection = @{}
+							[hashtable]$global:SetupCfg.$xmlSection = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 						}
 						[hashtable]$global:SetupCfg.$xmlSection.add("$($xmlSectionSubValue)", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
 						Write-Log -Message "Set undefined necessary global object value [`$global:SetupCfg.$($xmlSection).$($xmlSectionSubValue)] with predefined default content: [$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)]" -Severity 2 -Source ${CmdletName}
@@ -9159,24 +9155,28 @@ function Show-NxtInstallationWelcome {
 				if ($true -eq ([string]::IsNullOrEmpty($runningProcessDescriptions))) {
 					break
 				}
-				#  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
-				if ($true -eq $AllowDefer) {
-					#  If there is deferral and closing apps is allowed but there are no apps to be closed, break the while loop
-					if (($true -eq $AllowDeferCloseApps) -and ($true -eq ([string]::IsNullOrEmpty($runningProcessDescriptions)))) {
+				if ($CloseAppsCountdown -gt 0) {
+					#  Check if we need to prompt the user to defer, to defer and close apps, or not to prompt them at all
+					if (($true -eq $AllowDefer) -and (($false -eq ($promptResult.Contains('Close'))) -or (($runningProcessDescriptions) -and ($false -eq ($promptResult.Contains('Continue')))))) {
+						$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
+					}
+					#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
+					elseif (($true -eq $runningProcessDescriptions) -or ($true -eq $forceCountdown)) {
+						$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
+					}
+					#  If there is no deferral and no processes running, break the while loop
+					else {
 						break
 					}
-					#  Otherwise, as long as the user has not selected to close the apps or the processes are still running and the user has not selected to continue, prompt user to close running processes with deferral
-					elseif (($false -eq ($promptResult.Contains('Close'))) -or (($runningProcessDescriptions) -and ($false -eq ($promptResult.Contains('Continue'))))) {
-						[String]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -AllowDefer -DeferTimes $deferTimes -DeferDeadline $deferDeadlineUniversal -MinimizeWindows $MinimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
-					}
 				}
-				#  If there is no deferral and processes are running, prompt the user to close running processes with no deferral option
-				elseif (($true -eq $runningProcessDescriptions) -or ($true -eq $forceCountdown)) {
-					[String]$promptResult = Show-NxtWelcomePrompt -ProcessObjects $processObjects -ProcessDescriptions $runningProcessDescriptions -CloseAppsCountdown $closeAppsCountdownGlobal -PersistPrompt $PersistPrompt -MinimizeWindows $minimizeWindows -CustomText:$CustomText -TopMost $TopMost -ContinueType $ContinueType -UserCanCloseAll:$UserCanCloseAll -UserCanAbort:$UserCanAbort -ApplyContinueTypeOnError:$ApplyContinueTypeOnError -ProcessIdToIgnore $ProcessIdToIgnore
-				}
-				#  If there is no deferral and no processes running, break the while loop
 				else {
-					break
+					# These results are equivalent the results of Show-NxtWelcomePrompt
+					if ($ContinueType -eq [PSADTNXT.ContinueType]::Abort) {
+						$promptResult = 'Cancel'
+					}
+					else {
+						$promptResult = 'Close'
+					}
 				}
 				if ($true -eq ($promptResult.Contains('Cancel'))) {
 					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${CmdletName}
@@ -9199,7 +9199,7 @@ function Show-NxtInstallationWelcome {
 				}
 				#  Force the applications to close
 				elseif ($true -eq ($promptResult.Contains('Close'))) {
-					Write-Log -Message 'The user selected to force the application(s) to close...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to force the application(s) to close or timeout was reached with ContinueType set to Continue...' -Source ${CmdletName}
 					if (($true -eq $PromptToSave) -and (($true -eq $SessionZero) -and ($false -eq $IsProcessUserInteractive))) {
 						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
 					}
@@ -9647,6 +9647,7 @@ function Show-NxtWelcomePrompt {
 			}
 			default
 			{
+				Write-Log "CustomAppDeployToolkitUi.ps1 returned an unknown exit code: $welcomeExitCode. Defaulting to 'Continue'..." -Severity 3 -Source ${CmdletName}
 				$returnCode = 'Continue'
 			}
 		}
@@ -10839,17 +10840,18 @@ function Test-NxtXmlNodeExists {
 				if ($true -eq ([string]::IsNullOrEmpty(($nodes | Where-Object {
 					$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
 				} )))) {
-					return $false
+					Write-Output $false
+					return
 				}
 			}
-			return $true
+			Write-Output $true
 		}
 		else {
 			if ($false -eq [string]::IsNullOrEmpty($nodes)) {
-				return $true
+				Write-Output $true
 			}
 			else {
-				return $false
+				Write-Output $false
 			}
 		}
 	}
@@ -12875,7 +12877,7 @@ function Write-NxtXmlNode {
 				}
 
 				Write-Log -Message "Write a new node in xml file '$XmlFilePath'." -Source ${cmdletName}
-				return $xmlNode
+				Write-Output $xmlNode
 			}
 
 			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model

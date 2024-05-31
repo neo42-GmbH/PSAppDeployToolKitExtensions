@@ -945,8 +945,10 @@ value dependent of expected behavior for existence of the registry key (valid ar
 
 parent: /
 ```
-comma separated list of public desktop shortcut names to delete
-note: an empty list is allowed (that means: "CommonDesktopShortcutsToDelete": [])!
+comma separated list of public desktop shortcut names to delete.
+shortcuts are always deleted on uninstallation
+if DESKTOPSHORTCUT=1 is specified in setup.cfg these will also be deleted on installation to clear the desktop for the shortcuts created during setup.
+note: an empty list is allowed (meaning: "CommonDesktopShortcutsToDelete": [])
 ```
 
 **"CommonStartMenuShortcutsToCopyToCommonDesktop":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
