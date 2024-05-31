@@ -815,7 +815,7 @@ function Close-NxtBlockExecutionWindow {
 				$_.Path -like '*\BlockExecution\DeployNxtApplication.exe'
 			}).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
-			Write-Log "The background process of BlockExecution functionality will be closed now ..."
+			Write-Log "The background process of BlockExecution functionality will be closed now ..." -Source ${cmdletName}
 			## Stop-NxtProcess does not yet support Id as Parameter
 			Stop-Process -Id $blockexecutionWindowId -Force
 		}
