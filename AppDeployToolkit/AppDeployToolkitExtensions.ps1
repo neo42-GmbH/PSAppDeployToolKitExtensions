@@ -5436,14 +5436,15 @@ function Import-NxtIniFile {
 	}
 	Process {
 		try {
-			[hashtable]$ini = @{default = @{} }
+			[hashtable]$ini = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
+			$ini.default = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 			[string]$section = 'default'
-			[Array]$content = Get-Content -Path $Path
+			[string[]]$content = Get-Content -Path $Path
 			foreach ($line in $content) {
 				if ($line -match '^\[(.+)\]$') {
 					[string]$section = $matches[1]
 					if ($false -eq ($ini.ContainsKey($section))) {
-						[hashtable]$ini[$section] = @{}
+						[hashtable]$ini[$section] = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 					}
 				}
 				elseif ($line -match '^(;|#)') {
@@ -5510,15 +5511,16 @@ function Import-NxtIniFileWithComments {
 	}
 	Process {
 		try {
-			[hashtable]$ini = @{default = @{} }
+			[hashtable]$ini = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
+			$ini.default = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 			[string]$section = 'default'
-			[array]$commentBuffer = @()
-			[Array]$content = Get-Content -Path $Path
+			[string[]]$commentBuffer = @()
+			[string[]]$content = Get-Content -Path $Path
 			foreach ($line in $content) {
 				if ($line -match '^\[(.+)\]$') {
 					[string]$section = $matches[1]
 					if ($false -eq $ini.ContainsKey($section)) {
-						[hashtable]$ini[$section] = @{}
+						[hashtable]$ini[$section] = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 					}
 				}
 				elseif ($line -match '^(;|#)\s*(.*)') {
@@ -5527,10 +5529,9 @@ function Import-NxtIniFileWithComments {
 				elseif ($line -match '^(.+?)\s*=\s*(.*)$') {
 					[string]$variableName = $matches[1]
 					[string]$value = $matches[2].Trim()
-					[hashtable]$ini[$section][$variableName] = @{
-						Value    = $value
-						Comments = $commentBuffer -join "`r`n"
-					}
+					[hashtable]$ini[$section][$variableName] = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
+					$ini[$section][$variableName]["Value"] = $value
+					$ini[$section][$variableName]["Comments"] = $commentBuffer -join "`r`n"
 					[array]$commentBuffer = @()
 				}
 			}
@@ -8582,7 +8583,7 @@ function Set-NxtSetupCfg {
 		## provide all expected predefined values from ADT framework config file if they are missing/undefined in a default file 'setup.cfg' only
 		if ($true -eq $AddDefaultOptions) {
 			if ($null -eq $global:SetupCfg) {
-				[hashtable]$global:SetupCfg = @{}
+				[hashtable]$global:SetupCfg = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 			}
 			## note: xml nodes are case-sensitive
 			foreach ( $xmlSection in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.ChildNodes.Name | Where-Object {
@@ -8593,7 +8594,7 @@ function Set-NxtSetupCfg {
 						}) ) {
 					if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
 						if ($null -eq $global:SetupCfg.$xmlSection) {
-							[hashtable]$global:SetupCfg.$xmlSection = @{}
+							[hashtable]$global:SetupCfg.$xmlSection = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 						}
 						[hashtable]$global:SetupCfg.$xmlSection.add("$($xmlSectionSubValue)", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
 						Write-Log -Message "Set undefined necessary global object value [`$global:SetupCfg.$($xmlSection).$($xmlSectionSubValue)] with predefined default content: [$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)]" -Severity 2 -Source ${cmdletName}
