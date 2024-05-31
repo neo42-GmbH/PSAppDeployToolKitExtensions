@@ -7012,7 +7012,7 @@ function Remove-NxtEmptyIniFile {
 	Process {
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
 		if ($false -eq $Path.Exists -or $Path.Extension -ne ".ini") {
-			Write-Log -Message "File [$Path] does not exist or is not an INI file..." -Severity 2 -Source ${CmdletName}
+			Write-Log -Message "File [$Path] does not exist or is not an INI file..." -Severity 1 -Source ${CmdletName}
 			return
 		}
 		try {
@@ -7020,20 +7020,20 @@ function Remove-NxtEmptyIniFile {
 			## If any section exists that contains keys, the INI file is not considered empty
 			foreach ($section in $content.GetEnumerator()) {
 				if ($section.Value.Keys.Count -gt 0) {
-					Write-Log -Message "INI file [$Path] is not empty, so it was not deleted..." -Source ${CmdletName}
+					Write-Log -Message "INI file [$Path] is not empty, so it was not deleted..." -Severity 2 -Source ${CmdletName}
 					return
 				}
 			}
 			Remove-Item -Path $Path.FullName -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveIniFile'
 			if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveIniFile)) {
-				Write-Log -Message "The following error(s) took place while deleting the empty INI file [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveIniFile)" -Severity 2 -Source ${CmdletName}
+				Write-Log -Message "The following error(s) took place while deleting the empty INI file [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveIniFile)" -Severity 1 -Source ${CmdletName}
 			}
 			else {
 				Write-Log -Message "Empty INI file [$Path] was deleted successfully..." -Source ${CmdletName}
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to import or delete INI file [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+			Write-Log -Message "Failed to import or delete INI file [$Path]. `n$(Resolve-Error)" -Severity 1 -Source ${CmdletName}
 		}
 	}
 	End {
