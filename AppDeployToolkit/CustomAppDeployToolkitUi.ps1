@@ -1256,7 +1256,7 @@ function Write-FunctionHeaderOrFooter {
 	)
 
 	if ($true -eq $Header) {
-		Write-Log -Message 'Function Start' -Source ${cmdletName} -DebugMessage
+		Write-Log -Message 'Function Start' -Source ${CmdletName} -DebugMessage
 
 		## Get the parameters that the calling function was invoked with
 		[string]$CmdletBoundParameters = $CmdletBoundParameters | Format-Table -Property @{
@@ -1280,14 +1280,14 @@ function Write-FunctionHeaderOrFooter {
 			Alignment  = 'Left'
 		} -AutoSize -Wrap | Out-String
 		if ($false -eq [string]::IsNullOrEmpty($CmdletBoundParameters)) {
-			Write-Log -Message "Function invoked with bound parameter(s): `r`n$CmdletBoundParameters" -Source ${cmdletName} -DebugMessage
+			Write-Log -Message "Function invoked with bound parameter(s): `r`n$CmdletBoundParameters" -Source ${CmdletName} -DebugMessage
 		}
 		else {
-			Write-Log -Message 'Function invoked without any bound parameters.' -Source ${cmdletName} -DebugMessage
+			Write-Log -Message 'Function invoked without any bound parameters.' -Source ${CmdletName} -DebugMessage
 		}
 	}
 	elseif ($true -eq $Footer) {
-		Write-Log -Message 'Function End' -Source ${cmdletName} -DebugMessage
+		Write-Log -Message 'Function End' -Source ${CmdletName} -DebugMessage
 	}
 }
 #endregion
@@ -1721,11 +1721,11 @@ $script:installPhase = 'AskKillProcesses'
 [bool]$configToolkitLogDebugMessage = [bool]::Parse($xmlToolkitOptions.Toolkit_LogDebugMessage)
 [string]$appDeployCustomTypesSourceCode = Join-Path -Path $scriptRoot -ChildPath 'AppDeployToolkitMain.cs'
 if ($false -eq (Test-Path -LiteralPath $appDeployConfigFile -PathType 'Leaf')) {
-	Write-Log "App Deploy XML configuration file [$appDeployConfigFile] not found." -Source ${CmdletName} -Severity 3
+	Write-Log "App Deploy XML configuration file [$appDeployConfigFile] not found." -Source ${cmdletName} -Severity 3
 	throw "App Deploy XML configuration file [$appDeployConfigFile] not found."
 }
 if ($false -eq (Test-Path -LiteralPath $appDeployCustomTypesSourceCode -PathType 'Leaf')) {
-	Write-Log "App Deploy custom types source code file [$appDeployCustomTypesSourceCode] not found." -Source ${CmdletName} -Severity 3
+	Write-Log "App Deploy custom types source code file [$appDeployCustomTypesSourceCode] not found." -Source ${cmdletName} -Severity 3
 	throw "App Deploy custom types source code file [$appDeployCustomTypesSourceCode] not found."
 }
 
@@ -1736,7 +1736,7 @@ if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 		Add-Type -Path $appDeployCustomTypesSourceCode -ReferencedAssemblies $referencedAssemblies -IgnoreWarnings -ErrorAction 'Stop'
 	}
 	catch {
-		Write-Log -Message "Failed to load custom types from source code file [$appDeployCustomTypesSourceCode] or any of [$referencedAssemblies]. `r`n$(Resolve-Error)" -Source ${CmdletName} -Severity 3
+		Write-Log -Message "Failed to load custom types from source code file [$appDeployCustomTypesSourceCode] or any of [$referencedAssemblies]. `r`n$(Resolve-Error)" -Source ${cmdletName} -Severity 3
 		throw 'Failed to load custom types from source code file.'
 	}
 }
@@ -1754,7 +1754,7 @@ if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 Set-Variable -Name 'closeAppsCountdownGlobal' -Value $CloseAppsCountdown -Scope 'Script'
 ## Check if the countdown was specified
 if ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeout)) {
-	Write-Log -Message "The close applications countdown time [$CloseAppsCountdown] is longer than the timeout specified in the XML configuration [$configInstallationUITimeout] for installation UI dialogs to timeout." -Source ${CmdletName} -Severity 3
+	Write-Log -Message "The close applications countdown time [$CloseAppsCountdown] is longer than the timeout specified in the XML configuration [$configInstallationUITimeout] for installation UI dialogs to timeout." -Source ${cmdletName} -Severity 3
 	throw 'The close applications countdown time cannot be longer than the timeout specified in the XML configuration for installation UI dialogs to timeout.'
 }
 [PSObject[]]$processObjects = ConvertFrom-NxtEncodedObject -EncodedObject $ProcessObjectsEncoded
