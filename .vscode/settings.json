@@ -43,9 +43,16 @@
     "json.schemas": [
         {
             "fileMatch": [
-                "/neo42PackageConfig.json"
+                "neo42PackageConfig.json"
             ],
             "url": "./.tests/schemas/neo42PackageConfig.schema.json"
+        }
+    ],
+    //-------- XML configuration --------
+    "xml.fileAssociations": [
+        {
+            "pattern": "AppDeployToolkit/AppDeployToolkitConfig.xml",
+            "systemId": "./.tests/schemas/AppDeployToolkitConfig.schema.xsd"
         }
     ]
 }

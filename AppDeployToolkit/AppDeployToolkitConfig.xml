@@ -246,7 +246,7 @@
         <!-- Name displayed in UI for installation deployment type. -->
         <DeploymentType_UnInstall>Uninstallation</DeploymentType_UnInstall>
 		<DeploymentType_UnInstallVerb>uninstalled</DeploymentType_UnInstallVerb>
-        <!-- Name displayed in UI for uninstallation deployment type. -->
+        <!-- Name displayed in UI for repair deployment type. -->
         <DeploymentType_Repair>Repairing</DeploymentType_Repair>
 		<DeploymentType_RepairVerb>repaired</DeploymentType_RepairVerb>
         <!-- Name displayed in UI for repair deployment type. -->

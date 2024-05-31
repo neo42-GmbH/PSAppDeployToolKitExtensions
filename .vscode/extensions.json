@@ -1,6 +1,7 @@
 // PSAppDeployToolkitExtension default extension recommendations
 {
     "recommendations": [
-        "ms-vscode.PowerShell"
+        "ms-vscode.PowerShell",
+        "redhat.vscode-xml"
     ]
 }
