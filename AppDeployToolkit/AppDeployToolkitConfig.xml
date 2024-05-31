@@ -53,7 +53,7 @@
 
     <!--Toolkit Options-->
     <Toolkit_Options>
-        <Toolkit_RequireAdmin>True</Toolkit_RequireAdmin>
+        <Toolkit_RequireAdmin>true</Toolkit_RequireAdmin>
         <!-- Specify if Administrator Rights are required. NB: Some functions won't work if this is set to false, such as deferral, blockexecution, file & registry RW access and potentially logging. -->
         <Toolkit_TempPath>$envTemp</Toolkit_TempPath>
         <!-- Path used to store temporary Toolkit files (with PSAppDeployToolkit as subdirectory), e.g. cache toolkit for cleaning up blocked apps. Normally you don't want this set to a path that is writable by regular users, this might lead to a security vulnerability. The default Temp variable for the LocalSystem account is C:\Windows\Temp. -->
@@ -62,27 +62,27 @@
 		<Toolkit_LogPath>$AppLogFolder</Toolkit_LogPath>
         <!-- Log path used for Toolkit logging. -->
         <Toolkit_TempPathNoAdminRights>$envTemp</Toolkit_TempPathNoAdminRights>
-        <!-- Same as TempPath but used when RequireAdmin is False. -->
+        <!-- Same as TempPath but used when RequireAdmin is false. -->
         <Toolkit_RegPathNoAdminRights>HKCU:\SOFTWARE</Toolkit_RegPathNoAdminRights>
-        <!-- Same as RegPath but used when RequireAdmin is False. Bear in mind that since this Registry Key should be writable without admin permission, regular users can modify it also. -->
+        <!-- Same as RegPath but used when RequireAdmin is false. Bear in mind that since this Registry Key should be writable without admin permission, regular users can modify it also. -->
 		<Toolkit_LogPathNoAdminRights>$AppLogFolder\$env:USERNAME</Toolkit_LogPathNoAdminRights>
-        <!-- Same as LogPath but used when RequireAdmin is False. -->
-        <Toolkit_CompressLogs>False</Toolkit_CompressLogs>
+        <!-- Same as LogPath but used when RequireAdmin is false. -->
+        <Toolkit_CompressLogs>false</Toolkit_CompressLogs>
         <!-- Specify if the log files should be bundled together in a compressed zip file -->
         <Toolkit_LogStyle>CMTrace</Toolkit_LogStyle>
         <!-- Specify if log file should be a CMTrace compatible log file or a Legacy text log file. -->
-        <Toolkit_LogDebugMessage>False</Toolkit_LogDebugMessage>
+        <Toolkit_LogDebugMessage>false</Toolkit_LogDebugMessage>
         <!-- Specify if debug messages such as bound parameters passed to a function should be logged. -->
         <Toolkit_LogMaxSize>10</Toolkit_LogMaxSize>
         <!-- Specify maximum file size limit for log file in megabytes (MB). -->
-        <Toolkit_LogWriteToHost>True</Toolkit_LogWriteToHost>
+        <Toolkit_LogWriteToHost>true</Toolkit_LogWriteToHost>
         <!-- Specify if log messages should be written to the console. -->
     </Toolkit_Options>
     <!--Toolkit Options-->
 
     <!--Toast Notification Options-->
     <Toast_Options>
-        <Toast_Disable>False</Toast_Disable>
+        <Toast_Disable>false</Toast_Disable>
         <Toast_AppName>PSAppDeployToolkit</Toast_AppName>
     </Toast_Options>
     <!--Toast Notification Options-->
@@ -108,7 +108,7 @@
 		<MSI_LogPath>$AppLogFolder</MSI_LogPath>
         <!-- Log path used for MSI logging. -->
 		<MSI_LogPathNoAdminRights>$AppLogFolder\$env:USERNAME</MSI_LogPathNoAdminRights>
-        <!-- Log path used for MSI logging when RequireAdmin is False. -->
+        <!-- Log path used for MSI logging when RequireAdmin is false. -->
 		<MSI_InstallParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_InstallParams>
         <!-- Installation parameters used for MSI actions in non-silent Deploy-Application call. -->
 		<MSI_SilentParams>MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn</MSI_SilentParams>
@@ -125,7 +125,7 @@
 		<NxtInnoSetup_LogPath>$AppLogFolder</NxtInnoSetup_LogPath>
 		<!-- Log path used for InnoSetup logging. -->
 		<NxtInnoSetup_LogPathNoAdminRights>$AppLogFolder\$env:USERNAME</NxtInnoSetup_LogPathNoAdminRights>
-		<!-- Log path used for InnoSetup logging when RequireAdmin is False. -->
+		<!-- Log path used for InnoSetup logging when RequireAdmin is false. -->
 		<NxtInnoSetup_InstallParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_InstallParams>
 		<!-- Installation parameters used for InnoSetup actions in non-silent Deploy-Application call. -->
 		<NxtInnoSetup_SilentParams>/FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010</NxtInnoSetup_SilentParams>
@@ -176,8 +176,8 @@
              HU                 Hungarian       |       CZ                  Czech
              FI                 Finnish         |
         -->
-        <ShowBalloonNotifications>False</ShowBalloonNotifications>
-        <!-- [True/False] - Used to turn automatic balloon notifications on or off. -->
+        <ShowBalloonNotifications>false</ShowBalloonNotifications>
+        <!-- [true/false] - Used to turn automatic balloon notifications on or off. -->
         <InstallationUI_Timeout>6900</InstallationUI_Timeout>
         <!-- Time in seconds to automatically timeout installation dialogs. Default is 1 hour and 55 minutes so that dialogs timeout before SCCM times out. -->
         <InstallationUI_ExitCode>1618</InstallationUI_ExitCode>
@@ -190,8 +190,8 @@
         <!-- Time in seconds after which the restart prompt should be re-displayed/repositioned when the -NoCountdown parameter is specified. Default is 600 seconds. -->
         <InstallationPromptToSave_Timeout>120</InstallationPromptToSave_Timeout>
         <!-- Time in seconds after which to re-prompt the user to close applications in case they ignore the prompt or they cancel the application's save prompt. -->
-        <InstallationWelcomePrompt_DynamicRunningProcessEvaluation>True</InstallationWelcomePrompt_DynamicRunningProcessEvaluation>
-        <!-- [True/False] - Specify whether to re-enumerate running processes dynamically while displaying Show-InstallationWelcome. -->
+        <InstallationWelcomePrompt_DynamicRunningProcessEvaluation>true</InstallationWelcomePrompt_DynamicRunningProcessEvaluation>
+        <!-- [true/false] - Specify whether to re-enumerate running processes dynamically while displaying Show-InstallationWelcome. -->
         <!-- If the CloseApps processes were not running when the prompt was displayed, and are subsequently detected to be running, the prompt will be updated with the apps to close. -->
         <!-- If the CloseApps processes were running when the prompt was displayed and are subsequently detected not to be running then the installation will automatically continue if deferral is not available. -->
         <!-- If the running applications change (new CloseApps processes launched or running processes closed), the list box will dynamically update to reflect the currently running applications. -->
@@ -1400,6 +1400,4 @@
         <RestartPrompt_ButtonRestartLater>Käynnistä uudelleen myöhemmin</RestartPrompt_ButtonRestartLater>
         <RestartPrompt_ButtonRestartNow>Käynnistä uudelleen heti</RestartPrompt_ButtonRestartNow>
     </UI_Messages_FI>
-
-
 </AppDeployToolkit_Config>

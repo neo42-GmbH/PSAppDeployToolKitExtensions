@@ -41,9 +41,9 @@
 								</xs:annotation>
 								<xs:complexType>
 									<xs:sequence>
-										<xs:element type="xs:byte" name="DESKTOPSHORTCUT" />
+										<xs:element type="Byte01" name="DESKTOPSHORTCUT" />
 										<xs:element type="xs:byte" name="SHOWBALLOONNOTIFICATIONS" />
-										<xs:element type="xs:byte" name="SOFTMIGRATION" />
+										<xs:element type="Byte01" name="SOFTMIGRATION" />
 									</xs:sequence>
 								</xs:complexType>
 							</xs:element>
@@ -52,13 +52,13 @@
 									<xs:sequence>
 										<xs:element type="xs:short" name="TIMEOUT" />
 										<xs:element type="xs:string" name="CONTINUETYPE" />
-										<xs:element type="xs:byte" name="USERCANCLOSEALL" />
-										<xs:element type="xs:byte" name="ALLOWABORTBYUSER" />
+										<xs:element type="Byte01" name="USERCANCLOSEALL" />
+										<xs:element type="Byte01" name="ALLOWABORTBYUSER" />
 										<xs:element type="xs:short" name="DEFERDAYS" />
 										<xs:element type="xs:short" name="DEFERTIMES" />
-										<xs:element type="xs:byte" name="TOPMOSTWINDOW" />
-										<xs:element type="xs:byte" name="MINIMIZEALLWINDOWS" />
-										<xs:element type="xs:byte" name="APPLYCONTINUETYPEONERROR" />
+										<xs:element type="Byte01" name="TOPMOSTWINDOW" />
+										<xs:element type="Byte01" name="MINIMIZEALLWINDOWS" />
+										<xs:element type="Byte01" name="APPLYCONTINUETYPEONERROR" />
 									</xs:sequence>
 								</xs:complexType>
 							</xs:element>
@@ -97,15 +97,8 @@
 					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element name="Toolkit_RequireAdmin">
-								<xs:simpleType>
-									<xs:restriction base="xs:string">
-										<xs:enumeration value="True" />
-										<xs:enumeration value="False" />
-									</xs:restriction>
-								</xs:simpleType>
-							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_TempPath">
+							<xs:element type="xs:boolean"  name="Toolkit_RequireAdmin"/>
+							<xs:element type="xs:anyURI" name="Toolkit_TempPath">
 								<xs:annotation>
 									<xs:documentation> Specify if Administrator Rights are required.
 										NB: Some functions won't work if this is set to false, such
@@ -113,7 +106,7 @@
 										and potentially logging. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_RegPath">
+							<xs:element type="xs:anyURI" name="Toolkit_RegPath">
 								<xs:annotation>
 									<xs:documentation> Path used to store temporary Toolkit files
 										(with PSAppDeployToolkit as subdirectory), e.g. cache
@@ -124,25 +117,25 @@
 										C:\Windows\Temp. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_LogPath">
+							<xs:element type="xs:anyURI" name="Toolkit_LogPath">
 								<xs:annotation>
 									<xs:documentation> Registry key used to store toolkit
 										information (with PSAppDeployToolkit as child registry key),
 										e.g. deferral history. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_TempPathNoAdminRights">
+							<xs:element type="xs:anyURI" name="Toolkit_TempPathNoAdminRights">
 								<xs:annotation>
 									<xs:documentation> Log path used for Toolkit logging. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_RegPathNoAdminRights">
+							<xs:element type="xs:anyURI" name="Toolkit_RegPathNoAdminRights">
 								<xs:annotation>
 									<xs:documentation> Same as TempPath but used when RequireAdmin
 										is False. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_LogPathNoAdminRights">
+							<xs:element type="xs:anyURI" name="Toolkit_LogPathNoAdminRights">
 								<xs:annotation>
 									<xs:documentation> Same as RegPath but used when RequireAdmin is
 										False. Bear in mind that since this Registry Key should be
@@ -150,17 +143,11 @@
 										it also. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element name="Toolkit_CompressLogs">
+							<xs:element type="xs:boolean" name="Toolkit_CompressLogs">
 								<xs:annotation>
 									<xs:documentation> Same as LogPath but used when RequireAdmin is
 										False. </xs:documentation>
 								</xs:annotation>
-								<xs:simpleType>
-									<xs:restriction base="xs:string">
-										<xs:enumeration value="True" />
-										<xs:enumeration value="False" />
-									</xs:restriction>
-								</xs:simpleType>
 							</xs:element>
 							<xs:element name="Toolkit_LogStyle">
 								<xs:annotation>
@@ -174,17 +161,11 @@
 									</xs:restriction>
 								</xs:simpleType>
 							</xs:element>
-							<xs:element name="Toolkit_LogDebugMessage">
+							<xs:element type="xs:boolean" name="Toolkit_LogDebugMessage">
 								<xs:annotation>
 									<xs:documentation> Specify if log file should be a CMTrace
 										compatible log file or a Legacy text log file. </xs:documentation>
 								</xs:annotation>
-								<xs:simpleType>
-									<xs:restriction base="xs:string">
-										<xs:enumeration value="True" />
-										<xs:enumeration value="False" />
-									</xs:restriction>
-								</xs:simpleType>
 							</xs:element>
 							<xs:element type="xs:int" name="Toolkit_LogMaxSize">
 								<xs:annotation>
@@ -192,17 +173,11 @@
 										parameters passed to a function should be logged. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element name="Toolkit_LogWriteToHost">
+							<xs:element type="xs:boolean" name="Toolkit_LogWriteToHost">
 								<xs:annotation>
 									<xs:documentation> Specify maximum file size limit for log file
 										in megabytes (MB). </xs:documentation>
 								</xs:annotation>
-								<xs:simpleType>
-									<xs:restriction base="xs:string">
-										<xs:enumeration value="True" />
-										<xs:enumeration value="False" />
-									</xs:restriction>
-								</xs:simpleType>
 							</xs:element>
 						</xs:sequence>
 					</xs:complexType>
@@ -213,14 +188,7 @@
 					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element name="Toast_Disable">
-								<xs:simpleType>
-									<xs:restriction base="xs:string">
-										<xs:enumeration value="True" />
-										<xs:enumeration value="False" />
-									</xs:restriction>
-								</xs:simpleType>
-							</xs:element>
+							<xs:element type="xs:boolean" name="Toast_Disable" />
 							<xs:element type="xs:string" name="Toast_AppName" />
 						</xs:sequence>
 					</xs:complexType>
@@ -388,7 +356,7 @@
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:string" name="InstallationUI_LanguageOverride" />
-							<xs:element name="ShowBalloonNotifications">
+							<xs:element type="xs:boolean" name="ShowBalloonNotifications">
 								<xs:annotation>
 									<xs:documentation> Specify a static UI language using the one of
 										the Language Codes listed below to override the language
@@ -402,16 +370,10 @@
 										(Traditional) RU Russian | SK Slovak HU Hungarian | CZ Czech
 										FI Finnish | </xs:documentation>
 								</xs:annotation>
-								<xs:simpleType>
-									<xs:restriction base="xs:string">
-										<xs:enumeration value="True" />
-										<xs:enumeration value="False" />
-									</xs:restriction>
-								</xs:simpleType>
 							</xs:element>
 							<xs:element type="xs:short" name="InstallationUI_Timeout">
 								<xs:annotation>
-									<xs:documentation> [True/False] - Used to turn automatic balloon
+									<xs:documentation> [true/false] - Used to turn automatic balloon
 										notifications on or off. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
@@ -449,23 +411,18 @@
 								</xs:annotation>
 							</xs:element>
 							<xs:element
+								type="xs:boolean"
 								name="InstallationWelcomePrompt_DynamicRunningProcessEvaluation">
 								<xs:annotation>
 									<xs:documentation> Time in seconds after which to re-prompt the
 										user to close applications in case they ignore the prompt or
 										they cancel the application's save prompt. </xs:documentation>
 								</xs:annotation>
-								<xs:simpleType>
-									<xs:restriction base="xs:string">
-										<xs:enumeration value="True" />
-										<xs:enumeration value="False" />
-									</xs:restriction>
-								</xs:simpleType>
 							</xs:element>
 							<xs:element type="xs:short"
 								name="InstallationWelcomePrompt_DynamicRunningProcessEvaluationInterval">
 								<xs:annotation>
-									<xs:documentation> [True/False] - Specify whether to
+									<xs:documentation> [true/false] - Specify whether to
 										re-enumerate running processes dynamically while displaying
 										Show-InstallationWelcome. If the CloseApps processes were
 										not running when the prompt was displayed, and are
@@ -790,4 +747,11 @@
 			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpSureToCloseText" />
 		</xs:sequence>
 	</xs:complexType>
+
+	<xs:simpleType name="Byte01">
+		<xs:restriction base="xs:byte">
+			<xs:minInclusive value="0" />
+			<xs:maxInclusive value="1" />
+		</xs:restriction>
+	</xs:simpleType>
 </xs:schema>
