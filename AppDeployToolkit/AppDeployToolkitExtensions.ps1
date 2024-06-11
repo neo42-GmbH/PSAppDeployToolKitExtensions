@@ -7657,6 +7657,9 @@ function Repair-NxtApplication {
 	.PARAMETER AcceptedRepairRebootCodes
 		Defines a list of reboot exit codes for all exit codes that will be accepted for reboot by called setup execution.
 		Defaults to $global:PackageConfig.AcceptedInstallRebootCodes.
+	.PARAMETER BackupRepairFile
+		Defines the path to the MSI file that should be used for the repair if the registry method fails.
+		Defaults to the value "InstFile" from the PackageConfig object.
 	.PARAMETER RepairLogPath
 		Defines the path to the folder where the log file should be stored.
 		Defaults to $configMSILogDir.
@@ -7713,6 +7716,9 @@ function Repair-NxtApplication {
 		$AcceptedRepairRebootCodes = $global:PackageConfig.AcceptedInstallRebootCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$BackupRepairFile,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$RepairLogPath = $configMSILogDir
 		)
 	Begin {
@@ -7760,8 +7766,13 @@ function Repair-NxtApplication {
 				}
 				## parameter -RepairFromSource $true runs 'msiexec /fvomus ...'
 				[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
+				if ($executionResult.ExitCode -eq 1612 -and $false -eq [string]::IsNullOrEmpty($BackupRepairFile)) {
+					Write-Log "Built-in repair mechanism failed due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
+					$executeNxtParams["Path"] = $BackupRepairFile
+					$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $false
+				}
 				$repairResult.ApplicationExitCode = $executionResult.ExitCode
-				if ($($executionResult.ExitCode) -in ($AcceptedRepairRebootCodes -split ",")) {
+				if ($executionResult.ExitCode -in ($AcceptedRepairRebootCodes -split ",")) {
 					$repairResult.MainExitCode = 3010
 					$repairResult.ErrorMessage = "Repair done with custom reboot return code '$($executionResult.ExitCode)'."
 				}
