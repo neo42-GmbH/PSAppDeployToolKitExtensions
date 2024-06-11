@@ -7659,7 +7659,6 @@ function Repair-NxtApplication {
 		Defaults to $global:PackageConfig.AcceptedInstallRebootCodes.
 	.PARAMETER BackupRepairFile
 		Defines the path to the MSI file that should be used for the repair if the registry method fails.
-		Defaults to the value "InstFile" from the PackageConfig object.
 	.PARAMETER RepairLogPath
 		Defines the path to the folder where the log file should be stored.
 		Defaults to $configMSILogDir.
