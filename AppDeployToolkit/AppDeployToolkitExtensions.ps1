@@ -7766,7 +7766,7 @@ function Repair-NxtApplication {
 				## parameter -RepairFromSource $true runs 'msiexec /fvomus ...'
 				[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
 				if ($executionResult.ExitCode -eq 1612 -and $false -eq [string]::IsNullOrEmpty($BackupRepairFile)) {
-					Write-Log "Built-in repair mechanism failed due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
+					Write-Log "Built-in repair mechanism failed with code [1612] due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
 					$executeNxtParams["Path"] = $BackupRepairFile
 					$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $false
 				}
