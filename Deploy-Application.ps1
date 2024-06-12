@@ -467,7 +467,7 @@ function Main {
 								if ("MSI" -eq $InstallMethod) {
 									CustomReinstallPreInstall
 									[string]$script:installPhase = 'Package-Reinstallation'
-									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Repair-NxtApplication -BackupRepairFile $global:PacakgeConfig.InstFile
+									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Repair-NxtApplication -BackupRepairFile $global:PackageConfig.InstFile
 									if ($false -eq $mainNxtResult.Success) {
 										CustomReinstallPostInstallOnError -ResultToCheck $mainNxtResult
 										Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
