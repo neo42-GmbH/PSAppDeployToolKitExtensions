@@ -7768,7 +7768,7 @@ function Repair-NxtApplication {
 				if ($executionResult.ExitCode -eq 1612 -and $false -eq [string]::IsNullOrEmpty($BackupRepairFile)) {
 					Write-Log "Built-in repair mechanism failed with code [1612] due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
 					$executeNxtParams["Path"] = $BackupRepairFile
-					$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $false
+					$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
 				}
 				$repairResult.ApplicationExitCode = $executionResult.ExitCode
 				if ($executionResult.ExitCode -in ($AcceptedRepairRebootCodes -split ",")) {
