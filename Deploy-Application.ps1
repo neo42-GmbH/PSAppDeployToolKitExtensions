@@ -130,7 +130,7 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, "Machine"), "Process")
 	}
 }
-$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules","$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
+$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
 if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-WmiObject Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
 	Write-Host "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
@@ -249,7 +249,8 @@ try {
 	}
 	if ($true -eq $DisableLogging) {
 		. $moduleAppDeployToolkitMain -DisableLogging
-	} else {
+	}
+ else {
 		. $moduleAppDeployToolkitMain
 	}
 	## add custom 'Nxt' variables
@@ -859,4 +860,38 @@ function CustomUninstallUserPartEnd {
 #endregion
 
 ## execute the main function to start the process
-Main
+#Main
+[string]$powershellCommand = "-ExecutionPolicy $ExecutionPolicy -File `"$scriptRoot\Progressbar.ps1`""
+[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Packagename" -Value "neo42Progress1"
+[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Title" -Value "huhu"
+[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "HeaderText" -Value "lala"
+[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "TopMost" -Switch $true
+[PsObject]$activeSessions = Get-LoggedOnUser
+if ((Get-Process -Id $PID).SessionId -eq 0) {
+	if ($activeSessions.Count -gt 0) {
+		try {
+			[UInt32[]]$sessionIds = $activeSessions | Select-Object -ExpandProperty SessionId
+			Write-Log "Start Progress for sessions $sessionIds"
+			$ProgressResult = [PSADTNXT.SessionHelper]::StartPowerShellScript($powershellCommand, $sessionIds)
+			[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
+			[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
+			Write-Log "ExitCode from Progress.ps1:: $ProgressResult, User: $logDomainName\$logUserName"
+			Start-Sleep 10
+			[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "End" -Switch $true
+			$ProgressResult = [PSADTNXT.SessionHelper]::StartPowerShellScript($powershellCommand, $sessionIds)
+		}
+		catch {
+			if ($true -eq $ApplyContinueTypeOnError) {
+				Write-Log -Message "Failed to start Progress.ps1." -Severity 3 -Source ${CmdletName}
+			}
+		}
+	}
+}
+else {
+	#[int]$progressExitCode = [PSADTNXT.Extensions]::StartPowerShellScript($powershellCommand, $false)
+	Write-Log "ExitCode from progress.ps1:: $progressExitCode, User: $env:USERNAME\$env:USERDOMAIN"
+	Start-Sleep 10
+	[string]$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "Kill" -Switch $true
+	$ProgressResult = [PSADTNXT.SessionHelper]::StartPowerShellScript($powershellCommand, $false)
+}
+

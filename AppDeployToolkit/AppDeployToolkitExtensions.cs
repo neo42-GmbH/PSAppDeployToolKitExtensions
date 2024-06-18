@@ -67,7 +67,17 @@ namespace PSADTNXT
             // you may wish to return null instead of defaulting to ASCII
             return null;
         }
+        [Obsolete("This method is obsolete. Use the method 'StartPowershellScript' instead.")]
         public static int StartPowershellScriptAndWaitForExitCode(string arguments)
+        {
+            return StartPowerShellScript(arguments, true);
+        }
+        public static int StartPowerShellScript(string arguments,bool waitForExit)
+        {
+            return StartPowerShellScriptInternal(arguments, waitForExit);
+        }
+
+        private static int StartPowerShellScriptInternal(string arguments,bool waitForExit)
         {
             var startInfo = new ProcessStartInfo
             {
@@ -81,8 +91,12 @@ namespace PSADTNXT
             var process = new Process();
             process.StartInfo = startInfo;
             process.Start();
-            process.WaitForExit();
-            return process.ExitCode;
+            if (waitForExit)
+            {
+                process.WaitForExit();
+                return process.ExitCode;
+            }
+            return process.Id;
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]
