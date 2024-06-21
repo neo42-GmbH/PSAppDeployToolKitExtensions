@@ -749,7 +749,7 @@ function Block-NxtAppExecution {
 					New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v Debugger /f"
 				}
 				## Remove the temp block exec folder
-				New-ScheduledTaskAction -Execute "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`""
+				New-ScheduledTaskAction -Execute "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NonInteractive -NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`""
 				## Remove the scheduled task
 				New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f"
 			)
@@ -1287,7 +1287,7 @@ function Complete-NxtPackageInstallation {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments "TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 			}
 			else {
-				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
+				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NonInteractive -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 			}
 		}
 		foreach ($oldAppFolder in $((Get-ChildItem -Path (Get-Item -Path $App).Parent.FullName | Where-Object Name -ne (Get-Item -Path $App).Name).FullName)) {
@@ -1296,7 +1296,7 @@ function Complete-NxtPackageInstallation {
 			Start-Sleep -Seconds 1
 			[hashtable]$executeProcessSplat = @{
 				Path = 'powershell.exe'
-				Parameters = "-ExecutionPolicy $ExecutionPolicy -File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`""
+				Parameters = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`""
 				NoWait = $true
 				WorkingDirectory = $env:TEMP
 				ExitOnProcessFailure = $false
@@ -1430,7 +1430,7 @@ function Complete-NxtPackageUninstallation {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments "TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 			else {
-				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
+				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NonInteractive -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 		}
 	}
@@ -6780,7 +6780,7 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$App\neo42-Install\DeployNxtApplication.exe"" uninstall")
 			}
 			else {
-				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
+				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -NonInteractive -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			}
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
@@ -6813,7 +6813,7 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$App\neo42-Install\DeployNxtApplication.exe"" uninstall")
 			}
 			else {
-				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
+				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -WindowStyle hidden -NonInteractive -File ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			}
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'Installed' -Type 'Dword' -Value '1'
 			if ($false -eq [string]::IsNullOrEmpty($SoftMigrationOccurred)) {
@@ -9511,7 +9511,7 @@ function Show-NxtWelcomePrompt {
 		# Convert to JSON in compressed form
 		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $ProcessObjects
 		[string]$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
-		[string]$powershellCommand = "-ExecutionPolicy $ExecutionPolicy -File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
+		[string]$powershellCommand = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferTimes" -Value $DeferTimes
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "DeferDeadline" -Value $DeferDeadline
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ContinueType" -Value $contiuneTypeValue
@@ -11826,7 +11826,7 @@ function Unregister-NxtPackage {
 								Start-Sleep -Seconds 1
 								[hashtable]$executeProcessSplat = @{
 									Path = 'powershell.exe'
-									Parameters = "-ExecutionPolicy $ExecutionPolicy -File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`""
+									Parameters = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`""
 									NoWait = $true
 									WorkingDirectory = $env:TEMP
 									ExitOnProcessFailure = $false
@@ -11876,7 +11876,7 @@ function Unregister-NxtPackage {
 						Start-Sleep -Seconds 1
 						[hashtable]$executeSplat = @{
 							Path = 'powershell.exe'
-							Parameters = "-ExecutionPolicy $ExecutionPolicy -File `"$App\Clean-Neo42AppFolder.ps1`""
+							Parameters = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$App\Clean-Neo42AppFolder.ps1`""
 							NoWait = $true
 							WorkingDirectory = $env:TEMP
 							ExitOnProcessFailure = $false
