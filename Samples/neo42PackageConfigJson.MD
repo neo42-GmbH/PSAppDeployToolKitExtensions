@@ -954,8 +954,10 @@ note: an empty list is allowed (meaning: "CommonDesktopShortcutsToDelete": [])
 **"CommonStartMenuShortcutsToCopyToCommonDesktop":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
-
+```
 note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Source" and "TargetName" have to be provided for each item, but an empty list is allowed too (that means: "CommonStartMenuShortcutsToCopyToCommonDesktop": [])!
+these items will only be copied if DESKTOPSHORTCUT=1 is set in the setup.cfg
+```
 
 **"Source"** *mandatory string value*
 
