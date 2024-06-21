@@ -591,6 +591,7 @@ function Main {
 			Clear-NxtTempFolder
 			Unblock-NxtAppExecution
 		}
+		CustomEnd
 		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {
@@ -856,6 +857,14 @@ function CustomUninstallUserPartEnd {
 	#endregion CustomUninstallUserPartEnd content
 }
 
+function CustomEnd {
+	[string]$script:installPhase = 'CustomEnd'
+
+	## executes at the end regardless of DeploymentType
+	#region CustomEnd content
+
+	#endregion CustomEnd content
+}
 #endregion
 
 ## execute the main function to start the process
