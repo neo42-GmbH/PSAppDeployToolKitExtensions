@@ -25,7 +25,7 @@ New-Item -ItemType File -Path "$dirname/$dirname/" -Name "Add a Setup.ico here!!
 Move-Item ./$dirname/$dirname/Tools ./$dirname/ -Force
 Move-Item ./$dirname/$dirname/Samples ./$dirname/ -Force
 Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
-New-Item -ItemType Directory -Name Artifacts
+New-Item -ItemType Directory -Name Artifacts -Force
 foreach ( $file in @(
 		"./$dirname/$dirname/Deploy-Application.ps1",
 		"./$dirname/$dirname/AppDeployToolkit/AppDeployToolkitExtensions.ps1",
