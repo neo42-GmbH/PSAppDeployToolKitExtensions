@@ -7020,8 +7020,8 @@ function Remove-NxtEmptyIniFile {
 	}
 	Process {
 		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
-		if ($false -eq $Path.Exists -or $Path.Extension -ne ".ini") {
-			Write-Log -Message "File [$Path] does not exist or is not an INI file..." -Severity 1 -Source ${CmdletName}
+		if ($false -eq $Path.Exists) {
+			Write-Log -Message "File [$Path] does not exist..." -Severity 1 -Source ${CmdletName}
 			return
 		}
 		try {
