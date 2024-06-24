@@ -13,8 +13,8 @@ jobs:
     - name: Install requirements
       shell: powershell
       run: |
-        Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser -AllowClobber
-        Install-Module -Name PSScriptAnalyzer -Force -SkipPublisherCheck -Scope CurrentUser -AllowClobber
+        Install-Module -Name Pester -RequiredVersion 5.5.0 -Force -SkipPublisherCheck -Scope CurrentUser -AllowClobber
+        Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.22.0 -Force -SkipPublisherCheck -Scope CurrentUser -AllowClobber
 
     - name: Checkout PSADT
       uses: actions/checkout@v4

@@ -9,8 +9,10 @@
         # COPYRIGHT #
         Copyright (c) 2024 neo42 GmbH, Germany.
 #>
+#requires -Modules @{ ModuleName="Pester"; ModuleVersion="5.5.0" }
+#requires -Modules @{ ModuleName="PSScriptAnalyzer"; ModuleVersion="1.22.0" }
 
-#requires -module Pester -version 5
+# Load Pester
 Import-Module Pester
 
 # Pester config
