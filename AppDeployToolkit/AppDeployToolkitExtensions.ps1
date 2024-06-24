@@ -11804,7 +11804,7 @@ function Unregister-NxtOld {
 			Write-Log -Message "No need to cleanup old package cached app folder." -Source ${cmdletName}
 		}
 		# Remove legacy x86 package container key if it exists and is empty
-		Remove-NxtEmptyFolder -Path "HKLM:\Software\WOW6432Node\neoPackages"
+		Remove-NxtEmptyRegistryKey -Path "HKLM:\Software\WOW6432Node\neoPackages"
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
