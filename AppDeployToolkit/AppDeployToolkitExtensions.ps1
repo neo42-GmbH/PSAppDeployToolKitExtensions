@@ -755,7 +755,7 @@ function Block-NxtAppExecution {
 					New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v Debugger /f"
 				}
 				## Remove the temp block exec folder
-				New-ScheduledTaskAction -Execute "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`""
+				New-ScheduledTaskAction -Execute "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NonInteractive -NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`""
 				## Remove the scheduled task
 				New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f"
 			)
@@ -1226,11 +1226,9 @@ function Complete-NxtPackageInstallation {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
 		if ($true -eq $DesktopShortcut) {
 			Copy-NxtDesktopShortcuts -StartMenuShortcutsToCopyToDesktop $StartMenuShortcutsToCopyToDesktop -Desktop $Desktop -StartMenu $StartMenu
-		}
-		else {
-			Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
 		}
 		foreach ($uninstallKeyToHide in $UninstallKeysToHide) {
 			[hashtable]$hideNxtParams = @{
@@ -1293,7 +1291,7 @@ function Complete-NxtPackageInstallation {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments 'TriggerInstallUserpart' -Version $UserPartRevision -Key "$PackageGUID"
 			}
 			else {
-				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
+				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NonInteractive -NoProfile -File ""$App\$UserpartDir\Deploy-Application.ps1"" TriggerInstallUserpart" -Version $UserPartRevision -Key "$PackageGUID"
 			}
 		}
 		foreach ($oldAppFolder in $((Get-ChildItem -Path (Get-Item -Path $App).Parent.FullName | Where-Object Name -NE (Get-Item -Path $App).Name).FullName)) {
@@ -1302,7 +1300,7 @@ function Complete-NxtPackageInstallation {
 			Start-Sleep -Seconds 1
 			[hashtable]$executeProcessSplat = @{
 				Path                 = 'powershell.exe'
-				Parameters           = "-ExecutionPolicy $ExecutionPolicy -File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`""
+				Parameters           = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`""
 				NoWait               = $true
 				WorkingDirectory     = $env:TEMP
 				ExitOnProcessFailure = $false
@@ -1363,6 +1361,12 @@ function Complete-NxtPackageUninstallation {
 	.PARAMETER ScriptRoot
 		Defines the parent directory of the script.
 		Defaults to the Variable $scriptRoot populated by AppDeployToolkitMain.ps1.
+	.PARAMETER DesktopShortcutsToDelete
+		Specifies the desktop shortcuts that should be deleted.
+		Defaults to the CommonDesktopShortcutsToDelete array defined in the neo42PackageConfig.json.
+	.PARAMETER StartMenuShortcuts
+		Specifies the links from the start menu which were copied to the desktop and should be deleted as well.
+		Defaults to the CommonStartMenuShortcutsToCopyToCommonDesktop array defined in the neo42PackageConfig.json.
 	.PARAMETER ExecutionPolicy
 		Defines the execution policy of the active setup PowerShell script.
 		Defaults to the corresponding value from the XML configuration file.
@@ -1399,6 +1403,9 @@ function Complete-NxtPackageUninstallation {
 		[string[]]
 		$DesktopShortcutsToDelete = $global:PackageConfig.CommonDesktopShortcutsToDelete,
 		[Parameter(Mandatory = $false)]
+		[object[]]
+		$StartMenuShortcuts = $global:PackageConfig.CommonStartMenuShortcutsToCopyToCommonDesktop,
+		[Parameter(Mandatory = $false)]
 		[string]
 		$Desktop = $envCommonDesktop,
 		[Parameter(Mandatory = $false)]
@@ -1412,6 +1419,16 @@ function Complete-NxtPackageUninstallation {
 	}
 	Process {
 		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $DesktopShortcutsToDelete -Desktop $Desktop
+		## Cleanup our shortcuts
+		[string[]]$shortCutsFromCopyToDesktop = $StartMenuShortcuts | ForEach-Object {
+			if ($false -eq [string]::IsNullOrEmpty($_.TargetName)) {
+				Write-Output $_.TargetName
+			}
+			else {
+				Write-Output (Split-Path -Path $_.Source -Leaf)
+			}
+		}
+		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $shortCutsFromCopyToDesktop -Desktop $Desktop
 		Set-ActiveSetup -PurgeActiveSetupKey -Key "$PackageGUID"
 		if ($true -eq $UserPartOnUninstallation) {
 			if ($true -eq ([string]::IsNullOrEmpty($UserPartRevision))) {
@@ -1436,7 +1453,7 @@ function Complete-NxtPackageUninstallation {
 				Set-ActiveSetup -StubExePath "$App\$UserpartDir\DeployNxtApplication.exe" -Arguments 'TriggerUninstallUserpart' -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 			else {
-				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
+				Set-ActiveSetup -StubExePath "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $ExecutionPolicy -NonInteractive -NoProfile -File `"$App\$UserpartDir\Deploy-Application.ps1`" TriggerUninstallUserpart" -Version $UserPartRevision -Key "$PackageGUID.uninstall"
 			}
 		}
 	}
@@ -6807,7 +6824,7 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$App\neo42-Install\DeployNxtApplication.exe"" uninstall")
 			}
 			else {
-				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
+				Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UninstallString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -NonInteractive -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			}
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartOnInstallation' -Value $UserPartOnInstallation -Type 'DWord'
 			Set-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Name 'UserPartOnUninstallation' -Value $UserPartOnUnInstallation -Type 'DWord'
@@ -6840,7 +6857,7 @@ function Register-NxtPackage {
 				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$App\neo42-Install\DeployNxtApplication.exe"" uninstall")
 			}
 			else {
-				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -WindowStyle hidden -file ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
+				Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'UninstallString' -Type 'ExpandString' -Value ("""$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"" -ExecutionPolicy $ExecutionPolicy -WindowStyle hidden -NonInteractive -File ""$App\neo42-Install\Deploy-Application.ps1"" uninstall")
 			}
 			Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$PackageGUID" -Name 'Installed' -Type 'Dword' -Value '1'
 			if ($false -eq [string]::IsNullOrEmpty($SoftMigrationOccurred)) {
@@ -7687,6 +7704,8 @@ function Repair-NxtApplication {
 	.PARAMETER AcceptedRepairRebootCodes
 		Defines a list of reboot exit codes for all exit codes that will be accepted for reboot by called setup execution.
 		Defaults to $global:PackageConfig.AcceptedInstallRebootCodes.
+	.PARAMETER BackupRepairFile
+		Defines the path to the MSI file that should be used for the repair if the registry method fails.
 	.PARAMETER RepairLogPath
 		Defines the path to the folder where the log file should be stored.
 		Defaults to $configMSILogDir.
@@ -7746,6 +7765,9 @@ function Repair-NxtApplication {
 		$AcceptedRepairRebootCodes = $global:PackageConfig.AcceptedInstallRebootCodes,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$BackupRepairFile,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$RepairLogPath = $configMSILogDir
 	)
 	Begin {
@@ -7793,8 +7815,13 @@ function Repair-NxtApplication {
 				}
 				## parameter -RepairFromSource $true runs 'msiexec /fvomus ...'
 				[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
+				if ($executionResult.ExitCode -eq 1612 -and $false -eq [string]::IsNullOrEmpty($BackupRepairFile)) {
+					Write-Log "Built-in repair mechanism failed with code [1612] due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
+					$executeNxtParams["Path"] = $BackupRepairFile
+					$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
+				}
 				$repairResult.ApplicationExitCode = $executionResult.ExitCode
-				if ($($executionResult.ExitCode) -in ($AcceptedRepairRebootCodes -split ',')) {
+				if ($executionResult.ExitCode -in ($AcceptedRepairRebootCodes -split ',')) {
 					$repairResult.MainExitCode = 3010
 					$repairResult.ErrorMessage = "Repair done with custom reboot return code '$($executionResult.ExitCode)'."
 				}
@@ -9548,7 +9575,7 @@ function Show-NxtWelcomePrompt {
 		# Convert to JSON in compressed form
 		[string]$processObjectsEncoded = ConvertTo-NxtEncodedObject -Object $ProcessObjects
 		[string]$toolkitUiPath = "$scriptRoot\CustomAppDeployToolkitUi.ps1"
-		[string]$powershellCommand = "-ExecutionPolicy $ExecutionPolicy -File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
+		[string]$powershellCommand = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$toolkitUiPath`" -ProcessDescriptions `"$ProcessDescriptions`" -ProcessObjectsEncoded `"$processObjectsEncoded`""
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name 'DeferTimes' -Value $DeferTimes
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name 'DeferDeadline' -Value $DeferDeadline
 		$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name 'ContinueType' -Value $contiuneTypeValue
@@ -11861,7 +11888,7 @@ function Unregister-NxtPackage {
 								Start-Sleep -Seconds 1
 								[hashtable]$executeProcessSplat = @{
 									Path                 = 'powershell.exe'
-									Parameters           = "-ExecutionPolicy $ExecutionPolicy -File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`""
+									Parameters           = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`""
 									NoWait               = $true
 									WorkingDirectory     = $env:TEMP
 									ExitOnProcessFailure = $false
@@ -11911,7 +11938,7 @@ function Unregister-NxtPackage {
 						Start-Sleep -Seconds 1
 						[hashtable]$executeSplat = @{
 							Path                 = 'powershell.exe'
-							Parameters           = "-ExecutionPolicy $ExecutionPolicy -File `"$App\Clean-Neo42AppFolder.ps1`""
+							Parameters           = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$App\Clean-Neo42AppFolder.ps1`""
 							NoWait               = $true
 							WorkingDirectory     = $env:TEMP
 							ExitOnProcessFailure = $false

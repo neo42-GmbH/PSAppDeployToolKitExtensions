@@ -171,7 +171,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstance Win32_OperatingS
 		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "$arguments"
 	}
 	else {
-		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -File `"$file`"$arguments"
+		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -NonInteractive -File `"$file`"$arguments"
 	}
 	$process.WaitForExit()
 	[int]$exitCode = $process.ExitCode
@@ -184,7 +184,7 @@ switch ($DeploymentType) {
 			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "-DeploymentType InstallUserPart"
 		}
 		else {
-			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart" | Out-Null
+			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart" | Out-Null
 		}
 		exit
 	}
@@ -193,7 +193,7 @@ switch ($DeploymentType) {
 			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "-DeploymentType UninstallUserPart"
 		}
 		else {
-			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle hidden -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
+			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
 		}
 		exit
 	}
@@ -461,7 +461,7 @@ function Main {
 								if ("MSI" -eq $InstallMethod) {
 									CustomReinstallPreInstall
 									[string]$script:installPhase = 'Package-Reinstallation'
-									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Repair-NxtApplication
+									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Repair-NxtApplication -BackupRepairFile $global:PackageConfig.InstFile
 									if ($false -eq $mainNxtResult.Success) {
 										CustomReinstallPostInstallOnError -ResultToCheck $mainNxtResult
 										Exit-NxtScriptWithError -ErrorMessage $mainNxtResult.ErrorMessage -ErrorMessagePSADT $mainNxtResult.ErrorMessagePSADT -MainExitCode $mainNxtResult.MainExitCode
@@ -586,6 +586,7 @@ function Main {
 			Clear-NxtTempFolder
 			Unblock-NxtAppExecution
 		}
+		CustomEnd
 		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {
@@ -924,6 +925,17 @@ function CustomUninstallUserPartEnd {
 	#region CustomUninstallUserPartEnd content
 
 	#endregion CustomUninstallUserPartEnd content
+}
+
+function CustomEnd {
+	<#
+	.SYNOPSIS
+		Executes at the end of the script regardless of DeploymentType
+	#>
+	[string]$script:installPhase = 'CustomEnd'
+	#region CustomEnd content
+
+	#endregion CustomEnd content
 }
 #endregion
 
