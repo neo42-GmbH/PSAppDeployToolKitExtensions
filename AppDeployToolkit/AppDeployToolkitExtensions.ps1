@@ -7036,9 +7036,9 @@ function Remove-NxtEmptyIniFile {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${CmdletName}
+		Write-Log -Message "Check if [$Path] exists and is empty..." -Source ${cmdletName}
 		if ($false -eq $Path.Exists) {
-			Write-Log -Message "File [$Path] does not exist..." -Severity 1 -Source ${CmdletName}
+			Write-Log -Message "File [$Path] does not exist..." -Severity 1 -Source ${cmdletName}
 			return
 		}
 		try {
@@ -7046,20 +7046,20 @@ function Remove-NxtEmptyIniFile {
 			## If any section exists that contains keys, the INI file is not considered empty
 			foreach ($section in $content.GetEnumerator()) {
 				if ($section.Value.Keys.Count -gt 0) {
-					Write-Log -Message "INI file [$Path] is not empty, so it was not deleted..." -Severity 2 -Source ${CmdletName}
+					Write-Log -Message "INI file [$Path] is not empty, so it was not deleted..." -Severity 2 -Source ${cmdletName}
 					return
 				}
 			}
 			Remove-Item -Path $Path.FullName -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveIniFile'
 			if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveIniFile)) {
-				Write-Log -Message "The following error(s) took place while deleting the empty INI file [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveIniFile)" -Severity 1 -Source ${CmdletName}
+				Write-Log -Message "The following error(s) took place while deleting the empty INI file [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveIniFile)" -Severity 1 -Source ${cmdletName}
 			}
 			else {
-				Write-Log -Message "Empty INI file [$Path] was deleted successfully..." -Source ${CmdletName}
+				Write-Log -Message "Empty INI file [$Path] was deleted successfully..." -Source ${cmdletName}
 			}
 		}
 		catch {
-			Write-Log -Message "Failed to import or delete INI file [$Path]. `n$(Resolve-Error)" -Severity 1 -Source ${CmdletName}
+			Write-Log -Message "Failed to import or delete INI file [$Path]. `n$(Resolve-Error)" -Severity 1 -Source ${cmdletName}
 		}
 	}
 	End {
