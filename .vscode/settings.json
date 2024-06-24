@@ -40,6 +40,7 @@
     "powershell.pester.outputVerbosity": "Diagnostic",
     "powershell.pester.codeLens": true,
     //-------- Json configuration --------
+    "json.validate.enable": true,
     "json.schemas": [
         {
             "fileMatch": [
