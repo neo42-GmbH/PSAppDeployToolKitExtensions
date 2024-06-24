@@ -10668,6 +10668,10 @@ function Test-NxtSetupCfg {
 		}
 		foreach ($section in $ini.GetEnumerator()) {
 			foreach ($parameter in $section.Value.GetEnumerator()) {
+				if ($parameter.Value.Comments -eq [string]::Empty) {
+					Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has no validation metadata. Skipping validation." -Source ${cmdletName} -Severity 2
+					continue
+				}
 				[string]$type = Get-MetaDataPropertyFromComment -Comment $parameter.Value.Comments -Property "Type"
 				[string[]]$values = (Get-MetaDataPropertyFromComment -Comment $parameter.Value.Comments -Property "Values").Split(",").Trim() | Where-Object {
 					$_ -ne [string]::Empty
