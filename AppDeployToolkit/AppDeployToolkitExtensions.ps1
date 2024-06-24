@@ -7050,8 +7050,8 @@ function Remove-NxtEmptyIniFile {
 					return
 				}
 			}
-			Remove-Item -Path $Path.FullName -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+ErrorRemoveIniFile'
-			if ($false -eq [string]::IsNullOrEmpty($ErrorRemoveIniFile)) {
+			Remove-Item -Path $Path.FullName -Force -ErrorAction 'SilentlyContinue' -ErrorVariable '+errorRemoveIniFile'
+			if ($false -eq [string]::IsNullOrEmpty($errorRemoveIniFile)) {
 				Write-Log -Message "The following error(s) took place while deleting the empty INI file [$Path]. `n$(Resolve-Error -ErrorRecord $ErrorRemoveIniFile)" -Severity 1 -Source ${cmdletName}
 			}
 			else {
