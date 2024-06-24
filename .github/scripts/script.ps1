@@ -26,7 +26,11 @@ Move-Item ./$dirname/$dirname/Tools ./$dirname/ -Force
 Move-Item ./$dirname/$dirname/Samples ./$dirname/ -Force
 Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
 New-Item -ItemType Directory -Name Artifacts
-sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/$dirname/Deploy-Application.ps1
-sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/$dirname/AppDeployToolkit/AppDeployToolkitExtensions.ps1
-sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/$dirname/AppDeployToolkit/AppDeployToolkitExtensions.cs
-sed -i "s/##REPLACEVERSION##/$dirname/g" ./$dirname/Tools/InsertLatestToNxtPsadtPackage.ps1
+foreach ( $file in @(
+		"./$dirname/$dirname/Deploy-Application.ps1",
+		"./$dirname/$dirname/AppDeployToolkit/AppDeployToolkitExtensions.ps1",
+		"./$dirname/$dirname/AppDeployToolkit/AppDeployToolkitExtensions.cs",
+		"./$dirname/Tools/InsertLatestToNxtPsadtPackage.ps1"
+	)) {
+		(Get-Content -Raw -Path $file).Replace('##REPLACEVERSION##', $dirname) | Set-Content -Path $file
+}
