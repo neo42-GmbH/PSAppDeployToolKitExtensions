@@ -8566,7 +8566,7 @@ function Set-NxtSetupCfg {
 		Write-Log -Message "Checking for config file [$setupCfgFileName] under [$Path]..." -Source ${CmdletName}
 		if ($true -eq ([System.IO.File]::Exists($Path))) {
 			if ($false -eq (Test-NxtSetupCfg -Path $Path)) {
-				Write-Log -Message "Validating [$setupCfgFileName] failed." -Severity 1 -Source ${CmdletName}
+				Write-Log -Message "Validating [$setupCfgFileName] failed." -Severity 3 -Source ${CmdletName}
 				throw "Validating [$setupCfgFileName] failed."
 			}
 			[hashtable]$global:SetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
