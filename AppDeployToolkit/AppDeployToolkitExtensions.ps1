@@ -10673,9 +10673,12 @@ function Test-NxtSetupCfg {
 			)
 			Process {
 				[regex]$propertyRegex = [regex]::new("$([Regex]::Escape(${Property}))\s*=[^\S\r\n]*(?<Value>.*)")
-				Write-Output ($propertyRegex.Match($Comment, [System.Text.RegularExpressions.RegexOptions]::Multiline).Groups | Where-Object {
-						$_.Name -eq "Value"
-					}).Value.Trim()
+				[System.Text.RegularExpressions.Group]$matchedGroup = $propertyRegex.Match($Comment, [System.Text.RegularExpressions.RegexOptions]::Multiline).Groups | Where-Object {
+					$_.Name -eq "Value"
+				} | Select-Object -First 1
+				if ($null -ne $matchedGroup) {
+					Write-Output $matchedGroup.Value.Trim()
+				}
 			}
 		}
 	}
@@ -10695,13 +10698,17 @@ function Test-NxtSetupCfg {
 		}
 		foreach ($section in $ini.GetEnumerator()) {
 			foreach ($parameter in $section.Value.GetEnumerator()) {
-				if ($parameter.Value.Comments -eq [string]::Empty) {
+				if ($true -eq [string]::IsNullOrEmpty($parameter.Value.Comments)) {
 					Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has no validation metadata. Skipping validation." -Source ${cmdletName} -Severity 2
 					continue
 				}
 				[string]$type = Get-MetaDataPropertyFromComment -Comment $parameter.Value.Comments -Property "Type"
-				[string[]]$values = (Get-MetaDataPropertyFromComment -Comment $parameter.Value.Comments -Property "Values").Split(",").Trim() | Where-Object {
-					$_ -ne [string]::Empty
+				[string]$valuesString = Get-MetaDataPropertyFromComment -Comment $parameter.Value.Comments -Property "Values"
+				[string[]]$values = @()
+				if ($false -eq [string]::IsNullOrEmpty($valuesString)) {
+					$values = $valuesString.Split(",").Trim() | Where-Object {
+						$_ -ne [string]::Empty
+					}
 				}
 				switch ($type) {
 					"Int" {
