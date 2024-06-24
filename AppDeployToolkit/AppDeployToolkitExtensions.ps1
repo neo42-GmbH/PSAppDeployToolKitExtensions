@@ -8626,6 +8626,10 @@ function Set-NxtSetupCfg {
 		[string]$setupCfgFileName = Split-Path -Path "$Path" -Leaf
 		Write-Log -Message "Checking for config file [$setupCfgFileName] under [$Path]..." -Source ${CmdletName}
 		if ($true -eq ([System.IO.File]::Exists($Path))) {
+			if ($false -eq (Test-NxtSetupCfg -Path $Path)) {
+				Write-Log -Message "Validating [$setupCfgFileName] failed." -Severity 3 -Source ${CmdletName}
+				throw "Validating [$setupCfgFileName] failed."
+			}
 			[hashtable]$global:SetupCfg = Import-NxtIniFile -Path $Path -ContinueOnError $ContinueOnError
 			Write-Log -Message "[$setupCfgFileName] was found and successfully parsed into global:SetupCfg object." -Source ${CmdletName}
 		}
@@ -10690,6 +10694,105 @@ function Test-NxtProcessExists {
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
+#region Function Test-NxtSetupCfg
+function Test-NxtSetupCfg {
+	<#
+	.SYNOPSIS
+		Tests a Setup.cfg file if all parameters meet the metadata requirements.
+	.DESCRIPTION
+		This function analyzes the Setup.cfg and evaluates the parameter comment for metadata requirements and validates the parameter values.
+	.PARAMETER Path
+		The path to the Setup.cfg file. This parameter is mandatory.
+	.EXAMPLE
+		Test-NxtSetupCfg -Path C:\path\to\Setup.cfg
+	.OUTPUTS
+		System.Boolean.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[System.IO.FileInfo]
+		$Path
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+
+		function Get-MetaDataPropertyFromComment {
+			Param(
+				[Parameter(Mandatory = $true)]
+				[string]
+				$Comment,
+				[Parameter(Mandatory = $true)]
+				[string]
+				$Property
+			)
+			Process {
+				[regex]$propertyRegex = [regex]::new("$([Regex]::Escape(${Property}))\s*=[^\S\r\n]*(?<Value>.*)")
+				[System.Text.RegularExpressions.Group]$matchedGroup = $propertyRegex.Match($Comment, [System.Text.RegularExpressions.RegexOptions]::Multiline).Groups | Where-Object {
+					$_.Name -eq "Value"
+				} | Select-Object -First 1
+				if ($null -ne $matchedGroup) {
+					Write-Output $matchedGroup.Value.Trim()
+				}
+			}
+		}
+	}
+	Process {
+		try {
+			[hashtable]$ini = Import-NxtIniFileWithComments -Path $Path -ContinueOnError $false
+		}
+		catch {
+			Write-Log "Failed to read setup.cfg file [$path]`n$(Resolve-Error)" -Source ${cmdletName} -Severity 3
+			Write-Output $false
+			return
+		}
+		if ($ini.Keys -notcontains "Options" -or $ini.Keys -notcontains "AskKillProcesses") {
+			Write-Log "Setup.cfg file [$path] is missing required sections." -Source ${cmdletName} -Severity 3
+			Write-Output $false
+			return
+		}
+		foreach ($section in $ini.GetEnumerator()) {
+			foreach ($parameter in $section.Value.GetEnumerator()) {
+				if ($true -eq [string]::IsNullOrEmpty($parameter.Value.Comments)) {
+					Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has no validation metadata. Skipping validation." -Source ${cmdletName} -Severity 2
+					continue
+				}
+				[string]$type = Get-MetaDataPropertyFromComment -Comment $parameter.Value.Comments -Property "Type"
+				[string]$valuesString = Get-MetaDataPropertyFromComment -Comment $parameter.Value.Comments -Property "Values"
+				[string[]]$values = @()
+				if ($false -eq [string]::IsNullOrEmpty($valuesString)) {
+					$values = $valuesString.Split(",").Trim() | Where-Object {
+						$_ -ne [string]::Empty
+					}
+				}
+				switch ($type) {
+					"Int" {
+						if ($false -eq [int]::TryParse($parameter.Value.Value, [ref]$null)) {
+							Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has an invalid value [$($parameter.Value.Value)]. Expected type: [Integer]" -Source ${cmdletName} -Severity 3
+							Write-Output $false
+							return
+						}
+					}
+				}
+				if ($values.Count -gt 0) {
+					if ($values -notcontains $parameter.Value.Value) {
+						Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has an invalid value [$($parameter.Value.Value)]. Valid values are: $($values -join ", ")." -Source ${cmdletName} -Severity 3
+						Write-Output $false
+						return
+					}
+				}
+			}
+		}
+		Write-Log -Message "Setup.cfg file [$path] is valid." -Source ${CmdletName}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
 	}
 }
 #endregion
