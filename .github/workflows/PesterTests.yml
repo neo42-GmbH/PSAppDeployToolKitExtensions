@@ -1,9 +1,9 @@
-name: Pester Tests
-
 on:
   pull_request:
     branches:
       - develop
+
+name: Pester Tests
 
 jobs:
   test:
