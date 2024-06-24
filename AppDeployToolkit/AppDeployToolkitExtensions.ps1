@@ -7012,7 +7012,7 @@ function Remove-NxtEmptyIniFile {
 	.SYNOPSIS
 		Removes only empty INI files.
 	.DESCRIPTION
-		This function is designed to remove INI files if and only if they are empty. If the specified INI file contains any sections or key-value pairs, the function continues without taking any action.
+		This function is designed to remove INI files if and only if they are empty. If the specified INI file contains any key-value pairs, the function continues without taking any action.
 	.PARAMETER Path
 		Specifies the path to the empty INI file to remove.
 		This parameter is mandatory.
