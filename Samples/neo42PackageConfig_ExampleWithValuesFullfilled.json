@@ -87,7 +87,7 @@
       "IsWQL": true
     }
   ],
-  "BlockExecution": true,
+  "BlockExecution": false,
   "TestConditionsPreSetupSuccessCheck": {
     "Install": {
       "TotalSecondsToWaitFor": 180,
