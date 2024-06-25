@@ -69,7 +69,7 @@
       "Description": ""
     }
   ],
-  "BlockExecution": false,
+  "BlockExecution": true,
   "TestConditionsPreSetupSuccessCheck": {
     "Install": {
       "TotalSecondsToWaitFor": 30,
