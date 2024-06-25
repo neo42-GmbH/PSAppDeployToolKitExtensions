@@ -45,6 +45,7 @@
   "UninstallKey": "!MSIGUID!",
   "UninstallKeyIsDisplayName": false,
   "UninstallKeyContainsWildCards": false,
+  "UninstallKeyContainsRegEx": false,
   "UninstallKeyContainsExpandVariables": false,
   "DisplayNamesToExcludeFromAppSearches": [
     "$($global:PackageConfig.UninstallDisplayName)"
@@ -100,6 +101,7 @@
       "Is64Bit": true,
       "KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)",
       "KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)",
+      "KeyNameContainsRegEx": "$($global:PackageConfig.UninstallKeyContainsRegEx)",
       "DisplayNamesToExcludeFromHiding": [
         "$($global:PackageConfig.UninstallDisplayName)"
       ]
