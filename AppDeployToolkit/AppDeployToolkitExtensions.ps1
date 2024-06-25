@@ -10596,7 +10596,16 @@ function Test-NxtPackageConfig {
 		[PSCustomObject]$validationRules = Get-Content $ValidationRulePath -Raw | ConvertFrom-Json
 	}
 	Process {
+		Write-Log "Validating package configuration..." -Source ${cmdletName}
 		Test-NxtObjectValidation -ValidationRule $validationRules -Object $PackageConfig -ContinueOnError $ContinueOnError -ParentObjectName "PackageConfig"
+		if ($true -eq $PackageConfig.UninstallKeyContainsWildCards -and $true -eq $PackageConfig.UninstallKeyContainsRegEx) {
+			throw "UninstallKeyContainsWildCards and UninstallKeyContainsRegEx cannot be set to true at the same time."
+		}
+		$PackageConfig.UninstallKeysToHide | ForEach-Object {
+			if ($true -eq $_.KeyNameContainsWildCards -and $true -eq $_.KeyNameContainsRegEx) {
+				throw "Error in UninstallKeyToHide: KeyNameContainsWildCards and KeyNameContainsRegEx cannot be set to true at the same time."
+			}
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
