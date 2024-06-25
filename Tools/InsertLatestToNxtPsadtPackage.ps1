@@ -338,6 +338,14 @@ function Update-NxtPSAdtPackage {
 '
                 Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
             }
+            ## new entry: UninstallKeyContainsRegEx
+            [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
+            [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
+            if ($null -eq $jsonContent.UninstallKeyContainsRegEx){
+                $content = Add-ContentBeforeTag -Content $content -StartTag '  "UninstallKeyContainsExpandVariables"' -ContentToInsert '  "UninstallKeyContainsRegEx": false,
+'
+                Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
+            }
             ## new entry: "ConfigVersion"
             [string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
             [PSCustomObject]$jsonContent = $content | ConvertFrom-Json
