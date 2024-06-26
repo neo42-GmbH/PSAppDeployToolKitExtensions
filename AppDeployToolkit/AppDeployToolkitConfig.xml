@@ -74,7 +74,7 @@
         <Toolkit_RegPath>HKLM:\SOFTWARE</Toolkit_RegPath>
         <!-- Registry key used to store toolkit information (with PSAppDeployToolkit as child
         registry key), e.g. deferral history. -->
-        <Toolkit_LogPath>$envWinDir\Logs\Software</Toolkit_LogPath>
+        <Toolkit_LogPath>$AppLogFolder</Toolkit_LogPath>
         <!-- Log path used for Toolkit logging. -->
         <Toolkit_TempPathNoAdminRights>$envTemp</Toolkit_TempPathNoAdminRights>
         <!-- Same as TempPath but used when RequireAdmin is False. -->
@@ -100,7 +100,7 @@
         <!-- Specify maximum number of previous log files to retain. -->
         <Toolkit_UseRobocopy>False</Toolkit_UseRobocopy>
         <!-- Specify if Robocopy should be used with the Copy-File function. -->
-        <Toolkit_CachePath>$AppLogFolder\Cache</Toolkit_CachePath>
+        <Toolkit_CachePath>$envProgramData\SoftwareCache</Toolkit_CachePath>
         <!-- Specify the path for the cache folder -->
     </Toolkit_Options>
     <!--Toolkit
