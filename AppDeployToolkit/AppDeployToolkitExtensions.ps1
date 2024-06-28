@@ -1540,11 +1540,11 @@ function ConvertTo-NxtInstallerProductCode {
 	}
 	Process {
 		[string]$productGuidChars = [regex]::replace($ProductGuid.Guid, "[^a-zA-Z0-9]", "")
-		return -join (
+		return (
 			$charIndex | ForEach-Object {
 				$productGuidChars[$_]
 			}
-		)
+		) -join [string]::Empty
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
