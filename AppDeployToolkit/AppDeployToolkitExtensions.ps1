@@ -7890,7 +7890,7 @@ function Repair-NxtApplication {
 				if ($executionResult.ExitCode -eq 1612 -and $false -eq [string]::IsNullOrEmpty($BackupRepairFile)) {
 					Write-Log "Built-in repair mechanism failed with code [1612] due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
 					[string]$installerSourceRegPath = "Registry::HKEY_CLASSES_ROOT\Installer\Products\$($executeNxtParams["Path"])\Sources"
-					[string]$previousPackageName = Get-RegistryKey -Key $installerSourceRegPath -Name "PackageName"
+					[string]$previousPackageName = Get-RegistryKey -Key $installerSourceRegPath -Value "PackageName"
 					if (
 						$false -eq [string]::IsNullOrEmpty($previousPackageName) -and
 						$previousPackageName -ne $BackupRepairFile
