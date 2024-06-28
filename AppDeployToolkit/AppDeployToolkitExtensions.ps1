@@ -7891,13 +7891,13 @@ function Repair-NxtApplication {
 					Write-Log "Built-in repair mechanism failed with code [1612] due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
 					[string]$installerSourceRegPath = "Registry::HKEY_CLASSES_ROOT\Installer\Products\$(ConvertTo-NxtInstallerProductCode -ProductGuid $($executeNxtParams["Path"]))\SourceList"
 					[string]$previousPackageName = Get-RegistryKey -Key $installerSourceRegPath -Value "PackageName"
-					[string]$installerName = Split-Path $BackupRepairFile -Leaf
+					[string]$backupRepairFileName = Split-Path $BackupRepairFile -Leaf
 					if (
 						$false -eq [string]::IsNullOrEmpty($previousPackageName) -and
-						$previousPackageName -ne $BackupRepairFile
+						$previousPackageName -ne $backupRepairFileName
 					) {
-						Write-Log "Found previously used source [$previousPackageName], but differs from package source [$installerName]. Adjusting installer cache prior to repair." -Severity 2 -Source ${cmdletName}
-						Set-RegistryKey -Key $installerSourceRegPath -Name "PackageName" -Value $installerName
+						Write-Log "Found previously used source [$previousPackageName], but differs from package source [$backupRepairFileName]. Adjusting installer cache prior to repair." -Severity 2 -Source ${cmdletName}
+						Set-RegistryKey -Key $installerSourceRegPath -Name "PackageName" -Value $backupRepairFileName
 					}
 					$executeNxtParams["Path"] = $BackupRepairFile
 					$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
