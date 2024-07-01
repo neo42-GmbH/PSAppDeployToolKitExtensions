@@ -1507,7 +1507,7 @@ function ConvertFrom-NxtEncodedObject {
 	}
 }
 #endregion
-#region Function ConvertTo-NxtProductCode
+#region Function ConvertTo-NxtInstallerProductCode
 function ConvertTo-NxtInstallerProductCode {
 	<#
 	.SYNOPSIS
@@ -7896,7 +7896,7 @@ function Repair-NxtApplication {
 						$false -eq [string]::IsNullOrEmpty($previousPackageName) -and
 						$previousPackageName -ne $backupRepairFileName
 					) {
-						Write-Log "Found previously used source [$previousPackageName], but differs from package source [$backupRepairFileName]. Adjusting installer cache prior to repair." -Severity 2 -Source ${cmdletName}
+						Write-Log "Found previously used source [$previousPackageName], that differs from package source [$backupRepairFileName]. Adjusting installer cache prior to repair." -Severity 2 -Source ${cmdletName}
 						Set-RegistryKey -Key $installerSourceRegPath -Name "PackageName" -Value $backupRepairFileName
 					}
 					$executeNxtParams["Path"] = $BackupRepairFile
