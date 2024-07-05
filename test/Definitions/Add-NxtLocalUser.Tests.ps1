@@ -9,7 +9,7 @@ Describe 'Add-NxtLocalUser' {
             }
         }
         It 'Should create a new user account' {
-            Add-NxtLocalUser -Username 'TestUser' -Password 'JX{C@Wb<PHV=H}Gx2' | Should -Be $true
+            Add-NxtLocalUser -Username 'TestUser' -Password 'JX{C@Wb<PHV=H}Gx' | Should -Be $true
             Get-LocalUser -Name 'TestUser' | Should -Not -Be $null
         }
         It 'Should have the correct password' {
