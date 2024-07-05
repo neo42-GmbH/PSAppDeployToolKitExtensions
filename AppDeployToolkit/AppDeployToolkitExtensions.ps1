@@ -3666,7 +3666,10 @@ function Get-NxtCurrentDisplayVersion {
 		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
 		[Parameter(Mandatory = $false)]
 		[array]
-		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentMethod
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3680,7 +3683,7 @@ function Get-NxtCurrentDisplayVersion {
 			[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = New-Object -TypeName PSADTNXT.NxtDisplayVersionResult
 			try {
 				Write-Log -Message "Detect currently set DisplayVersion value of package application..." -Source ${CmdletName}
-				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $DeploymentMethod
 				if ($installedAppResults.Count -eq 0) {
 					Write-Log -Message "Found no uninstall key with UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Skipped detecting a DisplayVersion." -Severity 2 -Source ${CmdletName}
 					$displayVersionResult.DisplayVersion = [string]::Empty
