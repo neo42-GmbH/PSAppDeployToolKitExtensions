@@ -3327,6 +3327,10 @@ function Expand-NxtPackageConfig {
 		[array]$global:PackageConfig.DisplayNamesToExcludeFromAppSearches = foreach ($displayNameToExcludeFromAppSearches in $global:PackageConfig.DisplayNamesToExcludeFromAppSearches) {
 			$ExecutionContext.InvokeCommand.ExpandString($displayNameToExcludeFromAppSearches)
 		}
+		## the array must exist even if empty, to avoid errors in the validation functions
+		if ($null -eq [array]$global:PackageConfig.DisplayNamesToExcludeFromAppSearches) {
+			[array]$global:PackageConfig.DisplayNamesToExcludeFromAppSearches = @()
+		}
 		foreach ($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
 			[string]$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
 			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
