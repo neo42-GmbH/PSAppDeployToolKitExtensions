@@ -1510,6 +1510,50 @@ function ConvertFrom-NxtEncodedObject {
 	}
 }
 #endregion
+#region Function ConvertTo-NxtInstallerProductCode
+function ConvertTo-NxtInstallerProductCode {
+	<#
+	.SYNOPSIS
+		Converts a product GUID into an installer product code.
+	.DESCRIPTION
+		The ConvertTo-NxtInstallerProductCode function converts a product GUID into an installer product code.
+		This function is useful when you need to retrieve the installer product code for a given product GUID.
+	.PARAMETER ProductGuid
+		The product GUID that you want to convert into an installer product code. This parameter is mandatory.
+	.EXAMPLE
+		$ProductCode = ConvertTo-NxtInstallerProductCode -ProductGuid "{12345678-1234-1234-1234-123456789012}"
+	.OUTPUTS
+		System.String
+	.NOTES
+		Ensure that the ProductGuid parameter contains a valid GUID. Invalid or malformed input can result in errors.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[guid]
+		$ProductGuid
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+
+		[int[]]$charIndex = 7,6,5,4,3,2,1,0,11,10,9,8,15,14,13,12,17,16,19,18,21,20,23,22,25,24,27,26,29,28,31,30
+	}
+	Process {
+		[string]$productGuidChars = [regex]::replace($ProductGuid.Guid, "[^a-zA-Z0-9]", "")
+		return (
+			$charIndex | ForEach-Object {
+				$productGuidChars[$_]
+			}
+		) -join [string]::Empty
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function ConvertTo-NxtEncodedObject
 function ConvertTo-NxtEncodedObject {
 	<#
@@ -1871,7 +1915,6 @@ function Execute-NxtBitRockInstaller {
 		[bool]$bitRockInstallerUninstallKeyContainsWildCards = $UninstallKeyContainsWildCards
 		[bool]$bitRockInstallerUninstallKeyContainsRegEx = $UninstallKeyContainsRegEx
 		[string[]]$bitRockInstallerDisplayNamesToExclude = $DisplayNamesToExclude
-
 		switch ($Action) {
 			'Install' {
 				[string]$bitRockInstallerDefaultParams = $configNxtBitRockInstallerInstallParams
@@ -7977,6 +8020,16 @@ function Repair-NxtApplication {
 				[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
 				if ($executionResult.ExitCode -eq 1612 -and $false -eq [string]::IsNullOrEmpty($BackupRepairFile)) {
 					Write-Log "Built-in repair mechanism failed with code [1612] due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
+					[string]$installerSourceRegPath = "Registry::HKEY_CLASSES_ROOT\Installer\Products\$(ConvertTo-NxtInstallerProductCode -ProductGuid $($executeNxtParams["Path"]))\SourceList"
+					[string]$previousPackageName = Get-RegistryKey -Key $installerSourceRegPath -Value "PackageName"
+					[string]$backupRepairFileName = Split-Path $BackupRepairFile -Leaf
+					if (
+						$false -eq [string]::IsNullOrEmpty($previousPackageName) -and
+						$previousPackageName -ne $backupRepairFileName
+					) {
+						Write-Log "Found previously used source [$previousPackageName], that differs from package source [$backupRepairFileName]. Adjusting installer cache prior to repair." -Severity 2 -Source ${cmdletName}
+						Set-RegistryKey -Key $installerSourceRegPath -Name "PackageName" -Value $backupRepairFileName
+					}
 					$executeNxtParams["Path"] = $BackupRepairFile
 					$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
 				}
