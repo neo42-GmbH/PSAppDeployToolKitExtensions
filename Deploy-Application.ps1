@@ -411,7 +411,14 @@ function Main {
 				Unregister-NxtOld
 				Resolve-NxtDependentPackage
 				[string]$script:installPhase = 'Check-SoftMigration'
-				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and ($false -eq (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName')) -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and ($false -eq $RemovePackagesWithSameProductGUID) ) {
+				if ( 
+					($true -eq $global:SetupCfg.Options.SoftMigration) -and
+					($false -eq (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName')) -and
+					($true -eq $RegisterPackage) -and 
+					((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and
+					($false -eq $RemovePackagesWithSameProductGUID) -and
+					($global:PackageConfig.AppVersion -ne (Get-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'Version'))
+					) {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-SoftMigration'
