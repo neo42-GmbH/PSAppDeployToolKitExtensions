@@ -4772,10 +4772,7 @@ function Get-NxtRegisteredPackage {
 		$InstalledState,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
-		[Parameter(Mandatory = $false)]
-		[string]
-		$AppVersion
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4817,12 +4814,6 @@ function Get-NxtRegisteredPackage {
 			[bool]$neoPackageIsInstalled = ( (Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$neoPackageGUID" -Value "Installed" ) -eq "1" )
 			if ($false -eq [string]::IsNullOrEmpty($InstalledState)) {
 				if ([System.Convert]::ToBoolean([System.Convert]::ToInt32($InstalledState)) -ne $neoPackageIsInstalled) {
-					continue
-				}
-			}
-			if ($false -eq [string]::IsNullOrEmpty($AppVersion)) {
-				[string]$neoAppVersion = Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$neoPackageGUID" -Value "Version"
-				if ($AppVersion -ne $neoAppVersion) {
 					continue
 				}
 			}
@@ -4956,10 +4947,12 @@ function Get-NxtRegisterOnly {
 	}
 	elseif (
 		($true -eq $SoftMigration) -and
-		(
-			((Get-NxtRegisteredPackage -ProductGUID $ProductGUID -RegPackagesKey $RegPackagesKey -AppVersion $AppVersion).count -eq 0) -or
-			$false -eq $RemovePackagesWithSameProductGUID
-		)
+		$false -eq (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
+			(
+				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID -RegPackagesKey $RegPackagesKey).count -eq 0) -or
+				$false -eq $RemovePackagesWithSameProductGUID
+			) -and
+			($AppVersion -ne (Get-RegistryKey -Key $PackageRegisterPath -Value 'Version'))
 		) {
 		if ($true -eq $SoftMigrationCustomResult) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
