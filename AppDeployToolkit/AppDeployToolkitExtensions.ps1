@@ -3689,7 +3689,6 @@ function Get-NxtCurrentDisplayVersion {
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
 	.PARAMETER DeploymentMethod
 		Deployment method of the application.
-		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtCurrentDisplayVersion -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
 	.EXAMPLE
@@ -3724,7 +3723,7 @@ function Get-NxtCurrentDisplayVersion {
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentMethod = $global:PackageConfig.DeploymentMethod
+		$DeploymentMethod
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4922,6 +4921,8 @@ function Get-NxtRegisterOnly {
 	.PARAMETER RegPackagesKey
 		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER DeploymentMethod
+		Specifies the deployment method used to install the software package.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 		This example detects if the target application is already installed and verifies conditions for a soft migration based on the values from the PackageConfig object.
@@ -4982,7 +4983,10 @@ function Get-NxtRegisterOnly {
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentMethod
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
@@ -5027,7 +5031,7 @@ function Get-NxtRegisterOnly {
 		}
 		else {
 			[string]$currentlyDetectedDisplayVersion = (
-					Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -UninstallKeyContainsRegEx $UninstallKeyContainsRegEx -DisplayNamesToExclude $DisplayNamesToExclude
+					Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -UninstallKeyContainsRegEx $UninstallKeyContainsRegEx -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $DeploymentMethod
 				).DisplayVersion
 			if ($true -eq [string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
@@ -10003,7 +10007,7 @@ function Switch-NxtMSIReinstallMode {
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check ReinstallMode for an expected msi display version!. Returning [$ReinstallMode]." -Severity 2 -Source ${cmdletName}
 			}
 			else {
-				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -UninstallKeyContainsRegEx $UninstallKeyContainsRegEx -DisplayNamesToExclude $DisplayNamesToExclude
+				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -UninstallKeyContainsRegEx $UninstallKeyContainsRegEx -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $InstallMethod
 				if ($false -eq $displayVersionResult.UninstallKeyExists) {
 					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
 					throw "No repair function executable under current conditions!"

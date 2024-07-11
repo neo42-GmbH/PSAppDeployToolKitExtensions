@@ -415,7 +415,7 @@ function Main {
 					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-SoftMigration'
-				if ($false -eq $(Get-NxtRegisterOnly)) {
+				if ($false -eq $(Get-NxtRegisterOnly -DeploymentType $DeploymentType)) {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
 					Remove-NxtProductMember
