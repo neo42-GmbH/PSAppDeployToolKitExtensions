@@ -1,5 +1,5 @@
 {
-  "ConfigVersion": "2023.10.31.1",
+  "ConfigVersion": "2024.07.01.1",
   "ScriptAuthor": "neo42 GmbH",
   "ScriptDate": "!CreationDate!",
   "InventoryID": "!11DigitNeo42InventoryID!",
@@ -45,6 +45,7 @@
   "UninstallKey": "!UninstallRegSubKeyName!",
   "UninstallKeyIsDisplayName": false,
   "UninstallKeyContainsWildCards": false,
+  "UninstallKeyContainsRegEx": false,
   "UninstallKeyContainsExpandVariables": false,
   "DisplayNamesToExcludeFromAppSearches": [
     "$($global:PackageConfig.UninstallDisplayName)"
@@ -100,6 +101,7 @@
       "Is64Bit": true,
       "KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)",
       "KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)",
+      "KeyNameContainsRegEx": "$($global:PackageConfig.UninstallKeyContainsRegEx)",
       "DisplayNamesToExcludeFromHiding": [
         "$($global:PackageConfig.UninstallDisplayName)"
       ]

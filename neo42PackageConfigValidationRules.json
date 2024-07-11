@@ -8,7 +8,8 @@
             "Operator": "match"
         },
         "AllowEmpty": false
-    },"AppArch": {
+    },
+    "AppArch": {
         "Mandatory": true,
         "HelpText": "AppArch is mandatory and must be a string with a value of x86, x64 or *.",
         "Validateset": [
