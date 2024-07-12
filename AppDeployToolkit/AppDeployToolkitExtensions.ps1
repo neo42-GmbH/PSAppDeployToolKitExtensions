@@ -4946,13 +4946,11 @@ function Get-NxtRegisterOnly {
 		Write-Output $false
 	}
 	elseif (
-		($true -eq $SoftMigration) -and
-		$false -eq (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
+		($true -eq $SoftMigration) -and ($AppVersion -ne (Get-RegistryKey -Key $PackageRegisterPath -Value 'Version')) -and
 			(
-				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID -RegPackagesKey $RegPackagesKey).count -eq 0) -or
+				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID -RegPackagesKey $RegPackagesKey | Where-Object PackageGUID -ne $PackageGUID).count -eq 0) -or
 				$false -eq $RemovePackagesWithSameProductGUID
-			) -and
-			($AppVersion -ne (Get-RegistryKey -Key $PackageRegisterPath -Value 'Version'))
+			)
 		) {
 		if ($true -eq $SoftMigrationCustomResult) {
 			Write-Log -Message 'Application is already present (pre-checked individually). Installation is not executed. Only package files are copied and package is registered. Performing SoftMigration ...' -Source ${cmdletName}
