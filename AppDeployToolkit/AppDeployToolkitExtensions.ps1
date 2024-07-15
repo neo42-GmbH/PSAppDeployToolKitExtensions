@@ -378,12 +378,12 @@ function Add-NxtLocalUser {
 			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName -ComputerName $COMPUTERNAME
 			if ($false -eq $userExists) {
 				[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
+				$objUser.SetInfo() | Out-Null
 			}
 			else {
 				[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$COMPUTERNAME/$UserName,user"
 			}
-			$objUser.SetPassword($Password) | Out-Null
-			$objUser.SetInfo() | Out-Null
+			$objUser.setpassword($Password) | Out-Null
 			if ($false -eq ([string]::IsNullOrEmpty($FullName))) {
 				$objUser.Put("FullName", $FullName) | Out-Null
 				$objUser.SetInfo() | Out-Null
@@ -4137,7 +4137,7 @@ function Get-NxtInstalledApplication {
 				if ("MSI" -eq $DeploymentMethod) {
 					$installedAppResults = $installedAppResults | Where-Object {
 						[string]$productRegKeyPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\"
-						if ($false -eq $_.Is64BitApplication) {
+						if ($true -eq $_.Is64BitApplication) {
 							$productRegKeyPath = "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
 						}
 						try {
