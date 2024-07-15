@@ -4065,6 +4065,9 @@ function Get-NxtInstalledApplication {
 		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
 		We recommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
+	.PARAMETER Is64Bit
+		Determines which registry hives to search in.
+		Defaults to PSADT Main Script's $Is64Bit variable.
 	.PARAMETER DeploymentMethod
 		Filter the results by the installer type. Currently only "MSI" is supported.
 		There is no default value.
@@ -4097,6 +4100,9 @@ function Get-NxtInstalledApplication {
 		[Parameter(Mandatory = $false)]
 		[string[]]
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Is64Bit = $global:Is64Bit,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentMethod
@@ -4137,7 +4143,7 @@ function Get-NxtInstalledApplication {
 				if ("MSI" -eq $DeploymentMethod) {
 					$installedAppResults = $installedAppResults | Where-Object {
 						[string]$productRegKeyPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\"
-						if ($false -eq $_.Is64BitApplication) {
+						if ($false -eq $_.Is64BitApplication -and $true -eq $Is64Bit) {
 							$productRegKeyPath = "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
 						}
 						try {
