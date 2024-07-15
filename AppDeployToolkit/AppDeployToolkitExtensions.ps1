@@ -4102,7 +4102,7 @@ function Get-NxtInstalledApplication {
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$Is64Bit = $global:Is64Bit,
+		$Is64Bit = $Is64Bit,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$DeploymentMethod
