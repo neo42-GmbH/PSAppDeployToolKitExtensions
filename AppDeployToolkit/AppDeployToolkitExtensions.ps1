@@ -378,12 +378,12 @@ function Add-NxtLocalUser {
 			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName -ComputerName $COMPUTERNAME
 			if ($false -eq $userExists) {
 				[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
-				$objUser.SetInfo() | Out-Null
 			}
 			else {
 				[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$COMPUTERNAME/$UserName,user"
 			}
-			$objUser.setpassword($Password) | Out-Null
+			$objUser.SetPassword($Password) | Out-Null
+			$objUser.SetInfo() | Out-Null
 			if ($false -eq ([string]::IsNullOrEmpty($FullName))) {
 				$objUser.Put("FullName", $FullName) | Out-Null
 				$objUser.SetInfo() | Out-Null
