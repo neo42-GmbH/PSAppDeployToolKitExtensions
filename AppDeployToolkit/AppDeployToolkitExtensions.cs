@@ -342,6 +342,31 @@ namespace PSADTNXT
             }
         }
 
+        public static void AdjustPrivilegeForCurrentProccess(string privilegeName, bool enabled)
+        {
+            var processToken = IntPtr.Zero;
+            try
+            {
+                var processHandleToken = Process.GetCurrentProcess().Handle;
+                if (!OpenProcessToken(processHandleToken, TOKEN_ALL_ACCESS, out processToken))
+                {
+                    throw CreateWin32Exception("OpenProcessToken");
+                }
+                AdjustPrivilege(privilegeName, enabled, processToken);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (processToken != IntPtr.Zero)
+                {
+                    CloseHandleIfExists(processToken);
+                }
+            }
+        }
+
         private static void AdjustPrivilege(string privilegeName, bool enabled, IntPtr token)
         {
             var luid = new LUID();
