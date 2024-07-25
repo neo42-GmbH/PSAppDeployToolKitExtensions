@@ -4066,7 +4066,7 @@ function Get-NxtInstalledApplication {
 		We recommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
 	.PARAMETER Is64Bit
-		Determines which registry hives to search in.
+		The operating system architecture to use for the search. Defaults to PSADT main script's $Is64Bit variable. This is not intended to be used directly.
 		Defaults to PSADT Main Script's $Is64Bit variable.
 	.PARAMETER DeploymentMethod
 		Filter the results by the installer type. Currently only "MSI" is supported.
@@ -4100,7 +4100,7 @@ function Get-NxtInstalledApplication {
 		[Parameter(Mandatory = $false)]
 		[string[]]
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $false, DontShow = $true)]
 		[bool]
 		$Is64Bit = $Is64Bit,
 		[Parameter(Mandatory = $false)]
