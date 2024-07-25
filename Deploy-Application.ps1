@@ -401,24 +401,9 @@ function Main {
 			} {
 				CustomInstallAndReinstallAndSoftMigrationBegin
 				## START OF INSTALL
-				[string]$script:installPhase = 'Package-PreCleanup'
-				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
-				if ($false -eq $mainNxtResult.Success) {
-					Clear-NxtTempFolder
-					Unblock-NxtAppExecution
-					Exit-Script -ExitCode $mainNxtResult.MainExitCode
-				}
-				Unregister-NxtOld
-				Resolve-NxtDependentPackage
-				[string]$script:installPhase = 'Check-SoftMigration'
-				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and ($false -eq (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName')) -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and ($false -eq $RemovePackagesWithSameProductGUID) ) {
-					CustomSoftMigrationBegin
-				}
-				[string]$script:installPhase = 'Check-SoftMigration'
-				if ($false -eq $(Get-NxtRegisterOnly)) {
-					## soft migration is not requested or not possible
-					[string]$script:installPhase = 'Package-Preparation'
-					Remove-NxtProductMember
+				[string]$script:installPhase = 'Package-Preparation'
+				[bool]$isRegisterOnly = Get-NxtRegisterOnly
+				if ($false -eq $isRegisterOnly) {
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
 					if ($showInstallationWelcomeResult -ne 0) {
 						switch ($showInstallationWelcomeResult) {
@@ -434,6 +419,23 @@ function Main {
 						}
 						Exit-NxtScriptWithError -ErrorMessage $currentShowInstallationWelcomeMessageInstall -MainExitCode $showInstallationWelcomeResult
 					}
+				}
+				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
+				if ($false -eq $mainNxtResult.Success) {
+					Clear-NxtTempFolder
+					Unblock-NxtAppExecution
+					Exit-Script -ExitCode $mainNxtResult.MainExitCode
+				}
+				Unregister-NxtOld
+				[string]$script:installPhase = 'Check-SoftMigration'
+				Resolve-NxtDependentPackage
+				if ( ($true -eq $global:SetupCfg.Options.SoftMigration) -and ($false -eq (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName')) -and ($true -eq $RegisterPackage) -and ((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID").count -eq 0) -and ($false -eq $RemovePackagesWithSameProductGUID) ) {
+					CustomSoftMigrationBegin
+				}
+				if ($false -eq $isRegisterOnly) {
+					## soft migration is not requested or not possible
+					[string]$script:installPhase = 'Package-Preparation'
+					Remove-NxtProductMember
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ( ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) -or ($true -eq $global:AppInstallDetectionCustomResult) ) {
