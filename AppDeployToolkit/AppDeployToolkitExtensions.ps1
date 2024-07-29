@@ -4640,7 +4640,7 @@ function Get-NxtProcessTree {
 		}
 	}
 	Process {
-		[ciminstance]$rootProcess = $processes | Where-Object { 
+		[ciminstance]$rootProcess = $processes | Where-Object {
 			$_.ProcessId -eq $ProcessId
 		}
 		if ($null -eq $rootProcess) {
