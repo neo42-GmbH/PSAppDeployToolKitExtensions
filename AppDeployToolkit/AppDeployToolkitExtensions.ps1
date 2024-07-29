@@ -4580,10 +4580,8 @@ function Get-NxtProcessTree {
 	.PARAMETER IncludeParentProcesses
 		Indicates if parent processes should be included in the result.
 		Defaults to $true.
-	.PARAMETER ProcessIdsToExcludeFromRecursion
-		Process IDs to exclude from the recursion. Internal use only.
 	.OUTPUTS
-		System.Management.ManagementObject
+		ciminstance[]
 	.EXAMPLE
 		Get-NxtProcessTree -ProcessId 1234
 		Gets the process tree for process with ID 1234 including child and parent processes.
@@ -4602,36 +4600,53 @@ function Get-NxtProcessTree {
 		$IncludeChildProcesses = $true,
 		[Parameter(Mandatory=$false)]
 		[bool]
-		$IncludeParentProcesses = $true,
-		[Parameter(Mandatory=$false)]
-		[AllowNull()]
-		[int[]]
-		$ProcessIdsToExcludeFromRecursion
+		$IncludeParentProcesses = $true
 	)
-	[System.Management.ManagementObject]$process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
-	if ($null -ne $process) {
-		Write-Output $process
-		if ($true -eq $IncludeChildProcesses) {
-			[System.Management.ManagementBaseObject[]]$childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
-			foreach ($child in $childProcesses) {
-				if (
-					$child.ProcessId -eq $process.ProcessId -and
-					$child.ProcessId -notin $ProcessIdsToExcludeFromRecursion
-				) {
-					return
-				}
-				$ProcessIdsToExcludeFromRecursion += $process.ProcessId
-				Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses -ProcessIdsToExcludeFromRecursion $ProcessIdsToExcludeFromRecursion
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+
+		[ciminstance[]]$processes = Get-CimInstance -Query "SELECT * FROM Win32_Process"
+
+		[scriptblock]$getRelatedProcesses = {
+			Param (
+				[ciminstance]
+				$Root,
+				[ciminstance[]]
+				$ProcessTable,
+				[switch]
+				$Parents
+			)
+			if ($true -eq $Parents) {
+				[ciminstance[]]$relatedProcesses = $ProcessTable | Where-Object { $_.ProcessId -eq $Root.ParentProcessId }
 			}
+			else {
+				[ciminstance[]]$relatedProcesses = $ProcessTable | Where-Object { $_.ParentProcessId -eq $Root.ProcessId }
+			}
+			$relatedProcesses | ForEach-Object {
+				& $getRelatedProcesses -ArgumentList -Root $_ -ProcessTable $processes -Parents:$Parents
+			}
+			Write-Output $relatedProcesses
 		}
-		if (
-			($process.ParentProcessId -ne $ProcessId) -and
-			$IncludeParentProcesses -and
-			$process.ParentProcessId -notin $ProcessIdsToExcludeFromRecursion
-		) {
-			$ProcessIdsToExcludeFromRecursion += $process.ProcessId
-			Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses -ProcessIdsToExcludeFromRecursion $ProcessIdsToExcludeFromRecursion
+	}
+	Process {
+		[ciminstance]$rootProcess = $processes | Where-Object { $_.ProcessId -eq $ProcessId }
+		if ($null -eq $rootProcess) {
+			Write-Output "Process with ID [$ProcessId] not found."
+			return
 		}
+	
+		[ciminstance[]]$processTree = @($rootProcess)
+		if ($true -eq $IncludeChildProcesses) {
+			$processTree += & $getRelatedProcesses -ArgumentList -Root $rootProcess -ProcessTable $processes
+		}
+		if ($true -eq $IncludeParentProcesses) {
+			$processTree += & $getRelatedProcesses -ArgumentList -Root $rootProcess -ProcessTable $processes -Parents
+		}
+		Write-Output $processTree
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
