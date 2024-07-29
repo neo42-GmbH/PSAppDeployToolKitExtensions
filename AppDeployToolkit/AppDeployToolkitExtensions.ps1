@@ -9841,29 +9841,36 @@ function Stop-NxtProcess {
 			Write-Log -Message "Failed to retrieve process(es) with query [$processQuery]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			return
 		}
-		if ($process.Count -gt 0) {
-			Write-Log -Message "Found $($process.Count) process(es) matching query [$processQuery]." -Source ${cmdletName}
+		if ($processes.Count -gt 0) {
+			Write-Log -Message "Found [$($processes.Count)] process(es) matching query [$processQuery]." -Source ${cmdletName}
 		}
 		else {
 			Write-Log -Message "No process(es) found matching query [$processQuery]." -Source ${cmdletName}
 			return
 		}
 		$processes | ForEach-Object {
+			[ciminstance]$process = $_
 			try {
-				Invoke-CimMethod -InputObject $_ -MethodName 'Terminate' -ErrorAction Stop | Out-Null
+				Invoke-CimMethod -InputObject $process -MethodName 'Terminate' -ErrorAction Stop | Out-Null
 			}
 			catch {
-				Write-Log -Message "Failed to stop process with ID [$($_.ProcessId)]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				# Not found is not an error in this case as the process might have been stopped by another process
+				if ($_.Exception -is [Microsoft.Management.Infrastructure.CimException] -and $_.Exception.NativeErrorCode -eq "NotFound") {
+					return
+				}
+				else {
+					Write-Log -Message "Failed to stop process with ID [$($process.ProcessId)]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+				}
 			}
 		}
-		if ($null -ne (Get-Process -Id $processes.ProcessId | Where-Object { 
-					$false -eq $_.HasExited 
+		if ($null -ne (Get-Process -Id $processes.ProcessId -ErrorAction SilentlyContinue | Where-Object {
+					$false -eq $_.HasExited
 				})
 		) {
 			Write-Log -Message "Found running process(es) after sending stop signal."
 		}
 		else {
-			Write-Log -Message "$($process.Count) Process(es) were successfully stopped." -Source ${cmdletName}
+			Write-Log -Message "[$($processes.Count)] process(es) were successfully stopped." -Source ${cmdletName}
 		}
 
 	}
