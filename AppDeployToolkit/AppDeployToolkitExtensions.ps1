@@ -9836,19 +9836,33 @@ function Stop-NxtProcess {
 		Write-Log -Message "Stopping process that match query [$processQuery]" -Source ${cmdletName}
 		try {
 			[ciminstance[]]$processes = Get-CimInstance -Class Win32_Process -Filter $processQuery -ErrorAction Stop
-			$processes | ForEach-Object {
-				Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop | Out-Null
-			}
-			if ($null -ne (Get-Process -Id $processes.ProcessId | Where-Object { $false -eq $_.HasExited })) {
-				throw "Found running process(es) after sending stop signal."
-			}
-			else {
-				Write-Log -Message "$($process.Count) Process(es) were successfully stopped." -Source ${cmdletName}
-			}
 		}
 		catch {
-			Write-Log -Message "Failed to stop process(es) with $Name. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to retrieve process(es) with query [$processQuery]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			return
 		}
+		if ($process.Count -gt 0){
+			Write-Log -Message "Found $($process.Count) process(es) matching query [$processQuery]." -Source ${cmdletName}
+		}
+		else {
+			Write-Log -Message "No process(es) found matching query [$processQuery]." -Source ${cmdletName}
+			return
+		}
+		$processes | ForEach-Object {
+			try {
+				Invoke-CimMethod -InputObject $_ -MethodName 'Terminate' -ErrorAction Stop | Out-Null
+			}
+			catch {
+				Write-Log -Message "Failed to stop process with ID [$($_.ProcessId)]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			}
+		}
+		if ($null -ne (Get-Process -Id $processes.ProcessId | Where-Object { $false -eq $_.HasExited })) {
+			Write-Log -Message "Found running process(es) after sending stop signal."
+		}
+		else {
+			Write-Log -Message "$($process.Count) Process(es) were successfully stopped." -Source ${cmdletName}
+		}
+
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
