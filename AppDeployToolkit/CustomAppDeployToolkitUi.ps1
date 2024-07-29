@@ -613,13 +613,15 @@ function Get-NxtProcessTree {
 			if ($true -eq $Parents) {
 				[ciminstance[]]$relatedProcesses = $ProcessTable | Where-Object {
 					$_.ProcessId -eq $Root.ParentProcessId -and
-					$_.ProcessId -notin $ProcessedIds
+					$_.ProcessId -notin $ProcessedIds -and
+					$_.ParentProcessId -ne $Root.ProcessId
 				}
 			}
 			else {
 				[ciminstance[]]$relatedProcesses = $ProcessTable | Where-Object {
 					$_.ParentProcessId -eq $Root.ProcessId -and
-					$_.ProcessId -notin $ProcessedIds
+					$_.ProcessId -notin $ProcessedIds -and
+					$_.ParentProcessId -ne $Root.ProcessId
 				}
 			}
 			$relatedProcesses | ForEach-Object {
