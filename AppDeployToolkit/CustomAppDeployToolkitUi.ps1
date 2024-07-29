@@ -631,7 +631,9 @@ function Get-NxtProcessTree {
 		}
 	}
 	Process {
-		[ciminstance]$rootProcess = $processes | Where-Object { $_.ProcessId -eq $ProcessId }
+		[ciminstance]$rootProcess = $processes | Where-Object { 
+			$_.ProcessId -eq $ProcessId
+		}
 		if ($null -eq $rootProcess) {
 			Write-Output "Process with ID [$ProcessId] not found."
 			return
