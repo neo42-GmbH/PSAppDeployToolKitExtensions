@@ -9841,7 +9841,7 @@ function Stop-NxtProcess {
 			Write-Log -Message "Failed to retrieve process(es) with query [$processQuery]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			return
 		}
-		if ($process.Count -gt 0){
+		if ($process.Count -gt 0) {
 			Write-Log -Message "Found $($process.Count) process(es) matching query [$processQuery]." -Source ${cmdletName}
 		}
 		else {
@@ -9856,7 +9856,10 @@ function Stop-NxtProcess {
 				Write-Log -Message "Failed to stop process with ID [$($_.ProcessId)]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 			}
 		}
-		if ($null -ne (Get-Process -Id $processes.ProcessId | Where-Object { $false -eq $_.HasExited })) {
+		if ($null -ne (Get-Process -Id $processes.ProcessId | Where-Object { 
+					$false -eq $_.HasExited 
+				})
+		) {
 			Write-Log -Message "Found running process(es) after sending stop signal."
 		}
 		else {
