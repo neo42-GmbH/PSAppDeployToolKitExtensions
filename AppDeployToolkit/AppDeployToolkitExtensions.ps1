@@ -4605,9 +4605,7 @@ function Get-NxtProcessTree {
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-
-		[ciminstance[]]$processes = Get-CimInstance -Query "SELECT * FROM Win32_Process"
-
+		[ciminstance[]]$processes = Get-CimInstance -ClassName "Win32_Process"
 		[scriptblock]$getRelatedProcesses = {
 			Param (
 				[ciminstance]
@@ -4615,26 +4613,23 @@ function Get-NxtProcessTree {
 				[ciminstance[]]
 				$ProcessTable,
 				[switch]
-				$Parents,
-				[int[]]
-				$ProcessedIds = @()
+				$Parents
 			)
-			if ($true -eq $Parents) {
-				[ciminstance[]]$relatedProcesses = $ProcessTable | Where-Object {
-					$_.ProcessId -eq $Root.ParentProcessId -and
-					$_.ProcessId -notin $ProcessedIds -and
-					$_.ParentProcessId -ne $Root.ProcessId
+			[ciminstance[]]$relatedProcesses = $ProcessTable | Where-Object {
+				$_.ProcessId -ne $Root.ProcessId
+			} | Where-Object {
+				if ($true -eq $Parents) {
+					$_.ProcessId -eq $Root.ParentProcessId
+				}
+				else {
+					$_.ParentProcessId -eq $Root.ProcessId
 				}
 			}
-			else {
-				[ciminstance[]]$relatedProcesses = $ProcessTable | Where-Object {
-					$_.ParentProcessId -eq $Root.ProcessId -and
-					$_.ProcessId -notin $ProcessedIds
-				}
+			$ProcessTable = $ProcessTable | Where-Object {
+				$_.ProcessId -notin $relatedProcesses.ProcessId
 			}
-			$relatedProcesses | ForEach-Object {
-				$ProcessedIds += $_.ProcessId
-				& $getRelatedProcesses -ArgumentList -Root $_ -ProcessTable $processes -Parents:$Parents -ProcessedIds $ProcessedIds
+			foreach ($process in $relatedProcesses) {
+				& $getRelatedProcesses -Root $_ -ProcessTable $ProcessTable -Parents:$Parents
 			}
 			Write-Output $relatedProcesses
 		}
@@ -4647,13 +4642,12 @@ function Get-NxtProcessTree {
 			Write-Output "Process with ID [$ProcessId] not found."
 			return
 		}
-	
 		[ciminstance[]]$processTree = @($rootProcess)
 		if ($true -eq $IncludeChildProcesses) {
-			$processTree += & $getRelatedProcesses -ArgumentList -Root $rootProcess -ProcessTable $processes
+			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes
 		}
 		if ($true -eq $IncludeParentProcesses) {
-			$processTree += & $getRelatedProcesses -ArgumentList -Root $rootProcess -ProcessTable $processes -Parents
+			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes -Parents
 		}
 		Write-Output $processTree
 	}
