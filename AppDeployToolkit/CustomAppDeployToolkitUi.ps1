@@ -630,7 +630,7 @@ function Get-NxtProcessTree {
 			$_.ProcessId -eq $ProcessId
 		}
 		if ($null -eq $rootProcess) {
-			Write-Output "Process with ID [$ProcessId] not found."
+			Write-Log "Process with ID [$ProcessId] not found." -Source ${CmdletName}
 			return
 		}
 		[ciminstance[]]$processTree = @($rootProcess)

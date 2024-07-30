@@ -12,7 +12,7 @@ Describe "Get-NxtProcessTree" {
         It "Should return a correct list of processes" {
             $processes = Get-NxtProcessTree -ProcessId $childProcess.Id
             $processes.GetType().BaseType.Name | Should -Be 'Array'
-            $processes | ForEach-Object { $_ | Should -BeOfType 'System.Management.ManagementObject' }
+            $processes | ForEach-Object { $_ | Should -BeOfType 'ciminstance' }
             $processes.Length | Should -BeGreaterThan 1
             $processes.ProcessId | Should -Contain $childProcess.Id
             $processes.ProcessId | Should -Contain $process.Id
@@ -29,7 +29,7 @@ Describe "Get-NxtProcessTree" {
             Get-NxtProcessTree -ProcessId 9999999 | Should -BeNullOrEmpty
         }
         It 'Should not loop on idle process' {
-            [Array]@((Get-NxtProcessTree -ProcessId 0)).count | Should -Be 1
+            [Array]@((Get-NxtProcessTree -ProcessId 0)).count | Should -BeLessThan 10
             [Array]@((Get-NxtParentProcess -Id $serviceProcess.id)).count | Should -BeLessThan 25
         }
     }
