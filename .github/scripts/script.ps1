@@ -1,14 +1,9 @@
+## Move source code to new folder
+Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
 ## Remove unneeded files from PSAppDeployToolkit and Extensions
-Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.git
-Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.github
-Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.tests
-Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.vscode
-Remove-Item -Force ./PSAppDeployToolkitExtensions/.gitignore
+Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.*
 Remove-Item ./PSAppDeployToolkitExtensions/README.MD
 Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
-Remove-Item ./PSAppDeployToolkitExtensions/neo42PackageConfig.json
-Copy-Item ./PSAppDeployToolkitExtensions/.samples/MSI/neo42PackageConfig.json ./PSAppDeployToolkitExtensions/neo42PackageConfig.json
-Remove-Item -Force -Recurse ./PSAppDeployToolkit/.git
 Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe*"
 ## Copy files to new folder
 $dirname = "$($Env:GITHUB_RELEASE_VERSION)-$($Env:GITHUB_RUN_NUMBER)"
@@ -16,15 +11,15 @@ New-Item -ItemType Directory -Name "$dirname" -Force
 New-Item -ItemType Directory -Name "$dirname/$dirname" -Force
 Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/$dirname/" -Recurse -Force -Exclude $exclude
 Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/$dirname/"
+Copy-Item ./$dirname/ExtensionsSourceCode/.samples/MSI/neo42PackageConfig.json ../$dirname/neo42PackageConfig.json -Force
 ## Has to be equal to $global:userPartDir in Deploy-Application.ps1
 New-Item -ItemType Directory -Name "$dirname/$dirname/SupportFiles/User" -Force
 New-Item -ItemType File -Path "$dirname/$dirname/SupportFiles/User" -Name "place UserPart files here!!!"
 New-Item -ItemType Directory -Name "$dirname/$dirname/Files" -Force
 New-Item -ItemType File -Path "$dirname/$dirname/Files" -Name "place setup files here!!!"
 New-Item -ItemType File -Path "$dirname/$dirname/" -Name "Add a Setup.ico here!!!"
-Move-Item ./$dirname/$dirname/.tools/* ./$dirname/Tools -Force
-Move-Item ./$dirname/$dirname/.samples/* ./$dirname/Samples -Force
-Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
+Copy-Item ./$dirname/ExtensionsSourceCode/.tools ./$dirname/Tools/ -Force
+Copy-Item ./$dirname/ExtensionsSourceCode/.samples ./$dirname/Samples/ -Force
 New-Item -ItemType Directory -Name Artifacts -Force
 ## Replace version in files
 foreach ( $file in @(
