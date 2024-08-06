@@ -1,4 +1,11 @@
 $dirname = "$($Env:GITHUB_RELEASE_VERSION)-$($Env:GITHUB_RUN_NUMBER)"
+New-Item -ItemType Directory -Name "$dirname" -Force
+New-Item -ItemType Directory -Name "$dirname/$dirname" -Force
+New-Item -ItemType Directory -Name "$dirname/$dirname/SupportFiles/User" -Force
+New-Item -ItemType File -Path "$dirname/$dirname/SupportFiles/User" -Name 'place UserPart files here!!!'
+New-Item -ItemType Directory -Name "$dirname/$dirname/Files" -Force
+New-Item -ItemType File -Path "$dirname/$dirname/Files" -Name 'place setup files here!!!'
+New-Item -ItemType File -Path "$dirname/$dirname/" -Name 'Add a Setup.ico here!!!'
 ## Move source code to new folder
 Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
 ## Remove unneeded files from PSAppDeployToolkit and Extensions
@@ -7,17 +14,10 @@ Remove-Item ./PSAppDeployToolkitExtensions/README.MD
 Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
 Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe*"
 ## Copy files to new folder
-New-Item -ItemType Directory -Name "$dirname" -Force
-New-Item -ItemType Directory -Name "$dirname/$dirname" -Force
 Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/$dirname/" -Recurse -Force -Exclude $exclude
 Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/$dirname/"
 Copy-Item ./$dirname/ExtensionsSourceCode/.samples/MSI/neo42PackageConfig.json ../$dirname/neo42PackageConfig.json -Force
 ## Has to be equal to $global:userPartDir in Deploy-Application.ps1
-New-Item -ItemType Directory -Name "$dirname/$dirname/SupportFiles/User" -Force
-New-Item -ItemType File -Path "$dirname/$dirname/SupportFiles/User" -Name "place UserPart files here!!!"
-New-Item -ItemType Directory -Name "$dirname/$dirname/Files" -Force
-New-Item -ItemType File -Path "$dirname/$dirname/Files" -Name "place setup files here!!!"
-New-Item -ItemType File -Path "$dirname/$dirname/" -Name "Add a Setup.ico here!!!"
 Copy-Item ./$dirname/ExtensionsSourceCode/.tools ./$dirname/Tools/ -Force
 Copy-Item ./$dirname/ExtensionsSourceCode/.samples ./$dirname/Samples/ -Force
 New-Item -ItemType Directory -Name Artifacts -Force
