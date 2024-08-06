@@ -8,6 +8,8 @@ New-Item -ItemType File -Path "$dirname/$dirname/Files" -Name 'place setup files
 New-Item -ItemType File -Path "$dirname/$dirname/" -Name 'Add a Setup.ico here!!!'
 ## Move source code to new folder
 Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
+## Use sample files
+Copy-Item ./PSAppDeployToolkitExtensions/.samples/MSI/neo42PackageConfig.json ./PSAppDeployToolkitExtensions/neo42PackageConfig.json -Force
 ## Remove unneeded files from PSAppDeployToolkit and Extensions
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.*
 Remove-Item ./PSAppDeployToolkitExtensions/README.MD
@@ -16,7 +18,6 @@ Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe
 ## Copy files to new folder
 Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/$dirname/" -Recurse -Force
 Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/$dirname/"
-Copy-Item ./$dirname/ExtensionsSourceCode/.samples/MSI/neo42PackageConfig.json ../$dirname/neo42PackageConfig.json -Force
 ## Has to be equal to $global:userPartDir in Deploy-Application.ps1
 Copy-Item ./$dirname/ExtensionsSourceCode/.tools ./$dirname/Tools/ -Force
 Copy-Item ./$dirname/ExtensionsSourceCode/.samples ./$dirname/Samples/ -Force
