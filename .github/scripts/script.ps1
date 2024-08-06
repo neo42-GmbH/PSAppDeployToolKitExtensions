@@ -14,7 +14,7 @@ Remove-Item ./PSAppDeployToolkitExtensions/README.MD
 Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
 Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe*"
 ## Copy files to new folder
-Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/$dirname/" -Recurse -Force -Exclude $exclude
+Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/$dirname/" -Recurse -Force
 Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/$dirname/"
 Copy-Item ./$dirname/ExtensionsSourceCode/.samples/MSI/neo42PackageConfig.json ../$dirname/neo42PackageConfig.json -Force
 ## Has to be equal to $global:userPartDir in Deploy-Application.ps1
