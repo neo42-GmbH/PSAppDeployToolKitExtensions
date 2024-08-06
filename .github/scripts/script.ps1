@@ -6,9 +6,12 @@ New-Item -ItemType File -Path "$dirname/$dirname/SupportFiles/User" -Name 'place
 New-Item -ItemType Directory -Name "$dirname/$dirname/Files" -Force
 New-Item -ItemType File -Path "$dirname/$dirname/Files" -Name 'place setup files here!!!'
 New-Item -ItemType File -Path "$dirname/$dirname/" -Name 'Add a Setup.ico here!!!'
+New-Item -ItemType Directory -Name Artifacts -Force
 ## Move source code to new folder
 Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
 ## Use sample files
+Copy-Item ./PSAppDeployToolkitExtensions/.tools ./$dirname/Tools/ -Force
+Copy-Item ./PSAppDeployToolkitExtensions/.samples ./$dirname/Samples/ -Force
 Copy-Item ./PSAppDeployToolkitExtensions/.samples/MSI/neo42PackageConfig.json ./PSAppDeployToolkitExtensions/neo42PackageConfig.json -Force
 ## Remove unneeded files from PSAppDeployToolkit and Extensions
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.*
@@ -18,10 +21,6 @@ Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe
 ## Copy files to new folder
 Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/$dirname/" -Recurse -Force
 Copy-Item "./PSAppDeployToolkitExtensions/*" -Recurse -Force -Destination "./$dirname/$dirname/"
-## Has to be equal to $global:userPartDir in Deploy-Application.ps1
-Copy-Item ./$dirname/ExtensionsSourceCode/.tools ./$dirname/Tools/ -Force
-Copy-Item ./$dirname/ExtensionsSourceCode/.samples ./$dirname/Samples/ -Force
-New-Item -ItemType Directory -Name Artifacts -Force
 ## Replace version in files
 foreach ( $file in @(
 		"./$dirname/$dirname/Deploy-Application.ps1",
