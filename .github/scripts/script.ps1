@@ -7,7 +7,7 @@ Remove-Item -Force ./PSAppDeployToolkitExtensions/.gitignore
 Remove-Item ./PSAppDeployToolkitExtensions/README.MD
 Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
 Remove-Item ./PSAppDeployToolkitExtensions/neo42PackageConfig.json
-Copy-Item ./PSAppDeployToolkitExtensions/Samples/MSI/neo42PackageConfig.json ./PSAppDeployToolkitExtensions/neo42PackageConfig.json
+Copy-Item ./PSAppDeployToolkitExtensions/.samples/MSI/neo42PackageConfig.json ./PSAppDeployToolkitExtensions/neo42PackageConfig.json
 Remove-Item -Force -Recurse ./PSAppDeployToolkit/.git
 Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe*"
 ## Copy files to new folder
