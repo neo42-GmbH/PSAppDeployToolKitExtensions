@@ -10,8 +10,8 @@ New-Item -ItemType Directory -Name Artifacts -Force
 ## Move source code to new folder
 Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
 ## Use sample files
-Copy-Item ./PSAppDeployToolkitExtensions/.tools ./$dirname/Tools/ -Force
-Copy-Item ./PSAppDeployToolkitExtensions/.samples ./$dirname/Samples/ -Force
+Copy-Item ./PSAppDeployToolkitExtensions/.tools ./$dirname/Tools/ -Force -Recurse
+Copy-Item ./PSAppDeployToolkitExtensions/.samples ./$dirname/Samples/ -Force -Recurse
 Copy-Item ./PSAppDeployToolkitExtensions/.samples/MSI/neo42PackageConfig.json ./PSAppDeployToolkitExtensions/neo42PackageConfig.json -Force
 ## Remove unneeded files from PSAppDeployToolkit and Extensions
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.*
