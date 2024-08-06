@@ -1,3 +1,4 @@
+$dirname = "$($Env:GITHUB_RELEASE_VERSION)-$($Env:GITHUB_RUN_NUMBER)"
 ## Move source code to new folder
 Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
 ## Remove unneeded files from PSAppDeployToolkit and Extensions
@@ -6,7 +7,6 @@ Remove-Item ./PSAppDeployToolkitExtensions/README.MD
 Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
 Remove-Item -Force -Recurse "./PSAppDeployToolkit/Toolkit/Deploy-Application.exe*"
 ## Copy files to new folder
-$dirname = "$($Env:GITHUB_RELEASE_VERSION)-$($Env:GITHUB_RUN_NUMBER)"
 New-Item -ItemType Directory -Name "$dirname" -Force
 New-Item -ItemType Directory -Name "$dirname/$dirname" -Force
 Copy-Item "./PSAppDeployToolkit/Toolkit/*" "$dirname/$dirname/" -Recurse -Force -Exclude $exclude
