@@ -22,10 +22,11 @@ New-Item -ItemType File -Path "$dirname/$dirname/SupportFiles/User" -Name "place
 New-Item -ItemType Directory -Name "$dirname/$dirname/Files" -Force
 New-Item -ItemType File -Path "$dirname/$dirname/Files" -Name "place setup files here!!!"
 New-Item -ItemType File -Path "$dirname/$dirname/" -Name "Add a Setup.ico here!!!"
-Move-Item ./$dirname/$dirname/Tools ./$dirname/ -Force
-Move-Item ./$dirname/$dirname/Samples ./$dirname/ -Force
+Move-Item ./$dirname/$dirname/.tools/* ./$dirname/Tools -Force
+Move-Item ./$dirname/$dirname/.samples/* ./$dirname/Samples -Force
 Move-Item ./PSAppDeployToolkitExtensions_Develop ./$dirname/ExtensionsSourceCode/ -Force
 New-Item -ItemType Directory -Name Artifacts -Force
+## Replace version in files
 foreach ( $file in @(
 		"./$dirname/$dirname/Deploy-Application.ps1",
 		"./$dirname/$dirname/AppDeployToolkit/AppDeployToolkitExtensions.ps1",
