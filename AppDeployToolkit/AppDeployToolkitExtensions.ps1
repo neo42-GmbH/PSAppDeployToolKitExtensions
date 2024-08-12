@@ -4581,7 +4581,7 @@ function Get-NxtProcessTree {
 		Indicates if parent processes should be included in the result.
 		Defaults to $true.
 	.OUTPUTS
-		ciminstance[]
+		System.Management.ManagementObject[]
 	.EXAMPLE
 		Get-NxtProcessTree -ProcessId 1234
 		Gets the process tree for process with ID 1234 including child and parent processes.
@@ -4592,66 +4592,61 @@ function Get-NxtProcessTree {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	Param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[int]
 		$ProcessId,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$IncludeChildProcesses = $true,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$IncludeParentProcesses = $true
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		[ciminstance[]]$processes = Get-CimInstance -ClassName "Win32_Process"
+		## Cache all processes
+		[System.Management.ManagementObject[]]$processes = Get-WmiObject -ClassName "Win32_Process"
+		## Define script block to get related processes
 		[scriptblock]$getRelatedProcesses = {
 			Param (
-				[ciminstance]
+				[System.Management.ManagementObject]
 				$Root,
-				[ciminstance[]]
+				[System.Management.ManagementObject[]]
 				$ProcessTable,
 				[switch]
 				$Parents
 			)
-			[ciminstance[]]$relatedProcesses = $ProcessTable | Where-Object {
-				$_.ProcessId -ne $Root.ProcessId
-			} | Where-Object {
-				if ($true -eq $Parents) {
-					$_.ProcessId -eq $Root.ParentProcessId
-				}
-				else {
-					$_.ParentProcessId -eq $Root.ProcessId
-				}
+			## Get related processes
+			[System.Management.ManagementObject[]]$relatedProcesses = $ProcessTable | Where-Object {
+				$_.ProcessId -ne $Root.ProcessId -and (
+					($true -eq $Parents -and $_.ProcessId -eq $Root.ParentProcessId) -or
+					($false -eq $Parents -and $_.ParentProcessId -eq $Root.ProcessId)
+				)
 			}
-			$ProcessTable = $ProcessTable | Where-Object {
-				$_.ProcessId -notin $relatedProcesses.ProcessId
-			}
+			## Recurse to get related processes of related processes
 			foreach ($process in $relatedProcesses) {
-				& $getRelatedProcesses -Root $_ -ProcessTable $ProcessTable -Parents:$Parents
+				& $getRelatedProcesses -Root $process -ProcessTable $ProcessTable -Parents:$Parents
 			}
 			Write-Output $relatedProcesses
 		}
 	}
 	Process {
-		[ciminstance]$rootProcess = $processes | Where-Object {
+		[System.Management.ManagementObject]$rootProcess = $processes | Where-Object {
 			$_.ProcessId -eq $ProcessId
 		}
 		if ($null -eq $rootProcess) {
-			Write-Log "Process with ID [$ProcessId] not found." -Source ${CmdletName}
+			Write-Log "Process with ID [$ProcessId] not found." -Source ${cmdletName}
 			return
 		}
-		[ciminstance[]]$processTree = @($rootProcess)
+		[System.Management.ManagementObject[]]$processTree = @($rootProcess)
 		if ($true -eq $IncludeChildProcesses) {
 			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes
 		}
 		if ($true -eq $IncludeParentProcesses) {
 			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes -Parents
 		}
-		Write-Output $processTree | Where-Object {
-			$null -ne $_
-		}
+		Write-Output $processTree
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
