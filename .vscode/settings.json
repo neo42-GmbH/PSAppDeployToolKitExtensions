@@ -1,0 +1,52 @@
+// PSAppDeployToolkitExtensions default settings to ensure consistent code formatting and file encoding
+{
+    //-------- Indentation configuration --------
+    "editor.detectIndentation": true,
+    "editor.formatOnPaste": true,
+    "editor.insertSpaces": false,
+    "editor.renderWhitespace": "boundary",
+    "editor.tabSize": 4,
+    //-------- Files configuration --------
+    "files.autoGuessEncoding": true,
+    "files.encoding": "utf8",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    //-------- PowerShell configuration --------
+    "powershell.codeFormatting.addWhitespaceAroundPipe": true,
+    "powershell.codeFormatting.alignPropertyValuePairs": true,
+    "powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
+    "powershell.codeFormatting.ignoreOneLineBlock": false,
+    "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
+    "powershell.codeFormatting.autoCorrectAliases": true,
+    "powershell.codeFormatting.openBraceOnSameLine":true,
+    "powershell.codeFormatting.newLineAfterOpenBrace": true,
+    "powershell.codeFormatting.newLineAfterCloseBrace": true,
+    "powershell.codeFormatting.trimWhitespaceAroundPipe": true,
+    "powershell.codeFormatting.useConstantStrings": true,
+    "powershell.codeFormatting.useCorrectCasing": true,
+    "powershell.codeFormatting.whitespaceAfterSeparator": true,
+    "powershell.codeFormatting.whitespaceAroundOperator": true,
+    "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
+    "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
+    "powershell.codeFormatting.whitespaceBetweenParameters": true,
+    "powershell.codeFormatting.whitespaceInsideBrace": true,
+    "powershell.powerShellDefaultVersion": "Windows PowerShell (x64)",
+    "powershell.scriptAnalysis.enable": true,
+    "powershell.scriptAnalysis.settingsPath": "./test/PSScriptAnalyzer/PSScriptAnalyzerSettings.psd1",
+    "powershell.helpCompletion": "BlockComment",
+    "dotnet.preferCSharpExtension": true,
+    //-------- Pester configuration --------
+    "powershell.pester.useLegacyCodeLens": false,
+    "powershell.pester.outputVerbosity": "Diagnostic",
+    "powershell.pester.codeLens": true,
+    //-------- Json configuration --------
+    "json.validate.enable": true,
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/neo42PackageConfig.json"
+            ],
+            "url": "./test/schemas/neo42PackageConfig.schema.json"
+        }
+    ]
+}
