@@ -555,7 +555,6 @@ function Get-RegistryKey {
 	}
 }
 #endregion
-#region Function Get-NxtProcessTree
 function Get-NxtProcessTree {
 	<#
 	.SYNOPSIS
@@ -637,13 +636,14 @@ function Get-NxtProcessTree {
 		if ($true -eq $IncludeParentProcesses) {
 			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes -Parents
 		}
-		Write-Output $processTree
+		Write-Output $processTree | Where-Object {
+			$null -ne $_
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
-#endregion
 #region Function Get-NxtRunningProcesses
 function Get-NxtRunningProcesses {
 	<#
