@@ -48,5 +48,12 @@
             ],
             "url": "./test/schemas/neo42PackageConfig.schema.json"
         }
+    ],
+    //-------- XML configuration --------
+    "xml.fileAssociations": [
+        {
+            "pattern": "AppDeployToolkit/AppDeployToolkitConfig.xml",
+            "systemId": "./test/schemas/AppDeployToolkitConfig.schema.xsd"
+        }
     ]
 }
