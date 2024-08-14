@@ -11310,7 +11310,7 @@ function Uninstall-NxtApplication {
 					[int]$logMessageSeverity = 2
 				}
 				else {
-					if ($false -eq [System.IO.Path]::IsPathRooted($UninstFile)) {
+					if ($false -eq [System.IO.Path]::IsPathRooted($UninstFile) -and [System.IO.File]::Exists((Join-Path -Path $DirFiles -ChildPath $UninstFile))) {
 						$UninstFile = Join-Path -Path $DirFiles -ChildPath $UninstFile
 					}
 					if ($true -eq [System.IO.File]::Exists($UninstFile)) {
