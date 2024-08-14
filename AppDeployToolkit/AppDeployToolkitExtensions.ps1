@@ -11058,15 +11058,17 @@ function Test-NxtXmlNodeExists {
 		$xml.Load($FilePath)
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
-			foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-				if ($true -eq ([string]::IsNullOrEmpty(($nodes | Where-Object {
-					$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
-				} )))) {
-					Write-Output $false
-					return
-				}
+			if ( @($nodes | Where-Object {
+						$node = $_
+						$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
+								$node.GetAttribute($_.Key) -eq $_.Value
+							})
+					}).Count -gt 0 ) {
+				Write-Output $true
 			}
-			Write-Output $true
+			else {
+				Write-Output $false
+			}
 		}
 		else {
 			if ($false -eq [string]::IsNullOrEmpty($nodes)) {
