@@ -8741,11 +8741,16 @@ function Set-NxtSetupCfg {
 				foreach ( $xmlSectionSubValue in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.ChildNodes.Name | Where-Object {
 					$_ -ne "#comment"
 				}) ) {
-					if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
+					if ($true -eq [string]::IsNullOrEmpty($global:SetupCfg.$xmlSection.$xmlSectionSubValue)) {
 						if ($null -eq $global:SetupCfg.$xmlSection) {
 							[hashtable]$global:SetupCfg.$xmlSection = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 						}
-						[hashtable]$global:SetupCfg.$xmlSection.add("$($xmlSectionSubValue)", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
+						if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
+							[hashtable]$global:SetupCfg.$xmlSection.add("$xmlSectionSubValue", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
+						}
+						else {
+							$global:SetupCfg.$xmlSection.$xmlSectionSubValue = "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)"
+						}
 						Write-Log -Message "Set undefined necessary global object value [`$global:SetupCfg.$($xmlSection).$($xmlSectionSubValue)] with predefined default content: [$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)]" -Severity 2 -Source ${CmdletName}
 					}
 				}
@@ -10851,6 +10856,13 @@ function Test-NxtSetupCfg {
 		}
 		foreach ($section in $ini.GetEnumerator()) {
 			foreach ($parameter in $section.Value.GetEnumerator()) {
+				if (
+					$true -eq [string]::IsNullOrEmpty($parameter.Value.Value) -and
+					$null -ne $xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$($section.Key).$($parameter.Key) 
+				) {
+					Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has no value. Skipping validation due to default value present in XML." -Source ${cmdletName} -Severity 2
+					continue
+				}
 				if ($true -eq [string]::IsNullOrEmpty($parameter.Value.Comments)) {
 					Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has no validation metadata. Skipping validation." -Source ${cmdletName} -Severity 2
 					continue
