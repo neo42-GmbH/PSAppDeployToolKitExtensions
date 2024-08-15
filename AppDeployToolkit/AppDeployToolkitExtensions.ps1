@@ -10858,7 +10858,7 @@ function Test-NxtSetupCfg {
 			foreach ($parameter in $section.Value.GetEnumerator()) {
 				if (
 					$true -eq [string]::IsNullOrEmpty($parameter.Value.Value) -and
-					$null -ne $xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$($section.Key).$($parameter.Key) 
+					$null -ne $xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$($section.Key).$($parameter.Key)
 				) {
 					Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has no value. Skipping validation due to default value present in XML." -Source ${cmdletName} -Severity 2
 					continue
