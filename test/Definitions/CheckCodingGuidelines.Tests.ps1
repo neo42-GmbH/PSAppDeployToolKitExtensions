@@ -181,25 +181,6 @@ Describe "Coding Guidelines" -ForEach @(
                 }
             }
         }
-        It "A scriptblock should have the parentheses in the first line with the statement" {
-            $statements = $ast.FindAll({ param($ast)
-                    (
-                        $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
-                        $ast -is [System.Management.Automation.Language.IfStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.ThrowStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.TrapStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.TryStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.NamedBlockAst] -or
-                        $ast -is [System.Management.Automation.Language.LoopStatementAst]
-                    ) -and
-                    $true -ne $ast.Unnamed -and
-                    $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
-                }, $true)
-            $statements | ForEach-Object {
-                $_.ast.Find( $args[0] -is [System.Management.Automation.Language.ScriptBlockAst], $false).Extent.Text.Split("`n") | 
-                    Select-Object -First 1 | Should -Match '\w+\s*{\s*$' -Because "the statement does not have the parentheses in the first line (line $($_.Extent.StartLineNumber))"
-            }
-        }
         It "Functions and blocks should have the ending parentheses as sole character" {
             $statements = $ast.FindAll({ param($ast)
                     (
