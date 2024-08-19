@@ -196,7 +196,7 @@ Describe "Coding Guidelines" -ForEach @(
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
                 }, $true)
             $statements | ForEach-Object {
-				($_.Extent.Text -split "`n") | Select-Object -First 1 | Should -Match '{' -Because "the statement does not have parentheses in the first line (line $($_.Extent.StartLineNumber))"
+				($_.Extent.Text -split "`n") | Select-Object -First 1 | Should -Match ')\s*{\s*$|(\s*$' -Because "the statement does not have parentheses in the first line (line $($_.Extent.StartLineNumber))"
             }
         }
         It "Functions and blocks should have the ending parentheses as sole character" {
