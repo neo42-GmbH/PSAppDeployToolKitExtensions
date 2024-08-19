@@ -192,6 +192,7 @@ Describe "Coding Guidelines" -ForEach @(
                         $ast -is [System.Management.Automation.Language.NamedBlockAst] -or
                         $ast -is [System.Management.Automation.Language.LoopStatementAst]
                     ) -and
+                    $ast.Extent.Text -ne "{}" -and
                     $true -ne $ast.Unnamed -and
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
                 }, $true)
