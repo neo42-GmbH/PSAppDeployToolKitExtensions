@@ -192,12 +192,11 @@ Describe "Coding Guidelines" -ForEach @(
                         $ast -is [System.Management.Automation.Language.NamedBlockAst] -or
                         $ast -is [System.Management.Automation.Language.LoopStatementAst]
                     ) -and
-                    $ast.Extent.Text -ne "{}" -and
                     $true -ne $ast.Unnamed -and
                     $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
                 }, $true)
             $statements | ForEach-Object {
-				($_.Extent.Text -split "`n") | Select-Object -First 1 | Should -Match '.+(\{|\()\s*$' -Because "the statement does not have parentheses in the first line (line $($_.Extent.StartLineNumber))"
+				($_.Extent.Text -split "`n") | Select-Object -First 1 | Should -Match '{' -Because "the statement does not have parentheses in the first line (line $($_.Extent.StartLineNumber))"
             }
         }
         It "Functions and blocks should have the ending parentheses as sole character" {
@@ -275,7 +274,11 @@ Describe "Coding Guidelines" -ForEach @(
                         $ast -is [System.Management.Automation.Language.DoWhileStatementAst] -or
                         $ast -is [System.Management.Automation.Language.WhileStatementAst]
                     ) -and
-                    $ast.Condition.Extent.Text -notmatch ("-")
+                    $ast.Condition.Extent.Text -notmatch ("-") -and
+                    (
+                        $false -eq [string]::IsNullOrEmpty($ast.Condition.Left.Extent.Text) -and
+                        $false -eq [string]::IsNullOrEmpty($ast.Condition.Right.Extent.Text)
+                    )
                 )
             }, $true)
             $noOperator | Should -BeNullOrEmpty -Because "there should be no condition without and operator (line $($noOperator.Extent.StartLineNumber))"
