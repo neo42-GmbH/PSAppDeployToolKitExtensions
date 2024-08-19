@@ -1724,7 +1724,7 @@ if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 [bool]$showCloseApps = $false
 [bool]$showDefer = $false
 
-Set-Variable -Name 'closeAppsCountdownGlobal' -Value $CloseAppsCountdown -Scope 'Script'
+$script:closeAppsCountdownGlobal = $CloseAppsCountdown
 ## Check if the countdown was specified
 if ($CloseAppsCountdown -and ($CloseAppsCountdown -gt $configInstallationUITimeout)) {
 	Write-Log -Message "The close applications countdown time [$CloseAppsCountdown] is longer than the timeout specified in the XML configuration [$configInstallationUITimeout] for installation UI dialogs to timeout." -Source ${CmdletName} -Severity 3
@@ -1959,7 +1959,8 @@ if ($CloseAppsCountdown -gt 0) {
 	</DockPanel>
 </Window>
 '@
-[System.Windows.Window]$control = New-NxtWpfControl $inputXML
+
+[System.Windows.Window]$control = New-NxtWpfControl -InputXml $inputXML
 
 [System.Windows.Media.Color]$backColor = $control.Resources['BackColor']
 [System.Windows.Media.Color]$backLightColor = $control.Resources['BackLightColor']
@@ -2046,7 +2047,6 @@ $control_MainWindow.TopMost = $TopMost
 	$control_MainPanel.IsEnabled = $true
 	$control_MainPanel.Opacity = 1
 }
-
 
 $control_HeaderPanel.add_MouseLeftButtonDown($windowLeftButtonDownHandler)
 $control_WindowCloseButton.add_Click($windowsCloseButtonClickHandler)
@@ -2223,47 +2223,52 @@ else {
 
 $control_AppNameText.Text = $installTitle
 $control_TitleText.Text = $installTitle
-if ($ProcessIdToIgnore -gt 0) {
-	[int[]]$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
-}
-else {
+[ScriptBlock]$getProcessUiItems = {
 	[int[]]$processIdsToIgnore = @()
-}
-[PSObject[]]$runningProcesses = foreach ($processObject in $processObjects) {
-	Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $ProcessIdsToIgnore | Where-Object {
-		$false -eq [string]::IsNullOrEmpty($_.id)
+	[Diagnostics.Process[]]$runningProcesses = @()
+	if ($ProcessIdToIgnore.Count -gt 0) {
+		$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
 	}
-}
-[ScriptBlock]$fillCloseApplicationList = {
-	Param ($runningProcessesParam)
-	$control_CloseApplicationList.Items.Clear()
-	[psobject[]]$processUIItems = foreach ($runningProcessItem in $runningProcessesParam) {
+	foreach ($processObject in $processObjects) {
+		$runningProcesses += Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $processIdsToIgnore | Where-Object {
+			$false -eq [string]::IsNullOrEmpty($_.id)
+		}
+	}
+	[PSCustomObject[]]$uiItems = @()
+	foreach ($runningProcessItem in $runningProcesses) {
 		Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($runningProcessItem.Id)'" | ForEach-Object {
 			[psobject]$item = New-Object PSObject -Property @{
 				Name	  = $runningProcessItem.ProcessDescription
-				StartedBy = $null
+				StartedBy = "N/A"
 			}
-			if ($null -eq $_.GetOwner().User) {
-				$item.StartedBy = "N/A"
+			[PSCustomObject]$owner = $_.GetOwner()
+			if ($null -ne $_) {
+				$item.StartedBy = $owner.Domain + "\" + $owner.User
 			}
-			else {
-				$item.StartedBy = $_.GetOwner().Domain + "\" + $_.GetOwner().User
-			}
-			Write-Output $item
+			$uiItems += $item
 		}
 	}
-	foreach ($processUIItem in ($processUIItems | Select-Object * -Unique)) {
-		$control_CloseApplicationList.Items.Add($processUIItem) | Out-Null
-	}
+	Write-Output ($uiItems | Select-Object -Property * -Unique)
 }
-& $fillCloseApplicationList $runningProcesses
+[ScriptBlock]$fillCloseApplicationList = {
+	Param (
+		[psobject[]]$processUIItems
+	)
+	if ($null -eq $processUIItems -or $false -eq ($processUIItems.Count -gt 0)) {
+		return
+	}
+	$control_CloseApplicationList.Items.Clear()
+	$processUIItems | ForEach-Object {
+		$control_CloseApplicationList.Items.Add($_) | Out-Null
+	}
+	$control_PopupListText.Text = ($processUIItems | Select-Object -ExpandProperty Name -Unique).Trim()
+}
+[hashtable]$syncHash = [hashtable]::Synchronized(@{
+	UiItems = & $getProcessUiItems
+})
+& $fillCloseApplicationList $syncHash.UiItems
 
-[string]$names = $runningProcesses | Select-Object -ExpandProperty Name -Unique
-$control_PopupListText.Text = $names.Trim()
-
-[Int32]$outNumber = $null
-
-if ([Int32]::TryParse($DeferTimes, [ref]$outNumber) -and $DeferTimes -ge 0) {
+if ([Int32]::TryParse($DeferTimes, [ref]$null) -and $DeferTimes -ge 0) {
 	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
 }
 if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
@@ -2316,7 +2321,7 @@ if ($null -eq $script:welcomeTimer) {
 		$control_Progress.Maximum = $configInstallationUITimeout
 		$control_Progress.Value = $configInstallationUITimeout
 		[Timespan]$tmpTime = [timespan]::fromseconds($configInstallationUITimeout)
-		Set-Variable -Name 'closeAppsCountdownGlobal' -Value $configInstallationUITimeout -Scope 'Script'
+		$script:closeAppsCountdownGlobal = $configInstallationUITimeout
 	}
 	$control_TimerBlock.Text = [String]::Format('{0}:{1:d2}:{2:d2}', $tmpTime.Days * 24 + $tmpTime.Hours, $tmpTime.Minutes, $tmpTime.Seconds)
 	$script:welcomeTimer.Start()
@@ -2355,10 +2360,9 @@ $script:welcomeTimer.Interval = [timespan]::fromseconds(1)
 [ScriptBlock]$welcomeTimer_Tick = {
 	# Your code to be executed every second goes here
 	try {
-		[Int32]$progressValue = $closeAppsCountdownGlobal - 1
-		Set-Variable -Name 'closeAppsCountdownGlobal' -Value $progressValue -Scope 'Script'
+		$script:closeAppsCountdownGlobal = $script:closeAppsCountdownGlobal - 1
 		## If the countdown is complete, close the application(s) or continue
-		if ($progressValue -lt 0) {
+		if ($closeAppsCountdownGlobal -le 0) {
 			if ($true -eq $showCountdown) {
 				if ($ContinueType -eq 0) {
 					$control_MainWindow.Tag = "Cancel"
@@ -2373,10 +2377,9 @@ $script:welcomeTimer.Interval = [timespan]::fromseconds(1)
 			$control_MainWindow.Close()
 		}
 		else {
-			$control_Progress.Value = $progressValue
-			[timespan]$progressTime = [timespan]::fromseconds($progressValue)
+			$control_Progress.Value = $closeAppsCountdownGlobal
+			[timespan]$progressTime = [timespan]::FromSeconds($closeAppsCountdownGlobal)
 			$control_TimerBlock.Text = [String]::Format('{0}:{1:d2}:{2:d2}', $progressTime.Days * 24 + $progressTime.Hours, $progressTime.Minutes, $progressTime.Seconds)
-
 		}
 	}
 	catch {
@@ -2388,7 +2391,7 @@ $script:welcomeTimer.add_Tick($welcomeTimer_Tick)
 ## Persistence Timer
 if ($true -eq $PersistPrompt) {
 	[System.Windows.Threading.DispatcherTimer]$welcomeTimerPersist = New-Object System.Windows.Threading.DispatcherTimer
-	$welcomeTimerPersist.Interval = [timespan]::fromseconds($configInstallationPersistInterval)
+	$welcomeTimerPersist.Interval = [timespan]::FromSeconds($configInstallationPersistInterval)
 	[ScriptBlock]$welcomeTimerPersist_Tick = {
 		$control_MainWindow.Topmost = $true
 		$control_MainWindow.Topmost = $TopMost
@@ -2398,52 +2401,52 @@ if ($true -eq $PersistPrompt) {
 }
 ## Process Re-Enumeration Timer
 if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
-	[System.Windows.Threading.DispatcherTimer]$timerRunningProcesses = New-Object System.Windows.Threading.DispatcherTimer
-	$timerRunningProcesses.Interval = [timespan]::fromseconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
-	[int]$tickCounter = 0
+	## Create a runspace to run the process enumeration in the background
+	[InitialSessionState]$iss = [initialsessionstate]::CreateDefault()
+
+	## Add required resources to the runspace by creating a new InitialSessionState object
+	$iss.Commands.Add([System.Management.Automation.Runspaces.SessionStateFunctionEntry[]]@(
+		[System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new('Get-NxtProcessTree', (Get-Content Function:\Get-NxtProcessTree)),
+		[System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new('Get-NxtRunningProcesses', (Get-Content Function:\Get-NxtRunningProcesses))
+	))
+	$iss.Variables.Add(
+		[System.Management.Automation.Runspaces.SessionStateVariableEntry[]]@(
+			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('processObjects', $processObjects, 'processObjects'),
+			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('getProcessUiItems', $getProcessUiItems, 'getProcessUiItems'),
+			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('ProcessIdToIgnore', $ProcessIdToIgnore, 'ProcessIdToIgnore')
+		)
+	)
+
+	[runspace]$runspace = [runspacefactory]::CreateRunspace($iss)
+	$runspace.ApartmentState = "STA"
+	$runspace.ThreadOptions = "ReuseThread"
+	$runspace.Open() | Out-Null
+	$runspace.SessionStateProxy.SetVariable("syncHash", $syncHash)
+
+	$ps = [powershell]::Create().AddScript({
+		function Write-Log {}
+		function Write-FunctionHeaderOrFooter {}
+		while ($true) {
+			$syncHash.UiItems = & ([ScriptBlock]::Create($getProcessUiItems))
+		}
+	})
+	$ps.Runspace = $runspace
+	$ps.BeginInvoke() | Out-Null
+
+	[System.Windows.Threading.DispatcherTimer]$timerRunningProcesses = [System.Windows.Threading.DispatcherTimer]::new()
+	$timerRunningProcesses.Interval = [timespan]::FromSeconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
 	[ScriptBlock]$timerRunningProcesses_Tick = {
-		try {
-			if ([math]::DivRem($tickCounter,10,[ref]$null) -eq 1) {
-				# As this is performance intensive, only run it every 10 Ticks
-				$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
-			}
-			$tickCounter++
-			[PSObject[]]$dynamicRunningProcesses = $null
-			[System.Diagnostics.Process[]]$dynamicRunningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore
-			[String]$dynamicRunningProcessDescriptions = ($dynamicRunningProcesses | Where-Object {
-				$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
-			} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
-			if ($dynamicRunningProcessDescriptions -ne $script:runningProcessDescriptions) {
-				# Update the runningProcessDescriptions variable for the next time this function runs
-				Set-Variable -Name 'runningProcessDescriptions' -Value $dynamicRunningProcessDescriptions -Force -Scope 'Script'
-				if ($dynamicRunningProcesses.Count -ne 0) {
-					Write-Log -Message "The running processes have changed. Updating the apps to close: [$script:runningProcessDescriptions]..." -Source ${CmdletName}
-				}
-				# Update the list box with the processes to close
-				$control_CloseApplicationList.Items.Clear()
-				& $FillCloseApplicationList $dynamicRunningProcesses
-			}
-			# If CloseApps processes were running when the prompt was shown, and they are subsequently detected to be closed while the form is showing, then close the form. The deferral and CloseApps conditions will be re-evaluated.
-			if ($false -eq [string]::IsNullOrEmpty($ProcessDescriptions)) {
-				if ($dynamicRunningProcesses.Count -eq 0) {
-					Write-Log -Message 'Previously detected running processes are no longer running.' -Source ${CmdletName}
-					$control_MainWindow.Close()
-				}
-			}
-			# If CloseApps processes were not running when the prompt was shown, and they are subsequently detected to be running while the form is showing, then close the form for relaunch. The deferral and CloseApps conditions will be re-evaluated.
-			else {
-				if ($dynamicRunningProcesses.Count -ne 0) {
-					Write-Log -Message 'New running processes detected. Updating the form to prompt to close the running applications.' -Source ${CmdletName}
-					$control_MainWindow.Close()
-				}
-			}
+		## Make a copy of the synchronized hashtable
+		if ($null -eq $syncHash.UiItems -or $syncHash.UiItems.Count -eq 0) {
+			$control_MainWindow.Close()
+			return
 		}
-		catch {
-		}
+		& $fillCloseApplicationList $syncHash.UiItems
 	}
 	$timerRunningProcesses.add_Tick($timerRunningProcesses_Tick)
 	$timerRunningProcesses.Start()
 }
+
 [__ComObject]$shellApp = New-Object -ComObject 'Shell.Application' -ErrorAction 'SilentlyContinue'
 if ($true -eq $MinimizeWindows) {
 	$shellApp.MinimizeAll()
@@ -2454,6 +2457,7 @@ $control_MainWindow.ShowDialog() | Out-Null
 
 if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$timerRunningProcesses.Stop()
+	$runspace.Dispose()
 }
 switch ($control_MainWindow.Tag) {
 	'Close' {
@@ -2481,4 +2485,3 @@ switch ($control_MainWindow.Tag) {
 	}
 }
 #endregion
-
