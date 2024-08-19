@@ -2436,12 +2436,13 @@ if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	[System.Windows.Threading.DispatcherTimer]$timerRunningProcesses = [System.Windows.Threading.DispatcherTimer]::new()
 	$timerRunningProcesses.Interval = [timespan]::FromSeconds($configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval)
 	[ScriptBlock]$timerRunningProcesses_Tick = {
-		## Make a copy of the synchronized hashtable
-		if ($null -eq $syncHash.UiItems -or $syncHash.UiItems.Count -eq 0) {
-			$control_MainWindow.Close()
-			return
-		}
-		& $fillCloseApplicationList $syncHash.UiItems
+		$control_MainWindow.Dispatcher.InvokeAsync([Action]{
+			if ($null -eq $syncHash.UiItems -or $syncHash.UiItems.Count -eq 0) {
+				$control_MainWindow.Close()
+				return
+			}
+			& $fillCloseApplicationList $syncHash.UiItems
+		})
 	}
 	$timerRunningProcesses.add_Tick($timerRunningProcesses_Tick)
 	$timerRunningProcesses.Start()
