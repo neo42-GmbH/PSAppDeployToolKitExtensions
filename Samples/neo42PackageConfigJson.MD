@@ -265,7 +265,7 @@ parent: /
 ```
 default value: ""
 comma separated list of depending applications, Windows features or services in one string (if any)
-note: usually these dependencies should be pre-checked in a custom function (i.e. 'CustomInstallAndReinstallBegin') of script too
+note: usually these dependencies should be pre-checked in a custom function (i.e. 'CustomInstallAndReinstallAndSoftMigrationBegin') of script too
 ```
 
 **"LastChange"** *mandatory informational string value*
@@ -945,15 +945,19 @@ value dependent of expected behavior for existence of the registry key (valid ar
 
 parent: /
 ```
-comma separated list of public desktop shortcut names to delete
-note: an empty list is allowed (that means: "CommonDesktopShortcutsToDelete": [])!
+comma separated list of public desktop shortcut names to delete.
+shortcuts are always deleted on uninstallation
+if DESKTOPSHORTCUT=1 is specified in setup.cfg these will also be deleted on installation to clear the desktop for the shortcuts created during setup.
+note: an empty list is allowed (meaning: "CommonDesktopShortcutsToDelete": [])
 ```
 
 **"CommonStartMenuShortcutsToCopyToCommonDesktop":** *optional value structure (possibly a collection) (children have to be surrounded by ***[]***)*
 
 parent: /
-
+```
 note: the following optional sub-structure (each member group in curly brackets) may be copied any times it's necessary, has to be comma-separated and both values "Source" and "TargetName" have to be provided for each item, but an empty list is allowed too (that means: "CommonStartMenuShortcutsToCopyToCommonDesktop": [])!
+these items will only be copied if DESKTOPSHORTCUT=1 is set in the setup.cfg
+```
 
 **"Source"** *mandatory string value*
 

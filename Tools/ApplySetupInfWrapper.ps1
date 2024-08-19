@@ -1,6 +1,9 @@
 <#
     .SYNOPSIS
         This script applies the Setup.inf wrapper to the current directory.
+        Place this script file in the created package for the Deploy-Applicatios.ps1 file and execute it with PowerShell.
+        A Setup.inf file is generated and the folder structure is adjusted so that the package is prepared for import into Empirum.
+        After the package customization, the file deletes itself.
     .NOTES
         # LICENSE #
         This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -42,7 +45,7 @@ $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 Write-Output ""
 
 ## Test for some basic requirements
-[array]$files = @("Deploy-Application.ps1", "neo42PackageConfig.json", "neo42PackageConfigValidationRules.json", "AppDeployToolkit\AppDeployToolkitExtensions.ps1", "AppDeployToolkit\AppDeployToolkitMain.ps1")
+[array]$files = @("Deploy-Application.ps1", "neo42PackageConfig.json", "neo42PackageConfigValidationRules.json", "AppDeployToolkit\AppDeployToolkitExtensions.ps1", "AppDeployToolkit\AppDeployToolkitMain.ps1", "Setup.ico")
 $files | ForEach-Object {
     if ($false -eq (Test-Path (Join-Path $workingDir $_))) {
         Write-Warning "$_ does not exist. This script is designed to work with proper neo42 APD packages. Abort!"
@@ -115,7 +118,12 @@ Write-Output "Apply the input data to '$infPath'"
 [string]$textContent = Get-Content -Path $infPath -Raw
 foreach ($property in $jsonContent.PSObject.Properties) {
     $placeholder = "!" + $property.Name + "!"
-    $value = [string]$property.Value
+    if ($property.TypeNameOfValue -eq "System.Boolean") {
+        $value = [string][int]$property.Value
+    }
+    else{
+        $value = [string]$property.Value
+    }
     if($property.Name -ieq "apparch" -and $value -ine "x64"){
         $value = "*"
     }
@@ -136,6 +144,10 @@ if ($unmatchedPlaceholders.Count -gt 0) {
 # Write the new inf content to disk
 Write-Output "Write the new inf content to disk"
 Set-Content -Path $infPath -Value $textContent -Encoding UTF8
+
+## Copy ico File to neoInstall Folder
+Write-Output "Copy ico file to neoInstall folder"
+Copy-Item -Path "$adtSubFolder\Setup.ico" -Destination "$workingDir\neoInstall\Setup.ico" -Force
 
 ## Self destruct the current script
 Write-Output ""
