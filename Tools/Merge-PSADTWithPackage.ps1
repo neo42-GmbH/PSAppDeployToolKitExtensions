@@ -150,6 +150,11 @@ $regexReplacements = @(
 	},
 	@{
 		File        = "Deploy-Application.ps1"
+		Pattern     = "(?<=(Get-NxtInstalledApplication|Test-NxtInstalledApplication|Get-NxtCurrentDisplayVersion).*)-DeploymentMethod"
+		Replacement = "-InstallMethod"
+	},
+	@{
+		File        = "Deploy-Application.ps1"
 		Pattern     = "Close-BlockExecutionWindow(?=\b)"
 		Replacement = "Close-NxtBlockExecutionWindow"
 	},
