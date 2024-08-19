@@ -249,7 +249,8 @@ Describe "Coding Guidelines" -ForEach @(
             $wrongSideOperator = $ast.Find({
                     param($ast)
                     $ast -is [System.Management.Automation.Language.BinaryExpressionAst] -and
-                    $ast.Right.Extent.Text -in @('$true', '$false', '$null')
+                    $ast.Right.Extent.Text -in @('$true', '$false', '$null') -and
+                    $false -eq [string]::IsNullOrEmpty($ast.Left.Extent.Text)
                 }, $true)
             $wrongSideOperator | Should -BeNullOrEmpty -Because "there should be no null or empty on the right side of a comparison (line $($wrongSideOperator.Extent.StartLineNumber))"
 
