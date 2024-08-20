@@ -1165,16 +1165,15 @@ function Test-NxtPersonalizationLightTheme {
 	Process {
 		[String]$sid = $UserObject.SID
 		[bool]$lightThemeResult = $true
-		if ($true -eq [string]::IsNullOrEmpty($sid)) {
+		if ($true -ne [string]::IsNullOrWhiteSpace($sid)) {
 			Write-Log -Message 'Failed to get SID of current sessions user, skipping theme check and using lighttheme.' -Source ${cmdletName} -Severity 2
-			[bool]$lightThemeResult = $true
 		}
 		else {
-			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
-				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1
+			if ($true -eq (Test-RegistryValue -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme" -SID $sid)) {
+				$lightThemeResult = (Get-RegistryKey -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme" -SID $sid) -eq 1
 			}
-			elseif ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
-				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1
+			elseif ($true -eq (Test-RegistryValue -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme" -SID $sid)) {
+				$lightThemeResult = (Get-RegistryKey -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme" -SID $sid) -eq 1
 			}
 		}
 		Write-Output $lightThemeResult
