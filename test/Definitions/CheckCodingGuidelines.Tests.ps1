@@ -318,7 +318,7 @@ Describe "Coding Guidelines" -ForEach @(
                 $token = $_
                 $context = $content[$token.Extent.StartLineNumber - 1]
                 # Skip for loops
-                if ($context -match "^\s*for\s*\(") { return }
+                if ($context -match "^\s*for\s*\(|\@\{") { return }
                 $token | Should -BeNullOrEmpty -Because "the ';' token should not be used a seperator (line $($token.Extent.StartLineNumber))"
             }
         }
