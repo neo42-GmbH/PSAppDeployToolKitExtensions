@@ -2409,13 +2409,14 @@ if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 		[System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new('Get-NxtProcessTree', (Get-Content Function:\Get-NxtProcessTree)),
 		[System.Management.Automation.Runspaces.SessionStateFunctionEntry]::new('Get-NxtRunningProcesses', (Get-Content Function:\Get-NxtRunningProcesses))
 	))
-	$iss.Variables.Add(
-		[System.Management.Automation.Runspaces.SessionStateVariableEntry[]]@(
+	$iss.Variables.Add([System.Management.Automation.Runspaces.SessionStateVariableEntry[]]@(
 			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('processObjects', $processObjects, 'processObjects'),
 			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('getProcessUiItems', $getProcessUiItems, 'getProcessUiItems'),
 			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('ProcessIdToIgnore', $ProcessIdToIgnore, 'ProcessIdToIgnore')
-		)
-	)
+	))
+	$iss.EnvironmentVariables.Add([System.Management.Automation.Runspaces.SessionStateVariableEntry[]]@(
+		[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('UserInteractive', $false, 'UserInteractive')
+	))
 
 	[runspace]$runspace = [runspacefactory]::CreateRunspace($iss)
 	$runspace.ApartmentState = "STA"
