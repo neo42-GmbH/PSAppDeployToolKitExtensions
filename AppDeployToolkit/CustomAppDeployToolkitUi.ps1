@@ -1154,27 +1154,25 @@ function Test-NxtPersonalizationLightTheme {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
+	Param (
+		[string]
+		$SID
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[int]$ownSessionId = (Get-Process -Id $PID).SessionId
-		[PSObject[]]$currentSessionUser = Get-LoggedOnUser | Where-Object {
-			$_.SessionId -eq $ownSessionId
-		}
-		[String]$sid = $currentSessionUser.SID
 		[bool]$lightThemeResult = $true
-		if ($true -eq [string]::IsNullOrEmpty($sid)) {
+		if ($true -eq [string]::IsNullOrWhiteSpace($SID)) {
 			Write-Log -Message 'Failed to get SID of current sessions user, skipping theme check and using lighttheme.' -Source ${cmdletName} -Severity 2
-			[bool]$lightThemeResult = $true
 		}
 		else {
-			if ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme")) {
-				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme") -eq 1
+			if ($true -eq (Test-RegistryValue -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme" -SID $SID)) {
+				$lightThemeResult = (Get-RegistryKey -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme" -SID $SID) -eq 1
 			}
-			elseif ($true -eq (Test-RegistryValue -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme")) {
-				[bool]$lightThemeResult = (Get-RegistryKey -Key "HKU:\$sid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme") -eq 1
+			elseif ($true -eq (Test-RegistryValue -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme" -SID $SID)) {
+				$lightThemeResult = (Get-RegistryKey -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme" -SID $SID) -eq 1
 			}
 		}
 		Write-Output $lightThemeResult
@@ -1714,6 +1712,12 @@ if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 	}
 }
 
+# Find the current user by session ID
+[int]$ownSessionId = [System.Diagnostics.Process]::GetCurrentProcess().SessionId
+[PSObject]$activeUser = Get-LoggedOnUser | Where-Object {
+	$_.SessionId -eq $ownSessionId
+}
+
 #  Get UI Options
 [Xml.XmlElement]$xmlConfigUIOptions = $xmlConfig.UI_Options
 [Int32]$configInstallationUITimeout = $xmlConfigUIOptions.InstallationUI_Timeout
@@ -2056,7 +2060,7 @@ $control_CancelButton.add_Click($cancelButtonClickHandler)
 $control_PopupCloseApplication.add_Click($popupCloseApplicationClickHandler)
 $control_PopupCancel.add_Click($popupCancelClickHandler)
 
-[bool]$isLightTheme = Test-NxtPersonalizationLightTheme
+[bool]$isLightTheme = Test-NxtPersonalizationLightTheme -SID $activeUser.SID
 
 if ($true -eq $isLightTheme) {
 	$backColor.r = 246
@@ -2085,56 +2089,38 @@ if ($true -eq $isLightTheme) {
 else {
 	$control_Banner.Source = $appDeployLogoBannerDark
 }
-## try to find the correct language for the current sessions user
-[int]$ownSessionId = (Get-Process -Id $PID).SessionId
-[PSObject]$runAsActiveUser = Get-LoggedOnUser | Where-Object {
-	$_.SessionId -eq $ownSessionId
-}
 ## Get current sessions UI language
 ## Get primary UI language for current sessions user (even if running as system)
-if ($null -ne $runAsActiveUser) {
-	#  Read language defined by Group Policy
-	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
-		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings' -Value 'PreferredUILanguages'
-	}
-	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
-		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $runAsActiveUser.SID
-	}
-	#  Read language for Win Vista & higher machines
-	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
-		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop' -Value 'PreferredUILanguages' -SID $runAsActiveUser.SID
-	}
-	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
-		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached' -Value 'MachinePreferredUILanguages' -SID $runAsActiveUser.SID
-	}
-	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
-		[string[]]$hKULanguages = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'LocaleName' -SID $runAsActiveUser.SID
-	}
-	#  Read language for Win XP machines
-	if ($true -eq [string]::IsNullOrEmpty($hKULanguages)) {
-		[string]$hKULocale = Get-RegistryKey -Key 'Registry::HKEY_CURRENT_USER\Control Panel\International' -Value 'Locale' -SID $runAsActiveUser.SID
-		if ($false -eq [string]::IsNullOrEmpty($hKULocale)) {
-			[Int32]$hKULocale = [Convert]::ToInt32('0x' + $hKULocale, 16)
-			[string[]]$hKULanguages = ([Globalization.CultureInfo]($hKULocale)).Name
-		}
-	}
-	if ($hKULanguages.Count -gt 0 -and ($false -eq [string]::IsNullOrWhiteSpace($hKULanguages[0]))) {
-		[Globalization.CultureInfo]$primaryWindowsUILanguage = [Globalization.CultureInfo]($hKULanguages[0])
-		[string]$hKUPrimaryLanguageShort = $primaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
-		#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
-		if ($hKUPrimaryLanguageShort -eq 'ZH') {
-			if ($primaryWindowsUILanguage.EnglishName -match 'Simplified') {
-				[string]$hKUPrimaryLanguageShort = 'ZH-Hans'
+if ($null -ne $activeUser) {
+	foreach ($registrySplat in @(
+		#  Read language defined by Group Policy
+		@{ Key = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings'; Value = 'PreferredUILanguages' },
+		@{ Key = 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
+		#  Read language for Win Vista & higher machines
+		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
+		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached'; Value = 'MachinePreferredUILanguages'; SID = $activeUser.SID },
+		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\International'; Value = 'LocaleName'; SID = $activeUser.SID }
+	)) {
+		[String[]]$hKULanguages = @(Get-RegistryKey @registrySplat)
+		if ($hKULanguages.Count -gt 0 -and ($false -eq [string]::IsNullOrWhiteSpace($hKULanguages[0]))) {
+			[Globalization.CultureInfo]$primaryWindowsUILanguage = [Globalization.CultureInfo]::GetCultureInfo($hKULanguages[0])
+			[string]$hKUPrimaryLanguageShort = $primaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
+			#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
+			if ($hKUPrimaryLanguageShort -eq 'ZH') {
+				if ($primaryWindowsUILanguage.EnglishName -match 'Simplified') {
+					[string]$hKUPrimaryLanguageShort = 'ZH-Hans'
+				}
+				if ($primaryWindowsUILanguage.EnglishName -match 'Traditional') {
+					[string]$hKUPrimaryLanguageShort = 'ZH-Hant'
+				}
 			}
-			if ($primaryWindowsUILanguage.EnglishName -match 'Traditional') {
-				[string]$hKUPrimaryLanguageShort = 'ZH-Hant'
+			#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
+			if ($hKUPrimaryLanguageShort -eq 'PT') {
+				if ($primaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
+					[string]$hKUPrimaryLanguageShort = 'PT-BR'
+				}
 			}
-		}
-		#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
-		if ($hKUPrimaryLanguageShort -eq 'PT') {
-			if ($primaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
-				[string]$hKUPrimaryLanguageShort = 'PT-BR'
-			}
+			break
 		}
 	}
 }
