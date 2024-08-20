@@ -1165,7 +1165,7 @@ function Test-NxtPersonalizationLightTheme {
 	Process {
 		[String]$sid = $UserObject.SID
 		[bool]$lightThemeResult = $true
-		if ($true -ne [string]::IsNullOrWhiteSpace($sid)) {
+		if ($true -eq [string]::IsNullOrWhiteSpace($sid)) {
 			Write-Log -Message 'Failed to get SID of current sessions user, skipping theme check and using lighttheme.' -Source ${cmdletName} -Severity 2
 		}
 		else {
