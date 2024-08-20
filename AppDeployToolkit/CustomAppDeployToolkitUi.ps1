@@ -2427,8 +2427,9 @@ if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$ps = [powershell]::Create().AddScript({
 		function Write-Log {}
 		function Write-FunctionHeaderOrFooter {}
+		[scriptblock]$getProcessUiItems = [scriptblock]::Create($getProcessUiItems)
 		while ($true) {
-			$syncHash.UiItems = & ([ScriptBlock]::Create($getProcessUiItems))
+			$syncHash.UiItems = & $getProcessUiItems
 		}
 	})
 	$ps.Runspace = $runspace
