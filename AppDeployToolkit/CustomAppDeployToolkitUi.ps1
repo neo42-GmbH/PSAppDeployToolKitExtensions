@@ -2415,7 +2415,8 @@ if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$iss.Variables.Add([System.Management.Automation.Runspaces.SessionStateVariableEntry[]]@(
 			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('processObjects', $processObjects, 'processObjects'),
 			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('getProcessUiItems', $getProcessUiItems, 'getProcessUiItems'),
-			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('ProcessIdToIgnore', $ProcessIdToIgnore, 'ProcessIdToIgnore')
+			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('ProcessIdToIgnore', $ProcessIdToIgnore, 'ProcessIdToIgnore'),
+			[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('configInstallationUITimeout', $configInstallationUITimeout, 'configInstallationUITimeout')
 	))
 	$iss.EnvironmentVariables.Add([System.Management.Automation.Runspaces.SessionStateVariableEntry[]]@(
 		[System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('UserInteractive', $false, 'UserInteractive')
@@ -2430,8 +2431,9 @@ if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$ps = [powershell]::Create().AddScript({
 		function Write-Log {}
 		function Write-FunctionHeaderOrFooter {}
+		[long]$latestCloseTime = [System.DateTimeOffset]::Now.ToUnixTimeSeconds() + $configInstallationUITimeout
 		[scriptblock]$getProcessUiItems = [scriptblock]::Create($getProcessUiItems)
-		while ($true) {
+		while ([System.DateTimeOffset]::Now.ToUnixTimeSeconds() -lt $latestCloseTime) {
 			$syncHash.UiItems = & $getProcessUiItems
 		}
 	})
