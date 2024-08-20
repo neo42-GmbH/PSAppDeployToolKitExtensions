@@ -1155,25 +1155,24 @@ function Test-NxtPersonalizationLightTheme {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	Param (
-		[PSObject]
-		$UserObject
+		[string]
+		$SID
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[String]$sid = $UserObject.SID
 		[bool]$lightThemeResult = $true
-		if ($true -eq [string]::IsNullOrWhiteSpace($sid)) {
+		if ($true -eq [string]::IsNullOrWhiteSpace($SID)) {
 			Write-Log -Message 'Failed to get SID of current sessions user, skipping theme check and using lighttheme.' -Source ${cmdletName} -Severity 2
 		}
 		else {
-			if ($true -eq (Test-RegistryValue -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme" -SID $sid)) {
-				$lightThemeResult = (Get-RegistryKey -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme" -SID $sid) -eq 1
+			if ($true -eq (Test-RegistryValue -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme" -SID $SID)) {
+				$lightThemeResult = (Get-RegistryKey -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "AppsUseLightTheme" -SID $SID) -eq 1
 			}
-			elseif ($true -eq (Test-RegistryValue -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme" -SID $sid)) {
-				$lightThemeResult = (Get-RegistryKey -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme" -SID $sid) -eq 1
+			elseif ($true -eq (Test-RegistryValue -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme" -SID $SID)) {
+				$lightThemeResult = (Get-RegistryKey -Key "Registry::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Value "SystemUsesLightTheme" -SID $SID) -eq 1
 			}
 		}
 		Write-Output $lightThemeResult
@@ -1674,6 +1673,7 @@ $tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -Raw ) | 
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
+[string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
 Remove-Variable -Name tempLoadPackageConfig
 
 [string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -2060,7 +2060,7 @@ $control_CancelButton.add_Click($cancelButtonClickHandler)
 $control_PopupCloseApplication.add_Click($popupCloseApplicationClickHandler)
 $control_PopupCancel.add_Click($popupCancelClickHandler)
 
-[bool]$isLightTheme = Test-NxtPersonalizationLightTheme -UserObject $activeUser
+[bool]$isLightTheme = Test-NxtPersonalizationLightTheme -SID $activeUser.SID
 
 if ($true -eq $isLightTheme) {
 	$backColor.r = 246
