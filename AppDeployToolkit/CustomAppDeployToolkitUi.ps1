@@ -2225,7 +2225,11 @@ $control_AppNameText.Text = $installTitle
 $control_TitleText.Text = $installTitle
 [ScriptBlock]$getProcessUiItems = {
 	[int[]]$processIdsToIgnore = @()
-	[Diagnostics.Process[]]$runningProcesses = @()
+	[Diagnostics.Process[]]$runningProcesses = foreach ($processObject in $processObjects) {
+		Get-NxtRunningProcesses -ProcessObjects $processObject -ProcessIdsToIgnore $ProcessIdsToIgnore | Where-Object {
+			$false -eq [string]::IsNullOrEmpty($_.id)
+		}
+	}
 	if ($ProcessIdToIgnore.Count -gt 0) {
 		$processIdsToIgnore = Get-NxtProcessTree -ProcessId $ProcessIdToIgnore | Select-Object -ExpandProperty ProcessId
 	}
@@ -2234,18 +2238,17 @@ $control_TitleText.Text = $installTitle
 			$false -eq [string]::IsNullOrEmpty($_.id)
 		}
 	}
-	[PSCustomObject[]]$uiItems = @()
-	foreach ($runningProcessItem in $runningProcesses) {
+	[PSCustomObject[]]$uiItems = foreach ($runningProcessItem in $runningProcesses) {
 		Get-WmiObject -Class Win32_Process -Filter "ProcessID = '$($runningProcessItem.Id)'" | ForEach-Object {
 			[psobject]$item = New-Object PSObject -Property @{
 				Name	  = $runningProcessItem.ProcessDescription
 				StartedBy = "N/A"
 			}
 			[PSCustomObject]$owner = $_.GetOwner()
-			if ($null -ne $_) {
+			if ($null -ne $owner) {
 				$item.StartedBy = $owner.Domain + "\" + $owner.User
 			}
-			$uiItems += $item
+			Write-Output $item
 		}
 	}
 	Write-Output ($uiItems | Select-Object -Property * -Unique)
