@@ -254,7 +254,7 @@ Describe "Coding Guidelines" -ForEach @(
                         $ast -is [System.Management.Automation.Language.DoUntilStatementAst] -or
                         $ast -is [System.Management.Automation.Language.DoWhileStatementAst] -or
                         $ast -is [System.Management.Automation.Language.WhileStatementAst]
-                    )  -and
+                    ) -and
                     $ast.Condition.Extent.Text -notmatch ("-")
                 )
             }, $true)
