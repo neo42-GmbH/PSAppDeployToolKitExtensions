@@ -2414,7 +2414,7 @@ if ($true -eq $configInstallationWelcomePromptDynamicRunningProcessEvaluation) {
 	$runspace.Open() | Out-Null
 	$runspace.SessionStateProxy.SetVariable("syncHash", $syncHash)
 
-	$ps = [powershell]::Create().AddScript({
+	[powershell]$ps = [powershell]::Create().AddScript({
 		function Write-Log {}
 		function Write-FunctionHeaderOrFooter {}
 		[long]$latestCloseTime = [System.DateTimeOffset]::Now.ToUnixTimeSeconds() + $configInstallationUITimeout
