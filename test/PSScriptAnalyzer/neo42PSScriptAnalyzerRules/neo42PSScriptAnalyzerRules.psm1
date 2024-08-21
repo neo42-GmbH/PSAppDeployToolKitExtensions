@@ -1,4 +1,4 @@
-function neo42PSUseCorrectTokenCapitalization {
+function Get-NxtPSUseCorrectTokenCapitalization {
 	<#
 	.SYNOPSIS
 	Checks that tokens are capitalized correctly.
@@ -59,7 +59,7 @@ function neo42PSUseCorrectTokenCapitalization {
 	}
 }
 
-function neo42PSVariablesInParamBlockShouldBeCapitalized {
+function Get-NxtPSVariablesInParamBlockShouldBeCapitalized {
 	<#
 	.SYNOPSIS
 	Checks that parameter variables are capitalized.
@@ -104,7 +104,7 @@ function neo42PSVariablesInParamBlockShouldBeCapitalized {
 	}
 }
 
-function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
+function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 	<#
 	.SYNOPSIS
 	Checks that variables are capitalized and originate from the param block.
@@ -160,7 +160,7 @@ function neo42PSCapatalizedVariablesNeedToOriginateFromParamBlock {
 	}
 }
 
-function neo42PSParamBlockVariablesShouldBeTyped {
+function Get-NxtPSParamBlockVariablesShouldBeTyped {
 	<#
 	.SYNOPSIS
 	Checks that parameter variables are typed.
@@ -208,7 +208,7 @@ function neo42PSParamBlockVariablesShouldBeTyped {
 	}
 }
 
-function neo42PSDontUseEmptyStringLiterals {
+function Get-NxtPSDontUseEmptyStringLiterals {
 	<#
 	.SYNOPSIS
 	Checks that empty strings are not used.
@@ -258,7 +258,7 @@ function neo42PSDontUseEmptyStringLiterals {
 	}
 }
 
-function neo42PSEnforceConsistantConditionalStatements {
+function Get-NxtPSEnforceConsistantConditionalStatements {
 	<#
 	.SYNOPSIS
 	Checks that conditional statements are consistent.
@@ -303,48 +303,10 @@ function neo42PSEnforceConsistantConditionalStatements {
 			'SuggestedCorrections' = $suggestedCorrections
 		}
 	}
-
-	<# Currently very basic... Can only detect conditions without any operator
-	$noOperators = $TestAst.FindAll({
-			(
-				$args[0] -is [System.Management.Automation.Language.IfStatementAst] -and
-				$args[0].Clauses.Item1.Extent.Text -notmatch ('-')
-			) -or
-			(
-				(
-					$args[0] -is [System.Management.Automation.Language.DoUntilStatementAst] -or
-					$args[0] -is [System.Management.Automation.Language.DoWhileStatementAst] -or
-					$args[0] -is [System.Management.Automation.Language.WhileStatementAst]
-				) -and
-				$args[0].Condition.Extent.Text -notmatch ('-')
-			)
-		}, $false)
-	foreach ($noOperator in $noOperators) {
-		$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
-		$suggestedCorrections.add(
-			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
-				$noOperator.Extent.StartLineNumber,
-				$noOperator.Extent.EndLineNumber,
-				$noOperator.Extent.StartColumnNumber,
-				$noOperator.Extent.EndColumnNumber,
-				'$true -eq ' + $noOperator.Extent.Text,
-				$MyInvocation.MyCommand.Definition,
-				'Evaluate the condition with an operator against a boolean literal.'
-			)
-		) | Out-Null
-		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-			'Message'  = 'Conditional statements should be used in conjunction with an operator'
-			'Extent'   = $noOperator.Extent
-			'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-			'Severity' = 'Warning'
-		}
-	}
-	#>
-
 	return $results
 }
 
-function neo42PSEnforceNewLineAtEndOfFile {
+function Get-NxtPSEnforceNewLineAtEndOfFile {
 	<#
 	.SYNOPSIS
 	Checks that there is a new line at the end of the file.
@@ -407,7 +369,7 @@ function neo42PSEnforceNewLineAtEndOfFile {
 	}
 }
 
-function neo42PSIncompatibleFunctions {
+function Get-NxtPSIncompatibleFunctions {
 	<#
 	.SYNOPSIS
 	Dont allow usage of PSADT functions which are not compatible with our extensions.
@@ -455,4 +417,4 @@ function neo42PSIncompatibleFunctions {
 	}
 }
 
-Export-ModuleMember -Function 'neo42*'
+Export-ModuleMember -Function 'Get-NxtPS*'
