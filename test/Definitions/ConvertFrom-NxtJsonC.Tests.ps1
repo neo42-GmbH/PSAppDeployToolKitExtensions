@@ -20,7 +20,7 @@ Describe "ConvertFrom-NxtEncodedObject" {
             "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
         } /* Multiline Blabla2 */
     },
-    "powershell.powerShellAdditionalExePaths": {
+    "powershell.powerShellAdditionalExePaths\"": {
         "pwsh7": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
         "pwsh5": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
     },/*,
