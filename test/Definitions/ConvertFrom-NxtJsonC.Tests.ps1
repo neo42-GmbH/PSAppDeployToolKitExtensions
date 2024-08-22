@@ -28,7 +28,7 @@ Describe "ConvertFrom-NxtEncodedObject" {
 	*/
     "powershell.powerShellDefaultVersion": "pwsh7",
     "[powershell]": {
-        "editor.wordSeparators": "`~!@#$%^&*()=+[{]}\\|;:'\",.<>/?"
+        "editor.wordSeparators": "`~!@#$%^&*()=+[{]}\\//|;:'\",.<>/?"
     },
     "testCommentIndicators": {
         "lineComment": "//",
