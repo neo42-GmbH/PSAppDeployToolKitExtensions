@@ -50,6 +50,10 @@ Describe "ConvertFrom-NxtEncodedObject" {
             $output = ConvertFrom-NxtJsonC -InputObject $jsonC
             $output | Should -BeOfType PSCustomObject
             $output."update.mode" | Should -Be 'none'
+            $output."terminal.integrated.profiles.windows".PowerShell | Should -Not -BeNullOrEmpty
+            $output."terminal.integrated.profiles.windows"."Command Prompt" | Should -Not -BeNullOrEmpty
+            $output."terminal.integrated.profiles.windows"."Git Bash" | Should -Not -BeNullOrEmpty
+            $output."terminal.integrated.profiles.windows"."Windows PowerShell".path | Should -Not -BeNullOrEmpty
 
         }
         It "Should fail when given an invalid input" {
