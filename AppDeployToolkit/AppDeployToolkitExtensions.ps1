@@ -1507,6 +1507,46 @@ function ConvertFrom-NxtEncodedObject {
 	}
 }
 #endregion
+#region Function ConvertFrom-NxtJsonC
+function ConvertFrom-NxtJsonC {
+	<#
+	.SYNOPSIS
+		Converts a JSON string with comments into a PowerShell object.
+	.DESCRIPTION
+		The ConvertFrom-NxtJsonC function converts a JSON string with comments into a PowerShell object.
+		Comments are removed from the JSON string before conversion and are not included in the resulting object.
+	.PARAMETER InputObject
+		The JSON string with comments that you want to convert into a PowerShell object.
+		This value can be piped to the function and is mandatory.
+	.EXAMPLE
+		"{
+			// This is a comment
+			"Name": "John",
+			"Age": 30
+		}" | ConvertFrom-NxtJsonC
+	.OUTPUTS
+		[System.Management.Automation.PSCustomObject]
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0)]
+		[string]
+		$InputObject
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		Write-Output ([regex]::Replace($Json, "(?s)(?://.*?(\r\n|\n))|(/\*.*?\*/)", [string]::Empty) | ConvertFrom-Json -ErrorAction Stop)
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function ConvertTo-NxtInstallerProductCode
 function ConvertTo-NxtInstallerProductCode {
 	<#
