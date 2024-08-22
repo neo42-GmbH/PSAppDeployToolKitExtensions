@@ -133,14 +133,14 @@ function Start-NxtProcess {
 #endregion
 ## Only use system environment variables and modules during script execution
 if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart', 'InstallUserPart', 'UninstallUserPart')) {
-	foreach ($variable in [System.Environment]::GetEnvironmentVariables("User").Keys) {
-		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, "Machine"), "Process")
+	foreach ($variable in [System.Environment]::GetEnvironmentVariables('User').Keys) {
+		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, 'Machine'), 'Process')
 	}
 }
-$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
+$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
-if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstance -ClassName "Win32_OperatingSystem").OSArchitecture -eq "64-bit") {
-	Write-Warning "Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell."
+if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
+	Write-Warning 'Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell.'
 	[string]$file = $MyInvocation.MyCommand.Path
 	# add all bound parameters to the argument list
 	[string]$arguments = [string]::Empty
@@ -174,7 +174,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstance -ClassName "Win3
 switch ($DeploymentType) {
 	TriggerInstallUserPart {
 		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")) {
-			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "-DeploymentType InstallUserPart"
+			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments '-DeploymentType InstallUserPart'
 		}
 		else {
 			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart" | Out-Null
@@ -183,7 +183,7 @@ switch ($DeploymentType) {
 	}
 	TriggerUninstallUserPart {
 		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")) {
-			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "-DeploymentType UninstallUserPart"
+			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments '-DeploymentType UninstallUserPart'
 		}
 		else {
 			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
@@ -200,7 +200,7 @@ switch ($DeploymentType) {
 [string]$global:AppDeployToolkitExtensionsPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitExtensions.ps1"
 [string]$global:AppDeployToolkitConfigPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitConfig.xml"
 [string]$global:DeploymentSystem = $DeploymentSystem
-[string]$global:UserPartDir = "User"
+[string]$global:UserPartDir = 'User'
 ## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
 [string[]]$script:NxtTempDirectories = @()
 ## We temporarily load the package config to get the appVendor, appName and appVersion variables which are also required to define the AppLogFolder.
@@ -210,7 +210,7 @@ switch ($DeploymentType) {
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
 [string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
-Remove-Variable -Name "tempLoadPackageConfig"
+Remove-Variable -Name 'tempLoadPackageConfig'
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
@@ -315,7 +315,7 @@ catch {
 	[int32]$mainExitCode = 60001
 	[string]$mainErrorMessage = "$(Resolve-Error)"
 	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
-	if ($DeploymentType -notin @("InstallUserPart", "UninstallUserPart")) {
+	if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
 		Clear-NxtTempFolder
 	}
 	Exit-Script -ExitCode $mainExitCode
@@ -398,7 +398,7 @@ function Main {
 		CustomBegin
 		switch ($DeploymentType) {
 			{
-				($_ -eq "Install") -or ($_ -eq "Repair")
+				($_ -eq 'Install') -or ($_ -eq 'Repair')
 			} {
 				CustomInstallAndReinstallAndSoftMigrationBegin
 				## START OF INSTALL
@@ -433,10 +433,10 @@ function Main {
 					if ($showInstallationWelcomeResult -ne 0) {
 						switch ($showInstallationWelcomeResult) {
 							'1618' {
-								[string]$currentShowInstallationWelcomeMessageInstall = "AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached."
+								[string]$currentShowInstallationWelcomeMessageInstall = 'AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached.'
 							}
 							'60012' {
-								[string]$currentShowInstallationWelcomeMessageInstall = "User deferred installation request."
+								[string]$currentShowInstallationWelcomeMessageInstall = 'User deferred installation request.'
 							}
 							default {
 								[string]$currentShowInstallationWelcomeMessageInstall = "AskKillProcesses window returned unexpected exit code: $showInstallationWelcomeResult"
@@ -448,14 +448,14 @@ function Main {
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ( ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) -or ($true -eq $global:AppInstallDetectionCustomResult) ) {
 						if ($true -eq $global:AppInstallDetectionCustomResult) {
-							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
+							Write-Log -Message 'Found an installed application: detected by custom pre-checks.' -Source $deployAppScriptFriendlyName
 						}
 						else {
 							[string]$global:PackageConfig.ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						}
 						Write-Log -Message "[$script:installPhase] selected mode: $($global:PackageConfig.ReinstallMode)" -Source $deployAppScriptFriendlyName
 						switch ($global:PackageConfig.ReinstallMode) {
-							"Reinstall" {
+							'Reinstall' {
 								CustomReinstallPreUninstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
@@ -473,8 +473,8 @@ function Main {
 								}
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
-							"MSIRepair" {
-								if ("MSI" -eq $InstallMethod) {
+							'MSIRepair' {
+								if ('MSI' -eq $InstallMethod) {
 									CustomReinstallPreInstall
 									[string]$script:installPhase = 'Package-Reinstallation'
 									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Repair-NxtApplication -BackupRepairFile $global:PackageConfig.InstFile
@@ -488,7 +488,7 @@ function Main {
 									throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
 								}
 							}
-							"Install" {
+							'Install' {
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
@@ -515,12 +515,12 @@ function Main {
 						CustomInstallEnd -ResultToCheck $mainNxtResult
 					}
 					if ($true -eq $global:SetupCfg.Options.SoftMigration) {
-						[string]$softMigrationOccurred = "false"
+						[string]$softMigrationOccurred = 'false'
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
 				}
 				else {
-					[string]$softMigrationOccurred = "true"
+					[string]$softMigrationOccurred = 'true'
 				}
 				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
@@ -534,11 +534,11 @@ function Main {
 					Register-NxtPackage -MainExitCode $rebootRequirementResult.MainExitCode -LastErrorMessage $returnErrorMessage -SoftMigrationOccurred $softMigrationOccurred
 				}
 				else {
-					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
+					Write-Log -Message 'No need to register package.' -Source $deployAppScriptFriendlyName
 				}
 				## END OF INSTALL
 			}
-			"Uninstall" {
+			'Uninstall' {
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
 				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($false -eq $SkipUnregister) ) {
@@ -549,10 +549,10 @@ function Main {
 					if ($showUnInstallationWelcomeResult -ne 0) {
 						switch ($showUnInstallationWelcomeResult) {
 							'1618' {
-								[string]$currentShowInstallationWelcomeMessageUninstall = "AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached."
+								[string]$currentShowInstallationWelcomeMessageUninstall = 'AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached.'
 							}
 							'60012' {
-								[string]$currentShowInstallationWelcomeMessageUninstall = "User deferred installation request."
+								[string]$currentShowInstallationWelcomeMessageUninstall = 'User deferred installation request.'
 							}
 							default {
 								[string]$currentShowInstallationWelcomeMessageUninstall = "AskKillProcesses window returned unexpected exit code: $showInstallationWelcomeResult"
@@ -577,17 +577,17 @@ function Main {
 					Unregister-NxtPackage
 				}
 				else {
-					Write-Log -Message "No need to unregister package(s) now..." -Source $deployAppScriptFriendlyName
+					Write-Log -Message 'No need to unregister package(s) now...' -Source $deployAppScriptFriendlyName
 				}
 				## END OF UNINSTALL
 			}
-			"InstallUserPart" {
+			'InstallUserPart' {
 				## START OF USERPARTINSTALL
 				CustomInstallUserPartBegin
 				CustomInstallUserPartEnd
 				## END OF USERPARTINSTALL
 			}
-			"UninstallUserPart" {
+			'UninstallUserPart' {
 				## START OF USERPARTUNINSTALL
 				CustomUninstallUserPartBegin
 				CustomUninstallUserPartEnd
@@ -596,7 +596,7 @@ function Main {
 		}
 		[string]$script:installPhase = 'Package-Finish'
 		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
-		if ($DeploymentType -notin @("InstallUserPart", "UninstallUserPart")) {
+		if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
 			Clear-NxtTempFolder
 			Unblock-NxtAppExecution
 		}
@@ -606,7 +606,7 @@ function Main {
 	catch {
 		## unhandled exception occured
 		Write-Log -Message "$(Resolve-Error)" -Severity 3 -Source $deployAppScriptFriendlyName
-		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
+		Exit-NxtScriptWithError -ErrorMessage 'The installation/uninstallation aborted with an error message!' -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
 	}
 }
 
