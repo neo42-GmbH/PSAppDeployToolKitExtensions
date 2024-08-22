@@ -1540,7 +1540,7 @@ function ConvertFrom-NxtJsonC {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Output ([regex]::Replace($InputObject, '(?<![\"\w])(\/\/.*|\/\*[\s\S]*?\*\/)', [string]::Empty, [System.Text.RegularExpressions.RegexOptions]::Multiline) | ConvertFrom-Json -ErrorAction Stop)
+		Write-Output ([regex]::Replace($InputObject, '(?<![\"\w])(\/\/.*|\/\*[\s\S]*?\*\/)|\s*\/\/[^\"\n\r]*$', [string]::Empty, [System.Text.RegularExpressions.RegexOptions]::Multiline) | ConvertFrom-Json -ErrorAction Stop)
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer

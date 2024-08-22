@@ -42,8 +42,9 @@ Describe "ConvertFrom-NxtEncodedObject" {
         "blockComment": ["/*", "*/"]
     },
     "workbench.startupEditor": "none",
-    "update.mode": "none"
-}
+    "update.mode": "none",
+    "test": true//bla
+} 
 '@
         }
         It "Should return expected output" {
@@ -54,6 +55,7 @@ Describe "ConvertFrom-NxtEncodedObject" {
             $output."terminal.integrated.profiles.windows"."Command Prompt" | Should -Not -BeNullOrEmpty
             $output."terminal.integrated.profiles.windows"."Git Bash" | Should -Not -BeNullOrEmpty
             $output."terminal.integrated.profiles.windows"."Windows PowerShell".path | Should -Not -BeNullOrEmpty
+            $output.test | Should -Be $true
 
         }
         It "Should fail when given an invalid input" {
