@@ -1526,6 +1526,8 @@ function ConvertFrom-NxtJsonC {
 		}" | ConvertFrom-NxtJsonC
 	.OUTPUTS
 		[System.Management.Automation.PSCustomObject]
+	.NOTES
+		Starting with PowerShell 6.0, the ConvertFrom-Json cmdlet supports JSON strings with comments.
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
@@ -1540,7 +1542,13 @@ function ConvertFrom-NxtJsonC {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Output ([regex]::Replace($InputObject, '(?<![\"\w])(\/\/.*|\/\*[\s\S]*?\*\/)|\s*\/\/[^\"\n\r]*$', [string]::Empty, [System.Text.RegularExpressions.RegexOptions]::Multiline) | ConvertFrom-Json -ErrorAction Stop)
+		try {
+			Write-Output ([regex]::Replace($InputObject, '(?<![\"\w])(\/\/.*|\/\*[\s\S]*?\*\/)|\s*\/\/[^\"\n\r]*$', [string]::Empty, [System.Text.RegularExpressions.RegexOptions]::Multiline) | ConvertFrom-Json -ErrorAction Stop)
+		}
+		catch {
+			Write-Log -Message "Failed to convert JSON string with comments to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to convert JSON string with comments to PowerShell object. `n$(Resolve-Error)"
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
