@@ -1543,7 +1543,7 @@ function ConvertFrom-NxtJsonC {
 	}
 	Process {
 		try {
-			Write-Output ([regex]::Replace($InputObject, '(?<![\"\w])(\/\/.*|\/\*[\s\S]*?\*\/)|\s*\/\/[^\"\n\r]$', [string]::Empty, [System.Text.RegularExpressions.RegexOptions]::Multiline) | ConvertFrom-Json -ErrorAction Stop)
+			Write-Output ([regex]::Replace($InputObject, '(?<![\"\w])(\/\/.*|\/\*[\s\S]*?\*\/)|\s*\/\/[^\"\n\r]*', [string]::Empty, [System.Text.RegularExpressions.RegexOptions]::Multiline) | ConvertFrom-Json -ErrorAction Stop)
 		}
 		catch {
 			Write-Log -Message "Failed to convert JSON string with comments to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
