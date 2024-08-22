@@ -140,10 +140,7 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
 if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstance -ClassName "Win32_OperatingSystem").OSArchitecture -eq "64-bit") {
-	Write-Verbose "PROCESSOR_ARCHITECTURE: $($env:PROCESSOR_ARCHITECTURE)"
-	Write-Verbose "OSArchitecture: $((Get-CimInstance -ClassName "Win32_OperatingSystem").OSArchitecture)"
-	Write-Verbose $($MyInvocation.BoundParameters)
-	Write-Verbose "Will restart script in 64bit PowerShell"
+	Write-Warning "Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell."
 	[string]$file = $MyInvocation.MyCommand.Path
 	# add all bound parameters to the argument list
 	[string]$arguments = [string]::Empty
@@ -171,8 +168,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstance -ClassName "Win3
 		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -NonInteractive -File `"$file`"$arguments"
 	}
 	$process.WaitForExit()
-	[int]$exitCode = $process.ExitCode
-	exit $exitCode
+	exit $process.ExitCode
 }
 ## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
 switch ($DeploymentType) {
