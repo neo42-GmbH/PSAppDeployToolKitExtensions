@@ -1542,6 +1542,10 @@ function ConvertFrom-NxtJsonC {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		if ($PSVersionTable.PSVersion.Major -ge 6) {
+			Write-Output ($InputObject | ConvertFrom-Json -ErrorAction Stop)
+			return
+		}
 		try {
 			Write-Output ($InputObject -replace '("(\\.|[^\\"])*")|\/\*[\S\s]*?\*\/|\/\/.*', '$1' | ConvertFrom-Json -ErrorAction Stop)
 		}
