@@ -5,18 +5,12 @@ Describe "ConvertFrom-NxtEncodedObject" {
 {
     "terminal.integrated.profiles.windows": {
         //Update Blabla
-        "PowerShell": {
-            "source": "PowerShell",
-            "icon": "terminal-powershell"
-        },
         "Command Prompt": {
             "path": [
-                "${env:windir}\\Sysnative\\cmd.exe",//Blabla2
+                "${env:windir}\\Sysnative\\cmd.exe", //Blabla2
                 "${env:windir}\\System32\\cmd.exe"
-            ],
-            "args": [],
-            "icon": "terminal-cmd"
-        },/*
+            ]
+        }, /*
         Multiline Blabla
         */
         "Git Bash": {
@@ -24,37 +18,37 @@ Describe "ConvertFrom-NxtEncodedObject" {
         },
         "Windows PowerShell": {
             "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
-        }/* Multiline Blabla2 */
+        } /* Multiline Blabla2 */
     },
-    "terminal.integrated.defaultProfile.windows": "PowerShell",
     "powershell.powerShellAdditionalExePaths": {
         "pwsh7": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
         "pwsh5": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
-    },
+    },/*,
+	"powershell.powerShellDefaultVersion": "pwsh5",
+	*/
     "powershell.powerShellDefaultVersion": "pwsh7",
     "[powershell]": {
-        "debug.saveBeforeStart": "nonUntitledEditorsInActiveGroup",
-        "editor.semanticHighlighting.enabled": false,
         "editor.wordSeparators": "`~!@#$%^&*()=+[{]}\\|;:'\",.<>/?"
     },
     "testCommentIndicators": {
         "lineComment": "//",
-        "blockComment": ["/*", "*/"]
+        "blockComment": [
+            "/*",
+            "*/"
+        ]
     },
-    "workbench.startupEditor": "none",
-    "update.mode": "none",
-    "test": true//bla
-} 
+    "test": true/*test*/
+}
 '@
         }
         It "Should return expected output" {
             $output = ConvertFrom-NxtJsonC -InputObject $jsonC
             $output | Should -BeOfType PSCustomObject
             $output."update.mode" | Should -Be 'none'
-            $output."terminal.integrated.profiles.windows".PowerShell | Should -Not -BeNullOrEmpty
             $output."terminal.integrated.profiles.windows"."Command Prompt" | Should -Not -BeNullOrEmpty
             $output."terminal.integrated.profiles.windows"."Git Bash" | Should -Not -BeNullOrEmpty
             $output."terminal.integrated.profiles.windows"."Windows PowerShell".path | Should -Not -BeNullOrEmpty
+            $output."powershell.powerShellDefaultVersion" | Should -Be "pwsh7"
             $output.test | Should -Be $true
 
         }
