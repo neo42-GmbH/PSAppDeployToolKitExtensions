@@ -1542,12 +1542,13 @@ function ConvertFrom-NxtJsonC {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ($PSVersionTable.PSVersion.Major -ge 6) {
-			Write-Output ($InputObject | ConvertFrom-Json -ErrorAction Stop)
-			return
-		}
 		try {
-			Write-Output ($InputObject -replace '("(\\.|[^\\"])*")|\/\*[\S\s]*?\*\/|\/\/.*', '$1' | ConvertFrom-Json -ErrorAction Stop)
+			if ($PSVersionTable.PSVersion.Major -ge 6) {
+				Write-Output ($InputObject | ConvertFrom-Json -ErrorAction Stop)
+			}
+			else {
+				Write-Output ($InputObject -replace '("(\\.|[^\\"])*")|\/\*[\S\s]*?\*\/|\/\/.*', '$1' | ConvertFrom-Json -ErrorAction Stop)
+			}
 		}
 		catch {
 			Write-Log -Message "Failed to convert JSON string with comments to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
