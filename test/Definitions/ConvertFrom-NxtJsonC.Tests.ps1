@@ -37,6 +37,7 @@ Describe "ConvertFrom-NxtEncodedObject" {
             "*/"
         ]
     },
+    "update.mode": "none",
     "test": true/*test*/
 }
 '@
