@@ -145,7 +145,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win3
 	# add all bound parameters to the argument list
 	[string]$arguments = [string]::Empty
 	foreach ($item in $MyInvocation.BoundParameters.Keys) {
-		[PsObject]$type = $($MyInvocation.BoundParameters[$item]).GetType()
+		[System.Reflection.TypeInfo]$type = $($MyInvocation.BoundParameters[$item]).GetType()
 		if ($type -eq [switch]) {
 			if ($true -eq $MyInvocation.BoundParameters[$item]) {
 				$arguments += " -$item"
