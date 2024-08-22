@@ -1,17 +1,15 @@
-// PSAppDeployToolkitExtensions default settings to ensure consistent code formatting and file encoding
 {
-    //-------- Indentation configuration --------
     "editor.detectIndentation": true,
     "editor.formatOnPaste": true,
     "editor.insertSpaces": false,
     "editor.renderWhitespace": "boundary",
     "editor.tabSize": 4,
-    //-------- Files configuration --------
+
     "files.autoGuessEncoding": true,
     "files.encoding": "utf8",
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
-    //-------- PowerShell configuration --------
+
     "powershell.codeFormatting.addWhitespaceAroundPipe": true,
     "powershell.codeFormatting.alignPropertyValuePairs": true,
     "powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
@@ -35,11 +33,11 @@
     "powershell.scriptAnalysis.settingsPath": "./test/PSScriptAnalyzer/PSScriptAnalyzerSettings.psd1",
     "powershell.helpCompletion": "BlockComment",
     "dotnet.preferCSharpExtension": true,
-    //-------- Pester configuration --------
+
     "powershell.pester.useLegacyCodeLens": false,
     "powershell.pester.outputVerbosity": "Diagnostic",
     "powershell.pester.codeLens": true,
-    //-------- Json configuration --------
+
     "json.validate.enable": true,
     "json.schemas": [
         {
@@ -49,7 +47,7 @@
             "url": "./test/schemas/neo42PackageConfig.schema.json"
         }
     ],
-    //-------- XML configuration --------
+
     "xml.fileAssociations": [
         {
             "pattern": "AppDeployToolkit/AppDeployToolkitConfig.xml",
