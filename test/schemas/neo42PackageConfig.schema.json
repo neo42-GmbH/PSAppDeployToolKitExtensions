@@ -67,7 +67,8 @@
 						"type": "string",
 						"description": "DependentPackages.ErrorMessage is optional and must be a string."
 					}
-				}
+				},
+				"additionalProperties": false
 			},
 			"required": [
 				"DesiredState",
@@ -138,6 +139,7 @@
 						"description": "AppKillProcesses.Description is mandatory for each item below AppKillProcesses and must be a string. If empty, the name will be used."
 					}
 				},
+				"additionalItems": false,
 				"required": [
 					"Name",
 					"Description"
@@ -154,6 +156,7 @@
 					"$ref": "#/$defs/TestCondition"
 				}
 			},
+			"additionalProperties": false,
 			"required": [
 				"Install",
 				"Uninstall"
@@ -265,6 +268,7 @@
 								"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.ShouldExist is mandatory and must be boolean."
 							}
 						},
+						"additionalProperties": false,
 						"required": [
 							"Name",
 							"ShouldExist"
@@ -278,12 +282,28 @@
 						"type": "object",
 						"properties": {
 							"ValueName": {
-								"type": "string",
-								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string."
+								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
+								"anyOf": [
+									{
+										"type": "string",
+										"minLength": 1
+									},
+									{
+										"type": "null"
+									}
+								]
 							},
 							"ValueData": {
-								"type": "string",
-								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string."
+								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
+								"anyOf": [
+									{
+										"type": "string",
+										"minLength": 1
+									},
+									{
+										"type": "null"
+									}
+								]
 							},
 							"KeyPath": {
 								"type": "string",
@@ -295,6 +315,7 @@
 								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a boolean."
 							}
 						},
+						"additionalProperties": false,
 						"required": [
 							"ValueName",
 							"ValueData",
@@ -320,6 +341,7 @@
 					]
 				}
 			},
+			"additionalProperties": false,
 			"required": [
 				"TotalSecondsToWaitFor",
 				"ProcessesToWaitFor",
