@@ -440,6 +440,7 @@
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
+<!-- Validate when UI translations are complete
 				<xs:element type="UI_Messages_Type" name="UI_Messages_EN">
 					<xs:annotation>
 						<xs:documentation>UI Options UI Messages - English </xs:documentation>
@@ -558,6 +559,7 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+-->
 
 	<!-- Reoccuring types defined below -->
 	<xs:complexType name="UI_Messages_Type">
