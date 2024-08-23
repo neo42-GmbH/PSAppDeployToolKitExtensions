@@ -557,9 +557,10 @@
 					</xs:annotation>
 				</xs:element>
 			</xs:sequence>
+-->
 		</xs:complexType>
 	</xs:element>
--->
+
 
 	<!-- Reoccuring types defined below -->
 	<xs:complexType name="UI_Messages_Type">
