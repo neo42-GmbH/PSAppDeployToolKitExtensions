@@ -457,6 +457,19 @@ function Update-NxtPSAdtPackage {
 				Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
 				[bool]$contentChanged = $false
 			}
+			## rename : "-DeploymentMethod" to "-InstallMethod" in case it is in the same line as Get-NxtInstalledApplication, Test-NxtInstalledApplication or Get-NxtCurrentDisplayVersion"
+			[string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
+			foreach ($line in ($content -split "`n")){
+				if ($line -match "Get-NxtInstalledApplication|Test-NxtInstalledApplication|Get-NxtCurrentDisplayVersion" -and $line -match "-DeploymentMethod") {
+					[bool]$contentChanged = $true
+					$content = $content.Replace($line, $line.Replace("-DeploymentMethod","-InstallMethod"))
+					Write-Warning "Replaced -DeploymentMethod with -InstallMethod in $PackageToUpdatePath in line: $line"
+				}
+			}
+			if ($true -eq $contentChanged) {
+				Set-Content -Path "$PackageToUpdatePath\Deploy-Application.ps1" -Value $content -NoNewline
+				[bool]$contentChanged = $false
+			}
 			# rename: "Close-BlockExecutionWindow" to "Close-NxtBlockExecutionWindow"
 			[string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
 			foreach ($line in ($content -split "`n")){

@@ -446,7 +446,7 @@ function Main {
 					}
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
-					if ( ($true -eq $(Test-NxtAppIsInstalled -DeploymentMethod $InstallMethod)) -or ($true -eq $global:AppInstallDetectionCustomResult) ) {
+					if ( ($true -eq $(Test-NxtAppIsInstalled -InstallMethod $global:PackageConfig.UninstallMethod)) -or ($true -eq $global:AppInstallDetectionCustomResult) ) {
 						if ($true -eq $global:AppInstallDetectionCustomResult) {
 							Write-Log -Message 'Found an installed application: detected by custom pre-checks.' -Source $deployAppScriptFriendlyName
 						}
