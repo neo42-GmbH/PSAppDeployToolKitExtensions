@@ -98,7 +98,7 @@
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:boolean"  name="Toolkit_RequireAdmin"/>
-							<xs:element type="xs:anyURI" name="Toolkit_TempPath">
+							<xs:element type="xs:string" name="Toolkit_TempPath">
 								<xs:annotation>
 									<xs:documentation> Specify if Administrator Rights are required.
 										NB: Some functions won't work if this is set to false, such
@@ -106,7 +106,7 @@
 										and potentially logging. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:anyURI" name="Toolkit_RegPath">
+							<xs:element type="xs:string" name="Toolkit_RegPath">
 								<xs:annotation>
 									<xs:documentation> Path used to store temporary Toolkit files
 										(with PSAppDeployToolkit as subdirectory), e.g. cache
@@ -117,25 +117,25 @@
 										C:\Windows\Temp. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:anyURI" name="Toolkit_LogPath">
+							<xs:element type="xs:string" name="Toolkit_LogPath">
 								<xs:annotation>
 									<xs:documentation> Registry key used to store toolkit
 										information (with PSAppDeployToolkit as child registry key),
 										e.g. deferral history. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:anyURI" name="Toolkit_TempPathNoAdminRights">
+							<xs:element type="xs:string" name="Toolkit_TempPathNoAdminRights">
 								<xs:annotation>
 									<xs:documentation> Log path used for Toolkit logging. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:anyURI" name="Toolkit_RegPathNoAdminRights">
+							<xs:element type="xs:string" name="Toolkit_RegPathNoAdminRights">
 								<xs:annotation>
 									<xs:documentation> Same as TempPath but used when RequireAdmin
 										is False. </xs:documentation>
 								</xs:annotation>
 							</xs:element>
-							<xs:element type="xs:anyURI" name="Toolkit_LogPathNoAdminRights">
+							<xs:element type="xs:string" name="Toolkit_LogPathNoAdminRights">
 								<xs:annotation>
 									<xs:documentation> Same as RegPath but used when RequireAdmin is
 										False. Bear in mind that since this Registry Key should be
