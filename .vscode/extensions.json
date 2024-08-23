@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "ms-vscode.PowerShell",
+        "redhat.vscode-xml",
+        "ms-dotnettools.csdevkit"
+    ]
+}
