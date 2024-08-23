@@ -97,7 +97,7 @@
 					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element type="xs:boolean"  name="Toolkit_RequireAdmin"/>
+							<xs:element type="xs:boolean" name="Toolkit_RequireAdmin" />
 							<xs:element type="xs:string" name="Toolkit_TempPath">
 								<xs:annotation>
 									<xs:documentation> Specify if Administrator Rights are required.
@@ -440,7 +440,8 @@
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
-<!-- Validate when UI translations are complete
+				<xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+				<!-- Validate when UI translations are complete
 				<xs:element type="UI_Messages_Type" name="UI_Messages_EN">
 					<xs:annotation>
 						<xs:documentation>UI Options UI Messages - English </xs:documentation>
@@ -556,8 +557,8 @@
 						<xs:documentation> UI Messages - Finnish </xs:documentation>
 					</xs:annotation>
 				</xs:element>
+			-->
 			</xs:sequence>
--->
 		</xs:complexType>
 	</xs:element>
 
