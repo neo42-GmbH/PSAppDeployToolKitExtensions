@@ -139,7 +139,7 @@
 						"description": "AppKillProcesses.Description is mandatory for each item below AppKillProcesses and must be a string. If empty, the name will be used."
 					}
 				},
-				"additionalItems": false,
+				"additionalProperties": false,
 				"required": [
 					"Name",
 					"Description"
