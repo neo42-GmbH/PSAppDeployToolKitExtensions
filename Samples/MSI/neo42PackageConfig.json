@@ -72,16 +72,16 @@
   "TestConditionsPreSetupSuccessCheck": {
     "Install": {
       "TotalSecondsToWaitFor": 30,
-      "ProcessOperator": "And",
+      "ProcessOperator": "AND",
       "ProcessesToWaitFor": [],
-      "RegKeyOperator": "And",
+      "RegKeyOperator": "AND",
       "RegKeysToWaitFor": []
     },
     "Uninstall": {
       "TotalSecondsToWaitFor": 30,
-      "ProcessOperator": "And",
+      "ProcessOperator": "AND",
       "ProcessesToWaitFor": [],
-      "RegKeyOperator": "And",
+      "RegKeyOperator": "AND",
       "RegKeysToWaitFor": []
     }
   },
