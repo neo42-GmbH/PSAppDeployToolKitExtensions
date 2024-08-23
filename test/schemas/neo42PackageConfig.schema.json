@@ -168,7 +168,8 @@
 		"App": {
 			"type": "string",
 			"description": "App is mandatory and must be a string.",
-			"minLength": 1
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameChars"
 		},
 		"DisplayNamesToExcludeFromAppSearches": {
 			"type": "array",
@@ -229,10 +230,10 @@
 	],
 	"$defs": {
 		"NoInvalidFileNameChars": {
-			"pattern": "^[^\\\\/:*?\"<>|]*$"
+			"pattern": "^[^\\\\/:*?\"<>|]*$|\\$\\(.*\\)"
 		},
 		"NoInvalidFileNameCharsWithWildcard": {
-			"pattern": "^[^\\\\/:?\"<>|]*$"
+			"pattern": "^[^\\\\\/:?\"<>|]*$|\\$\\(.*\\)"
 		},
 		"ExitCodeString": {
 			"type": "string",
