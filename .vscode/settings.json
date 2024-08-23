@@ -42,7 +42,7 @@
     "json.schemas": [
         {
             "fileMatch": [
-                "/neo42PackageConfig.json"
+                "/neo42PackageConfig*.json"
             ],
             "url": "./test/schemas/neo42PackageConfig.schema.json"
         }
