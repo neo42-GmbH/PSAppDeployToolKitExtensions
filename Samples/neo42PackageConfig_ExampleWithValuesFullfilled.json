@@ -91,7 +91,7 @@
   "TestConditionsPreSetupSuccessCheck": {
     "Install": {
       "TotalSecondsToWaitFor": 180,
-      "ProcessOperator": "And",
+      "ProcessOperator": "AND",
       "ProcessesToWaitFor": [
         {
           "Name": "no*ad.exe",
@@ -102,7 +102,7 @@
           "ShouldExist": false
         }
       ],
-      "RegKeyOperator": "And",
+      "RegKeyOperator": "AND",
       "RegKeysToWaitFor": [
         {
           "KeyPath": "HKLM:\\SOFTWARE\\Matrix42\\Agent\\sub1",
@@ -144,7 +144,7 @@
     },
     "Uninstall": {
       "TotalSecondsToWaitFor": 60,
-      "ProcessOperator": "Or",
+      "ProcessOperator": "OR",
       "ProcessesToWaitFor": [
         {
           "Name": "notepad.exe",
@@ -155,7 +155,7 @@
           "ShouldExist": true
         }
       ],
-      "RegKeyOperator": "And",
+      "RegKeyOperator": "AND",
       "RegKeysToWaitFor": [
         {
           "KeyPath": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{GUID*}",
