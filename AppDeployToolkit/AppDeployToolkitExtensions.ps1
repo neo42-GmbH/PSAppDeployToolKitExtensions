@@ -10324,6 +10324,7 @@ function Test-NxtObjectValidation {
 		private
 	#>
 	[CmdletBinding()]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'ContainsDirectValues', Justification = 'Detection is not correctly picking up the usage of this parameter.')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[ValidateNotNullOrEmpty()]
@@ -10333,6 +10334,9 @@ function Test-NxtObjectValidation {
 		[ValidateNotNullOrEmpty()]
 		[psobject]
 		$ObjectToValidate,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContainsDirectValues = $false,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$ParentObjectName,
