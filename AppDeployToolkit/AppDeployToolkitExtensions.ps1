@@ -9175,9 +9175,9 @@ function Show-NxtInstallationWelcome {
 					Write-Log -Message "... found processes (with file extensions removed): $processNames" -Source ${cmdletName}
 					foreach ( $processName in $processNames ) {
 						$processObjects += [PSObject]@{
-							ProcessName			= $processName
+							ProcessName        = $processName
 							ProcessDescription	= [string]::Empty
-							IsWql				= $false
+							IsWql              = $false
 						}
 					}
 				}
@@ -9191,16 +9191,16 @@ function Show-NxtInstallationWelcome {
 				if ($true -eq ($processAppsItem.Name.Contains('='))) {
 					[String[]]$processSplit = $processAppsItem.Name -split '='
 					$processObjects += [PSObject]@{
-						ProcessName			= $processSplit[0]
+						ProcessName        = $processSplit[0]
 						ProcessDescription	= $processSplit[1]
-						IsWql				= $false
+						IsWql              = $false
 					}
 				}
 				else {
 					$processObjects += [PSObject]@{
-						ProcessName			= $processAppsItem.Name
+						ProcessName        = $processAppsItem.Name
 						ProcessDescription	= $processAppsItem.Description
-						IsWql				= [bool]$processAppsItem.IsWQL
+						IsWql              = [bool]$processAppsItem.IsWQL
 					}
 				}
 			}
@@ -9208,9 +9208,9 @@ function Show-NxtInstallationWelcome {
 		if ($false -eq [string]::IsNullOrEmpty($defaultMsiExecutablesList)) {
 			foreach ($defaultMsiExecutable in ($defaultMsiExecutablesList -split ',')) {
 				$processObjects += [PSObject]@{
-					ProcessName			= $defaultMsiExecutable
+					ProcessName        = $defaultMsiExecutable
 					ProcessDescription	= [string]::Empty
-					IsWql				= $false
+					IsWql              = $false
 				}
 			}
 		}
