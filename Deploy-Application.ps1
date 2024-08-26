@@ -192,7 +192,7 @@ if ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $tempL
 	exit 60014
 }
 try {
-	Set-ExecutionPolicy -ExecutionPolicy $powerShellOptionsExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
+	Set-ExecutionPolicy -ExecutionPolicy $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
 }
 catch {
 	Write-Warning "Execution Policy did not match current and override was not successful. Is a GPO in place? Error: $($_.Exception.Message)"
