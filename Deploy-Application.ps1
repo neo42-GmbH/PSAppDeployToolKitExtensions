@@ -143,7 +143,7 @@ elseif ($DeploymentType -eq 'TriggerUninstallUserPart') {
 	Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
 	exit
 }
-elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstace -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
+elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
 	Write-Warning 'Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell.'
 	# add all bound parameters to the argument list
 	[string]$arguments = foreach ($key in $MyInvocation.BoundParameters.Keys) {
