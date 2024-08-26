@@ -14,7 +14,7 @@ Describe "Get-NxtComputerManufacturer" {
             $result | Should -Be 'Test'
         }
         It "Should return an empty string if the WMI query fails"{
-            function global:Get-WmiObject {
+            function global:Get-CimInstance {
                 return $null
             }
             $result = Get-NxtComputerManufacturer
