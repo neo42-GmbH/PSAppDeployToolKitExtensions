@@ -270,7 +270,7 @@ catch {
 	if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
 		Clear-NxtTempFolder
 	}
-	Exit-Script -ExitCode 60001
+	Exit-Script -ExitCode $mainExitCode
 }
 
 function Main {
