@@ -160,8 +160,7 @@ elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstace -ClassName 'W
 	[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($MyInvocation.MyCommand.Path)`" $arguments"
 	$process.WaitForExit()
 	$script:ExitCode = $process.ExitCode
-	[int32]$mainExitCode = $process.ExitCode
-	exit $mainExitCode
+	exit $process.ExitCode
 }
 #endregion
 #region Global variables
@@ -183,15 +182,14 @@ elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstace -ClassName 'W
 [string]$appName = $tempLoadPackageConfig.AppName
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
 [string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
-Remove-Variable -Name tempLoadPackageConfig
+Remove-Variable -Name 'tempLoadPackageConfig'
 #endregion
 #region Set the script execution policy for this process
 [xml]$tempLoadToolkitConfig = Get-Content "$global:AppDeployToolkitConfigPath" -Raw
-[string]$powerShellOptionsExecutionPolicy = $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy
-if (($true -eq [string]::IsNullOrEmpty($powerShellOptionsExecutionPolicy)) -or ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $powerShellOptionsExecutionPolicy)) {
+if ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy) {
 	Write-Error -Message "Invalid value for 'Toolkit_ExecutionPolicy' property in 'AppDeployToolkitConfig.xml'."
-	[int32]$mainExitCode = 60014
-	exit $mainExitCode
+	$script:ExitCode = 60014
+	exit 60014
 }
 try {
 	Set-ExecutionPolicy -ExecutionPolicy $powerShellOptionsExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
@@ -199,8 +197,7 @@ try {
 catch {
 	Write-Warning "Execution Policy did not match current and override was not successful. Is a GPO in place? Error: $($_.Exception.Message)"
 }
-Remove-Variable -Name powerShellOptionsExecutionPolicy
-Remove-Variable -Name tempLoadToolkitConfig
+Remove-Variable -Name 'tempLoadToolkitConfig'
 #endregion
 ## Variables: Exit Code
 [int32]$mainExitCode = 0
@@ -257,22 +254,10 @@ try {
 	Test-NxtPackageConfig
 
 	## Write variables to verbose channel to prevent warnings issued by PSScriptAnalyzer
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigValidationPath: $global:Neo42PackageConfigValidationPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigPath: $global:Neo42PackageConfigPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SetupCfgPath: $global:SetupCfgPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomSetupCfgPath: $global:CustomSetupCfgPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] DeployApplicationPath: $global:DeployApplicationPath"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] AppDeployToolkitExtensionsPath: $global:AppDeployToolkitExtensionsPath"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptVersion: $deployAppScriptVersion"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptDate: $deployAppScriptDate"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptParameters: $deployAppScriptParameters"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appDeployLogoBannerDark: $appDeployLogoBannerDark"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SoftMigrationCustomResult (prefillvalue): $global:SoftMigrationCustomResult"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] UserPartDir: $global:UserPartDir"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVendor: $appVendor"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appName: $appName"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVersion: $appVersion"
-	Write-Verbose "[$($MyInvocation.MyCommand.Name)] AppLogFolder: $global:AppLogFolder"
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -280,7 +265,7 @@ try {
 }
 catch {
 	[int32]$mainExitCode = 60001
-	[string]$mainErrorMessage = "$(Resolve-Error)"
+	[string]$mainErrorMessage = Resolve-Error
 	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 	if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
 		Clear-NxtTempFolder
@@ -570,7 +555,7 @@ function Main {
 	}
 	catch {
 		## unhandled exception occured
-		Write-Log -Message "$(Resolve-Error)" -Severity 3 -Source $deployAppScriptFriendlyName
+		Write-Log -Message (Resolve-Error) -Severity 3 -Source $deployAppScriptFriendlyName
 		Exit-NxtScriptWithError -ErrorMessage 'The installation/uninstallation aborted with an error message!' -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
 	}
 }
