@@ -123,7 +123,7 @@ function Start-NxtProcess {
 	Process {
 		[System.Diagnostics.ProcessStartInfo]$processStartInfo = [System.Diagnostics.ProcessStartInfo]::new($FilePath, $Arguments)
 		$processStartInfo.UseShellExecute = $UseShellExecute
-		Write-Output [System.Diagnostics.Process]::Start($processStartInfo)
+		Write-Output ([System.Diagnostics.Process]::Start($processStartInfo))
 	}
 }
 #region PSEnvironment
@@ -184,7 +184,7 @@ elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName '
 [string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
 Remove-Variable -Name 'tempLoadPackageConfig'
 #endregion
-#region Set the script execution policy for this process
+#region Execution policy
 [xml]$tempLoadToolkitConfig = Get-Content "$global:AppDeployToolkitConfigPath" -Raw
 if ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy) {
 	Write-Error -Message "Invalid value for 'Toolkit_ExecutionPolicy' property in 'AppDeployToolkitConfig.xml'."
