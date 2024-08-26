@@ -65,20 +65,27 @@
 Param (
 	[Parameter(Mandatory = $false)]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
-	[string]$DeploymentType = 'Install',
+	[string]
+	$DeploymentType = 'Install',
 	[Parameter(Mandatory = $false)]
 	[ValidateSet('Interactive', 'Silent', 'NonInteractive')]
-	[string]$DeployMode = 'Interactive',
+	[string]
+	$DeployMode = 'Interactive',
 	[Parameter(Mandatory = $false)]
-	[bool]$AllowRebootPassThru = $true,
+	[bool]
+	$AllowRebootPassThru = $true,
 	[Parameter(Mandatory = $false)]
-	[switch]$TerminalServerMode = $false,
+	[switch]
+	$TerminalServerMode = $false,
 	[Parameter(Mandatory = $false)]
-	[switch]$DisableLogging = $false,
+	[switch]
+	$DisableLogging = $false,
 	[Parameter(Mandatory = $false)]
-	[switch]$SkipUnregister = $false,
+	[switch]
+	$SkipUnregister = $false,
 	[Parameter(Mandatory = $false)]
-	[string]$DeploymentSystem = [string]::Empty
+	[string]
+	$DeploymentSystem = [string]::Empty
 )
 function Start-NxtProcess {
 	<#
@@ -122,8 +129,8 @@ function Start-NxtProcess {
 #region PSEnvironment
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules","$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
 if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart', 'InstallUserPart', 'UninstallUserPart')) {
-	foreach ($variable in [System.Environment]::GetEnvironmentVariables("User").Keys) {
-		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, "Machine"), "Process")
+	foreach ($variable in [System.Environment]::GetEnvironmentVariables('User').Keys) {
+		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, 'Machine'), 'Process')
 	}
 }
 #endregion
@@ -166,11 +173,11 @@ elseif ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstace -ClassName "W
 [string]$global:AppDeployToolkitExtensionsPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitExtensions.ps1"
 [string]$global:AppDeployToolkitConfigPath = "$PSScriptRoot\AppDeployToolkit\AppDeployToolkitConfig.xml"
 [string]$global:DeploymentSystem = $DeploymentSystem
-[string]$global:UserPartDir = "User"
+[string]$global:UserPartDir = 'User'
 ## Attention: All file/directory entries in this array will be deleted at the end of the script if it is a subpath of the default temp folder!
 [string[]]$script:NxtTempDirectories = @()
 ## We temporarily load the package config to get the appVendor, appName and appVersion variables which are also required to define the AppLogFolder.
-$tempLoadPackageConfig = (Get-Content "$global:Neo42PackageConfigPath" -raw ) | ConvertFrom-Json
+[PSCustomObject]$tempLoadPackageConfig = (Get-Content -Raw -Path "$global:Neo42PackageConfigPath") | ConvertFrom-Json
 ## Several PSADT-functions do not work, if these variables are not set here.
 [string]$appVendor = $tempLoadPackageConfig.AppVendor
 [string]$appName = $tempLoadPackageConfig.AppName
@@ -203,13 +210,11 @@ Remove-Variable -Name tempLoadToolkitConfig
 [string]$deployAppScriptDate = '02/05/2023'
 [hashtable]$deployAppScriptParameters = $PSBoundParameters
 ## Variables: Environment
+[System.Management.Automation.InvocationInfo]$invocationInfo = $MyInvocation
 if (Test-Path -LiteralPath 'variable:HostInvocation') {
-	$InvocationInfo = $HostInvocation
+	$invocationInfo = $HostInvocation
 }
-else {
-	$InvocationInfo = $MyInvocation
-}
-[string]$scriptDirectory = Split-Path -Path $InvocationInfo.MyCommand.Definition -Parent
+[string]$scriptDirectory = Split-Path -Path $invocationInfo.MyCommand.Definition -Parent
 ## dot source the required AppDeploy Toolkit functions
 try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
@@ -218,7 +223,8 @@ try {
 	}
 	if ($true -eq $DisableLogging) {
 		. $moduleAppDeployToolkitMain -DisableLogging
-	} else {
+	}
+	else {
 		. $moduleAppDeployToolkitMain
 	}
 	## add custom 'Nxt' variables
@@ -273,8 +279,10 @@ try {
 	##*===============================================
 }
 catch {
-	Write-Log -Message (Resolve-Error) -Severity 3 -Source $deployAppScriptFriendlyName
-	if ($DeploymentType -notin @("InstallUserPart", "UninstallUserPart")) {
+	[int32]$mainExitCode = 60001
+	[string]$mainErrorMessage = "$(Resolve-Error)"
+	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
+	if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
 		Clear-NxtTempFolder
 	}
 	Exit-Script -ExitCode 60001
@@ -376,10 +384,10 @@ function Main {
 						($global:PackageConfig.AppVersion -ne (Get-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'Version'))
 					) -and
 					($true -eq $RegisterPackage) -and
-					((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" | Where-Object PackageGUID -ne $PackageGUID).count -eq 0) -and
+					((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" | Where-Object PackageGUID -NE $PackageGUID).count -eq 0) -and
 					($false -eq $RemovePackagesWithSameProductGUID)
 				) {
-				CustomSoftMigrationBegin
+					CustomSoftMigrationBegin
 				}
 				[string]$script:installPhase = 'Check-SoftMigration'
 				if ($false -eq $(Get-NxtRegisterOnly)) {
@@ -390,10 +398,10 @@ function Main {
 					if ($showInstallationWelcomeResult -ne 0) {
 						switch ($showInstallationWelcomeResult) {
 							'1618' {
-								[string]$currentShowInstallationWelcomeMessageInstall = "AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached."
+								[string]$currentShowInstallationWelcomeMessageInstall = 'AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached.'
 							}
 							'60012' {
-								[string]$currentShowInstallationWelcomeMessageInstall = "User deferred installation request."
+								[string]$currentShowInstallationWelcomeMessageInstall = 'User deferred installation request.'
 							}
 							default {
 								[string]$currentShowInstallationWelcomeMessageInstall = "AskKillProcesses window returned unexpected exit code: $showInstallationWelcomeResult"
@@ -405,14 +413,14 @@ function Main {
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ( ($true -eq $(Test-NxtAppIsInstalled -InstallMethod $global:PackageConfig.UninstallMethod)) -or ($true -eq $global:AppInstallDetectionCustomResult) ) {
 						if ($true -eq $global:AppInstallDetectionCustomResult) {
-							Write-Log -Message "Found an installed application: detected by custom pre-checks." -Source $deployAppScriptFriendlyName
+							Write-Log -Message 'Found an installed application: detected by custom pre-checks.' -Source $deployAppScriptFriendlyName
 						}
 						else {
 							[string]$global:PackageConfig.ReinstallMode = $(Switch-NxtMSIReinstallMode)
 						}
 						Write-Log -Message "[$script:installPhase] selected mode: $($global:PackageConfig.ReinstallMode)" -Source $deployAppScriptFriendlyName
 						switch ($global:PackageConfig.ReinstallMode) {
-							"Reinstall" {
+							'Reinstall' {
 								CustomReinstallPreUninstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtApplication
@@ -430,8 +438,8 @@ function Main {
 								}
 								CustomReinstallPostInstall -ResultToCheck $mainNxtResult
 							}
-							"MSIRepair" {
-								if ("MSI" -eq $InstallMethod) {
+							'MSIRepair' {
+								if ('MSI' -eq $InstallMethod) {
 									CustomReinstallPreInstall
 									[string]$script:installPhase = 'Package-Reinstallation'
 									[PSADTNXT.NxtApplicationResult]$mainNxtResult = Repair-NxtApplication -BackupRepairFile $global:PackageConfig.InstFile
@@ -445,7 +453,7 @@ function Main {
 									throw "Unsupported combination of 'ReinstallMode' and 'InstallMethod' properties. Value 'MSIRepair' in 'ReinstallMode' is supported for installation method 'MSI' only!"
 								}
 							}
-							"Install" {
+							'Install' {
 								CustomReinstallPreInstall
 								[string]$script:installPhase = 'Package-Reinstallation'
 								[PSADTNXT.NxtApplicationResult]$mainNxtResult = Install-NxtApplication
@@ -472,12 +480,12 @@ function Main {
 						CustomInstallEnd -ResultToCheck $mainNxtResult
 					}
 					if ($true -eq $global:SetupCfg.Options.SoftMigration) {
-						[string]$softMigrationOccurred = "false"
+						[string]$softMigrationOccurred = 'false'
 					}
 					CustomInstallAndReinstallEnd -ResultToCheck $mainNxtResult
 				}
 				else {
-					[string]$softMigrationOccurred = "true"
+					[string]$softMigrationOccurred = 'true'
 				}
 				## here we continue if application is present and/or register package is necessary only.
 				CustomInstallAndReinstallAndSoftMigrationEnd -ResultToCheck $mainNxtResult
@@ -491,11 +499,11 @@ function Main {
 					Register-NxtPackage -MainExitCode $rebootRequirementResult.MainExitCode -LastErrorMessage $returnErrorMessage -SoftMigrationOccurred $softMigrationOccurred
 				}
 				else {
-					Write-Log -Message "No need to register package." -Source $deployAppScriptFriendlyName
+					Write-Log -Message 'No need to register package.' -Source $deployAppScriptFriendlyName
 				}
 				## END OF INSTALL
 			}
-			"Uninstall" {
+			'Uninstall' {
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
 				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($false -eq $SkipUnregister) ) {
@@ -506,10 +514,10 @@ function Main {
 					if ($showUnInstallationWelcomeResult -ne 0) {
 						switch ($showUnInstallationWelcomeResult) {
 							'1618' {
-								[string]$currentShowInstallationWelcomeMessageUninstall = "AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached."
+								[string]$currentShowInstallationWelcomeMessageUninstall = 'AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached.'
 							}
 							'60012' {
-								[string]$currentShowInstallationWelcomeMessageUninstall = "User deferred installation request."
+								[string]$currentShowInstallationWelcomeMessageUninstall = 'User deferred installation request.'
 							}
 							default {
 								[string]$currentShowInstallationWelcomeMessageUninstall = "AskKillProcesses window returned unexpected exit code: $showInstallationWelcomeResult"
@@ -534,17 +542,17 @@ function Main {
 					Unregister-NxtPackage
 				}
 				else {
-					Write-Log -Message "No need to unregister package(s) now..." -Source $deployAppScriptFriendlyName
+					Write-Log -Message 'No need to unregister package(s) now...' -Source $deployAppScriptFriendlyName
 				}
 				## END OF UNINSTALL
 			}
-			"InstallUserPart" {
+			'InstallUserPart' {
 				## START OF USERPARTINSTALL
 				CustomInstallUserPartBegin
 				CustomInstallUserPartEnd
 				## END OF USERPARTINSTALL
 			}
-			"UninstallUserPart" {
+			'UninstallUserPart' {
 				## START OF USERPARTUNINSTALL
 				CustomUninstallUserPartBegin
 				CustomUninstallUserPartEnd
@@ -553,7 +561,7 @@ function Main {
 		}
 		[string]$script:installPhase = 'Package-Finish'
 		[PSADTNXT.NxtRebootResult]$rebootRequirementResult = Set-NxtRebootVariable
-		if ($DeploymentType -notin @("InstallUserPart", "UninstallUserPart")) {
+		if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
 			Clear-NxtTempFolder
 			Unblock-NxtAppExecution
 		}
@@ -562,8 +570,8 @@ function Main {
 	}
 	catch {
 		## unhandled exception occured
-		Write-Log -Message (Resolve-Error) -Severity 3 -Source $deployAppScriptFriendlyName
-		Exit-NxtScriptWithError -ErrorMessage "The installation/uninstallation aborted with an error message!" -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
+		Write-Log -Message "$(Resolve-Error)" -Severity 3 -Source $deployAppScriptFriendlyName
+		Exit-NxtScriptWithError -ErrorMessage 'The installation/uninstallation aborted with an error message!' -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
 	}
 }
 
@@ -572,35 +580,49 @@ function Main {
 ## naming pattern:
 ## {functionType}{Phase}{PrePosition}{SubPhase}
 function CustomBegin {
+	<#
+		.SYNOPSIS
+			Executes always at the beginning of the script regardless of the DeploymentType ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart')
+	#>
 	[string]$script:installPhase = 'CustomBegin'
 
-	## executes always at the beginning of the script regardless of the DeploymentType ('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart')
 	#region CustomBegin content
 
 	#endregion CustomBegin content
 }
 
 function CustomInstallAndReinstallAndSoftMigrationBegin {
+	<#
+		.SYNOPSIS
+			Executes before any installation, reinstallation or soft migration tasks are performed.
+	#>
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationBegin'
 
-	## executes before any installation, reinstallation or soft migration tasks are performed
 	#region CustomInstallAndReinstallAndSoftMigrationBegin content
 
 	#endregion CustomInstallAndReinstallAndSoftMigrationBegin content
 }
 
 function CustomSoftMigrationBegin {
+	<#
+		.SYNOPSIS
+			Executes before a default check of soft migration runs.
+			After successful individual checks for soft migration the following variable has to be set at the end of this section:
+			[bool]$global:SoftMigrationCustomResult = $true
+	#>
 	[string]$script:installPhase = 'CustomSoftMigrationBegin'
 
-	## executes before a default check of soft migration runs
-	## after successful individual checks for soft migration the following variable has to be set at the end of this section:
-	## [bool]$global:SoftMigrationCustomResult = $true
 	#region CustomSoftMigrationBegin content
 
 	#endregion CustomSoftMigrationBegin content
 }
 
 function CustomInstallAndReinstallAndSoftMigrationEnd {
+	<#
+		.SYNOPSIS
+			Executes after the completed install, reinstall or soft migration process.
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -608,33 +630,43 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
 
-	## executes after the completed install or reinstall process and on soft migration
 	#region CustomInstallAndReinstallAndSoftMigrationEnd content
 
 	#endregion CustomInstallAndReinstallAndSoftMigrationEnd content
 }
 
 function CustomInstallAndReinstallPreInstallAndReinstall {
+	<#
+		.SYNOPSIS
+			Executes before any installation or reinstallation tasks are performed.
+			After successful individual checks for installed application state the following variable has to be set at the end of this section:
+			[bool]$global:AppInstallDetectionCustomResult = $true
+	#>
 	[string]$script:installPhase = 'CustomInstallAndReinstallPreInstallAndReinstall'
 
-	## executes before any installation or reinstallation tasks are performed
-	## after successful individual checks for installed application state the following variable has to be set at the end of this section:
-	## [bool]$global:AppInstallDetectionCustomResult = $true
 	#region CustomInstallAndReinstallPreInstallAndReinstall content
 
 	#endregion CustomInstallAndReinstallPreInstallAndReinstall content
 }
 
 function CustomReinstallPreUninstall {
+	<#
+		.SYNOPSIS
+			Executes before the uninstallation in the reinstall process.
+	#>
 	[string]$script:installPhase = 'CustomReinstallPreUninstall'
 
-	## executes before the uninstallation in the reinstall process
 	#region CustomReinstallPreUninstall content
 
 	#endregion CustomReinstallPreUninstall content
 }
 
 function CustomReinstallPostUninstallOnError {
+	<#
+		.SYNOPSIS
+			Executes right after the uninstallation in the reinstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -642,13 +674,17 @@ function CustomReinstallPostUninstallOnError {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstallOnError'
 
-	## executes right after the uninstallation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
 	#region CustomReinstallPostUninstallOnError content
 
 	#endregion CustomReinstallPostUninstallOnError content
 }
 
 function CustomReinstallPostUninstall {
+	<#
+		.SYNOPSIS
+			Executes after the successful uninstallation in the reinstall process.
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -656,22 +692,29 @@ function CustomReinstallPostUninstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstall'
 
-	## executes after the successful uninstallation in the reinstall process
 	#region CustomReinstallPostUninstall content
 
 	#endregion CustomReinstallPostUninstall content
 }
 
 function CustomReinstallPreInstall {
+	<#
+		.SYNOPSIS
+			Executes before the installation in the reinstall process.
+	#>
 	[string]$script:installPhase = 'CustomReinstallPreInstall'
 
-	## executes before the installation in the reinstall process
 	#region CustomReinstallPreInstall content
 
 	#endregion CustomReinstallPreInstall content
 }
 
 function CustomReinstallPostInstallOnError {
+	<#
+		.SYNOPSIS
+			Executes right after the installation in the reinstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -679,13 +722,17 @@ function CustomReinstallPostInstallOnError {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstallOnError'
 
-	## executes right after the installation in the reinstall process (just add possible cleanup steps here, because scripts exits right after this function!)
 	#region CustomReinstallPostInstallOnError content
 
 	#endregion CustomReinstallPostInstallOnError content
 }
 
 function CustomReinstallPostInstall {
+	<#
+		.SYNOPSIS
+			Executes after the successful installation in the reinstall process.
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -693,22 +740,29 @@ function CustomReinstallPostInstall {
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstall'
 
-	## executes after the successful installation in the reinstall process
 	#region CustomReinstallPostInstall content
 
 	#endregion CustomReinstallPostInstall content
 }
 
 function CustomInstallBegin {
+	<#
+		.SYNOPSIS
+			Executes before the installation in the install process.
+	#>
 	[string]$script:installPhase = 'CustomInstallBegin'
 
-	## executes before the installation in the install process
 	#region CustomInstallBegin content
 
 	#endregion CustomInstallBegin content
 }
 
 function CustomInstallEndOnError {
+	<#
+		.SYNOPSIS
+			Executes right after the installation in the install process. (just add possible cleanup steps here, because scripts exits right after this function!)
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -716,13 +770,17 @@ function CustomInstallEndOnError {
 	)
 	[string]$script:installPhase = 'CustomInstallEndOnError'
 
-	## executes right after the installation in the install process (just add possible cleanup steps here, because scripts exits right after this function!)
 	#region CustomInstallEndOnError content
 
 	#endregion CustomInstallEndOnError content
 }
 
 function CustomInstallEnd {
+	<#
+		.SYNOPSIS
+			Executes after the successful installation in the install process.
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -730,13 +788,17 @@ function CustomInstallEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallEnd'
 
-	## executes after the successful installation in the install process
 	#region CustomInstallEnd content
 
 	#endregion CustomInstallEnd content
 }
 
 function CustomInstallAndReinstallEnd {
+	<#
+		.SYNOPSIS
+			Executes after the completed install or reinstall process.
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -744,22 +806,29 @@ function CustomInstallAndReinstallEnd {
 	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallEnd'
 
-	## executes after the completed install or reinstall process
 	#region CustomInstallAndReinstallEnd content
 
 	#endregion CustomInstallAndReinstallEnd content
 }
 
 function CustomUninstallBegin {
+	<#
+		.SYNOPSIS
+			Executes before the uninstallation in the uninstall process.
+	#>
 	[string]$script:installPhase = 'CustomUninstallBegin'
 
-	## executes before the uninstallation in the uninstall process
 	#region CustomUninstallBegin content
 
 	#endregion CustomUninstallBegin content
 }
 
 function CustomUninstallEndOnError {
+	<#
+		.SYNOPSIS
+			Executes right after the uninstallation in the uninstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -767,13 +836,17 @@ function CustomUninstallEndOnError {
 	)
 	[string]$script:installPhase = 'CustomUninstallEndOnError'
 
-	## executes right after the uninstallation in the uninstall process (just add possible cleanup steps here, because scripts exits right after this function!)
 	#region CustomUninstallEndOnError content
 
 	#endregion CustomUninstallEndOnError content
 }
 
 function CustomUninstallEnd {
+	<#
+		.SYNOPSIS
+			Executes after the successful uninstallation in the uninstall process.
+	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -781,52 +854,66 @@ function CustomUninstallEnd {
 	)
 	[string]$script:installPhase = 'CustomUninstallEnd'
 
-	## executes after the successful uninstallation in the uninstall process
 	#region CustomUninstallEnd content
 
 	#endregion CustomUninstallEnd content
 }
 
 function CustomInstallUserPartBegin {
+	<#
+		.SYNOPSIS
+			Executes at the beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	#>
 	[string]$script:installPhase = 'CustomInstallUserPartBegin'
 
-	## executes at the beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
 	#region CustomInstallUserPartBegin content
 
 	#endregion CustomInstallUserPartBegin content
 }
 
 function CustomInstallUserPartEnd {
+	<#
+		.SYNOPSIS
+			Executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
+	#>
 	[string]$script:installPhase = 'CustomInstallUserPartEnd'
 
-	## executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
 	#region CustomInstallUserPartEnd content
 
 	#endregion CustomInstallUserPartEnd content
 }
 
 function CustomUninstallUserPartBegin {
+	<#
+		.SYNOPSIS
+			Executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
+	#>
 	[string]$script:installPhase = 'CustomUninstallUserPartBegin'
 
-	## executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
 	#region CustomUninstallUserPartBegin content
 
 	#endregion CustomUninstallUserPartBegin content
 }
 
 function CustomUninstallUserPartEnd {
+	<#
+		.SYNOPSIS
+			Executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
+	#>
 	[string]$script:installPhase = 'CustomUninstallUserPartEnd'
 
-	## executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
 	#region CustomUninstallUserPartEnd content
 
 	#endregion CustomUninstallUserPartEnd content
 }
 
 function CustomEnd {
+	<#
+		.SYNOPSIS
+			Executes at the end regardless of DeploymentType
+	#>
 	[string]$script:installPhase = 'CustomEnd'
 
-	## executes at the end regardless of DeploymentType
 	#region CustomEnd content
 
 	#endregion CustomEnd content
