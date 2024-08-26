@@ -163,7 +163,21 @@ elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName '
 	exit $process.ExitCode
 }
 #endregion
-#region Global variables
+#region Variables
+## Variables: Exit Code
+[int32]$mainExitCode = 0
+## Variables: Script
+[string]$deployAppScriptFriendlyName = 'Deploy Application'
+[string]$deployAppScriptVersion = [string]'##REPLACEVERSION##'
+[string]$deployAppScriptDate = '02/05/2023'
+[hashtable]$deployAppScriptParameters = $PSBoundParameters
+## Variables: Environment
+[System.Management.Automation.InvocationInfo]$invocationInfo = $MyInvocation
+if (Test-Path -LiteralPath 'variable:HostInvocation') {
+	$invocationInfo = $HostInvocation
+}
+[string]$scriptDirectory = Split-Path -Path $invocationInfo.MyCommand.Definition -Parent
+## Global variables
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
@@ -199,20 +213,7 @@ catch {
 }
 Remove-Variable -Name 'tempLoadToolkitConfig'
 #endregion
-## Variables: Exit Code
-[int32]$mainExitCode = 0
-## Variables: Script
-[string]$deployAppScriptFriendlyName = 'Deploy Application'
-[string]$deployAppScriptVersion = [string]'##REPLACEVERSION##'
-[string]$deployAppScriptDate = '02/05/2023'
-[hashtable]$deployAppScriptParameters = $PSBoundParameters
-## Variables: Environment
-[System.Management.Automation.InvocationInfo]$invocationInfo = $MyInvocation
-if (Test-Path -LiteralPath 'variable:HostInvocation') {
-	$invocationInfo = $HostInvocation
-}
-[string]$scriptDirectory = Split-Path -Path $invocationInfo.MyCommand.Definition -Parent
-## dot source the required AppDeploy Toolkit functions
+## MARK: Source AppDeployToolkit
 try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
 	if ($false -eq (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) {
@@ -237,6 +238,7 @@ catch {
 	exit $mainExitCode
 }
 
+## MARK: Initialize Environment
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
 	Initialize-NxtEnvironment
