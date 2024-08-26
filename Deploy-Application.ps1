@@ -89,23 +89,23 @@ Param (
 )
 function Start-NxtProcess {
 	<#
-	.SYNOPSIS
-		Start a process by filename.
-	.DESCRIPTION
-		Replacement for the native Start-Process cmdlet using .NET process Object.
-	.PARAMETER FilePath
-		Path for the filename that should be called.
-	.PARAMETER Arguments
-		Arguments for the process.
-	.PARAMETER UseShellExecute
-		Specifies the UseShellExecute parameter. Default: $false.
-	.EXAMPLE
-		Start-NxtProcess -FileName "C:\Windows\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-File "C:\Users\labadmin\PSAppDeployToolKitExtensions\Deploy-Application.ps1""
-	.OUTPUTS
-		System.Diagnostics.Process
-	.LINK
-		https://neo42.de/psappdeploytoolkit
-#>
+		.SYNOPSIS
+			Start a process by filename.
+		.DESCRIPTION
+			Replacement for the native Start-Process cmdlet using .NET process Object.
+		.PARAMETER FilePath
+			Path for the filename that should be called.
+		.PARAMETER Arguments
+			Arguments for the process.
+		.PARAMETER UseShellExecute
+			Specifies the UseShellExecute parameter. Default: $false.
+		.EXAMPLE
+			Start-NxtProcess -FileName "C:\Windows\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-File "C:\Users\labadmin\PSAppDeployToolKitExtensions\Deploy-Application.ps1""
+		.OUTPUTS
+			System.Diagnostics.Process
+		.LINK
+			https://neo42.de/psappdeploytoolkit
+	#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
@@ -127,7 +127,7 @@ function Start-NxtProcess {
 	}
 }
 #region PSEnvironment
-$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules","$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ";"
+$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
 if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart', 'InstallUserPart', 'UninstallUserPart')) {
 	foreach ($variable in [System.Environment]::GetEnvironmentVariables('User').Keys) {
 		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, 'Machine'), 'Process')
@@ -135,15 +135,15 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 }
 #endregion
 #region Asynchronous restart conditions
-if ($DeploymentType -eq "TriggerInstallUserPart") {
+if ($DeploymentType -eq 'TriggerInstallUserPart') {
 	Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart" | Out-Null
 	exit
 }
-elseif ($DeploymentType -eq "TriggerUninstallUserPart") {
+elseif ($DeploymentType -eq 'TriggerUninstallUserPart') {
 	Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
 	exit
 }
-elseif ($env:PROCESSOR_ARCHITECTURE -eq "x86" -and (Get-CimInstace -ClassName "Win32_OperatingSystem").OSArchitecture -eq "64-bit") {
+elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstace -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
 	Write-Warning 'Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell.'
 	# add all bound parameters to the argument list
 	[string]$arguments = foreach ($key in $MyInvocation.BoundParameters.Keys) {
@@ -364,7 +364,7 @@ function Main {
 		Test-NxtConfigVersionCompatibility
 		CustomBegin
 		switch -RegEx ($DeploymentType) {
-			"Install|Repair" {
+			'Install|Repair' {
 				CustomInstallAndReinstallAndSoftMigrationBegin
 				## START OF INSTALL
 				[string]$script:installPhase = 'Package-PreCleanup'
