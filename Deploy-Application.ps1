@@ -127,12 +127,12 @@ function Start-NxtProcess {
 	}
 }
 #region PSEnvironment
-$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
 if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart', 'InstallUserPart', 'UninstallUserPart')) {
 	foreach ($variable in [System.Environment]::GetEnvironmentVariables('User').Keys) {
 		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, 'Machine'), 'Process')
 	}
 }
+$env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
 #endregion
 #region Asynchronous restart conditions
 if ($DeploymentType -eq 'TriggerInstallUserPart') {
