@@ -378,12 +378,12 @@ function Add-NxtLocalUser {
 			[bool]$userExists = Test-NxtLocalUserExists -UserName $UserName -ComputerName $COMPUTERNAME
 			if ($false -eq $userExists) {
 				[System.DirectoryServices.DirectoryEntry]$objUser = $adsiObj.Create("User", $UserName)
-				$objUser.SetInfo() | Out-Null
 			}
 			else {
 				[System.DirectoryServices.DirectoryEntry]$objUser = [ADSI]"WinNT://$COMPUTERNAME/$UserName,user"
 			}
-			$objUser.setpassword($Password) | Out-Null
+			$objUser.SetPassword($Password) | Out-Null
+			$objUser.SetInfo() | Out-Null
 			if ($false -eq ([string]::IsNullOrEmpty($FullName))) {
 				$objUser.Put("FullName", $FullName) | Out-Null
 				$objUser.SetInfo() | Out-Null
@@ -1507,6 +1507,50 @@ function ConvertFrom-NxtEncodedObject {
 	}
 }
 #endregion
+#region Function ConvertTo-NxtInstallerProductCode
+function ConvertTo-NxtInstallerProductCode {
+	<#
+	.SYNOPSIS
+		Converts a product GUID into an installer product code.
+	.DESCRIPTION
+		The ConvertTo-NxtInstallerProductCode function converts a product GUID into an installer product code.
+		This function is useful when you need to retrieve the installer product code for a given product GUID.
+	.PARAMETER ProductGuid
+		The product GUID that you want to convert into an installer product code. This parameter is mandatory.
+	.EXAMPLE
+		$ProductCode = ConvertTo-NxtInstallerProductCode -ProductGuid "{12345678-1234-1234-1234-123456789012}"
+	.OUTPUTS
+		System.String
+	.NOTES
+		Ensure that the ProductGuid parameter contains a valid GUID. Invalid or malformed input can result in errors.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true)]
+		[guid]
+		$ProductGuid
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+
+		[int[]]$charIndex = 7,6,5,4,3,2,1,0,11,10,9,8,15,14,13,12,17,16,19,18,21,20,23,22,25,24,27,26,29,28,31,30
+	}
+	Process {
+		[string]$productGuidChars = [regex]::replace($ProductGuid.Guid, "[^a-zA-Z0-9]", "")
+		return (
+			$charIndex | ForEach-Object {
+				$productGuidChars[$_]
+			}
+		) -join [string]::Empty
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function ConvertTo-NxtEncodedObject
 function ConvertTo-NxtEncodedObject {
 	<#
@@ -2555,7 +2599,7 @@ function Execute-NxtMSI {
 			($UninstallKeyIsDisplayName -or $UninstallKeyContainsWildCards -or ($false -eq [string]::IsNullOrEmpty($DisplayNamesToExclude))) -and
 			$Action -eq "Uninstall"
 		) {
-			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $Path -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $Path -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod "MSI"
 			if ($installedAppResults.Count -eq 0) {
 				Write-Log -Message "Found no Application with UninstallKey [$Path], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 				return
@@ -3283,6 +3327,10 @@ function Expand-NxtPackageConfig {
 		[array]$global:PackageConfig.DisplayNamesToExcludeFromAppSearches = foreach ($displayNameToExcludeFromAppSearches in $global:PackageConfig.DisplayNamesToExcludeFromAppSearches) {
 			$ExecutionContext.InvokeCommand.ExpandString($displayNameToExcludeFromAppSearches)
 		}
+		## the array must exist even if empty, to avoid errors in the validation functions
+		if ($null -eq [array]$global:PackageConfig.DisplayNamesToExcludeFromAppSearches) {
+			[array]$global:PackageConfig.DisplayNamesToExcludeFromAppSearches = @()
+		}
 		foreach ($uninstallKeyToHide in $global:PackageConfig.UninstallKeysToHide) {
 			[string]$uninstallKeyToHide.KeyName = $ExecutionContext.InvokeCommand.ExpandString($uninstallKeyToHide.KeyName)
 			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameIsDisplayName)) {
@@ -3638,6 +3686,8 @@ function Get-NxtCurrentDisplayVersion {
 		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
 		We reccommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
+	.PARAMETER InstallMethod
+		Defines the installer type any applied installer specific logic. Currently only applicable for MSI installers.
 	.EXAMPLE
 		Get-NxtCurrentDisplayVersion -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
 	.EXAMPLE
@@ -3666,7 +3716,10 @@ function Get-NxtCurrentDisplayVersion {
 		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
 		[Parameter(Mandatory = $false)]
 		[array]
-		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallMethod
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3680,7 +3733,7 @@ function Get-NxtCurrentDisplayVersion {
 			[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = New-Object -TypeName PSADTNXT.NxtDisplayVersionResult
 			try {
 				Write-Log -Message "Detect currently set DisplayVersion value of package application..." -Source ${CmdletName}
-				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $InstallMethod
 				if ($installedAppResults.Count -eq 0) {
 					Write-Log -Message "Found no uninstall key with UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Skipped detecting a DisplayVersion." -Severity 2 -Source ${CmdletName}
 					$displayVersionResult.DisplayVersion = [string]::Empty
@@ -4012,6 +4065,11 @@ function Get-NxtInstalledApplication {
 		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
 		We recommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
+	.PARAMETER Is64Bit
+		Determines which registry hives to search in.
+		Defaults to PSADT Main Script's $Is64Bit variable.
+	.PARAMETER InstallMethod
+		Filter the results by the installer type. Currently only "MSI" is supported.
 	.EXAMPLE
 		Get-NxtInstalledApplication -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
 	.EXAMPLE
@@ -4039,8 +4097,14 @@ function Get-NxtInstalledApplication {
 		[bool]
 		$UninstallKeyContainsWildCards = $global:PackageConfig.UninstallKeyContainsWildCards,
 		[Parameter(Mandatory = $false)]
-		[array]
-		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches
+		[string[]]
+		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Is64Bit = $Is64Bit,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallMethod
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4074,6 +4138,21 @@ function Get-NxtInstalledApplication {
 				foreach ($displayNameToExclude in $DisplayNamesToExclude) {
 					$installedAppResults = $installedAppResults | Where-Object DisplayName -ne $displayNameToExclude
 					Write-Log -Message "Excluded [$displayNameToExclude] from the results above." -Source ${CmdletName}
+				}
+				if ("MSI" -eq $InstallMethod) {
+					$installedAppResults = $installedAppResults | Where-Object {
+						[string]$productRegKeyPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\"
+						if ($false -eq $_.Is64BitApplication -and $true -eq $Is64Bit) {
+							$productRegKeyPath = "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
+						}
+						try {
+							Write-Output ((Get-ItemProperty -Path ($productRegKeyPath + $_.UninstallSubkey) -ErrorAction Stop).WindowsInstaller -eq 1)
+						}
+						catch {
+							Write-Log "Filtered [$($_.DisplayName)] due to not being an MSI installer." -Source ${cmdletName}
+							Write-Output $false
+						}
+					}
 				}
 				Write-Output $installedAppResults
 			}
@@ -4805,6 +4884,9 @@ function Get-NxtRegisterOnly {
 	.PARAMETER RegPackagesKey
 		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstallMethod
+		Specifies the installation method of the software package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 		This example detects if the target application is already installed and verifies conditions for a soft migration based on the values from the PackageConfig object.
@@ -4862,17 +4944,22 @@ function Get-NxtRegisterOnly {
 		$ProductGUID = $global:PackageConfig.ProductGUID,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$RegPackagesKey = $global:PackageConfig.RegPackagesKey
+		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$AppVersion = $global:PackageConfig.AppVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallMethod = $global:PackageConfig.UninstallMethod
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
 		Write-Output $false
 	}
 	elseif (
-		($true -eq $SoftMigration) -and
-		$false -eq (Test-RegistryValue -Key $PackageRegisterPath -Value 'ProductName') -and
+		($true -eq $SoftMigration) -and ($AppVersion -ne (Get-RegistryKey -Key $PackageRegisterPath -Value 'Version')) -and
 			(
-				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID -RegPackagesKey $RegPackagesKey).count -eq 0) -or
+				((Get-NxtRegisteredPackage -ProductGUID $ProductGUID -RegPackagesKey $RegPackagesKey | Where-Object PackageGUID -ne $PackageGUID).count -eq 0) -or
 				$false -eq $RemovePackagesWithSameProductGUID
 			)
 		) {
@@ -4907,7 +4994,7 @@ function Get-NxtRegisterOnly {
 		}
 		else {
 			[string]$currentlyDetectedDisplayVersion = (
-					Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+					Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $InstallMethod
 				).DisplayVersion
 			if ($true -eq [string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
@@ -6128,7 +6215,7 @@ function Install-NxtApplication {
 					[int]$logMessageSeverity = 3
 				}
 				else {
-					if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
+					if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $internalInstallerMethod)) {
 						$installResult.ErrorMessage = "Installation of '$AppName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
 						$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 						$installResult.Success = $false
@@ -7797,7 +7884,7 @@ function Repair-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$RepairLogPath = $configMSILogDir
-		)
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -7816,7 +7903,7 @@ function Repair-NxtApplication {
 			[int]$logMessageSeverity = 3
 		}
 		else {
-			$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude).ProductCode
+			$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod "MSI").ProductCode
 			if ($true -eq ([string]::IsNullOrEmpty($executeNxtParams.Path))) {
 				$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
 				$repairResult.Success = $null
@@ -7845,6 +7932,16 @@ function Repair-NxtApplication {
 				[PsObject]$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
 				if ($executionResult.ExitCode -eq 1612 -and $false -eq [string]::IsNullOrEmpty($BackupRepairFile)) {
 					Write-Log "Built-in repair mechanism failed with code [1612] due to missing sources. Trying installer from package." -Severity 2 -Source ${CmdletName}
+					[string]$installerSourceRegPath = "Registry::HKEY_CLASSES_ROOT\Installer\Products\$(ConvertTo-NxtInstallerProductCode -ProductGuid $($executeNxtParams["Path"]))\SourceList"
+					[string]$previousPackageName = Get-RegistryKey -Key $installerSourceRegPath -Value "PackageName"
+					[string]$backupRepairFileName = Split-Path $BackupRepairFile -Leaf
+					if (
+						$false -eq [string]::IsNullOrEmpty($previousPackageName) -and
+						$previousPackageName -ne $backupRepairFileName
+					) {
+						Write-Log "Found previously used source [$previousPackageName], that differs from package source [$backupRepairFileName]. Adjusting installer cache prior to repair." -Severity 2 -Source ${cmdletName}
+						Set-RegistryKey -Key $installerSourceRegPath -Name "PackageName" -Value $backupRepairFileName
+					}
 					$executeNxtParams["Path"] = $BackupRepairFile
 					$executionResult = Execute-NxtMSI @executeNxtParams -Log "$RepairLogFile" -RepairFromSource $true
 				}
@@ -7868,7 +7965,7 @@ function Repair-NxtApplication {
 						($executionResult.ExitCode -notin ($AcceptedInstallRebootCodes -split ",")) -and
 						($repairResult.MainExitCode -notin 0,1641,3010)
 					) -or
-					($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
+					($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod "MSI")) ) {
 					$repairResult.ErrorMessage = "Repair of '$AppName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 					$repairResult.Success = $false
 					[int]$logMessageSeverity = 3
@@ -9860,7 +9957,7 @@ function Switch-NxtMSIReinstallMode {
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check ReinstallMode for an expected msi display version!. Returning [$ReinstallMode]." -Severity 2 -Source ${cmdletName}
 			}
 			else {
-				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $InstallMethod
 				if ($false -eq $displayVersionResult.UninstallKeyExists) {
 					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
 					throw "No repair function executable under current conditions!"
@@ -9936,13 +10033,13 @@ function Test-NxtAppIsInstalled {
 		Specifies whether the UninstallKey includes wildcards. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayNamesToExclude
 		Lists the display names to be excluded from the search. Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER DeploymentMethod
-		Defines the installer type, applicable only for MSI installers. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstallMethod
+		Defines the installer type any applied installer specific logic. Currently only applicable for MSI installers.
 	.EXAMPLE
 		Test-NxtAppIsInstalled -UninstallKey "This Application_is1"
 		Checks if an application with the uninstall key "This Application_is1" is installed. The values not specified explicitly are taken from the PackageConfig.json.
 	.EXAMPLE
-		Test-NxtAppIsInstalled -UninstallKey "*paper*" -DisplayNamesToExclude @() -UninstallKeyContainsWildCards $true -UninstallKeyIsDisplayName $false -DeploymentMethod Setup
+		Test-NxtAppIsInstalled -UninstallKey "*paper*" -DisplayNamesToExclude @() -UninstallKeyContainsWildCards $true -UninstallKeyIsDisplayName $false -InstallMethod Setup
 		Searches for any installed application with a display name containing s"paper" using wildcards.
 	.OUTPUTS
 		System.Boolean.
@@ -9965,7 +10062,7 @@ function Test-NxtAppIsInstalled {
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentMethod
+		$InstallMethod
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -9973,13 +10070,13 @@ function Test-NxtAppIsInstalled {
 	}
 	Process {
 		Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
-		[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+		[PSCustomObject[]]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $InstallMethod
 		if ($installedAppResults.Count -eq 0) {
 			[bool]$approvedResult = $false
 			Write-Log -Message "Found no application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
 		}
 		elseif ($installedAppResults.Count -gt 1) {
-			if ("MSI" -eq $DeploymentMethod) {
+			if ("MSI" -eq $InstallMethod) {
 				## This case maybe resolved with a foreach-loop in future.
 				[bool]$approvedResult = $false
 				Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 3 -Source ${CmdletName}
@@ -11236,7 +11333,7 @@ function Uninstall-NxtApplication {
 				}
 			}
 			else {
-				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod) ) {
+				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $UninstallMethod) ) {
 					[bool]$appIsInstalled=$true
 				}
 				else {
@@ -11339,7 +11436,7 @@ function Uninstall-NxtApplication {
 						[int]$logMessageSeverity = 3
 					}
 					else {
-						if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
+						if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $internalInstallerMethod)) {
 							$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallResult.Success = $false
