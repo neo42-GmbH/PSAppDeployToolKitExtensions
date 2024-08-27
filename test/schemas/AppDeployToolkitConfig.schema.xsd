@@ -168,7 +168,6 @@
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
-				<xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
 				<xs:element type="UI_Messages_Type" name="UI_Messages_EN" />
 				<xs:element type="UI_Messages_Type" name="UI_Messages_DA" />
 				<xs:element type="UI_Messages_Type" name="UI_Messages_FR" />
@@ -192,6 +191,7 @@
 				<xs:element type="UI_Messages_Type" name="UI_Messages_CZ" />
 				<xs:element type="UI_Messages_Type" name="UI_Messages_HU" />
 				<xs:element type="UI_Messages_Type" name="UI_Messages_FI" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_TR" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -234,25 +234,25 @@
 			<xs:element type="xs:string" name="RestartPrompt_ButtonRestartLater" />
 			<xs:element type="xs:string" name="RestartPrompt_ButtonRestartNow" />
 			<!-- Neo custom text -->
-			<xs:element type="xs:string" name="DeploymentType_InstallVerb" />
-			<xs:element type="xs:string" name="DeploymentType_UnInstallVerb" />
-			<xs:element type="xs:string" name="DeploymentType_RepairVerb" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_FollowApplication" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationClose" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_SaveWorkWithoutCloseButton" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_SaveWork" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationName" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_StartedBy" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_ChooseDefer" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_RemainingDefferals" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_DeferalExpired" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Abort" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Continue" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseApplications" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_Close" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_Defer" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpCloseApplicationText" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpSureToCloseText" />
+			<xs:element type="xs:string" name="DeploymentType_InstallVerb" minOccurs="0" />
+			<xs:element type="xs:string" name="DeploymentType_UnInstallVerb" minOccurs="0" />
+			<xs:element type="xs:string" name="DeploymentType_RepairVerb" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_FollowApplication" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationClose" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_SaveWorkWithoutCloseButton" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_SaveWork" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationName" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_StartedBy" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_ChooseDefer" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_RemainingDefferals" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_DeferalExpired" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Abort" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Continue" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseApplications" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_Close" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_Defer" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpCloseApplicationText" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpSureToCloseText" minOccurs="0" />
 		</xs:sequence>
 	</xs:complexType>
 
