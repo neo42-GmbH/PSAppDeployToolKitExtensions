@@ -11065,20 +11065,20 @@ function Test-NxtXml {
 			return
 		}
 		$xmlDoc.Schemas.Add($null, $XmlSchema.FullName) | Out-Null
-		[bool]$result = $true
 		try {
 			$xmlDoc.Validate($null)
 		}
 		catch [System.Xml.Schema.XmlSchemaValidationException] {
 			Write-Log -Message $_.Exception.Message -Source ${cmdletName} -Severity 3
-			$result = $false
-		}
-		catch {
-			Write-Log -Message "Failed to validate the XML document against the schema." -Source ${cmdletName} -Severity 3
 			Write-Output $false
 			return
 		}
-		Write-Output $result
+		catch {
+			Write-Log -Message "Failed to validate the XML document against the schema.`n$(Resolve-Error)" -Source ${cmdletName} -Severity 3
+			Write-Output $false
+			return
+		}
+		Write-Output $true
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
