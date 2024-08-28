@@ -2,7 +2,7 @@
     .SYNOPSIS
         This script creates wiki md files based on the AppDeployToolkitExtensions.ps1
     .DESCRIPTION
-        Place this script file in "..\Toolkit\AppDeployToolkit\"
+        Place this script file in "AppDeployToolkit\"
         and run with powershell. A wiki directory with md files will be created
     .NOTES
         # LICENSE #
