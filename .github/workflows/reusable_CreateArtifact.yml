@@ -8,7 +8,7 @@ on:
         required: true
         type: string
     outputs:
-      ARTIFACT_VERSION: 
+      ARTIFACT_VERSION:
         value: ${{ jobs.artifact.outputs.VERSION }}
 
 jobs:
@@ -64,6 +64,7 @@ jobs:
             "./ExtensionsSourceCode/neo42PackageConfigValidationRules.json"
             "./ExtensionsSourceCode/Setup.cfg"
           )
+          Copy-Item -Force -Destination "./PSAppDeployToolkit/neo42PackageConfig.json" -Path "./ExtensionsSourceCode/Samples/neo42PackageConfig_ExampleWithValuesFullfilled.json"
 
       - name: remove-unwanted
         shell: pwsh
