@@ -7,6 +7,101 @@
 			"description": "ConfigVersion is mandatory and must be a string with a Config Version number in the format of 4digits.2digits.2digits.variableDigit (e.g. 2023.01.01.1).",
 			"Pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}\\.[0-9]+$"
 		},
+		"ScriptAuthor":{
+			"type": "string",
+			"description": "ScriptAuthor is mandatory and corresponds to the author of the script.",
+			"minLength": 1,
+			"default": "neo42 GmbH"
+		},
+		"ScriptDate": {
+			"type": "string",
+			"description": "ScriptDate is the initial date of script creation in format dd/MM/yyyy.",
+			"pattern": "^\\d{2}/\\d{2}/\\d{4}$"
+		},
+		"InventoryID": {
+			"type": "string",
+			"description": "InventoryID is an interal identifier with 11 digits conisting of: 3 digits employee name abbreviation + 8 digits random hexadecimal number",
+			"minLength": 11,
+			"maxLength": 11
+		},
+		"Description": {
+			"type": "string",
+			"description": "Describes the package in a human readable format. This is optional."
+		},
+		"InstallMethod": {
+			"$ref": "#/$defs/InstallMethod"
+		},
+		"UninstallMethod": {
+			"$ref": "#/$defs/InstallMethod"
+		},
+		"ReinstallMode": {
+			"type": "string",
+			"description": "ReinstallMode is mandatory. Used to specify which mode of repair should be used. Refer to the documentation for more information.",
+			"default": "Reinstall",
+			"enum": [
+				"MSIRepair",
+				"Reinstall",
+				"Install"
+			]
+		},
+		"MSIInplaceUpgradeable": {
+			"type": "boolean",
+			"description": "MSIInplaceUpgradeable is optional and is only used for MSI packages. Set to true if MSI supports inplace upgrades."
+		},
+		"MSIDowngradeable": {
+			"type": "boolean",
+			"description": "MSIDowngradeable is optional and is only used for MSI packages. Set to true if MSI supports downgrades."
+		},
+		"SoftMigration": {
+			"type": "object",
+			"description": "SoftMigration is optional and contains custom conditions for soft migration.",
+			"properties": {
+				"File": {
+					"type": "object",
+					"description": "File based soft migration conditions. This is mandatory.",
+					"properties": {
+						"FullNameToCheck": {
+							"type": "string",
+							"description": "Points to the file to check for soft migration. If VersionToCheck is not set, the file must only exist."
+						},
+						"VersionToCheck": {
+							"type": "string",
+							"description": "Extension of FullNameToCheck.  If VersionToCheck is specified the file must exist and the version must match."
+						}
+					},
+					"additionalProperties": false,
+					"dependentRequired": {
+						"VersionToCheck": [
+							"FullNameToCheck"
+						]
+					}
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"File"
+			]
+		},
+		"TestedOn": {
+			"type": "string",
+			"description": "TestedOn is a mandatory comma separated list of operating systems and architectures the package was tested on.",
+			"default": "Win10 x86, Win10 x64, Win11 x64",
+			"minLength": 1
+		},
+		"Dependencies": {
+			"type": "string",
+			"description": "Informational mandatory field to list dependent applications, Windows features or services (if any). This is mandatory."
+		},
+		"LastChange": {
+			"type": "string",
+			"description": "LastChange is mandatory and must be a string with the date of the last change in format dd/MM/yyyy.",
+			"pattern": "^\\d{2}/\\d{2}/\\d{4}$"
+		},
+		"Build": {
+			"type": "string",
+			"description": "Build is mandatory and must be a string with a build number represented by only digits. Increase this number with every revision.",
+			"pattern": "^\\d+$"
+		},
 		"AppArch": {
 			"type": "string",
 			"description": "AppArch is mandatory and must be a string with a value of x86, x64 or *.",
@@ -16,34 +111,56 @@
 				"*"
 			]
 		},
-		"AppendInstParaToDefaultParameters": {
-			"type": "boolean",
-			"description": "AppendInstParaToDefaultParameters is mandatory and must be a boolean."
+		"AppVendor": {
+			"description": "AppVendor is mandatory and must be a string. It must not contain any of the following characters: \\ / : * ? \" < > |",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"AppName": {
+			"description": "AppName is mandatory and must be a string. It must not contain any of the following characters: \\ / : * ? \" < > |",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"AppVersion": {
+			"type": "string",
+			"description": "Real numeric version of the application. This is mandatory and must be a string.",
+			"minLength": 1,
+			"pattern": "^[\\d\\.]+$"
+		},
+		"AppRevision": {
+			"type": "string",
+			"description": "AppRevision is mandatory and must be a string with a revision number represented by only digits. Increase this number with every revision of the package.",
+			"minLength": 1,
+			"default": "0",
+			"pattern": "^\\d+$"
+		},
+		"AppLang": {
+			"type": "string",
+			"description": "AppLang is mandatory and must be a string with a value of a lang name. Most likely only DEU, ENU and MUI are used.",
+			"pattern": "^[A-Z]{3}$"
 		},
 		"ProductGUID": {
-			"type": "string",
-			"format": "uuid",
-			"description": "ProductGUID is mandatory and must be a string."
+			"$ref": "#/$defs/NeoGUID",
+			"description": "ProductGUID is a GUID in the format of {042...} and is mandatory. Used to group packages together. Must be unique for each group."
 		},
 		"RemovePackagesWithSameProductGUID": {
 			"type": "boolean",
-			"description": "RemovePackagesWithSameProductGUID is optional and must be a boolean."
+			"description": "RemovePackagesWithSameProductGUID is optional. When specified uninstalls all found application packages with same ProductGUID",
+			"default": false
 		},
 		"PackageGUID": {
-			"type": "string",
-			"format": "uuid",
-			"description": "PackageGUID is optional and must be a string."
+			"$ref": "#/$defs/NeoGUID",
+			"description": "PackageGUID is the GUID of the package in the format of {042...} and is mandatory. Must be unique for each package."
 		},
 		"DependentPackages": {
 			"type": "array",
-			"description": "DependentPackages is optional and must be an array PSCustomObjects.",
+			"description": "A list of pacakges this package depends on.",
 			"items": {
 				"type": "object",
 				"properties": {
 					"GUID": {
-						"type": "string",
-						"format": "uuid",
-						"description": "DependentPackages.GUID is optional and must be a string with a valid GUID."
+						"$ref": "#/$defs/NeoGUID",
+						"description": "Reference to a package GUID of a dependent package."
 					},
 					"DesiredState": {
 						"type": "string",
@@ -55,35 +172,79 @@
 					},
 					"OnConflict": {
 						"type": "string",
-						"description": "DependentPackages.OnConflict is mandatory and must be a string with a value of Continue or Stop.",
+						"description": "Decide what happens if the desired state is not present. If 'Fail' or 'Warn' is specified an ErrorMessage property can be set.",
 						"enum": [
 							"Fail",
 							"Uninstall",
 							"Warn",
 							"Continue"
 						]
-					},
-					"ErrorMessage": {
-						"type": "string",
-						"description": "DependentPackages.ErrorMessage is optional and must be a string."
 					}
 				},
-				"additionalProperties": false
+				"if" : {
+					"properties": {
+						"OnConflict": {
+							"enum": [
+								"Fail",
+								"Warn"
+							]
+						}
+					}
+				},
+				"then": {
+					"properties": {
+						"GUID": {},
+						"DesiredState": {},
+						"OnConflict": {},
+						"ErrorMessage": {
+							"type": "string",
+							"description": "DependentPackages.ErrorMessage is optional and must be a string."
+						}
+					},
+					"additionalProperties": false
+				},
+				"else": {
+					"properties": {
+						"GUID": {},
+						"DesiredState": {},
+						"OnConflict": {}
+					},
+					"additionalProperties": false
+				}
 			},
 			"required": [
+				"GUID",
 				"DesiredState",
 				"OnConflict"
 			]
 		},
 		"RegPackagesKey": {
 			"type": "string",
-			"description": "RegPackagesKey is mandatory and must be a string.",
+			"description": "Registry subkey where package information is stored. This is mandatory and must be a string.",
 			"minLength": 1
 		},
 		"UninstallDisplayName": {
-			"type": "string",
-			"description": "UninstallDisplayName is optional and must be a string.",
-			"minLength": 1
+			"description": "Displayname used in the uninstall registry key. This is mandatory and must be a string. For more information refer to the documentation.",
+			"default": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName)",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameCharsWithWildcard"
+		},
+		"AppRootFolder": {
+			"description": "Base name of the package cache folder on client system, storing persistent files for installed packages",
+			"minLength": 1,
+			"default": "neo42Pkgs",
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"App": {
+			"description": "Package cache folder on client system.",
+			"minLength": 1,
+			"default": "$($global:PackageConfig.AppRootFolder\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"UninstallOld": {
+			"type": "boolean",
+			"description": "Switch to instruct script to remove packages from former framework versions.",
+			"default": true
 		},
 		"Reboot": {
 			"type": "integer",
@@ -94,60 +255,158 @@
 				2
 			]
 		},
+		"UserPartOnInstallation": {
+			"type": "boolean",
+			"description": "Defines if the user part components should be executed on installation. This is optional and must be a boolean.",
+			"default": false
+		},
+		"UserPartOnUninstallation": {
+			"type": "boolean",
+			"description": "Defines if the user part components should be executed on installation. This is optional and must be a boolean.",
+			"default": false
+		},
 		"UserPartRevision": {
 			"type": "string",
 			"description": "UserPartRevision is mandatory and must be a string.",
 			"pattern": "^[0-9]{4},[0-9]{2},[0-9]{2},[0-9]{2}$"
 		},
-		"AppLang": {
+		"HidePackageUninstallButton": {
+			"type": "boolean",
+			"description": "Hide own uninstall button for this package in system control settings.",
+			"default": false
+		},
+		"HidePackageUninstallEntry": {
+			"type": "boolean",
+			"description": "Hide own uninstall entry for this package in system control settings.",
+			"default": false
+		},
+		"DisplayVersion": {
 			"type": "string",
-			"description": "AppLang is mandatory and must be a string with a value of a valid culture name.",
+			"description": "Optional property to define the display version of the package manually. If not specified, the DisplayVersion of the installed package is used.",
 			"minLength": 1
 		},
-		"AppName": {
+		"InstallerVersion": {
 			"type": "string",
-			"description": "AppName is mandatory and must be a string. It must not contain any of the following characters: \\ / : * ? \" < > |",
+			"description": "Optional property to define the installer version of the package manually. Not used by the framework but can be used for internal purposes.",
+			"minLength": 1
+		},
+		"UninstallKey": {
+			"description": "Name of the uninstall key in the registry. If this value is not set, the value will be determined by the framework.",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameCharsWithWildcard"
+		},
+		"UninstallKeyIsDisplayName": {
+			"type": "boolean",
+			"description": "If set to true, the UninstallKey will be determined by the DisplayName of the key.",
+			"default": false
+		},
+		"UninstallKeyContainsWildCards": {
+			"type": "boolean",
+			"description": "If set to true, wildcards will be evaluated.",
+			"default": false
+		},
+		"UninstallKeyContainsExpandVariables": {
+			"type": "boolean",
+			"description": "If set to true, variables will be expanded.",
+			"default": false
+		},
+		"DisplayNamesToExcludeFromAppSearches": {
+			"type": "array",
+			"description": "List of display names to exclude from app searches.",
+			"items": {
+				"$ref": "#/$defs/NoInvalidFileNameCharsWithWildcard"
+			}
+		},
+		"InstallLocation": {
+			"description": "Represents the installation location of the package. This is optional and is not used by the framework. It can be used for internal purposes.",
 			"minLength": 1,
 			"$ref": "#/$defs/NoInvalidFileNameChars"
 		},
-		"AppVendor": {
-			"type": "string",
-			"description": "AppVendor is mandatory and must be a string. It must not contain any of the following characters: \\ / : * ? \" < > |",
+		"InstLogFile": {
+			"description": "Mandatory path to the installation log file.",
+			"default": "$($global:PackageConfig.AppRootFolder)\\Install.$global:DeploymentTimestamp.log",
 			"minLength": 1,
 			"$ref": "#/$defs/NoInvalidFileNameChars"
 		},
-		"AppVersion": {
-			"type": "string",
-			"description": "AppVersion is optional and must be a string.",
+		"UninstLogFile": {
+			"description": "Mandatory path to the uninstallation log file.",
+			"default": "$($global:PackageConfig.AppRootFolder)\\Uninstall.$global:DeploymentTimestamp.log",
 			"minLength": 1,
 			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"InstFile": {
+			"description": "Mandatory name of the installation file. By default the file is expected in the package's Files folder.",
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"InstPara": {
+			"type": "string",
+			"description": "Optional string of parameters that will be passed to the installation file. Can include variables."
+		},
+		"AppendInstParaToDefaultParameters": {
+			"type": "boolean",
+			"description": "AppendInstParaToDefaultParameters is mandatory and must be a boolean."
+		},
+		"AcceptedInstallExitCodes": {
+			"description": "AcceptedInstallExitCodes must be a comma separated list of numbers.",
+			"$ref": "#/$defs/ExitCodeString"
+		},
+		"AcceptedInstallRebootCodes": {
+			"description": "AcceptedInstallRebootCodes must be a comma separated list of numbers.",
+			"$ref": "#/$defs/ExitCodeString"
+		},
+		"UninstFile": {
+			"description": "Optional name of the uninstallation file. If not specified the framework will use the default uninstallation method defined in the registry.",
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"UninstPara": {
+			"type": "string",
+			"description": "Optional string of parameters that will be passed to the uninstallation file. Can include variables."
+		},
+		"AppendUninstParaToDefaultParameters": {
+			"type": "boolean",
+			"description": "AppendUninstParaToDefaultParameters is mandatory and must be a boolean."
+		},
+		"AcceptedUninstallExitCodes": {
+			"description": "AcceptedUninstallExitCodes must be a comma separated list of numbers.",
+			"$ref": "#/$defs/ExitCodeString"
+		},
+		"AcceptedUninstallRebootCodes": {
+			"description": "AcceptedUninstallRebootCodes must be a comma separated list of numbers.",
+			"$ref": "#/$defs/ExitCodeString"
 		},
 		"AppKillProcesses": {
 			"type": "array",
-			"description": "AppKillProcesses is mandatory and must be an array.",
+			"description": "And optional list of applications that should not be running during execution.",
 			"items": {
 				"type": "object",
 				"properties": {
 					"Name": {
-						"type": "string",
-						"description": "AppKillProcesses.Name is mandatory in each item below AppKillProcesses and must be a string.",
-						"pattern": "^((?![\\*\\.]+((?:[^\\*]exe)|)$|^\\.exe).)*$",
-						"minLength": 1
+						"description": "Name of the running binary without extension.",
+						"$ref": "#/$defs/BinaryWithoutExtension"
 					},
 					"Description": {
 						"type": "string",
-						"description": "AppKillProcesses.Description is mandatory for each item below AppKillProcesses and must be a string. If empty, the name will be used."
+						"description": "Description used to for the process found in name property"
+					},
+					"IsWQL": {
+						"type": "boolean",
+						"description": "If set to true, the process will be searched using WMI and the Name property will be used as the WQL query."
 					}
 				},
 				"additionalProperties": false,
 				"required": [
-					"Name",
-					"Description"
+					"Name"
 				]
 			}
 		},
+		"BlockExecution": {
+			"type": "boolean",
+			"description": "Determines if applications specified in AppKillProcesses should be blocked from execution during execution.",
+			"default": false
+		},
 		"TestConditionsPreSetupSuccessCheck": {
 			"type": "object",
+			"description": "TestConditionsPreSetupSuccessCheck allows to evaluate conditions before the setup is executed.",
 			"properties": {
 				"Install": {
 					"$ref": "#/$defs/TestCondition"
@@ -162,50 +421,109 @@
 				"Uninstall"
 			]
 		},
-		"AppRootFolder": {
-			"type": "string",
-			"description": "AppRootFolder is optional and must be a string.",
-			"minLength": 1,
-			"$ref": "#/$defs/NoInvalidFileNameChars"
-		},
-		"App": {
-			"type": "string",
-			"description": "App is mandatory and must be a string.",
-			"minLength": 1,
-			"$ref": "#/$defs/NoInvalidFileNameChars"
-		},
-		"DisplayNamesToExcludeFromAppSearches": {
+		"CommonDesktopShortcutsToDelete": {
 			"type": "array",
-			"description": "DisplayNamesToExcludeFromAppSearches is mandatory and must be an array.",
+			"description": "List of common desktop shortcuts to delete.",
 			"items": {
-				"type": "string",
-				"description": "DisplayNamesToExcludeFromAppSearches.DirectValues is optional and must be a string.",
-				"$ref": "#/$defs/NoInvalidFileNameCharsWithWildcard"
+				"$ref": "#/$defs/NoInvalidFileNameChars"
 			}
 		},
-		"AppendUninstParaToDefaultParameters": {
-			"type": "boolean",
-			"description": "AppendUninstParaToDefaultParameters is mandatory and must be a boolean."
+		"CommonStartMenuShortcutsToCopyToCommonDesktop": {
+			"type": "array",
+			"description": "List of common start menu shortcuts to copy to common desktop.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"Source": {
+						"description": "Source of the shortcut to copy.",
+						"format": "anyURI"
+					},
+					"TargetName": {
+						"description": "Destination of the shortcut to copy.",
+						"$ref": "#/$defs/NoInvalidFileNameChars"
+					}
+				},
+				"additionalProperties": false,
+				"required": [
+					"Source"
+				]
+			}
 		},
-		"AcceptedInstallExitCodes": {
-			"description": "AcceptedInstallExitCodes must be a comma separated list of numbers.",
-			"$ref": "#/$defs/ExitCodeString"
+		"UninstallKeysToHide": {
+			"type": "array",
+			"description": "List of uninstall keys to hide.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"KeyName": {
+						"description": "Name of the uninstall key to hide.",
+						"$ref": "#/$defs/NoInvalidFileNameCharsWithWildcard"
+					},
+					"Is64Bit": {
+						"type": "boolean",
+						"description": "If set to true, the key is a 64-bit key."
+					},
+					"KeyNameIsDisplayName": {
+						"description": "If set to true, the KeyName is used to search the key by display name. This property can be expanded with variables."
+					},
+					"KeyNameContainsWildCards": {
+						"description": "If set to true, wildcards will be evaluated. This property can be expanded with variables."
+					},
+					"DisplayNamesToExcludeFromHiding": {
+						"type": "array",
+						"description": "List of display names to exclude from hiding.",
+						"items": {
+							"$ref": "#/$defs/NoInvalidFileNameChars"
+						}
+					}
+				},
+				"additionalProperties": false,
+				"required": [
+					"KeyName"
+				]
+			}
 		},
-		"AcceptedInstallRebootCodes": {
-			"description": "AcceptedInstallRebootCodes must be a comma separated list of numbers.",
-			"$ref": "#/$defs/ExitCodeString"
-		},
-		"AcceptedUninstallExitCodes": {
-			"description": "AcceptedUninstallExitCodes must be a comma separated list of numbers.",
-			"$ref": "#/$defs/ExitCodeString"
-		},
-		"AcceptedUninstallRebootCodes": {
-			"description": "AcceptedUninstallRebootCodes must be a comma separated list of numbers.",
-			"$ref": "#/$defs/ExitCodeString"
+		"PackageSpecificVariablesRaw": {
+			"type": "array",
+			"description": "List of package specific variables for internal use.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"Name": {
+						"description": "Name of the variable.",
+						"minLength": 1,
+						"$ref": "#/$defs/NoInvalidFileNameChars"
+					},
+					"Value": {
+						"description": "Value of the variable.",
+						"minLength": 1,
+						"type": "string"
+					},
+					"ExpandVariables": {
+						"type": "boolean",
+						"description": "If set to true, the value will be expanded."
+					}
+				},
+				"additionalProperties": false,
+				"required": [
+					"Name",
+					"Value"
+				]
+			}
 		}
 	},
 	"required": [
 		"ConfigVersion",
+		"ScriptAuthor",
+		"ScriptDate",
+		"InventoryID",
+		"InstallMethod",
+		"UninstallMethod",
+		"ReinstallMode",
+		"TestedOn",
+		"Dependencies",
+		"LastChange",
+		"Build",
 		"AppArch",
 		"AppendInstParaToDefaultParameters",
 		"ProductGUID",
@@ -231,11 +549,42 @@
 		"AcceptedUninstallExitCodes",
 		"AcceptedUninstallRebootCodes"
 	],
+	"dependendRequired": {
+		"AppendInstParaToDefaultParameters": [
+			"InstPara"
+		],
+		"AppendUninstParaToDefaultParameters": [
+			"UninstPara"
+		]
+	},
 	"$defs": {
+		"InstallMethod": {
+			"type": "string",
+			"description": "May define a well-known type of setup for which default installation routines will be used. Specify none if no default installation routines are available. Refer to the documentation for more information.",
+			"enum": [
+				"MSI",
+				"Inno Setup",
+				"Nullsoft",
+				"BitrockInstaller",
+				"AppX",
+				"none"
+			]
+		},
+		"BinaryWithoutExtension": {
+			"type": "string",
+			"pattern": "^((?![\\*\\.]+((?:[^\\*]exe)|)$|^\\.exe).)*$"
+		},
+		"NeoGUID": {
+			"type": "string",
+			"format": "uuid",
+			"pattern": "^{042"
+		},
 		"NoInvalidFileNameChars": {
+			"type": "string",
 			"pattern": "^[^\\\\/:*?\"<>|]*$|\\$\\(.*\\)"
 		},
 		"NoInvalidFileNameCharsWithWildcard": {
+			"type": "string",
 			"pattern": "^[^\\\\\/:?\"<>|]*$|\\$\\(.*\\)"
 		},
 		"ExitCodeString": {
@@ -248,24 +597,32 @@
 			"properties": {
 				"TotalSecondsToWaitFor": {
 					"type": "integer",
-					"description": "TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor is mandatory and must be an integer in the range of 1 and 3600.",
+					"description": "Timeout in seconds for the test conditions to be met. This is mandatory and must be an integer.",
+					"default": 30,
 					"minimum": 1,
 					"maximum": 3600
 				},
+				"ProcessOperator": {
+					"type": "string",
+					"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessOperator is mandatory and must be a string with a value of AND or OR.",
+					"enum": [
+						"AND",
+						"OR"
+					]
+				},
 				"ProcessesToWaitFor": {
 					"type": "array",
-					"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor is optional and must be an array.",
+					"description": "A list of processes that should (not) be running during execution.",
 					"items": {
 						"type": "object",
 						"properties": {
 							"Name": {
-								"type": "string",
-								"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.Name is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor and must be a string.",
-								"minLength": 1
+								"description": "Name of the running binary without extension.",
+								"$ref": "#/$defs/BinaryWithoutExtension"
 							},
 							"ShouldExist": {
 								"type": "boolean",
-								"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.ShouldExist is mandatory and must be boolean."
+								"description": "Switch to determine if the process should be running or not."
 							}
 						},
 						"additionalProperties": false,
@@ -275,14 +632,28 @@
 						]
 					}
 				},
+				"RegKeyOperator": {
+					"type": "string",
+					"description": "Determines if all or any of the RegKeysToWaitFor conditions must be met.",
+					"enum": [
+						"AND",
+						"OR"
+					],
+					"default": "AND"
+				},
 				"RegKeysToWaitFor": {
 					"type": "array",
-					"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor is mandatory and must be an array.",
+					"description": "List of registry keys that should (not) exist during execution, including optional value name and data.",
 					"items": {
 						"type": "object",
 						"properties": {
+							"KeyPath": {
+								"type": "string",
+								"description": "Path of the registry key to check. This is mandatory.",
+								"minLength": 1
+							},
 							"ValueName": {
-								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
+								"description": "Name of the registry value to check. If not set, the key itself is checked.",
 								"anyOf": [
 									{
 										"type": "string",
@@ -294,7 +665,7 @@
 								]
 							},
 							"ValueData": {
-								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
+								"description": "If set, the value of the registry key must match this value.",
 								"anyOf": [
 									{
 										"type": "string",
@@ -305,40 +676,22 @@
 									}
 								]
 							},
-							"KeyPath": {
-								"type": "string",
-								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.KeyPath is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
-								"minLength": 1
-							},
 							"ShouldExist": {
 								"type": "boolean",
-								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a boolean."
+								"description": "Switch to determine if the registry condition should match or not."
 							}
+						},
+						"dependendRequired": {
+							"ValueName": [
+								"ValueData"
+							]
 						},
 						"additionalProperties": false,
 						"required": [
-							"ValueName",
-							"ValueData",
 							"KeyPath",
 							"ShouldExist"
 						]
 					}
-				},
-				"RegKeyOperator": {
-					"type": "string",
-					"description": "TestConditionsPreSetupSuccessCheck.Install.RegKeyOperator is mandatory and must be a string with a value of AND or OR.",
-					"enum": [
-						"AND",
-						"OR"
-					]
-				},
-				"ProcessOperator": {
-					"type": "string",
-					"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessOperator is mandatory and must be a string with a value of AND or OR.",
-					"enum": [
-						"AND",
-						"OR"
-					]
 				}
 			},
 			"additionalProperties": false,
