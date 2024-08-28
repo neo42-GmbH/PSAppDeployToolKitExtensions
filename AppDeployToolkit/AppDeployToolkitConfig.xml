@@ -336,7 +336,7 @@
 		<NxtWelcomePrompt_ApplicationName>Application name</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Started by</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>You can choose to defer the {0} until the deferral expires:</NxtWelcomePrompt_ChooseDefer>
-		<NxtWelcomePrompt_RemainingDefferals>Remaining deferrals: {0}</NxtWelcomePrompt_RemainingDefferals>
+		<NxtWelcomePrompt_RemainingDeferals>Remaining deferrals: {0}</NxtWelcomePrompt_RemainingDeferals>
 		<NxtWelcomePrompt_DeferalExpired>Once the defferal is expired, you will no longer have the option to defer.</NxtWelcomePrompt_DeferalExpired>
 		<NxtWelcomePrompt_CloseWithoutSaving_Abort>If you do not close your applications the software {0} will be aborted.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
 		<NxtWelcomePrompt_CloseWithoutSaving_Continue>If you do not close your applications, they will be closed without saving, and the software {0} will be continued.</NxtWelcomePrompt_CloseWithoutSaving_Continue>
@@ -403,7 +403,7 @@
 		<NxtWelcomePrompt_ApplicationName>Applikationens navn</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Startet af</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>Du kan vælge at udskyde {0}, indtil udskydelsen udløber:</NxtWelcomePrompt_ChooseDefer>
-		<NxtWelcomePrompt_RemainingDefferals>Resterende udsættelser: {0}</NxtWelcomePrompt_RemainingDefferals>
+		<NxtWelcomePrompt_RemainingDeferals>Resterende udsættelser: {0}</NxtWelcomePrompt_RemainingDeferals>
 		<NxtWelcomePrompt_DeferalExpired>Når defferal er udløbet, har du ikke længere mulighed for at udskyde.</NxtWelcomePrompt_DeferalExpired>
 		<NxtWelcomePrompt_CloseWithoutSaving_Abort>Hvis du ikke lukker dine programmer, vil softwaren {0}blive afbrudt.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
 		<NxtWelcomePrompt_CloseWithoutSaving_Continue>Hvis du ikke lukker dine programmer, vil de blive lukket uden at blive gemt, og softwaren {0} vil fortsætte.</NxtWelcomePrompt_CloseWithoutSaving_Continue>
@@ -468,7 +468,7 @@
 		<NxtWelcomePrompt_ApplicationName>Nom de l'application</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Démarré par</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>Vous pouvez choisir de reporter le {0} jusqu'à l'expiration du report :</NxtWelcomePrompt_ChooseDefer>
-		<NxtWelcomePrompt_RemainingDefferals>Les reports restants : {0}</NxtWelcomePrompt_RemainingDefferals>
+		<NxtWelcomePrompt_RemainingDeferals>Les reports restants : {0}</NxtWelcomePrompt_RemainingDeferals>
 		<NxtWelcomePrompt_DeferalExpired>Une fois le délai expiré, vous n'aurez plus la possibilité d'ajourner.</NxtWelcomePrompt_DeferalExpired>
 		<NxtWelcomePrompt_CloseWithoutSaving_Abort>Si vous ne fermez pas vos applications, le logiciel {0} sera interrompu.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
 		<NxtWelcomePrompt_CloseWithoutSaving_Continue>Si vous ne fermez pas vos applications, elles seront fermées sans être sauvegardées, et le logiciel {0} sera poursuivi.</NxtWelcomePrompt_CloseWithoutSaving_Continue>
@@ -533,7 +533,7 @@
 		<NxtWelcomePrompt_ApplicationName>Applikation Name</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Gestartet von</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>Sie können Aufschieben auswählen, um die {0} bis zum Ablauf der Aufschiebung zu verzögern:</NxtWelcomePrompt_ChooseDefer>
-		<NxtWelcomePrompt_RemainingDefferals>Verbleibende Aufschiebungen: {0}</NxtWelcomePrompt_RemainingDefferals>
+		<NxtWelcomePrompt_RemainingDeferals>Verbleibende Aufschiebungen: {0}</NxtWelcomePrompt_RemainingDeferals>
 		<NxtWelcomePrompt_DeferalExpired>Sobald die Aufschiebung abgelaufen ist, können Sie nicht mehr aufschieben.</NxtWelcomePrompt_DeferalExpired>
 		<NxtWelcomePrompt_CloseWithoutSaving_Abort>Wenn Sie Ihre Anwendungen nicht schließen, wird die Software {0} abgebrochen.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
 		<NxtWelcomePrompt_CloseWithoutSaving_Continue>Wenn Sie Ihre Anwendungen nicht schließen, werden sie ohne Speichern geschlossen und die Software {0} wird fortgesetzt.</NxtWelcomePrompt_CloseWithoutSaving_Continue>
@@ -598,7 +598,7 @@
 		<NxtWelcomePrompt_ApplicationName>Nome dell'applicazione</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Iniziato da</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>È possibile scegliere di rinviare il {0} fino alla scadenza del rinvio:</NxtWelcomePrompt_ChooseDefer>
-		<NxtWelcomePrompt_RemainingDefferals>Rinvii rimanenti: {0}</NxtWelcomePrompt_RemainingDefferals>
+		<NxtWelcomePrompt_RemainingDeferals>Rinvii rimanenti: {0}</NxtWelcomePrompt_RemainingDeferals>
 		<NxtWelcomePrompt_DeferalExpired>Una volta scaduto il defferal, non sarà più possibile rinviare.</NxtWelcomePrompt_DeferalExpired>
 		<NxtWelcomePrompt_CloseWithoutSaving_Abort>Se non si chiudono le applicazioni, il software {0} verrà interrotto.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
 		<NxtWelcomePrompt_CloseWithoutSaving_Continue>Se non si chiudono le applicazioni, queste verranno chiuse senza essere salvate e il software {0} continuerà a funzionare.</NxtWelcomePrompt_CloseWithoutSaving_Continue>

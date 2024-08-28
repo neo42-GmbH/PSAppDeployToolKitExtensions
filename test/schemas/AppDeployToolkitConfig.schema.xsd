@@ -244,7 +244,7 @@
 			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationName" minOccurs="0" />
 			<xs:element type="xs:string" name="NxtWelcomePrompt_StartedBy" minOccurs="0" />
 			<xs:element type="xs:string" name="NxtWelcomePrompt_ChooseDefer" minOccurs="0" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_RemainingDefferals" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_RemainingDeferals" minOccurs="0" />
 			<xs:element type="xs:string" name="NxtWelcomePrompt_DeferalExpired" minOccurs="0" />
 			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Abort" minOccurs="0" />
 			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Continue" minOccurs="0" />

@@ -2258,7 +2258,7 @@ $control_TitleText.Text = $installTitle
 & $fillCloseApplicationList $syncHash.UiItems
 
 if ([Int32]::TryParse($DeferTimes, [ref]$null) -and $DeferTimes -ge 0) {
-	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
+	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDeferals -f $([Int32]$DeferTimes + 1)
 }
 if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 	$control_DeferDeadlineText.Text = $xmlUIMessages.DeferPrompt_Deadline + " " + $DeferDeadline
