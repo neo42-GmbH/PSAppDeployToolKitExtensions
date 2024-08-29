@@ -442,7 +442,7 @@ function Add-NxtProcessPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[System.IO.DirectoryInfo]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -453,33 +453,29 @@ function Add-NxtProcessPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
-			$false -eq [string]::IsNullOrEmpty($_)
+		[string[]]$pathEntries = @(((Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
+					$false -eq [string]::IsNullOrWhiteSpace($_)
+				}))
+		if ($false -eq $Path.Exists) {
+			Write-Log "The path [$($Path.FullName)] that will be added does not exist." -Severity 2 -Source ${cmdletName}
 		}
-		try {
-			$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
+		if ($pathEntries.Count -eq 0) {
+			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ($Path.FullName + ";")
+			Write-Log "Added [$($Path.FullName)] to the processes PATH variable." -Source ${cmdletName}
 		}
-		catch {
-			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			throw
-		}
-		if ($false -eq (Test-Path -Path $Path)) {
-			Write-Log "The path '$Path' that will be added does not exist." -Severity 2 -Source ${cmdletName}
-		}
-		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')) {
+		elseif ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.FullName.ToLower().TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
-				$pathEntries.Add("$Path") | Out-Null
-				Write-Log "Appended '$Path' to the processes PATH variable." -Source ${cmdletName}
+				$pathEntries = $pathEntries + @($Path.FullName)
+				Write-Log "Appending [$($Path.FullName)] to the processes PATH variable." -Source ${cmdletName}
 			}
 			else {
-				$pathEntries.Insert(0,"$Path") | Out-Null
-				Write-Log "Prepended '$Path' to the processes PATH variable." -Source ${cmdletName}
+				$pathEntries = @($Path.FullName) + $pathEntries
+				Write-Log "Prepending [$($Path.FullName)] to the processes PATH variable." -Source ${cmdletName}
 			}
-			[string]$pathString = ($pathEntries -join ";") + ";"
-			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
+			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value (($pathEntries -join ";") + ";")
 		}
 		else {
-			Write-Log "Path entry '$Path' already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
+			Write-Log "Path entry [$($Path.FullName)] already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -512,7 +508,7 @@ function Add-NxtSystemPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[System.IO.DirectoryInfo]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -523,33 +519,29 @@ function Add-NxtSystemPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
-			$false -eq [string]::IsNullOrEmpty($_)
+		[string[]]$pathEntries = @(((Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
+					$false -eq [string]::IsNullOrWhiteSpace($_)
+				}))
+		if ($false -eq $Path.Exists) {
+			Write-Log "The path [$($Path.FullName)] that will be added does not exist." -Severity 2 -Source ${cmdletName}
 		}
-		try {
-			$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
+		if ($pathEntries.Count -eq 0) {
+			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value ($Path.FullName + ";")
+			Write-Log "Added [$($Path.FullName)] to the systems PATH variable." -Source ${cmdletName}
 		}
-		catch {
-			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			throw
-		}
-		if ($false -eq (Test-Path -Path $Path)) {
-			Write-Log "The path '$Path' that will be added does not exist." -Severity 2 -Source ${cmdletName}
-		}
-		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')) {
+		elseif ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.FullName.ToLower().TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
-				$pathEntries.Add("$Path") | Out-Null
-				Write-Log "Appended '$Path' to the systems PATH variable." -Source ${cmdletName}
+				$pathEntries = $pathEntries + @($Path.FullName)
+				Write-Log "Appending [$($Path.FullName)] to the systems PATH variable." -Source ${cmdletName}
 			}
 			else {
-				$pathEntries.Insert(0,"$Path") | Out-Null
-				Write-Log "Prepended '$Path' to the systems PATH variable." -Source ${cmdletName}
+				$pathEntries = @($Path.FullName) + $pathEntries
+				Write-Log "Prepending [$($Path.FullName)] to the systems PATH variable." -Source ${cmdletName}
 			}
-			[string]$pathString = ($pathEntries -join ";") + ";"
-			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
+			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value (($pathEntries -join ";") + ";")
 		}
 		else {
-			Write-Log "Path entry '$Path' already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
+			Write-Log "Path entry [$($Path.FullName)] already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
 		}
 	}
 	End {
