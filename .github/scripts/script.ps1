@@ -4,7 +4,6 @@ Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.github
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/.vscode
 Remove-Item -Force -Recurse ./PSAppDeployToolkitExtensions/test
 Remove-Item -Force ./PSAppDeployToolkitExtensions/.gitignore
-Remove-Item ./PSAppDeployToolkitExtensions/README.MD
 Remove-Item ./PSAppDeployToolkitExtensions/Setup.ico
 Remove-Item ./PSAppDeployToolkitExtensions/neo42PackageConfig.json
 Copy-Item ./PSAppDeployToolkitExtensions/Samples/MSI/neo42PackageConfig.json ./PSAppDeployToolkitExtensions/neo42PackageConfig.json
