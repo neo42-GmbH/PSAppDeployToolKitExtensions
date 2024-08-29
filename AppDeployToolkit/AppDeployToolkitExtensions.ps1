@@ -802,16 +802,14 @@ function Close-NxtBlockExecutionWindow {
 		).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
 			Write-Log "The informational window of BlockExecution functionality will be closed now ..."
-			## Stop-NxtProcess does not yet support Id as Parameter
-			Stop-Process -Id $blockexecutionWindowId -Force
+			Stop-NxtProcess -Id $blockexecutionWindowId
 		}
 		[int[]]$blockexecutionWindowId = (Get-Process powershell | Where-Object {
 			$_.Path -like "*\BlockExecution\DeoployNxtApplication.exe"}
 		).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
 			Write-Log "The background process of BlockExecution functionality will be closed now ..."
-			## Stop-NxtProcess does not yet support Id as Parameter
-			Stop-Process -Id $blockexecutionWindowId -Force
+			Stop-NxtProcess -Id $blockexecutionWindowId
 		}
 	}
 	End {
@@ -9386,7 +9384,7 @@ function Show-NxtInstallationWelcome {
 						}
 						else {
 							Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${CmdletName}
-							Stop-Process -Name $runningProcess.ProcessName -Force -ErrorAction 'SilentlyContinue'
+							Stop-NxtProcess -Name $runningProcess.ProcessName
 						}
 					}
 					if ($processIdToIgnore -gt 0) {
@@ -9446,7 +9444,7 @@ function Show-NxtInstallationWelcome {
 				} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
 				$runningProcesses.ProcessName | ForEach-Object -Process {
-					Stop-Process -Name $_ -Force -ErrorAction 'SilentlyContinue'
+					Stop-NxtProcess -Name $_
 				}
 				Start-Sleep -Seconds 2
 			}
@@ -9472,7 +9470,7 @@ function Show-NxtInstallationWelcome {
 
 								if ($false -eq $notesNSDProcess.WaitForExit(10000)) {
 									Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${CmdletName}
-									Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
+									Stop-NxtProcess -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
 								}
 							}
 						}
@@ -9483,7 +9481,7 @@ function Show-NxtInstallationWelcome {
 						Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${CmdletName}
 
 						#  Force NSD process to stop in case the previous command was not successful
-						Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
+						Stop-NxtProcess -Name 'NSD'
 					}
 				}
 			}
@@ -9797,6 +9795,8 @@ function Stop-NxtProcess {
 		The name of the process to stop. This parameter is mandatory. It is interpreted as a WQL query if the IsWql parameter is set to $true.
 	.PARAMETER IsWql
 		Indicates if the 'Name' parameter should be interpreted as a WQL query. Default is $false.
+	.PARAMETER Id
+		The process ID to stop. This parameter is an alternative to the 'Name' parameter and cannot be used with IsWql
 	.EXAMPLE
 		Stop-NxtProcess -Name "Notepad"
 		This example stops all instances of Notepad.
@@ -9808,69 +9808,73 @@ function Stop-NxtProcess {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(DefaultParameterSetName = 'Name')]
 	Param (
-
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, ParameterSetName = 'Name')]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$Name,
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
+		[Parameter(Mandatory = $false, ParameterSetName = 'Name')]
 		[bool]
-		$IsWql
+		$IsWql,
+		[Parameter(Mandatory = $true, ParameterSetName = 'Id')]
+		[Alias('ProcessId')]
+		[int]
+		$Id
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Log -Message "Stopping process with '$Name'..." -Source ${cmdletName}
+		if ($PSCmdlet.ParameterSetName -eq 'Id') {
+			[string]$processQuery = "ProcessId = `"$Id`""
+		}
+		elseif ($PSCmdlet.ParameterSetName -eq 'Name' -and $false -eq $IsWql) {
+			[string]$processQuery = "Name = `"$(${Name} -replace "\.exe$", [string]::Empty).exe`""
+		}
+		else {
+			[string]$processQuery = "$Name"
+		}
+
+		Write-Log -Message "Stopping process that match query [$processQuery]" -Source ${cmdletName}
 		try {
-			if ( $false -eq $IsWql ) {
-				[string]$processNameWithoutExtension = $Name -replace "\.exe$", [string]::Empty
-				[System.Diagnostics.Process[]]$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue
-				[int]$processCountForLogging = $processes.Count
-				if ($processes.Count -ne 0) {
-					Stop-Process -Name $processNameWithoutExtension -Force
-				}
-				## Test after 10ms if the process(es) is/are still running, if it is still in the list it is ok if it has exited
-				Start-Sleep -Milliseconds 10
-				$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue | Where-Object {
-					$false -eq $_.HasExited
-				}
-				if ($processes.Count -ne 0) {
-					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				}
-				else {
-					Write-Log -Message "$processCountForLogging processes were successfully stopped." -Source ${cmdletName}
-				}
+			[ciminstance[]]$processes = Get-CimInstance -Class Win32_Process -Filter $processQuery -ErrorAction Stop
+		}
+		catch {
+			Write-Log -Message "Failed to retrieve process(es) with query [$processQuery]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			return
+		}
+		if ($processes.Count -gt 0) {
+			Write-Log -Message "Found [$($processes.Count)] process(es) matching query [$processQuery]." -Source ${cmdletName}
+		}
+		else {
+			Write-Log -Message "No process(es) found matching query [$processQuery]." -Source ${cmdletName}
+			return
+		}
+		$processes | ForEach-Object {
+			[ciminstance]$process = $_
+			try {
+				Invoke-CimMethod -InputObject $process -MethodName 'Terminate' -ErrorAction Stop | Out-Null
 			}
-			else {
-				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $Name -ErrorAction Stop | ForEach-Object {
-					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
-				}
-				[int]$processCountForLogging = $processes.Count
-				if ($processes.Count -ne 0) {
-					$processes | Stop-Process -Force
-				}
-				## Test after 1s if the process(es) are still running, if it is still in the list it is ok if it has exited.
-				Start-Sleep -Milliseconds 10
-				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $Name -ErrorAction Stop | ForEach-Object {
-					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
-				} | Where-Object {
-					$false -eq $_.HasExited
-				}
-				if ($processes.Count -ne 0) {
-					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			catch {
+				# Not found is not an error in this case as the process might have been stopped by another process
+				if ($_.Exception -is [Microsoft.Management.Infrastructure.CimException] -and $_.Exception.NativeErrorCode -eq "NotFound") {
+					return
 				}
 				else {
-					Write-Log -Message "$processCountForLogging processes were successfully stopped." -Source ${cmdletName}
+					Write-Log -Message "Failed to stop process with ID [$($process.ProcessId)]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				}
 			}
 		}
-		catch {
-			Write-Log -Message "Failed to stop process(es) with $Name. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		if ($null -ne (Get-Process -Id $processes.ProcessId -ErrorAction SilentlyContinue | Where-Object {
+					$false -eq $_.HasExited
+				})
+		) {
+			Write-Log -Message "Found running process(es) after sending stop signal."
+		}
+		else {
+			Write-Log -Message "[$($processes.Count)] process(es) were successfully stopped." -Source ${cmdletName}
 		}
 	}
 	End {
