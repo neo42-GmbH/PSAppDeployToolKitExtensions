@@ -11023,10 +11023,10 @@ function Test-NxtXmlNodeExists {
 		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
 		Tests for the existence of a node at the specified XPath in 'xmlstuff.xml'.
 	.EXAMPLE
-		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2")
+		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{name="NewNode2"}
 		Tests for a node with a specific attribute value in 'xmlstuff.xml'.
 	.EXAMPLE
-		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2","other=1232")
+		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{name="NewNode2"; "other=1232"}
 		Tests for a node with multiple attribute filters in 'xmlstuff.xml'.
 	.OUTPUTS
 		System.Boolean.
