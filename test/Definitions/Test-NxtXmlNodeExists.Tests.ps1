@@ -60,6 +60,22 @@ Describe "Test-NxtXmlNodeExists" {
             $result | Should -BeTrue
         }
     }
+    Context "When the node does exist but the attributes are spread out" {
+        It "Returns false" {
+            $xml = @"
+<Root>
+    <Child id="123" name="test">Some text</Child>
+    <Child id="456" name="test2">Some text</Child>
+</Root>
+"@
+            $filePath = "$PSScriptRoot\example5.xml"
+            $nodePath = "/Root/Child"
+            $filterAttributes = @{ "id" = "123"; "name" = "test2" }
+            Set-Content -Path $filePath -Value $xml
+            [bool]$result = Test-NxtXmlNodeExists -FilePath $filePath -NodePath $nodePath -FilterAttributes $filterAttributes
+            $result | Should -BeFalse
+        }
+    }
     Context "When the node does exist with multiple attributes and the filter is not complete" {
         It "Returns true" {
             $xml = @"
@@ -67,7 +83,7 @@ Describe "Test-NxtXmlNodeExists" {
     <Child id="324" name="test">Some text</Child>
 </Root>
 "@
-            $filePath = "$PSScriptRoot\example5.xml"
+            $filePath = "$PSScriptRoot\example6.xml"
             $nodePath = "/Root/Child"
             $filterAttributes = @{ "id" = "324" }
             Set-Content -Path $filePath -Value $xml

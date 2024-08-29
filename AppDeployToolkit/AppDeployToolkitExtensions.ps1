@@ -11032,10 +11032,10 @@ function Test-NxtXmlNodeExists {
 		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
 		Tests for the existence of a node at the specified XPath in 'xmlstuff.xml'.
 	.EXAMPLE
-		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2")
+		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{name="NewNode2"}
 		Tests for a node with a specific attribute value in 'xmlstuff.xml'.
 	.EXAMPLE
-		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2","other=1232")
+		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{name="NewNode2"; "other=1232"}
 		Tests for a node with multiple attribute filters in 'xmlstuff.xml'.
 	.OUTPUTS
 		System.Boolean.
@@ -11067,15 +11067,17 @@ function Test-NxtXmlNodeExists {
 		$xml.Load($FilePath)
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
-			foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-				if ($true -eq ([string]::IsNullOrEmpty(($nodes | Where-Object {
-					$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
-				} )))) {
-					Write-Output $false
-					return
-				}
+			if ( @($nodes | Where-Object {
+					[psobject]$filterNode = $_
+						$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
+								$filterNode.GetAttribute($_.Key) -eq $_.Value
+							})
+					}).Count -gt 0 ) {
+				Write-Output $true
 			}
-			Write-Output $true
+			else {
+				Write-Output $false
+			}
 		}
 		else {
 			if ($false -eq [string]::IsNullOrEmpty($nodes)) {
@@ -12390,12 +12392,12 @@ function Update-NxtXmlNode {
 			$xml.Load($FilePath)
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
-				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-					$nodes = $nodes | Where-Object {
-						$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
-					}
+				$nodes = $nodes | Where-Object {
+					[psobject]$filterNode = $_
+					$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
+							$filterNode.GetAttribute($_.Key) -eq $_.Value
+						})
 				}
-				Clear-Variable filterAttribute
 			}
 			## Ensure we only have one node
 			if ($nodes.count -gt 1) {
