@@ -12383,15 +12383,12 @@ function Update-NxtXmlNode {
 			$xml.Load($FilePath)
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
-				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-					$nodes = $nodes | Where-Object {
-						[psobject]$node = $_
-						$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
-								$node.GetAttribute($_.Key) -eq $_.Value
-							})
-					}
+				$nodes = $nodes | Where-Object {
+					[psobject]$node = $_
+					$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
+							$node.GetAttribute($_.Key) -eq $_.Value
+						})
 				}
-				Clear-Variable filterAttribute
 			}
 			## Ensure we only have one node
 			if ($nodes.count -gt 1) {
