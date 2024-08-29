@@ -1724,6 +1724,7 @@ if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 [Int32]$configInstallationPersistInterval = $xmlConfigUIOptions.InstallationPrompt_PersistInterval
 [bool]$configInstallationWelcomePromptDynamicRunningProcessEvaluation = [bool]::Parse($xmlConfigUIOptions.InstallationWelcomePrompt_DynamicRunningProcessEvaluation)
 [Int32]$configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval = $xmlConfigUIOptions.InstallationWelcomePrompt_DynamicRunningProcessEvaluationInterval
+[string]$configInstallationWelcomeLanguageOverride = $xmlConfigUIOptions.InstallationUI_LanguageOverride
 ## Reset switches
 [bool]$showCloseApps = $false
 [bool]$showDefer = $false
@@ -2092,36 +2093,41 @@ else {
 ## Get current sessions UI language
 ## Get primary UI language for current sessions user (even if running as system)
 if ($null -ne $activeUser) {
-	foreach ($registrySplat in @(
-		#  Read language defined by Group Policy
-		@{ Key = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings'; Value = 'PreferredUILanguages' },
-		@{ Key = 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
-		#  Read language for Win Vista & higher machines
-		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
-		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached'; Value = 'MachinePreferredUILanguages'; SID = $activeUser.SID },
-		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\International'; Value = 'LocaleName'; SID = $activeUser.SID }
-	)) {
-		[String[]]$hKULanguages = @(Get-RegistryKey @registrySplat)
-		if ($hKULanguages.Count -gt 0 -and ($false -eq [string]::IsNullOrWhiteSpace($hKULanguages[0]))) {
-			[Globalization.CultureInfo]$primaryWindowsUILanguage = [Globalization.CultureInfo]::GetCultureInfo($hKULanguages[0])
-			[string]$hKUPrimaryLanguageShort = $primaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
-			#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
-			if ($hKUPrimaryLanguageShort -eq 'ZH') {
-				if ($primaryWindowsUILanguage.EnglishName -match 'Simplified') {
-					[string]$hKUPrimaryLanguageShort = 'ZH-Hans'
+	if ($true -eq [string]::IsNullOrWhiteSpace($configInstallationWelcomeLanguageOverride)) {
+		foreach ($registrySplat in @(
+				#  Read language defined by Group Policy
+				@{ Key = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings'; Value = 'PreferredUILanguages' },
+				@{ Key = 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
+				#  Read language for Win Vista & higher machines
+				@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
+				@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached'; Value = 'MachinePreferredUILanguages'; SID = $activeUser.SID },
+				@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\International'; Value = 'LocaleName'; SID = $activeUser.SID }
+			)) {
+			[string[]]$hKULanguages = @(Get-RegistryKey @registrySplat)
+			if ($hKULanguages.Count -gt 0 -and ($false -eq [string]::IsNullOrWhiteSpace($hKULanguages[0]))) {
+				[Globalization.CultureInfo]$primaryWindowsUILanguage = [Globalization.CultureInfo]::GetCultureInfo($hKULanguages[0])
+				[string]$hKUPrimaryLanguageShort = $primaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
+				#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
+				if ($hKUPrimaryLanguageShort -eq 'ZH') {
+					if ($primaryWindowsUILanguage.EnglishName -match 'Simplified') {
+						$hKUPrimaryLanguageShort = 'ZH-Hans'
+					}
+					if ($primaryWindowsUILanguage.EnglishName -match 'Traditional') {
+						$hKUPrimaryLanguageShort = 'ZH-Hant'
+					}
 				}
-				if ($primaryWindowsUILanguage.EnglishName -match 'Traditional') {
-					[string]$hKUPrimaryLanguageShort = 'ZH-Hant'
+				#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
+				if ($hKUPrimaryLanguageShort -eq 'PT') {
+					if ($primaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
+						$hKUPrimaryLanguageShort = 'PT-BR'
+					}
 				}
+				break
 			}
-			#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
-			if ($hKUPrimaryLanguageShort -eq 'PT') {
-				if ($primaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
-					[string]$hKUPrimaryLanguageShort = 'PT-BR'
-				}
-			}
-			break
 		}
+	}
+	else {
+		[string]$hKUPrimaryLanguageShort = $configInstallationWelcomeLanguageOverride
 	}
 }
 if ($false -eq [string]::IsNullOrEmpty($hKUPrimaryLanguageShort)) {
