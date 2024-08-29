@@ -11059,7 +11059,7 @@ function Test-NxtXmlNodeExists {
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			if ( @($nodes | Where-Object {
-						$node = $_
+					[psobject]$node = $_
 						$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
 								$node.GetAttribute($_.Key) -eq $_.Value
 							})
@@ -12385,7 +12385,7 @@ function Update-NxtXmlNode {
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
 					$nodes = $nodes | Where-Object {
-						$node = $_
+						[psobject]$node = $_
 						$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
 								$node.GetAttribute($_.Key) -eq $_.Value
 							})
