@@ -9871,7 +9871,6 @@ function Stop-NxtProcess {
 		else {
 			Write-Log -Message "[$($processes.Count)] process(es) were successfully stopped." -Source ${cmdletName}
 		}
-
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
