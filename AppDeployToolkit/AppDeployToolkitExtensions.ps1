@@ -809,7 +809,6 @@ function Close-NxtBlockExecutionWindow {
 		).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
 			Write-Log "The background process of BlockExecution functionality will be closed now ..."
-			## Stop-NxtProcess does not yet support Id as Parameter
 			Stop-NxtProcess -Id $blockexecutionWindowId
 		}
 	}
