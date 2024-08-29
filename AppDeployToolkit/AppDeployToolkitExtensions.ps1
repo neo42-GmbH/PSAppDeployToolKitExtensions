@@ -6024,7 +6024,7 @@ function Install-NxtApplication {
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER InstallMethod
+	.PARAMETER UninstallMethod
 		Defines the type of the uninstaller used in this package. Used for filtering the correct uninstaller from the registry.
 		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
