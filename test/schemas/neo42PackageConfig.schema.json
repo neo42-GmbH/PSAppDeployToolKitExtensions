@@ -1,0 +1,354 @@
+{
+	"$schema": "https://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"ConfigVersion": {
+			"type": "string",
+			"description": "ConfigVersion is mandatory and must be a string with a Config Version number in the format of 4digits.2digits.2digits.variableDigit (e.g. 2023.01.01.1).",
+			"Pattern": "^\\d{4}\\.\\d{2}\\.\\d{2}\\.[0-9]+$"
+		},
+		"AppArch": {
+			"type": "string",
+			"description": "AppArch is mandatory and must be a string with a value of x86, x64 or *.",
+			"enum": [
+				"x86",
+				"x64",
+				"*"
+			]
+		},
+		"AppendInstParaToDefaultParameters": {
+			"type": "boolean",
+			"description": "AppendInstParaToDefaultParameters is mandatory and must be a boolean."
+		},
+		"ProductGUID": {
+			"type": "string",
+			"format": "uuid",
+			"description": "ProductGUID is mandatory and must be a string."
+		},
+		"RemovePackagesWithSameProductGUID": {
+			"type": "boolean",
+			"description": "RemovePackagesWithSameProductGUID is optional and must be a boolean."
+		},
+		"PackageGUID": {
+			"type": "string",
+			"format": "uuid",
+			"description": "PackageGUID is optional and must be a string."
+		},
+		"DependentPackages": {
+			"type": "array",
+			"description": "DependentPackages is optional and must be an array PSCustomObjects.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"GUID": {
+						"type": "string",
+						"format": "uuid",
+						"description": "DependentPackages.GUID is optional and must be a string with a valid GUID."
+					},
+					"DesiredState": {
+						"type": "string",
+						"description": "DependentPackages.DesiredState is mandatory and must be a string with a value of Present or Absent.",
+						"enum": [
+							"Present",
+							"Absent"
+						]
+					},
+					"OnConflict": {
+						"type": "string",
+						"description": "DependentPackages.OnConflict is mandatory and must be a string with a value of Continue or Stop.",
+						"enum": [
+							"Fail",
+							"Uninstall",
+							"Warn",
+							"Continue"
+						]
+					},
+					"ErrorMessage": {
+						"type": "string",
+						"description": "DependentPackages.ErrorMessage is optional and must be a string."
+					}
+				},
+				"additionalProperties": false
+			},
+			"required": [
+				"DesiredState",
+				"OnConflict"
+			]
+		},
+		"RegPackagesKey": {
+			"type": "string",
+			"description": "RegPackagesKey is mandatory and must be a string.",
+			"minLength": 1
+		},
+		"UninstallDisplayName": {
+			"type": "string",
+			"description": "UninstallDisplayName is optional and must be a string.",
+			"minLength": 1
+		},
+		"Reboot": {
+			"type": "integer",
+			"description": "Reboot is mandatory and must be an integer of 0, 1 or 2.",
+			"enum": [
+				0,
+				1,
+				2
+			]
+		},
+		"UserPartRevision": {
+			"type": "string",
+			"description": "UserPartRevision is mandatory and must be a string.",
+			"pattern": "^[0-9]{4},[0-9]{2},[0-9]{2},[0-9]{2}$"
+		},
+		"AppLang": {
+			"type": "string",
+			"description": "AppLang is mandatory and must be a string with a value of a valid culture name.",
+			"minLength": 1
+		},
+		"AppName": {
+			"type": "string",
+			"description": "AppName is mandatory and must be a string. It must not contain any of the following characters: \\ / : * ? \" < > |",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"AppVendor": {
+			"type": "string",
+			"description": "AppVendor is mandatory and must be a string. It must not contain any of the following characters: \\ / : * ? \" < > |",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"AppVersion": {
+			"type": "string",
+			"description": "AppVersion is optional and must be a string.",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"AppKillProcesses": {
+			"type": "array",
+			"description": "AppKillProcesses is mandatory and must be an array.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"Name": {
+						"type": "string",
+						"description": "AppKillProcesses.Name is mandatory in each item below AppKillProcesses and must be a string.",
+						"pattern": "^((?![\\*\\.]+((?:[^\\*]exe)|)$|^\\.exe).)*$",
+						"minLength": 1
+					},
+					"Description": {
+						"type": "string",
+						"description": "AppKillProcesses.Description is mandatory for each item below AppKillProcesses and must be a string. If empty, the name will be used."
+					}
+				},
+				"additionalProperties": false,
+				"required": [
+					"Name",
+					"Description"
+				]
+			}
+		},
+		"TestConditionsPreSetupSuccessCheck": {
+			"type": "object",
+			"properties": {
+				"Install": {
+					"$ref": "#/$defs/TestCondition"
+				},
+				"Uninstall": {
+					"$ref": "#/$defs/TestCondition"
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"Install",
+				"Uninstall"
+			]
+		},
+		"AppRootFolder": {
+			"type": "string",
+			"description": "AppRootFolder is optional and must be a string.",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"App": {
+			"type": "string",
+			"description": "App is mandatory and must be a string.",
+			"minLength": 1,
+			"$ref": "#/$defs/NoInvalidFileNameChars"
+		},
+		"DisplayNamesToExcludeFromAppSearches": {
+			"type": "array",
+			"description": "DisplayNamesToExcludeFromAppSearches is mandatory and must be an array.",
+			"items": {
+				"type": "string",
+				"description": "DisplayNamesToExcludeFromAppSearches.DirectValues is optional and must be a string.",
+				"$ref": "#/$defs/NoInvalidFileNameCharsWithWildcard"
+			}
+		},
+		"AppendUninstParaToDefaultParameters": {
+			"type": "boolean",
+			"description": "AppendUninstParaToDefaultParameters is mandatory and must be a boolean."
+		},
+		"AcceptedInstallExitCodes": {
+			"description": "AcceptedInstallExitCodes must be a comma separated list of numbers.",
+			"$ref": "#/$defs/ExitCodeString"
+		},
+		"AcceptedInstallRebootCodes": {
+			"description": "AcceptedInstallRebootCodes must be a comma separated list of numbers.",
+			"$ref": "#/$defs/ExitCodeString"
+		},
+		"AcceptedUninstallExitCodes": {
+			"description": "AcceptedUninstallExitCodes must be a comma separated list of numbers.",
+			"$ref": "#/$defs/ExitCodeString"
+		},
+		"AcceptedUninstallRebootCodes": {
+			"description": "AcceptedUninstallRebootCodes must be a comma separated list of numbers.",
+			"$ref": "#/$defs/ExitCodeString"
+		}
+	},
+	"required": [
+		"ConfigVersion",
+		"AppArch",
+		"AppendInstParaToDefaultParameters",
+		"ProductGUID",
+		"RemovePackagesWithSameProductGUID",
+		"PackageGUID",
+		"DependentPackages",
+		"RegPackagesKey",
+		"UninstallDisplayName",
+		"Reboot",
+		"UserPartRevision",
+		"AppLang",
+		"AppName",
+		"AppVendor",
+		"AppVersion",
+		"AppKillProcesses",
+		"TestConditionsPreSetupSuccessCheck",
+		"AppRootFolder",
+		"App",
+		"DisplayNamesToExcludeFromAppSearches",
+		"AppendUninstParaToDefaultParameters",
+		"AcceptedInstallExitCodes",
+		"AcceptedInstallRebootCodes",
+		"AcceptedUninstallExitCodes",
+		"AcceptedUninstallRebootCodes"
+	],
+	"$defs": {
+		"NoInvalidFileNameChars": {
+			"pattern": "^[^\\\\/:*?\"<>|]*$|\\$\\(.*\\)"
+		},
+		"NoInvalidFileNameCharsWithWildcard": {
+			"pattern": "^[^\\\\\/:?\"<>|]*$|\\$\\(.*\\)"
+		},
+		"ExitCodeString": {
+			"type": "string",
+			"pattern": "^(\\*|-?\\d+(,-?\\d+)*)$|^$"
+		},
+		"TestCondition": {
+			"type": "object",
+			"description": "TestConditionsPreSetupSuccessCheck is mandatory and must be a PSCustomObject.",
+			"properties": {
+				"TotalSecondsToWaitFor": {
+					"type": "integer",
+					"description": "TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor is mandatory and must be an integer in the range of 1 and 3600.",
+					"minimum": 1,
+					"maximum": 3600
+				},
+				"ProcessesToWaitFor": {
+					"type": "array",
+					"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor is optional and must be an array.",
+					"items": {
+						"type": "object",
+						"properties": {
+							"Name": {
+								"type": "string",
+								"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.Name is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor and must be a string.",
+								"minLength": 1
+							},
+							"ShouldExist": {
+								"type": "boolean",
+								"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessesToWaitFor.ShouldExist is mandatory and must be boolean."
+							}
+						},
+						"additionalProperties": false,
+						"required": [
+							"Name",
+							"ShouldExist"
+						]
+					}
+				},
+				"RegKeysToWaitFor": {
+					"type": "array",
+					"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor is mandatory and must be an array.",
+					"items": {
+						"type": "object",
+						"properties": {
+							"ValueName": {
+								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueName is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
+								"anyOf": [
+									{
+										"type": "string",
+										"minLength": 1
+									},
+									{
+										"type": "null"
+									}
+								]
+							},
+							"ValueData": {
+								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ValueData is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
+								"anyOf": [
+									{
+										"type": "string",
+										"minLength": 1
+									},
+									{
+										"type": "null"
+									}
+								]
+							},
+							"KeyPath": {
+								"type": "string",
+								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.KeyPath is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a string.",
+								"minLength": 1
+							},
+							"ShouldExist": {
+								"type": "boolean",
+								"description": "TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor.ShouldExist is mandatory in each item below TestConditionsPreSetupSuccessCheck.Install.RegkeysToWaitFor and must be a boolean."
+							}
+						},
+						"additionalProperties": false,
+						"required": [
+							"ValueName",
+							"ValueData",
+							"KeyPath",
+							"ShouldExist"
+						]
+					}
+				},
+				"RegKeyOperator": {
+					"type": "string",
+					"description": "TestConditionsPreSetupSuccessCheck.Install.RegKeyOperator is mandatory and must be a string with a value of AND or OR.",
+					"enum": [
+						"AND",
+						"OR"
+					]
+				},
+				"ProcessOperator": {
+					"type": "string",
+					"description": "TestConditionsPreSetupSuccessCheck.Install.ProcessOperator is mandatory and must be a string with a value of AND or OR.",
+					"enum": [
+						"AND",
+						"OR"
+					]
+				}
+			},
+			"additionalProperties": false,
+			"required": [
+				"TotalSecondsToWaitFor",
+				"ProcessesToWaitFor",
+				"RegKeysToWaitFor",
+				"RegKeyOperator",
+				"ProcessOperator"
+			]
+		}
+	}
+}

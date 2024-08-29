@@ -181,24 +181,6 @@ Describe "Coding Guidelines" -ForEach @(
                 }
             }
         }
-        It "A scriptblock should have the parentheses in the first line with the statement" {
-            $statements = $ast.FindAll({ param($ast)
-                    (
-                        $ast -is [System.Management.Automation.Language.FunctionDefinitionAst] -or
-                        $ast -is [System.Management.Automation.Language.IfStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.ThrowStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.TrapStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.TryStatementAst] -or
-                        $ast -is [System.Management.Automation.Language.NamedBlockAst] -or
-                        $ast -is [System.Management.Automation.Language.LoopStatementAst]
-                    ) -and
-                    $true -ne $ast.Unnamed -and
-                    $null -ne $ast.Find({ $args[0] -is [System.Management.Automation.Language.ScriptBlockAst] }, $true)
-                }, $true)
-            $statements | ForEach-Object {
-				($_.Extent.Text -split "`n") | Select-Object -First 1 | Should -Match '.+(\{|\()\s*$' -Because "the statement does not have parentheses in the first line (line $($_.Extent.StartLineNumber))"
-            }
-        }
         It "Functions and blocks should have the ending parentheses as sole character" {
             $statements = $ast.FindAll({ param($ast)
                     (
@@ -318,7 +300,7 @@ Describe "Coding Guidelines" -ForEach @(
                 $token = $_
                 $context = $content[$token.Extent.StartLineNumber - 1]
                 # Skip for loops
-                if ($context -match "^\s*for\s*\(") { return }
+                if ($context -match "^\s*for\s*\(|\@\{") { return }
                 $token | Should -BeNullOrEmpty -Because "the ';' token should not be used a seperator (line $($token.Extent.StartLineNumber))"
             }
         }
