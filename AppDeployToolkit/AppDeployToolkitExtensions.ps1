@@ -8743,7 +8743,7 @@ function Set-NxtSetupCfg {
 				}) ) {
 					if ($true -eq [string]::IsNullOrEmpty($global:SetupCfg.$xmlSection.$xmlSectionSubValue)) {
 						if ($null -eq $global:SetupCfg.$xmlSection) {
-							[hashtable]$global:SetupCfg.$xmlSection = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
+							$global:SetupCfg.$xmlSection = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 						}
 						if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
 							$global:SetupCfg.$xmlSection.add("$xmlSectionSubValue", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
