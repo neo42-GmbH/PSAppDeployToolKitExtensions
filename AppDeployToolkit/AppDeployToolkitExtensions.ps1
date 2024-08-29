@@ -12385,7 +12385,10 @@ function Update-NxtXmlNode {
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
 					$nodes = $nodes | Where-Object {
-						$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
+						$node = $_
+						$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
+								$node.GetAttribute($_.Key) -eq $_.Value
+							})
 					}
 				}
 				Clear-Variable filterAttribute
