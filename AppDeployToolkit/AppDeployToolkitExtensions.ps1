@@ -7593,6 +7593,10 @@ function Remove-NxtProcessPathVariable {
 				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\')
 			}))
 		try {
+			if ($pathEntries.Count -eq 0) {
+				Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ""
+				Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable. Note: PATH environment variable is now empty." -Severity 2 -Source ${cmdletName}
+			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
 			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
@@ -7640,6 +7644,10 @@ function Remove-NxtSystemPathVariable {
 				$_.TrimEnd('\') -ine $Path.TrimEnd('\')
 			}))
 		try {
+			if ($pathEntries.Count -eq 0) {
+				Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ""
+				Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable. Note: PATH environment variable is now empty." -Severity 2 -Source ${cmdletName}
+			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
 			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
