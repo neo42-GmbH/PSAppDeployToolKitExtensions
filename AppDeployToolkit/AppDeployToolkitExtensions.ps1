@@ -474,7 +474,7 @@ function Add-NxtProcessPathVariable {
 			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ($dirInfo.FullName + ";")
 			Write-Log "Added [$($Path.FullName)] to the processes PATH variable." -Source ${cmdletName}
 		}
-		elseif ($pathEntries.toLower().TrimEnd('\') -notcontains $dirInfo.FullName.ToLower().TrimEnd('\')) {
+		elseif ($pathEntries.TrimEnd('\') -inotcontains $dirInfo.FullName.TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
 				$pathEntries = $pathEntries + @($dirInfo.FullName)
 				Write-Log "Appending [$($dirInfo.FullName)] to the processes PATH variable." -Source ${cmdletName}
@@ -551,7 +551,7 @@ function Add-NxtSystemPathVariable {
 			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value ($dirInfo.FullName + ";")
 			Write-Log "Added [$($dirInfo.FullName)] to the systems PATH variable." -Source ${cmdletName}
 		}
-		elseif ($pathEntries.toLower().TrimEnd('\') -notcontains $dirInfo.FullName.ToLower().TrimEnd('\')) {
+		elseif ($pathEntries.TrimEnd('\') -inotcontains $dirInfo.FullName.TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
 				$pathEntries = $pathEntries + @($dirInfo.FullName)
 				Write-Log "Appending [$($dirInfo.FullName)] to the systems PATH variable." -Source ${cmdletName}
