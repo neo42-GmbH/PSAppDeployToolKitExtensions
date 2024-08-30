@@ -8614,6 +8614,7 @@ function Set-NxtProcessEnvironmentVariable {
 		[string]
 		$Key,
 		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
 		[string]
 		$Value
 	)
@@ -8808,6 +8809,7 @@ function Set-NxtSystemEnvironmentVariable {
 		[string]
 		$Key,
 		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
 		[string]
 		$Value
 	)
