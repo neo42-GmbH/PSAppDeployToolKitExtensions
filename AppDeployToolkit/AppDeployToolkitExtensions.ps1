@@ -472,7 +472,7 @@ function Add-NxtProcessPathVariable {
 		}
 		if ($pathEntries.Count -eq 0) {
 			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ($dirInfo.FullName + ";")
-			Write-Log "Added [$($Path.FullName)] to the processes PATH variable." -Source ${cmdletName}
+			Write-Log "Added [$($Path.FullName)] to to an empty processes PATH variable." -Serverity 2 -Source ${cmdletName}
 		}
 		elseif ($pathEntries.TrimEnd('\') -inotcontains $dirInfo.FullName.TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
@@ -549,7 +549,7 @@ function Add-NxtSystemPathVariable {
 		}
 		if ($pathEntries.Count -eq 0) {
 			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value ($dirInfo.FullName + ";")
-			Write-Log "Added [$($dirInfo.FullName)] to the systems PATH variable." -Source ${cmdletName}
+			Write-Log "Added [$($dirInfo.FullName)] to an empty systems PATH variable." -Severity 2 -Source ${cmdletName}
 		}
 		elseif ($pathEntries.TrimEnd('\') -inotcontains $dirInfo.FullName.TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
