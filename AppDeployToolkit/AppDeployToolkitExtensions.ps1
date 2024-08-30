@@ -7579,7 +7579,7 @@ function Remove-NxtProcessPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path
 	)
 	Begin {
@@ -7587,11 +7587,11 @@ function Remove-NxtProcessPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') |
+		[string[]]$pathEntries = @(((Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') |
 			Where-Object {
 				$false -eq [string]::IsNullOrEmpty($_) -and
 				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\')
-			}
+			}))
 		try {
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
@@ -7626,7 +7626,7 @@ function Remove-NxtSystemPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path
 	)
 	Begin {
@@ -7634,11 +7634,11 @@ function Remove-NxtSystemPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') |
+		[string[]]$pathEntries = @(((Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') |
 			Where-Object {
 				$false -eq [string]::IsNullOrEmpty($_) -and
-				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\')
-			}
+				$_.TrimEnd('\') -ine $Path.TrimEnd('\')
+			}))
 		try {
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
