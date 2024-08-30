@@ -9965,6 +9965,8 @@ function Switch-NxtMSIReinstallMode {
 		The expected version of the installed MSI application. Defaults to the 'DisplayVersion' from the PackageConfig object.
 	.PARAMETER InstallMethod
 		Type of installer used for the package, applicable to MSI installers. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallMethod
+		Method used to uninstall the application. Used to filter the correct application form the registry. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ReinstallMode
 		Defines how a reinstallation should be performed. Defaults to the corresponding value from the PackageConfig object. Especially for msi setups this might be switched after display version check inside of this function
 	.PARAMETER MSIInplaceUpgradeable
@@ -10004,6 +10006,9 @@ function Switch-NxtMSIReinstallMode {
 		$InstallMethod = $global:PackageConfig.InstallMethod,
 		[Parameter(Mandatory = $false)]
 		[string]
+		$UninstallMethod = $global:PackageConfig.UninstallMethod,
+		[Parameter(Mandatory = $false)]
+		[string]
 		$ReinstallMode = $global:PackageConfig.ReinstallMode,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -10025,7 +10030,7 @@ function Switch-NxtMSIReinstallMode {
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check ReinstallMode for an expected msi display version!. Returning [$ReinstallMode]." -Severity 2 -Source ${cmdletName}
 			}
 			else {
-				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $InstallMethod
+				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $UninstallMethod
 				if ($false -eq $displayVersionResult.UninstallKeyExists) {
 					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
 					throw "No repair function executable under current conditions!"
