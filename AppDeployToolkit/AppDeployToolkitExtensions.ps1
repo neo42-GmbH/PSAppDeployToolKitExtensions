@@ -425,7 +425,7 @@ function Add-NxtProcessPathVariable {
 	.DESCRIPTION
 		Adds a path to the processes PATH environment variable. If the path already exists, it will not be added again.
 		Empty values will be removed.
-	.PARAMETER AddPath
+	.PARAMETER Path
 		Path to be added to the processes PATH environment variable.
 		Has to be a valid path. The path value will automatically be expanded.
 	.PARAMETER AddToBeginning
@@ -442,7 +442,7 @@ function Add-NxtProcessPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[System.IO.DirectoryInfo]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -456,26 +456,37 @@ function Add-NxtProcessPathVariable {
 		[string[]]$pathEntries = @(((Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
 					$false -eq [string]::IsNullOrWhiteSpace($_)
 				}))
-		if ($false -eq $Path.Exists) {
-			Write-Log "The path [$($Path.FullName)] that will be added does not exist." -Severity 2 -Source ${cmdletName}
+		if ($false -eq [System.IO.Path]::IsPathRooted($Path)) {
+			Write-Log -Message "The path [$($Path)] that was supposed be added is not rooted." -Severity 3 -Source ${cmdletName}
+			throw "The path [$($Path)] that was supposed be added is not rooted."
+		}
+		try {
+			[System.IO.DirectoryInfo]$dirInfo = [System.IO.DirectoryInfo]::new($Path)
+		}
+		catch {
+			Write-Log -Message "The path [$($Path)] that was supposed be added is not a valid path." -Severity 3 -Source ${cmdletName}
+			throw "The path [$($Path)] that was supposed be added is not a valid path."
+		}
+		if ($false -eq $dirInfo.Exists) {
+			Write-Log "The path [$($dirInfo.FullName)] that will be added does not exist." -Severity 2 -Source ${cmdletName}
 		}
 		if ($pathEntries.Count -eq 0) {
-			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ($Path.FullName + ";")
+			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ($dirInfo.FullName + ";")
 			Write-Log "Added [$($Path.FullName)] to the processes PATH variable." -Source ${cmdletName}
 		}
-		elseif ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.FullName.ToLower().TrimEnd('\')) {
+		elseif ($pathEntries.toLower().TrimEnd('\') -notcontains $dirInfo.FullName.ToLower().TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
-				$pathEntries = $pathEntries + @($Path.FullName)
-				Write-Log "Appending [$($Path.FullName)] to the processes PATH variable." -Source ${cmdletName}
+				$pathEntries = $pathEntries + @($dirInfo.FullName)
+				Write-Log "Appending [$($dirInfo.FullName)] to the processes PATH variable." -Source ${cmdletName}
 			}
 			else {
-				$pathEntries = @($Path.FullName) + $pathEntries
-				Write-Log "Prepending [$($Path.FullName)] to the processes PATH variable." -Source ${cmdletName}
+				$pathEntries = @($dirInfo.FullName) + $pathEntries
+				Write-Log "Prepending [$($dirInfo.FullName)] to the processes PATH variable." -Source ${cmdletName}
 			}
 			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value (($pathEntries -join ";") + ";")
 		}
 		else {
-			Write-Log "Path entry [$($Path.FullName)] already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
+			Write-Log "Path entry [$($dirInfo.FullName)] already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -491,7 +502,7 @@ function Add-NxtSystemPathVariable {
 	.DESCRIPTION
 		Adds a path to the systems PATH environment variable. If the path already exists, it will not be added again.
 		Empty values will be removed.
-	.PARAMETER AddPath
+	.PARAMETER Path
 		Path to be added to the systems PATH environment variable.
 		Has to be a valid path. The path value will automatically be expanded.
 	.PARAMETER AddToBeginning
@@ -508,7 +519,7 @@ function Add-NxtSystemPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[System.IO.DirectoryInfo]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -522,26 +533,37 @@ function Add-NxtSystemPathVariable {
 		[string[]]$pathEntries = @(((Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
 					$false -eq [string]::IsNullOrWhiteSpace($_)
 				}))
-		if ($false -eq $Path.Exists) {
-			Write-Log "The path [$($Path.FullName)] that will be added does not exist." -Severity 2 -Source ${cmdletName}
+		if ($false -eq [System.IO.Path]::IsPathRooted($Path)) {
+			Write-Log -Message "The path [$($Path)] that was supposed be added is not rooted." -Severity 3 -Source ${cmdletName}
+			throw
+		}
+		try {
+			[System.IO.DirectoryInfo]$dirInfo = [System.IO.DirectoryInfo]::new($Path)
+		}
+		catch {
+			Write-Log -Message "The path [$($Path)] that was supposed be added is not a valid path." -Severity 3 -Source ${cmdletName}
+			throw
+		}
+		if ($false -eq $dirInfo.Exists) {
+			Write-Log "The path [$($dirInfo.FullName)] that will be added does not exist." -Severity 2 -Source ${cmdletName}
 		}
 		if ($pathEntries.Count -eq 0) {
-			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value ($Path.FullName + ";")
-			Write-Log "Added [$($Path.FullName)] to the systems PATH variable." -Source ${cmdletName}
+			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value ($dirInfo.FullName + ";")
+			Write-Log "Added [$($dirInfo.FullName)] to the systems PATH variable." -Source ${cmdletName}
 		}
-		elseif ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.FullName.ToLower().TrimEnd('\')) {
+		elseif ($pathEntries.toLower().TrimEnd('\') -notcontains $dirInfo.FullName.ToLower().TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
-				$pathEntries = $pathEntries + @($Path.FullName)
-				Write-Log "Appending [$($Path.FullName)] to the systems PATH variable." -Source ${cmdletName}
+				$pathEntries = $pathEntries + @($dirInfo.FullName)
+				Write-Log "Appending [$($dirInfo.FullName)] to the systems PATH variable." -Source ${cmdletName}
 			}
 			else {
-				$pathEntries = @($Path.FullName) + $pathEntries
-				Write-Log "Prepending [$($Path.FullName)] to the systems PATH variable." -Source ${cmdletName}
+				$pathEntries = @($dirInfo.FullName) + $pathEntries
+				Write-Log "Prepending [$($dirInfo.FullName)] to the systems PATH variable." -Source ${cmdletName}
 			}
 			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value (($pathEntries -join ";") + ";")
 		}
 		else {
-			Write-Log "Path entry [$($Path.FullName)] already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
+			Write-Log "Path entry [$($dirInfo.FullName)] already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
 		}
 	}
 	End {
