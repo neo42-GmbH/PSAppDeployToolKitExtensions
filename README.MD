@@ -4,12 +4,12 @@ This repository contains all extensions and changes to the [PSAppDeploymentToolk
 # Build instructions
 In order to create a functional build of the toolkit with our extensions please follow the instructions below:
 
-* Get a version 3.x release copy of the [PSAppDeploymentToolkit](#links).
-    - ```Recommended``` Remove the Deploy-Application* files at the root of "\Toolkit"
-* Get the contents of this repository.
-    - ```Recommended``` Remove all references to Git
-    - ```Recommended``` Remove these folders: Samples, Tools, test
-* Copy the remaining content of this repository and paste it into the "\Toolkit" folder of the PSAppDeploymentToolkit 
+* Get a release copy of the [PSAppDeploymentToolkit](#links).
+* Clone or download the contents of this repository
+* Create a new folder
+    * Copy the Toolkit/AppDeployToolkit into it
+    * Copy the contents of this repository and overwrite existing
+        - It is recommended to remove all dot files before copying the contents
 
 # Requirements
 * PowerShell 5.0+ (PowerShell Core is not supported)
