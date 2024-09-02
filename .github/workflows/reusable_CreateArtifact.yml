@@ -54,17 +54,8 @@ jobs:
         shell: pwsh
         run: |
           Move-Item -Force -Path "./PSAppDeployToolkit/Toolkit/AppDeployToolkit/" -Destination "./PSAppDeployToolkit/AppDeployToolkit/"
-          Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/AppDeployToolkit/*" -Destination "./PSAppDeployToolkit/AppDeployToolkit/"
-          Copy-Item -Force -Destination "./PSAppDeployToolkit" -Path @(
-            "./ExtensionsSourceCode/Deploy-Application.ps1"
-            "./ExtensionsSourceCode/DeployNxtApplication.exe"
-            "./ExtensionsSourceCode/COPYING"
-            "./ExtensionsSourceCode/COPYING.Lesser"
-            "./ExtensionsSourceCode/README.txt"
-            "./ExtensionsSourceCode/neo42PackageConfigValidationRules.json"
-            "./ExtensionsSourceCode/Setup.cfg"
-          )
-          Copy-Item -Force -Destination "./PSAppDeployToolkit/neo42PackageConfig.json" -Path "./ExtensionsSourceCode/Samples/neo42PackageConfig_ExampleWithValuesFullfilled.json"
+          Copy-Item -Force -Recurse -Exclude '.*' -Path "./ExtensionsSourceCode/" -Destination "./PSAppDeployToolkit/"
+          Copy-Item -Force -Destination "./PSAppDeployToolkit/neo42PackageConfig.json" -Path "./ExtensionsSourceCode/.samples/neo42PackageConfig_ExampleWithValuesFullfilled.json"
 
       - name: remove-unwanted
         shell: pwsh
@@ -72,7 +63,6 @@ jobs:
           Remove-Item -Recurse -Force -Path @(
             "./ExtensionsSourceCode/.git*"
             "./PSAppDeployToolkit/.git*"
-
             "./PSAppDeployToolkit/Toolkit/"
           )
 
@@ -93,7 +83,7 @@ jobs:
             "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.ps1"
             "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.cs"
           ) | ForEach-Object {
-            (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_
+            (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
           }
 
       - name: upload-artifact

@@ -12,12 +12,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: artifact
-    
+
     - name: checkout-tests
       uses: actions/checkout@v4
       with:
         path: test
-        sparse-checkout: test/*
+        sparse-checkout: .tests/*
         sparse-checkout-cone-mode: false
 
     - name: run-pester
@@ -25,8 +25,8 @@ jobs:
       run: |
         Set-Location -Path "${{ steps.download-artifact-test.outputs.download-path }}\*\PSAppDeployToolkit"
         Copy-Item -Path ".\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination ".\Setup.ico"
-        . ..\..\..\test\test\RunPester.ps1
-    
+        . ..\..\..\test\.tests\RunPester.ps1
+
     - name: remove-artifact
       if: always()
       shell: powershell
