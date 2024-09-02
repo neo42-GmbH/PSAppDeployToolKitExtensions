@@ -1,0 +1,24 @@
+name: "Suggest a feature or improvement"
+description: "While we cannot guarantee implementation we are eager to here your suggestions"
+title: "[Feature]: "
+labels: ["enhancement", "feature", "triage"]
+body:
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: "Confirmation"
+      description: "Please confirm that your issue is not related to servies neo42 provides"
+      options:
+        - label: "My issue is not related to the behaviour of a package or product provided by neo42"
+          required: true
+        - label: "I understand that issues created in this repository are not subject to any support agreements made with neo42"
+          required: true
+  - type: markdown
+    attributes:
+      value: |
+        <sub>If you need help with these products please consider contacting us at [support@neo42.de](mailto:support@neo42.de)</sub>
+  - type: textarea
+    id: feature
+    attributes:
+      label: "Feature"
+      description: "Please describe the improvement or feature in full. Desired outputs, behaviour and even the steps to get there. An example is always appreciated"
