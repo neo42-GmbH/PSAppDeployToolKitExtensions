@@ -19,7 +19,7 @@ When filing an issue, please check [existing open](https://github.com/neo42-GmbH
 
 ## Contributing via Pull Requests
 
-That you that you are interested in contributing to the project. At this time we are not accepting pull requests from contributors.
+Thank you that you are interested in contributing to the project. At this time we are not accepting pull requests from external contributors.
 
 If you are willing to share your code anyway, please do so in the issues section. You can appened your ideas there and we will evaluate them accordingly
 
