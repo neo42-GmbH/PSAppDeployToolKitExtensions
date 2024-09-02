@@ -31,7 +31,7 @@ Start-Process -FilePath $compilerPath -ArgumentList $compilerArgs -Wait -NoNewWi
 
 # Mute Toolkit logging
 [System.IO.FileInfo]$toolkitMain = Get-ChildItem -Recurse -Filter "AppDeployToolkitMain.ps1" | Select-Object -First 1
-(Get-Content "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml" -Raw).Replace('<Toolkit_LogWriteToHost>True</Toolkit_LogWriteToHost>', '<Toolkit_LogWriteToHost>False</Toolkit_LogWriteToHost>') | 
+(Get-Content "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml" -Raw).Replace('<Toolkit_LogWriteToHost>true</Toolkit_LogWriteToHost>', '<Toolkit_LogWriteToHost>false</Toolkit_LogWriteToHost>') |
     Out-File "$($toolkitMain.Directory.FullName)\AppDeployToolkitConfig.xml"
 
 # Import PSADT
