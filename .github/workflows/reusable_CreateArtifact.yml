@@ -54,13 +54,13 @@ jobs:
         shell: pwsh
         run: |
           Move-Item -Force -Path "./PSAppDeployToolkit/Toolkit/AppDeployToolkit/" -Destination "./PSAppDeployToolkit/AppDeployToolkit/"
-          Copy-Item -Force -Recurse -Verbose -Exclude '.*' -Path "./ExtensionsSourceCode/" -Destination "./PSAppDeployToolkit/"
+          Copy-Item -Force -Recurse -Exclude '.*' -Path "./ExtensionsSourceCode/*" -Destination "./PSAppDeployToolkit/"
           Copy-Item -Force -Destination "./PSAppDeployToolkit/neo42PackageConfig.json" -Path "./ExtensionsSourceCode/.samples/neo42PackageConfig_ExampleWithValuesFullfilled.json"
 
       - name: remove-unwanted
         shell: pwsh
         run: |
-          Remove-Item -Force -Recurse -Verbose -Path @(
+          Remove-Item -Force -Recurse -Path @(
             "./ExtensionsSourceCode/.git*"
             "./PSAppDeployToolkit/.git*"
             "./PSAppDeployToolkit/Toolkit/"
@@ -69,7 +69,7 @@ jobs:
       - name: create-folder-structure
         shell: pwsh
         run: |
-          New-Item -Force -ItemType File -Verbose -Path @(
+          New-Item -Force -ItemType File -Path @(
             "./PSAppDeployToolkit/SupportFiles/User/Place user files here"
             "./PSAppDeployToolkit/Files/Place setup files here"
             "./PSAppDeployToolkit/Place Setup ico here"
