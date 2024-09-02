@@ -75,6 +75,12 @@ jobs:
             "./PSAppDeployToolkit/Place Setup ico here"
           )
 
+      - name: copy-sample-and-tools
+        shell: pwsh
+        run: |
+          Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.samples/*" -Destination "./Samples/"
+          Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.tools/*" -Destination "./Tools/"
+
       - name: inject-version
         shell: pwsh
         run: |
