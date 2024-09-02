@@ -64,7 +64,7 @@ jobs:
             "./ExtensionsSourceCode/.git*"
             "./PSAppDeployToolkit/.git*"
             "./PSAppDeployToolkit/Toolkit/"
-          )
+          ) | Out-Null
 
       - name: create-folder-structure
         shell: pwsh
@@ -73,12 +73,15 @@ jobs:
             "./PSAppDeployToolkit/SupportFiles/User/Place user files here"
             "./PSAppDeployToolkit/Files/Place setup files here"
             "./PSAppDeployToolkit/Place Setup ico here"
-          )
+          ) | Out-Null
 
       - name: copy-sample-and-tools
         shell: pwsh
         run: |
-          Get-ChildItem
+          New-Item -Force -ItemType Directory -Path @(
+            "./Samples"
+            "./Tools"
+          ) | Out-Null
           Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.samples/*" -Destination "./Samples/"
           Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.tools/*" -Destination "./Tools/"
 
