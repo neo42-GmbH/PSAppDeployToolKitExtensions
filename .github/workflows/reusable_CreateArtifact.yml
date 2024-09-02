@@ -55,7 +55,7 @@ jobs:
         run: |
           Move-Item -Force -Path "./PSAppDeployToolkit/Toolkit/AppDeployToolkit/" -Destination "./PSAppDeployToolkit/AppDeployToolkit/"
           Copy-Item -Force -Recurse -Exclude '.*' -Path "./ExtensionsSourceCode/*" -Destination "./PSAppDeployToolkit/"
-          Copy-Item -Force -Destination "./PSAppDeployToolkit/neo42PackageConfig.json" -Path "./ExtensionsSourceCode/.samples/neo42PackageConfig_ExampleWithValuesFullfilled.json"
+          Copy-Item -Force -Path "./ExtensionsSourceCode/.samples/neo42PackageConfig_ExampleWithValuesFullfilled.json" -Destination "./PSAppDeployToolkit/neo42PackageConfig.json"
 
       - name: remove-unwanted
         shell: pwsh
@@ -78,6 +78,7 @@ jobs:
       - name: copy-sample-and-tools
         shell: pwsh
         run: |
+          Get-ChildItem
           Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.samples/*" -Destination "./Samples/"
           Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.tools/*" -Destination "./Tools/"
 
