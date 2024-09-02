@@ -60,6 +60,9 @@ labels:
     - name: research
       description: Path to solution unknown, might require alot effort
       color: 353675
+    - name: triage
+      description: Needs initial input from the team
+      color: F7DA05
     - name: upstream issue
       description: Issue not solvable without modifing the main
       color: E40046
