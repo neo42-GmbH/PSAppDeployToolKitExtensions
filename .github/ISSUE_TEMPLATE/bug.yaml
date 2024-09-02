@@ -23,13 +23,6 @@ body:
     attributes:
       label: "Please describe the issue you are facing"
       description: "Especially helpful are steps to reproduce, the desired behaviour or any insights you might have already aquired"
-      render: shell
-  - type: input
-    id: component
-    attributes:
-      label: "Component"
-      description: "Clarify which specific component is displaying undesired behaviour"
-      placeholder: "Function: Stop-NxtProcess"
   - type: input
     id: version
     attributes:
@@ -73,3 +66,9 @@ body:
         - "Other (specific in issue description)"
     validations:
       required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Please copy and paste any relevant log output here
+      render: shell
