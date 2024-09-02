@@ -12,8 +12,8 @@ In order to create a functional build of the toolkit with our extensions please 
         - It is recommended to remove all dot files before copying the contents
 
 # Requirements
-* PowerShell 5.0+ (PowerShell Core is not supported)
-* .NET Framework 4+
+* PowerShell 5.1 Desktop (PowerShell Core is not supported)
+* .NET Framework 4
 
 # License
 The content of this repository is licensed under the GNU Lesser General Public License version 3, or any later version. You can find a copy of the license at the root of this repository. You are free to use, alter and share the contents as you wish as long as it complies with the aforementioned license.

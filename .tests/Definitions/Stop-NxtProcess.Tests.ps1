@@ -24,6 +24,10 @@ Describe "Stop-NxtProcess" {
             Stop-NxtProcess -Name "Name = 'NonexistantProcess'" -IsWql $true | Should -BeNullOrEmpty
             $process.HasExited | Should -Be $false
         }
+        It "Should stop the process by ID" {
+            Stop-NxtProcess -Id $process.Id | Should -BeNullOrEmpty
+            $process.HasExited | Should -Be $true
+        }
     }
     Context "When the process is not running"{
         It "Should fail to kill a nonexistant process" {
