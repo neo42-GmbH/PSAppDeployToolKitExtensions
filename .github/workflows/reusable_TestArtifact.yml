@@ -23,9 +23,9 @@ jobs:
     - name: run-pester
       shell: powershell
       run: |
-        Set-Location -Path "${{ steps.download-artifact-test.outputs.download-path }}\*\PSAppDeployToolkit"
-        Copy-Item -Path ".\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination ".\Setup.ico"
-        . ..\..\..\test\.tests\RunPester.ps1
+        $artifactPath = Get-ChildItem -Path "${{ steps.download-artifact-test.outputs.download-path }}" | Select-Object -First 1
+        Copy-Item -Path "$(artifactPath.FullName)\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$(artifactPath.FullName)\Setup.ico"
+        . .\test\.tests\RunPester.ps1
 
     - name: remove-artifact
       if: always()

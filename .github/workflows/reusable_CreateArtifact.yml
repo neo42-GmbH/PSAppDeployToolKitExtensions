@@ -29,7 +29,6 @@ jobs:
           # If the release is a milestone, use the milestone number and closed_at date
           if ('${{ github.event_name }}' -eq 'milestone') {
             $number = '${{ github.event.milestone.number }}'
-            $date = Get-Date -Date '${{ github.event.milestone.closed_at }}' -Format 'yyyy.MM.dd'
           }
 
           $version = "$date.$number".Trim()
