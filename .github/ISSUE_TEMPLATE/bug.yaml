@@ -21,8 +21,8 @@ body:
   - type: textarea
     id: issue
     attributes:
-      label: "Please describe the issue you are facing"
-      description: "Especially helpful are steps to reproduce, the desired behaviour or any insights you might have already aquired"
+      label: "Description"
+      description: "Please describe your issue in detail. Especially helpful are reproductive steps, the desired behaviour or any insights you might have already aquired"
   - type: input
     id: version
     attributes:
@@ -63,7 +63,7 @@ body:
         - "Microsoft Intune"
         - "Omnissa Workspace One"
         - "Microsoft Configuration Manager"
-        - "Other (specific in issue description)"
+        - "Other (specify in issue description)"
     validations:
       required: false
   - type: textarea
