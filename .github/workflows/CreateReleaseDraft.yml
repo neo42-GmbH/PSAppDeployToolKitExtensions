@@ -56,7 +56,7 @@ jobs:
             'create',
             '--owner', '${{ github.repository_owner }}',
             '--repository', '${{ github.repository }}',
-            '--token', '${{ secrets.GHRM_TOKEN }}',
+            '--token', '${{ secrets.GITHUBRELEASEMANAGER_TOKEN }}',
             '--targetcommitish', '${{ github.sha }}',
             '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager',
             '--assets', '${{ github.workspace }}/${{ steps.download-artifact-release.outputs.download-path }}.zip'
