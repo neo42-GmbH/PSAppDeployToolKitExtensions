@@ -24,7 +24,7 @@ jobs:
       shell: powershell
       run: |
         $artifactPath = Get-ChildItem -Path "${{ steps.download-artifact-test.outputs.download-path }}" | Select-Object -First 1
-        Copy-Item -Path "$($artifactPath.FullName)\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactPath.FullName)\Setup.ico"
+        Copy-Item -Path "$($artifactPath.FullName)\PSAppDeployToolkit\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactPath.FullName)\PSAppDeployToolkit\Setup.ico"
         . .\test\.tests\RunPester.ps1
 
     - name: remove-artifact
