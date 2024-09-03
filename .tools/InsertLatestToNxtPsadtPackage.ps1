@@ -13,7 +13,7 @@ param(
 		[Parameter(Mandatory=$true)]
 		[string]$LatestVersionPath,
 		[Parameter(Mandatory=$false)]
-		[string]$CompatibleVersion = "##REPLACEVERSION##"
+		[version]$CompatibleVersion = "##REPLACEVERSION##"
 	)
 function Get-NxtContentBetweenTags {
 	param(
@@ -153,7 +153,7 @@ function Update-NxtPSAdtPackage {
 		[Parameter(Mandatory=$false)]
 		[string]$LogFileName,
 		[Parameter(Mandatory=$true)]
-		[string]$CompatibleVersion,
+		[version]$CompatibleVersion,
 		[Parameter(Mandatory=$true)]
 		[string]$ConfigVersion
 	)
@@ -166,7 +166,7 @@ function Update-NxtPSAdtPackage {
 		throw "LatestVersionPath does not exist"
 	}
 	[string]$newVersionContent = Get-Content -Raw -Path "$LatestVersionPath\Deploy-Application.ps1"
-	[string]$newVersion = (Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
+	[version]$newVersion = (Get-NxtContentBetweenTags -Content $newVersionContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
 	if ($CompatibleVersion -eq "`#`#`R`E`P`L`A`C`E`V`E`R`S`I`O`N`#`#") {
 		Write-Warning "CompatibleVersion is $CompatibleVersion, you are probably using a development version, skipping UpdateToolVersionCompatibilityCheck!"
 		Write-Warning "Using $CompatibleVersion as CompatibleVersion might render the resulting package unfunctional, please use a properly built version instead!"
@@ -178,9 +178,9 @@ function Update-NxtPSAdtPackage {
 	[string]$existingContent = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
 	#check for Version -ge 2023.06.12.01-53
 	if ($existingContent -match "ConfigVersion:") {
-		[string]$version =(Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
+		[version]$version =(Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
 	} else {
-		[string]$version = (Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:").TrimEnd("`n")
+		[version]$version = (Get-NxtContentBetweenTags -Content $existingContent -StartTag '	Version: ' -EndTag '	Toolkit Exit Code Ranges:').TrimEnd("`n")
 	}
 	if ($version.Contains('-') -and [int]($version -split "-")[1] -lt 53) {
 		throw "Version of $PackageToUpdatePath is lower than 2023.06.12.01-53 and must be updated manually"

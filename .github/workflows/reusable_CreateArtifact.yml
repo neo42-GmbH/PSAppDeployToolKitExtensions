@@ -92,6 +92,7 @@ jobs:
             "./PSAppDeployToolkit/Deploy-Application.ps1"
             "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.ps1"
             "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.cs"
+            "./Tools/InsertLatestToPsadtPackage.ps1"
           ) | ForEach-Object {
             (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
           }
