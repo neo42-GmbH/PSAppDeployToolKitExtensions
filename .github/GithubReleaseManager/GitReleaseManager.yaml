@@ -1,81 +1,83 @@
 create:
-    # Please see
-    # https://gittools.github.io/GitReleaseManager/docs/configuration/template-configuration#editing-the-templates
-    # configuration for configuring footers
-    include-footer: false
-    include-sha-section: true
-    sha-section-heading: "SHA256 Hashes of the release artifacts"
-    sha-section-line-format: "- `{1}\t{0}`"
-    allow-update-to-published: false
+  # Please see
+  # https://gittools.github.io/GitReleaseManager/docs/configuration/template-configuration#editing-the-templates
+  # configuration for configuring footers
+  include-footer: false
+  include-sha-section: true
+  sha-section-heading: "SHA256 Hashes of the release artifacts"
+  sha-section-line-format: "- `{1}\t{0}`"
+  allow-update-to-published: false
 default-branch: main
 labels:
-    - name: bug
-      description: Something isn't working
-      color: ee0701
-    - name: complex
-      description: Requires bigger effort to fix or enhance
-      color: f33d69
-    - name: documentation
-      description: Improvements or additions to documentation
-      color: d4c5f9
-    - name: duplicate
-      description: This issue or pull request already exists
-      color: cfd3d7
-    - name: easy
-      description: Easy to fix or enhance
-      color: 2f5abd
-    - name: enhancement
-      description: Improvement to the current implementation
-      color: a2eeef
-    - name: feature
-      description: Requesting a new feature to be added
-      color: 84b6eb
-    - name: help wanted
-      description: Extra attention is needed
-      color: 33aa3f
-    - name: intermediate
-      description: Intermediate effort to fix or enhance required
-      color: 72c6ac
-    - name: invalid
-      description: This doesn't seem right
-      color: e4e669
-    - name: P0
-      description: Critical
-      color: e02cc8
-    - name: P1
-      description: High
-      color: 921E42
-    - name: P2
-      description: Medium
-      color: 0e8aef
-    - name: P3
-      description: Low
-      color: 1B9760
-    - name: P4
-      description: Nice to have
-      color: 2D93D4
-    - name: question
-      description: Further information is requested
-      color: cc317c
-    - name: research
-      description: Path to solution unknown, might require alot effort
-      color: 353675
-    - name: triage
-      description: Needs initial input from the team
-      color: F7DA05
-    - name: upstream issue
-      description: Issue not solvable without modifing the main
-      color: E40046
-    - name: wontfix
-      description: This will not be worked on
-      color: 000000
+  - name: Bug
+    description: Something isn't working
+    color: ee0701
+  - name: Complex
+    description: Requires bigger effort to fix or enhance
+    color: f33d69
+  - name: Documentation
+    description: Improvements or additions to documentation
+    color: d4c5f9
+  - name: Duplicate
+    description: This issue or pull request already exists
+    color: cfd3d7
+  - name: Easy
+    description: Easy to fix or enhance
+    color: 2f5abd
+  - name: Enhancement
+    description: Improvement to the current implementation
+    color: a2eeef
+  - name: Feature
+    description: Requesting a new feature to be added
+    color: 84b6eb
+  - name: Help Wanted
+    description: Extra attention is needed
+    color: 33aa3f
+  - name: Intermediate
+    description: Intermediate effort to fix or enhance required
+    color: 72c6ac
+  - name: Invalid
+    description: This doesn't seem right
+    color: e4e669
+  - name: P0
+    description: Critical
+    color: e02cc8
+  - name: P1
+    description: High
+    color: 921E42
+  - name: P2
+    description: Medium
+    color: 0e8aef
+  - name: P3
+    description: Low
+    color: 1B9760
+  - name: P4
+    description: Nice to have
+    color: 2D93D4
+  - name: Question
+    description: Further information is requested
+    color: cc317c
+  - name: Research
+    description: Path to solution unknown, might require alot effort
+    color: 353675
+  - name: Triage
+    description: Needs initial input from the team
+    color: F7DA05
+  - name: Upstream Issue
+    description: Issue not solvable without modifing the main
+    color: E40046
+  - name: Wontfix
+    description: This will not be worked on
+    color: 000000
 issue-labels-include:
-    - bug
-    - documentation
-    - feature
-    - enhancement
+  - bug
+  - documentation
+  - feature
+  - enhancement
 issue-labels-exclude:
-    - wontfix
-    - duplicate
-    - invalid
-issue-labels-alias: []
+  - wontfix
+  - duplicate
+  - invalid
+issue-labels-alias:
+  - name: "Documentation"
+    plural: "Documentation"
