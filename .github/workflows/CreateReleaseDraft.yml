@@ -21,6 +21,10 @@ jobs:
       - artifact
       - test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
 
     steps:
       - name: download-artifact
@@ -30,7 +34,8 @@ jobs:
       - name: zip-artifact
         shell: pwsh
         run: |
-          Compress-Archive -Path "${{ steps.download-artifact-release.outputs.download-path }}" -DestinationPath "${{ steps.download-artifact-release.outputs.download-path }}.zip"
+          $artifactPath = Get-ChildItem -Path "${{ steps.download-artifact-release.outputs.download-path }}" | Select-Object -First 1
+          Compress-Archive -Path "$($artifactPath.FullName)/*" -DestinationPath "${{ github.workspace }}/PSAppDeployToolKitExtensions-${{ needs.artifact.outputs.ARTIFACT_VERSION }}.zip"
 
       - name: checkout-release-manager-config
         uses: actions/checkout@v4
@@ -56,10 +61,10 @@ jobs:
             'create',
             '--owner', '${{ github.repository_owner }}',
             '--repository', '${{ github.event.repository.name }}',
-            '--token', '${{ secrets.GITHUBRELEASEMANAGER_TOKEN }}',
+            '--token', '${{ secrets.GITHUB_TOKEN }}',
             '--targetcommitish', '${{ github.sha }}',
             '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager',
-            '--assets', '${{ steps.download-artifact-release.outputs.download-path }}.zip'
+            '--assets', '${{ github.workspace }}/PSAppDeployToolKitExtensions-${{ needs.artifact.outputs.ARTIFACT_VERSION }}.zip'
           )
 
           if ('${{ github.event_name }}' -eq 'milestone') {
@@ -70,8 +75,8 @@ jobs:
           else {
             Write-Host "Creating pre-release from ref '${{ github.ref_name }}'"
             Set-Content -Path '${{ github.workspace }}/prerelease.md' -Encoding UTF8 -Force -Value `
-            "This is a pre-release build from '[${{ github.ref_name }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})'. Releases like this are not intended for production use.
-            There will be no changelog or release notes for this build. Please refer to the latest stable release for more information.
+            "This is a pre-release build from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }}). Releases like this are not intended for production use.
+            There will be no changelog or release notes for this build. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information.
 
             If you have any questions or concerns, please contact the development team."
             $params += '--pre'
