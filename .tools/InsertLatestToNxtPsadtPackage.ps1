@@ -180,7 +180,7 @@ function Update-NxtPSAdtPackage {
 	if ($existingContent -match "ConfigVersion:") {
 		[string]$version = (Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	ConfigVersion:").TrimEnd("`n")
 	} else {
-		[string]$version = (Get-NxtContentBetweenTags -Content $existingContent -StartTag '	Version: ' -EndTag '	Toolkit Exit Code Ranges:').TrimEnd("`n")
+		[string]$version = (Get-NxtContentBetweenTags -Content $existingContent -StartTag "	Version: " -EndTag "	Toolkit Exit Code Ranges:").TrimEnd("`n")
 	}
 	if ($version.Contains('-') -and [int]($version -split "-")[1] -lt 53) {
 		throw "Version of $PackageToUpdatePath is lower than 2023.06.12.01-53 and must be updated manually"
