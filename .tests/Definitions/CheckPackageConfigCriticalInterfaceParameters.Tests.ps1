@@ -103,7 +103,7 @@ Describe "CheckPackageConfigCriticalInterfaceParameters." {
                     Type = "String"
                 }
             )
-            $packageConfig = Get-Content .\neo42PackageConfig.json | Out-String | ConvertFrom-Json
+            $packageConfig = Get-Content "$global:PSADTPath\..\neo42PackageConfig.json" | Out-String | ConvertFrom-Json
             $valuesToCheck.Name | Should -BeIn $($packageConfig.Psobject.Properties.Name) -Because "The value is expected to be in the package config file"
             $valuesToCheck.Where({$_.Type -eq "String"}).Name | Should -BeIn $($packageConfig.Psobject.Properties.Where({$_.Value -is [string]}).Name) -Because "The value is expected to be a string"
             $valuesToCheck.Where({$_.Type -eq "Bool"}).Name | Should -BeIn $($packageConfig.Psobject.Properties.Where({$_.Value -is [bool]}).Name) -Because "The value is expected to be a bool"
