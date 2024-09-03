@@ -55,11 +55,11 @@ jobs:
           $params = @(
             'create',
             '--owner', '${{ github.repository_owner }}',
-            '--repository', '${{ github.repository }}',
+            '--repository', '${{ github.event.repository.name }}',
             '--token', '${{ secrets.GITHUBRELEASEMANAGER_TOKEN }}',
             '--targetcommitish', '${{ github.sha }}',
             '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager',
-            '--assets', '${{ github.workspace }}/${{ steps.download-artifact-release.outputs.download-path }}.zip'
+            '--assets', '${{ steps.download-artifact-release.outputs.download-path }}.zip'
           )
 
           if ('${{ github.event_name }}' -eq 'milestone') {
@@ -69,13 +69,13 @@ jobs:
           }
           else {
             Write-Host "Creating pre-release from ref '${{ github.ref_name }}'"
-            "This is a pre-release build form '[${{ github.ref_name }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})'. Releases like this are not intended for production use.
+            Set-Content -Path '${{ github.workspace }}/prerelease.md' -Encoding UTF8 -Force -Value `
+            "This is a pre-release build from '[${{ github.ref_name }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})'. Releases like this are not intended for production use.
             There will be no changelog or release notes for this build. Please refer to the latest stable release for more information.
 
-            If you have any questions or concerns, please contact the development team.
-            " >> '${{ github.workspace }}/ghrm/.github/GithubReleaseManager/pre-release.md'
+            If you have any questions or concerns, please contact the development team."
             $params += '--pre'
-            $params += '--inputFilePath', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager/pre-release.md'
+            $params += '--inputFilePath', '${{ github.workspace }}/prerelease.md'
             $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}-${{ github.ref_name }}-unstable'
           }
 
