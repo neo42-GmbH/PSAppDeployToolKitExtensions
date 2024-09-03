@@ -19,6 +19,7 @@ jobs:
   release:
     needs:
       - artifact
+      - test
     runs-on: ubuntu-latest
     permissions:
       contents: write
