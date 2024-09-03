@@ -1,19 +1,13 @@
-# Check if we are in the Definitions folder. Pester tests via PesterTestsStarter.ps1 are executed from the root folder
-$baseDir = Split-Path -Path (Resolve-Path $MyInvocation.MyCommand.Definition) -Parent
-if ((Split-Path $baseDir -Leaf) -eq "Definitions"){
-    $baseDir = Resolve-Path "$baseDir\..\..\"
-}
-
 Describe "Coding Guidelines" -ForEach @(
-    @{path = "$baseDir\Deploy-Application.ps1" },
-    @{path = "$baseDir\AppDeployToolkit\AppDeployToolkitExtensions.ps1" },
-    @{path = "$baseDir\AppDeployToolkit\CustomAppDeployToolkitUi.ps1" }
+    @{path = "$global:PSADTPath\Deploy-Application.ps1" },
+    @{path = "$global:PSADTPath\AppDeployToolkit\AppDeployToolkitExtensions.ps1" },
+    @{path = "$global:PSADTPath\AppDeployToolkit\CustomAppDeployToolkitUi.ps1" }
 ) {
     Context "$(Split-Path $path -Leaf)" {
         BeforeAll {
             $tokens = $errors = $null
-            [string[]]$content = Get-Content -Path "$path"
-            [string]$contentRaw = Get-Content -Path "$path" -Raw
+            [string[]]$content = Get-Content -Path $path
+            [string]$contentRaw = Get-Content -Path $path -Raw
             [System.Management.Automation.Language.Ast]$ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
         }
         It "Should have no errors" {

@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  milestone:
+    types:
+      - closed
+
+jobs:
+  artifact:
+    uses: ./.github/workflows/reusable_CreateArtifact.yml
+    with:
+      PSADT_VERSION: ${{ vars.TARGET_ADT_VERSION  }}
+
+  test:
+    needs: artifact
+    uses: ./.github/workflows/reusable_TestArtifact.yml
+
+  release:
+    needs:
+      - artifact
+      - test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: download-artifact
+        id: download-artifact-release
+        uses: actions/download-artifact@v4
+
+      - name: zip-artifact
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "${{ steps.download-artifact-release.outputs.download-path }}" -DestinationPath "${{ steps.download-artifact-release.outputs.download-path }}.zip"
+
+      - name: checkout-release-manager-config
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          path: ${{ github.workspace }}/ghrm
+          sparse-checkout: .github/GithubReleaseManager/*
+          sparse-checkout-cone-mode: false
+
+      - name: install-dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x.x'
+
+      - name: install-release-manager
+        shell: pwsh
+        run: dotnet tool install --global GitReleaseManager.Tool
+
+      - name: create-release
+        shell: pwsh
+        run: |
+          $params = @(
+            'create',
+            '--owner', '${{ github.repository_owner }}',
+            '--repository', '${{ github.repository }}',
+            '--token', '${{ secrets.GITHUBRELEASEMANAGER_TOKEN }}',
+            '--targetcommitish', '${{ github.sha }}',
+            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager',
+            '--assets', '${{ github.workspace }}/${{ steps.download-artifact-release.outputs.download-path }}.zip'
+          )
+
+          if ('${{ github.event_name }}' -eq 'milestone') {
+            Write-Host "Creating release from milestone '${{ github.event.milestone.title }}' on '$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')'."
+            $params += '--milestone', '"${{ github.event.milestone.title }}"'
+            $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
+          }
+          else {
+            Write-Host "Creating pre-release from ref '${{ github.ref_name }}'"
+            "This is a pre-release build form '[${{ github.ref_name }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})'. Releases like this are not intended for production use.
+            There will be no changelog or release notes for this build. Please refer to the latest stable release for more information.
+
+            If you have any questions or concerns, please contact the development team.
+            " >> '${{ github.workspace }}/ghrm/.github/GithubReleaseManager/pre-release.md'
+            $params += '--pre'
+            $params += '--inputFilePath', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager/pre-release.md'
+            $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}-${{ github.ref_name }}-unstable'
+          }
+
+          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
+          exit $proc.ExitCode

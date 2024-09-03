@@ -1,0 +1,33 @@
+name: Test Artifact
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: PSAppDeployToolKitExtensions-Runner
+    steps:
+    - name: download-artifact
+      id: download-artifact-test
+      uses: actions/download-artifact@v4
+      with:
+        path: artifact
+
+    - name: checkout-tests
+      uses: actions/checkout@v4
+      with:
+        path: test
+        sparse-checkout: .tests/*
+        sparse-checkout-cone-mode: false
+
+    - name: run-pester
+      shell: powershell
+      run: |
+        $artifactPath = Get-ChildItem -Path "${{ steps.download-artifact-test.outputs.download-path }}" | Select-Object -First 1
+        Copy-Item -Path "$($artifactPath.FullName)\PSAppDeployToolkit\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactPath.FullName)\PSAppDeployToolkit\Setup.ico"
+        . .\test\.tests\RunPester.ps1 -ToolkitMain "$($artifactPath.FullName)\PSAppDeployToolkit\AppDeployToolkit\AppDeployToolkitMain.ps1"
+
+    - name: remove-artifact
+      if: always()
+      shell: powershell
+      run: Remove-Item -Path "${{ steps.download-artifact-test.outputs.download-path }}" -Recurse -Force
