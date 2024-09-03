@@ -70,14 +70,14 @@ labels:
     description: This will not be worked on
     color: 000000
 issue-labels-include:
-  - bug
-  - documentation
-  - feature
-  - enhancement
+  - Bug
+  - Documentation
+  - Feature
+  - Enhancement
 issue-labels-exclude:
-  - wontfix
-  - duplicate
-  - invalid
+  - Wontfix
+  - Duplicate
+  - Invalid
 issue-labels-alias:
-  - name: "Documentation"
-    plural: "Documentation"
+  - name: Documentation
+    plural: Documentation
