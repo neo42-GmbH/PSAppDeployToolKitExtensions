@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       CONFIRM_RELEASE:
-        description: '⚠️ If you select the production branch, a release draft and comments will be created. Please confirm that you want to proceed if this is the case.'
+        description: '⚠️ The production branch will create a release draft, close the milestone, and comment on issues. Confirmation for production is required.'
         default: false
         type: boolean
 
