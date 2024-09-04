@@ -21,6 +21,15 @@ jobs:
           sparse-checkout: .github/GithubReleaseManager/*
           sparse-checkout-cone-mode: false
 
+      - name: install-dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x.x'
+
+      - name: install-release-manager
+        shell: pwsh
+        run: dotnet tool install --global GitReleaseManager.Tool
+
       - name: comment-on-issues
         shell: pwsh
         run: |
