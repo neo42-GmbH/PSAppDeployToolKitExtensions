@@ -26,7 +26,7 @@ jobs:
     if: ${{ github.event.inputs.CONFIRM_RELEASE == 'true' || github.ref != 'refs/heads/production' }}
     permissions:
       contents: write
-      issues: write
+      issues: read
       pull-requests: read
 
     steps:
