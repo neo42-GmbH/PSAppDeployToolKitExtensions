@@ -2,7 +2,7 @@ Describe 'Get-NxtParentProcess' {
     Context 'when given a process ID' {
         BeforeAll {
             [string]$selfPID = ([System.Diagnostics.Process]::GetCurrentProcess()).Id
-            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath ./test/simple.exe -PassThru
+            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath $global:simpleExe -PassThru
             [ciminstance]$service = Get-CimInstance -Class Win32_Service -Filter "State = 'Running'" | Select-Object -First 1
             [System.Diagnostics.Process]$serviceProcess = Get-Process -Id $service.ProcessId
         }

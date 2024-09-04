@@ -1,0 +1,97 @@
+name: Create Artifact
+
+on:
+  workflow_call:
+    inputs:
+      PSADT_VERSION:
+        description: 'The version of the PSADT source'
+        required: true
+        type: string
+    outputs:
+      ARTIFACT_VERSION:
+        value: ${{ jobs.artifact.outputs.VERSION }}
+
+jobs:
+  artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.release-info.outputs.RELEASE_VERSION }}
+
+    steps:
+      - name: get-release-info
+        id: release-info
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format 'yyyy.MM.dd'
+          $number = '${{ github.run_number }}'
+
+          $version = "$date.$number"
+          "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Auto-generated release version: $version"
+
+      - name: checkout-psadt
+        uses: actions/checkout@v4
+        with:
+          repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
+          sparse-checkout: 'Toolkit/AppDeployToolkit/*'
+          sparse-checkout-cone-mode: false
+          path: ./PSAppDeployToolkit
+          ref: ${{ inputs.PSADT_VERSION }}
+
+      - name: checkout-extensions
+        uses: actions/checkout@v4
+        with:
+          path: ./ExtensionsSourceCode
+
+      - name: merge-extensions
+        shell: pwsh
+        run: |
+          Move-Item -Force -Path "./PSAppDeployToolkit/Toolkit/AppDeployToolkit/" -Destination "./PSAppDeployToolkit/AppDeployToolkit/"
+          Copy-Item -Force -Recurse -Exclude '.*' -Path "./ExtensionsSourceCode/*" -Destination "./PSAppDeployToolkit/"
+          Copy-Item -Force -Path "./ExtensionsSourceCode/.samples/neo42PackageConfig_ExampleWithValuesFullfilled.json" -Destination "./PSAppDeployToolkit/neo42PackageConfig.json"
+
+      - name: remove-unwanted
+        shell: pwsh
+        run: |
+          Remove-Item -Force -Recurse -Path @(
+            "./ExtensionsSourceCode/.git*"
+            "./PSAppDeployToolkit/.git*"
+            "./PSAppDeployToolkit/Toolkit/"
+          ) | Out-Null
+
+      - name: create-folder-structure
+        shell: pwsh
+        run: |
+          New-Item -Force -ItemType File -Path @(
+            "./PSAppDeployToolkit/SupportFiles/User/Place user files here"
+            "./PSAppDeployToolkit/Files/Place setup files here"
+            "./PSAppDeployToolkit/Place Setup ico here"
+          ) | Out-Null
+
+      - name: copy-sample-and-tools
+        shell: pwsh
+        run: |
+          New-Item -Force -ItemType Directory -Path @(
+            "./Samples"
+            "./Tools"
+          ) | Out-Null
+          Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.samples/*" -Destination "./Samples/"
+          Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.tools/*" -Destination "./Tools/"
+
+      - name: inject-version
+        shell: pwsh
+        run: |
+          @(
+            "./PSAppDeployToolkit/Deploy-Application.ps1"
+            "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.ps1"
+            "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.cs"
+            "./Tools/InsertLatestToNxtPsadtPackage.ps1"
+          ) | ForEach-Object {
+            (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
+          }
+
+      - name: upload-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PSAppDeployToolKitExtensions-${{ steps.release-info.outputs.RELEASE_VERSION }}
+          path: .

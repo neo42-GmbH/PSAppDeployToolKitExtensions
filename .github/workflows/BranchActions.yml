@@ -1,0 +1,17 @@
+name: Branch Workflows
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  artifact:
+    uses: ./.github/workflows/reusable_CreateArtifact.yml
+    with:
+      PSADT_VERSION: ${{ vars.TARGET_ADT_VERSION  }}
+
+  test:
+    needs: artifact
+    uses: ./.github/workflows/reusable_TestArtifact.yml

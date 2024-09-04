@@ -1,7 +1,7 @@
 Describe "Get-NxtRunningProcesses" {
     Context "When running processes are present" {
         BeforeAll {
-            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath ./test/simple.exe -PassThru
+            [System.Diagnostics.Process]$childProcess = Start-Process -FilePath $global:simpleExe -PassThru
             [System.Diagnostics.Process]$lsassProcess = Get-Process -Name lsass
         }
         AfterAll {
