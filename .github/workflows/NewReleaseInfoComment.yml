@@ -7,7 +7,7 @@ on:
 jobs:
   comment:
     runs-on: ubuntu-latest
-    if: ${{ github.event.release.prerelease == 'false' }}
+    if: ${{ github.event.release.prerelease == false }}
     permissions:
       issues: write
       pull-requests: read
