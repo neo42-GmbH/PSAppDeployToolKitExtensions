@@ -59,7 +59,7 @@ jobs:
           New-Item -Path "${{ github.workspace }}/components" -ItemType Directory -Force | Out-Null
           $root = Get-ChildItem -Path "${{ steps.download-artifact-release.outputs.download-path }}" | Select-Object -First 1
           Get-ChildItem -Path $root.FullName | Where-Object { $_.GetType().Name -eq "DirectoryInfo" }  | ForEach-Object {
-            Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip" -Verbose
+            Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
           }
 
       - name: update-milestones
