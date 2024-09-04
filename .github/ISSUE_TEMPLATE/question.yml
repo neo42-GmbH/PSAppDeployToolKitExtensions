@@ -15,7 +15,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        <sub>If you need help with these products please consider contacting us at [support@neo42.de](mailto:support@neo42.de)</sub>
+        <sub>If you need help with these products please consider contacting us at [neosupport@neo42.de](mailto:neosupport@neo42.de)</sub>
   - type: textarea
     id: question
     attributes:
