@@ -26,7 +26,7 @@ jobs:
     if: ${{ github.event.inputs.CONFIRM_RELEASE == 'true' || github.ref != 'refs/heads/production' }}
     permissions:
       contents: write
-      issues: write
+      issues: read
       pull-requests: read
 
     steps:
@@ -129,22 +129,6 @@ jobs:
             $params += '--inputFilePath', '${{ github.workspace }}/prerelease.md'
             $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}-${{ github.ref_name }}-unstable'
           }
-
-          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
-          exit $proc.ExitCode
-
-      - name: comment-on-issues
-        if: ${{ github.ref_name == 'production' }}
-        shell: pwsh
-        run: |
-          $params = @(
-            'close',
-            '--owner', '${{ github.repository_owner }}',
-            '--repository', '${{ github.event.repository.name }}',
-            '--token', '${{ secrets.GITHUB_TOKEN }}',
-            '--milestone', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
-            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager'
-          )
 
           $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
           exit $proc.ExitCode
