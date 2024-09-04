@@ -72,7 +72,7 @@ jobs:
               state: 'open'
             });
 
-            // Update the milestone for the current release
+            // Update the milestone for the current release. Note: The description will be part of the release notes.
             const milestone = milestones.find(m => m.title === 'Next');
             const isoDate = new Date().toISOString();
             if (milestone) {
@@ -112,6 +112,7 @@ jobs:
 
           if ('${{ github.ref_name }}' -eq 'production') {
             Write-Host "Creating production release draft."
+            # The milestone description will be part of the release notes.
             $params += '--milestone', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
             $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
           }
