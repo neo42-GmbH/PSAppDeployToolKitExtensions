@@ -1,0 +1,148 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      CONFIRM_RELEASE:
+        description: '⚠️ The production branch will create a release draft, close the milestone, and comment on issues. Confirmation for production is required.'
+        default: false
+        type: boolean
+
+jobs:
+  artifact:
+    uses: ./.github/workflows/reusable_CreateArtifact.yml
+    with:
+      PSADT_VERSION: ${{ vars.TARGET_ADT_VERSION  }}
+
+  test:
+    needs: artifact
+    uses: ./.github/workflows/reusable_TestArtifact.yml
+
+  release:
+    needs:
+      - artifact
+      - test
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.CONFIRM_RELEASE == 'true' || github.ref != 'refs/heads/production' }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
+
+    steps:
+      - name: download-artifact
+        id: download-artifact-release
+        uses: actions/download-artifact@v4
+
+      - name: checkout-release-manager-config
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          path: ${{ github.workspace }}/ghrm
+          sparse-checkout: .github/GithubReleaseManager/*
+          sparse-checkout-cone-mode: false
+
+      - name: install-dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x.x'
+
+      - name: install-release-manager
+        shell: pwsh
+        run: dotnet tool install --global GitReleaseManager.Tool
+
+      - name: zip-components
+        shell: pwsh
+        run: |
+          New-Item -Path "${{ github.workspace }}/components" -ItemType Directory -Force | Out-Null
+          $root = Get-ChildItem -Path "${{ steps.download-artifact-release.outputs.download-path }}" | Select-Object -First 1
+          Get-ChildItem -Path $root.FullName -Exclude 'ExtensionsSourceCode' | ForEach-Object {
+            Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
+          }
+
+      - name: update-milestones
+        if: ${{ github.ref_name == 'production' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: milestones } = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+
+            // Update the milestone for the current release. Note: The description will be part of the release notes.
+            const milestone = milestones.find(m => m.title === 'Next');
+            const isoDate = new Date().toISOString();
+            if (milestone) {
+              await github.rest.issues.updateMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                milestone_number: milestone.number,
+                title: '${{ needs.artifact.outputs.ARTIFACT_VERSION }}',
+                description: 'Release version ${{ needs.artifact.outputs.ARTIFACT_VERSION }} built from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})',
+                due_on: isoDate
+              });
+            }
+            else {
+              throw new Error('Milestone not found');
+            }
+
+            // Create a new milestone for the next release
+            await github.rest.issues.createMilestone({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Next',
+              description: 'The next release',
+            });
+
+      - name: create-release-draft
+        shell: pwsh
+        run: |
+          $params = @(
+            'create',
+            '--owner', '${{ github.repository_owner }}',
+            '--repository', '${{ github.event.repository.name }}',
+            '--token', '${{ secrets.GITHUB_TOKEN }}',
+            '--targetcommitish', '${{ github.sha }}',
+            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager',
+            '--assets', "$((Get-ChildItem -Path "${{ github.workspace }}/components").FullName -join ',')"
+          )
+
+          if ('${{ github.ref_name }}' -eq 'production') {
+            Write-Host "Creating production release draft."
+            # The milestone description will be part of the release notes.
+            $params += '--milestone', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
+            $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
+          }
+          else {
+            Write-Host "Creating pre-release from ref '${{ github.ref_name }}'"
+            Set-Content -Path '${{ github.workspace }}/prerelease.md' -Encoding UTF8 -Force -Value `
+            "This is a pre-release build from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }}). Releases like this are not intended for production use.
+            There will be no changelog or release notes for this build. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information.
+
+            If you have any questions or concerns, please contact the development team."
+            $params += '--pre'
+            $params += '--inputFilePath', '${{ github.workspace }}/prerelease.md'
+            $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}-${{ github.ref_name }}-unstable'
+          }
+
+          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
+          exit $proc.ExitCode
+
+      - name: comment-on-issues
+        if: ${{ github.ref_name == 'production' }}
+        shell: pwsh
+        run: |
+          $params = @(
+            'close',
+            '--owner', '${{ github.repository_owner }}',
+            '--repository', '${{ github.event.repository.name }}',
+            '--token', '${{ secrets.GITHUB_TOKEN }}',
+            '--milestone', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
+            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager'
+          )
+
+          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
+          exit $proc.ExitCode

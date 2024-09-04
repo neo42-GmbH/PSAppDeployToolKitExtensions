@@ -96,6 +96,6 @@
 		}
 	}
 	CustomRulePath      = @(
-		'.\test\PSScriptAnalyzer\neo42PSScriptAnalyzerRules'
+		'.\.tests\PSScriptAnalyzer\neo42PSScriptAnalyzerRules'
 	)
 }

@@ -3,7 +3,7 @@ Describe "Watch-NxtProcessIsStopped" {
         BeforeAll {
             [System.Diagnostics.Process]$process = [System.Diagnostics.Process]::GetCurrentProcess()
             function New-TestProcess {
-                return Start-Job -ScriptBlock { $proc = Start-Process -FilePath $args[0] -PassThru; Start-Sleep 2; Stop-Process  $proc } -ArgumentList "$PSScriptRoot\simple.exe"
+                return Start-Job -ScriptBlock { $proc = Start-Process -FilePath $args[0] -PassThru; Start-Sleep 2; Stop-Process  $proc } -ArgumentList "$global:simpleExe"
             }
         }
         It "Should return true if process does not exists" {

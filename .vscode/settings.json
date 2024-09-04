@@ -30,7 +30,7 @@
     "powershell.codeFormatting.whitespaceInsideBrace": true,
     "powershell.powerShellDefaultVersion": "Windows PowerShell (x64)",
     "powershell.scriptAnalysis.enable": true,
-    "powershell.scriptAnalysis.settingsPath": "./test/PSScriptAnalyzer/PSScriptAnalyzerSettings.psd1",
+    "powershell.scriptAnalysis.settingsPath": "./.tests/PSScriptAnalyzer/PSScriptAnalyzerSettings.psd1",
     "powershell.helpCompletion": "BlockComment",
     "dotnet.preferCSharpExtension": true,
 
@@ -44,14 +44,14 @@
             "fileMatch": [
                 "/neo42PackageConfig*.json"
             ],
-            "url": "./test/schemas/neo42PackageConfig.schema.json"
+            "url": "./.tests/schemas/neo42PackageConfig.schema.json"
         }
     ],
 
     "xml.fileAssociations": [
         {
             "pattern": "AppDeployToolkit/AppDeployToolkitConfig.xml",
-            "systemId": "./test/schemas/AppDeployToolkitConfig.schema.xsd"
+            "systemId": "./.tests/schemas/AppDeployToolkitConfig.schema.xsd"
         }
     ]
 }
