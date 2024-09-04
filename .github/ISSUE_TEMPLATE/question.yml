@@ -7,7 +7,7 @@ body:
     id: terms
     attributes:
       label: "Confirmation"
-      description: "Please confirm that your issue is not related to servies neo42 provides"
+      description: "Please confirm that your issue is not related to services neo42 provides"
       options:
         - label: "My issue is not related to the behaviour of a package or product provided by neo42"
           required: true
