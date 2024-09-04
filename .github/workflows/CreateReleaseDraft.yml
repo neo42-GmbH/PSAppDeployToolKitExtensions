@@ -56,8 +56,8 @@ jobs:
         run: |
           New-Item -Path "${{ github.workspace }}/components" -ItemType Directory -Force | Out-Null
           $root = Get-ChildItem -Path "${{ steps.download-artifact-release.outputs.download-path }}" | Select-Object -First 1
-          Get-ChildItem -Path $root.FullName -Exclude 'ExtensionsSourceCode' | ForEach-Object {
-            Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
+          Get-ChildItem -Path $root.FullName | Where-Object { $_.Name -inotin @('ExtensionsSourceCode') } | ForEach-Object {
+            Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip" -Verbose
           }
 
       - name: update-milestones
