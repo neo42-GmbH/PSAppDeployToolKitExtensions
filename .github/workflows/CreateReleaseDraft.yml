@@ -130,19 +130,3 @@ jobs:
 
           $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
           exit $proc.ExitCode
-
-      - name: comment-on-issues
-        if: ${{ github.ref_name == 'production' }}
-        shell: pwsh
-        run: |
-          $params = @(
-            'close',
-            '--owner', '${{ github.repository_owner }}',
-            '--repository', '${{ github.event.repository.name }}',
-            '--token', '${{ secrets.GITHUB_TOKEN }}',
-            '--milestone', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
-            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager'
-          )
-
-          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
-          exit $proc.ExitCode

@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.release.prerelease == 'false' }}
+    permissions:
+      issues: write
+      pull-requests: read
+
+    steps:
+      - name: checkout-release-manager-config
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          path: ${{ github.workspace }}/ghrm
+          sparse-checkout: .github/GithubReleaseManager/*
+          sparse-checkout-cone-mode: false
+
+      - name: comment-on-issues
+        shell: pwsh
+        run: |
+          $params = @(
+            'close',
+            '--owner', '${{ github.repository_owner }}',
+            '--repository', '${{ github.event.repository.name }}',
+            '--token', '${{ secrets.GITHUB_TOKEN }}',
+            '--milestone', '${{ github.event.release.name }}',
+            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager'
+          )
+
+          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
+          exit $proc.ExitCode
