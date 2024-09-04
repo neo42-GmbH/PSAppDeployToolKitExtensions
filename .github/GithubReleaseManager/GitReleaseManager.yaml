@@ -4,10 +4,21 @@ create:
   # configuration for configuring footers
   include-footer: false
   include-sha-section: true
-  sha-section-heading: "SHA256 Hashes of the release artifacts"
+  sha-section-heading: "SHA256 Hashes"
   sha-section-line-format: "- `{1}\t{0}`"
   allow-update-to-published: false
-default-branch: main
+close:
+  use-issue-comments: true
+  issue-comment: |
+    :tada: This issue will be addressed in version {milestone} :tada:
+
+    Once the release is published, it will be available on:
+      * [GitHub release](https://github.com/{owner}/{repository}/releases/tag/{milestone})
+      * [neo42 Service Downloads Portal](https://portal.neo42.de/ServiceDownloadsManagement) (Sign-in required)
+
+    <sub>This is an auto-generated message from your friendly release assistant :package::rocket:
+    Please note that the publishing process might take a while or can even be rejected.</sub>
+default-branch: production
 labels:
   - name: Bug
     description: Something isn't working

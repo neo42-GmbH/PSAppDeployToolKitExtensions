@@ -22,16 +22,10 @@ jobs:
         id: release-info
         shell: pwsh
         run: |
-          # Default version is the current date and the run number. This allows for debugging and testing without a milestone
           $date = Get-Date -Format 'yyyy.MM.dd'
           $number = '${{ github.run_number }}'
 
-          # If the release is a milestone, use the milestone number and closed_at date
-          if ('${{ github.event_name }}' -eq 'milestone') {
-            $number = '${{ github.event.milestone.number }}'
-          }
-
-          $version = "$date.$number".Trim()
+          $version = "$date.$number"
           "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
           Write-Host "Auto-generated release version: $version"
 
