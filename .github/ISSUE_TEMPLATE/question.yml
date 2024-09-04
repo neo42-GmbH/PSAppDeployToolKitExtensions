@@ -1,6 +1,5 @@
 name: "Ask a question"
 description: "Any question related to the extensions are welcome here."
-title: "[Question]: "
 labels: ["help wanted", "question", "triage"]
 body:
   - type: checkboxes

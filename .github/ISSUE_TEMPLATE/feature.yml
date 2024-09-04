@@ -1,6 +1,5 @@
 name: "Suggest a feature or improvement"
 description: "While we cannot guarantee implementation we are eager to here your suggestions"
-title: "[Feature]: "
 labels: ["enhancement", "feature", "triage"]
 body:
   - type: checkboxes
