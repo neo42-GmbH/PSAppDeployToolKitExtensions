@@ -36,15 +36,15 @@ if ([string]::IsNullOrEmpty($workingDir) -or $true -ne [System.IO.Directory]::Ex
 
 ## Create some help output
 Write-Output 'neo42 GmbH - Apply Setup.inf Wrapper to APD package'
-Write-Output [string]::Empty
+Write-Output $([string]::Empty)
 Write-Output 'This script applies the Setup.inf wrapper to the current directory.'
 Write-Output 'The current directory is expected to be an APD based package.'
 Write-Output 'The script will download the latest wrapper from neo42 and apply it to the current directory.'
 Write-Output 'The script will self destruct after execution - so make sure you are using a copy of this script.'
-Write-Output [string]::Empty
+Write-Output $([string]::Empty)
 Write-Output 'Press any key to continue or CTRL+C to abort.'
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
-Write-Output [string]::Empty
+Write-Output $([string]::Empty)
 
 ## Test for some basic requirements
 [array]$files = @('Deploy-Application.ps1', 'neo42PackageConfig.json', 'neo42PackageConfigValidationRules.json', 'AppDeployToolkit\AppDeployToolkitExtensions.ps1', 'AppDeployToolkit\AppDeployToolkitMain.ps1', 'Setup.ico')
@@ -172,7 +172,7 @@ Write-Output 'Copy ico file to neoInstall folder'
 Copy-Item -Path "$adtSubFolder\Setup.ico" -Destination "$workingDir\neoInstall\Setup.ico" -Force
 
 ## Self destruct the current script
-Write-Output [string]::Empty
+Write-Output $([string]::Empty)
 Write-Output 'Wrapper successfully created! Removing the current script in 5 seconds.....'
 Start-Sleep -Seconds 5
 Remove-Item $MyInvocation.MyCommand.Definition -Force
