@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.release.prerelease == false }}
     permissions:
+      contents: read
       issues: write
       pull-requests: read
 
