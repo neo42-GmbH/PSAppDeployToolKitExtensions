@@ -93,8 +93,8 @@ jobs:
             "./Tools/InsertLatestToNxtPsadtPackage.ps1"
           ) | ForEach-Object {
             (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
-            "Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'"
           }
+          "Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'"
 
       - name: upload-artifact
         uses: actions/upload-artifact@v4
