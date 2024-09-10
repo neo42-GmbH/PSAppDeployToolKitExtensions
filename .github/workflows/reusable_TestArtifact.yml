@@ -24,8 +24,10 @@ jobs:
       shell: powershell
       run: |
         $artifactPath = Get-ChildItem -Path "${{ steps.download-artifact-test.outputs.download-path }}" | Select-Object -First 1
-        Copy-Item -Path "$($artifactPath.FullName)\PSAppDeployToolkit\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactPath.FullName)\PSAppDeployToolkit\Setup.ico"
-        . .\test\.tests\RunPester.ps1 -ToolkitMain "$($artifactPath.FullName)\PSAppDeployToolkit\AppDeployToolkit\AppDeployToolkitMain.ps1"
+        ## name should be like yyyy.MM.dd.run_number
+        $versionFromFolderName = Get-ChildItem -Path $artifactPath | Where-Object {$_.Name -match '^\d{4}\.\d{2}\.\d{2}\.\d+$'} | Select-Object -First 1
+        Copy-Item -Path "$($artifactPath.FullName)\$versionFromFolderName\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactPath.FullName)\PSAppDeployToolkit\Setup.ico"
+        . .\test\.tests\RunPester.ps1 -ToolkitMain "$($artifactPath.FullName)\$versionFromFolderName\AppDeployToolkit\AppDeployToolkitMain.ps1"
 
     - name: remove-artifact
       if: always()
