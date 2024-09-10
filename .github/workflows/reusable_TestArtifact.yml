@@ -25,6 +25,7 @@ jobs:
       run: |
         $artifactPath = Get-ChildItem -Path "${{ steps.download-artifact-test.outputs.download-path }}" | Select-Object -First 1
         $versionFromPath = Get-ChildItem -Path "$($artifactPath.FullName)" | Where-Object {$_.Name -match '^\d{4}\.\d{2}\.\d{2}\.\d+$'} | Select-Object -First 1 -ExpandProperty BaseName
+        Write-Host "Testing artifact version: $versionFromPath"
         Copy-Item -Path "$($artifactPath.FullName)\$versionFromPath\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactPath.FullName)\PSAppDeployToolkit\Setup.ico"
         . .\test\.tests\RunPester.ps1 -ToolkitMain "$($artifactPath.FullName)\$versionFromPath\AppDeployToolkit\AppDeployToolkitMain.ps1"
 
