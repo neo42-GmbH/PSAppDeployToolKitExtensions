@@ -28,6 +28,21 @@ jobs:
           $version = "$date.$number"
           "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
           Write-Host "Auto-generated release version: $version"
+      - name: get-branch-info
+        id: branch-info
+        shell: pwsh
+        run: |
+          Write-Host 'github.head_ref: ${{ github.head_ref }}'
+          Write-Host 'github.ref_name: ${{ github.ref_name }}'
+          if ('${{ github.ref_name }}' -eq 'production') {
+            $branchname = '${{ github.ref_name }}'
+          } elseif ($false -eq [string]::IsNullOrEmpty( '${{ github.head_ref }}' ) ){
+            $branchname = '${{ github.head_ref }}' -replace 'refs/heads/', ''
+          } else {
+            $branchname = 'PreRelease'
+          }
+          "BRANCH_NAME=$branchname" >> $env:GITHUB_OUTPUT
+          Write-Host "branchname: $branchname"
 
       - name: checkout-psadt
         uses: actions/checkout@v4
@@ -94,17 +109,17 @@ jobs:
           ) | ForEach-Object {
             (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
           }
-          Write-Host 'REF: ${{ github.head_ref }}'
-          if ('${{ github.head_ref }}' -eq 'production') {
+          [string]$branchname = '${{ steps.branch-info.outputs.BRANCH_NAME }}'
+          if ($branchname -eq 'production') {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'
-          } elseif ([string]::IsNullOrEmpty( '${{ github.head_ref }}' ) ){
+          } elseif ([string]::IsNullOrEmpty( $branchname ) ){
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_PreRelease'
           } else {
-            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ github.head_ref }}'
+            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ steps.branch-info.outputs.BRANCH_NAME }}'
           }
 
       - name: upload-artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ github.head_ref != 'production' && '_' || '' }}${{ github.head_ref != 'production' && github.head_ref || '' }}
+          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ steps.branch-info.outputs.BRANCH_NAME != 'production' && '_' || '' }}${{ steps.branch-info.outputs.BRANCH_NAME != 'production' && steps.branch-info.outputs.BRANCH_NAME || '' }}
           path: .
