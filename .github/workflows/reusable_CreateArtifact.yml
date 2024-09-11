@@ -94,9 +94,9 @@ jobs:
           ) | ForEach-Object {
             (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
           }
-          Write-Host 'REF: ${{ github.ref_name }}'
-          if ('${{ github.ref_name }}' -ne 'production') {
-            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ github.ref_name }}'
+          Write-Host 'REF: ${{ github.head_ref }}'
+          if ('${{ github.head_ref }}' -ne 'production') {
+            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ github.head_ref }}'
           } else {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'
           }
@@ -104,5 +104,5 @@ jobs:
       - name: upload-artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ github.ref_name != 'production' && '_' || '' }}${{ github.ref_name != 'production' && github.ref_name || '' }}
+          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ github.head_ref != 'production' && '_' || '' }}${{ github.head_ref != 'production' && github.head_ref || '' }}
           path: .
