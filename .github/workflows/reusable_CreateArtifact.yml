@@ -41,9 +41,8 @@ jobs:
           } else {
             $branchname = 'PreRelease'
           }
-          $branch = '${{ github.ref }}'
-          "BRANCH_NAME=$branch" >> $env:GITHUB_OUTPUT
-          Write-Host "Branch: $branch"
+          "BRANCH_NAME=$branchname" >> $env:GITHUB_OUTPUT
+          Write-Host "branchname: $branchname"
 
       - name: checkout-psadt
         uses: actions/checkout@v4
