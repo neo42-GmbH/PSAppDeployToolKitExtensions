@@ -36,10 +36,10 @@ jobs:
           Write-Host 'github.ref_name: ${{ github.ref_name }}'
           if ('${{ github.ref_name }}' -eq 'production') {
             $branchname = '${{ github.ref_name }}'
-          } elseif ([string]::IsNullOrEmpty( '${{ github.head_ref }}' ) ){
-            $branchname = 'PreRelease'
-          } else {
+          } elseif ($false -eq [string]::IsNullOrEmpty( '${{ github.head_ref }}' ) ){
             $branchname = '${{ github.head_ref }}' -replace 'refs/heads/', ''
+          } else {
+            $branchname = 'Prerelease'
           }
           "BRANCH_NAME=$branchname" >> $env:GITHUB_OUTPUT
           Write-Host "branchname: $branchname"
