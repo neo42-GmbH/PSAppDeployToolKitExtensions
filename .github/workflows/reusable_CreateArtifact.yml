@@ -112,7 +112,7 @@ jobs:
             [string]$branchname = '${{ steps.branch-info.outputs.BRANCH_NAME }}'
           if ($branchname -eq 'production') {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'
-          } elseif ([string]::IsNullOrEmpty( $branchname ){
+          } elseif ([string]::IsNullOrEmpty( $branchname ) ){
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_PreRelease'
           } else {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_$branchname'
