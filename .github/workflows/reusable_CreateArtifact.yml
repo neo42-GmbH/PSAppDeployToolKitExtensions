@@ -47,9 +47,11 @@ jobs:
         id: get-branch-from-ExtensionsSourceCode
         shell: pwsh
         run: |
-          $branch = (Get-Content -Path ./ExtensionsSourceCode/.git/HEAD).Trim().Split('/')[-1]
+          Push-Location ./ExtensionsSourceCode
+          $branch = $(git rev-parse --abbrev-ref HEAD)
           "BRANCH_NAME=$branch" >> $env:GITHUB_OUTPUT
           Write-Host "Branch name: $branch"
+          Pop-Location
 
       - name: merge-extensions
         shell: pwsh
