@@ -97,7 +97,7 @@ jobs:
           Write-Host 'REF: ${{ github.head_ref }}'
           if ('${{ github.head_ref }}' -eq 'production') {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'
-          } elseif ([string]::IsNullOrEmpty('${{ github.head_ref }}))'{
+          } elseif ([string]::IsNullOrEmpty( '${{ github.head_ref }}' ) ){
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_PreRelease'
           } else {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ github.head_ref }}'
