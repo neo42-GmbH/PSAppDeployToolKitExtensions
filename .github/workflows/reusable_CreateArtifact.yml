@@ -43,16 +43,6 @@ jobs:
         with:
           path: ./ExtensionsSourceCode
 
-      - name: get-branch-from-ExtensionsSourceCode
-        id: get-branch-from-ExtensionsSourceCode
-        shell: pwsh
-        run: |
-          Push-Location ./ExtensionsSourceCode
-          $branch = $(git rev-parse --abbrev-ref HEAD)
-          "BRANCH_NAME=$branch" >> $env:GITHUB_OUTPUT
-          Write-Host "Branch name: $branch"
-          Pop-Location
-
       - name: merge-extensions
         shell: pwsh
         run: |
@@ -104,9 +94,9 @@ jobs:
           ) | ForEach-Object {
             (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
           }
-          ## rename ./PSAppDeployToolkit to version number + branch name if the branch name is not production
-          if ('${{ steps.get-branch-from-ExtensionsSourceCode.outputs.BRANCH_NAME }}' -ne 'production') {
-            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ steps.get-branch-from-ExtensionsSourceCode.outputs.BRANCH_NAME }}'
+          Write-Host 'REF: ${{ github.ref_name }}'
+          if ('${{ github.ref_name }}' -ne 'production') {
+            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ github.ref_name }}'
           } else {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'
           }
@@ -114,5 +104,5 @@ jobs:
       - name: upload-artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ steps.get-branch-from-ExtensionsSourceCode.outputs.BRANCH_NAME != 'production' && '_' || '' }}${{ steps.get-branch-from-ExtensionsSourceCode.outputs.BRANCH_NAME != 'production' && steps.get-branch-from-ExtensionsSourceCode.outputs.BRANCH_NAME || '' }}
+          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ github.ref_name != 'production' && '_' || '' }}${{ github.ref_name != 'production' && github.ref_name || '' }}
           path: .
