@@ -28,6 +28,7 @@ jobs:
         Write-Host "Testing artifact version: $artifactSubPath"
         Copy-Item -Path "$($artifactSubPath.FullName)\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactSubPath.FullName)\Setup.ico" -Verbose
         Write-Host "Create symlink to shorten path for tests"
+        Remove-Item -Type SymbolicLink -Path .\nxtTestRun -ErrorAction SilentlyContinue
         New-Item -Type SymbolicLink -Path .\nxtTestRun -Value "$($artifactSubPath.FullName)"
         Write-Host "Running Pester tests, Path '.\nxtTestRun\AppDeployToolkit\AppDeployToolkitMain.ps1'"
         . .\test\.tests\RunPester.ps1 -ToolkitMain ".\nxtTestRun\AppDeployToolkit\AppDeployToolkitMain.ps1"
