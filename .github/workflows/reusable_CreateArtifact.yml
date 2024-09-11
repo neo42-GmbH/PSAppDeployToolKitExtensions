@@ -106,5 +106,5 @@ jobs:
       - name: upload-artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ github.head_ref != 'production' && '_'github.head_ref || '' }}
+          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ github.head_ref != 'production' && '_' || '' }}${{ github.head_ref != 'production' && github.head_ref || '' }}
           path: .
