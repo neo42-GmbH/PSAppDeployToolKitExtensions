@@ -104,7 +104,7 @@ jobs:
           }
           ## rename ./PSAppDeployToolkit to version number + branch name if the branch name is not production
           if ('${{ steps.get-branch-from-ExtensionsSourceCode.outputs.BRANCH_NAME }}' -ne 'production') {
-            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ steps.get-branch-from-ExtensionsSourceCode.outputs.BRANCH_NAME }}''
+            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ steps.get-branch-from-ExtensionsSourceCode.outputs.BRANCH_NAME }}'
           } else {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'
           }
