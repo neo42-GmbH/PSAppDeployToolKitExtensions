@@ -24,8 +24,13 @@ jobs:
       shell: powershell
       run: |
         $artifactPath = Get-ChildItem -Path "${{ steps.download-artifact-test.outputs.download-path }}" | Select-Object -First 1
-        Copy-Item -Path "$($artifactPath.FullName)\PSAppDeployToolkit\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactPath.FullName)\PSAppDeployToolkit\Setup.ico"
-        . .\test\.tests\RunPester.ps1 -ToolkitMain "$($artifactPath.FullName)\PSAppDeployToolkit\AppDeployToolkit\AppDeployToolkitMain.ps1"
+        $artifactSubPath = Get-ChildItem -Path "$($artifactPath.FullName)" | Where-Object {$_.Name -match '^\d{4}\.\d{2}\.\d{2}\.\d+'} | Select-Object -First 1
+        Write-Host "Testing artifact version: $artifactSubPath"
+        Copy-Item -Path "$($artifactSubPath.FullName)\AppDeployToolkit\AppDeployToolkitLogo.ico" -Destination "$($artifactSubPath.FullName)\Setup.ico" -Verbose
+        Write-Host "Create symlink to shorten path for tests"
+        New-Item -Type SymbolicLink -Path .\nxtTestRun -Value "$($artifactSubPath.FullName)"
+        Write-Host "Running Pester tests, Path '.\nxtTestRun\AppDeployToolkit\AppDeployToolkitMain.ps1'"
+        . .\test\.tests\RunPester.ps1 -ToolkitMain ".\nxtTestRun\AppDeployToolkit\AppDeployToolkitMain.ps1"
 
     - name: remove-artifact
       if: always()
