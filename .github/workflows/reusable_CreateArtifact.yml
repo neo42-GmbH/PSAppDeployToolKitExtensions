@@ -95,10 +95,12 @@ jobs:
             (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
           }
           Write-Host 'REF: ${{ github.head_ref }}'
-          if ('${{ github.head_ref }}' -ne 'production') {
-            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ github.head_ref }}'
-          } else {
+          if ('${{ github.head_ref }}' -eq 'production') {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'
+          } elseif ([string]::IsNullOrEmpty( '${{ github.head_ref }}' ) ){
+            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_PreRelease'
+          } else {
+            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ github.head_ref }}'
           }
 
       - name: upload-artifact
