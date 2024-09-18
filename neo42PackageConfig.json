@@ -1,11 +1,11 @@
 {
   "ConfigVersion": "2023.10.31.1",
-  "ScriptAuthor": "neo42 GmbH",
-  "ScriptDate": "22/09/2022",
-  "InventoryID": "hjt632C168F",
-  "Description": "Jens Hoetger Scribble Papers 2.10.2",
-  "InstallMethod": "Inno Setup",
-  "UninstallMethod": "Inno Setup",
+  "ScriptAuthor": "neo42",
+  "ScriptDate": "17/09/2024",
+  "InventoryID": "hsn32323532",
+  "Description": "neo42 PackageConfigEditor 1.1.2.0",
+  "InstallMethod": "MSI",
+  "UninstallMethod": "MSI",
   "ReinstallMode": "Reinstall",
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
@@ -15,138 +15,95 @@
       "VersionToCheck": ""
     }
   },
-  "TestedOn": "Win10 x64",
+  "TestedOn": "Win10 x64, Win11 x64",
   "Dependencies": "",
-  "LastChange": "22/09/2022",
+  "LastChange": "17/09/2024",
   "Build": "0",
-  "AppArch": "x86",
-  "AppVendor": "Jens Hoetger",
-  "AppName": "Scribble Papers",
-  "AppVersion": "2.10.2",
+  "AppArch": "x64",
+  "AppVendor": "neo42",
+  "AppName": "PackageConfigEditor",
+  "AppVersion": "1.1.2.0",
   "AppRevision": "0",
-  "AppLang": "DEU",
-  "ProductGUID": "{04200815-0000-0000-0000-000000000000}",
+  "AppLang": "MUI",
+  "ProductGUID": "{0427B2D0-28F7-4AEA-9EE6-AC2F2740C437}",
   "RemovePackagesWithSameProductGUID": false,
-  "PackageGUID": "{04243331-E468-41F5-BA2B-71750CE7B40B}",
+  "PackageGUID": "{0428729D-9D33-456B-BB44-F090638DBD53}",
   "DependentPackages": [],
   "RegPackagesKey": "neoPackages",
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)",
   "AppRootFolder": "neo42Pkgs",
-  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
+  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
   "UninstallOld": true,
   "Reboot": 0,
   "UserPartOnInstallation": false,
   "UserPartOnUninstallation": false,
-  "UserPartRevision": "2022,09,22,01",
+  "UserPartRevision": "2024,09,17,01",
   "HidePackageUninstallButton": false,
   "HidePackageUninstallEntry": false,
-  "DisplayVersion": "2.10.2",
-  "InstallerVersion": "2.10.2",
-  "UninstallKey": "Scribble Papers_is1",
+  "DisplayVersion": "1.1.2.0",
+  "InstallerVersion": "1.1.2.0",
+  "UninstallKey": "{B4B79BC4-A1BD-4115-BC10-FA3EF4457A14}",
   "UninstallKeyIsDisplayName": false,
   "UninstallKeyContainsWildCards": false,
   "UninstallKeyContainsExpandVariables": false,
   "DisplayNamesToExcludeFromAppSearches": [
     "$($global:PackageConfig.UninstallDisplayName)"
   ],
-  "InstallLocation": "$($global:programFilesDir)\\Scribble Papers",
+  "InstallLocation": "$($global:programFilesDir)\\neo42\\PackageConfigEditor",
   "InstLogFile": "$($global:AppLogFolder)\\Install.$global:DeploymentTimestamp.log",
   "UninstLogFile": "$($global:AppLogFolder)\\Uninstall.$global:DeploymentTimestamp.log",
-  "InstFile": "SPSetup.exe",
-  "InstPara": "/FORCEINSTALL /SILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.instLogFile)\"",
-  "AppendInstParaToDefaultParameters": false,
+  "InstFile": "neo42_PackageConfigEditor_1.1.2.0.msi",
+  "InstPara": "",
+  "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
   "AcceptedInstallRebootCodes": "",
-  "UninstFile": "$($global:PackageConfig.installLocation)\\unins000.exe",
-  "UninstPara": "/SILENT /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /LOG=\"$($global:PackageConfig.uninstLogFile)\"",
-  "AppendUninstParaToDefaultParameters": false,
+  "UninstFile": "",
+  "UninstPara": "",
+  "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
   "AcceptedUninstallRebootCodes": "",
   "AppKillProcesses": [
     {
-      "Name": "ScPapers",
-      "Description": ""
+      "Name": "Neo42.PackageConfigEditor",
+      "Description": "neo42 Package Config Editor"
     }
   ],
   "BlockExecution": false,
   "TestConditionsPreSetupSuccessCheck": {
     "Install": {
-      "TotalSecondsToWaitFor": 30,
-      "ProcessOperator": "AND",
       "ProcessesToWaitFor": [],
+      "ProcessOperator": "AND",
       "RegKeyOperator": "AND",
-      "RegKeysToWaitFor": []
+      "RegKeysToWaitFor": [],
+      "TotalSecondsToWaitFor": 30
     },
     "Uninstall": {
-      "TotalSecondsToWaitFor": 30,
-      "ProcessOperator": "AND",
       "ProcessesToWaitFor": [],
+      "ProcessOperator": "AND",
       "RegKeyOperator": "AND",
-      "RegKeysToWaitFor": []
+      "RegKeysToWaitFor": [],
+      "TotalSecondsToWaitFor": 30
     }
   },
   "CommonDesktopShortcutsToDelete": [
-    "Scribble Papers Programmdokumentation.lnk",
-    "Scribble Papers 2022.lnk"
+    "PackageConfigEditor.lnk"
   ],
   "CommonStartMenuShortcutsToCopyToCommonDesktop": [
     {
-      "Source": "Programs\\Scribble Papers\\Scribble Papers.lnk",
-      "TargetName": "Scribble Papers 2022.lnk"
-    },
-    {
-      "Source": "Programs\\Scribble Papers\\Scribble Papers Programmdokumentation.lnk"
+      "Source": "Programs\\neo42\\PackageConfigEditor\\PackageConfigEditor.lnk",
+      "TargetName": "PackageConfigEditor.lnk"
     }
   ],
   "UninstallKeysToHide": [
     {
       "KeyName": "$($global:PackageConfig.UninstallKey)",
-      "Is64Bit": false,
+      "Is64Bit": true,
       "KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)",
       "KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)",
       "DisplayNamesToExcludeFromHiding": [
         "$($global:PackageConfig.UninstallDisplayName)"
       ]
-    },
-    {
-      "KeyName": "SomeAppName - *",
-      "Is64Bit": true,
-      "KeyNameIsDisplayName": true,
-      "KeyNameContainsWildCards": true,
-      "DisplayNamesToExcludeFromHiding": [
-        "SomeAppName - 1.0",
-        "SomeAppName - 1.1",
-        "$($global:PackageConfig.UninstallDisplayName)"
-      ]
-    },
-    {
-      "KeyName": "SomeOrdinary[64BitOn64BitOS]UninstallKey"
     }
   ],
-  "PackageSpecificVariablesRaw": [
-    {
-      "Name": "vcredist2016Installer",
-      "Value": "vcredist2017.exe",
-      "ExpandVariables": true
-    },
-    {
-      "Name": "usage",
-      "Value": "somecomment"
-    },
-    {
-      "Name": "expandme",
-      "Value": "$(ls ~)",
-      "ExpandVariables": true
-    },
-    {
-      "Name": "expandmenot",
-      "Value": "$(ls ~)",
-      "ExpandVariables": false
-    },
-    {
-      "Name": "prefilled vars",
-      "Value": "HKLM:Software$global:Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\$($global:PackageConfig.UninstallKey)",
-      "ExpandVariables": true
-    }
-  ]
+  "PackageSpecificVariablesRaw": []
 }
