@@ -1,0 +1,97 @@
+{
+  "ConfigVersion": "2023.10.31.1",
+  "ScriptAuthor": "neo42 GmbH",
+  "ScriptDate": "",
+  "InventoryID": "",
+  "Description": "",
+  "InstallMethod": "MSI",
+  "UninstallMethod": "MSI",
+  "ReinstallMode": "Reinstall",
+  "MSIInplaceUpgradeable": false,
+  "MSIDowngradeable": false,
+  "SoftMigration": {
+    "File": {
+      "FullNameToCheck": "",
+      "VersionToCheck": ""
+    }
+  },
+  "TestedOn": "Win10 x86, Win10 x64, Win11 x64",
+  "Dependencies": "",
+  "LastChange": "",
+  "Build": "0",
+  "AppArch": "*",
+  "AppVendor": "",
+  "AppName": "",
+  "AppVersion": "",
+  "AppRevision": "0",
+  "AppLang": "MUI",
+  "ProductGUID": "",
+  "RemovePackagesWithSameProductGUID": false,
+  "PackageGUID": "",
+  "DependentPackages": [],
+  "RegPackagesKey": "neoPackages",
+  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)",
+  "AppRootFolder": "neo42Pkgs",
+  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
+  "UninstallOld": true,
+  "Reboot": 0,
+  "UserPartOnInstallation": false,
+  "UserPartOnUninstallation": false,
+  "UserPartRevision": "",
+  "HidePackageUninstallButton": false,
+  "HidePackageUninstallEntry": false,
+  "DisplayVersion": "",
+  "InstallerVersion": "",
+  "UninstallKey": "",
+  "UninstallKeyIsDisplayName": false,
+  "UninstallKeyContainsWildCards": false,
+  "UninstallKeyContainsExpandVariables": false,
+  "DisplayNamesToExcludeFromAppSearches": [
+    "$($global:PackageConfig.UninstallDisplayName)"
+  ],
+  "InstallLocation": "",
+  "InstLogFile": "$($global:AppLogFolder)\\Install.$global:DeploymentTimestamp.log",
+  "UninstLogFile": "$($global:AppLogFolder)\\Uninstall.$global:DeploymentTimestamp.log",
+  "InstFile": "",
+  "InstPara": "",
+  "AppendInstParaToDefaultParameters": true,
+  "AcceptedInstallExitCodes": "",
+  "AcceptedInstallRebootCodes": "",
+  "UninstFile": "",
+  "UninstPara": "",
+  "AppendUninstParaToDefaultParameters": true,
+  "AcceptedUninstallExitCodes": "",
+  "AcceptedUninstallRebootCodes": "",
+  "AppKillProcesses": [],
+  "BlockExecution": false,
+  "TestConditionsPreSetupSuccessCheck": {
+    "Install": {
+      "TotalSecondsToWaitFor": 30,
+      "ProcessOperator": "AND",
+      "ProcessesToWaitFor": [],
+      "RegKeyOperator": "AND",
+      "RegKeysToWaitFor": []
+    },
+    "Uninstall": {
+      "TotalSecondsToWaitFor": 30,
+      "ProcessOperator": "AND",
+      "ProcessesToWaitFor": [],
+      "RegKeyOperator": "AND",
+      "RegKeysToWaitFor": []
+    }
+  },
+  "CommonDesktopShortcutsToDelete": [],
+  "CommonStartMenuShortcutsToCopyToCommonDesktop": [],
+  "UninstallKeysToHide": [
+    {
+      "KeyName": "$($global:PackageConfig.UninstallKey)",
+      "Is64Bit": true,
+      "KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)",
+      "KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)",
+      "DisplayNamesToExcludeFromHiding": [
+        "$($global:PackageConfig.UninstallDisplayName)"
+      ]
+    }
+  ],
+  "PackageSpecificVariablesRaw": []
+}
