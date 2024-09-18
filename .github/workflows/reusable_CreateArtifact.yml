@@ -117,7 +117,7 @@ jobs:
           } else {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ steps.branch-info.outputs.BRANCH_NAME }}'
           }
-          if ($true -eq (Test-Path -Path './PSAppDeployToolkit/neo42PackageConfig.Release.json)){
+          if ($true -eq (Test-Path -Path './PSAppDeployToolkit/neo42PackageConfig.Release.json')){
             Remove-Item -Path './PSAppDeployToolkit/neo42PackageConfig.json'
             Rename-Item -Path './PSAppDeployToolkit/neo42PackageConfig.Release.json' -NewName './PSAppDeployToolkit/neo42PackageConfig.json'
           }
