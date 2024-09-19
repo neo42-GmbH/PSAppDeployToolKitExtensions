@@ -98,6 +98,14 @@ jobs:
         run: |
           Set-Content -Path "./CommitHash.txt" -Value "${{ github.sha }}" -Encoding UTF8
 
+      - name: Replace-Packageconfig-with-release-json
+        shell: pwsh
+        run: |
+          if ($true -eq (Test-Path -Path ./PSAppDeployToolkit/neo42PackageConfig.Release.json)){
+            Remove-Item -Path ./PSAppDeployToolkit/neo42PackageConfig.json
+            Rename-Item -Path ./PSAppDeployToolkit/neo42PackageConfig.Release.json -NewName neo42PackageConfig.json
+          }
+
       - name: inject-version
         shell: pwsh
         run: |
@@ -109,6 +117,10 @@ jobs:
           ) | ForEach-Object {
             (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
           }
+
+      - name: rename-artifact-folder
+        shell: pwsh
+        run: |
           [string]$branchname = '${{ steps.branch-info.outputs.BRANCH_NAME }}'
           if ($branchname -eq 'production') {
             Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'

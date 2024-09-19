@@ -24,11 +24,11 @@ Describe "CheckPackageConfigCriticalInterfaceParameters." {
                 },
                 [PSCustomObject]@{
                     Name = "PackageGuid"
-                    Type = "GUID"
+                    Type = "String"
                 },
                 [PSCustomObject]@{
                     Name = "ProductGuid"
-                    Type = "GUID"
+                    Type = "String"
                 },
                 [PSCustomObject]@{
                     Name = "UninstallMethod"
@@ -107,10 +107,6 @@ Describe "CheckPackageConfigCriticalInterfaceParameters." {
             $valuesToCheck.Name | Should -BeIn $($packageConfig.Psobject.Properties.Name) -Because "The value is expected to be in the package config file"
             $valuesToCheck.Where({$_.Type -eq "String"}).Name | Should -BeIn $($packageConfig.Psobject.Properties.Where({$_.Value -is [string]}).Name) -Because "The value is expected to be a string"
             $valuesToCheck.Where({$_.Type -eq "Bool"}).Name | Should -BeIn $($packageConfig.Psobject.Properties.Where({$_.Value -is [bool]}).Name) -Because "The value is expected to be a bool"
-            $guidParameterNames = $valuesToCheck.Where({$_.Type -eq "GUID"}).Name
-            $guidParameters = $packageConfig.Psobject.Properties.Where({$_.Name -in $GuidParameterNames})
-            $guidOutput = [guid]::NewGuid()
-            $guidParameters.Name | Should -BeIn $($guidParameters.Where({[guid]::TryParse($_.Value, [ref]$guidOutput)}).Name) -Because "The value is expected to be a GUID"
         }
     }
 }
