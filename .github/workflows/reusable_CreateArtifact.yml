@@ -103,7 +103,7 @@ jobs:
         run: |
           if ($true -eq (Test-Path -Path ./PSAppDeployToolkit/neo42PackageConfig.Release.json)){
             Remove-Item -Path ./PSAppDeployToolkit/neo42PackageConfig.json
-            Rename-Item -Path ./PSAppDeployToolkit/neo42PackageConfig.Release.json -NewName ./PSAppDeployToolkit/neo42PackageConfig.json
+            Rename-Item -Path ./PSAppDeployToolkit/neo42PackageConfig.Release.json -NewName neo42PackageConfig.json
           }
 
       - name: inject-version
