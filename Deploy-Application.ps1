@@ -53,7 +53,7 @@
 	Copyright (c) 2024 neo42 GmbH, Germany.
 
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2023.10.31.1
+	ConfigVersion: 2024.09.19.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -583,8 +583,10 @@ function Main {
 			}
 			'InstallUserPart' {
 				## START OF USERPARTINSTALL
+				[string]$userPartSuccess = 'true'
 				CustomInstallUserPartBegin
 				CustomInstallUserPartEnd
+				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components$($global:PackageConfig.PackageGUID)" -Name 'UserPartInstallSuccess' -Type 'String' -Value "$userPartSuccess"
 				## END OF USERPARTINSTALL
 			}
 			'UninstallUserPart' {
@@ -898,6 +900,7 @@ function CustomInstallUserPartBegin {
 	<#
 		.SYNOPSIS
 			Executes at the beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
+			On error set $script:userPartSuccess = $false
 	#>
 	[string]$script:installPhase = 'CustomInstallUserPartBegin'
 
@@ -910,6 +913,7 @@ function CustomInstallUserPartEnd {
 	<#
 		.SYNOPSIS
 			Executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
+			On error set $script:userPartSuccess = $false
 	#>
 	[string]$script:installPhase = 'CustomInstallUserPartEnd'
 
