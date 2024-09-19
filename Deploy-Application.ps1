@@ -586,13 +586,15 @@ function Main {
 				[string]$userPartSuccess = 'true'
 				CustomInstallUserPartBegin
 				CustomInstallUserPartEnd
-				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components$($global:PackageConfig.PackageGUID)" -Name 'UserPartInstallSuccess' -Type 'String' -Value "$userPartSuccess"
+				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components\$($global:PackageConfig.PackageGUID)" -Name 'UserPartInstallSuccess' -Type 'String' -Value "$userPartSuccess"
 				## END OF USERPARTINSTALL
 			}
 			'UninstallUserPart' {
 				## START OF USERPARTUNINSTALL
+				[string]$userPartSuccess = 'true'
 				CustomUninstallUserPartBegin
 				CustomUninstallUserPartEnd
+				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components\$($global:PackageConfig.PackageGUID).uninstall" -Name 'UserPartUninstallSuccess' -Type 'String' -Value "$userPartSuccess"
 				## END OF USERPARTUNINSTALL
 			}
 		}
@@ -926,6 +928,7 @@ function CustomUninstallUserPartBegin {
 	<#
 		.SYNOPSIS
 			Executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
+			On error set $script:userPartSuccess = $false
 	#>
 	[string]$script:installPhase = 'CustomUninstallUserPartBegin'
 
@@ -938,6 +941,7 @@ function CustomUninstallUserPartEnd {
 	<#
 		.SYNOPSIS
 			Executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
+			On error set $script:userPartSuccess = $false
 	#>
 	[string]$script:installPhase = 'CustomUninstallUserPartEnd'
 
