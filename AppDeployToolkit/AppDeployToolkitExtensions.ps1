@@ -12571,8 +12571,10 @@ function Update-NxtXmlNode {
 					$stream.Close()
 				}
 				default {
-					[System.Text.Encoding]$saveEncoding = [System.Text.Encoding]::GetEncoding($intEncoding)
+					[System.Text.Encoding]$saveEncoding = [System.Text.Encoding]::$intEncoding
 					$stream = [System.IO.StreamWriter]::new($FilePath, $false, $saveEncoding)
+					$xml.Save($stream)
+					$stream.Close()
 				}
 				}
 				$message += " Using encoding [$intEncoding]."
