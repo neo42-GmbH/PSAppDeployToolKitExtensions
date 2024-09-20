@@ -64,6 +64,8 @@ jobs:
               if (Test-Path "$($root.FullName)\Tools") {
                 Compress-Archive -Path "$($root.FullName)\Tools" -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_$($_.Name).zip" -Update
               }
+            } elseif ($_.Name -eq 'Tools') {
+              ##do not zip the tools folder as it is already included in the PSAppdeployToolkit_with_neo42_extensions_Ver_ zip
             } else {
               Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
             }
