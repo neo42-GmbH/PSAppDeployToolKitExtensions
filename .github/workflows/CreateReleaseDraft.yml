@@ -61,6 +61,9 @@ jobs:
           Get-ChildItem -Path $root.FullName -Directory | ForEach-Object {
             if ($_.Name -match '^\d{4}\.\d{2}\.\d{2}\.\d+') {
               Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_$($_.Name).zip"
+              if (Test-Path "$($root.FullName)\Tools") {
+                Compress-Archive -Path "$($root.FullName)\Tools" -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_$($_.Name).zip" -Update
+              }
             } else {
               Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
             }
