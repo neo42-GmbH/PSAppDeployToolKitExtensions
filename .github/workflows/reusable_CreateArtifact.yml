@@ -63,7 +63,6 @@ jobs:
         run: |
           Move-Item -Force -Path "./PSAppDeployToolkit/Toolkit/AppDeployToolkit/" -Destination "./PSAppDeployToolkit/AppDeployToolkit/"
           Copy-Item -Force -Recurse -Exclude '.*' -Path "./ExtensionsSourceCode/*" -Destination "./PSAppDeployToolkit/"
-          Copy-Item -Force -Path "./ExtensionsSourceCode/.samples/neo42PackageConfig_ExampleWithValuesFullfilled.json" -Destination "./PSAppDeployToolkit/neo42PackageConfig.json"
 
       - name: copy-sample-and-tools
         shell: pwsh
