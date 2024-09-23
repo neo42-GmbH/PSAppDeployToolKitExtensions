@@ -358,7 +358,7 @@ function Update-NxtPSAdtPackage {
 			[string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
 			[PSCustomObject]$jsonContent = $content | ConvertFrom-Json
 			if ($null -eq $jsonContent.ConfigVersion){
-				$content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2023.10.31.1",
+				$content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2024.09.19.1",
 '
 				Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
 			}
@@ -572,7 +572,7 @@ function Update-NxtPSAdtPackage {
 [string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
 $PackagesToUpdatePath = $PackagesToUpdatePath.Trim("`"`'")
 $LatestVersionPath = $LatestVersionPath.Trim("`"`'")
-$ConfigVersion = "2023.10.31.1"
+$ConfigVersion = "2024.09.19.1"
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
 Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName -CompatibleVersion $CompatibleVersion -ConfigVersion $ConfigVersion
 }
