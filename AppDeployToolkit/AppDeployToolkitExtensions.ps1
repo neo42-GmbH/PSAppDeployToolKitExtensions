@@ -663,9 +663,20 @@ function Add-NxtXmlNode {
 			[string]$lastNodeChild = $NodePath.Substring($NodePath.LastIndexOf("/") + 1)
 			# Test for Parent Node
 			if ($false -eq (Test-NxtXmlNodeExists -FilePath $FilePath -NodePath $parentNodePath)) {
-				Add-NxtXmlNode -FilePath $FilePath -NodePath $parentNodePath
-				[xml]$xml = [xml]::new()
-				$xml.Load($FilePath)
+				Write-Log -Message "Parent node $parentNodePath does not exist. Creating it." -Source ${cmdletName}
+				[hashtable]$addNxtXmlNodeParams = @{
+					'FilePath' = $FilePath
+					'NodePath' = $parentNodePath
+				}
+				if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+					$addNxtXmlNodeParams['Encoding'] = $Encoding
+				}
+				if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+					$addNxtXmlNodeParams['DefaultEncoding'] = $DefaultEncoding
+				}
+				Add-NxtXmlNode @addNxtXmlNodeParams
+				[System.Xml.XmlDocument]$xml = [System.Xml.XmlDocument]::new()
+				$xml = Import-NxtXmlFile @importNxtXmlFileParams
 			}
 			[string]$message = "Adding node $NodePath to $FilePath"
 			# Create new node with the last part of the path
@@ -8417,7 +8428,7 @@ function Save-NxtXmlFile {
 		[string]
 		$Path,
 		[Parameter(Mandatory = $true)]
-		[xml]
+		[System.Xml.XmlDocument]
 		$Xml,
 		[Parameter(Mandatory = $false)]
 		[string]
@@ -11422,6 +11433,10 @@ function Test-NxtXmlNodeExists {
 		The XPath to the node that needs to be tested for existence. This parameter is mandatory.
 	.PARAMETER FilterAttributes
 		A hashtable of attributes to filter the node. Optional parameter.
+	.PARAMETER Encoding
+		The encoding of the XML file. Optional parameter.
+	.PARAMETER DefaultEncoding
+		The default encoding to use if the file's encoding cannot be auto-detected. Optional parameter.
 	.EXAMPLE
 		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
 		Tests for the existence of a node at the specified XPath in 'xmlstuff.xml'.
@@ -11446,7 +11461,15 @@ function Test-NxtXmlNodeExists {
 		$NodePath,
 		[Parameter(Mandatory = $false)]
 		[hashtable]
-		$FilterAttributes
+		$FilterAttributes,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
+		[string]
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -11457,8 +11480,16 @@ function Test-NxtXmlNodeExists {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
-		[xml]$xml = [xml]::new()
-		$xml.Load($FilePath)
+		[hashtable]$importNxtXmlFileParams = @{
+				Path = $FilePath
+		}
+		if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+			$importNxtXmlFileParams["Encoding"] = $Encoding
+		}
+		if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+			$importNxtXmlFileParams["DefaultEncoding"] = $DefaultEncoding
+		}
+		[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @importNxtXmlFileParams
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			if ( @($nodes | Where-Object {
@@ -12803,7 +12834,7 @@ function Update-NxtXmlNode {
 			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
 				$importNxtXmlFileParams["DefaultEncoding"] = $DefaultEncoding
 			}
-			[xml]$xml = Import-NxtXmlFile @importNxtXmlFileParams
+			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @importNxtXmlFileParams
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				$nodes = $nodes | Where-Object {
