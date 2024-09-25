@@ -3984,7 +3984,7 @@ function Get-NxtFileEncoding {
 		The Get-NxtFileEncoding function returns the estimated encoding of a file based on Byte Order Mark (BOM) detection. If the encoding cannot
 		be detected, it will default to the provided DefaultEncoding value or ASCII if no value is specified. This can be used to identify the
 		proper encoding for further file operations like reading or writing.
-		Returns the detected encoding or the specified default encoding if detection was not possible.
+		Returns the detected encoding or the specified default encoding if detection was not possible or file was not found.
 	.PARAMETER Path
 		Specifies the path to the file for which the encoding needs to be determined. This parameter is mandatory.
 	.PARAMETER DefaultEncoding
@@ -4016,15 +4016,27 @@ function Get-NxtFileEncoding {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		try {
-			[string]$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
-			if ($true -eq ([System.String]::IsNullOrEmpty($intEncoding))) {
-				[string]$intEncoding = $DefaultEncoding
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Message "File '$Path' does not exist." -Severity 2 -Source ${cmdletName}
+			if ($true -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
+				Write-Log -Message "No default encoding specified." -Severity 2 -Source ${cmdletName}
 			}
-			Write-Output $intEncoding
+			else {
+				Write-Log -Message "Returning default encoding '$DefaultEncoding'." -Severity 2 -Source ${cmdletName}
+				Write-Output $DefaultEncoding
+			}
 		}
-		catch {
-			Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		else {
+			try {
+				[string]$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
+				if ($true -eq ([System.String]::IsNullOrEmpty($intEncoding))) {
+					[string]$intEncoding = $DefaultEncoding
+				}
+				Write-Output $intEncoding
+			}
+			catch {
+				Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			}
 		}
 	}
 	End {
@@ -5783,6 +5795,10 @@ function Import-NxtXmlFile {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Message "File [$Path] not found." -Severity 3 -Source ${cmdletName}
+			throw "File [$Path] not found."
+		}
 		[String]$intEncoding = $Encoding
 		if ($true -eq [string]::IsNullOrEmpty($intEncoding)) {
 			try {
@@ -13530,7 +13546,7 @@ function Write-NxtXmlNode {
 			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
 			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
 			[hashtable]$saveNxtXmlFileParams = @{
-				'XmlDoc' = $xmlDoc
+				'Xml' = $xmlDoc
 				'Path' = $XmlFilePath
 			}
 			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
