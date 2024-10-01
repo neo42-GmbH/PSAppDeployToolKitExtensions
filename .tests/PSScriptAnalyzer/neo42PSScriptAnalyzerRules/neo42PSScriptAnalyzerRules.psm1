@@ -235,13 +235,17 @@ function Get-NxtPSDontUseEmptyStringLiterals {
 		$results = @()
 		foreach ($stringConstant in $stringConstants) {
 			$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
+			[string]$correctionContent = '[string]::Empty'
+			if ($stringConstant.Parent -is [System.Management.Automation.Language.CommandBaseAst] -and $stringConstant.Parent.GetCommandName() -eq 'Write-Output') {
+				$correctionContent = '([string]::Empty)'
+			}
 			$suggestedCorrections.add(
 				[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 					$stringConstant.Extent.StartLineNumber,
 					$stringConstant.Extent.EndLineNumber,
 					$stringConstant.Extent.StartColumnNumber,
 					$stringConstant.Extent.EndColumnNumber,
-					'[string]::Empty',
+					$correctionContent,
 					$MyInvocation.MyCommand.Definition,
 					'Use .NET string empty instead of empty string literal.'
 				)
