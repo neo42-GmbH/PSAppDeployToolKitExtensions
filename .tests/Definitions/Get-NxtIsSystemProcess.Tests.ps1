@@ -12,7 +12,7 @@ Describe "Get-NxtIsSystemProcess" {
         It "Should be true for system process" {
             Get-NxtIsSystemProcess -ProcessId 4 | Should -Be $true
         }
-        It "Should return true for user process" -Skip {
+        It "Should return true for user process" {
             if ($userProcessId) {
                 $result = Get-NxtIsSystemProcess -ProcessId $userProcessId
                 $result | Should -BeOfType 'bool'
