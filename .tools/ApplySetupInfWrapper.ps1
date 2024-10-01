@@ -17,13 +17,13 @@
 [CmdletBinding()]
 Param (
 	[string]
-	$localWrapperPath
+	$LocalWrapperPath
 )
 
 [string]$workingDir = $PSScriptRoot
 if ([string]::IsNullOrEmpty($workingDir) -or $true -ne [System.IO.Directory]::Exists($workingDir)) {
 	Write-Warning 'Failed to detect working directory. Abort!'
-	exit
+	exit 0
 }
 
 ## Define basic variables
@@ -52,7 +52,7 @@ $files | ForEach-Object {
 	if ($false -eq (Test-Path (Join-Path $workingDir $_))) {
 		Write-Warning "$_ does not exist. This script is designed to work with proper neo42 APD packages. Abort!"
 		Start-Sleep -Seconds 5
-		exit
+		exit 0
 	}
 }
 
@@ -69,7 +69,7 @@ Get-ChildItem -Path $workingDir | ForEach-Object {
 	}
 }
 
-if ([string]::IsNullOrEmpty($localWrapperPath)) {
+if ([string]::IsNullOrEmpty($LocalWrapperPath)) {
 	Write-Output 'No local wrapper path provided. Downloading the latest wrapper from neo42.'
 	## Download the latest wrapper from neo42
 	try {
@@ -95,25 +95,25 @@ if ([string]::IsNullOrEmpty($localWrapperPath)) {
 		if ($computedHash -ne $latestWrapper.WrapperHash) {
 			Write-Warning 'Wrapper hash validation failed. Download was not successful. Abort!'
 			Start-Sleep -Seconds 5
-			exit
+			exit 0
 		}
 	}
 	catch {
 		Write-Warning 'Failed to download the wrapper. Check your internet connection. Abort!'
 		Start-Sleep -Seconds 5
-		exit
+		exit 0
 	}
 }
-elseif ($true -eq [System.IO.File]::Exists($localWrapperPath)) {
-	Write-Output "Using local wrapper from '$localWrapperPath'"
+elseif ($true -eq [System.IO.File]::Exists($LocalWrapperPath)) {
+	Write-Output "Using local wrapper from '$LocalWrapperPath'"
 	try {
-		Copy-Item -Path $localWrapperPath -Destination $workingDir
-		$wrapperPath = $workingDir + '\' + (Split-Path $localWrapperPath -Leaf)
+		Copy-Item -Path $LocalWrapperPath -Destination $workingDir
+		$wrapperPath = $workingDir + '\' + (Split-Path $LocalWrapperPath -Leaf)
 	}
 	catch {
 		Write-Warning 'Failed to load the wrapper. Check the file path. Abort!'
 		Start-Sleep -Seconds 5
-		exit
+		exit 0
 	}
 }
 else {
