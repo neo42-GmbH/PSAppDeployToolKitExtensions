@@ -19,7 +19,7 @@ Describe "Get-NxtIsSystemProcess" {
                 $result | Should -Be $false
             }
             else {
-                Set-ItResult -Inconclusive -Message "No user process found"
+                Set-ItResult -Inconclusive -Because "No user process found"
             }
         }
     }
