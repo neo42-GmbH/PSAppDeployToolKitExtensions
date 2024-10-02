@@ -61,32 +61,36 @@
 .LINK
 	http://psappdeploytoolkit.com
 #>
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Deployment')]
 Param (
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
 	[string]
 	$DeploymentType = 'Install',
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
 	[ValidateSet('Interactive', 'Silent', 'NonInteractive')]
 	[string]
 	$DeployMode = 'Interactive',
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
 	[bool]
 	$AllowRebootPassThru = $true,
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
 	[switch]
 	$TerminalServerMode = $false,
 	[Parameter(Mandatory = $false)]
 	[switch]
 	$DisableLogging = $false,
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
 	[switch]
 	$SkipUnregister = $false,
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
 	[string]
-	$DeploymentSystem = [string]::Empty
+	$DeploymentSystem = [string]::Empty,
+	[Parameter(Mandatory = $false, ParameterSetName = 'Environment')]
+	[switch]
+	$LoadEnvironmentOnly = $false
 )
+
 #region Function Start-NxtProcess
 function Start-NxtProcess {
 	<#
@@ -139,7 +143,7 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 }
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
-if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
+if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit' -and $false -eq $LoadEnvironmentOnly) {
 	Write-Warning 'Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell.'
 	[string]$file = $MyInvocation.MyCommand.Path
 	# add all bound parameters to the argument list
@@ -964,4 +968,8 @@ function CustomEnd {
 #endregion
 
 ## execute the main function to start the process
+if ($true -eq $LoadEnvironmentOnly) {
+	Write-Log -Message 'Environment loaded only. Exiting script now...' -Source $deployAppScriptFriendlyName
+	exit 0
+}
 Main
