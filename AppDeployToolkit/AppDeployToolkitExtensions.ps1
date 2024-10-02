@@ -12340,11 +12340,11 @@ function Update-NxtTextInFile {
 		[Int]
 		$Count = [int]::MaxValue,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$Encoding,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$DefaultEncoding,
 		[Parameter()]
@@ -12357,8 +12357,8 @@ function Update-NxtTextInFile {
 	}
 	Process {
 		[String]$intEncoding = $Encoding
-		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq([String]::IsNullOrEmpty($intEncoding)))) {
-			[string]$intEncoding = "UTF8"
+		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq ([String]::IsNullOrEmpty($intEncoding)))) {
+			[string]$intEncoding = 'UTF8'
 		}
 		elseif (($true -eq (Test-Path -Path $Path)) -and ($true -eq ([String]::IsNullOrEmpty($intEncoding)))) {
 			try {
@@ -12368,17 +12368,17 @@ function Update-NxtTextInFile {
 				if ($false -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
 					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
-				if ($intEncoding -eq "UTF8") {
+				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+				if ($intEncoding -eq 'UTF8') {
 					[bool]$noBOMDetected = $true
 				}
-				elseif ($intEncoding -eq "UTF8withBom") {
+				elseif ($intEncoding -eq 'UTF8withBom') {
 					[bool]$noBOMDetected = $false
-					[string]$intEncoding = "UTF8"
+					[string]$intEncoding = 'UTF8'
 				}
 			}
 			catch {
-				[string]$intEncoding = "UTF8"
+				[string]$intEncoding = 'UTF8'
 			}
 		}
 		try {
@@ -12390,20 +12390,21 @@ function Update-NxtTextInFile {
 			}
 			[string]$content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
-			[array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
+			[array]$regexMatches = $pattern.Matches($content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
-				Write-Log -Message "Did not find anything to replace in file '$Path'."
+				Write-Log -Message "Did not find anything to replace in file [$Path]."
 				return
 			}
 			else {
-				Write-Log -Message "Replace found text in file '$Path'."
+				Write-Log -Message "Found $($regexMatches.Count) instances of search string [$SearchString] in file [$Path]."
 			}
 			[array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
 				$content = $content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
+				Write-Log -Message "Replaced [$($match.Value)] with [$ReplaceString] at index $($match.Index)"
 			}
-			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
-				[System.IO.File]::WriteAllLines($Path, $Content)
+			if ($noBOMDetected -and ($intEncoding -eq 'UTF8')) {
+				[System.IO.File]::WriteAllLines($Path, $content)
 			}
 			else {
 				$content | Set-Content @contentParams -NoNewline
