@@ -9,11 +9,12 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 	.OUTPUTS
 	[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
+	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.Token[]]
-		$TestTokens
+		$TestToken
 	)
 	Begin {
 		[string[]]$keywordList = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
@@ -24,13 +25,13 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 	}
 	Process {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = [System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]::new()
-		foreach ($token in $TestTokens) {
+		foreach ($token in $TestToken) {
 			## Check if the token is a keyword and if it is already in the correct case
 			if ($false -eq $token.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::Keyword)) {
 				continue
 			}
 			## Check if we have a suggestion, otherwise return nothing
-			if ($true -eq [string]::IsNullOrWhiteSpace($keywordHash[$token.Text]) -or $keywordHash[$token.Text] -ceq $token.Text) {
+			if ($false -eq $keywordHash.ContainsKey($token.Text) -or $keywordHash[$token.Text] -ceq $token.Text) {
 				continue
 			}
 			## Create a suggestion object
