@@ -65,9 +65,9 @@
 .LINK
 	http://psappdeploytoolkit.com
 #>
-[CmdletBinding(DefaultParameterSetName = 'Deployment')]
+[CmdletBinding()]
 Param (
-	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false)]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
 	[string]
 	$DeploymentType = 'Install',
@@ -94,7 +94,6 @@ Param (
 	[switch]
 	$SkipDeployment = ($env:NxtSkipDeployment -eq "True")
 )
-
 #region Function Start-NxtProcess
 function Start-NxtProcess {
 	<#
