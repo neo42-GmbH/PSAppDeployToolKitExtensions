@@ -9,7 +9,6 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 	.OUTPUTS
 	[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
