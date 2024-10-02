@@ -26,6 +26,10 @@
 .PARAMETER DeploymentSystem
 	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
 	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
+.PARAMETER LoadEnvironmentOnly
+	Loads the deployment environment only. Default is: $false.
+	This parameter is used to load the environment only and exit the script. This can come in if you only want to load the functions and variables of the script.
+	Note: This parameter can only be used in combination with the "DisableLogging" parameter.
 .EXAMPLE
 	powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; exit $LastExitCode }"
 .EXAMPLE
