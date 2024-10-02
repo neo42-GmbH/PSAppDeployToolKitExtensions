@@ -119,7 +119,7 @@ elseif ($true -eq [System.IO.File]::Exists($LocalWrapperPath)) {
 else {
 	Write-Warning 'Wrapper file not found. Check the file path. Abort!'
 	Start-Sleep -Seconds 5
-	exit
+	exit 0
 }
 
 ## Extract the archive to the working directory
@@ -160,7 +160,7 @@ if ($unmatchedPlaceholders.Count -gt 0) {
 	Write-Warning 'Not all placeholders have been replaced. Remaining placeholders are:'
 	$unmatchedPlaceholders | ForEach-Object { Write-Warning $_.Value }
 	Start-Sleep -Seconds 5
-	exit
+	exit 0
 }
 
 # Write the new inf content to disk
