@@ -26,10 +26,10 @@
 .PARAMETER DeploymentSystem
 	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
 	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
-.PARAMETER LoadEnvironmentOnly
+.PARAMETER SkipDeployment
 	Loads the deployment environment only. Default is: $false.
-	This parameter is used to load the environment only and exit the script. This can come in if you only want to load the functions and variables of the script.
-	Note: This parameter can only be used in combination with the "DisableLogging" parameter.
+	This parameter is used to skip the actual deployment process and only load the deployment environment. This can be useful for debugging purposes.
+	Note: The Trigger-DeploymentTypes and a x86 shell will cause a new process to be started.
 .EXAMPLE
 	powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; exit $LastExitCode }"
 .EXAMPLE
@@ -71,28 +71,28 @@ Param (
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
 	[string]
 	$DeploymentType = 'Install',
-	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false)]
 	[ValidateSet('Interactive', 'Silent', 'NonInteractive')]
 	[string]
 	$DeployMode = 'Interactive',
-	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false)]
 	[bool]
 	$AllowRebootPassThru = $true,
-	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false)]
 	[switch]
 	$TerminalServerMode = $false,
 	[Parameter(Mandatory = $false)]
 	[switch]
 	$DisableLogging = $false,
-	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false)]
 	[switch]
 	$SkipUnregister = $false,
-	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false)]
 	[string]
 	$DeploymentSystem = [string]::Empty,
-	[Parameter(Mandatory = $false, ParameterSetName = 'Environment')]
+	[Parameter(Mandatory = $false)]
 	[switch]
-	$LoadEnvironmentOnly = $false
+	$SkipDeployment = ($env:NxtSkipDeployment -eq "True")
 )
 
 #region Function Start-NxtProcess
@@ -147,7 +147,7 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 }
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
-if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit' -and $false -eq $LoadEnvironmentOnly) {
+if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
 	Write-Warning 'Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell.'
 	[string]$file = $MyInvocation.MyCommand.Path
 	# add all bound parameters to the argument list
@@ -972,8 +972,8 @@ function CustomEnd {
 #endregion
 
 ## execute the main function to start the process
-if ($true -eq $LoadEnvironmentOnly) {
-	Write-Log -Message 'Environment loaded only. Exiting script now...' -Source $deployAppScriptFriendlyName
+if ($true -eq $SkipDeployment) {
+	Write-Log -Message 'Not executing Main due to SkipDeployment being [True]' -Source $deployAppScriptFriendlyName
 	exit 0
 }
 Main
