@@ -310,7 +310,7 @@ function Get-NxtPSEnforceNewLineAtEndOfFile {
 		if ($null -ne $TestAst.Parent) {
 			return
 		}
-		[string]$lastLine = $TestAst.Extent.Text -split [System.Environment]::NewLine | Select-Object -Last 1
+		[string]$lastLine = ($TestAst.Extent.Text -split [System.Environment]::NewLine)[-1]
 		if ($true -eq [string]::IsNullOrWhiteSpace($lastLine)) {
 			return
 		}
