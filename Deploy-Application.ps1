@@ -29,7 +29,7 @@
 .PARAMETER SkipDeployment
 	Loads the deployment environment only. Default is: $false.
 	This parameter is used to skip the actual deployment process and only load the deployment environment. This can be useful for development and debugging purposes.
-	Note: The Trigger-DeploymentTypes and a x86 shell will cause a new process to be started.
+	Note: The Trigger-DeploymentTypes and a x86 shell will still cause a new process to be started.
 .EXAMPLE
 	powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; exit $LastExitCode }"
 .EXAMPLE
