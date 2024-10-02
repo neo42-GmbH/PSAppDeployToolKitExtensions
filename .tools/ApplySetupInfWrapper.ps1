@@ -23,7 +23,7 @@ Param (
 [string]$workingDir = $PSScriptRoot
 if ([string]::IsNullOrEmpty($workingDir) -or $true -ne [System.IO.Directory]::Exists($workingDir)) {
 	Write-Warning 'Failed to detect working directory. Abort!'
-	exit 0
+	exit 1
 }
 
 ## Define basic variables
@@ -52,7 +52,7 @@ $files | ForEach-Object {
 	if ($false -eq (Test-Path (Join-Path $workingDir $_))) {
 		Write-Warning "$_ does not exist. This script is designed to work with proper neo42 APD packages. Abort!"
 		Start-Sleep -Seconds 5
-		exit 0
+		exit 1
 	}
 }
 
@@ -95,13 +95,13 @@ if ([string]::IsNullOrEmpty($LocalWrapperPath)) {
 		if ($computedHash -ne $latestWrapper.WrapperHash) {
 			Write-Warning 'Wrapper hash validation failed. Download was not successful. Abort!'
 			Start-Sleep -Seconds 5
-			exit 0
+			exit 1
 		}
 	}
 	catch {
 		Write-Warning 'Failed to download the wrapper. Check your internet connection. Abort!'
 		Start-Sleep -Seconds 5
-		exit 0
+		exit 1
 	}
 }
 elseif ($true -eq [System.IO.File]::Exists($LocalWrapperPath)) {
@@ -113,13 +113,13 @@ elseif ($true -eq [System.IO.File]::Exists($LocalWrapperPath)) {
 	catch {
 		Write-Warning 'Failed to load the wrapper. Check the file path. Abort!'
 		Start-Sleep -Seconds 5
-		exit 0
+		exit 1
 	}
 }
 else {
 	Write-Warning 'Wrapper file not found. Check the file path. Abort!'
 	Start-Sleep -Seconds 5
-	exit 0
+	exit 1
 }
 
 ## Extract the archive to the working directory
@@ -160,7 +160,7 @@ if ($unmatchedPlaceholders.Count -gt 0) {
 	Write-Warning 'Not all placeholders have been replaced. Remaining placeholders are:'
 	$unmatchedPlaceholders | ForEach-Object { Write-Warning $_.Value }
 	Start-Sleep -Seconds 5
-	exit 0
+	exit 1
 }
 
 # Write the new inf content to disk
