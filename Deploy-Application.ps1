@@ -27,9 +27,9 @@
 	Can be used to specify the deployment system that is used to deploy the application. Default is: [string]::Empty.
 	Required by some "*-Nxt*" functions to handle deployment system specific tasks.
 .PARAMETER SkipDeployment
-	Loads the deployment environment only. Default is: $false.
-	This parameter is used to skip the actual deployment process and only load the deployment environment. This can be useful for development and debugging purposes.
-	Note: The Trigger-DeploymentTypes and a x86 shell will still cause a new process to be started.
+	Loads the deployment environment only and skips cleanup. Default is: $false.
+	This parameter is intended for development and debugging purposes only.
+	Note: Only 'Install', 'Uninstall' and 'Repair' deployment types are supported. No upgrade from x86 to x64 is performed.
 .EXAMPLE
 	powershell.exe -Command "& { & '.\Deploy-Application.ps1' -DeployMode 'Silent'; exit $LastExitCode }"
 .EXAMPLE
@@ -65,10 +65,12 @@
 .LINK
 	http://psappdeploytoolkit.com
 #>
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Deployment')]
 Param (
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
+	[Parameter(Mandatory = $false, ParameterSetName = 'SkipDeployment')]
+	[ValidateSet('Install', 'Uninstall', 'Repair')]
 	[string]
 	$DeploymentType = 'Install',
 	[Parameter(Mandatory = $false)]
@@ -90,9 +92,9 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[string]
 	$DeploymentSystem = [string]::Empty,
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, DontShow = $true, ParameterSetName = 'SkipDeployment')]
 	[switch]
-	$SkipDeployment = ($env:NxtSkipDeployment -eq "True")
+	$SkipDeployment = $false
 )
 #region Function Start-NxtProcess
 function Start-NxtProcess {
@@ -146,7 +148,7 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 }
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
-if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
+if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit' -and $false -eq $SkipDeployment) {
 	Write-Warning 'Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell.'
 	[string]$file = $MyInvocation.MyCommand.Path
 	# add all bound parameters to the argument list
@@ -973,6 +975,7 @@ function CustomEnd {
 ## execute the main function to start the process
 if ($true -eq $SkipDeployment) {
 	Write-Log -Message 'Not executing Main due to SkipDeployment being [True]' -Source $deployAppScriptFriendlyName
+	# Do not use Exit-Script here, because we want dont want clean up to be executed.
 	exit 0
 }
 Main
