@@ -7048,7 +7048,7 @@ function Remove-NxtDesktopShortcuts {
 	}
 	Process {
 		try {
-			foreach ($value in $DesktopShortcutsToDelete) {
+			foreach ($value in ($DesktopShortcutsToDelete | Where-Object {$false -eq [string]::IsNullOrWhiteSpace($_)})) {
 				Write-Log -Message "Removing desktop shortcut '$Desktop\$value'..." -Source ${cmdletName}
 				Remove-File -Path "$Desktop\$value"
 				Write-Log -Message "Desktop shortcut succesfully removed." -Source ${cmdletName}
