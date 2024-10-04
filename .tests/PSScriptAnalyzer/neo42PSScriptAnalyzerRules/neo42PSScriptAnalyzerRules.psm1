@@ -55,7 +55,7 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 					'SuggestedCorrections' = $suggestedCorrections
 				})
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -100,7 +100,7 @@ function Get-NxtPSVariablesInParamBlockShouldBeCapitalized {
 					})
 			}
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -139,7 +139,7 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 					})
 			}
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -183,7 +183,7 @@ function Get-NxtPSParamBlockVariablesShouldBeTyped {
 					})
 			}
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -236,7 +236,7 @@ function Get-NxtPSDontUseEmptyStringLiterals {
 					'SuggestedCorrections' = $suggestedCorrections
 				})
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -285,7 +285,7 @@ function Get-NxtPSEnforceConsistantConditionalStatements {
 				'SuggestedCorrections' = $suggestedCorrections
 			})
 	}
-	return $results
+	return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 }
 
 function Get-NxtPSEnforceNewLineAtEndOfFile {
@@ -339,13 +339,13 @@ function Get-NxtPSEnforceNewLineAtEndOfFile {
 				$lastLine
 			)
 		)
-		return [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-			'Message'              = 'There should be a new line at the end of the file'
-			'Extent'               = $extent
-			'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-			'Severity'             = 'Warning'
-			'SuggestedCorrections' = $suggestedCorrections
-		}
+		return @([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				'Message'              = 'There should be a new line at the end of the file'
+				'Extent'               = $extent
+				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+				'Severity'             = 'Warning'
+				'SuggestedCorrections' = $suggestedCorrections
+			})
 	}
 }
 
@@ -389,7 +389,7 @@ function Get-NxtPSIncompatibleFunctions {
 				})
 		}
 
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
