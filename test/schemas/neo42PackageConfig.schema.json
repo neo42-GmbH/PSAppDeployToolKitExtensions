@@ -574,11 +574,11 @@
 		},
 		"NoInvalidFileNameChars": {
 			"type": "string",
-			"pattern": "^[^\\\\/:*?\"<>|]*$|\\$\\(.*\\)"
+			"pattern": "(?=(?!^\\s+))^[^\\\/:*?\"<>|]+$|\\$\\(.*\\)"
 		},
 		"NoInvalidFileNameCharsWithWildcard": {
 			"type": "string",
-			"pattern": "^[^\\\\\/:?\"<>|]*$|\\$\\(.*\\)"
+			"pattern": "(?=(?!^\\s+))^[^\\\/:?\"<>|]+$|\\$\\(.*\\)"
 		},
 		"ExitCodeString": {
 			"type": "string",
