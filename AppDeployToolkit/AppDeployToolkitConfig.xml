@@ -181,13 +181,13 @@
         <InstallationUI_Timeout>6900</InstallationUI_Timeout>
         <!-- Time in seconds to automatically timeout installation dialogs. Default is 1 hour and 55 minutes so that dialogs timeout before SCCM times out. -->
         <InstallationUI_ExitCode>1618</InstallationUI_ExitCode>
-        <!-- Exit code used when a UI prompt times out or the user opts to defer. -->
+        <!-- Exit code used when a UI prompt times out or the user opts to defer. [Warning: This setting does not apply to NXT dialogs] -->
         <InstallationDefer_ExitCode>60012</InstallationDefer_ExitCode>
-        <!-- Exit code used when a user opts to defer. -->
+        <!-- Exit code used when a user opts to defer. [Warning: This setting does not apply to NXT dialogs] -->
         <InstallationPrompt_PersistInterval>60</InstallationPrompt_PersistInterval>
         <!-- Time in seconds after which the prompt should be repositioned centre screen when the -PersistPrompt parameter is used. Default is 60 seconds. -->
         <InstallationRestartPrompt_PersistInterval>600</InstallationRestartPrompt_PersistInterval>
-        <!-- Time in seconds after which the restart prompt should be re-displayed/repositioned when the -NoCountdown parameter is specified. Default is 600 seconds. -->
+        <!-- Time in seconds after which the restart prompt should be re-displayed/repositioned when the -NoCountdown parameter is specified. Default is 600 seconds. [Warning: This setting does not apply to NXT dialogs] -->
         <InstallationPromptToSave_Timeout>120</InstallationPromptToSave_Timeout>
         <!-- Time in seconds after which to re-prompt the user to close applications in case they ignore the prompt or they cancel the application's save prompt. -->
         <InstallationWelcomePrompt_DynamicRunningProcessEvaluation>true</InstallationWelcomePrompt_DynamicRunningProcessEvaluation>
