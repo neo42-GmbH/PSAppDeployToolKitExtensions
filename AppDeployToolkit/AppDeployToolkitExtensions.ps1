@@ -1519,6 +1519,50 @@ function ConvertFrom-NxtEncodedObject {
 	}
 }
 #endregion
+#region Function ConvertFrom-NxtEscapedString
+function ConvertFrom-NxtEscapedString {
+	<#
+	.SYNOPSIS
+		Converts an escaped string into a list of components.
+	.DESCRIPTION
+		The ConvertFrom-NxtEscapedString function converts an escaped string into a list of string components split by whitespace characters.
+		Helpful when you need specific parts of a string that are separated by whitespace characters and the string itself contains escaped characters.
+	.PARAMETER InputString
+		The escaped string that you want to convert into a list of components. This parameter is mandatory.
+	.EXAMPLE
+		ConvertFrom-NxtEscapedString -InputString 'C:\my\ program.exe -Argument1 "Value 1" -Argument2 ''Value 2'' -Argument3 Value\ 3'
+	.OUTPUTS
+		[string[]]
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0)]
+		[Alias('EscapedString')]
+		[string]
+		$InputString
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			[string[]]$result = $InputString -split '(?<!\\) (?=(?:[^"]|"[^"]*")*$)(?=(?:[^'']|''[^'']*'')*$)'
+			Write-Log "Converted escaped string to list of components with $($result.Count) members." -Source ${cmdletName}
+			Write-Output ($result -replace '^[''"]|[''"]$', [string]::Empty -replace '\\ ', ' ')
+		}
+		catch {
+			Write-Log -Message "Failed to convert escaped string to list of components. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to convert escaped string to list of components. `n$(Resolve-Error)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function ConvertFrom-NxtJsonC
 function ConvertFrom-NxtJsonC {
 	<#
