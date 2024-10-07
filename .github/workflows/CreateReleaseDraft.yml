@@ -33,6 +33,8 @@ jobs:
       - name: download-artifact
         id: download-artifact-release
         uses: actions/download-artifact@v4
+        with:
+          path: artifact
 
       - name: checkout-release-manager-config
         uses: actions/checkout@v4
@@ -56,8 +58,17 @@ jobs:
         run: |
           New-Item -Path "${{ github.workspace }}/components" -ItemType Directory -Force | Out-Null
           $root = Get-ChildItem -Path "${{ steps.download-artifact-release.outputs.download-path }}" | Select-Object -First 1
-          Get-ChildItem -Path $root.FullName -Exclude 'ExtensionsSourceCode' | ForEach-Object {
-            Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
+          Get-ChildItem -Path $root.FullName -Directory | ForEach-Object {
+            if ($_.Name -match '^\d{4}\.\d{2}\.\d{2}\.\d+') {
+              Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_$($_.Name).zip"
+              if (Test-Path "$($root.FullName)\Tools") {
+                Compress-Archive -Path "$($root.FullName)\Tools" -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_$($_.Name).zip" -Update
+              }
+            } elseif ($_.Name -eq 'Tools') {
+              ##do not zip the tools folder as it is already included in the PSAppdeployToolkit_with_neo42_extensions_Ver_ zip
+            } else {
+              Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
+            }
           }
 
       - name: update-milestones
@@ -127,22 +138,6 @@ jobs:
             $params += '--inputFilePath', '${{ github.workspace }}/prerelease.md'
             $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}-${{ github.ref_name }}-unstable'
           }
-
-          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
-          exit $proc.ExitCode
-
-      - name: comment-on-issues
-        if: ${{ github.ref_name == 'production' }}
-        shell: pwsh
-        run: |
-          $params = @(
-            'close',
-            '--owner', '${{ github.repository_owner }}',
-            '--repository', '${{ github.event.repository.name }}',
-            '--token', '${{ secrets.GITHUB_TOKEN }}',
-            '--milestone', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
-            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager'
-          )
 
           $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
           exit $proc.ExitCode
