@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 	This script performs the installation, repair or uninstallation of an application(s).
 .DESCRIPTION
@@ -52,8 +52,8 @@
 	# MODIFICATION COPYRIGHT #
 	Copyright (c) 2024 neo42 GmbH, Germany.
 
-	Version: ##REPLACEVERSION##
-	ConfigVersion: 2024.09.19.1
+	Version: 2024.09.11.40
+	ConfigVersion: 2023.10.31.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -87,25 +87,26 @@ Param (
 	[string]
 	$DeploymentSystem = [string]::Empty
 )
+#region Function Start-NxtProcess
 function Start-NxtProcess {
 	<#
-		.SYNOPSIS
-			Start a process by filename.
-		.DESCRIPTION
-			Replacement for the native Start-Process cmdlet using .NET process Object.
-		.PARAMETER FilePath
-			Path for the filename that should be called.
-		.PARAMETER Arguments
-			Arguments for the process.
-		.PARAMETER UseShellExecute
-			Specifies the UseShellExecute parameter. Default: $false.
-		.EXAMPLE
-			Start-NxtProcess -FileName "C:\Windows\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-File "C:\Users\labadmin\PSAppDeployToolKitExtensions\Deploy-Application.ps1""
-		.OUTPUTS
-			System.Diagnostics.Process
-		.LINK
-			https://neo42.de/psappdeploytoolkit
-	#>
+	.SYNOPSIS
+		Start a process by filename.
+	.DESCRIPTION
+		Replacement for the native Start-Process cmdlet using .NET process Object.
+	.PARAMETER FilePath
+		Path for the filename that should be called.
+	.PARAMETER Arguments
+		Arguments for the process.
+	.PARAMETER UseShellExecute
+		Specifies the UseShellExecute parameter. Default: $false.
+	.EXAMPLE
+		Start-NxtProcess -FileName "C:\Windows\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-File "C:\Users\labadmin\PSAppDeployToolKitExtensions\Deploy-Application.ps1""
+	.OUTPUTS
+		System.Diagnostics.Process
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+#>
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
@@ -121,63 +122,76 @@ function Start-NxtProcess {
 		$UseShellExecute = $false
 	)
 	Process {
-		[System.Diagnostics.ProcessStartInfo]$processStartInfo = [System.Diagnostics.ProcessStartInfo]::new($FilePath, $Arguments)
+		[System.Diagnostics.ProcessStartInfo]$processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+		$processStartInfo.FileName = $FilePath
+		$processStartInfo.Arguments = $Arguments
 		$processStartInfo.UseShellExecute = $UseShellExecute
-		Write-Output ([System.Diagnostics.Process]::Start($processStartInfo))
+		[System.Diagnostics.Process]$process = [System.Diagnostics.Process]::Start($processStartInfo)
+		Write-Output -InputObject $process
 	}
 }
-#region PSEnvironment
+#endregion
+## Only use system environment variables and modules during script execution
 if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart', 'InstallUserPart', 'UninstallUserPart')) {
 	foreach ($variable in [System.Environment]::GetEnvironmentVariables('User').Keys) {
 		[System.Environment]::SetEnvironmentVariable($variable, [System.Environment]::GetEnvironmentVariable($variable, 'Machine'), 'Process')
 	}
 }
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
-#endregion
-#region Asynchronous restart conditions
-if ($DeploymentType -eq 'TriggerInstallUserPart') {
-	Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart" | Out-Null
-	exit
-}
-elseif ($DeploymentType -eq 'TriggerUninstallUserPart') {
-	Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
-	exit
-}
-elseif ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
+## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
+if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit') {
 	Write-Warning 'Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell.'
+	[string]$file = $MyInvocation.MyCommand.Path
 	# add all bound parameters to the argument list
-	[string]$arguments = foreach ($key in $MyInvocation.BoundParameters.Keys) {
-		if ($MyInvocation.BoundParameters[$key] -is [switch] -or $MyInvocation.BoundParameters[$key] -is [bool]) {
-			Write-Output "-${key}:`$$($true -eq $MyInvocation.BoundParameters[$key])"
+	[string]$arguments = [string]::Empty
+	foreach ($item in $MyInvocation.BoundParameters.Keys) {
+		[System.Reflection.TypeInfo]$type = $($MyInvocation.BoundParameters[$item]).GetType()
+		if ($type -eq [switch]) {
+			if ($true -eq $MyInvocation.BoundParameters[$item]) {
+				$arguments += " -$item"
+			}
 		}
-		elseif ($MyInvocation.BoundParameters[$key] -is [string]) {
-			Write-Output "-$key `"$($MyInvocation.BoundParameters[$key])`""
+		elseif ($type -eq [string]) {
+			$arguments += " -$item `"$($MyInvocation.BoundParameters[$item])`""
 		}
-		else {
-			Write-Output "-$key $($MyInvocation.BoundParameters[$key])"
+		elseif ($type -eq [int]) {
+			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
 		}
-	} -join [string]::Empty
-	[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($MyInvocation.MyCommand.Path)`" $arguments"
+		elseif ($type -eq [bool]) {
+			$arguments += " -$item $($MyInvocation.BoundParameters[$item])"
+		}
+	}
+	if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")) {
+		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments "$arguments"
+	}
+	else {
+		[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$env:windir\SysNative\WindowsPowerShell\v1.0\powershell.exe" -Arguments " -ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -NonInteractive -File `"$file`"$arguments"
+	}
 	$process.WaitForExit()
-	$script:ExitCode = $process.ExitCode
 	exit $process.ExitCode
 }
-#endregion
-#region Variables
-## Variables: Exit Code
-[int32]$mainExitCode = 0
-## Variables: Script
-[string]$deployAppScriptFriendlyName = 'Deploy Application'
-[string]$deployAppScriptVersion = [string]'##REPLACEVERSION##'
-[string]$deployAppScriptDate = '02/05/2023'
-[hashtable]$deployAppScriptParameters = $PSBoundParameters
-## Variables: Environment
-[System.Management.Automation.InvocationInfo]$invocationInfo = $MyInvocation
-if (Test-Path -LiteralPath 'variable:HostInvocation') {
-	$invocationInfo = $HostInvocation
+## During UserPart execution, invoke self asynchronously to prevent logon freeze caused by active setup.
+switch ($DeploymentType) {
+	TriggerInstallUserPart {
+		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")) {
+			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments '-DeploymentType InstallUserPart'
+		}
+		else {
+			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType InstallUserPart" | Out-Null
+		}
+		exit
+	}
+	TriggerUninstallUserPart {
+		if ($true -eq (Test-Path -Path "$PSScriptRoot\DeployNxtApplication.exe")) {
+			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments '-DeploymentType UninstallUserPart'
+		}
+		else {
+			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"$($script:MyInvocation.MyCommand.Path)`" -DeploymentType UninstallUserPart" | Out-Null
+		}
+		exit
+	}
 }
-[string]$scriptDirectory = Split-Path -Path $invocationInfo.MyCommand.Definition -Parent
-## Global variables
+## Global default variables
 [string]$global:Neo42PackageConfigPath = "$PSScriptRoot\neo42PackageConfig.json"
 [string]$global:Neo42PackageConfigValidationPath = "$PSScriptRoot\neo42PackageConfigValidationRules.json"
 [string]$global:SetupCfgPath = "$PSScriptRoot\Setup.cfg"
@@ -197,23 +211,37 @@ if (Test-Path -LiteralPath 'variable:HostInvocation') {
 [string]$appVersion = $tempLoadPackageConfig.AppVersion
 [string]$global:AppLogFolder = "$env:ProgramData\$($tempLoadPackageConfig.AppRootFolder)Logs\$appVendor\$appName\$appVersion"
 Remove-Variable -Name 'tempLoadPackageConfig'
-#endregion
-#region Execution policy
-[xml]$tempLoadToolkitConfig = Get-Content "$global:AppDeployToolkitConfigPath" -Raw
-if ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy) {
+##* Do not modify section below =============================================================================================================================================
+#region DoNotModify
+## Set the script execution policy for this process
+[xml]$tempLoadToolkitConfig = Get-Content -Raw -Path "$global:AppDeployToolkitConfigPath"
+[string]$powerShellOptionsExecutionPolicy = $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy
+if (($true -eq [string]::IsNullOrEmpty($powerShellOptionsExecutionPolicy)) -or ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $powerShellOptionsExecutionPolicy)) {
 	Write-Error -Message "Invalid value for 'Toolkit_ExecutionPolicy' property in 'AppDeployToolkitConfig.xml'."
-	$script:ExitCode = 60014
 	exit 60014
 }
 try {
-	Set-ExecutionPolicy -ExecutionPolicy $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
+	Set-ExecutionPolicy -ExecutionPolicy $powerShellOptionsExecutionPolicy -Scope 'Process' -Force -ErrorAction 'Stop'
 }
 catch {
 	Write-Warning "Execution Policy did not match current and override was not successful. Is a GPO in place? Error: $($_.Exception.Message)"
 }
+Remove-Variable -Name 'powerShellOptionsExecutionPolicy'
 Remove-Variable -Name 'tempLoadToolkitConfig'
-#endregion
-## MARK: Source AppDeployToolkit
+## Variables: Exit Code
+[int32]$mainExitCode = 0
+## Variables: Script
+[string]$deployAppScriptFriendlyName = 'Deploy Application'
+[string]$deployAppScriptVersion = [string]'2024.09.11.40'
+[string]$deployAppScriptDate = '02/05/2023'
+[hashtable]$deployAppScriptParameters = $psBoundParameters
+## Variables: Environment
+[System.Management.Automation.InvocationInfo]$invocationInfo = $MyInvocation
+if (Test-Path -LiteralPath 'variable:HostInvocation') {
+	$invocationInfo = $HostInvocation
+}
+[string]$scriptDirectory = Split-Path -Path $invocationInfo.MyCommand.Definition -Parent
+## dot source the required AppDeploy Toolkit functions
 try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
 	if ($false -eq (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) {
@@ -234,11 +262,17 @@ catch {
 	}
 	Write-Error -Message "Module [$moduleAppDeployToolkitMain] failed to load: `n$($_.Exception.Message)`n `n$($_.InvocationInfo.PositionMessage)" -ErrorAction 'Continue'
 	## exit the script, returning the exit code to SCCM
-	$script:ExitCode = $mainExitCode
-	exit $mainExitCode
+	if (Test-Path -LiteralPath 'variable:HostInvocation') {
+		$script:ExitCode = $mainExitCode
+		exit
+	}
+	else {
+		exit $mainExitCode
+	}
 }
+#endregion
+##* Do not modify section above	=============================================================================================================================================
 
-## MARK: Initialize Environment
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
 	Initialize-NxtEnvironment
@@ -256,10 +290,22 @@ try {
 	Test-NxtPackageConfig
 
 	## Write variables to verbose channel to prevent warnings issued by PSScriptAnalyzer
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigValidationPath: $global:Neo42PackageConfigValidationPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] Neo42PackageConfigPath: $global:Neo42PackageConfigPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SetupCfgPath: $global:SetupCfgPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomSetupCfgPath: $global:CustomSetupCfgPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] DeployApplicationPath: $global:DeployApplicationPath"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] AppDeployToolkitExtensionsPath: $global:AppDeployToolkitExtensionsPath"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptVersion: $deployAppScriptVersion"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptDate: $deployAppScriptDate"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] deployAppScriptParameters: $deployAppScriptParameters"
 	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appDeployLogoBannerDark: $appDeployLogoBannerDark"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] SoftMigrationCustomResult (prefillvalue): $global:SoftMigrationCustomResult"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] UserPartDir: $global:UserPartDir"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVendor: $appVendor"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appName: $appName"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] appVersion: $appVersion"
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] AppLogFolder: $global:AppLogFolder"
 
 	##*===============================================
 	##* END VARIABLE DECLARATION
@@ -267,7 +313,7 @@ try {
 }
 catch {
 	[int32]$mainExitCode = 60001
-	[string]$mainErrorMessage = Resolve-Error
+	[string]$mainErrorMessage = "$(Resolve-Error)"
 	Write-Log -Message $mainErrorMessage -Severity 3 -Source $deployAppScriptFriendlyName
 	if ($DeploymentType -notin @('InstallUserPart', 'UninstallUserPart')) {
 		Clear-NxtTempFolder
@@ -350,8 +396,10 @@ function Main {
 	try {
 		Test-NxtConfigVersionCompatibility
 		CustomBegin
-		switch -RegEx ($DeploymentType) {
-			'Install|Repair' {
+		switch ($DeploymentType) {
+			{
+				($_ -eq 'Install') -or ($_ -eq 'Repair')
+			} {
 				CustomInstallAndReinstallAndSoftMigrationBegin
 				## START OF INSTALL
 				[string]$script:installPhase = 'Package-PreCleanup'
@@ -535,18 +583,14 @@ function Main {
 			}
 			'InstallUserPart' {
 				## START OF USERPARTINSTALL
-				[string]$userPartSuccess = 'true'
 				CustomInstallUserPartBegin
 				CustomInstallUserPartEnd
-				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components\$($global:PackageConfig.PackageGUID)" -Name 'UserPartInstallSuccess' -Type 'String' -Value "$userPartSuccess"
 				## END OF USERPARTINSTALL
 			}
 			'UninstallUserPart' {
 				## START OF USERPARTUNINSTALL
-				[string]$userPartSuccess = 'true'
 				CustomUninstallUserPartBegin
 				CustomUninstallUserPartEnd
-				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components\$($global:PackageConfig.PackageGUID).uninstall" -Name 'UserPartUninstallSuccess' -Type 'String' -Value "$userPartSuccess"
 				## END OF USERPARTUNINSTALL
 			}
 		}
@@ -561,7 +605,7 @@ function Main {
 	}
 	catch {
 		## unhandled exception occured
-		Write-Log -Message (Resolve-Error) -Severity 3 -Source $deployAppScriptFriendlyName
+		Write-Log -Message "$(Resolve-Error)" -Severity 3 -Source $deployAppScriptFriendlyName
 		Exit-NxtScriptWithError -ErrorMessage 'The installation/uninstallation aborted with an error message!' -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
 	}
 }
@@ -854,7 +898,6 @@ function CustomInstallUserPartBegin {
 	<#
 		.SYNOPSIS
 			Executes at the beginning of InstallUserPart if the script is started with the value 'InstallUserPart' for parameter 'DeploymentType'
-			On error set $script:userPartSuccess = $false
 	#>
 	[string]$script:installPhase = 'CustomInstallUserPartBegin'
 
@@ -867,7 +910,6 @@ function CustomInstallUserPartEnd {
 	<#
 		.SYNOPSIS
 			Executes at the end of InstallUserPart if the script is executed started with the value 'InstallUserPart' for parameter 'DeploymentType'
-			On error set $script:userPartSuccess = $false
 	#>
 	[string]$script:installPhase = 'CustomInstallUserPartEnd'
 
@@ -880,7 +922,6 @@ function CustomUninstallUserPartBegin {
 	<#
 		.SYNOPSIS
 			Executes at the beginning of UnInstallUserPart if the script is started with the value 'UnInstallUserPart' for parameter 'DeploymentType'
-			On error set $script:userPartSuccess = $false
 	#>
 	[string]$script:installPhase = 'CustomUninstallUserPartBegin'
 
@@ -893,7 +934,6 @@ function CustomUninstallUserPartEnd {
 	<#
 		.SYNOPSIS
 			Executes at the end of UnInstallUserPart if the script is executed started with the value 'UninstallUserPart' for parameter 'DeploymentType'
-			On error set $script:userPartSuccess = $false
 	#>
 	[string]$script:installPhase = 'CustomUninstallUserPartEnd'
 
@@ -917,3 +957,4 @@ function CustomEnd {
 
 ## execute the main function to start the process
 Main
+
