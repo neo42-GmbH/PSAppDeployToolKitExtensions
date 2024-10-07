@@ -61,7 +61,7 @@
 					"description": "File based soft migration conditions. This is mandatory.",
 					"properties": {
 						"FullNameToCheck": {
-							"type": "string",
+							"$ref": "#/$defs/NoInvalidFileNameChars",
 							"description": "Points to the file to check for soft migration. If VersionToCheck is not set, the file must only exist."
 						},
 						"VersionToCheck": {
@@ -336,7 +336,8 @@
 		},
 		"InstFile": {
 			"description": "Mandatory name of the installation file. By default the file is expected in the package's Files folder.",
-			"$ref": "#/$defs/NoInvalidFileNameChars"
+			"$ref": "#/$defs/NoInvalidFileNameChars",
+			"minLength": 1
 		},
 		"InstPara": {
 			"type": "string",
@@ -574,11 +575,11 @@
 		},
 		"NoInvalidFileNameChars": {
 			"type": "string",
-			"pattern": "(?=(?!^\\s+))^[^\\\/:*?\"<>|]+$|\\$\\(.*\\)"
+			"pattern": "(?=(?!^\\s+))^[^\\\/:*?\"<>|]+$|\\$\\(.*\\)|^$"
 		},
 		"NoInvalidFileNameCharsWithWildcard": {
 			"type": "string",
-			"pattern": "(?=(?!^\\s+))^[^\\\/:?\"<>|]+$|\\$\\(.*\\)"
+			"pattern": "(?=(?!^\\s+))^[^\\\/:?\"<>|]+$|\\$\\(.*\\)|^$"
 		},
 		"ExitCodeString": {
 			"type": "string",
