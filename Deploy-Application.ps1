@@ -87,6 +87,7 @@ Param (
 	[string]
 	$DeploymentSystem = [string]::Empty
 )
+#region Function Start-NxtProcess
 function Start-NxtProcess {
 	<#
 		.SYNOPSIS
@@ -126,6 +127,7 @@ function Start-NxtProcess {
 		Write-Output ([System.Diagnostics.Process]::Start($processStartInfo))
 	}
 }
+#endregion
 #region PSEnvironment
 if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart', 'InstallUserPart', 'UninstallUserPart')) {
 	foreach ($variable in [System.Environment]::GetEnvironmentVariables('User').Keys) {
@@ -213,7 +215,7 @@ catch {
 }
 Remove-Variable -Name 'tempLoadToolkitConfig'
 #endregion
-## MARK: Source AppDeployToolkit
+#region Source AppDeployToolkit
 try {
 	[string]$moduleAppDeployToolkitMain = "$scriptDirectory\AppDeployToolkit\AppDeployToolkitMain.ps1"
 	if ($false -eq (Test-Path -LiteralPath $moduleAppDeployToolkitMain -PathType 'Leaf')) {
@@ -237,8 +239,8 @@ catch {
 	$script:ExitCode = $mainExitCode
 	exit $mainExitCode
 }
-
-## MARK: Initialize Environment
+#endregion
+#region Initialize Environment
 try {
 	[string]$script:installPhase = 'Initialize-Environment'
 	Initialize-NxtEnvironment
@@ -274,7 +276,8 @@ catch {
 	}
 	Exit-Script -ExitCode $mainExitCode
 }
-
+#endregion
+#region Main
 function Main {
 	<#
 	.SYNOPSIS
@@ -565,6 +568,7 @@ function Main {
 		Exit-NxtScriptWithError -ErrorMessage 'The installation/uninstallation aborted with an error message!' -ErrorMessagePSADT $($Error[0].Exception.Message) -MainExitCode 60001
 	}
 }
+#endregion
 
 #region entry point functions to perform custom tasks during script run
 ## custom functions are sorted by occurrence order in the main function.
