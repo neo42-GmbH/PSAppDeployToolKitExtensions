@@ -231,7 +231,7 @@
 		},
 		"AppRootFolder": {
 			"description": "Base name of the package cache folder on client system, storing persistent files for installed packages",
-			"minLength": 1,
+			"minLengpth": 1,
 			"default": "neo42Pkgs",
 			"$ref": "#/$defs/NoInvalidFileNameChars"
 		},
@@ -553,7 +553,7 @@
 	"$defs": {
 		"InstallMethod": {
 			"type": "string",
-			"description": "May define a well-known type of setup for which default installation routines will be used. Specify none if no default installation routines are available. Refer to the documentation for more information.",
+			"description": "May define a well-known type of setup for which default routines and parameters will be used. Specify none if no default installation routines are available. Refer to the documentation for more information.",
 			"enum": [
 				"MSI",
 				"Inno Setup",
