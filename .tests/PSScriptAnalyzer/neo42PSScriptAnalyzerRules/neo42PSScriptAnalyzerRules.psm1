@@ -135,11 +135,12 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 				[System.Management.Automation.Language.NamedBlockAst]$namedBlockAst = $paramBlockAst.Parent | Select-Object -ExpandProperty $block -ErrorAction SilentlyContinue
 				if ($null -eq $namedBlockAst) {
 					continue
-    }
+				}
 				# Get All capitalized variables that are not automatically defined
 				[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $namedBlockAst.FindAll({
 						$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
 						$args[0].VariablePath.UserPath -cmatch '^[A-Z]' -and
+						$true -Ieq $args[0].VariablePath.IsUnscopedVariable -and
 						$args[0].VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'false', 'foreach', 'HOME', 'Host', 'input', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'MyInvocation', 'HostInvocation', 'NestedPromptLevel', 'null', 'PID', 'PROFILE', 'PSBoundParameters', 'PSCmdlet', 'PSCommandPath', 'PSCulture', 'PSDebugContext', 'PSEdition', 'PSHOME', 'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender', 'ShellId', 'StackTrace', 'switch', 'this', 'true')
 					}, $false)
 

@@ -605,6 +605,7 @@ function Main {
 			Unblock-NxtAppExecution
 		}
 		CustomEnd
+		[string]$script:installPhase = 'Package-Finish'
 		Exit-Script -ExitCode $rebootRequirementResult.MainExitCode
 	}
 	catch {
