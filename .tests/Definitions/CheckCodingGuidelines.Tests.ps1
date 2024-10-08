@@ -88,7 +88,6 @@ Describe "Coding Guidelines" -ForEach @(
                     $capitalizedVariables | ForEach-Object {
                         $_ | Should -BeIn $paramBlockAst.Parameters.Name.VariablePath.UserPath -Because "the capitalized variable '$($_.VariablePath.UserPath)' is not defined in the param block (line $($_.Extent.StartLineNumber))"
                     }
-
                 }
             }
         }
