@@ -19,7 +19,7 @@
 	Copyright (c) 2024 neo42 GmbH, Germany.
 
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2023.10.31.1
+	ConfigVersion: 2024.09.19.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -425,7 +425,7 @@ function Add-NxtProcessPathVariable {
 	.DESCRIPTION
 		Adds a path to the processes PATH environment variable. If the path already exists, it will not be added again.
 		Empty values will be removed.
-	.PARAMETER AddPath
+	.PARAMETER Path
 		Path to be added to the processes PATH environment variable.
 		Has to be a valid path. The path value will automatically be expanded.
 	.PARAMETER AddToBeginning
@@ -442,7 +442,7 @@ function Add-NxtProcessPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -453,33 +453,40 @@ function Add-NxtProcessPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
-			$false -eq [string]::IsNullOrEmpty($_)
+		[string[]]$pathEntries = @(((Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
+					$false -eq [string]::IsNullOrWhiteSpace($_)
+				}))
+		if ($false -eq [System.IO.Path]::IsPathRooted($Path)) {
+			Write-Log -Message "The path [$($Path)] that was supposed be added is not rooted." -Severity 3 -Source ${cmdletName}
+			throw "The path [$($Path)] that was supposed be added is not rooted."
 		}
 		try {
-			$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
+			[System.IO.DirectoryInfo]$dirInfo = [System.IO.DirectoryInfo]::new($Path)
 		}
 		catch {
-			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			throw
+			Write-Log -Message "The path [$($Path)] that was supposed be added is not a valid path." -Severity 3 -Source ${cmdletName}
+			throw "The path [$($Path)] that was supposed be added is not a valid path."
 		}
-		if ($false -eq (Test-Path -Path $Path)) {
-			Write-Log "The path '$Path' that will be added does not exist." -Severity 2 -Source ${cmdletName}
+		if ($false -eq $dirInfo.Exists) {
+			Write-Log "The path [$($dirInfo.FullName)] that will be added does not exist." -Severity 2 -Source ${cmdletName}
 		}
-		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')) {
+		if ($pathEntries.Count -eq 0) {
+			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ($dirInfo.FullName + ";")
+			Write-Log "Added [$($Path.FullName)] to to an empty processes PATH variable." -Serverity 2 -Source ${cmdletName}
+		}
+		elseif ($pathEntries.TrimEnd('\') -inotcontains $dirInfo.FullName.TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
-				$pathEntries.Add("$Path") | Out-Null
-				Write-Log "Appended '$Path' to the processes PATH variable." -Source ${cmdletName}
+				$pathEntries = $pathEntries + @($dirInfo.FullName)
+				Write-Log "Appending [$($dirInfo.FullName)] to the processes PATH variable." -Source ${cmdletName}
 			}
 			else {
-				$pathEntries.Insert(0,"$Path") | Out-Null
-				Write-Log "Prepended '$Path' to the processes PATH variable." -Source ${cmdletName}
+				$pathEntries = @($dirInfo.FullName) + $pathEntries
+				Write-Log "Prepending [$($dirInfo.FullName)] to the processes PATH variable." -Source ${cmdletName}
 			}
-			[string]$pathString = ($pathEntries -join ";") + ";"
-			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
+			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value (($pathEntries -join ";") + ";")
 		}
 		else {
-			Write-Log "Path entry '$Path' already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
+			Write-Log "Path entry [$($dirInfo.FullName)] already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -495,7 +502,7 @@ function Add-NxtSystemPathVariable {
 	.DESCRIPTION
 		Adds a path to the systems PATH environment variable. If the path already exists, it will not be added again.
 		Empty values will be removed.
-	.PARAMETER AddPath
+	.PARAMETER Path
 		Path to be added to the systems PATH environment variable.
 		Has to be a valid path. The path value will automatically be expanded.
 	.PARAMETER AddToBeginning
@@ -512,7 +519,7 @@ function Add-NxtSystemPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path,
 		[Parameter(Mandatory = $false)]
 		[bool]
@@ -523,33 +530,40 @@ function Add-NxtSystemPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
-			$false -eq [string]::IsNullOrEmpty($_)
-		}
-		try {
-			$Path = (New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path -ErrorAction Stop).FullName
-		}
-		catch {
-			Write-Log -Message "'$Path' is not a valid Path. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		[string[]]$pathEntries = @(((Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') | Where-Object {
+					$false -eq [string]::IsNullOrWhiteSpace($_)
+				}))
+		if ($false -eq [System.IO.Path]::IsPathRooted($Path)) {
+			Write-Log -Message "The path [$($Path)] that was supposed be added is not rooted." -Severity 3 -Source ${cmdletName}
 			throw
 		}
-		if ($false -eq (Test-Path -Path $Path)) {
-			Write-Log "The path '$Path' that will be added does not exist." -Severity 2 -Source ${cmdletName}
+		try {
+			[System.IO.DirectoryInfo]$dirInfo = [System.IO.DirectoryInfo]::new($Path)
 		}
-		if ($pathEntries.toLower().TrimEnd('\') -notcontains $Path.ToLower().TrimEnd('\')) {
+		catch {
+			Write-Log -Message "The path [$($Path)] that was supposed be added is not a valid path." -Severity 3 -Source ${cmdletName}
+			throw
+		}
+		if ($false -eq $dirInfo.Exists) {
+			Write-Log "The path [$($dirInfo.FullName)] that will be added does not exist." -Severity 2 -Source ${cmdletName}
+		}
+		if ($pathEntries.Count -eq 0) {
+			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value ($dirInfo.FullName + ";")
+			Write-Log "Added [$($dirInfo.FullName)] to an empty systems PATH variable." -Severity 2 -Source ${cmdletName}
+		}
+		elseif ($pathEntries.TrimEnd('\') -inotcontains $dirInfo.FullName.TrimEnd('\')) {
 			if ($false -eq $AddToBeginning) {
-				$pathEntries.Add("$Path") | Out-Null
-				Write-Log "Appended '$Path' to the systems PATH variable." -Source ${cmdletName}
+				$pathEntries = $pathEntries + @($dirInfo.FullName)
+				Write-Log "Appending [$($dirInfo.FullName)] to the systems PATH variable." -Source ${cmdletName}
 			}
 			else {
-				$pathEntries.Insert(0,"$Path") | Out-Null
-				Write-Log "Prepended '$Path' to the systems PATH variable." -Source ${cmdletName}
+				$pathEntries = @($dirInfo.FullName) + $pathEntries
+				Write-Log "Prepending [$($dirInfo.FullName)] to the systems PATH variable." -Source ${cmdletName}
 			}
-			[string]$pathString = ($pathEntries -join ";") + ";"
-			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
+			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value (($pathEntries -join ";") + ";")
 		}
 		else {
-			Write-Log "Path entry '$Path' already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
+			Write-Log "Path entry [$($dirInfo.FullName)] already exists in the PATH variable." -Severity 2 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -802,16 +816,14 @@ function Close-NxtBlockExecutionWindow {
 		).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
 			Write-Log "The informational window of BlockExecution functionality will be closed now ..."
-			## Stop-NxtProcess does not yet support Id as Parameter
-			Stop-Process -Id $blockexecutionWindowId -Force
+			Stop-NxtProcess -Id $blockexecutionWindowId
 		}
 		[int[]]$blockexecutionWindowId = (Get-Process powershell | Where-Object {
 			$_.Path -like "*\BlockExecution\DeoployNxtApplication.exe"}
 		).Id
 		if ($false -eq ([string]::IsNullOrEmpty($blockexecutionWindowId))) {
 			Write-Log "The background process of BlockExecution functionality will be closed now ..."
-			## Stop-NxtProcess does not yet support Id as Parameter
-			Stop-Process -Id $blockexecutionWindowId -Force
+			Stop-NxtProcess -Id $blockexecutionWindowId
 		}
 	}
 	End {
@@ -1504,6 +1516,59 @@ function ConvertFrom-NxtEncodedObject {
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+#region Function ConvertFrom-NxtJsonC
+function ConvertFrom-NxtJsonC {
+	<#
+	.SYNOPSIS
+		Converts a JSON string with comments into a PowerShell object.
+	.DESCRIPTION
+		The ConvertFrom-NxtJsonC function converts a JSON string with comments into a PowerShell object.
+		Comments are removed from the JSON string before conversion and are not included in the resulting object.
+	.PARAMETER InputObject
+		The JSON string with comments that you want to convert into a PowerShell object.
+		This value can be piped to the function and is mandatory.
+	.EXAMPLE
+		"{
+			// This is a comment
+			"Name": "John",
+			"Age": 30
+		}" | ConvertFrom-NxtJsonC
+	.OUTPUTS
+		[System.Management.Automation.PSCustomObject]
+	.NOTES
+		Starting with PowerShell 6.0, the ConvertFrom-Json cmdlet supports JSON strings with comments.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0)]
+		[string]
+		$InputObject
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			if ($PSVersionTable.PSVersion.Major -ge 6) {
+				Write-Output ($InputObject | ConvertFrom-Json -ErrorAction Stop)
+			}
+			else {
+				Write-Output ($InputObject -replace '("(\\.|[^\\"])*")|\/\*[\S\s]*?\*\/|\/\/.*', '$1' | ConvertFrom-Json -ErrorAction Stop)
+			}
+		}
+		catch {
+			Write-Log -Message "Failed to convert JSON string with comments to PowerShell object. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to convert JSON string with comments to PowerShell object. `n$(Resolve-Error)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -2599,7 +2664,7 @@ function Execute-NxtMSI {
 			($UninstallKeyIsDisplayName -or $UninstallKeyContainsWildCards -or ($false -eq [string]::IsNullOrEmpty($DisplayNamesToExclude))) -and
 			$Action -eq "Uninstall"
 		) {
-			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $Path -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+			[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $Path -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod "MSI"
 			if ($installedAppResults.Count -eq 0) {
 				Write-Log -Message "Found no Application with UninstallKey [$Path], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Skipping action [$Action]..." -Severity 2 -Source ${CmdletName}
 				return
@@ -3686,7 +3751,7 @@ function Get-NxtCurrentDisplayVersion {
 		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
 		We reccommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
-	.PARAMETER DeploymentMethod
+	.PARAMETER InstallMethod
 		Defines the installer type any applied installer specific logic. Currently only applicable for MSI installers.
 	.EXAMPLE
 		Get-NxtCurrentDisplayVersion -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
@@ -3719,7 +3784,7 @@ function Get-NxtCurrentDisplayVersion {
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentMethod
+		$InstallMethod
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -3733,7 +3798,7 @@ function Get-NxtCurrentDisplayVersion {
 			[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = New-Object -TypeName PSADTNXT.NxtDisplayVersionResult
 			try {
 				Write-Log -Message "Detect currently set DisplayVersion value of package application..." -Source ${CmdletName}
-				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $DeploymentMethod
+				[array]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $InstallMethod
 				if ($installedAppResults.Count -eq 0) {
 					Write-Log -Message "Found no uninstall key with UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Skipped detecting a DisplayVersion." -Severity 2 -Source ${CmdletName}
 					$displayVersionResult.DisplayVersion = [string]::Empty
@@ -4066,11 +4131,10 @@ function Get-NxtInstalledApplication {
 		We recommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
 	.PARAMETER Is64Bit
-		Determines which registry hives to search in.
+		The operating system architecture to use for the search. Defaults to PSADT main script's $Is64Bit variable. This is not intended to be used directly.
 		Defaults to PSADT Main Script's $Is64Bit variable.
-	.PARAMETER DeploymentMethod
+	.PARAMETER InstallMethod
 		Filter the results by the installer type. Currently only "MSI" is supported.
-		There is no default value.
 	.EXAMPLE
 		Get-NxtInstalledApplication -UninstallKey "{12345678-A123-45B6-CD7E-12345FG6H78I}"
 	.EXAMPLE
@@ -4100,12 +4164,12 @@ function Get-NxtInstalledApplication {
 		[Parameter(Mandatory = $false)]
 		[string[]]
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $false, DontShow = $true)]
 		[bool]
 		$Is64Bit = $Is64Bit,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentMethod
+		$InstallMethod
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -4140,7 +4204,7 @@ function Get-NxtInstalledApplication {
 					$installedAppResults = $installedAppResults | Where-Object DisplayName -ne $displayNameToExclude
 					Write-Log -Message "Excluded [$displayNameToExclude] from the results above." -Source ${CmdletName}
 				}
-				if ("MSI" -eq $DeploymentMethod) {
+				if ("MSI" -eq $InstallMethod) {
 					$installedAppResults = $installedAppResults | Where-Object {
 						[string]$productRegKeyPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\"
 						if ($false -eq $_.Is64BitApplication -and $true -eq $Is64Bit) {
@@ -4905,6 +4969,9 @@ function Get-NxtRegisterOnly {
 	.PARAMETER RegPackagesKey
 		Defines the name of the registry key keeping track of all packages delivered by this packaging framework.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER InstallMethod
+		Specifies the installation method of the software package.
+		Defaults to the corresponding value from the PackageConfig object.
 	.EXAMPLE
 		Get-NxtRegisterOnly
 		This example detects if the target application is already installed and verifies conditions for a soft migration based on the values from the PackageConfig object.
@@ -4965,7 +5032,10 @@ function Get-NxtRegisterOnly {
 		$RegPackagesKey = $global:PackageConfig.RegPackagesKey,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AppVersion = $global:PackageConfig.AppVersion
+		$AppVersion = $global:PackageConfig.AppVersion,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$InstallMethod = $global:PackageConfig.UninstallMethod
 	)
 	if ($false -eq $RegisterPackage) {
 		Write-Log -Message 'Package should not be registered. Performing an (re)installation depending on found application state...' -Source ${cmdletName}
@@ -5009,7 +5079,7 @@ function Get-NxtRegisterOnly {
 		}
 		else {
 			[string]$currentlyDetectedDisplayVersion = (
-					Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+					Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $InstallMethod
 				).DisplayVersion
 			if ($true -eq [string]::IsNullOrEmpty($DisplayVersion)) {
 				Write-Log -Message 'DisplayVersion in this package config is $null or empty. SoftMigration not possible.' -Source ${cmdletName}
@@ -6041,6 +6111,9 @@ function Install-NxtApplication {
 	.PARAMETER InstallMethod
 		Defines the type of the installer used in this package.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallMethod
+		Defines the type of the uninstaller used in this package. Used for filtering the correct uninstaller from the registry.
+		Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER PreSuccessCheckTotalSecondsToWaitFor
 		Timeout in seconds the function waits and checks for the condition to occur.
 		Defaults to the corresponding value from the PackageConfig object.
@@ -6105,6 +6178,9 @@ function Install-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InstallMethod = $global:PackageConfig.InstallMethod,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$UninstallMethod = $global:PackageConfig.UninstallMethod,
 		[Parameter(Mandatory = $false)]
 		[int]
 		$PreSuccessCheckTotalSecondsToWaitFor = $global:packageConfig.TestConditionsPreSetupSuccessCheck.Install.TotalSecondsToWaitFor,
@@ -6230,7 +6306,7 @@ function Install-NxtApplication {
 					[int]$logMessageSeverity = 3
 				}
 				else {
-					if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
+					if ($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $UninstallMethod)) {
 						$installResult.ErrorMessage = "Installation of '$AppName' failed. ErrorLevel: $($installResult.ApplicationExitCode)"
 						$installResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 						$installResult.Success = $false
@@ -7580,7 +7656,7 @@ function Remove-NxtProcessPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path
 	)
 	Begin {
@@ -7588,12 +7664,16 @@ function Remove-NxtProcessPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') |
+		[string[]]$pathEntries = @(((Get-NxtProcessEnvironmentVariable -Key 'PATH').Split(';') |
 			Where-Object {
 				$false -eq [string]::IsNullOrEmpty($_) -and
 				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\')
-			}
+			}))
 		try {
+			if ($pathEntries.Count -eq 0) {
+				Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ""
+				Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable. Note: PATH environment variable is now empty." -Severity 2 -Source ${cmdletName}
+			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtProcessEnvironmentVariable -Key "PATH" -Value $pathString
 			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
@@ -7627,7 +7707,7 @@ function Remove-NxtSystemPathVariable {
 	[CmdletBinding()]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[String]
+		[string]
 		$Path
 	)
 	Begin {
@@ -7635,12 +7715,16 @@ function Remove-NxtSystemPathVariable {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		[System.Collections.ArrayList]$pathEntries = (Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') |
+		[string[]]$pathEntries = @(((Get-NxtSystemEnvironmentVariable -Key 'PATH').Split(';') |
 			Where-Object {
 				$false -eq [string]::IsNullOrEmpty($_) -and
-				$_.ToLower().TrimEnd('\') -ne $Path.ToLower().TrimEnd('\')
-			}
+				$_.TrimEnd('\') -ine $Path.TrimEnd('\')
+			}))
 		try {
+			if ($pathEntries.Count -eq 0) {
+				Set-NxtProcessEnvironmentVariable -Key "PATH" -Value ""
+				Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable. Note: PATH environment variable is now empty." -Severity 2 -Source ${cmdletName}
+			}
 			[string]$pathString = ($pathEntries -join ";") + ";"
 			Set-NxtSystemEnvironmentVariable -Key "PATH" -Value $pathString
 			Write-Log -Message "Removed all occurences of path '$Path' from PATH environment variable."
@@ -7899,7 +7983,7 @@ function Repair-NxtApplication {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$RepairLogPath = $configMSILogDir
-		)
+	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
@@ -7918,7 +8002,7 @@ function Repair-NxtApplication {
 			[int]$logMessageSeverity = 3
 		}
 		else {
-			$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude).ProductCode
+			$executeNxtParams["Path"] = (Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod "MSI").ProductCode
 			if ($true -eq ([string]::IsNullOrEmpty($executeNxtParams.Path))) {
 				$repairResult.ErrorMessage = "Repair function could not run for provided parameter 'UninstallKey=$UninstallKey'. The expected msi setup of the application seems not to be installed on system!"
 				$repairResult.Success = $null
@@ -7980,7 +8064,7 @@ function Repair-NxtApplication {
 						($executionResult.ExitCode -notin ($AcceptedInstallRebootCodes -split ",")) -and
 						($repairResult.MainExitCode -notin 0,1641,3010)
 					) -or
-					($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod "MSI")) ) {
+					($false -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod "MSI")) ) {
 					$repairResult.ErrorMessage = "Repair of '$AppName' failed. ErrorLevel: $($repairResult.ApplicationExitCode)"
 					$repairResult.Success = $false
 					[int]$logMessageSeverity = 3
@@ -8607,6 +8691,7 @@ function Set-NxtProcessEnvironmentVariable {
 		[string]
 		$Key,
 		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
 		[string]
 		$Value
 	)
@@ -8617,10 +8702,10 @@ function Set-NxtProcessEnvironmentVariable {
 	Process {
 		try {
 			[System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Process)
-			Write-Log -Message "Process the environment variable with key '$Key' and value '{$Value}'." -Source ${cmdletName}
+			Write-Log -Message "Process the environment variable with key [$Key] and value [$Value]." -Source ${cmdletName}
 		}
 		catch {
-			Write-Log -Message "Failed to set the process environment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to set the process environment variable with key [$Key] and value [$Value]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -8761,11 +8846,16 @@ function Set-NxtSetupCfg {
 				foreach ( $xmlSectionSubValue in ($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.ChildNodes.Name | Where-Object {
 					$_ -ne "#comment"
 				}) ) {
-					if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
+					if ($true -eq [string]::IsNullOrEmpty($global:SetupCfg.$xmlSection.$xmlSectionSubValue)) {
 						if ($null -eq $global:SetupCfg.$xmlSection) {
-							[hashtable]$global:SetupCfg.$xmlSection = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
+							$global:SetupCfg.$xmlSection = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 						}
-						[hashtable]$global:SetupCfg.$xmlSection.add("$($xmlSectionSubValue)", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
+						if ($null -eq $global:SetupCfg.$xmlSection.$xmlSectionSubValue) {
+							$global:SetupCfg.$xmlSection.add("$xmlSectionSubValue", "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)")
+						}
+						else {
+							$global:SetupCfg.$xmlSection.$xmlSectionSubValue = "$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)"
+						}
 						Write-Log -Message "Set undefined necessary global object value [`$global:SetupCfg.$($xmlSection).$($xmlSectionSubValue)] with predefined default content: [$($xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$xmlSection.$xmlSectionSubValue)]" -Severity 2 -Source ${CmdletName}
 					}
 				}
@@ -8801,6 +8891,7 @@ function Set-NxtSystemEnvironmentVariable {
 		[string]
 		$Key,
 		[Parameter(Mandatory = $true)]
+		[AllowEmptyString()]
 		[string]
 		$Value
 	)
@@ -8811,10 +8902,10 @@ function Set-NxtSystemEnvironmentVariable {
 	Process {
 		try {
 			[System.Environment]::SetEnvironmentVariable($Key, $Value, [System.EnvironmentVariableTarget]::Machine)
-			Write-Log -Message "Set a system environment variable with key '$Key' and value '{$Value}'." -Source ${cmdletName}
+			Write-Log -Message "Set a system environment variable with key [$Key] and value [$Value]." -Source ${cmdletName}
 		}
 		catch {
-			Write-Log -Message "Failed to set the system environment variable with key '$Key' and value '{$Value}'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			Write-Log -Message "Failed to set the system environment variable with key [$Key] and value [$Value]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 		}
 	}
 	End {
@@ -9401,7 +9492,7 @@ function Show-NxtInstallationWelcome {
 						}
 						else {
 							Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${CmdletName}
-							Stop-Process -Name $runningProcess.ProcessName -Force -ErrorAction 'SilentlyContinue'
+							Stop-NxtProcess -Name $runningProcess.ProcessName
 						}
 					}
 					if ($processIdToIgnore -gt 0) {
@@ -9461,7 +9552,7 @@ function Show-NxtInstallationWelcome {
 				} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
 				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
 				$runningProcesses.ProcessName | ForEach-Object -Process {
-					Stop-Process -Name $_ -Force -ErrorAction 'SilentlyContinue'
+					Stop-NxtProcess -Name $_
 				}
 				Start-Sleep -Seconds 2
 			}
@@ -9487,7 +9578,7 @@ function Show-NxtInstallationWelcome {
 
 								if ($false -eq $notesNSDProcess.WaitForExit(10000)) {
 									Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${CmdletName}
-									Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
+									Stop-NxtProcess -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
 								}
 							}
 						}
@@ -9498,7 +9589,7 @@ function Show-NxtInstallationWelcome {
 						Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${CmdletName}
 
 						#  Force NSD process to stop in case the previous command was not successful
-						Stop-Process -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
+						Stop-NxtProcess -Name 'NSD'
 					}
 				}
 			}
@@ -9812,6 +9903,8 @@ function Stop-NxtProcess {
 		The name of the process to stop. This parameter is mandatory. It is interpreted as a WQL query if the IsWql parameter is set to $true.
 	.PARAMETER IsWql
 		Indicates if the 'Name' parameter should be interpreted as a WQL query. Default is $false.
+	.PARAMETER Id
+		The process ID to stop. This parameter is an alternative to the 'Name' parameter and cannot be used with IsWql
 	.EXAMPLE
 		Stop-NxtProcess -Name "Notepad"
 		This example stops all instances of Notepad.
@@ -9823,69 +9916,73 @@ function Stop-NxtProcess {
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(DefaultParameterSetName = 'Name')]
 	Param (
-
-		[Parameter(Mandatory = $true)]
+		[Parameter(Mandatory = $true, ParameterSetName = 'Name')]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$Name,
-		[Parameter(Mandatory = $false)]
-		[ValidateNotNullOrEmpty()]
+		[Parameter(Mandatory = $false, ParameterSetName = 'Name')]
 		[bool]
-		$IsWql
+		$IsWql,
+		[Parameter(Mandatory = $true, ParameterSetName = 'Id')]
+		[Alias('ProcessId')]
+		[int]
+		$Id
 	)
 	Begin {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		Write-Log -Message "Stopping process with '$Name'..." -Source ${cmdletName}
+		if ($PSCmdlet.ParameterSetName -eq 'Id') {
+			[string]$processQuery = "ProcessId = `"$Id`""
+		}
+		elseif ($PSCmdlet.ParameterSetName -eq 'Name' -and $false -eq $IsWql) {
+			[string]$processQuery = "Name = `"$(${Name} -replace "\.exe$", [string]::Empty).exe`""
+		}
+		else {
+			[string]$processQuery = "$Name"
+		}
+
+		Write-Log -Message "Stopping process that match query [$processQuery]" -Source ${cmdletName}
 		try {
-			if ( $false -eq $IsWql ) {
-				[string]$processNameWithoutExtension = $Name -replace "\.exe$", [string]::Empty
-				[System.Diagnostics.Process[]]$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue
-				[int]$processCountForLogging = $processes.Count
-				if ($processes.Count -ne 0) {
-					Stop-Process -Name $processNameWithoutExtension -Force
-				}
-				## Test after 10ms if the process(es) is/are still running, if it is still in the list it is ok if it has exited
-				Start-Sleep -Milliseconds 10
-				$processes = Get-Process -Name $processNameWithoutExtension -ErrorAction SilentlyContinue | Where-Object {
-					$false -eq $_.HasExited
-				}
-				if ($processes.Count -ne 0) {
-					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-				}
-				else {
-					Write-Log -Message "$processCountForLogging processes were successfully stopped." -Source ${cmdletName}
-				}
+			[ciminstance[]]$processes = Get-CimInstance -Class Win32_Process -Filter $processQuery -ErrorAction Stop
+		}
+		catch {
+			Write-Log -Message "Failed to retrieve process(es) with query [$processQuery]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			return
+		}
+		if ($processes.Count -gt 0) {
+			Write-Log -Message "Found [$($processes.Count)] process(es) matching query [$processQuery]." -Source ${cmdletName}
+		}
+		else {
+			Write-Log -Message "No process(es) found matching query [$processQuery]." -Source ${cmdletName}
+			return
+		}
+		$processes | ForEach-Object {
+			[ciminstance]$process = $_
+			try {
+				Invoke-CimMethod -InputObject $process -MethodName 'Terminate' -ErrorAction Stop | Out-Null
 			}
-			else {
-				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $Name -ErrorAction Stop | ForEach-Object {
-					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
-				}
-				[int]$processCountForLogging = $processes.Count
-				if ($processes.Count -ne 0) {
-					$processes | Stop-Process -Force
-				}
-				## Test after 1s if the process(es) are still running, if it is still in the list it is ok if it has exited.
-				Start-Sleep -Milliseconds 10
-				[System.Diagnostics.Process[]]$processes = Get-CimInstance -Class Win32_Process -Filter $Name -ErrorAction Stop | ForEach-Object {
-					Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
-				} | Where-Object {
-					$false -eq $_.HasExited
-				}
-				if ($processes.Count -ne 0) {
-					Write-Log -Message "Failed to stop process. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			catch {
+				# Not found is not an error in this case as the process might have been stopped by another process
+				if ($_.Exception -is [Microsoft.Management.Infrastructure.CimException] -and $_.Exception.NativeErrorCode -eq "NotFound") {
+					return
 				}
 				else {
-					Write-Log -Message "$processCountForLogging processes were successfully stopped." -Source ${cmdletName}
+					Write-Log -Message "Failed to stop process with ID [$($process.ProcessId)]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 				}
 			}
 		}
-		catch {
-			Write-Log -Message "Failed to stop process(es) with $Name. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		if ($null -ne (Get-Process -Id $processes.ProcessId -ErrorAction SilentlyContinue | Where-Object {
+					$false -eq $_.HasExited
+				})
+		) {
+			Write-Log -Message "Found running process(es) after sending stop signal."
+		}
+		else {
+			Write-Log -Message "[$($processes.Count)] process(es) were successfully stopped." -Source ${cmdletName}
 		}
 	}
 	End {
@@ -9910,8 +10007,8 @@ function Switch-NxtMSIReinstallMode {
 		List of display names to exclude from the search. Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
 	.PARAMETER DisplayVersion
 		The expected version of the installed MSI application. Defaults to the 'DisplayVersion' from the PackageConfig object.
-	.PARAMETER InstallMethod
-		Type of installer used for the package, applicable to MSI installers. Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER UninstallMethod
+		Method used to uninstall the application. Used to filter the correct application form the registry. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER ReinstallMode
 		Defines how a reinstallation should be performed. Defaults to the corresponding value from the PackageConfig object. Especially for msi setups this might be switched after display version check inside of this function
 	.PARAMETER MSIInplaceUpgradeable
@@ -9948,7 +10045,7 @@ function Switch-NxtMSIReinstallMode {
 		$DisplayVersion = $global:PackageConfig.DisplayVersion,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InstallMethod = $global:PackageConfig.InstallMethod,
+		$UninstallMethod = $global:PackageConfig.UninstallMethod,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$ReinstallMode = $global:PackageConfig.ReinstallMode,
@@ -9967,20 +10064,20 @@ function Switch-NxtMSIReinstallMode {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		if ("MSI" -eq $InstallMethod) {
+		if ("MSI" -eq $UninstallMethod) {
 			if ($true -eq ([string]::IsNullOrEmpty($DisplayVersion))) {
 				Write-Log -Message "No 'DisplayVersion' provided. Processing msi setup without double check ReinstallMode for an expected msi display version!. Returning [$ReinstallMode]." -Severity 2 -Source ${cmdletName}
 			}
 			else {
-				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude
+				[PSADTNXT.NxtDisplayVersionResult]$displayVersionResult = Get-NxtCurrentDisplayVersion -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $UninstallMethod
 				if ($false -eq $displayVersionResult.UninstallKeyExists) {
-					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${CmdletName}
+					Write-Log -Message "No installed application was found and no 'DisplayVersion' was detectable!" -Source ${cmdletName}
 					throw "No repair function executable under current conditions!"
 				}
 				elseif ($true -eq [string]::IsNullOrEmpty($displayVersionResult.DisplayVersion)) {
 					### Note: By default an empty value 'DisplayVersion' for an installed msi setup may not be possible unless it was manipulated manually.
 					Write-Log -Message "Detected 'DisplayVersion' is empty. Wrong installation results may be possible." -Severity 2 -Source ${cmdletName}
-					Write-Log -Message "Exact check for an installed msi application not possible! But found application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$ReinstallMode]." -Source ${CmdletName}
+					Write-Log -Message "Exact check for an installed msi application not possible! But found application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$ReinstallMode]." -Source ${cmdletName}
 				}
 				else {
 					Write-Log -Message "Processing msi setup: double check ReinstallMode for expected msi display version [$DisplayVersion]." -Source ${cmdletName}
@@ -10048,13 +10145,13 @@ function Test-NxtAppIsInstalled {
 		Specifies whether the UninstallKey includes wildcards. Defaults to the corresponding value from the PackageConfig object.
 	.PARAMETER DisplayNamesToExclude
 		Lists the display names to be excluded from the search. Defaults to the corresponding value from the PackageConfig object.
-	.PARAMETER DeploymentMethod
+	.PARAMETER InstallMethod
 		Defines the installer type any applied installer specific logic. Currently only applicable for MSI installers.
 	.EXAMPLE
 		Test-NxtAppIsInstalled -UninstallKey "This Application_is1"
 		Checks if an application with the uninstall key "This Application_is1" is installed. The values not specified explicitly are taken from the PackageConfig.json.
 	.EXAMPLE
-		Test-NxtAppIsInstalled -UninstallKey "*paper*" -DisplayNamesToExclude @() -UninstallKeyContainsWildCards $true -UninstallKeyIsDisplayName $false -DeploymentMethod Setup
+		Test-NxtAppIsInstalled -UninstallKey "*paper*" -DisplayNamesToExclude @() -UninstallKeyContainsWildCards $true -UninstallKeyIsDisplayName $false -InstallMethod Setup
 		Searches for any installed application with a display name containing s"paper" using wildcards.
 	.OUTPUTS
 		System.Boolean.
@@ -10077,7 +10174,7 @@ function Test-NxtAppIsInstalled {
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$DeploymentMethod
+		$InstallMethod
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -10085,13 +10182,13 @@ function Test-NxtAppIsInstalled {
 	}
 	Process {
 		Write-Log -Message "Checking if application is installed..." -Source ${CmdletName}
-		[PSCustomObject[]]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $DeploymentMethod
+		[PSCustomObject[]]$installedAppResults = Get-NxtInstalledApplication -UninstallKey $UninstallKey -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $InstallMethod
 		if ($installedAppResults.Count -eq 0) {
 			[bool]$approvedResult = $false
 			Write-Log -Message "Found no application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Source ${CmdletName}
 		}
 		elseif ($installedAppResults.Count -gt 1) {
-			if ("MSI" -eq $DeploymentMethod) {
+			if ("MSI" -eq $InstallMethod) {
 				## This case maybe resolved with a foreach-loop in future.
 				[bool]$approvedResult = $false
 				Write-Log -Message "Found more than one application matching UninstallKey [$UninstallKey], UninstallKeyIsDisplayName [$UninstallKeyIsDisplayName], UninstallKeyContainsWildCards [$UninstallKeyContainsWildCards] and DisplayNamesToExclude [$($DisplayNamesToExclude -join "][")]. Returning [$approvedResult]." -Severity 3 -Source ${CmdletName}
@@ -10871,6 +10968,13 @@ function Test-NxtSetupCfg {
 		}
 		foreach ($section in $ini.GetEnumerator()) {
 			foreach ($parameter in $section.Value.GetEnumerator()) {
+				if (
+					$true -eq [string]::IsNullOrEmpty($parameter.Value.Value) -and
+					$null -ne $xmlConfigFile.AppDeployToolkit_Config.SetupCfg_Parameters.$($section.Key).$($parameter.Key)
+				) {
+					Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has no value. Skipping validation due to default value present in XML." -Source ${cmdletName} -Severity 2
+					continue
+				}
 				if ($true -eq [string]::IsNullOrEmpty($parameter.Value.Comments)) {
 					Write-Log "Parameter [$($parameter.Key)] in section [$($section.Key)] has no validation metadata. Skipping validation." -Source ${cmdletName} -Severity 2
 					continue
@@ -11043,10 +11147,10 @@ function Test-NxtXmlNodeExists {
 		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
 		Tests for the existence of a node at the specified XPath in 'xmlstuff.xml'.
 	.EXAMPLE
-		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2")
+		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{name="NewNode2"}
 		Tests for a node with a specific attribute value in 'xmlstuff.xml'.
 	.EXAMPLE
-		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @("name=NewNode2","other=1232")
+		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -FilterAttributes @{name="NewNode2"; "other=1232"}
 		Tests for a node with multiple attribute filters in 'xmlstuff.xml'.
 	.OUTPUTS
 		System.Boolean.
@@ -11078,15 +11182,17 @@ function Test-NxtXmlNodeExists {
 		$xml.Load($FilePath)
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
-			foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-				if ($true -eq ([string]::IsNullOrEmpty(($nodes | Where-Object {
-					$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
-				} )))) {
-					Write-Output $false
-					return
-				}
+			if ( @($nodes | Where-Object {
+					[psobject]$filterNode = $_
+						$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
+								$filterNode.GetAttribute($_.Key) -eq $_.Value
+							})
+					}).Count -gt 0 ) {
+				Write-Output $true
 			}
-			Write-Output $true
+			else {
+				Write-Output $false
+			}
 		}
 		else {
 			if ($false -eq [string]::IsNullOrEmpty($nodes)) {
@@ -11348,7 +11454,7 @@ function Uninstall-NxtApplication {
 				}
 			}
 			else {
-				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $UninstallMethod) ) {
+				if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $UninstallMethod) ) {
 					[bool]$appIsInstalled=$true
 				}
 				else {
@@ -11451,7 +11557,7 @@ function Uninstall-NxtApplication {
 						[int]$logMessageSeverity = 3
 					}
 					else {
-						if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -DeploymentMethod $internalInstallerMethod)) {
+						if ($true -eq $(Test-NxtAppIsInstalled -UninstallKey "$UninstallKey" -UninstallKeyIsDisplayName $UninstallKeyIsDisplayName -UninstallKeyContainsWildCards $UninstallKeyContainsWildCards -DisplayNamesToExclude $DisplayNamesToExclude -InstallMethod $internalInstallerMethod)) {
 							$uninstallResult.ErrorMessage = "Uninstallation of '$AppName' failed. ErrorLevel: $($uninstallResult.ApplicationExitCode)"
 							$uninstallResult.ErrorMessagePSADT = $($Error[0].Exception.Message)
 							$uninstallResult.Success = $false
@@ -12401,12 +12507,12 @@ function Update-NxtXmlNode {
 			$xml.Load($FilePath)
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
-				foreach ($filterAttribute in $FilterAttributes.GetEnumerator()) {
-					$nodes = $nodes | Where-Object {
-						$_.GetAttribute($filterAttribute.Key) -eq $filterAttribute.Value
-					}
+				$nodes = $nodes | Where-Object {
+					[psobject]$filterNode = $_
+					$false -notin ($FilterAttributes.GetEnumerator() | ForEach-Object {
+							$filterNode.GetAttribute($_.Key) -eq $_.Value
+						})
 				}
-				Clear-Variable filterAttribute
 			}
 			## Ensure we only have one node
 			if ($nodes.count -gt 1) {
