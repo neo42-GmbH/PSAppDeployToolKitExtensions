@@ -608,15 +608,17 @@ function Get-NxtProcessTree {
 				$Parents
 			)
 			## Get related processes
-			[System.Management.ManagementObject[]]$relatedProcesses = $ProcessTable | Where-Object {
-				$_.ProcessId -ne $Root.ProcessId -and (
-					($true -eq $Parents -and $_.ProcessId -eq $Root.ParentProcessId) -or
-					($false -eq $Parents -and $_.ParentProcessId -eq $Root.ProcessId)
-				)
-			}
+			[System.Management.ManagementObject[]]$relatedProcesses = @(
+				$ProcessTable | Where-Object {
+					$_.ProcessId -ne $Root.ProcessId -and (
+						($true -eq $Parents -and $_.ProcessId -eq $Root.ParentProcessId) -or
+						($false -eq $Parents -and $_.ParentProcessId -eq $Root.ProcessId)
+					)
+				}
+			)
 			## Recurse to get related processes of related processes
 			foreach ($process in $relatedProcesses) {
-				& $getRelatedProcesses -Root $process -ProcessTable $ProcessTable -Parents:$Parents
+				$relatedProcesses += & $getRelatedProcesses -Root $process -ProcessTable $ProcessTable -Parents:$Parents
 			}
 			Write-Output $relatedProcesses
 		}
@@ -636,9 +638,7 @@ function Get-NxtProcessTree {
 		if ($true -eq $IncludeParentProcesses) {
 			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes -Parents
 		}
-		Write-Output $processTree | Where-Object {
-			$null -ne $_
-		}
+		Write-Output $processTree
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
