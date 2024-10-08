@@ -8476,7 +8476,6 @@ function Save-NxtXmlFile {
 		try {
 			$stream = [System.IO.StreamWriter]::new($Path, $false, $fileEncoding)
 			$xml.Save($stream)
-			$stream.Close()
 			$message = "Saving XML Using encoding [$intEncoding]."
 			Write-Log -Message $message -Source ${cmdletName}
 		}
