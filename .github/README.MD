@@ -2,9 +2,24 @@
 The neo42 PSAppDeployToolkit Extensions integrate and extend a globally respected and regorously tested deployment framework. We use them to align the PSADT with the vision neo42 has for packaging.
 We hope, by providing public access, you can profit off of our work and help us improve ourselfs.
 
-neo42 GmbH makes use of these extensions to provide its packages and services.
+neo42 GmbH makes use of these extensions to provide its service [Application Package Depot](https://neo42.de/application-package-depot).
 
 # Why use the neo42 Extensions
+### Configuration based installers
+__No code approach to writing new packages__
+
+Don't want to write new code for every simple package? Make use of our Deploy-Application.ps1 which can be controlled solely by its corresponding neo42PackageConfig.json. The standardized sequence of the main function remains unchanged for each package!
+
+_The included schema for the json file and examples will help you write your first package in no time._
+
+__Custom* functions__
+
+You are not limited to the values contained within in the configuration file but you can also write customizings in the intended Custom* functions without loosing the framework we provide. The custom* functions offer many different entry points to intervene in the main function process and perform individual actions for each package if required.
+
+__Automation first__
+
+In addition to the neo42PackageConfig.json file, which is very easy to change automatically, we have also made sure that automatic updates are possible in many other aspects. For example, in this [script](https://github.com/neo42-GmbH/ManagementService-PowerShell/blob/master/Pipelines/Add-ContentToCustomFunction.ps1) we have demonstrated how to use Custom* functions for your own content. Your own product-specific code can be automatically transferred to new packages at any time!
+
 ### New functionalities
 __The neo42 Extensions offer over 100+ new functions__
 * They simplify interacting with complex data types like XML
@@ -13,16 +28,19 @@ __The neo42 Extensions offer over 100+ new functions__
 * Makes interacting with system security related functions easy. For example setting ACLs in simple but powerful functions
 * They extend PSADT functions with better error handling, more functionality or altered defaults that are compatible with neo42 packages
 * Make use of observer functions that handle waiting for processes, files, registry keys and others easy
+* Extended ui for interactions with the user that also supports dark mode
 
 _All functions are tested to work in different deployment system contextes like Empirum, Intune or Workspace One_
 
-### Configuration based installers
-__No code approach to writing new packages__
+__Integrated installer handling__
 
-Don't want to write new code for every simple package? Make use of our Deploy-Application.ps1 which can be controlled solely by its corresponding neo42PackageConfig.json
-The included schema and examples will help you write your first package in no time.
+Based on our long experience, we have been able to integrate the silent parameters and handling for the most common installer types into the extension. As a rule, no further parameters or code adaptations are necessary for the following types:
+* MSI
+* InnoSetup
+* BitRock
+* Nullsoft
 
-_You are not limited to the values contained within in the configuration file but you can also write customizings in the intended Custom* functions without loosing the framework we provide._
+_Apart from these installers, any other installer can be addressed via the predefined fields in the configuration file._
 
 # Build instructions
 _Note: We always recommend obtaining the [latest production release](github.com//releases](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases)/latest) from the releases page._
@@ -47,3 +65,4 @@ This code is distributed WITHOUT ANY WARRANTY; without even the implied warranty
 # Links
 * https://github.com/PSAppDeployToolkit/PSAppDeployToolkit
 * https://www.gnu.org/licenses/licenses.html
+* [neo42 Extensions wiki](https://portal.neo42.de/Documentation/66d825612756cd61dea8ba8c)

@@ -358,7 +358,7 @@ function Update-NxtPSAdtPackage {
 			[string]$content = Get-Content -Raw -Path $PackageToUpdatePath\neo42PackageConfig.json
 			[PSCustomObject]$jsonContent = $content | ConvertFrom-Json
 			if ($null -eq $jsonContent.ConfigVersion){
-				$content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2023.10.31.1",
+				$content = Add-ContentBeforeTag -Content $content -StartTag '  "ScriptAuthor"' -ContentToInsert '  "ConfigVersion": "2024.09.19.1",
 '
 				Set-Content -Path "$PackageToUpdatePath\neo42PackageConfig.json" -Value $content -NoNewline
 			}
@@ -460,7 +460,7 @@ function Update-NxtPSAdtPackage {
 			## rename : "-DeploymentMethod" to "-InstallMethod" in case it is in the same line as Get-NxtInstalledApplication, Test-NxtInstalledApplication or Get-NxtCurrentDisplayVersion"
 			[string]$content = Get-Content -Raw -Path "$PackageToUpdatePath\Deploy-Application.ps1"
 			foreach ($line in ($content -split "`n")){
-				if ($line -match "Get-NxtInstalledApplication|Test-NxtInstalledApplication|Get-NxtCurrentDisplayVersion" -and $line -match "-DeploymentMethod") {
+				if ($line -match "Get-NxtInstalledApplication|Test-NxtInstalledApplication|Get-NxtCurrentDisplayVersion|Test-NxtAppIsInstalled" -and $line -match "-DeploymentMethod") {
 					[bool]$contentChanged = $true
 					$content = $content.Replace($line, $line.Replace("-DeploymentMethod","-InstallMethod"))
 					Write-Warning "Replaced -DeploymentMethod with -InstallMethod in $PackageToUpdatePath in line: $line"
@@ -572,7 +572,7 @@ function Update-NxtPSAdtPackage {
 [string]$logFileName = (Get-Date -format "yyyy-MM-dd_HH-mm-ss") + "_UpdateNxtPSAdtPackage." + "log"
 $PackagesToUpdatePath = $PackagesToUpdatePath.Trim("`"`'")
 $LatestVersionPath = $LatestVersionPath.Trim("`"`'")
-$ConfigVersion = "2023.10.31.1"
+$ConfigVersion = "2024.09.19.1"
 Get-ChildItem -Recurse -Path $PackagesToUpdatePath -Filter "Deploy-Application.ps1" | ForEach-Object {
 Update-NxtPSAdtPackage -PackageToUpdatePath $_.Directory.FullName -LatestVersionPath $LatestVersionPath -LogFileName $logFileName -CompatibleVersion $CompatibleVersion -ConfigVersion $ConfigVersion
 }
