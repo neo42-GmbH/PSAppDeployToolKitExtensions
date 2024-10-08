@@ -16,23 +16,23 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 		$TestToken
 	)
 	Begin {
-		[string[]]$keywordList = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
-		[hashtable]$keywordHash = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
-		foreach ($keyword in $keywordList) {
-			$keywordHash[$keyword] = $keyword
-		}
+		[System.Collections.Generic.HashSet[string]]$keywords = [System.Collections.Generic.HashSet[string]]::new(
+			[System.Collections.ObjectModel.Collection[string]]@('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param'),
+			[System.StringComparer]::OrdinalIgnoreCase
+		)
 	}
 	Process {
-		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = [System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]::new()
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		foreach ($token in $TestToken) {
-			## Check if the token is a keyword and if it is already in the correct case
-			if ($false -eq $token.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::Keyword)) {
+			[string]$spelling = [string]::Empty
+			if (
+				$false -eq $token.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::Keyword) -or
+				$false -eq $keywords.TryGetValue($token.Text, [ref]$spelling) -or
+				$token.Text -ceq $spelling
+			) {
 				continue
 			}
-			## Check if we have a suggestion, otherwise return nothing
-			if ($false -eq $keywordHash.ContainsKey($token.Text) -or $keywordHash[$token.Text] -ceq $token.Text) {
-				continue
-			}
+
 			## Create a suggestion object
 			$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
 			$null = $suggestedCorrections.Add(
@@ -41,7 +41,7 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 					$token.Extent.EndLineNumber,
 					$token.Extent.StartColumnNumber,
 					$token.Extent.EndColumnNumber,
-					$keywordHash[$token.Text],
+					$spelling,
 					$MyInvocation.MyCommand.Definition,
 					'Apply the correct capitalization.'
 				)
@@ -77,7 +77,7 @@ function Get-NxtPSVariablesInParamBlockShouldBeCapitalized {
 		$TestAst
 	)
 	Process {
-		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = [System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]::new()
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.FunctionDefinitionAst[]]$functions = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
 			}, $false)
@@ -122,7 +122,7 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 		$TestAst
 	)
 	Process {
-		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = [System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]::new()
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
 				$args[0].VariablePath.UserPath -cmatch '^[A-Z]' -and
@@ -164,7 +164,7 @@ function Get-NxtPSParamBlockVariablesShouldBeTyped {
 		if ($null -eq $TestAst.ParamBlock) {
 			return
 		}
-		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = [System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]::new()
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		foreach ($parameterAst in $TestAst.ParamBlock.Parameters) {
 			if ($null -eq $parameterAst.Attributes.TypeName) {
 				$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
@@ -205,7 +205,7 @@ function Get-NxtPSDontUseEmptyStringLiterals {
 		$TestAst
 	)
 	Process {
-		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = [System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]::new()
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.StringConstantExpressionAst[]]$stringConstants = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst] -and
 				$args[0].Value -eq [string]::Empty
@@ -257,7 +257,7 @@ function Get-NxtPSEnforceConsistantConditionalStatements {
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
-	[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = [System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]::new()
+	[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 	[System.Management.Automation.Language.BinaryExpressionAst[]]$wrongSideOperators = $TestAst.FindAll({
 			$args[0] -is [System.Management.Automation.Language.BinaryExpressionAst] -and
 			$args[0].Right.Extent.Text -in @('$true', '$false')
@@ -373,7 +373,7 @@ function Get-NxtPSIncompatibleFunctions {
 		}
 	}
 	Process {
-		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = [System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]::new()
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 
 		[System.Management.Automation.Language.CommandAst[]]$commandAsts = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
