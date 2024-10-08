@@ -69,11 +69,11 @@ function Add-NxtContent {
 	.PARAMETER Encoding
 		Specifies the encoding that should be used to write the content. It defaults to the value obtained from `Get-NxtFileEncoding`.
 		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
-		"Byte", "Oem", "Unicode", "UTF32", "UTF8".
+		"Oem", "Unicode", "UTF32", "UTF8".
 	.PARAMETER DefaultEncoding
 		Specifies the encoding that should be used if the `Get-NxtFileEncoding` function is unable to detect the file's encoding.
 		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
-		"Byte", "Oem", "Unicode", "UTF32", "UTF8".
+		"Oem", "Unicode", "UTF32", "UTF8".
 	.EXAMPLE
 		Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
 		This example appends the text "Text to be appended to a file" to the `testfile.txt` in the `C:\Temp` directory.
@@ -646,16 +646,14 @@ function Add-NxtXmlNode {
 				Write-Log -Message "File $FilePath does not exist" -Severity 3
 				throw "File $FilePath does not exist"
 			}
-			[hashtable]$importNxtXmlFileParams = @{
-				'Path' = $FilePath
-			}
+			[hashtable]$encodingParams = @{}
 			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
-				$importNxtXmlFileParams['Encoding'] = $Encoding
+				$encodingParams['Encoding'] = $Encoding
 			}
 			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
-				$importNxtXmlFileParams['DefaultEncoding'] = $DefaultEncoding
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
 			}
-			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @importNxtXmlFileParams
+			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			[string]$parentNodePath = $NodePath.Substring(0, $NodePath.LastIndexOf("/"))
 			if ($true -eq ([string]::IsNullOrEmpty($parentNodePath))) {
 				throw "The provided node root path $NodePath does not exist"
@@ -664,19 +662,9 @@ function Add-NxtXmlNode {
 			# Test for Parent Node
 			if ($false -eq (Test-NxtXmlNodeExists -FilePath $FilePath -NodePath $parentNodePath)) {
 				Write-Log -Message "Parent node $parentNodePath does not exist. Creating it." -Source ${cmdletName}
-				[hashtable]$addNxtXmlNodeParams = @{
-					'FilePath' = $FilePath
-					'NodePath' = $parentNodePath
-				}
-				if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
-					$addNxtXmlNodeParams['Encoding'] = $Encoding
-				}
-				if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
-					$addNxtXmlNodeParams['DefaultEncoding'] = $DefaultEncoding
-				}
-				Add-NxtXmlNode @addNxtXmlNodeParams
+				Add-NxtXmlNode @encodingParams -FilePath $FilePath -NodePath $parentNodePath
 				[System.Xml.XmlDocument]$xml = [System.Xml.XmlDocument]::new()
-				$xml = Import-NxtXmlFile @importNxtXmlFileParams
+				$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			}
 			[string]$message = "Adding node $NodePath to $FilePath"
 			# Create new node with the last part of the path
@@ -694,17 +682,7 @@ function Add-NxtXmlNode {
 			$message += "."
 			Write-Log -Message $message -Source ${CmdletName}
 			$xml.SelectSingleNode($parentNodePath).AppendChild($newNode) | Out-Null
-			[hashtable]$saveNxtXmlFileParams = @{
-				'Xml' = $xml
-				'Path' = $FilePath
-			}
-			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
-				$saveNxtXmlFileParams['Encoding'] = $Encoding
-			}
-			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
-				$saveNxtXmlFileParams['DefaultEncoding'] = $DefaultEncoding
-			}
-			Save-NxtXmlFile @saveNxtXmlFileParams
+			Save-NxtXmlFile @encodingParams -Xml $xml -Path $FilePath
 		}
 		catch {
 			Write-Log -Message "Failed to add node $NodePath to $FilePath." -Severity 3 -Source ${cmdletName}
@@ -6858,16 +6836,14 @@ function Read-NxtSingleXmlNode {
 	}
 	Process {
 		try {
-			[hashtable]$importNxtXmlFileParams = @{
-				'Path' = $XmlFilePath
-			}
+			[hashtable]$encodingParams = @{}
 			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
-				$importNxtXmlFileParams['Encoding'] = $Encoding
+				$encodingParams['Encoding'] = $Encoding
 			}
 			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
-				$importNxtXmlFileParams['DefaultEncoding'] = $DefaultEncoding
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
 			}
-			[System.Xml.XmlDocument]$xmlDoc = Import-NxtXmlFile @importNxtXmlFileParams
+			[System.Xml.XmlDocument]$xmlDoc = Import-NxtXmlFile @encodingParams -Path $XmlFilePath
 			[System.Xml.XmlNode]$selection = $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName)
 			if ($selection.ChildNodes.count -gt 1) {
 				Write-Log -Message "Found multiple child nodes for '$SingleNodeName'. Concated values will be returned." -Severity 3 -Source ${cmdletName}
@@ -11480,16 +11456,14 @@ function Test-NxtXmlNodeExists {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
-		[hashtable]$importNxtXmlFileParams = @{
-				Path = $FilePath
-		}
+		[hashtable]$encodingParams = @{}
 		if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
-			$importNxtXmlFileParams["Encoding"] = $Encoding
+			$encodingParams["Encoding"] = $Encoding
 		}
 		if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
-			$importNxtXmlFileParams["DefaultEncoding"] = $DefaultEncoding
+			$encodingParams["DefaultEncoding"] = $DefaultEncoding
 		}
-		[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @importNxtXmlFileParams
+		[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			if ( @($nodes | Where-Object {
@@ -12825,16 +12799,14 @@ function Update-NxtXmlNode {
 			throw "File $FilePath does not exist"
 		}
 		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeExistsParams)) {
-			[hashtable]$importNxtXmlFileParams = @{
-				Path = $FilePath
-			}
+			[hashtable]$encodingParams = @{}
 			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
-				$importNxtXmlFileParams["Encoding"] = $Encoding
+				$encodingParams["Encoding"] = $Encoding
 			}
 			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
-				$importNxtXmlFileParams["DefaultEncoding"] = $DefaultEncoding
+				$encodingParams["DefaultEncoding"] = $DefaultEncoding
 			}
-			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @importNxtXmlFileParams
+			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				$nodes = $nodes | Where-Object {
@@ -13556,16 +13528,14 @@ function Write-NxtXmlNode {
 	}
 	Process {
 		try {
-			[hashtable]$importNxtXmlFileParams = @{
-				'Path' = $XmlFilePath
-			}
+			[hashtable]$encodingParams = @{}
 			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
-				$importNxtXmlFileParams['Encoding'] = $Encoding
+				$encodingParams['Encoding'] = $Encoding
 			}
 			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
-				$importNxtXmlFileParams['DefaultEncoding'] = $DefaultEncoding
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
 			}
-			[System.Xml.XmlDocument]$xmlDoc = Import-NxtXmlFile @importNxtXmlFileParams
+			[System.Xml.XmlDocument]$xmlDoc = Import-NxtXmlFile @encodingParams -Path $XmlFilePath
 
 			[scriptblock]$createXmlNode = { Param ([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child)
 				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, [string]::Empty)
@@ -13591,17 +13561,7 @@ function Write-NxtXmlNode {
 
 			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
 			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
-			[hashtable]$saveNxtXmlFileParams = @{
-				'Xml' = $xmlDoc
-				'Path' = $XmlFilePath
-			}
-			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
-				$saveNxtXmlFileParams['Encoding'] = $Encoding
-			}
-			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
-				$saveNxtXmlFileParams['DefaultEncoding'] = $DefaultEncoding
-			}
-			Save-NxtXmlFile @saveNxtXmlFileParams
+			Save-NxtXmlFile @encodingParams -Xml $xmlDoc -Path $XmlFilePath
 		}
 		catch {
 			Write-Log -Message "Failed to write node in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
