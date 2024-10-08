@@ -47,7 +47,7 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 				)
 			)
 			## Return the diagnostic record
-			$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 					'Message'              = 'The token is not capitalized correctly.'
 					'Extent'               = $token.Extent
 					'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
@@ -92,7 +92,7 @@ function Get-NxtPSVariablesInParamBlockShouldBeCapitalized {
 					continue
 				}
 				## Return the diagnostic record
-				$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'  = 'A parameter block variable needs to start with a capital letter'
 						'Extent'   = $parameterVariableAst.Extent
 						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
@@ -131,7 +131,7 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 
 		foreach ($variableAst in $capitalizedVariables) {
 			if ($variableAst.VariablePath.UserPath -notin $TestAst.ParamBlock.Parameters.Name.VariablePath.UserPath) {
-				$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'  = 'A capatalized variable needs to be defined in the param block'
 						'Extent'   = $variableAst.Extent
 						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
@@ -167,7 +167,7 @@ function Get-NxtPSParamBlockVariablesShouldBeTyped {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		foreach ($parameterAst in $TestAst.ParamBlock.Parameters) {
 			if ($null -eq $parameterAst.Attributes.TypeName) {
-				$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'  = 'A parameter block variable needs to be typed'
 						'Extent'   = $parameterAst.Extent
 						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
@@ -175,7 +175,7 @@ function Get-NxtPSParamBlockVariablesShouldBeTyped {
 					})
 			}
 			elseif ($parameterAst.Attributes.TypeName.Extent.StartLineNumber -eq $parameterAst.Name.Extent.StartLineNumber) {
-				$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'  = 'The type definition and variable should be on a seperate lines'
 						'Extent'   = $parameterAst.Extent
 						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
@@ -228,7 +228,7 @@ function Get-NxtPSDontUseEmptyStringLiterals {
 					'Use .NET string empty instead of empty string literal.'
 				)
 			)
-			$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 					'Message'              = 'Empty strings should not be used'
 					'Extent'               = $stringConstant.Extent
 					'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
@@ -277,7 +277,7 @@ function Get-NxtPSEnforceConsistantConditionalStatements {
 			)
 		)
 
-		$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+		$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 				'Message'              = 'Boolean literals should be on the left side of a comparison'
 				'Extent'               = $wrongSideOperator.Extent
 				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
@@ -381,7 +381,7 @@ function Get-NxtPSIncompatibleFunctions {
 			}, $false)
 
 		foreach ($commandAst in $commandAsts) {
-			$results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 					'Message'  = $incompatibleFunctions[$commandAst.GetCommandName()]
 					'Extent'   = $commandAst.Extent
 					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
