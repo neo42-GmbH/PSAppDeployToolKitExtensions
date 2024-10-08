@@ -4618,13 +4618,14 @@ function Get-NxtProcessTree {
 				$Parents
 			)
 			## Get related processes
-			[System.Management.ManagementObject[]]$relatedProcesses = @()
-			$relatedProcesses += $ProcessTable | Where-Object {
-				$_.ProcessId -ne $Root.ProcessId -and (
-					($true -eq $Parents -and $_.ProcessId -eq $Root.ParentProcessId) -or
-					($false -eq $Parents -and $_.ParentProcessId -eq $Root.ProcessId)
-				)
-			}
+			[System.Management.ManagementObject[]]$relatedProcesses = @(
+				$ProcessTable | Where-Object {
+					$_.ProcessId -ne $Root.ProcessId -and (
+						($true -eq $Parents -and $_.ProcessId -eq $Root.ParentProcessId) -or
+						($false -eq $Parents -and $_.ParentProcessId -eq $Root.ProcessId)
+					)
+				}
+			)
 			## Recurse to get related processes of related processes
 			foreach ($process in $relatedProcesses) {
 				$relatedProcesses += & $getRelatedProcesses -Root $process -ProcessTable $ProcessTable -Parents:$Parents
