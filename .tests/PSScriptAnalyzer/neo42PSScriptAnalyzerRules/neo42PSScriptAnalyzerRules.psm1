@@ -17,7 +17,7 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 	)
 	Begin {
 		[string[]]$keywordList = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
-		[hashtable]$keywordHash = @{}
+		[hashtable]$keywordHash = [hashtable]::new([StringComparer]::OrdinalIgnoreCase)
 		foreach ($keyword in $keywordList) {
 			$keywordHash[$keyword] = $keyword
 		}
