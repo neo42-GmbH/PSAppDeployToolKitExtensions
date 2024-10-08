@@ -4269,7 +4269,7 @@ function Get-NxtIsSystemProcess {
 		}
 		else {
 			[psobject]$owner = $process.GetOwner()
-			if ($null -eq $owner -or $true -eq [string]::IsNullOrEmpty($owner.User)) {
+			if ($true -eq [string]::IsNullOrEmpty($owner.User)) {
 				if ($ProcessId -eq 4 -and $process.Name -eq "System") {
 					Write-Log -Message "Process with ID '$ProcessId' is the system process." -Source ${cmdletName}
 					Write-Output $true
