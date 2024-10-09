@@ -68,12 +68,12 @@ function Add-NxtContent {
 		Specifies the string that will be appended to the file.
 	.PARAMETER Encoding
 		Specifies the encoding that should be used to write the content. It defaults to the value obtained from `Get-NxtFileEncoding`.
-		Possible values include: "Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode",
-		"Byte", "Oem", "Unicode", "UTF32", "UTF8".
+		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
+		"Oem", "Unicode", "UTF32", "UTF8".
 	.PARAMETER DefaultEncoding
 		Specifies the encoding that should be used if the `Get-NxtFileEncoding` function is unable to detect the file's encoding.
-		Possible values include: "Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode",
-		"Byte", "Oem", "Unicode", "UTF32", "UTF8".
+		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
+		"Oem", "Unicode", "UTF32", "UTF8".
 	.EXAMPLE
 		Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
 		This example appends the text "Text to be appended to a file" to the `testfile.txt` in the `C:\Temp` directory.
@@ -94,11 +94,11 @@ function Add-NxtContent {
 		[String]
 		$Value,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$Encoding,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$DefaultEncoding
 	)
@@ -586,6 +586,14 @@ function Add-NxtXmlNode {
 		The attributes to add
 	.PARAMETER InnerText
 		The value to add to the node
+	.PARAMETER Encoding
+		Specifies the encoding that should be used to write the content. It defaults to the value obtained from `Get-NxtFileEncoding`.
+		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
+		"Oem", "Unicode", "UTF32", "UTF8", "UTF8withBom".
+	.PARAMETER DefaultEncoding
+		Specifies the encoding that should be used if the `Get-NxtFileEncoding` function is unable to detect the file's encoding.
+		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
+		"Oem", "Unicode", "UTF32", "UTF8", "UTF8withBom".
 	.EXAMPLE
 		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
 		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3 with the attribute name=NewNode2 and the value NewValue2.
@@ -618,11 +626,19 @@ function Add-NxtXmlNode {
 		$Attributes,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InnerText
+		$InnerText,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
-		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
 		try {
@@ -630,8 +646,14 @@ function Add-NxtXmlNode {
 				Write-Log -Message "File $FilePath does not exist" -Severity 3
 				throw "File $FilePath does not exist"
 			}
-			[xml]$xml = [xml]::new()
-			$xml.Load($FilePath)
+			[hashtable]$encodingParams = @{}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$encodingParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
+			}
+			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			[string]$parentNodePath = $NodePath.Substring(0, $NodePath.LastIndexOf("/"))
 			if ($true -eq ([string]::IsNullOrEmpty($parentNodePath))) {
 				throw "The provided node root path $NodePath does not exist"
@@ -639,13 +661,14 @@ function Add-NxtXmlNode {
 			[string]$lastNodeChild = $NodePath.Substring($NodePath.LastIndexOf("/") + 1)
 			# Test for Parent Node
 			if ($false -eq (Test-NxtXmlNodeExists -FilePath $FilePath -NodePath $parentNodePath)) {
-				Add-NxtXmlNode -FilePath $FilePath -NodePath $parentNodePath
-				[xml]$xml = [xml]::new()
-				$xml.Load($FilePath)
+				Write-Log -Message "Parent node $parentNodePath does not exist. Creating it." -Source ${cmdletName}
+				Add-NxtXmlNode @encodingParams -FilePath $FilePath -NodePath $parentNodePath
+				[System.Xml.XmlDocument]$xml = [System.Xml.XmlDocument]::new()
+				$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			}
 			[string]$message = "Adding node $NodePath to $FilePath"
 			# Create new node with the last part of the path
-			[System.Xml.XmlLinkedNode]$newNode = $xml.CreateElement( $LastNodeChild )
+			[System.Xml.XmlLinkedNode]$newNode = $xml.CreateElement( $lastNodeChild )
 			if ($false -eq [string]::IsNullOrEmpty($InnerText)) {
 				$newNode.InnerText = $InnerText
 				$message += " with innerText [$InnerText]"
@@ -659,15 +682,15 @@ function Add-NxtXmlNode {
 			$message += "."
 			Write-Log -Message $message -Source ${CmdletName}
 			$xml.SelectSingleNode($parentNodePath).AppendChild($newNode) | Out-Null
-			$xml.Save("$FilePath")
+			Save-NxtXmlFile @encodingParams -Xml $xml -Path $FilePath
 		}
 		catch {
-			Write-Log -Message "Failed to add node $NodePath to $FilePath." -Severity 3 -Source ${CmdletName}
+			Write-Log -Message "Failed to add node $NodePath to $FilePath." -Severity 3 -Source ${cmdletName}
 			throw $_
 		}
 	}
 	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -3994,12 +4017,12 @@ function Get-NxtFileEncoding {
 		The Get-NxtFileEncoding function returns the estimated encoding of a file based on Byte Order Mark (BOM) detection. If the encoding cannot
 		be detected, it will default to the provided DefaultEncoding value or ASCII if no value is specified. This can be used to identify the
 		proper encoding for further file operations like reading or writing.
-		Returns the detected encoding or the specified default encoding if detection was not possible.
+		Returns the detected encoding or the specified default encoding if detection was not possible or file was not found.
 	.PARAMETER Path
 		Specifies the path to the file for which the encoding needs to be determined. This parameter is mandatory.
 	.PARAMETER DefaultEncoding
-		Specifies the encoding to be returned in case the encoding could not be detected. Valid options include "Ascii", "BigEndianUTF32",
-		"Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", and "UTF8".
+		Specifies the encoding to be returned in case the encoding could not be detected. Valid options include "Ascii",
+		"Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8" and "UTF8withBOM".
 	.EXAMPLE
 		Get-NxtFileEncoding -Path C:\Temp\testfile.txt
 		This example returns the estimated encoding of the file located at "C:\Temp\testfile.txt".
@@ -4017,7 +4040,7 @@ function Get-NxtFileEncoding {
 		[String]
 		$Path,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8", "UTF8withBOM")]
 		[String]
 		$DefaultEncoding
 	)
@@ -4026,15 +4049,27 @@ function Get-NxtFileEncoding {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		try {
-			[string]$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
-			if ($true -eq ([System.String]::IsNullOrEmpty($intEncoding))) {
-				[string]$intEncoding = $DefaultEncoding
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Message "File '$Path' does not exist." -Severity 2 -Source ${cmdletName}
+			if ($true -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
+				Write-Log -Message "No default encoding specified." -Severity 2 -Source ${cmdletName}
 			}
-			Write-Output $intEncoding
+			else {
+				Write-Log -Message "Returning default encoding '$DefaultEncoding'." -Severity 2 -Source ${cmdletName}
+				Write-Output $DefaultEncoding
+			}
 		}
-		catch {
-			Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		else {
+			try {
+				[string]$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
+				if ($true -eq ([System.String]::IsNullOrEmpty($intEncoding))) {
+					[string]$intEncoding = $DefaultEncoding
+				}
+				Write-Output $intEncoding
+			}
+			catch {
+				Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			}
 		}
 	}
 	End {
@@ -5765,6 +5800,119 @@ function Import-NxtIniFileWithComments {
 	}
 }
 #endregion
+#region Function Import-NxtXmlFile
+function Import-NxtXmlFile {
+	<#
+	.SYNOPSIS
+		Imports an XML file into a PowerShell object.
+	.DESCRIPTION
+		This function reads the specified XML file and converts it into a PowerShell object.
+	.PARAMETER Path
+		The path to the XML file. This parameter is mandatory.
+	.PARAMETER Encoding
+		The encoding of the XML file.
+	.PARAMETER DefaultEncoding
+		The default encoding to use if the encoding of the XML file could not be determined.
+		The best practice is to use UTF8 with BOM as the default encoding.
+	.PARAMETER ContinueOnError
+		Specifies whether the function continues to execute if an error occurs. Accepts $true or $false. Defaults to $true.
+	.OUTPUTS
+		System.Xml.XmlDocument.
+	.EXAMPLE
+		Import-NxtXmlFile -Path C:\path\to\xml\file.xml
+		This example reads the specified XML file and converts it into a PowerShell object.
+	.EXAMPLE
+		Import-NxtXmlFile -Path C:\path\to\xml\file.xml -ContinueOnError $false
+		This example reads the specified XML file and converts it into a PowerShell object. If an error occurs, the function stops executing and throws an error.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		$DefaultEncoding = 'UTF8withBom',
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContinueOnError = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Message "File [$Path] not found." -Severity 3 -Source ${cmdletName}
+			if ($false -eq $ContinueOnError) {
+				throw "File [$Path] not found."
+			}
+		}
+		[String]$intEncoding = $Encoding
+		if ($true -eq [string]::IsNullOrEmpty($intEncoding)) {
+			try {
+				[hashtable]$getFileEncodingParams = @{
+					Path = $Path
+				}
+				if ($false -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+				}
+				$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+			}
+			catch {
+				$intEncoding = $DefaultEncoding
+			}
+		}
+		switch ($intEncoding) {
+			'UTF8' {
+				[System.Text.Encoding]$fileEncoding = New-Object System.Text.UTF8Encoding($false)
+			}
+			'UTF8withBom' {
+				[System.Text.Encoding]$fileEncoding = New-Object System.Text.UTF8Encoding($true)
+			}
+			default {
+				[System.Text.Encoding]$fileEncoding = [System.Text.Encoding]::$intEncoding
+			}
+		}
+		try {
+			[System.IO.StreamReader]$streamReader = [System.IO.StreamReader]::new($Path, $fileEncoding)
+			[string]$fileContent = $streamReader.ReadToEnd()
+			$streamReader.Close()
+		}
+		catch {
+			Write-Log -Message "Failed to read file content. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			if ($false -eq $ContinueOnError) {
+				throw "Failed to read file content."
+			}
+		}
+		finally {
+			$streamReader.Close()
+		}
+		try {
+			[System.Xml.XmlDocument]$xml = [System.Xml.XmlDocument]::new()
+			$xml.LoadXml($fileContent)
+			Write-Output $xml
+			Write-Log -Message "Read xml file [$path]. " -Source ${cmdletName}
+		}
+		catch {
+			Write-Log -Message "Failed to read xml file [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			if ($false -eq $ContinueOnError) {
+				throw "Failed to read xml file [$path]: $($_.Exception.Message)"
+			}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Initialize-NxtAppRootFolder
 function Initialize-NxtAppRootFolder {
 	<#
@@ -6714,6 +6862,11 @@ function Read-NxtSingleXmlNode {
 	.PARAMETER AttributeName
 		Attribute name to be read from the node.
 		Default is "Innertext".
+	.PARAMETER Encoding
+		Encoding of the XML file.
+	.PARAMETER DefaultEncoding
+		Default encoding of the XML file if the encoding is not specified or detected.
+		Best practice is to use UTF8withBom.
 	.EXAMPLE
 		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
 		Reads the content of the "UserId" node from the XML file located at "C:\Test\setup.xml."
@@ -6735,7 +6888,15 @@ function Read-NxtSingleXmlNode {
 		$SingleNodeName,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AttributeName = "Innertext"
+		$AttributeName = "Innertext",
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6743,8 +6904,14 @@ function Read-NxtSingleXmlNode {
 	}
 	Process {
 		try {
-			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-			$xmlDoc.Load($XmlFilePath)
+			[hashtable]$encodingParams = @{}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$encodingParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
+			}
+			[System.Xml.XmlDocument]$xmlDoc = Import-NxtXmlFile @encodingParams -Path $XmlFilePath
 			[System.Xml.XmlNode]$selection = $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName)
 			if ($selection.ChildNodes.count -gt 1) {
 				Write-Log -Message "Found multiple child nodes for '$SingleNodeName'. Concated values will be returned." -Severity 3 -Source ${cmdletName}
@@ -8277,6 +8444,102 @@ function Resolve-NxtDependentPackage {
 	}
 }
 #endregion
+#region Function Save-NxtXmlFile
+function Save-NxtXmlFile {
+	<#
+	.SYNOPSIS
+		Saves a xml Object to an XML file.
+	.DESCRIPTION
+		The Save-NxtXmlFile function saves a xml object to an XML file.
+	.PARAMETER Path
+		The full path of the XML file to be saved. This parameter is mandatory.
+	.PARAMETER Xml
+		The XML object to be saved. This parameter is mandatory.
+	.PARAMETER Encoding
+		The encoding to be used when saving the XML file.
+	.PARAMETER DefaultEncoding
+		The default encoding to be used when saving the XML file.
+		Defaults to UTF8withBom, which is the best choice for most cases.
+	.EXAMPLE
+		Save-NxtXmlFile -Path "C:\path\to\file.xml" -Xml $xml
+		This example saves the XML object to the specified file.
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $true)]
+		[System.Xml.XmlDocument]
+		$Xml,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		$DefaultEncoding = "UTF8withBom"
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[String]$intEncoding = $Encoding
+		[bool]$fileExists = Test-Path -Path $Path
+		if ($true -eq [string]::IsNullOrEmpty($intEncoding) ) {
+			if ($false -eq $fileExists) {
+				$intEncoding = $DefaultEncoding
+			}
+			else {
+				try {
+					[hashtable]$getFileEncodingParams = @{
+						Path = $Path
+					}
+					if ($false -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
+						[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					}
+					$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+				}
+				catch {
+					$intEncoding = $DefaultEncoding
+				}
+			}
+		}
+		switch ($intEncoding) {
+			'UTF8' {
+				[System.Text.Encoding]$fileEncoding = New-Object System.Text.UTF8Encoding($false)
+			}
+			'UTF8withBom' {
+				[System.Text.Encoding]$fileEncoding = New-Object System.Text.UTF8Encoding($true)
+			}
+			default {
+				[System.Text.Encoding]$fileEncoding = [System.Text.Encoding]::$intEncoding
+			}
+		}
+		try {
+			[System.IO.StreamWriter]$stream = [System.IO.StreamWriter]::new($Path, $false, $fileEncoding)
+			$Xml.Save($stream)
+			Write-Log -Message "Saving XML Using encoding [$intEncoding]." -Source ${cmdletName}
+		}
+		catch {
+			Write-Log -Message "Failed to save XML Document [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to save XML Document [$Path]."
+		}
+		finally {
+			$stream.Close()
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Set-NxtCustomSetupCfg
 function Set-NxtCustomSetupCfg {
 	<#
@@ -8977,6 +9240,11 @@ function Set-NxtXmlNode {
 		A hashtable containing attributes to filter the XML node to be updated.
 	.PARAMETER InnerText
 		The text to set as the value of the XML node.
+	.PARAMETER Encoding
+		The encoding to be used when saving the XML file.
+	.PARAMETER DefaultEncoding
+		The default encoding to be used when saving the XML file.
+		Defaults to UTF8withBom.
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
 		Sets the value of the node located at /RootNode/Settings/Settings2/SubSubSetting3 to "NewValue2" and adds the attribute name="NewNode2".
@@ -9017,7 +9285,16 @@ function Set-NxtXmlNode {
 		$FilterAttributes,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InnerText
+		$InnerText,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$DefaultEncoding = "UTF8withBom"
+
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -9050,6 +9327,12 @@ function Set-NxtXmlNode {
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				$updateNxtXmlNodeParams.Add("FilterAttributes", $FilterAttributes)
 			}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$updateNxtXmlNodeParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$updateNxtXmlNodeParams['DefaultEncoding'] = $DefaultEncoding
+			}
 			Update-NxtXmlNode @updateNxtXmlNodeParams
 		}
 	else {
@@ -9062,6 +9345,12 @@ function Set-NxtXmlNode {
 			}
 			if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
 				$addNxtXmlNodeParams.Add("Attributes", $Attributes)
+			}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$addNxtXmlNodeParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$addNxtXmlNodeParams['DefaultEncoding'] = $DefaultEncoding
 			}
 			Add-NxtXmlNode @addNxtXmlNodeParams
 		}
@@ -9665,7 +9954,7 @@ function Show-NxtInstallationWelcome {
 				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
-					Update-NxtXmlNode -FilePath "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+					Update-NxtXmlNode -FilePath "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico" -Encoding UTF8withBom
 				}
 			}
 		}
@@ -11102,11 +11391,11 @@ function Test-NxtStringInFile {
 		[bool]
 		$IgnoreCase = $true,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$Encoding,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$DefaultEncoding
 	)
@@ -11132,7 +11421,7 @@ function Test-NxtStringInFile {
 				if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
 					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
 				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
 				}
@@ -11189,6 +11478,10 @@ function Test-NxtXmlNodeExists {
 		The XPath to the node that needs to be tested for existence. This parameter is mandatory.
 	.PARAMETER FilterAttributes
 		A hashtable of attributes to filter the node. Optional parameter.
+	.PARAMETER Encoding
+		The encoding of the XML file. Optional parameter.
+	.PARAMETER DefaultEncoding
+		The default encoding to use if the file's encoding cannot be auto-detected. Optional parameter.
 	.EXAMPLE
 		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
 		Tests for the existence of a node at the specified XPath in 'xmlstuff.xml'.
@@ -11213,7 +11506,15 @@ function Test-NxtXmlNodeExists {
 		$NodePath,
 		[Parameter(Mandatory = $false)]
 		[hashtable]
-		$FilterAttributes
+		$FilterAttributes,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
+		[string]
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -11224,8 +11525,14 @@ function Test-NxtXmlNodeExists {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
-		[xml]$xml = [xml]::new()
-		$xml.Load($FilePath)
+		[hashtable]$encodingParams = @{}
+		if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+			$encodingParams["Encoding"] = $Encoding
+		}
+		if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+			$encodingParams["DefaultEncoding"] = $DefaultEncoding
+		}
+		[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			if ( @($nodes | Where-Object {
@@ -12406,11 +12713,11 @@ function Update-NxtTextInFile {
 		[Int]
 		$Count = [int]::MaxValue,
 		[Parameter()]
-		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
+		[ValidateSet('Ascii', 'Default', 'UTF7', 'BigEndianUnicode', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$Encoding,
 		[Parameter()]
-		[ValidateSet('Ascii', 'BigEndianUTF32', 'Default', 'String', 'Default', 'Unknown', 'UTF7', 'BigEndianUnicode', 'Byte', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
+		[ValidateSet('Ascii', 'Default', 'UTF7', 'BigEndianUnicode', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$DefaultEncoding,
 		[Parameter()]
@@ -12502,6 +12809,10 @@ function Update-NxtXmlNode {
 		A hashtable of attributes to set or update on the selected node.
 	.PARAMETER InnerText
 		The text value to be set for the node.
+	.PARAMETER Encoding
+		Specifies the encoding of the file. Optional parameter.
+	.PARAMETER DefaultEncoding
+		Specifies the default encoding to use if the file's encoding cannot be auto-detected. Optional parameter.
 	.EXAMPLE
 		Update-NxtXmlNode -FilePath ".\xmlstuff.xml" -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
 		This updates the node's inner text to "NewValue2" and sets the attribute "name" to "NewNode2".
@@ -12530,7 +12841,15 @@ function Update-NxtXmlNode {
 		$FilterAttributes,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InnerText
+		$InnerText,
+		[Parameter()]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[String]
+		$Encoding,
+		[Parameter()]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[String]
+		$DefaultEncoding = 'UTF8withBom'
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -12550,8 +12869,14 @@ function Update-NxtXmlNode {
 			throw "File $FilePath does not exist"
 		}
 		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeExistsParams)) {
-			[xml]$xml = [xml]::new()
-			$xml.Load($FilePath)
+			[hashtable]$encodingParams = @{}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$encodingParams["Encoding"] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$encodingParams["DefaultEncoding"] = $DefaultEncoding
+			}
+			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				$nodes = $nodes | Where-Object {
@@ -12579,9 +12904,19 @@ function Update-NxtXmlNode {
 					$message += " and attribute [$($attribute.Key)] with value [$($attribute.Value)]"
 				}
 			}
+			[hashtable]$saveNxtXmlFileParams = @{
+				Xml = $xml
+				Path = $FilePath
+			}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$saveNxtXmlFileParams["Encoding"] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$saveNxtXmlFileParams["DefaultEncoding"] = $DefaultEncoding
+			}
+			Save-NxtXmlFile @saveNxtXmlFileParams
 			$message += "."
 			Write-Log -Message $message -Source ${cmdletName}
-			$xml.Save("$FilePath")
 		}
 		else {
 			Write-Log -Message "Node $NodePath does not exist" -Severity 3
@@ -13211,6 +13546,11 @@ function Write-NxtXmlNode {
 	Specifies the path to the XML file where the node will be added. This parameter is mandatory.
 	.PARAMETER Model
 	Defines the model of the XML node to be added, including its name, attributes, and child nodes. This parameter is mandatory.
+	.PARAMETER Encoding
+		Specifies the encoding of the file. Optional parameter.
+	.PARAMETER DefaultEncoding
+		Specifies the default encoding to use if the file's encoding cannot be auto-detected. Optional parameter.
+		Default value is 'UTF8withBom'.
 	.EXAMPLE
 	$newNode = New-Object PSADTNXT.XmlNodeModel
 	$newNode.name = "item"
@@ -13242,7 +13582,15 @@ function Write-NxtXmlNode {
 		$XmlFilePath,
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.XmlNodeModel]
-		$Model
+		$Model,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$DefaultEncoding = 'UTF8withBom'
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -13250,8 +13598,14 @@ function Write-NxtXmlNode {
 	}
 	Process {
 		try {
-			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-			$xmlDoc.Load($XmlFilePath)
+			[hashtable]$encodingParams = @{}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$encodingParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
+			}
+			[System.Xml.XmlDocument]$xmlDoc = Import-NxtXmlFile @encodingParams -Path $XmlFilePath
 
 			[scriptblock]$createXmlNode = { Param ([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child)
 				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, [string]::Empty)
@@ -13277,7 +13631,7 @@ function Write-NxtXmlNode {
 
 			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
 			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
-			[void]$xmlDoc.Save($XmlFilePath)
+			Save-NxtXmlFile @encodingParams -Xml $xmlDoc -Path $XmlFilePath
 		}
 		catch {
 			Write-Log -Message "Failed to write node in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
