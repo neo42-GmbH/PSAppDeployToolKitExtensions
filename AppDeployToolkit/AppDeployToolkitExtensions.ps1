@@ -589,11 +589,11 @@ function Add-NxtXmlNode {
 	.PARAMETER Encoding
 		Specifies the encoding that should be used to write the content. It defaults to the value obtained from `Get-NxtFileEncoding`.
 		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
-		"Oem", "Unicode", "UTF32", "UTF8".
+		"Oem", "Unicode", "UTF32", "UTF8", "UTF8withBom".
 	.PARAMETER DefaultEncoding
 		Specifies the encoding that should be used if the `Get-NxtFileEncoding` function is unable to detect the file's encoding.
 		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
-		"Oem", "Unicode", "UTF32", "UTF8".
+		"Oem", "Unicode", "UTF32", "UTF8", "UTF8withBom".
 	.EXAMPLE
 		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
 		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3 with the attribute name=NewNode2 and the value NewValue2.
