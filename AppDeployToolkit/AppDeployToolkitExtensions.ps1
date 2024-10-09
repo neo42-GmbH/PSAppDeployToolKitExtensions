@@ -5807,7 +5807,9 @@ function Import-NxtXmlFile {
 	Process {
 		if ($false -eq (Test-Path -Path $Path)) {
 			Write-Log -Message "File [$Path] not found." -Severity 3 -Source ${cmdletName}
-			throw "File [$Path] not found."
+			if ($false -eq $ContinueOnError) {
+				throw "File [$Path] not found."
+			}
 		}
 		[String]$intEncoding = $Encoding
 		if ($true -eq [string]::IsNullOrEmpty($intEncoding)) {
@@ -5837,12 +5839,14 @@ function Import-NxtXmlFile {
 		}
 		try {
 			[System.IO.StreamReader]$streamReader = [System.IO.StreamReader]::new($Path, $fileEncoding)
-			$fileContent = $streamReader.ReadToEnd()
+			[string]$fileContent = $streamReader.ReadToEnd()
 			$streamReader.Close()
 		}
 		catch {
 			Write-Log -Message "Failed to read file content. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
-			throw "Failed to read file content."
+			if ($false -eq $ContinueOnError) {
+				throw "Failed to read file content."
+			}
 		}
 		finally {
 			$streamReader.Close()
@@ -8400,9 +8404,9 @@ function Resolve-NxtDependentPackage {
 function Save-NxtXmlFile {
 	<#
 	.SYNOPSIS
-		Saves a hashtable to an XML file.
+		Saves a xml Object to an XML file.
 	.DESCRIPTION
-		The Save-NxtXmlFile function saves a hashtable to an XML file.
+		The Save-NxtXmlFile function saves a xml object to an XML file.
 	.PARAMETER Path
 		The full path of the XML file to be saved. This parameter is mandatory.
 	.PARAMETER Xml
@@ -8447,7 +8451,8 @@ function Save-NxtXmlFile {
 		if ($true -eq [string]::IsNullOrEmpty($intEncoding) ) {
 			if ($false -eq $fileExists) {
 				$intEncoding = $DefaultEncoding
-			}else {
+			}
+			else {
 				try {
 					[hashtable]$getFileEncodingParams = @{
 						Path = $Path
@@ -8474,10 +8479,9 @@ function Save-NxtXmlFile {
 			}
 		}
 		try {
-			$stream = [System.IO.StreamWriter]::new($Path, $false, $fileEncoding)
-			$xml.Save($stream)
-			$message = "Saving XML Using encoding [$intEncoding]."
-			Write-Log -Message $message -Source ${cmdletName}
+			[System.IO.StreamWriter]$stream = [System.IO.StreamWriter]::new($Path, $false, $fileEncoding)
+			$Xml.Save($stream)
+			Write-Log -Message "Saving XML Using encoding [$intEncoding]." -Source ${cmdletName}
 		}
 		catch {
 			Write-Log -Message "Failed to save XML Document [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
@@ -12669,7 +12673,7 @@ function Update-NxtTextInFile {
 		[String]
 		$Encoding,
 		[Parameter()]
-		[ValidateSet('Ascii', 'Default', 'UTF7', 'BigEndianUnicod', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
+		[ValidateSet('Ascii', 'Default', 'UTF7', 'BigEndianUnicode', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$DefaultEncoding,
 		[Parameter()]
