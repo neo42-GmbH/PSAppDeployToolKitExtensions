@@ -11,37 +11,47 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: read
 
     steps:
-      - name: checkout-release-manager-config
-        uses: actions/checkout@v4
+      - name: reply-to-and-close-issues
+        uses: actions/github-script@v7
         with:
-          ref: ${{ github.ref }}
-          path: ${{ github.workspace }}/ghrm
-          sparse-checkout: .github/GithubReleaseManager/*
-          sparse-checkout-cone-mode: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: milestones } = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed'
+            });
+            const milestone = milestones.find(m => m.title === '${{ github.event.release.name }}');
+            if (!milestone) {
+              throw new Error('Milestone not found');
+            }
 
-      - name: install-dotnet
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.x.x'
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              milestone: milestone.number
+            });
 
-      - name: install-release-manager
-        shell: pwsh
-        run: dotnet tool install --global GitReleaseManager.Tool
+            for (const issue of issues) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
 
-      - name: comment-on-issues
-        shell: pwsh
-        run: |
-          $params = @(
-            'close',
-            '--owner', '${{ github.repository_owner }}',
-            '--repository', '${{ github.event.repository.name }}',
-            '--token', '${{ secrets.GITHUB_TOKEN }}',
-            '--milestone', '${{ github.event.release.name }}',
-            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager'
-          )
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `:tada: This issue will be addressed in version ${milestone.title} :tada:
+            Once the release is published, it will be available on:
+              * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${milestone.title})
+              * [neo42 Service Downloads Portal](https://portal.neo42.de/ServiceDownloadsManagement) (Sign-in required)
 
-          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
-          exit $proc.ExitCode
+            <sub>This is an auto-generated message from your friendly release assistant :package::rocket:
+            Please note that the publishing process might take a while or can even be rejected.</sub>`
+              });
+            }
