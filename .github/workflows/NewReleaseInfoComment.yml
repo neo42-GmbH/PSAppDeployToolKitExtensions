@@ -23,7 +23,7 @@ jobs:
               repo: context.repo.repo,
               state: 'closed'
             });
-            const milestone = milestones.find(m => m.title === '${{ github.event.release.name }}');
+            const milestone = milestones.find(m => m.title === '${{ github.event.release.tag_name }}');
             if (!milestone) {
               throw new Error('Milestone not found');
             }
