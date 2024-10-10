@@ -94,8 +94,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
-            body = isPreRelease
+            const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
+            const body = isPreRelease
               ? 'This is a pre-release build from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }}). Releases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information.'
               : 'This release will be closing milestone [${{ needs.artifact.outputs.ARTIFACT_TAG }}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1). Refer to it for more information.';
 
