@@ -46,6 +46,14 @@ jobs:
           Compress-Archive -Path "./${{ needs.artifact.outputs.ARTIFACT_TAG }}" -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_${{ needs.artifact.outputs.ARTIFACT_TAG }}.zip"
           Compress-Archive -Path "./Samples" -DestinationPath "${{ github.workspace }}/components/Samples.zip"
 
+      - name: generate-hash-files
+        shell: pwsh
+        run: |
+          foreach ($component in (Get-ChildItem -File -Path "${{ github.workspace }}/components")) {
+            $hash = Get-FileHash -Path $component.FullName -Algorithm SHA256
+            Add-Content -Path "${{ github.workspace }}/components/$([System.IO.Path]::GetFileNameWithoutExtension($hash.Path)).SHA256" -Value "$($hash.Hash) *$([System.IO.Path]::GetFileName( $hash.Path ))" -Encoding Ascii
+          }
+
       - name: update-milestones
         if: ${{ needs.artifact.outputs.ARTIFACT_BRANCH == 'production' }}
         uses: actions/github-script@v7
@@ -90,14 +98,20 @@ jobs:
 
       - name: create-release
         uses: actions/github-script@v7
-        id: release
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const issueCount = (await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              milestone: '${{ steps.milestone.outputs.result }}',
+              state: 'closed'
+            })).data.length;
+
             const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
             const body = isPreRelease
               ? 'This is a pre-release build from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }}). Releases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information.'
-              : 'This release will be closing milestone [${{ needs.artifact.outputs.ARTIFACT_TAG }}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1). Refer to it for more information.';
+              : `As part of this release [${issueCount} issues](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) were closed.`;
 
             const { data: release } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
@@ -111,7 +125,7 @@ jobs:
               body: body
             });
 
-            for (const component of ['PSAppdeployToolkit_with_neo42_extensions_Ver_${{ needs.artifact.outputs.ARTIFACT_TAG }}.zip', 'Samples.zip']) {
+            for (const component of require('fs').readdirSync(`${{ github.workspace }}/components`)) {
               console.log(`Uploading ${component} to release`);
               await github.rest.repos.uploadReleaseAsset({
                 owner: context.repo.owner,
