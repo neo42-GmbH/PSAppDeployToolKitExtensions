@@ -35,13 +35,6 @@ jobs:
             });
 
             for (const issue of issues) {
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                state: 'closed'
-              });
-
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -54,4 +47,13 @@ jobs:
             <sub>This is an auto-generated message from your friendly release assistant :package::rocket:
             Please note that the publishing process might take a while or can even be rejected.</sub>`
               });
+
+              if (issue.state !== 'closed') {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed'
+                });
+              }
             }
