@@ -38,7 +38,7 @@ jobs:
           $runId = '${{ github.run_number }}'
           $branch = '${{ github.head_ref || github.ref_name }}'.Replace('refs/heads/', '')
           $version = "$date.$runId"
-          $releaseTag = "$version-PreRelease"
+          $tag = "$version-PreRelease"
 
           if ($false -eq [string]::IsNullOrEmpty($branch) -and $branch -ne 'production') {
             $tag = "$version-$branch"
