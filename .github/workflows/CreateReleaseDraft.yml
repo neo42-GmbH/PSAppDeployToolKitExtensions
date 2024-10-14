@@ -101,12 +101,14 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issueCount = (await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              milestone: '${{ steps.milestone.outputs.result }}'
-            })).data.length;
-            const issueText = issueCount === 1 ? `${issueCount} issue` : '${issueCount} issues';
+            if ('${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' === 'production') {
+              const issueCount = (await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                milestone: '${{ steps.milestone.outputs.result }}'
+              })).data.length;
+              const issueText = issueCount === 1 ? `${issueCount} issue` : '${issueCount} issues';
+            }
 
             const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
             const body = isPreRelease
