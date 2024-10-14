@@ -43,8 +43,7 @@ jobs:
             Once the release is published, it will be available on:
               * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${milestone.title})
 
-            <sub>This is an auto-generated message from your friendly release assistant :package::rocket:
-            Please note that the publishing process might take a while or can even be rejected.</sub>`
+            <sub>This is an auto-generated message from your friendly release assistant :package::rocket:</sub>`
               });
 
               if (issue.state !== 'closed') {
