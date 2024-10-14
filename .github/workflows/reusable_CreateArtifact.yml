@@ -1,6 +1,12 @@
 name: Create Artifact
 
 on:
+  workflow_dispatch:
+    inputs:
+      PSADT_VERSION:
+        description: 'The version of the PSADT source'
+        required: true
+        type: string
   workflow_call:
     inputs:
       PSADT_VERSION:
