@@ -42,7 +42,6 @@ jobs:
                 body: `:tada: This issue will be addressed in version ${milestone.title} :tada:
             Once the release is published, it will be available on:
               * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${milestone.title})
-              * [neo42 Service Downloads Portal](https://portal.neo42.de/ServiceDownloadsManagement) (Sign-in required)
 
             <sub>This is an auto-generated message from your friendly release assistant :package::rocket:
             Please note that the publishing process might take a while or can even be rejected.</sub>`
