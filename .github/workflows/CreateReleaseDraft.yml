@@ -148,4 +148,3 @@ jobs:
                 data: require('fs').readFileSync(`${{ github.workspace }}/components/${component}`)
               });
             }
-
