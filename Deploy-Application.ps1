@@ -670,7 +670,7 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 		.SYNOPSIS
 			Executes after the completed install, reinstall or soft migration process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -714,7 +714,7 @@ function CustomReinstallPostUninstallOnError {
 		.SYNOPSIS
 			Executes right after the uninstallation in the reinstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -732,7 +732,7 @@ function CustomReinstallPostUninstall {
 		.SYNOPSIS
 			Executes after the successful uninstallation in the reinstall process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -762,7 +762,7 @@ function CustomReinstallPostInstallOnError {
 		.SYNOPSIS
 			Executes right after the installation in the reinstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -780,7 +780,7 @@ function CustomReinstallPostInstall {
 		.SYNOPSIS
 			Executes after the successful installation in the reinstall process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -810,7 +810,7 @@ function CustomInstallEndOnError {
 		.SYNOPSIS
 			Executes right after the installation in the install process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -828,7 +828,7 @@ function CustomInstallEnd {
 		.SYNOPSIS
 			Executes after the successful installation in the install process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -846,7 +846,7 @@ function CustomInstallAndReinstallEnd {
 		.SYNOPSIS
 			Executes after the completed install or reinstall process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -876,7 +876,7 @@ function CustomUninstallEndOnError {
 		.SYNOPSIS
 			Executes right after the uninstallation in the uninstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
@@ -894,7 +894,7 @@ function CustomUninstallEnd {
 		.SYNOPSIS
 			Executes after the successful uninstallation in the uninstall process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
