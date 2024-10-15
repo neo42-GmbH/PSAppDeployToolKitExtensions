@@ -102,6 +102,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
+            var releaseNoteHeader = "# 🚨 Important 🚨 #\nReleases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information."
             const { data: currentRelease } = await github.rest.repos.getLatestRelease({
               owner: context.repo.owner,
               repo: context.repo.repo
@@ -113,12 +114,17 @@ jobs:
                 repo: context.repo.repo,
                 milestone: '${{ steps.milestone.outputs.result }}'
               })).data.length;
-              const issueText = issueCount === 1 ? `${issueCount} issue` : '${issueCount} issues';
-              const body = `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
+              const issueText = issueCount === 1 ? `${issueCount} issue` : `${issueCount} issues`;
+              releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
             }
-            else {
-              const body = "# 🚨 Important 🚨 #\nReleases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information."
-            }
+
+            const { data: releaseNotesGenerated } = await github.rest.repos.generateReleaseNotes({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
+              target_commitish: '${{ github.sha }}',
+              previous_tag_name: currentRelease.tag_name
+            });
 
             const { data: newRelease } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
@@ -128,21 +134,8 @@ jobs:
               target_commitish: '${{ github.sha }}',
               draft: true,
               prerelease: isPreRelease,
-              generate_release_notes: false
-            });
-
-            const { data: notes } = await github.rest.repos.generateReleaseNotes({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
-              previous_tag_name: currentRelease.tag_name
-            });
-
-            await github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: newRelease.id,
-              body: `${body}\n\n${notes.body}`
+              generate_release_notes: false,
+              body: `${releaseNoteHeader}\n\n${releaseNotesGenerated.body}`
             });
 
             for (const component of require('fs').readdirSync(`${{ github.workspace }}/components`)) {
@@ -155,4 +148,3 @@ jobs:
                 data: require('fs').readFileSync(`${{ github.workspace }}/components/${component}`)
               });
             }
-
