@@ -4,7 +4,7 @@ Describe "Stop-NxtProcess" {
             $process = Start-Process -FilePath $global:simpleExe -PassThru
         }
         AfterEach {
-            if ($process.HasExited -eq $false) {
+            if ($false -eq $process.HasExited) {
                 $process.Kill()
             }
         }
