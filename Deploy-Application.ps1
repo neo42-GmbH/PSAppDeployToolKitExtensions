@@ -670,13 +670,13 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 		.SYNOPSIS
 			Executes after the completed install, reinstall or soft migration process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomInstallAndReinstallAndSoftMigrationEnd: $ResultToCheck"
 
 	#region CustomInstallAndReinstallAndSoftMigrationEnd content
 
@@ -714,13 +714,13 @@ function CustomReinstallPostUninstallOnError {
 		.SYNOPSIS
 			Executes right after the uninstallation in the reinstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstallOnError'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomReinstallPostUninstallOnError: $ResultToCheck"
 
 	#region CustomReinstallPostUninstallOnError content
 
@@ -732,13 +732,13 @@ function CustomReinstallPostUninstall {
 		.SYNOPSIS
 			Executes after the successful uninstallation in the reinstall process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomReinstallPostUninstall'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomReinstallPostUninstall: $ResultToCheck"
 
 	#region CustomReinstallPostUninstall content
 
@@ -762,13 +762,13 @@ function CustomReinstallPostInstallOnError {
 		.SYNOPSIS
 			Executes right after the installation in the reinstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstallOnError'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomReinstallPostInstallOnError: $ResultToCheck"
 
 	#region CustomReinstallPostInstallOnError content
 
@@ -780,13 +780,13 @@ function CustomReinstallPostInstall {
 		.SYNOPSIS
 			Executes after the successful installation in the reinstall process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomReinstallPostInstall'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomReinstallPostInstall: $ResultToCheck"
 
 	#region CustomReinstallPostInstall content
 
@@ -810,13 +810,13 @@ function CustomInstallEndOnError {
 		.SYNOPSIS
 			Executes right after the installation in the install process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomInstallEndOnError'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomInstallEndOnError: $ResultToCheck"
 
 	#region CustomInstallEndOnError content
 
@@ -828,13 +828,13 @@ function CustomInstallEnd {
 		.SYNOPSIS
 			Executes after the successful installation in the install process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomInstallEnd'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomInstallEnd: $ResultToCheck"
 
 	#region CustomInstallEnd content
 
@@ -846,13 +846,13 @@ function CustomInstallAndReinstallEnd {
 		.SYNOPSIS
 			Executes after the completed install or reinstall process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallEnd'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomInstallAndReinstallEnd: $ResultToCheck"
 
 	#region CustomInstallAndReinstallEnd content
 
@@ -876,13 +876,13 @@ function CustomUninstallEndOnError {
 		.SYNOPSIS
 			Executes right after the uninstallation in the uninstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomUninstallEndOnError'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomUninstallEndOnError: $ResultToCheck"
 
 	#region CustomUninstallEndOnError content
 
@@ -894,13 +894,13 @@ function CustomUninstallEnd {
 		.SYNOPSIS
 			Executes after the successful uninstallation in the uninstall process.
 	#>
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.NxtApplicationResult]
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomUninstallEnd'
+	Write-Verbose "[$($MyInvocation.MyCommand.Name)] CustomUninstallEnd: $ResultToCheck"
 
 	#region CustomUninstallEnd content
 
