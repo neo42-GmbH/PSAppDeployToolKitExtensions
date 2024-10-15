@@ -101,21 +101,26 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            if ('${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' === 'production') {
+            const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
+            const { data: currentRelease } = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            if (!isPreRelease) {
               const issueCount = (await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 milestone: '${{ steps.milestone.outputs.result }}'
               })).data.length;
               const issueText = issueCount === 1 ? `${issueCount} issue` : '${issueCount} issues';
+              const body = `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
+            }
+            else {
+              const body = "# 🚨 Important 🚨 #\nReleases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information."
             }
 
-            const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
-            const body = isPreRelease
-              ? 'Releases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information.'
-              : `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
-
-            const { data: release } = await github.rest.repos.createRelease({
+            const { data: newRelease } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
@@ -123,8 +128,21 @@ jobs:
               target_commitish: '${{ github.sha }}',
               draft: true,
               prerelease: isPreRelease,
-              generate_release_notes: !isPreRelease,
-              body: body
+              generate_release_notes: false
+            });
+
+            const { data.body: notes } = await github.rest.repos.generateReleaseNotes({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
+              previous_tag_name: currentRelease.tag_name
+            });
+
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: newRelease.id,
+              body: `${body}\n\n${notes}`
             });
 
             for (const component of require('fs').readdirSync(`${{ github.workspace }}/components`)) {
@@ -132,7 +150,7 @@ jobs:
               await github.rest.repos.uploadReleaseAsset({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                release_id: release.id,
+                release_id: newRelease.id,
                 name: component,
                 data: require('fs').readFileSync(`${{ github.workspace }}/components/${component}`)
               });
