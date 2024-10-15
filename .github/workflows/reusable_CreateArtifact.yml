@@ -1,6 +1,12 @@
 name: Create Artifact
 
 on:
+  workflow_dispatch:
+    inputs:
+      PSADT_VERSION:
+        description: 'The version of the PSADT source'
+        required: true
+        type: string
   workflow_call:
     inputs:
       PSADT_VERSION:
@@ -10,12 +16,18 @@ on:
     outputs:
       ARTIFACT_VERSION:
         value: ${{ jobs.artifact.outputs.VERSION }}
+      ARTIFACT_TAG:
+        value: ${{ jobs.artifact.outputs.TAG }}
+      ARTIFACT_BRANCH:
+        value: ${{ jobs.artifact.outputs.BRANCH }}
 
 jobs:
   artifact:
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.release-info.outputs.RELEASE_VERSION }}
+      TAG: ${{ steps.release-info.outputs.RELEASE_TAG }}
+      BRANCH: ${{ steps.release-info.outputs.RELEASE_BRANCH }}
 
     steps:
       - name: get-release-info
@@ -23,26 +35,21 @@ jobs:
         shell: pwsh
         run: |
           $date = Get-Date -Format 'yyyy.MM.dd'
-          $number = '${{ github.run_number }}'
+          $runId = '${{ github.run_number }}'
+          $branch = '${{ github.head_ref || github.ref_name }}'.Replace('refs/heads/', '')
+          $version = "$date.$runId"
+          $tag = "$version-PreRelease"
 
-          $version = "$date.$number"
-          "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
-          Write-Host "Auto-generated release version: $version"
-      - name: get-branch-info
-        id: branch-info
-        shell: pwsh
-        run: |
-          Write-Host 'github.head_ref: ${{ github.head_ref }}'
-          Write-Host 'github.ref_name: ${{ github.ref_name }}'
-          if ('${{ github.ref_name }}' -eq 'production') {
-            $branchname = '${{ github.ref_name }}'
-          } elseif ($false -eq [string]::IsNullOrEmpty( '${{ github.head_ref }}' ) ){
-            $branchname = '${{ github.head_ref }}' -replace 'refs/heads/', ''
-          } else {
-            $branchname = 'PreRelease'
+          if ($false -eq [string]::IsNullOrEmpty($branch) -and $branch -ne 'production') {
+            $tag = "$version-$branch"
+          } elseif ($branch -eq 'production') {
+            $tag = "$version"
           }
-          "BRANCH_NAME=$branchname" >> $env:GITHUB_OUTPUT
-          Write-Host "branchname: $branchname"
+
+          "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
+          "RELEASE_BRANCH=$branch" >> $env:GITHUB_OUTPUT
+          "RELEASE_TAG=$tag" >> $env:GITHUB_OUTPUT
+          Write-Host "Determined version [$version] and branch [$branch]. Tagging as [$tag]"
 
       - name: checkout-psadt
         uses: actions/checkout@v4
@@ -50,7 +57,7 @@ jobs:
           repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
           sparse-checkout: 'Toolkit/AppDeployToolkit/*'
           sparse-checkout-cone-mode: false
-          path: ./PSAppDeployToolkit
+          path: ./${{ steps.release-info.outputs.RELEASE_TAG }}
           ref: ${{ inputs.PSADT_VERSION }}
 
       - name: checkout-extensions
@@ -61,8 +68,8 @@ jobs:
       - name: merge-extensions
         shell: pwsh
         run: |
-          Move-Item -Force -Path "./PSAppDeployToolkit/Toolkit/AppDeployToolkit/" -Destination "./PSAppDeployToolkit/AppDeployToolkit/"
-          Copy-Item -Force -Recurse -Exclude '.*' -Path "./ExtensionsSourceCode/*" -Destination "./PSAppDeployToolkit/"
+          Move-Item -Force -Path "./${{ steps.release-info.outputs.RELEASE_TAG }}/Toolkit/AppDeployToolkit/" -Destination "./${{ steps.release-info.outputs.RELEASE_TAG }}/AppDeployToolkit/"
+          Copy-Item -Force -Recurse -Exclude '.*' -Path "./ExtensionsSourceCode/*" -Destination "./${{ steps.release-info.outputs.RELEASE_TAG }}/"
 
       - name: copy-sample-and-tools
         shell: pwsh
@@ -79,17 +86,17 @@ jobs:
         run: |
           Remove-Item -Force -Recurse -Path @(
             "./ExtensionsSourceCode/"
-            "./PSAppDeployToolkit/.git*"
-            "./PSAppDeployToolkit/Toolkit/"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/.git*"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/Toolkit/"
           ) | Out-Null
 
       - name: create-folder-structure
         shell: pwsh
         run: |
           New-Item -Force -ItemType File -Path @(
-            "./PSAppDeployToolkit/SupportFiles/User/Place user files here"
-            "./PSAppDeployToolkit/Files/Place setup files here"
-            "./PSAppDeployToolkit/Place Setup ico here"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/SupportFiles/User/Place user files here"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/Files/Place setup files here"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/Place Setup ico here"
           ) | Out-Null
 
       - name: place-commit-hash
@@ -97,40 +104,24 @@ jobs:
         run: |
           Set-Content -Path "./CommitHash.txt" -Value "${{ github.sha }}" -Encoding UTF8
 
-      - name: Replace-Packageconfig-with-release-json
+      - name: apply-release-config
         shell: pwsh
-        run: |
-          if ($true -eq (Test-Path -Path ./PSAppDeployToolkit/neo42PackageConfig.Release.json)){
-            Remove-Item -Path ./PSAppDeployToolkit/neo42PackageConfig.json
-            Rename-Item -Path ./PSAppDeployToolkit/neo42PackageConfig.Release.json -NewName neo42PackageConfig.json
-          }
+        run: Move-Item -Force -Path "./${{ steps.release-info.outputs.RELEASE_TAG }}/neo42PackageConfig.Release.json" -Destination "./${{ steps.release-info.outputs.RELEASE_TAG }}/neo42PackageConfig.json" -ErrorAction SilentlyContinue
 
       - name: inject-version
         shell: pwsh
         run: |
           @(
-            "./PSAppDeployToolkit/Deploy-Application.ps1"
-            "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.ps1"
-            "./PSAppDeployToolkit/AppDeployToolkit/AppDeployToolkitExtensions.cs"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/Deploy-Application.ps1"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/AppDeployToolkit/AppDeployToolkitExtensions.ps1"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/AppDeployToolkit/AppDeployToolkitExtensions.cs"
             "./Tools/InsertLatestToNxtPsadtPackage.ps1"
           ) | ForEach-Object {
             (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
           }
 
-      - name: rename-artifact-folder
-        shell: pwsh
-        run: |
-          [string]$branchname = '${{ steps.branch-info.outputs.BRANCH_NAME }}'
-          if ($branchname -eq 'production') {
-            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}'
-          } elseif ([string]::IsNullOrEmpty( $branchname ) ){
-            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_PreRelease'
-          } else {
-            Rename-Item -Path ./PSAppDeployToolkit -NewName '${{ steps.release-info.outputs.RELEASE_VERSION }}_${{ steps.branch-info.outputs.BRANCH_NAME }}'
-          }
-
       - name: upload-artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_VERSION }}${{ steps.branch-info.outputs.BRANCH_NAME != 'production' && '_' || '' }}${{ steps.branch-info.outputs.BRANCH_NAME != 'production' && steps.branch-info.outputs.BRANCH_NAME || '' }}
+          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_TAG }}
           path: .
