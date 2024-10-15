@@ -677,6 +677,7 @@ function CustomInstallAndReinstallAndSoftMigrationEnd {
 		$ResultToCheck
 	)
 	[string]$script:installPhase = 'CustomInstallAndReinstallAndSoftMigrationEnd'
+
 	#region CustomInstallAndReinstallAndSoftMigrationEnd content
 
 	#endregion CustomInstallAndReinstallAndSoftMigrationEnd content
