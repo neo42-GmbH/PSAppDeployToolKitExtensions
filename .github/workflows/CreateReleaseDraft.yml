@@ -135,7 +135,6 @@ jobs:
               draft: true,
               prerelease: isPreRelease,
               generate_release_notes: false,
-              make_latest: !isPreRelease,
               body: `${releaseNoteHeader}\n\n${releaseNotesGenerated.body}`
             });
 
