@@ -112,7 +112,7 @@ jobs:
 
             const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
             const body = isPreRelease
-              ? 'This is a pre-release build from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }}). Releases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information.'
+              ? 'Releases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information.'
               : `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
 
             const { data: release } = await github.rest.repos.createRelease({
@@ -123,7 +123,7 @@ jobs:
               target_commitish: '${{ github.sha }}',
               draft: true,
               prerelease: isPreRelease,
-              generate_release_notes: true,
+              generate_release_notes: !isPreRelease,
               body: body
             });
 
