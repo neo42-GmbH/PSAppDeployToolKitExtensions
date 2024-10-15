@@ -208,7 +208,8 @@ function Get-NxtPSDontUseEmptyStringLiterals {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.StringConstantExpressionAst[]]$stringConstants = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst] -and
-				$args[0].Value -eq [string]::Empty
+				$args[0].Value -eq [string]::Empty -and
+				$args[0].Parent.TypeName.Name -ne 'Diagnostics.CodeAnalysis.SuppressMessageAttribute'
 			}, $false)
 
 		foreach ($stringConstant in $stringConstants) {
