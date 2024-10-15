@@ -211,13 +211,13 @@ function Update-NxtPSAdtPackage {
 		.SYNOPSIS
 			Executes right after the uninstallation in the reinstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = `$true)]
 		[PSADTNXT.NxtApplicationResult]
 		`$ResultToCheck
 	)
 	[string]`$script:installPhase = 'CustomReinstallPostUninstallOnError'
-	Write-Verbose `"[`$(`$MyInvocation.MyCommand.Name)] CustomUninstallEnd: `$ResultToCheck`"
 
 	#region CustomReinstallPostUninstallOnError content
 
@@ -232,13 +232,13 @@ function Update-NxtPSAdtPackage {
 		.SYNOPSIS
 			Executes right after the installation in the reinstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = `$true)]
 		[PSADTNXT.NxtApplicationResult]
 		`$ResultToCheck
 	)
 	[string]`$script:installPhase = 'CustomReinstallPostInstallOnError'
-	Write-Verbose `"[`$(`$MyInvocation.MyCommand.Name)] CustomReinstallPostInstallOnError: `$ResultToCheck`"
 
 	#region CustomReinstallPostInstallOnError content
 
@@ -253,13 +253,13 @@ function Update-NxtPSAdtPackage {
 		.SYNOPSIS
 			Executes right after the installation in the install process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = `$true)]
 		[PSADTNXT.NxtApplicationResult]
 		`$ResultToCheck
 	)
 	[string]`$script:installPhase = 'CustomInstallEndOnError'
-	Write-Verbose `"[`$(`$MyInvocation.MyCommand.Name)] CustomInstallEndOnError: `$ResultToCheck`"
 
 	#region CustomInstallEndOnError content
 
@@ -274,13 +274,13 @@ function Update-NxtPSAdtPackage {
 		.SYNOPSIS
 			Executes right after the uninstallation in the uninstall process. (just add possible cleanup steps here, because scripts exits right after this function!)
 	#>
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Scope = 'Function', Justification = 'Template function')]
 	Param (
 		[Parameter(Mandatory = `$true)]
 		[PSADTNXT.NxtApplicationResult]
 		`$ResultToCheck
 	)
 	[string]`$script:installPhase = 'CustomUninstallEndOnError'
-	Write-Verbose `"[`$(`$MyInvocation.MyCommand.Name)] CustomUninstallEndOnError: `$ResultToCheck`"
 
 	#region CustomUninstallEndOnError content
 
