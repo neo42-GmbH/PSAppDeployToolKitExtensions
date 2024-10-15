@@ -114,7 +114,7 @@ jobs:
                 milestone: '${{ steps.milestone.outputs.result }}'
               })).data.length;
               const issueText = issueCount === 1 ? `${issueCount} issue` : '${issueCount} issues';
-              cost body = `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
+              const body = `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
             }
             else {
               const body = "# 🚨 Important 🚨 #\nReleases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information."
