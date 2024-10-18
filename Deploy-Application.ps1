@@ -63,7 +63,7 @@
 #>
 [CmdletBinding()]
 Param (
-	[Parameter(Mandatory = $false)]
+	[Parameter(Mandatory = $false, Position = 0)]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
 	[string]
 	$DeploymentType = 'Install',
