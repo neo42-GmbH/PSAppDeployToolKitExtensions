@@ -9,33 +9,33 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 	.OUTPUTS
 	[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.Language.Token[]]
 		$TestToken
 	)
 	Begin {
-		[string[]]$keywordList = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
+		[System.Collections.Generic.HashSet[string]]$keywords = [System.Collections.Generic.HashSet[string]]::new(
+			[System.Collections.ObjectModel.Collection[string]]@('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param'),
+			[System.StringComparer]::OrdinalIgnoreCase
+		)
 	}
 	Process {
-		$results = @()
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		foreach ($token in $TestToken) {
-			## Check if the token is a keyword and if it is already in the correct case
-			if ($false -eq $token.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::Keyword)) {
+			[string]$spelling = [string]::Empty
+			if (
+				$false -eq $token.TokenFlags.HasFlag([System.Management.Automation.Language.TokenFlags]::Keyword) -or
+				$false -eq $keywords.TryGetValue($token.Text, [ref]$spelling) -or
+				$token.Text -ceq $spelling
+			) {
 				continue
 			}
-			## Get the correct spelling of the token
-			[string]$spelling = $keywordList | Where-Object { $_ -ieq $token.Text } | Select-Object -First 1
-			## Check if we have a suggestion, otherwise return nothing
-			if ($true -eq [string]::IsNullOrWhiteSpace($spelling) -or $spelling -ceq $token.Text) {
-				continue
-			}
+
 			## Create a suggestion object
-			$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
-			$suggestedCorrections.add(
+			$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
+			$null = $suggestedCorrections.Add(
 				[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 					$token.Extent.StartLineNumber,
 					$token.Extent.EndLineNumber,
@@ -45,17 +45,17 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 					$MyInvocation.MyCommand.Definition,
 					'Apply the correct capitalization.'
 				)
-			) | Out-Null
+			)
 			## Return the diagnostic record
-			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'              = 'The token is not capitalized correctly.'
-				'Extent'               = $token.Extent
-				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-				'Severity'             = 'Warning'
-				'SuggestedCorrections' = $suggestedCorrections
-			}
+			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+					'Message'              = 'The token is not capitalized correctly.'
+					'Extent'               = $token.Extent
+					'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+					'Severity'             = 'Warning'
+					'SuggestedCorrections' = $suggestedCorrections
+				})
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -70,17 +70,17 @@ function Get-NxtPSVariablesInParamBlockShouldBeCapitalized {
 	.OUTPUTS
 	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
 	Process {
-		[System.Management.Automation.Language.FunctionDefinitionAst[]]$functions = $TestAst.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $false)
-		$results = @()
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
+		[System.Management.Automation.Language.FunctionDefinitionAst[]]$functions = $TestAst.FindAll({
+				$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
+			}, $false)
 		foreach ($functionAst in $functions) {
 			[System.Management.Automation.Language.ParamBlockAst]$paramBlockAst = $functionAst.Body.ParamBlock
 			if ($null -eq $paramBlockAst) {
@@ -92,15 +92,15 @@ function Get-NxtPSVariablesInParamBlockShouldBeCapitalized {
 					continue
 				}
 				## Return the diagnostic record
-				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'  = 'A parameter block variable needs to start with a capital letter'
-					'Extent'   = $parameterVariableAst.Extent
-					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-					'Severity' = 'Warning'
-				}
+				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+						'Message'  = 'A parameter block variable needs to start with a capital letter'
+						'Extent'   = $parameterVariableAst.Extent
+						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+						'Severity' = 'Warning'
+					})
 			}
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -115,48 +115,31 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 	.OUTPUTS
 	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
 	Process {
-		[System.Management.Automation.Language.ParamBlockAst[]]$parameterBlocks = $TestAst.FindAll({
-				$args[0] -is [System.Management.Automation.Language.ParamBlockAst] -and
-				$args[0].Parameters.Count -gt 0
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
+		[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $TestAst.FindAll({
+				$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
+				$args[0].VariablePath.UserPath -cmatch '^[A-Z]' -and
+				$args[0].VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'MyInvocation', 'HostInvocation', 'NestedPromptLevel', 'PID', 'PROFILE', 'PSBoundParameters', 'PSCmdlet', 'PSCommandPath', 'PSCulture', 'PSDebugContext', 'PSEdition', 'PSHOME', 'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender', 'ShellId', 'StackTrace')
 			}, $false)
 
-		$results = @()
-		foreach ($paramBlockAst in $parameterBlocks) {
-			foreach ($block in @('BeginBlock', 'ProcessBlock', 'EndBlock')) {
-				[System.Management.Automation.Language.NamedBlockAst]$namedBlockAst = $paramBlockAst.Parent | Select-Object -ExpandProperty $block -ErrorAction SilentlyContinue
-				if ($null -eq $namedBlockAst) {
-					continue
-    }
-				# Get All capitalized variables that are not automatically defined
-				[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $namedBlockAst.FindAll({
-						$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
-						$args[0].VariablePath.UserPath -cmatch '^[A-Z]' -and
-						$args[0].VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'false', 'foreach', 'HOME', 'Host', 'input', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'MyInvocation', 'HostInvocation', 'NestedPromptLevel', 'null', 'PID', 'PROFILE', 'PSBoundParameters', 'PSCmdlet', 'PSCommandPath', 'PSCulture', 'PSDebugContext', 'PSEdition', 'PSHOME', 'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender', 'ShellId', 'StackTrace', 'switch', 'this', 'true')
-					}, $false)
-
-				foreach ($variableAst in $capitalizedVariables) {
-					if ($variableAst.VariablePath.UserPath -in $paramBlockAst.Parameters.Name.VariablePath.UserPath) {
-						continue
-					}
-					$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+		foreach ($variableAst in $capitalizedVariables) {
+			if ($variableAst.VariablePath.UserPath -notin $TestAst.ParamBlock.Parameters.Name.VariablePath.UserPath) {
+				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'  = 'A capatalized variable needs to be defined in the param block'
 						'Extent'   = $variableAst.Extent
 						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 						'Severity' = 'Warning'
-					}
-				}
+					})
 			}
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -171,40 +154,36 @@ function Get-NxtPSParamBlockVariablesShouldBeTyped {
 	.OUTPUTS
 	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
 	Process {
-		[System.Management.Automation.Language.ParamBlockAst]$parameterBlock = $TestAst.ParamBlock
-		if ($null -eq $parameterBlock) {
+		if ($null -eq $TestAst.ParamBlock) {
 			return
 		}
-
-		$results = @()
-		foreach ($parameterAst in $parameterBlock.Parameters) {
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
+		foreach ($parameterAst in $TestAst.ParamBlock.Parameters) {
 			if ($null -eq $parameterAst.Attributes.TypeName) {
-				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'  = 'A parameter block variable needs to be typed'
-					'Extent'   = $parameterAst.Extent
-					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-					'Severity' = 'Warning'
-				}
+				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+						'Message'  = 'A parameter block variable needs to be typed'
+						'Extent'   = $parameterAst.Extent
+						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+						'Severity' = 'Warning'
+					})
 			}
 			elseif ($parameterAst.Attributes.TypeName.Extent.StartLineNumber -eq $parameterAst.Name.Extent.StartLineNumber) {
-				$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'  = 'The type definition and variable should be on a seperate lines'
-					'Extent'   = $parameterAst.Extent
-					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-					'Severity' = 'Warning'
-				}
+				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+						'Message'  = 'The type definition and variable should be on a seperate lines'
+						'Extent'   = $parameterAst.Extent
+						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+						'Severity' = 'Warning'
+					})
 			}
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -219,42 +198,46 @@ function Get-NxtPSDontUseEmptyStringLiterals {
 	.OUTPUTS
 	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
 	Process {
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.StringConstantExpressionAst[]]$stringConstants = $TestAst.FindAll({
-				$args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $args[0].Value -eq [string]::Empty -and
+				$args[0] -is [System.Management.Automation.Language.StringConstantExpressionAst] -and
+				$args[0].Value -eq [string]::Empty -and
 				$args[0].Parent.TypeName.Name -ne 'Diagnostics.CodeAnalysis.SuppressMessageAttribute'
 			}, $false)
-		$results = @()
+
 		foreach ($stringConstant in $stringConstants) {
-			$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
-			$suggestedCorrections.add(
+			$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
+			[string]$correctionContent = '[string]::Empty'
+			if ($stringConstant.Parent -is [System.Management.Automation.Language.CommandAst] -and $stringConstant.Parent.GetCommandName() -eq 'Write-Output') {
+				$correctionContent = '([string]::Empty)'
+			}
+			$null = $suggestedCorrections.Add(
 				[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 					$stringConstant.Extent.StartLineNumber,
 					$stringConstant.Extent.EndLineNumber,
 					$stringConstant.Extent.StartColumnNumber,
 					$stringConstant.Extent.EndColumnNumber,
-					'[string]::Empty',
+					$correctionContent,
 					$MyInvocation.MyCommand.Definition,
 					'Use .NET string empty instead of empty string literal.'
 				)
-			) | Out-Null
-			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'              = 'Empty strings should not be used'
-				'Extent'               = $stringConstant.Extent
-				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-				'Severity'             = 'Warning'
-				'SuggestedCorrections' = $suggestedCorrections
-			}
+			)
+			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+					'Message'              = 'Empty strings should not be used'
+					'Extent'               = $stringConstant.Extent
+					'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+					'Severity'             = 'Warning'
+					'SuggestedCorrections' = $suggestedCorrections
+				})
 		}
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
@@ -269,22 +252,21 @@ function Get-NxtPSEnforceConsistantConditionalStatements {
 	.OUTPUTS
 	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
-	$results = @()
+	[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 	[System.Management.Automation.Language.BinaryExpressionAst[]]$wrongSideOperators = $TestAst.FindAll({
 			$args[0] -is [System.Management.Automation.Language.BinaryExpressionAst] -and
 			$args[0].Right.Extent.Text -in @('$true', '$false')
 		}, $false)
+
 	foreach ($wrongSideOperator in $wrongSideOperators) {
-		$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
-		$suggestedCorrections.add(
+		$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
+		$null = $suggestedCorrections.Add(
 			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 				$wrongSideOperator.Extent.StartLineNumber,
 				$wrongSideOperator.Extent.EndLineNumber,
@@ -294,16 +276,17 @@ function Get-NxtPSEnforceConsistantConditionalStatements {
 				$MyInvocation.MyCommand.Definition,
 				'Switch the boolean literal to the left side of the comparison.'
 			)
-		) | Out-Null
-		$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-			'Message'              = 'Boolean literals should be on the left side of a comparison'
-			'Extent'               = $wrongSideOperator.Extent
-			'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-			'Severity'             = 'Warning'
-			'SuggestedCorrections' = $suggestedCorrections
-		}
+		)
+
+		$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				'Message'              = 'Boolean literals should be on the left side of a comparison'
+				'Extent'               = $wrongSideOperator.Extent
+				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+				'Severity'             = 'Warning'
+				'SuggestedCorrections' = $suggestedCorrections
+			})
 	}
-	return $results
+	return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 }
 
 function Get-NxtPSEnforceNewLineAtEndOfFile {
@@ -317,11 +300,9 @@ function Get-NxtPSEnforceNewLineAtEndOfFile {
 	.OUTPUTS
 	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
@@ -329,12 +310,12 @@ function Get-NxtPSEnforceNewLineAtEndOfFile {
 		if ($null -ne $TestAst.Parent) {
 			return
 		}
-		[string]$lastLine = $TestAst.Extent.Text -split [System.Environment]::NewLine | Select-Object -Last 1
+		[string]$lastLine = ($TestAst.Extent.Text -split [System.Environment]::NewLine)[-1]
 		if ($true -eq [string]::IsNullOrWhiteSpace($lastLine)) {
 			return
 		}
-		$suggestedCorrections = New-Object System.Collections.ObjectModel.Collection["Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent"]
-		$suggestedCorrections.add(
+		$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
+		$null = $suggestedCorrections.Add(
 			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 				$TestAst.Extent.EndLineNumber,
 				$TestAst.Extent.EndLineNumber,
@@ -344,7 +325,7 @@ function Get-NxtPSEnforceNewLineAtEndOfFile {
 				$MyInvocation.MyCommand.Definition,
 				'Add a new line at the end of the file.'
 			)
-		) | Out-Null
+		)
 		$extent = [System.Management.Automation.Language.ScriptExtent]::new(
 			[System.Management.Automation.Language.ScriptPosition]::new(
 				$TestAst.Extent.File,
@@ -359,13 +340,13 @@ function Get-NxtPSEnforceNewLineAtEndOfFile {
 				$lastLine
 			)
 		)
-		return [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-			'Message'              = 'There should be a new line at the end of the file'
-			'Extent'               = $extent
-			'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-			'Severity'             = 'Warning'
-			'SuggestedCorrections' = $suggestedCorrections
-		}
+		return @([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+				'Message'              = 'There should be a new line at the end of the file'
+				'Extent'               = $extent
+				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+				'Severity'             = 'Warning'
+				'SuggestedCorrections' = $suggestedCorrections
+			})
 	}
 }
 
@@ -380,40 +361,36 @@ function Get-NxtPSIncompatibleFunctions {
 	.OUTPUTS
 	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 	#>
-	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param (
 		[Parameter(Mandatory = $true)]
-		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
 	Begin {
-		[psobject[]]$incompatibleFunctions = @(
-			@{
-				Functions = @('Update-SessionEnvironmentVariables', 'Refresh-SessionEnvironmentVariables')
-				Reason    = 'Due to security reasons we clear the environment at the start of the Deploy-Application.ps1. Reloading the environment would mitigate this security measure.'
-			}
-		)
+		[hashtable]$incompatibleFunctions = @{
+			'Update-SessionEnvironmentVariables'  = 'Due to security reasons we clear the environment at the start of the Deploy-Application.ps1. Reloading the environment would mitigate this security measure.'
+			'Refresh-SessionEnvironmentVariables' = 'Due to security reasons we clear the environment at the start of the Deploy-Application.ps1. Reloading the environment would mitigate this security measure.'
+		}
 	}
 	Process {
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
+
 		[System.Management.Automation.Language.CommandAst[]]$commandAsts = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
-				$args[0].GetCommandName() -in @($incompatibleFunctions.Functions)
+				$args[0].GetCommandName() -in $incompatibleFunctions.Keys
 			}, $false)
 
-		[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results = @()
-
 		foreach ($commandAst in $commandAsts) {
-			$results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'              = ($incompatibleFunctions | Where-Object { $_.Functions -contains $commandAst.GetCommandName() }).Reason
-				'Extent'               = $commandAst.Extent
-				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-				'Severity'             = 'Warning'
-			}
+			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+					'Message'  = $incompatibleFunctions[$commandAst.GetCommandName()]
+					'Extent'   = $commandAst.Extent
+					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+					'Severity' = 'Warning'
+				})
 		}
 
-		return $results
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
 
