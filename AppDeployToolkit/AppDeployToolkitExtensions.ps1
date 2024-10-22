@@ -11099,7 +11099,7 @@ function Test-NxtStringInFile {
 		else {
 			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::None
 		}
-		[System.Text.RegularExpressions.MatchCollection[]]$regexMatches = @([regex]::Matches($content, $pattern, $options))
+		[array]$regexMatches = [regex]::Matches($content, $pattern, $options)
 		if ($regexMatches.Count -gt 0) {
 			Write-Output $true
 		}
