@@ -11079,14 +11079,14 @@ function Test-NxtStringInFile {
 				[string]$intEncoding = "UTF8"
 			}
 		}
-		[bool]$textFound = $false
 		[hashtable]$contentParams = @{
 			Path = $Path
 		}
 		if ($false -eq [string]::IsNullOrEmpty($intEncoding)) {
 			[string]$contentParams['Encoding'] = $intEncoding
 		}
-		[string]$content = Get-Content @contentParams -Raw
+		# Specifically cast into string to catch case where content is $null
+		[string]$content = "$(Get-Content @contentParams -Raw)"
 		[regex]$pattern = if ($true -eq $ContainsRegex) {
 			[regex]::new($SearchString)
 		}
@@ -11099,11 +11099,13 @@ function Test-NxtStringInFile {
 		else {
 			[System.Text.RegularExpressions.RegexOptions]$options = [System.Text.RegularExpressions.RegexOptions]::None
 		}
-		[array]$regexMatches = [regex]::Matches($content, $pattern, $options)
+		[System.Text.RegularExpressions.MatchCollection[]]$regexMatches = @([regex]::Matches($content, $pattern, $options))
 		if ($regexMatches.Count -gt 0) {
-			[bool]$textFound = $true
+			Write-Output $true
 		}
-		Write-Output $textFound
+		else {
+			Write-Output $false
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
