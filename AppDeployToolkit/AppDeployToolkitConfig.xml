@@ -445,7 +445,7 @@
         <RestartPrompt_ButtonRestartLater>Minimieren</RestartPrompt_ButtonRestartLater>
         <RestartPrompt_ButtonRestartNow>Jetzt Neustarten</RestartPrompt_ButtonRestartNow>
 		<NxtWelcomePrompt_FollowApplication>Die folgende Anwendung wird gerade {0}:</NxtWelcomePrompt_FollowApplication>
-		<NxtWelcomePrompt_ApplicationClose>Die folgenden Programme müssen geschlossen werden, bevor die {0} fortgesetzt werden kann.</NxtWelcomePrompt_ApplicationClose>
+		<NxtWelcomePrompt_ApplicationClose>Die folgenden Anwendungen müssen geschlossen werden, bevor die {0} fortgesetzt werden kann.</NxtWelcomePrompt_ApplicationClose>
 		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Bitte speichern Sie Ihre Arbeit und schließen Sie die Programme.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
 		<NxtWelcomePrompt_SaveWork>Bitte speichern Sie Ihre Arbeit, schließen Sie die Anwendung und dann wird dieser Prozess fortgeführt. Speichern Sie alternativ Ihre Arbeit und klicken Sie auf 'Anwendungen schließen'.</NxtWelcomePrompt_SaveWork>
 		<NxtWelcomePrompt_ApplicationName>Anwendungsname</NxtWelcomePrompt_ApplicationName>
