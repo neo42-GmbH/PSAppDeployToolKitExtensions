@@ -67,7 +67,7 @@
 #>
 [CmdletBinding(DefaultParameterSetName = 'Deployment')]
 Param (
-	[Parameter(Mandatory = $false, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false, Position = 0, ParameterSetName = 'Deployment')]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
 	[Parameter(Mandatory = $false, ParameterSetName = 'SkipDeployment')]
 	[ValidateSet('Install', 'Uninstall', 'Repair')]
