@@ -410,7 +410,7 @@
         <ClosePrompt_ButtonDefer>Aufschieben</ClosePrompt_ButtonDefer>
         <ClosePrompt_Message>Die folgenden Anwendungen müssen geschlossen werden, bevor die Installation fortgesetzt werden kann.
 
-            Bitte speichern Sie Ihre Arbeit, schließen Sie die Programme und fahren Sie dann fort.
+            Bitte speichern Sie Ihre Arbeit, schließen Sie die Anwendungen und fahren Sie dann fort.
         Alternativ können Sie Ihre Arbeit speichern und dann auf „Schließe Anwendungen klicken.</ClosePrompt_Message>
         <ClosePrompt_CountdownMessage>HINWEIS: Diese Andwendungen werden automatisch geschlossen:</ClosePrompt_CountdownMessage>
         <DeferPrompt_WelcomeMessage>Die folgende Anwendung soll installiert werden:</DeferPrompt_WelcomeMessage>
@@ -446,7 +446,7 @@
         <RestartPrompt_ButtonRestartNow>Jetzt Neustarten</RestartPrompt_ButtonRestartNow>
 		<NxtWelcomePrompt_FollowApplication>Die folgende Anwendung wird gerade {0}:</NxtWelcomePrompt_FollowApplication>
 		<NxtWelcomePrompt_ApplicationClose>Die folgenden Anwendungen müssen geschlossen werden, bevor die {0} fortgesetzt werden kann.</NxtWelcomePrompt_ApplicationClose>
-		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Bitte speichern Sie Ihre Arbeit und schließen Sie die Programme.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
+		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Bitte speichern Sie Ihre Arbeit und schließen Sie die Anwendungen.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
 		<NxtWelcomePrompt_SaveWork>Bitte speichern Sie Ihre Arbeit, schließen Sie die Anwendung und dann wird dieser Prozess fortgeführt. Speichern Sie alternativ Ihre Arbeit und klicken Sie auf 'Anwendungen schließen'.</NxtWelcomePrompt_SaveWork>
 		<NxtWelcomePrompt_ApplicationName>Anwendungsname</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Gestartet von</NxtWelcomePrompt_StartedBy>
