@@ -281,7 +281,7 @@
         <RestartPrompt_ButtonRestartLater>Minimize</RestartPrompt_ButtonRestartLater>
         <RestartPrompt_ButtonRestartNow>Restart Now</RestartPrompt_ButtonRestartNow>
 		<NxtWelcomePrompt_FollowApplication>The following application is about to be {0}:</NxtWelcomePrompt_FollowApplication>
-		<NxtWelcomePrompt_ApplicationClose>The follwing applications must be closed before the {0} can procced.</NxtWelcomePrompt_ApplicationClose>
+		<NxtWelcomePrompt_ApplicationClose>The following applications must be closed before the {0} can procced.</NxtWelcomePrompt_ApplicationClose>
 		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Please save your work and close the applications.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
 		<NxtWelcomePrompt_SaveWork>Please save your work, close the applications and this process will be continued. Alternativly, save your work and click 'Close applications'.</NxtWelcomePrompt_SaveWork>
 		<NxtWelcomePrompt_ApplicationName>Application name</NxtWelcomePrompt_ApplicationName>
