@@ -412,6 +412,31 @@ function Main {
 				CustomInstallAndReinstallAndSoftMigrationBegin
 				## START OF INSTALL
 				[string]$script:installPhase = 'Package-PreCleanup'
+				[scriptblock]$installationWelcomeInstall = {
+					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
+					switch ($showInstallationWelcomeResult) {
+						0 {
+						}
+						1618 {
+							Exit-NxtScriptWithError -ErrorMessage 'AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached.' -MainExitCode $showInstallationWelcomeResult
+						}
+						60012 {
+							Exit-NxtScriptWithError -ErrorMessage 'User deferred installation request.' -MainExitCode $showInstallationWelcomeResult
+						}
+						default {
+							Exit-NxtScriptWithError -ErrorMessage "AskKillProcesses window returned unexpected exit code: $showInstallationWelcomeResult" -MainExitCode $showInstallationWelcomeResult
+						}
+					}
+				}
+				[string]$psadtInstalledPackageVersion = Get-RegistryKey -Key "HKLM:\Software\$RegPackagesKey\$PackageGUID" -Value 'Version'
+				## If an update is detected and the old package needs uninstallation, show the installation welcome dialog before uninstalling the old package
+				if (
+					$false -eq [string]::IsNullOrWhiteSpace($psadtInstalledPackageVersion) -and
+					$true -eq $global:PackageConfig.UninstallOld -and
+					(Compare-NxtVersion -DetectedVersion $psadtInstalledPackageVersion -TargetVersion $global:PackageConfig.AppVersion) -eq 'Update'
+				) {
+					$installationWelcomeInstall.Invoke()
+				}
 				[PSADTNXT.NxtApplicationResult]$mainNxtResult = Uninstall-NxtOld
 				if ($false -eq $mainNxtResult.Success) {
 					Clear-NxtTempFolder
@@ -422,14 +447,14 @@ function Main {
 				Resolve-NxtDependentPackage
 				[string]$script:installPhase = 'Check-SoftMigration'
 				if (
-					($true -eq $global:SetupCfg.Options.SoftMigration) -and
+					$true -eq $global:SetupCfg.Options.SoftMigration -and
+					$true -eq $RegisterPackage -and
+					$false -eq $RemovePackagesWithSameProductGUID -and
 					(
-						($false -eq (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName')) -or
-						($global:PackageConfig.AppVersion -ne (Get-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'Version'))
+						$false -eq (Test-RegistryValue -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'ProductName') -or
+						$global:PackageConfig.AppVersion -ne (Get-RegistryKey -Key HKLM\Software\$RegPackagesKey\$PackageGUID -Value 'Version')
 					) -and
-					($true -eq $RegisterPackage) -and
-					((Get-NxtRegisteredPackage -ProductGUID "$ProductGUID" | Where-Object PackageGUID -NE $PackageGUID).count -eq 0) -and
-					($false -eq $RemovePackagesWithSameProductGUID)
+					(Get-NxtRegisteredPackage -ProductGUID $ProductGUID | Where-Object PackageGUID -NE $PackageGUID).Count -eq 0
 				) {
 					CustomSoftMigrationBegin
 				}
@@ -438,21 +463,7 @@ function Main {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
 					Remove-NxtProductMember
-					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
-					if ($showInstallationWelcomeResult -ne 0) {
-						switch ($showInstallationWelcomeResult) {
-							'1618' {
-								[string]$currentShowInstallationWelcomeMessageInstall = 'AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached.'
-							}
-							'60012' {
-								[string]$currentShowInstallationWelcomeMessageInstall = 'User deferred installation request.'
-							}
-							default {
-								[string]$currentShowInstallationWelcomeMessageInstall = "AskKillProcesses window returned unexpected exit code: $showInstallationWelcomeResult"
-							}
-						}
-						Exit-NxtScriptWithError -ErrorMessage $currentShowInstallationWelcomeMessageInstall -MainExitCode $showInstallationWelcomeResult
-					}
+					$installationWelcomeInstall.Invoke()
 					CustomInstallAndReinstallPreInstallAndReinstall
 					[string]$script:installPhase = 'Decide-ReInstallMode'
 					if ( ($true -eq $(Test-NxtAppIsInstalled -InstallMethod $global:PackageConfig.UninstallMethod)) -or ($true -eq $global:AppInstallDetectionCustomResult) ) {
