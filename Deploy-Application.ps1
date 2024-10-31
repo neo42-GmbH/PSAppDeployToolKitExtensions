@@ -413,7 +413,8 @@ function Main {
 				## START OF INSTALL
 				[string]$script:installPhase = 'Package-PreCleanup'
 				[scriptblock]$installationWelcomeInstall = {
-					switch ([int](Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps)) {
+					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
+					switch ($showInstallationWelcomeResult) {
 						0 {
 						}
 						1618 {
