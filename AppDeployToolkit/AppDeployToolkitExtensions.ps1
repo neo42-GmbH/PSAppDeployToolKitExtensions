@@ -9051,7 +9051,7 @@ function Show-NxtInstallationWelcome {
 		Indicates if the function is being used for installation or uninstallation. This parameter is mandatory.
 	.PARAMETER ContinueType
 		Defines behavior after dialog timeout. Influences further actions. Default value is determined by the global SetupCfg object. This parameter is optional.
-	.PARAMETER ContinueTypeAfterDeferrals
+	.PARAMETER ForceContinueAfterDeferrals
 		Defines behavior after the deferral deadline. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER UserCanCloseAll
 		Allows users to close all specified applications. Default value is determined by the global SetupCfg object. This parameter is optional.
@@ -9169,8 +9169,8 @@ function Show-NxtInstallationWelcome {
 		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
 		## should the deadline be reached this continue type will be applied
 		[Parameter(Mandatory = $false)]
-		[PSADTNXT.ContinueType]
-		$ContinueTypeAfterDeferrals = $global:SetupCfg.AskKillProcesses.ContinueTypeAfterDeferrals,
+		[bool]
+		$ForceContinueAfterDeferrals = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.ForceContinueAfterDeferrals)),
 		## Specifies if the user can close all applications
 		[Parameter(Mandatory = $false)]
 		[Switch]
@@ -9343,9 +9343,9 @@ function Show-NxtInstallationWelcome {
 					$AllowDefer = $false
 				}
 			}
-			if ($false -eq $AllowDefer -and $null -ne $ContinueTypeAfterDeferrals ) {
-				Write-Log "ContinueTypeAfterDeferrals is set. Applying alternate ContinueType [$([enum]::GetName([PSADTNXT.ContinueType], $ContinueTypeAfterDeferrals))]." -Source ${cmdletName}
-				$ContinueType = $ContinueTypeAfterDeferrals
+			if ($false -eq $AllowDefer -and $true -eq $ForceContinueAfterDeferrals ) {
+				Write-Log "ForceContinueAfterDeferrals is set. Applying alternate ContinueType [Continue]." -Source ${cmdletName}
+				$ContinueType = [PSADTNXT.ContinueType]::Continue
 			}
 		}
 		if (($deferTimes -lt 0) -and ($false -eq $deferDeadlineUniversal)) {
