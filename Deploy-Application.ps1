@@ -428,7 +428,16 @@ function Main {
 				if ($false -eq $(Get-NxtRegisterOnly)) {
 					## soft migration is not requested or not possible
 					[string]$script:installPhase = 'Package-Preparation'
-					Remove-NxtProductMember
+					[int]$removeNxtProductMemberResult_Install = Remove-NxtProductMember
+					if (0 -ne $removeNxtProductMemberResult_Install) {
+						## masked error code from prevented uninstall in Remove-NxtProductMember
+						if (61618 -eq $removeNxtProductMemberResult_Install) {
+							Exit-NxtScriptWithError -ErrorMessage 'Removal of a found product member application package could not be processed now.' -MainExitCode 1618
+						}
+						else {
+							Exit-NxtScriptWithError -ErrorMessage 'Removal of a found product member application package failed.' -MainExitCode $removeNxtProductMemberResult_Install
+						}
+					}
 					[int]$showInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $true -AllowDeferCloseApps
 					if ($showInstallationWelcomeResult -ne 0) {
 						switch ($showInstallationWelcomeResult) {
@@ -542,7 +551,16 @@ function Main {
 				## START OF UNINSTALL
 				[string]$script:installPhase = 'Package-Preparation'
 				if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($false -eq $SkipUnregister) ) {
-					Remove-NxtProductMember
+					[int]$removeNxtProductMemberResult_Uninstall = Remove-NxtProductMember
+					if (0 -ne $removeNxtProductMemberResult_Uninstall) {
+						## masked error code from prevented uninstall in Remove-NxtProductMember
+						if (61618 -eq $removeNxtProductMemberResult_Uninstall) {
+							Exit-NxtScriptWithError -ErrorMessage 'Removal of a found product member application package could not be processed now.' -MainExitCode 1618
+						}
+						else {
+							Exit-NxtScriptWithError -ErrorMessage 'Removal of a found product member application package failed.' -MainExitCode $removeNxtProductMemberResult_Uninstall
+						}
+					}
 				}
 				if ( ($true -eq $RegisterPackage) -and ($true -eq $(Get-NxtRegisteredPackage -PackageGUID "$PackageGUID" -InstalledState 1)) ) {
 					[int]$showUnInstallationWelcomeResult = Show-NxtInstallationWelcome -IsInstall $false
@@ -550,6 +568,10 @@ function Main {
 						switch ($showUnInstallationWelcomeResult) {
 							'1618' {
 								[string]$currentShowInstallationWelcomeMessageUninstall = 'AskKillProcesses dialog aborted by user or AskKillProcesses timeout reached.'
+								## necessary if called inside run of Remove-NxtProductMember (to mask this error code from regular msi return code)
+								if ( ($true -eq $RemovePackagesWithSameProductGUID) -and ($true -eq $SkipUnregister) ) {
+									$showUnInstallationWelcomeResult = 61618
+								}
 							}
 							'60012' {
 								[string]$currentShowInstallationWelcomeMessageUninstall = 'User deferred installation request.'

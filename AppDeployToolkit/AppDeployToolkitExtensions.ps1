@@ -7774,10 +7774,7 @@ function Remove-NxtProductMember {
 	Process {
 		[int]$removalCounter = 0
 		if ($true -eq $RemovePackagesWithSameProductGUID) {
-			(Get-NxtRegisteredPackage -ProductGUID $ProductGUID -InstalledState 1 -RegPackagesKey $RegPackagesKey).PackageGUID | Where-Object {
-				$null -ne $($_)
-			} | ForEach-Object {
-				[string]$assignedPackageGUID = $_
+			foreach ($assignedPackageGUID in (Get-NxtRegisteredPackage -ProductGUID $ProductGUID -InstalledState 1 -RegPackagesKey $RegPackagesKey).PackageGUID | Where-Object { $null -ne $($_) }) {
 				## we don't remove the current package inside this function
 				if ($assignedPackageGUID -ne $PackageGUID) {
 					[string]$assignedPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Value 'UninstallString')
@@ -7785,14 +7782,17 @@ function Remove-NxtProductMember {
 					if ($false -eq ([string]::IsNullOrEmpty($assignedPackageUninstallString))) {
 						Write-Log -Message "Removing package with uninstall call: '$assignedPackageUninstallString -SkipUnregister'." -Source ${CmdletName}
 						cmd /c "$assignedPackageUninstallString -SkipUnregister"
-						if ($LASTEXITCODE -ne 0) {
-							Write-Log -Message "Removal of found product member application package failed with return code '$LASTEXITCODE'." -Severity 3 -Source ${CmdletName}
-							throw "Removal of found product member application package failed."
+						if (0 -eq $LASTEXITCODE) {
+							Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Name 'Installed' -Type 'Dword' -Value '0'
+							Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Name 'SystemComponent' -Type 'Dword' -Value '1'
+							Write-Log -Message "Set current install state and hided the uninstall entry for product member application package with PackageGUID '$assignedPackageGUID'." -Source ${cmdletName}
+							$removalCounter += 1
 						}
-						Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Name 'Installed' -Type 'Dword' -Value '0'
-						Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$assignedPackageGUID" -Name 'SystemComponent' -Type 'Dword' -Value '1'
-						Write-Log -Message "Set current install state and hided the uninstall entry for product member application package with PackageGUID '$assignedPackageGUID'." -Source ${cmdletName}
-						$removalCounter += 1
+						else {
+							Write-Log -Message "Removal of product member package with 'PackageGUID' [$assignedPackageGUID] has currently been prevented by AskKillProcesses dialog behavior." -Severity 2 -Source ${CmdletName}
+							$removalCounter = -1
+							break
+						}
 					}
 					else {
 						Write-Log -Message "Removal of product member package with 'PackageGUID' [$assignedPackageGUID] is not processable. There is no current 'UninstallString' available." -Severity 2 -Source ${cmdletName}
@@ -7802,6 +7802,12 @@ function Remove-NxtProductMember {
 		}
 		if ($removalCounter -eq 0) {
 			Write-Log -Message "No valid conditions for removal of application packages assigned to a product." -Source ${CmdletName}
+		}
+		if ($removalCounter -ge 0) {
+			Write-Output 0
+		}
+		else {
+			Write-Output $LASTEXITCODE
 		}
 	}
 	End {
