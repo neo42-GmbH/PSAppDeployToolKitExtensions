@@ -603,7 +603,7 @@ function Main {
 			}
 			'InstallUserPart' {
 				## START OF USERPARTINSTALL
-				[string]$userPartSuccess = 'true'
+				[string]$script:userPartSuccess = 'true'
 				CustomInstallUserPartBegin
 				CustomInstallUserPartEnd
 				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components\$($global:PackageConfig.PackageGUID)" -Name 'UserPartInstallSuccess' -Type 'String' -Value "$userPartSuccess"
@@ -611,7 +611,7 @@ function Main {
 			}
 			'UninstallUserPart' {
 				## START OF USERPARTUNINSTALL
-				[string]$userPartSuccess = 'true'
+				[string]$script:userPartSuccess = 'true'
 				CustomUninstallUserPartBegin
 				CustomUninstallUserPartEnd
 				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components\$($global:PackageConfig.PackageGUID).uninstall" -Name 'UserPartUninstallSuccess' -Type 'String' -Value "$userPartSuccess"
