@@ -496,7 +496,7 @@ parent: /
 note: this value is mandatory if the value "UserPartOnInstallation" and/or "UserPartOnUninstallation" is set to 'true'
 ```
 default value: ""
-uses a unique value for the user part of the package in comma separated format derived from value "ScriptDate" expanded by a counter starting with 0 like "2023,06,08,00"
+uses a unique value for the user part of the package in comma separated format derived from value "ScriptDate" expanded by a counter starting with 1 like "2023,06,08,01"
 note: to re-run the user part installation together with a package reinstallation the added counter has to be incremented
 ```
 
