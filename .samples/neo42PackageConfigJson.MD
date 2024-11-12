@@ -700,8 +700,8 @@ default value: false
 switch to control the behavior for using the defined parameters in value "UninstPara" (valid are only 'true' and 'false')
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
 ```
-- **true** : appends the parameters to these one got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
-- **false**: replaces the parameters got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
+- **true** : appends the parameters to these one got from the corresponding parameters entry (if any) in ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: replaces the parameters got from the corresponding parameters entry (if any) in ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedUninstallExitCodes"** *optional string value*
 
