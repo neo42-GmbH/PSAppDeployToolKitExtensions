@@ -191,7 +191,7 @@ note: a log file parameter always will be appended, if supported by setup type (
 
 parent: /
 ```
-default value: "Reinstall", but "MSIRepair" is recommended for MSI setups (executes default MSI engine repair switch '/fvomus' with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters")
+default value: "Reinstall" (with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters")
 
 reinstall mode used for default setup execution in main routine
 
@@ -200,7 +200,7 @@ especially for MSI setups in case provided value "UninstallKey" is a display nam
 additionally the defined "AcceptedRepairExitCodes" are provided to the default process execution
 note: additionally valid value is "Install" (important: like for mode 'Reinstall' the related settings for the corresponding values "InstallMethod" and "UninstallMethod" will be used!)
 ```
-- **MSIRepair**: does a default MSI setup integrated repair procedure - note: usage with legacy setups will throw a controlled error!
+- **MSIRepair**: does a default MSI setup integrated repair procedure with MSI engine repair switch '/fvomus' - note: especially for MSI setup, usage with legacy setups will throw a controlled error!
 - **Reinstall**: does an external 2-step procedure with a regular uninstallation procedure first and an regular installation procedure again afterwards (note: an intermediate reboot may be required!)
 - **Install**: does a regular installation procedure (it's just an "over-installing", especially for MSI setups it may do an inplace upgrade if allowed by value 'MSIInplaceUpgradeable' in case of detecting installed application just with DISPLAYNAME instead of MSIGUID as Uninstallkey) - note: be careful, the application/setup has to support this procedure!
 
