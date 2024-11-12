@@ -12325,7 +12325,8 @@ function Unregister-NxtOld {
 		[bool]
 		$UninstallOld = $global:PackageConfig.UninstallOld,
 		[Parameter(Mandatory = $false)]
-		[string] $DeploymentSystem = $global:DeploymentSystem
+		[string]
+		$DeploymentSystem = $global:DeploymentSystem
 	)
 	Begin {
 		## Get the name of this function and write header
