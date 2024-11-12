@@ -40,7 +40,7 @@ Describe "Get-NxtWindowsBits" {
             $env:PROCESSOR_ARCHITECTURE="INVALID"
         }
         It "Should return nothing" {
-            { Get-NxtWindowsBits } | Should -Throw
+            Get-NxtWindowsBits | Should -BeNullOrEmpty
         }
     }
 
@@ -49,7 +49,7 @@ Describe "Get-NxtWindowsBits" {
             Remove-Item Env:\PROCESSOR_ARCHITECTURE
         }
         It "Should return nothing" {
-            Get-NxtWindowsBits | Should -Throw
+            Get-NxtWindowsBits | Should -BeNullOrEmpty
         }
     }
 }
