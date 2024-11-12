@@ -5585,21 +5585,16 @@ function Get-NxtWindowsBits {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		try {
-			switch -regex ($ProcessorArchitecture.ToUpper()) {
-				"^(AMD64|ARM64)$" {
-					Write-Output 64
-				}
-				"^(X86|ARM)$" {
-					Write-Output 32
-				}
-				Default {
-					Write-Error "$($ProcessorArchitecture) could not be translated to CPU bitness 'WindowsBits'"
-				}
+		switch -Regex ($ProcessorArchitecture.ToUpper()) {
+			"^(AMD64|ARM64)$" {
+				Write-Output 64
 			}
-		}
-		catch {
-			Write-Log -Message "Failed to translate $($ProcessorArchitecture) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			"^(X86|ARM)$" {
+				Write-Output 32
+			}
+			Default {
+				Write-Log "$($ProcessorArchitecture) could not be translated to CPU bitness 'WindowsBits'" -Severity 3 -Source ${cmdletName}
+			}
 		}
 	}
 	End {
