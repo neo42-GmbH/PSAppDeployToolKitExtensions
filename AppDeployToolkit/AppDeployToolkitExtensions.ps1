@@ -12758,11 +12758,15 @@ function Update-NxtTextInFile {
 			}
 		}
 		try {
-			[hashtable]$contentParams = @{}
+			[hashtable]$contentParams = @{
+				Path        = $Path
+				Raw         = $true
+				ErrorAction = 'Stop'
+			}
 			if ($false -eq [string]::IsNullOrEmpty($intEncoding)) {
 				[string]$contentParams['Encoding'] = $intEncoding
 			}
-			[string]$content = Get-Content @contentParams -Path $Path -Raw -ErrorAction Stop
+			[string]$content = Get-Content @contentParams
 			[regex]$pattern = $SearchString
 			[array]$regexMatches = $pattern.Matches($content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
