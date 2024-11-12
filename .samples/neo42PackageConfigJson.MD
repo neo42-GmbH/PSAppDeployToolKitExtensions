@@ -283,7 +283,7 @@ parent: /
 ```
 default value: "0"
 build number of the script starting with 0 for each revision (in general it is a numeric value as type 'string')
-note: increment this value if script is changed AND package is not already distributed to clients
+note: increment this value if script is changed AND package should not be triggered on all clients
 ```
 
 **"AppArch"** *mandatory string value*
