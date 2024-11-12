@@ -12754,14 +12754,12 @@ function Update-NxtTextInFile {
 		}
 		try {
 			[hashtable]$contentParams = @{
-				Path        = $Path
-				Raw         = $true
-				ErrorAction = 'Stop'
+				Path = $Path
 			}
 			if ($false -eq [string]::IsNullOrEmpty($intEncoding)) {
 				[string]$contentParams['Encoding'] = $intEncoding
 			}
-			[string]$content = Get-Content @contentParams
+			[string]$content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
 			[array]$regexMatches = $pattern.Matches($content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
