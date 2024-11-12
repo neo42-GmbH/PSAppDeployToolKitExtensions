@@ -569,7 +569,7 @@ switch to control the interpretation of character '*' within the defined string 
 parent: /
 ```
 default value: false
-switch to control the interpretation of '$($variables)' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
+switch to control the interpretation of stored variables (such as '$($VariableName)') within the defined string with the value "UninstallKey" (valid are only 'true' and 'false')
 ```
 - **true** : '$($var)' is interpreted as a PowerShell variable
 - **false**: '$($var)' is interpreted as part of the defined string
