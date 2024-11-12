@@ -12323,7 +12323,9 @@ function Unregister-NxtOld {
 		$AppLang = $global:PackageConfig.AppLang,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$UninstallOld = $global:PackageConfig.UninstallOld
+		$UninstallOld = $global:PackageConfig.UninstallOld,
+		[Parameter(Mandatory = $false)]
+		[string] $DeploymentSystem = $global:DeploymentSystem
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -12407,6 +12409,11 @@ function Unregister-NxtOld {
 		[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
 		[string[]]$appNameList = @(($appNameWithoutAppLang, $AppName) | Sort-Object -Unique)
 		foreach ($regPackageRoot in @("HKLM:\Software\Wow6432Node", "HKLM:\Software")) {
+			if ($DeploymentSystem -eq "Empirum" -and $regPackageRoot -eq "HKLM:\Software") {
+				## in this case new PSADT package is wrapped by Empirum agent and must not be removed!
+				Write-Log -Message "DeploymentSystem is set to 'Empirum', skipping unregister of Empirum packages in 'HKLM:\Software'." -Source ${cmdletName}
+				continue
+			}
 			foreach ($appName in $appNameList) {
 				[Microsoft.Win32.RegistryKey]$regProductKey = Get-Item -Path "$regPackageRoot\$RegPackagesKey\$AppVendor\$appName" -ErrorAction SilentlyContinue
 				if ($null -eq $regProductKey) {
@@ -12421,7 +12428,7 @@ function Unregister-NxtOld {
 				[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object {
 					$true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID"))
 				}
-				Write-Log -Message "Detected $($regVersionKeysOfNonADTPackages.Count) old Empirum installation(s) of '$appName'." -Source ${cmdletName}
+				Write-Log -Message "Detected $($regVersionKeysOfNonADTPackages.Count) traditional Empirum installation(s) of '$appName'." -Source ${cmdletName}
 				foreach ($regVersionKey in $regVersionKeysOfNonADTPackages) {
 					[Microsoft.Win32.RegistryKey]$regSetupKey = Get-Item -Path (Join-Path $regVersionKey.PSPath "Setup")
 					## Remove this entry if the setup information is not available
@@ -12447,7 +12454,7 @@ function Unregister-NxtOld {
 				}
 			}
 		}
-		## cleanup Empirum specific install key
+		## cleanup traditional Empirum specific uninstall keys
 		@(
 			## Get all keys on which detection should be performed (x86 and x64)
 			Get-ChildItem -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" -ErrorAction SilentlyContinue
@@ -12463,7 +12470,7 @@ function Unregister-NxtOld {
 			## Only get keys that dont have the same version
 			$_.GetValue("DisplayVersion") -ne $AppVersion
 		} | ForEach-Object {
-			Write-Log "Removing the Empirum specific uninstall key '$($_.PSChildName)' with version '$($_.GetValue('DisplayVersion'))'." -Source ${CmdletName}
+			Write-Log "Removing the traditional Empirum specific uninstall key '$($_.PSChildName)' with version '$($_.GetValue('DisplayVersion'))'." -Source ${CmdletName}
 			Remove-RegistryKey $_.Name
 		}
 		## Remove the old package cache
