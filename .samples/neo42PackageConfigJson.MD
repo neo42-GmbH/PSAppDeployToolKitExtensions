@@ -559,7 +559,7 @@ switch to define the usage of the value "UninstallKey" as search string for a di
 parent: /
 ```
 default value: false
-switch to control the interpretation of character '*' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
+switch to control the interpretation of character '*' within the defined string with the value "UninstallKey" (valid are only 'true' and 'false')
 ```
 - **true** : '\*' is interpreted as a wildcard
 - **false**: '\*' is interpreted as part of the defined string
