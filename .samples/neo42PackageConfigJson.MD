@@ -141,10 +141,11 @@ for following well-known types of setups pre-defined parameter sets in file 'App
 - **NullSoft/NSIS**: if value is set to '*NullSoft*' only the default process execution with corresponding parameter set of legacy setup 'NullSoft' will be done
 - **BitRockInstaller**: all values like '*BitRock\**' will do default process execution with corresponding parameter set of legacy setup 'BitRockInstaller'
 - **none**: if value is set to '*none*' only any of the pre-defined procedures for well-known types of setups mentioned above will be skipped
+- **Setup**: is used by default to specify installation parameters for installation files that are not stored in the 'AppDeployToolkitConfig.xml' file
 
 following pre-defined parameter set will be used (see value "MSI_InstallParams"/"Nxt\<setup_type\>_InstallParams" in section "MSI_Options"/"Nxt\<setup_type>_Options" in file 'AppDeployToolkitConfig.xml'):
 ```
-MSI_InstallParams: MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn
+MSI_InstallParams                : MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn
 
 NxtInnoSetup_InstallParams       : /FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010
 NxtNullsoft_InstallParams        : /AllUsers /S
