@@ -1072,6 +1072,6 @@ note: especially consider masking rules for some characters inside the string
 
 parent: /PackageSpecificVariablesRaw/
 ```
-value dependent of necessary value extraction (valid are only 'true' and 'false')
+value dependent of necessary variable extraction inside of value "Value" (valid are only 'true' and 'false')
 note: this value may be omitted (that's equal to 'false')
 ```
