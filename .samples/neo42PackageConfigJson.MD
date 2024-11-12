@@ -668,7 +668,6 @@ parent: /
 ```
 default value: ""
 comma separated list of exit codes to accept a requested reboot after installation execution of the used setup installer file
-note: '*' is allowed for all exit codes
 ```
 
 **"UninstFile"** *optional string value*
