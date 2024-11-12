@@ -3,7 +3,7 @@ This file contains descriptions to all possible values in the file neo42PackageC
 ## good to know
 *By the way ***backtick*** is the general masking character for later usage of control characters inside powershell, but consider following masking rules for characters in json files at all:*
 
-| character | mask with | looks like | comments 
+| character | mask with | looks like | comments
 |:-----------:|:-----------:|:-----------:|:-----------:|
 | " | backtick | `" | necessary for expandable variable content in powershell |
 | $ | backtick | `$ | necessary for expandable variable content in powershell |
@@ -110,7 +110,7 @@ initial date of script creation in format "DD/MM/YYYY"
 
 parent: /
 ```
-internal unique identifier with 11 digits with format: 3 digits employee name abbreviation + 8 digits random hexadecimal number
+internal unique identifier with 11 digits with format: 3 digits employee name abbreviation + 8 digits random hexadecimal number or if automatically generated starting with 'n' followed by 13 decimal numbers
 ```
 
 **"Description"** *optional informational string value*
@@ -438,7 +438,7 @@ parent: /
 default value: "$($global:PackageConfig.AppRootFolder\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)"
 package cache folder on client system (i.e. possible user parts of package are executed from there)
 ```
- 
+
 **"UninstallOld"** *optional bool value*
 
 parent: /
@@ -560,7 +560,7 @@ parent: /
 default value: false
 switch to control the interpretation of '$($variables)' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
 ```
-- **true** : '$($var)' is interpreted as a PowerShell variable 
+- **true** : '$($var)' is interpreted as a PowerShell variable
 - **false**: '$($var)' is interpreted as part of the defined string
 
 **"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by ***[]***)*
@@ -764,7 +764,7 @@ parent: /TestConditionsPreSetupSuccessCheck/
 value sub-collection provides an optional custom opportunity for checking conditions after finishing the default setup installation routine and checking for installation state on the client and is valid for process items and/or registry items in last step during default installation process
 
 note: empty lists for process items and/or registry items are allowed!
- 
+
 **"TotalSecondsToWaitFor"** *mandatory integer value*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
@@ -969,7 +969,7 @@ link file name from somewhere inside of public start menu folder (including rela
 **"TargetName"** *optional string value*
 
 parent: /CommonStartMenuShortcutsToCopyToCommonDesktop/
-``` 
+```
 link file name on public desktop folder (necessary only if different name to Source)
 ```
 
