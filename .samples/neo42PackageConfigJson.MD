@@ -1048,7 +1048,7 @@ parent: /
 
 value collection to define customer specific variables
 
-note: the following sub-structure (each member group curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "Name" and "Value" have to be provided for each item, but an empty list is allowed too (that means: "PackageSpecificVariablesRaw": [])!
+note: the following sub-structure (each member group curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "Name" and "Value" have to be provided for each item, but an empty list is allowed too (that means: "PackageSpecificVariablesRaw": []), in addition the value "ExpandVariables" can be specified as 'true' or 'false' if a variable is present in the value "Value"!
 
 **"Name"** *mandatory string value*
 
