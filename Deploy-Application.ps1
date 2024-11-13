@@ -146,7 +146,7 @@ if ($DeploymentType -notin @('TriggerInstallUserPart', 'TriggerUninstallUserPart
 }
 $env:PSModulePath = @("$env:ProgramFiles\WindowsPowerShell\Modules", "$env:windir\system32\WindowsPowerShell\v1.0\Modules") -join ';'
 ## If running in 32-bit PowerShell, reload in 64-bit PowerShell if possible
-if ($env:PROCESSOR_ARCHITECTURE -eq 'x86' -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -eq '64-bit' -and $false -eq $SkipDeployment) {
+if ($env:PROCESSOR_ARCHITECTURE -in @('x86', 'ARM') -and (Get-CimInstance -ClassName 'Win32_OperatingSystem').OSArchitecture -like '64-bit*' -and $false -eq $SkipDeployment) {
 	Write-Warning 'Detected 32bit PowerShell running on 64bit OS. Restarting in 64bit PowerShell.'
 	[string]$file = $MyInvocation.MyCommand.Path
 	# add all bound parameters to the argument list

@@ -17,9 +17,27 @@ Describe "Get-NxtWindowsBits" {
         }
     }
 
-    Context "When running a different system" {
+    Context "When running on ARM64 system" {
         BeforeAll {
             $env:PROCESSOR_ARCHITECTURE="ARM64"
+        }
+        It "Should return 64" {
+            Get-NxtWindowsBits | Should -Be 64
+        }
+    }
+
+    Context "When running on ARM32 system" {
+        BeforeAll {
+            $env:PROCESSOR_ARCHITECTURE="ARM"
+        }
+        It "Should return 32" {
+            Get-NxtWindowsBits | Should -Be 32
+        }
+    }
+
+    Context "When running the variable is invalid" {
+        BeforeAll {
+            $env:PROCESSOR_ARCHITECTURE="INVALID"
         }
         It "Should return nothing" {
             Get-NxtWindowsBits | Should -BeNullOrEmpty
