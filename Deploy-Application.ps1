@@ -65,12 +65,10 @@
 .LINK
 	http://psappdeploytoolkit.com
 #>
-[CmdletBinding(DefaultParameterSetName = 'Deployment')]
+[CmdletBinding()]
 Param (
-	[Parameter(Mandatory = $false, Position = 0, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false, Position = 0)]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
-	[Parameter(Mandatory = $false, ParameterSetName = 'SkipDeployment')]
-	[ValidateSet('Install', 'Uninstall', 'Repair')]
 	[string]
 	$DeploymentType = 'Install',
 	[Parameter(Mandatory = $false)]
@@ -92,7 +90,7 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[string]
 	$DeploymentSystem = [string]::Empty,
-	[Parameter(Mandatory = $false, DontShow = $true, ParameterSetName = 'SkipDeployment')]
+	[Parameter(Mandatory = $false, DontShow = $true)]
 	[switch]
 	$SkipDeployment = $false
 )
