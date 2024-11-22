@@ -6,13 +6,7 @@
 		'Warning',
 		'Information'
 	)
-	ExcludeRules        = @(
-		'PSAvoidGlobalVars', # PSADT uses global variables
-		'PSUseShouldProcessForStateChangingFunctions', # We don't use ShouldProcess in our scripts
-		'PSUseOutputTypeCorrectly', # Does not work good with array types
-		'PSUseSingularNouns' # Ignored because we use plural nouns
-		'PSAvoidUsingEmptyCatchBlock' # Ignored because we use empty catch blocks
-	)
+	ExcludeRules        = @()
 	Rules               = @{
 		PSUseCompatibleCmdlets             = @{
 			Enable         = $true
@@ -30,7 +24,11 @@
 			IgnoreCommands = @(
 				'Should',
 				'Invoke-Pester',
-				'Write-Log'
+				'Context',
+				'Invoke-Pester',
+				'It',
+				'Should',
+				'Describe'
 			)
 		}
 		PSUseCompatibleSyntax              = @{
