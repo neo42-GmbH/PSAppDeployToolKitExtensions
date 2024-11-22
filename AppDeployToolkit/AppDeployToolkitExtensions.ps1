@@ -5424,6 +5424,46 @@ function Get-NxtSidByName {
 	}
 }
 #endregion
+#regionn Function Get-NxtStrictMode
+function Get-NxtStrictMode {
+	<#
+		.SYNOPSIS
+			Get the current strict mode version.
+		.DESCRIPTION
+			Get the strict mode version of the current PowerShell session.
+			If the version returned is 0.0, then strict mode is not enabled.
+		.OUTPUTS
+			System.Version
+		.EXAMPLE
+			Get-NxtStrictMode
+			Returns the current strict mode version.
+		.LINK
+			https://neo42.de/psappdeploytoolkit
+	#>
+	try {
+		$null = @()[1]
+	}
+	catch {
+		return [System.Version]::new(3, 0)
+	}
+
+	try {
+		$null = @{}.NonExistent
+	}
+	catch {
+		return [System.Version]::new(2, 0)
+	}
+
+	try {
+		$null = $undefined
+	}
+	catch {
+		return [System.Version]::new(1, 0)
+	}
+
+	return [System.Version]::new(0, 0)
+}
+#endegion
 #region Function Get-NxtSystemEnvironmentVariable
 function Get-NxtSystemEnvironmentVariable {
 	<#
