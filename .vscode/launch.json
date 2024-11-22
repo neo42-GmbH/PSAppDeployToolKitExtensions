@@ -1,0 +1,14 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Import environment via Deploy Application -SkipDeployment",
+			"type": "PowerShell",
+			"request": "launch",
+			"script": "${workspaceFolder}/Deploy-Application.ps1",
+			"args": [
+				"-SkipDeployment"
+			]
+		}
+	]
+}
