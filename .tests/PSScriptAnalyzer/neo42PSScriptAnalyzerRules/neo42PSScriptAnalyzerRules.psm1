@@ -125,12 +125,26 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
-				$args[0].VariablePath.UserPath -cmatch '^[A-Z]' -and
-				$args[0].VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'MyInvocation', 'HostInvocation', 'NestedPromptLevel', 'PID', 'PROFILE', 'PSBoundParameters', 'PSCmdlet', 'PSCommandPath', 'PSCulture', 'PSDebugContext', 'PSEdition', 'PSHOME', 'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender', 'ShellId', 'StackTrace')
+				$args[0].VariablePath.UserPath -cmatch '^[A-Z]|Preference$|PS.+|Invocation$' -and
+				$args[0].VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'NestedPromptLevel', 'PID', 'PROFILE', 'PWD', 'Sender', 'ShellId', 'StackTrace')
 			}, $false)
 
+		[scriptblock]$getParentParamBlocks = {
+			Param (
+				[System.Management.Automation.Language.Ast]
+				$Ast
+			)
+			if ($null -ne $Ast.Parent) {
+				&$getParentParamBlock -Ast $Ast.Parent
+			}
+			if ($null -ne $Ast.ParamBlock) {
+				return $Ast.ParamBlock
+			}
+		}
+		[System.Management.Automation.Language.ParamBlockAst[]]$parentParamBlocks = . $getParentParamBlocks -Ast $TestAst
+
 		foreach ($variableAst in $capitalizedVariables) {
-			if ($variableAst.VariablePath.UserPath -notin $TestAst.ParamBlock.Parameters.Name.VariablePath.UserPath) {
+			if ($variableAst.VariablePath.UserPath -notin $parentParamBlocks.Parameters.Name.VariablePath.UserPath) {
 				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'  = 'A capatalized variable needs to be defined in the param block'
 						'Extent'   = $variableAst.Extent
