@@ -187,7 +187,7 @@ function Get-NxtPSParamBlockVariablesShouldBeTyped {
 	}
 }
 
-function Get-NxtPSDontUseEmptyStringLiterals {
+function Get-NxtPSDontUseEmptyStringLiteral {
 	<#
 	.SYNOPSIS
 	Checks that empty strings are not used.
@@ -241,7 +241,7 @@ function Get-NxtPSDontUseEmptyStringLiterals {
 	}
 }
 
-function Get-NxtPSEnforceConsistantConditionalStatements {
+function Get-NxtPSEnforceConsistantConditionalStatement {
 	<#
 	.SYNOPSIS
 	Checks that conditional statements are consistent.
@@ -350,7 +350,7 @@ function Get-NxtPSEnforceNewLineAtEndOfFile {
 	}
 }
 
-function Get-NxtPSIncompatibleFunctions {
+function Get-NxtPSIncompatibleFunction {
 	<#
 	.SYNOPSIS
 	Dont allow usage of PSADT functions which are not compatible with our extensions.
