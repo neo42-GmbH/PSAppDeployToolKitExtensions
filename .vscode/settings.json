@@ -53,5 +53,18 @@
             "pattern": "AppDeployToolkit/AppDeployToolkitConfig.xml",
             "systemId": "./.tests/schemas/AppDeployToolkitConfig.schema.xsd"
         }
-    ]
+    ],
+
+    "terminal.integrated.profiles.windows": {
+        "PSADTExtensionShell": {
+            "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+            "args": [
+                "-NoExit",
+                "-NoProfile",
+                "-File",
+                "${workspaceFolder}\\.vscode\\WorkspaceProfile.ps1"
+            ]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PSADTExtensionShell"
 }
