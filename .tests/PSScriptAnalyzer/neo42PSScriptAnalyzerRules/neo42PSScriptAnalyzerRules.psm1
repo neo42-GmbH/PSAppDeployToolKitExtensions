@@ -125,7 +125,8 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
-				$args[0].VariablePath.UserPath -cmatch '^[A-Z]|Preference$|PS.+|Invocation$' -and
+				$args[0].VariablePath.UserPath -cmatch '^[A-Z]' -and
+				$args[0].VariablePath.UserPath -cnotmatch 'Preference$|^PS.+|Invocation$'
 				$args[0].VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'NestedPromptLevel', 'PID', 'PROFILE', 'PWD', 'Sender', 'ShellId', 'StackTrace')
 			}, $false)
 
@@ -135,13 +136,13 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 				$Ast
 			)
 			if ($null -ne $Ast.Parent) {
-				&$getParentParamBlock -Ast $Ast.Parent
+				& $getParentParamBlock -Ast $Ast.Parent
 			}
 			if ($null -ne $Ast.ParamBlock) {
 				return $Ast.ParamBlock
 			}
 		}
-		[System.Management.Automation.Language.ParamBlockAst[]]$parentParamBlocks = . $getParentParamBlocks -Ast $TestAst
+		[System.Management.Automation.Language.ParamBlockAst[]]$parentParamBlocks = $getParentParamBlocks.Invoke($TestAst)
 
 		foreach ($variableAst in $capitalizedVariables) {
 			if ($variableAst.VariablePath.UserPath -notin $parentParamBlocks.Parameters.Name.VariablePath.UserPath) {
