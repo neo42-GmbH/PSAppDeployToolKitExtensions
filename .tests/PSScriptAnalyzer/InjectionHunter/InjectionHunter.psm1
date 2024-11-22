@@ -31,7 +31,10 @@ function Measure-InvokeExpression {
 	)
 
 	[ScriptBlock] $predicate = {
-		param ([System.Management.Automation.Language.Ast] $Ast)
+		Param (
+			[System.Management.Automation.Language.Ast]
+			$Ast
+		)
 
 		$targetAst = $Ast -as [System.Management.Automation.Language.CommandAst]
 		if ($targetAst) {
@@ -48,11 +51,15 @@ function Measure-InvokeExpression {
 			-ArgumentList $Messages.MeasureInvokeExpression, $foundNode.Extent, $PSCmdlet.MyInvocation.InvocationName, Warning, $null
 		$results += $result
 	}
-	Return $results
+	return $results
 }
 
 
 function Measure-AddType {
+	<#
+		.DESCRIPTION
+			Find instances of Add-Type, which can be used to run arbitrary code if supplied with untrusted input.
+	#>
 	[CmdletBinding()]
 	[OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	Param
@@ -64,7 +71,10 @@ function Measure-AddType {
 	)
 
 	[ScriptBlock] $predicate = {
-		param ([System.Management.Automation.Language.Ast] $Ast)
+		Param (
+			[System.Management.Automation.Language.Ast]
+			$Ast
+		)
 
 		$targetAst = $Ast -as [System.Management.Automation.Language.CommandAst]
 		if ($targetAst) {
@@ -77,8 +87,9 @@ function Measure-AddType {
 					if ($addTypeParameters.BoundParameters.TypeDefinition.Value -is [System.Management.Automation.Language.VariableExpressionAst]) {
 						$variableName = $addTypeParameters.BoundParameters.TypeDefinition.Value.VariablePath.UserPath
 						$constantAssignmentForVariable = $ScriptBlockAst.FindAll( {
-								param(
-									[System.Management.Automation.Language.Ast] $Ast
+								Param (
+									[System.Management.Automation.Language.Ast]
+									$Ast
 								)
 
 								$assignmentAst = $Ast -as [System.Management.Automation.Language.AssignmentStatementAst]
@@ -110,7 +121,7 @@ function Measure-AddType {
 			-ArgumentList $Messages.MeasureAddType, $foundNode.Extent, $PSCmdlet.MyInvocation.InvocationName, Warning, $null
 		$results += $result
 	}
-	Return $results
+	return $results
 }
 
 
@@ -131,7 +142,10 @@ function Measure-DangerousMethod {
 	)
 
 	[ScriptBlock] $predicate = {
-		param ([System.Management.Automation.Language.Ast] $Ast)
+		Param (
+			[System.Management.Automation.Language.Ast]
+			$Ast
+		)
 
 		$targetAst = $Ast -as [System.Management.Automation.Language.InvokeMemberExpressionAst]
 		if ($targetAst) {
@@ -163,7 +177,7 @@ function Measure-DangerousMethod {
 			-ArgumentList $($Messages.MeasureDangerousMethod + $foundNode.Extent), $foundNode.Extent, $PSCmdlet.MyInvocation.InvocationName, Warning, $null
 		$results += $result
 	}
-	Return $results
+	return $results
 }
 
 
@@ -185,7 +199,10 @@ function Measure-CommandInjection {
 
 	## Finds CommandAst nodes that invoke PowerShell or CMD with user input
 	[ScriptBlock] $predicate = {
-		param ([System.Management.Automation.Language.Ast] $Ast)
+		Param (
+			[System.Management.Automation.Language.Ast]
+			$Ast
+		)
 
 		$targetAst = $Ast -as [System.Management.Automation.Language.CommandAst]
 		if ($targetAst) {
@@ -212,7 +229,7 @@ function Measure-CommandInjection {
 			-ArgumentList $Messages.MeasureCommandInjection, $foundNode.Extent, $PSCmdlet.MyInvocation.InvocationName, Warning, $null
 		$results += $result
 	}
-	Return $results
+	return $results
 }
 
 
@@ -233,8 +250,11 @@ function Measure-ForeachObjectInjection {
 	)
 
 	## Finds CommandAst nodes that invoke Foreach-Object with user input
-	[ScriptBlock] $predicate = {
-		param ([System.Management.Automation.Language.Ast] $Ast)
+	[ScriptBlock]$predicate = {
+		Param (
+			[System.Management.Automation.Language.Ast]
+			$Ast
+		)
 
 		$targetAst = $Ast -as [System.Management.Automation.Language.CommandAst]
 		if ($targetAst) {
@@ -262,7 +282,7 @@ function Measure-ForeachObjectInjection {
 			-ArgumentList $($Messages.MeasureForeachObjectInjection + $FoundNode.Extent), $foundNode.Extent, $PSCmdlet.MyInvocation.InvocationName, Warning, $null
 		$results += $result
 	}
-	Return $results
+	return $results
 }
 
 <#
@@ -282,8 +302,11 @@ function Measure-PropertyInjection {
 	)
 
 	## Finds MemberExpressionAst that uses a non-constant member
-	[ScriptBlock] $predicate = {
-		param ([System.Management.Automation.Language.Ast] $Ast)
+	[ScriptBlock]$predicate = {
+		Param (
+			[System.Management.Automation.Language.Ast]
+			$Ast
+		)
 
 		$targetAst = $Ast -as [System.Management.Automation.Language.MemberExpressionAst]
 		$methodAst = $Ast -as [System.Management.Automation.Language.InvokeMemberExpressionAst]
@@ -302,7 +325,7 @@ function Measure-PropertyInjection {
 			-ArgumentList $($Messages.MeasurePropertyInjection + $FoundNode.Extent), $foundNode.Extent, $PSCmdlet.MyInvocation.InvocationName, Warning, $null
 		$results += $result
 	}
-	Return $results
+	return $results
 }
 
 
@@ -323,8 +346,11 @@ function Measure-MethodInjection {
 	)
 
 	## Finds MemberExpressionAst nodes that don't invoke a constant expression
-	[ScriptBlock] $predicate = {
-		param ([System.Management.Automation.Language.Ast] $Ast)
+	[ScriptBlock]$predicate = {
+		Param (
+			[System.Management.Automation.Language.Ast]
+			$Ast
+		)
 
 		$targetAst = $Ast -as [System.Management.Automation.Language.InvokeMemberExpressionAst]
 		if ($targetAst) {
@@ -341,7 +367,7 @@ function Measure-MethodInjection {
 			-ArgumentList $($Messages.MeasureMethodInjection + $FoundNode.Extent), $foundNode.Extent, $PSCmdlet.MyInvocation.InvocationName, Warning, $null
 		$results += $result
 	}
-	Return $results
+	return $results
 }
 
 <#
@@ -362,8 +388,11 @@ function Measure-UnsafeEscaping {
 	)
 
 	## Finds replace operators likely being used to escape strings improperly
-	[ScriptBlock] $predicate = {
-		param ([System.Management.Automation.Language.Ast] $Ast)
+	[ScriptBlock]$predicate = {
+		Param (
+			[System.Management.Automation.Language.Ast]
+			$Ast
+		)
 
 		$targetAst = $Ast -as [System.Management.Automation.Language.BinaryExpressionAst]
 		if ($targetAst) {
@@ -381,5 +410,5 @@ function Measure-UnsafeEscaping {
 			-ArgumentList $Messages.MeasureUnsafeEscaping, $foundNode.Extent, $PSCmdlet.MyInvocation.InvocationName, Warning, $null
 		$results += $result
 	}
-	Return $results
+	return $results
 }
