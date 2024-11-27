@@ -409,4 +409,62 @@ function Get-NxtPSIncompatibleFunction {
 	}
 }
 
+function Get-NxtPSMigratableFunction {
+	<#
+	.SYNOPSIS
+	Checks that functions are named correctly.
+	.DESCRIPTION
+	Checks that functions are named correctly. With the v4 release the naming convention for functions has changed.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Begin {
+		[hashtable]$commandMigrationTable = @{
+			'Close-BlockExecutionWindow' = 'Close-NxtBlockExecutionWindow'
+		}
+	}
+	Process {
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
+		[System.Management.Automation.Language.CommandAst[]]$commandsToMigrate = $TestAst.FindAll({
+				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
+				$args[0].GetCommandName() -in $commandMigrationTable.Keys
+			}, $false)
+
+		foreach ($commandAst in $commandsToMigrate) {
+			$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
+			if ($commandMigrationTable[$commandAst.GetCommandName()] -is [string] -and $commandMigrationTable[$commandAst.GetCommandName()].Length -gt 0) {
+				$null = $suggestedCorrections.Add(
+					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+						$commandAst.Extent.StartLineNumber,
+						$commandAst.Extent.EndLineNumber,
+						$commandAst.Extent.StartColumnNumber,
+						$commandAst.Extent.EndColumnNumber,
+						($commandAst.Extent.Text -replace ('^' + [Regex]::Escape($commandAst.GetCommandName())), $commandMigrationTable[$commandAst.GetCommandName()]),
+						$MyInvocation.MyCommand.Definition,
+						'Replace the function name with the new function name.'
+					)
+				)
+			}
+			$null = $results.Add(
+				[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+					'Message'              = 'This function is deprecated and should be replaced with the new function name.'
+					'Extent'               = $commandAst.Extent
+					'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+					'Severity'             = 'Error'
+					'SuggestedCorrections' = $suggestedCorrections
+				}
+			)
+		}
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
+	}
+}
+
 Export-ModuleMember -Function 'Get-NxtPS*'
