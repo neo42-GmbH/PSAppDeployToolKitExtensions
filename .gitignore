@@ -5,6 +5,7 @@ AppDeployToolkit/AppDeployToolkitMain.cs
 AppDeployToolkit/AppDeployToolkitMain.ps1
 AppDeployToolkit/logo.png
 AppDeployToolkit/AppDeployToolkitLogo.png
+AppDeployToolkit/RunHidden.vbs
 SupportFiles/Setup.ico
 .vs/slnx.sqlite
 SupportFiles
