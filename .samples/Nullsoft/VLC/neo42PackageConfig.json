@@ -1,11 +1,11 @@
 {
-  "ConfigVersion": "2024.11.13.1",
-  "ScriptAuthor": "neo42",
-  "ScriptDate": "17/09/2024",
-  "InventoryID": "hsn32323532",
-  "Description": "neo42 PackageConfigEditor 1.1.2.0",
-  "InstallMethod": "MSI",
-  "UninstallMethod": "MSI",
+  "ConfigVersion": "2023.10.31.1",
+  "ScriptAuthor": "neo42 GmbH",
+  "ScriptDate": "11/06/2024",
+  "InventoryID": "ons657F32FB",
+  "Description": "VideoLAN.org VLC media player x64 3.0.21",
+  "InstallMethod": "Nullsoft",
+  "UninstallMethod": "Nullsoft",
   "ReinstallMode": "Reinstall",
   "MSIInplaceUpgradeable": false,
   "MSIDowngradeable": false,
@@ -17,81 +17,83 @@
   },
   "TestedOn": "Win10 x64, Win11 x64",
   "Dependencies": "",
-  "LastChange": "17/09/2024",
-  "Build": "0",
+  "LastChange": "11/06/2024",
+  "Build": "1",
   "AppArch": "x64",
-  "AppVendor": "neo42",
-  "AppName": "PackageConfigEditor",
-  "AppVersion": "1.1.2.0",
+  "AppVendor": "VideoLAN.org",
+  "AppName": "VLC media player x64",
+  "AppVersion": "3.0.21",
   "AppRevision": "0",
   "AppLang": "MUI",
-  "ProductGUID": "{0427B2D0-28F7-4AEA-9EE6-AC2F2740C437}",
+  "ProductGUID": "{04271134-4441-4B67-BCA7-A9C5E3DE3518}",
   "RemovePackagesWithSameProductGUID": false,
-  "PackageGUID": "{0428729D-9D33-456B-BB44-F090638DBD53}",
-  "DependentPackages": [],
+  "PackageGUID": "{04295372-16FB-400F-8EC0-079E29FF4F34}",
+  "DependentPackages": [
+  ],
   "RegPackagesKey": "neoPackages",
-  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)",
+  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.appName) $($global:PackageConfig.appVersion)",
   "AppRootFolder": "neo42Pkgs",
   "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
-  "UninstallOld": true,
+  "UninstallOld": false,
   "Reboot": 0,
-  "UserPartOnInstallation": false,
+  "UserPartOnInstallation": true,
   "UserPartOnUninstallation": false,
-  "UserPartRevision": "2024,09,17,01",
+  "UserPartRevision": "2024,06,12,01",
   "HidePackageUninstallButton": false,
   "HidePackageUninstallEntry": false,
-  "DisplayVersion": "1.1.2.0",
-  "InstallerVersion": "1.1.2.0",
-  "UninstallKey": "{B4B79BC4-A1BD-4115-BC10-FA3EF4457A14}",
+  "DisplayVersion": "3.0.21",
+  "InstallerVersion": "3.0.21",
+  "UninstallKey": "VLC media player",
   "UninstallKeyIsDisplayName": false,
   "UninstallKeyContainsWildCards": false,
   "UninstallKeyContainsExpandVariables": false,
   "DisplayNamesToExcludeFromAppSearches": [
     "$($global:PackageConfig.UninstallDisplayName)"
   ],
-  "InstallLocation": "$($global:programFilesDir)\\neo42\\PackageConfigEditor",
+  "InstallLocation": "$($global:ProgramFilesDir)\\VideoLAN\\VLC",
   "InstLogFile": "$($global:AppLogFolder)\\Install.$global:DeploymentTimestamp.log",
   "UninstLogFile": "$($global:AppLogFolder)\\Uninstall.$global:DeploymentTimestamp.log",
-  "InstFile": "neo42_PackageConfigEditor_1.1.2.0.msi",
+  "InstFile": "vlc-$($global:PackageConfig.InstallerVersion)-win64.exe",
   "InstPara": "",
   "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
+  "AcceptedRepairExitCodes": "",
   "AcceptedInstallRebootCodes": "",
-  "UninstFile": "",
+  "UninstFile": "$($global:PackageConfig.installLocation)\\uninstall.exe",
   "UninstPara": "",
   "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
   "AcceptedUninstallRebootCodes": "",
   "AppKillProcesses": [
     {
-      "Name": "Neo42.PackageConfigEditor",
-      "Description": "neo42 Package Config Editor"
+      "Name": "vlc.exe",
+      "Description": "VLC media player"
     }
   ],
   "BlockExecution": false,
   "TestConditionsPreSetupSuccessCheck": {
     "Install": {
+      "TotalSecondsToWaitFor": 30,
+      "ProcessOperator": "And",
       "ProcessesToWaitFor": [],
-      "ProcessOperator": "AND",
-      "RegKeyOperator": "AND",
-      "RegKeysToWaitFor": [],
-      "TotalSecondsToWaitFor": 30
+      "RegKeyOperator": "And",
+      "RegKeysToWaitFor": []
     },
     "Uninstall": {
+      "TotalSecondsToWaitFor": 30,
+      "ProcessOperator": "And",
       "ProcessesToWaitFor": [],
-      "ProcessOperator": "AND",
-      "RegKeyOperator": "AND",
-      "RegKeysToWaitFor": [],
-      "TotalSecondsToWaitFor": 30
+      "RegKeyOperator": "And",
+      "RegKeysToWaitFor": []
     }
   },
   "CommonDesktopShortcutsToDelete": [
-    "PackageConfigEditor.lnk"
+    "VLC media player.lnk"
   ],
   "CommonStartMenuShortcutsToCopyToCommonDesktop": [
     {
-      "Source": "Programs\\neo42\\PackageConfigEditor\\PackageConfigEditor.lnk",
-      "TargetName": "PackageConfigEditor.lnk"
+      "Source": "Programs\\VideoLAN\\VLC media player.lnk",
+      "TargetName": "VLC media player.lnk"
     }
   ],
   "UninstallKeysToHide": [
@@ -105,5 +107,16 @@
       ]
     }
   ],
-  "PackageSpecificVariablesRaw": []
+  "PackageSpecificVariablesRaw": [
+    {
+      "Name": "UninstallKey_32bitVersion",
+      "Value": "HKLM:Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\VLC media player",
+      "ExpandVariables": false
+    },
+    {
+      "Name": "AppName_32bitVersion",
+      "Value": "VLC media player",
+      "ExpandVariables": false
+    }
+  ]
 }

@@ -217,15 +217,15 @@
 		<!-- Time in seconds to automatically timeout installation dialogs. Default is 1 hour and 55
 		minutes so that dialogs timeout before SCCM times out. -->
 		<InstallationUI_ExitCode>1618</InstallationUI_ExitCode>
-		<!-- Exit code used when a UI prompt times out or the user opts to defer. -->
+		<!-- Exit code used when a UI prompt times out or the user opts to defer. [Warning: This setting does not apply to NXT dialogs] -->
 		<InstallationDefer_ExitCode>60012</InstallationDefer_ExitCode>
-		<!-- Exit code used when a user opts to defer. -->
+		<!-- Exit code used when a user opts to defer. [Warning: This setting does not apply to NXT dialogs] -->
 		<InstallationPrompt_PersistInterval>60</InstallationPrompt_PersistInterval>
 		<!-- Time in seconds after which the prompt should be repositioned centre screen when the
 		-PersistPrompt parameter is used. Default is 60 seconds. -->
 		<InstallationRestartPrompt_PersistInterval>600</InstallationRestartPrompt_PersistInterval>
 		<!-- Time in seconds after which the restart prompt should be re-displayed/repositioned when
-		the -NoCountdown parameter is specified. Default is 600 seconds. -->
+		the -NoCountdown parameter is specified. Default is 600 seconds. [Warning: This setting does not apply to NXT dialogs] -->
 		<InstallationPromptToSave_Timeout>120</InstallationPromptToSave_Timeout>
 		<!-- Time in seconds after which to re-prompt the user to close applications in case they
 		ignore the prompt or they cancel the application's save prompt. -->
@@ -261,16 +261,16 @@
 		<!-- Text displayed on the continue button when prompting to close running programs. -->
 		<ClosePrompt_ButtonContinueTooltip>Only select "Continue" after closing the above listed application(s).</ClosePrompt_ButtonContinueTooltip>
 		<!-- Tooltip text displayed on the continue button when prompting to close running programs. -->
-		<ClosePrompt_ButtonClose>Close Programs</ClosePrompt_ButtonClose>
+		<ClosePrompt_ButtonClose>Close Applications</ClosePrompt_ButtonClose>
 		<!-- Text displayed on the close button when prompting to close running programs. -->
 		<ClosePrompt_ButtonDefer>Defer</ClosePrompt_ButtonDefer>
 		<!-- Text displayed on the defer button when prompting to close running programs. -->
-		<ClosePrompt_Message>The following programs must be closed before the installation can proceed.
+		<ClosePrompt_Message>The following applications must be closed before the installation can proceed.
 
-			Please save your work, close the programs, and then continue.
-			Alternatively, save your work and click "Close Programs".</ClosePrompt_Message>
+			Please save your work, close the applications, and then continue.
+			Alternatively, save your work and click "Close Applications".</ClosePrompt_Message>
 		<!-- Text displayed when prompting to close running programs. -->
-		<ClosePrompt_CountdownMessage>NOTE: The program(s) will be automatically closed in:</ClosePrompt_CountdownMessage>
+		<ClosePrompt_CountdownMessage>NOTE: The application(s) will be automatically closed in:</ClosePrompt_CountdownMessage>
 		<!-- Text displayed when counting down to automatically closing applications. -->
 		<DeferPrompt_WelcomeMessage>The following application is about to be installed:</DeferPrompt_WelcomeMessage>
 		<!-- Text displayed when only the deferral dialog is to be displayed and there are no applications to close. -->
@@ -330,9 +330,9 @@
 		<DeploymentType_UnInstallVerb>uninstalled</DeploymentType_UnInstallVerb>
 		<DeploymentType_RepairVerb>repaired</DeploymentType_RepairVerb>
 		<NxtWelcomePrompt_FollowApplication>The following application is about to be {0}:</NxtWelcomePrompt_FollowApplication>
-		<NxtWelcomePrompt_ApplicationClose>The follwing programs must be closed before the {0} can procced.</NxtWelcomePrompt_ApplicationClose>
-		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Please save your work and close the programs.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
-		<NxtWelcomePrompt_SaveWork>Please save your work, close the programs and this process will be continued. Alternativly, save your work and click 'Close applications'.</NxtWelcomePrompt_SaveWork>
+		<NxtWelcomePrompt_ApplicationClose>The following applications must be closed before the {0} can procced.</NxtWelcomePrompt_ApplicationClose>
+		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Please save your work and close the applications.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
+		<NxtWelcomePrompt_SaveWork>Please save your work, close the applications and this process will be continued. Alternativly, save your work and click 'Close applications'.</NxtWelcomePrompt_SaveWork>
 		<NxtWelcomePrompt_ApplicationName>Application name</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Started by</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>You can choose to defer the {0} until the deferral expires:</NxtWelcomePrompt_ChooseDefer>
@@ -487,19 +487,20 @@
 
 			Bitte geben Sie ausreichend Speicherplatz frei, um mit der Installation fortzufahren.</DiskSpace_Message>
 		<ClosePrompt_ButtonContinue>Weiter</ClosePrompt_ButtonContinue>
-		<ClosePrompt_ButtonContinueTooltip>Klicken Sie erst auf "Weiter", nachdem Sie die obigen Anwendung(en) geschlossen haben.</ClosePrompt_ButtonContinueTooltip>
-		<ClosePrompt_ButtonClose>Programme schließen</ClosePrompt_ButtonClose>
+		<ClosePrompt_ButtonContinueTooltip>Klicken Sie erst auf „Weiter“, nachdem Sie die obigen Anwendung(en) geschlossen haben.</ClosePrompt_ButtonContinueTooltip>
+		<ClosePrompt_ButtonClose>Schließe Anwendungen</ClosePrompt_ButtonClose>
 		<ClosePrompt_ButtonDefer>Aufschieben</ClosePrompt_ButtonDefer>
-		<ClosePrompt_Message>Die folgenden Programme müssen geschlossen werden, bevor die Installation fortgesetzt werden kann.
+		<ClosePrompt_Message>Die folgenden Anwendungen müssen geschlossen werden, bevor die Installation fortgesetzt werden kann.
 
-			Bitte speichern Sie Ihre Arbeit, schließen Sie die Programme und fahren Sie dann fort.
-			Alternativ können Sie Ihre Arbeit speichern und dann auf "Programme schließen" klicken.</ClosePrompt_Message>
-		<ClosePrompt_CountdownMessage>HINWEIS: Diese Programme werden automatisch geschlossen:</ClosePrompt_CountdownMessage>
+			Bitte speichern Sie Ihre Arbeit, schließen Sie die Anwendungen und fahren Sie dann fort.
+		Alternativ können Sie Ihre Arbeit speichern und dann auf „Schließe Anwendungen klicken.</ClosePrompt_Message>
+		<ClosePrompt_CountdownMessage>HINWEIS: Diese Andwendungen werden automatisch geschlossen:</ClosePrompt_CountdownMessage>
 		<DeferPrompt_WelcomeMessage>Die folgende Anwendung soll installiert werden:</DeferPrompt_WelcomeMessage>
 		<DeferPrompt_ExpiryMessage>Sie können die Installation verzögern, bis die Rückstellung abläuft:</DeferPrompt_ExpiryMessage>
 		<DeferPrompt_WarningMessage>Sobald die Rückstellung abgelaufen ist, werden Sie keine Möglichkeit mehr haben die Installation zu verschieben.</DeferPrompt_WarningMessage>
 		<DeferPrompt_RemainingDeferrals>Verbleibende Rückstellungen:</DeferPrompt_RemainingDeferrals>
 		<DeferPrompt_Deadline>Termin:</DeferPrompt_Deadline>
+
 		<WelcomePrompt_CountdownMessage>Die {0} wird automatisch fortgesetzt in:</WelcomePrompt_CountdownMessage>
 		<WelcomePrompt_CustomMessage></WelcomePrompt_CustomMessage>
 
@@ -527,20 +528,20 @@
 		<DeploymentType_UnInstallVerb>deinstalliert</DeploymentType_UnInstallVerb>
 		<DeploymentType_RepairVerb>repariert</DeploymentType_RepairVerb>
 		<NxtWelcomePrompt_FollowApplication>Die folgende Anwendung wird gerade {0}:</NxtWelcomePrompt_FollowApplication>
-		<NxtWelcomePrompt_ApplicationClose>Die folgenden Programme müssen geschlossen werden, bevor die {0} fortgesetzt werden kann.</NxtWelcomePrompt_ApplicationClose>
-		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Bitte speichern Sie Ihre Arbeit und schließen Sie die Programme.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
-		<NxtWelcomePrompt_SaveWork>Bitte speichern Sie Ihre Arbeit, schließen Sie die Programme und dann wird dieser Prozess fortgeführt. Speichern Sie alternativ Ihre Arbeit und klicken Sie auf 'Applikationen schließen'.</NxtWelcomePrompt_SaveWork>
-		<NxtWelcomePrompt_ApplicationName>Applikation Name</NxtWelcomePrompt_ApplicationName>
+		<NxtWelcomePrompt_ApplicationClose>Die folgenden Anwendungen müssen geschlossen werden, bevor die {0} fortgesetzt werden kann.</NxtWelcomePrompt_ApplicationClose>
+		<NxtWelcomePrompt_SaveWorkWithoutCloseButton>Bitte speichern Sie Ihre Arbeit und schließen Sie die Anwendungen.</NxtWelcomePrompt_SaveWorkWithoutCloseButton>
+		<NxtWelcomePrompt_SaveWork>Bitte speichern Sie Ihre Arbeit, schließen Sie die Anwendung und dann wird dieser Prozess fortgeführt. Speichern Sie alternativ Ihre Arbeit und klicken Sie auf 'Anwendungen schließen'.</NxtWelcomePrompt_SaveWork>
+		<NxtWelcomePrompt_ApplicationName>Anwendungsname</NxtWelcomePrompt_ApplicationName>
 		<NxtWelcomePrompt_StartedBy>Gestartet von</NxtWelcomePrompt_StartedBy>
 		<NxtWelcomePrompt_ChooseDefer>Sie können Aufschieben auswählen, um die {0} bis zum Ablauf der Aufschiebung zu verzögern:</NxtWelcomePrompt_ChooseDefer>
 		<NxtWelcomePrompt_RemainingDeferals>Verbleibende Aufschiebungen: {0}</NxtWelcomePrompt_RemainingDeferals>
 		<NxtWelcomePrompt_DeferalExpired>Sobald die Aufschiebung abgelaufen ist, können Sie nicht mehr aufschieben.</NxtWelcomePrompt_DeferalExpired>
 		<NxtWelcomePrompt_CloseWithoutSaving_Abort>Wenn Sie Ihre Anwendungen nicht schließen, wird die Software {0} abgebrochen.</NxtWelcomePrompt_CloseWithoutSaving_Abort>
 		<NxtWelcomePrompt_CloseWithoutSaving_Continue>Wenn Sie Ihre Anwendungen nicht schließen, werden sie ohne Speichern geschlossen und die Software {0} wird fortgesetzt.</NxtWelcomePrompt_CloseWithoutSaving_Continue>
-		<NxtWelcomePrompt_CloseApplications>Applikationen schließen</NxtWelcomePrompt_CloseApplications>
+		<NxtWelcomePrompt_CloseApplications>Anwendungen schließen</NxtWelcomePrompt_CloseApplications>
 		<NxtWelcomePrompt_Close>Abbrechen</NxtWelcomePrompt_Close>
 		<NxtWelcomePrompt_Defer>Aufschieben</NxtWelcomePrompt_Defer>
-		<NxtWelcomePrompt_PopUpCloseApplicationText>Die folgenden Applikationen werden, ohne zu speichern, geschlossen:</NxtWelcomePrompt_PopUpCloseApplicationText>
+		<NxtWelcomePrompt_PopUpCloseApplicationText>Die folgenden Anwendungen werden, ohne zu speichern, geschlossen:</NxtWelcomePrompt_PopUpCloseApplicationText>
 		<NxtWelcomePrompt_PopUpSureToCloseText>Sind sie sicher diese zu schließen?</NxtWelcomePrompt_PopUpSureToCloseText>
 	</UI_Messages_DE>
 	<UI_Messages_IT>

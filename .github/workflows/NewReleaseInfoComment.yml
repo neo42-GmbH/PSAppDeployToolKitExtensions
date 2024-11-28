@@ -1,0 +1,57 @@
+name: Comment issues on release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.release.prerelease == false }}
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: reply-to-and-close-issues
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: milestones } = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed'
+            });
+            const milestone = milestones.find(m => m.title === '${{ github.event.release.tag_name }}');
+            if (!milestone) {
+              throw new Error('Milestone not found');
+            }
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              milestone: milestone.number
+            });
+
+            for (const issue of issues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `:tada: This issue will be addressed in version ${milestone.title} :tada:
+            Once the release is published, it will be available on:
+              * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${milestone.title})
+
+            <sub>This is an auto-generated message from your friendly release assistant :package::rocket:</sub>`
+              });
+
+              if (issue.state !== 'closed') {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed'
+                });
+              }
+            }

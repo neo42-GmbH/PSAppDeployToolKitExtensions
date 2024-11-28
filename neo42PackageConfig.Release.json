@@ -1,9 +1,9 @@
 {
   "ConfigVersion": "2024.11.13.1",
-  "ScriptAuthor": "neo42",
-  "ScriptDate": "17/09/2024",
-  "InventoryID": "hsn32323532",
-  "Description": "neo42 PackageConfigEditor 1.1.2.0",
+  "ScriptAuthor": "neo42 GmbH",
+  "ScriptDate": "",
+  "InventoryID": "",
+  "Description": "",
   "InstallMethod": "MSI",
   "UninstallMethod": "MSI",
   "ReinstallMode": "Reinstall",
@@ -15,44 +15,44 @@
       "VersionToCheck": ""
     }
   },
-  "TestedOn": "Win10 x64, Win11 x64",
+  "TestedOn": "Win10 x86, Win10 x64, Win11 x64",
   "Dependencies": "",
-  "LastChange": "17/09/2024",
+  "LastChange": "",
   "Build": "0",
-  "AppArch": "x64",
-  "AppVendor": "neo42",
-  "AppName": "PackageConfigEditor",
-  "AppVersion": "1.1.2.0",
+  "AppArch": "*",
+  "AppVendor": "",
+  "AppName": "",
+  "AppVersion": "",
   "AppRevision": "0",
   "AppLang": "MUI",
-  "ProductGUID": "{0427B2D0-28F7-4AEA-9EE6-AC2F2740C437}",
+  "ProductGUID": "",
   "RemovePackagesWithSameProductGUID": false,
-  "PackageGUID": "{0428729D-9D33-456B-BB44-F090638DBD53}",
+  "PackageGUID": "",
   "DependentPackages": [],
   "RegPackagesKey": "neoPackages",
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)",
   "AppRootFolder": "neo42Pkgs",
-  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
+  "App": "$($global:PackageConfig.AppRootFolder)\\$($global:PackageConfig.AppVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
   "UninstallOld": true,
   "Reboot": 0,
   "UserPartOnInstallation": false,
   "UserPartOnUninstallation": false,
-  "UserPartRevision": "2024,09,17,01",
+  "UserPartRevision": "",
   "HidePackageUninstallButton": false,
   "HidePackageUninstallEntry": false,
-  "DisplayVersion": "1.1.2.0",
-  "InstallerVersion": "1.1.2.0",
-  "UninstallKey": "{B4B79BC4-A1BD-4115-BC10-FA3EF4457A14}",
+  "DisplayVersion": "",
+  "InstallerVersion": "",
+  "UninstallKey": "",
   "UninstallKeyIsDisplayName": false,
   "UninstallKeyContainsWildCards": false,
   "UninstallKeyContainsExpandVariables": false,
   "DisplayNamesToExcludeFromAppSearches": [
     "$($global:PackageConfig.UninstallDisplayName)"
   ],
-  "InstallLocation": "$($global:programFilesDir)\\neo42\\PackageConfigEditor",
+  "InstallLocation": "",
   "InstLogFile": "$($global:AppLogFolder)\\Install.$global:DeploymentTimestamp.log",
   "UninstLogFile": "$($global:AppLogFolder)\\Uninstall.$global:DeploymentTimestamp.log",
-  "InstFile": "neo42_PackageConfigEditor_1.1.2.0.msi",
+  "InstFile": "",
   "InstPara": "",
   "AppendInstParaToDefaultParameters": true,
   "AcceptedInstallExitCodes": "",
@@ -62,38 +62,26 @@
   "AppendUninstParaToDefaultParameters": true,
   "AcceptedUninstallExitCodes": "",
   "AcceptedUninstallRebootCodes": "",
-  "AppKillProcesses": [
-    {
-      "Name": "Neo42.PackageConfigEditor",
-      "Description": "neo42 Package Config Editor"
-    }
-  ],
+  "AppKillProcesses": [],
   "BlockExecution": false,
   "TestConditionsPreSetupSuccessCheck": {
     "Install": {
-      "ProcessesToWaitFor": [],
+      "TotalSecondsToWaitFor": 30,
       "ProcessOperator": "AND",
+      "ProcessesToWaitFor": [],
       "RegKeyOperator": "AND",
-      "RegKeysToWaitFor": [],
-      "TotalSecondsToWaitFor": 30
+      "RegKeysToWaitFor": []
     },
     "Uninstall": {
-      "ProcessesToWaitFor": [],
+      "TotalSecondsToWaitFor": 30,
       "ProcessOperator": "AND",
+      "ProcessesToWaitFor": [],
       "RegKeyOperator": "AND",
-      "RegKeysToWaitFor": [],
-      "TotalSecondsToWaitFor": 30
+      "RegKeysToWaitFor": []
     }
   },
-  "CommonDesktopShortcutsToDelete": [
-    "PackageConfigEditor.lnk"
-  ],
-  "CommonStartMenuShortcutsToCopyToCommonDesktop": [
-    {
-      "Source": "Programs\\neo42\\PackageConfigEditor\\PackageConfigEditor.lnk",
-      "TargetName": "PackageConfigEditor.lnk"
-    }
-  ],
+  "CommonDesktopShortcutsToDelete": [],
+  "CommonStartMenuShortcutsToCopyToCommonDesktop": [],
   "UninstallKeysToHide": [
     {
       "KeyName": "$($global:PackageConfig.UninstallKey)",

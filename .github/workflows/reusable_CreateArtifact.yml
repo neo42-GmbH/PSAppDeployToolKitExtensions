@@ -1,0 +1,127 @@
+name: Create Artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      PSADT_VERSION:
+        description: 'The version of the PSADT source'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      PSADT_VERSION:
+        description: 'The version of the PSADT source'
+        required: true
+        type: string
+    outputs:
+      ARTIFACT_VERSION:
+        value: ${{ jobs.artifact.outputs.VERSION }}
+      ARTIFACT_TAG:
+        value: ${{ jobs.artifact.outputs.TAG }}
+      ARTIFACT_BRANCH:
+        value: ${{ jobs.artifact.outputs.BRANCH }}
+
+jobs:
+  artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.release-info.outputs.RELEASE_VERSION }}
+      TAG: ${{ steps.release-info.outputs.RELEASE_TAG }}
+      BRANCH: ${{ steps.release-info.outputs.RELEASE_BRANCH }}
+
+    steps:
+      - name: get-release-info
+        id: release-info
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format 'yyyy.MM.dd'
+          $runId = '${{ github.run_number }}'
+          $branch = '${{ github.head_ref || github.ref_name }}'.Replace('refs/heads/', '')
+          $version = "$date.$runId"
+          $tag = "$version-PreRelease"
+
+          if ($false -eq [string]::IsNullOrEmpty($branch) -and $branch -ne 'production') {
+            $tag = "$version-$branch"
+          } elseif ($branch -eq 'production') {
+            $tag = "$version"
+          }
+
+          "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
+          "RELEASE_BRANCH=$branch" >> $env:GITHUB_OUTPUT
+          "RELEASE_TAG=$tag" >> $env:GITHUB_OUTPUT
+          Write-Host "Determined version [$version] and branch [$branch]. Tagging as [$tag]"
+
+      - name: checkout-psadt
+        uses: actions/checkout@v4
+        with:
+          repository: 'PSAppDeployToolkit/PSAppDeployToolkit.git'
+          sparse-checkout: 'Toolkit/AppDeployToolkit/*'
+          sparse-checkout-cone-mode: false
+          path: ./${{ steps.release-info.outputs.RELEASE_TAG }}
+          ref: ${{ inputs.PSADT_VERSION }}
+
+      - name: checkout-extensions
+        uses: actions/checkout@v4
+        with:
+          path: ./ExtensionsSourceCode
+
+      - name: merge-extensions
+        shell: pwsh
+        run: |
+          Move-Item -Force -Path "./${{ steps.release-info.outputs.RELEASE_TAG }}/Toolkit/AppDeployToolkit/" -Destination "./${{ steps.release-info.outputs.RELEASE_TAG }}/AppDeployToolkit/"
+          Copy-Item -Force -Recurse -Exclude '.*' -Path "./ExtensionsSourceCode/*" -Destination "./${{ steps.release-info.outputs.RELEASE_TAG }}/"
+
+      - name: copy-sample-and-tools
+        shell: pwsh
+        run: |
+          New-Item -Force -ItemType Directory -Path @(
+            "./Samples"
+            "./Tools"
+          ) | Out-Null
+          Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.samples/*" -Destination "./Samples/"
+          Copy-Item -Force -Recurse -Path "./ExtensionsSourceCode/.tools/*" -Destination "./Tools/"
+
+      - name: remove-unwanted
+        shell: pwsh
+        run: |
+          Remove-Item -Force -Recurse -Path @(
+            "./ExtensionsSourceCode/"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/.git*"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/Toolkit/"
+          ) | Out-Null
+
+      - name: create-folder-structure
+        shell: pwsh
+        run: |
+          New-Item -Force -ItemType File -Path @(
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/SupportFiles/User/Place user files here"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/Files/Place setup files here"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/Place Setup ico here"
+          ) | Out-Null
+
+      - name: place-commit-hash
+        shell: pwsh
+        run: |
+          Set-Content -Path "./CommitHash.txt" -Value "${{ github.sha }}" -Encoding UTF8
+
+      - name: apply-release-config
+        shell: pwsh
+        run: Move-Item -Force -Path "./${{ steps.release-info.outputs.RELEASE_TAG }}/neo42PackageConfig.Release.json" -Destination "./${{ steps.release-info.outputs.RELEASE_TAG }}/neo42PackageConfig.json" -ErrorAction SilentlyContinue
+
+      - name: inject-version
+        shell: pwsh
+        run: |
+          @(
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/Deploy-Application.ps1"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/AppDeployToolkit/AppDeployToolkitExtensions.ps1"
+            "./${{ steps.release-info.outputs.RELEASE_TAG }}/AppDeployToolkit/AppDeployToolkitExtensions.cs"
+            "./Tools/InsertLatestToNxtPsadtPackage.ps1"
+          ) | ForEach-Object {
+            (Get-Content -Raw -Path $_) -replace '##REPLACEVERSION##', '${{ steps.release-info.outputs.RELEASE_VERSION }}' | Set-Content -Path $_ -Encoding UTF8
+          }
+
+      - name: upload-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PSAppdeployToolkit_with_neo42_extensions_Ver_${{ steps.release-info.outputs.RELEASE_TAG }}
+          path: .

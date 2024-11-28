@@ -571,10 +571,8 @@ function Get-NxtProcessTree {
 	.PARAMETER IncludeParentProcesses
 		Indicates if parent processes should be included in the result.
 		Defaults to $true.
-	.PARAMETER ProcessIdsToExcludeFromRecursion
-		Process IDs to exclude from the recursion. Internal use only.
 	.OUTPUTS
-		System.Management.ManagementObject
+		System.Management.ManagementObject[]
 	.EXAMPLE
 		Get-NxtProcessTree -ProcessId 1234
 		Gets the process tree for process with ID 1234 including child and parent processes.
@@ -585,44 +583,70 @@ function Get-NxtProcessTree {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	Param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[int]
 		$ProcessId,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$IncludeChildProcesses = $true,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
-		$IncludeParentProcesses = $true,
-		[Parameter(Mandatory=$false)]
-		[AllowNull()]
-		[int[]]
-		$ProcessIdsToExcludeFromRecursion
+		$IncludeParentProcesses = $true
 	)
-	[System.Management.ManagementObject]$process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
-	if ($null -ne $process) {
-		Write-Output $process
-		if ($true -eq $IncludeChildProcesses) {
-			[System.Management.ManagementBaseObject[]]$childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
-			foreach ($child in $childProcesses) {
-				if (
-					$child.ProcessId -eq $process.ProcessId -and
-					$child.ProcessId -notin $ProcessIdsToExcludeFromRecursion
-				) {
-					return
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		## Cache all processes
+		[System.Management.ManagementObject[]]$processes = Get-WmiObject -ClassName 'Win32_Process'
+		## Define script block to get related processes
+		[scriptblock]$getRelatedProcesses = {
+			Param (
+				[System.Management.ManagementObject]
+				$Root,
+				[System.Management.ManagementObject[]]
+				$ProcessTable,
+				[switch]
+				$Parents
+			)
+			## Get related processes
+			[System.Management.ManagementObject[]]$relatedProcesses = @(
+				$ProcessTable | Where-Object {
+					$_.ProcessId -ne $Root.ProcessId -and (
+						($true -eq $Parents -and $_.ProcessId -eq $Root.ParentProcessId) -or
+						($false -eq $Parents -and $_.ParentProcessId -eq $Root.ProcessId)
+					)
 				}
-				$ProcessIdsToExcludeFromRecursion += $process.ProcessId
-				Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses -ProcessIdsToExcludeFromRecursion $ProcessIdsToExcludeFromRecursion
+			)
+			## Recurse to get related processes of related processes
+			foreach ($process in $relatedProcesses) {
+				$relatedProcesses += & $getRelatedProcesses -Root $process -Parents:$Parents -ProcessTable @(
+					$ProcessTable | Where-Object {
+						$relatedProcesses.ProcessId -notcontains $_.ProcessId
+					}
+				)
 			}
+			Write-Output $relatedProcesses
 		}
-		if (
-			($process.ParentProcessId -ne $ProcessId) -and
-			$IncludeParentProcesses -and
-			$process.ParentProcessId -notin $ProcessIdsToExcludeFromRecursion
-		) {
-			$ProcessIdsToExcludeFromRecursion += $process.ProcessId
-			Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses -ProcessIdsToExcludeFromRecursion $ProcessIdsToExcludeFromRecursion
+	}
+	Process {
+		[System.Management.ManagementObject]$rootProcess = $processes | Where-Object {
+			$_.ProcessId -eq $ProcessId
 		}
+		if ($null -eq $rootProcess) {
+			Write-Log "Process with ID [$ProcessId] not found." -Source ${cmdletName}
+			return
+		}
+		[System.Management.ManagementObject[]]$processTree = @($rootProcess)
+		if ($true -eq $IncludeChildProcesses) {
+			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes
+		}
+		if ($true -eq $IncludeParentProcesses) {
+			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes -Parents
+		}
+		Write-Output $processTree
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -1724,6 +1748,7 @@ if ($null -eq ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 [Int32]$configInstallationPersistInterval = $xmlConfigUIOptions.InstallationPrompt_PersistInterval
 [bool]$configInstallationWelcomePromptDynamicRunningProcessEvaluation = [bool]::Parse($xmlConfigUIOptions.InstallationWelcomePrompt_DynamicRunningProcessEvaluation)
 [Int32]$configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval = $xmlConfigUIOptions.InstallationWelcomePrompt_DynamicRunningProcessEvaluationInterval
+[string]$configInstallationWelcomeLanguageOverride = $xmlConfigUIOptions.InstallationUI_LanguageOverride
 ## Reset switches
 [bool]$showCloseApps = $false
 [bool]$showDefer = $false
@@ -2092,36 +2117,41 @@ else {
 ## Get current sessions UI language
 ## Get primary UI language for current sessions user (even if running as system)
 if ($null -ne $activeUser) {
-	foreach ($registrySplat in @(
-		#  Read language defined by Group Policy
-		@{ Key = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings'; Value = 'PreferredUILanguages' },
-		@{ Key = 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
-		#  Read language for Win Vista & higher machines
-		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
-		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached'; Value = 'MachinePreferredUILanguages'; SID = $activeUser.SID },
-		@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\International'; Value = 'LocaleName'; SID = $activeUser.SID }
-	)) {
-		[String[]]$hKULanguages = @(Get-RegistryKey @registrySplat)
-		if ($hKULanguages.Count -gt 0 -and ($false -eq [string]::IsNullOrWhiteSpace($hKULanguages[0]))) {
-			[Globalization.CultureInfo]$primaryWindowsUILanguage = [Globalization.CultureInfo]::GetCultureInfo($hKULanguages[0])
-			[string]$hKUPrimaryLanguageShort = $primaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
-			#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
-			if ($hKUPrimaryLanguageShort -eq 'ZH') {
-				if ($primaryWindowsUILanguage.EnglishName -match 'Simplified') {
-					[string]$hKUPrimaryLanguageShort = 'ZH-Hans'
+	if ($true -eq [string]::IsNullOrWhiteSpace($configInstallationWelcomeLanguageOverride)) {
+		foreach ($registrySplat in @(
+				#  Read language defined by Group Policy
+				@{ Key = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\MUI\Settings'; Value = 'PreferredUILanguages' },
+				@{ Key = 'Registry::HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
+				#  Read language for Win Vista & higher machines
+				@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop'; Value = 'PreferredUILanguages'; SID = $activeUser.SID },
+				@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\Desktop\MuiCached'; Value = 'MachinePreferredUILanguages'; SID = $activeUser.SID },
+				@{ Key = 'Registry::HKEY_CURRENT_USER\Control Panel\International'; Value = 'LocaleName'; SID = $activeUser.SID }
+			)) {
+			[string[]]$hKULanguages = @(Get-RegistryKey @registrySplat)
+			if ($hKULanguages.Count -gt 0 -and ($false -eq [string]::IsNullOrWhiteSpace($hKULanguages[0]))) {
+				[Globalization.CultureInfo]$primaryWindowsUILanguage = [Globalization.CultureInfo]::GetCultureInfo($hKULanguages[0])
+				[string]$hKUPrimaryLanguageShort = $primaryWindowsUILanguage.TwoLetterISOLanguageName.ToUpper()
+				#  If the detected language is Chinese, determine if it is simplified or traditional Chinese
+				if ($hKUPrimaryLanguageShort -eq 'ZH') {
+					if ($primaryWindowsUILanguage.EnglishName -match 'Simplified') {
+						$hKUPrimaryLanguageShort = 'ZH-Hans'
+					}
+					if ($primaryWindowsUILanguage.EnglishName -match 'Traditional') {
+						$hKUPrimaryLanguageShort = 'ZH-Hant'
+					}
 				}
-				if ($primaryWindowsUILanguage.EnglishName -match 'Traditional') {
-					[string]$hKUPrimaryLanguageShort = 'ZH-Hant'
+				#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
+				if ($hKUPrimaryLanguageShort -eq 'PT') {
+					if ($primaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
+						$hKUPrimaryLanguageShort = 'PT-BR'
+					}
 				}
+				break
 			}
-			#  If the detected language is Portuguese, determine if it is Brazilian Portuguese
-			if ($hKUPrimaryLanguageShort -eq 'PT') {
-				if ($primaryWindowsUILanguage.ThreeLetterWindowsLanguageName -eq 'PTB') {
-					[string]$hKUPrimaryLanguageShort = 'PT-BR'
-				}
-			}
-			break
 		}
+	}
+	else {
+		[string]$hKUPrimaryLanguageShort = $configInstallationWelcomeLanguageOverride
 	}
 }
 if ($false -eq [string]::IsNullOrEmpty($hKUPrimaryLanguageShort)) {
