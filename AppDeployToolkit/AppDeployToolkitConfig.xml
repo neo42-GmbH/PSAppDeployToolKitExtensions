@@ -100,7 +100,7 @@
 		<!-- Specify maximum number of previous log files to retain. -->
 		<Toolkit_UseRobocopy>false</Toolkit_UseRobocopy>
 		<!-- Specify if Robocopy should be used with the Copy-File function. -->
-		<Toolkit_CachePath>$($PackageConfig.AppRootFolder)</Toolkit_CachePath>
+		<Toolkit_CachePath>$($PackageConfig.App)\SoftwareCache</Toolkit_CachePath>
 		<!-- Specify the path for the cache folder -->
 	</Toolkit_Options>
 	<!--Toolkit
