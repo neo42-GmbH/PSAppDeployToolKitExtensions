@@ -53,7 +53,7 @@ _Note: We always recommend obtaining the [latest production release](github.com/
         - It is recommended to remove all dot files before copying the contents
 
 # Requirements
-* PSAppDeployTookit 3.9.3
+* PSAppDeployTookit 3.10.2
 * PowerShell 5.1 Desktop (PowerShell Core is not supported)
 * .NET Framework 4
 
