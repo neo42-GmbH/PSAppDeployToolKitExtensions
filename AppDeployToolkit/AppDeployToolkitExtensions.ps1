@@ -11471,6 +11471,80 @@ function Test-NxtStringInFile {
 	}
 }
 #endregion
+#region Function Test-NxtXml
+function Test-NxtXml {
+	<#
+		.SYNOPSIS
+			Validates an XML document against an XML schema.
+		.DESCRIPTION
+			Validates an XML document against an XML schema.
+		.PARAMETER Xml
+			The XML document to validate.
+		.PARAMETER XmlSchema
+			The XML schema to validate the XML document against.
+		.EXAMPLE
+			Test-NxtXml -Xml "C:\path\to\file.xml" -XmlSchema "C:\path\to\schema.xsd"
+		.OUTPUTS
+			System.Boolean.
+	#>
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+		[System.IO.FileInfo]
+		$Xml,
+		[Parameter(Mandatory = $false)]
+		[System.IO.FileInfo]
+		$XmlSchema
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($false -eq $Xml.Exists) {
+			Write-Log -Message "The xml specified does not exist" -Source ${cmdletName} -Severity 3
+			Write-Output $false
+			return
+		}
+		elseif ($null -ne $XmlSchema -and $false -eq $XmlSchema.Exists) {
+			Write-Log -Message "The schema specified does not exist" -Source ${cmdletName} -Severity 3
+			Write-Output $false
+			return
+		}
+		[System.Xml.XmlDocument]$xmlDoc = [System.Xml.XmlDocument]::new()
+		try {
+			$xmlDoc.Load($Xml.FullName)
+		}
+		catch {
+			Write-Log -Message "Failed to load the XML document [$($Xml.FullName)]." -Source ${cmdletName} -Severity 3
+			Write-Output $false
+			return
+		}
+		if ($null -eq $XmlSchema) {
+			Write-Log -Message "No schema specified. Skipping further validation." -Source ${cmdletName} -Severity 1
+			Write-Output $true
+			return
+		}
+		$xmlDoc.Schemas.Add($null, $XmlSchema.FullName) | Out-Null
+		try {
+			$xmlDoc.Validate($null)
+		}
+		catch [System.Xml.Schema.XmlSchemaValidationException] {
+			Write-Log -Message $_.Exception.Message -Source ${cmdletName} -Severity 3
+			Write-Output $false
+			return
+		}
+		catch {
+			Write-Log -Message "Failed to validate the XML document against the schema.`n$(Resolve-Error)" -Source ${cmdletName} -Severity 3
+			Write-Output $false
+			return
+		}
+		Write-Output $true
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Test-NxtXmlNodeExists
 function Test-NxtXmlNodeExists {
 	<#
