@@ -499,6 +499,7 @@ function PSNxtMissingParameter {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.CommandAst[]]$commands = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
+				$true -notin $args[0].CommandElements.Splatted -and
 				$args[0].GetCommandName() -in $requiredParameters.Keys
 			}, $false)
 
