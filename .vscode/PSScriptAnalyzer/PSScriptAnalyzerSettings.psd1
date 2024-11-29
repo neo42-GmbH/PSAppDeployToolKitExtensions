@@ -1,10 +1,6 @@
 @{
-	Severity       = @(
-		'Error',
-		'Warning',
-		'Information'
-	)
-	Rules          = @{
+	IncludeDefaultRules = $true
+	Rules               = @{
 		# Rules extracted from PSScriptAnalyzer 1.23.0
 		# https://learn.microsoft.com/en-us/powershell/utility-modules/psscriptanalyzer/rules/readme?view=ps-modules
 		PSAlignAssignmentStatement                      = @{
@@ -37,7 +33,7 @@
 		}
 		PSAvoidLongLines                                = @{
 			Enable            = $true
-			MaximumLineLength = 200
+			MaximumLineLength = 256
 		}
 		PSAvoidMultipleTypeAttributes                   = @{
 			Enable = $true
@@ -293,7 +289,7 @@
 			}
 		}
 	}
-	CustomRulePath = @(
+	CustomRulePath      = @(
 		'.\.vscode\PSScriptAnalyzer\neo42PSScriptAnalyzerRules',
 		'.\.vscode\PSScriptAnalyzer\InjectionHunter'
 	)
