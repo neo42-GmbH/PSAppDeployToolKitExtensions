@@ -13,11 +13,17 @@ function PSNxtUseCorrectTokenCapitalization {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.Token[]]
-		$TestToken
+		$TestToken,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
 	Begin {
+		if ($false -eq $Settings.Enable) {
+			return
+		}
 		[System.Collections.Generic.HashSet[string]]$keywords = [System.Collections.Generic.HashSet[string]]::new(
-			[System.Collections.ObjectModel.Collection[string]]@('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param'),
+			[System.Collections.ObjectModel.Collection[string]]$Settings.Keywords,
 			[System.StringComparer]::OrdinalIgnoreCase
 		)
 	}
@@ -59,7 +65,7 @@ function PSNxtUseCorrectTokenCapitalization {
 	}
 }
 
-function PSNxtVariablesInParamBlockShouldBeCapitalized {
+function PSNxtVariablesInParamBlockMustBeCapitalized {
 	<#
 	.SYNOPSIS
 	Checks that parameter variables are capitalized.
@@ -74,9 +80,20 @@ function PSNxtVariablesInParamBlockShouldBeCapitalized {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
+	Begin {
+		if ($false -eq $Settings.Enable) {
+			return
+		}
+	}
 	Process {
+		if ($TestAst -is [System.Management.Automation.Language.ParamBlockAst]) {
+			return
+		}
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.FunctionDefinitionAst[]]$functions = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
@@ -104,7 +121,7 @@ function PSNxtVariablesInParamBlockShouldBeCapitalized {
 	}
 }
 
-function PSNxtCapatalizedVariablesNeedToOriginateFromParamBlock {
+function PSNxtAvoidCapitalizedVarsOutsideParamBlock {
 	<#
 	.SYNOPSIS
 	Checks that variables are capitalized and originate from the param block.
@@ -119,9 +136,15 @@ function PSNxtCapatalizedVariablesNeedToOriginateFromParamBlock {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
 	Begin {
+		if ($false -eq $Settings.Enable) {
+			return
+		}
 		[string[]]$builtInVariables = @(
 			'ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'NestedPromptLevel', 'PID', 'PROFILE', 'PWD', 'Sender', 'ShellId', 'StackTrace'
 		)
@@ -179,8 +202,16 @@ function PSNxtParamBlockVariablesShouldBeTyped {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
+	Begin {
+		if ($false -eq $Settings.Enable) {
+			return
+		}
+	}
 	Process {
 		if ($null -eq $TestAst.ParamBlock) {
 			return
@@ -223,8 +254,16 @@ function PSNxtDontUseEmptyStringLiteral {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
+	Begin {
+		if ($false -eq $Settings.Enable) {
+			return
+		}
+	}
 	Process {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.StringConstantExpressionAst[]]$stringConstants = $TestAst.FindAll({
@@ -277,37 +316,47 @@ function PSNxtEnforceConsistantConditionalStatement {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
-	[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
-	[System.Management.Automation.Language.BinaryExpressionAst[]]$wrongSideOperators = $TestAst.FindAll({
-			$args[0] -is [System.Management.Automation.Language.BinaryExpressionAst] -and
-			$args[0].Right.Extent.Text -in @('$true', '$false')
-		}, $false)
-
-	foreach ($wrongSideOperator in $wrongSideOperators) {
-		$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
-		$null = $suggestedCorrections.Add(
-			[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
-				$wrongSideOperator.Extent.StartLineNumber,
-				$wrongSideOperator.Extent.EndLineNumber,
-				$wrongSideOperator.Extent.StartColumnNumber,
-				$wrongSideOperator.Extent.EndColumnNumber,
-				$wrongSideOperator.Right.Extent.Text + ' -' + $wrongSideOperator.Operator + ' ' + $wrongSideOperator.Left.Extent.Text,
-				$MyInvocation.MyCommand.Definition,
-				'Switch the boolean literal to the left side of the comparison.'
-			)
-		)
-
-		$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-				'Message'              = 'Boolean literals should be on the left side of a comparison'
-				'Extent'               = $wrongSideOperator.Extent
-				'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-				'Severity'             = 'Warning'
-				'SuggestedCorrections' = $suggestedCorrections
-			})
+	Begin {
+		if ($false -eq $Settings.Enable) {
+			return
+		}
 	}
-	return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
+	Process {
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
+		[System.Management.Automation.Language.BinaryExpressionAst[]]$wrongSideOperators = $TestAst.FindAll({
+				$args[0] -is [System.Management.Automation.Language.BinaryExpressionAst] -and
+				$args[0].Right.Extent.Text -in @('$true', '$false')
+			}, $false)
+
+		foreach ($wrongSideOperator in $wrongSideOperators) {
+			$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
+			$null = $suggestedCorrections.Add(
+				[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
+					$wrongSideOperator.Extent.StartLineNumber,
+					$wrongSideOperator.Extent.EndLineNumber,
+					$wrongSideOperator.Extent.StartColumnNumber,
+					$wrongSideOperator.Extent.EndColumnNumber,
+					$wrongSideOperator.Right.Extent.Text + ' -' + $wrongSideOperator.Operator + ' ' + $wrongSideOperator.Left.Extent.Text,
+					$MyInvocation.MyCommand.Definition,
+					'Switch the boolean literal to the left side of the comparison.'
+				)
+			)
+
+			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+					'Message'              = 'Boolean literals should be on the left side of a comparison'
+					'Extent'               = $wrongSideOperator.Extent
+					'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+					'Severity'             = 'Warning'
+					'SuggestedCorrections' = $suggestedCorrections
+				})
+		}
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
+	}
 }
 
 function PSNxtEnforceNewLineAtEndOfFile {
@@ -325,8 +374,16 @@ function PSNxtEnforceNewLineAtEndOfFile {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
+	Begin {
+		if ($false -eq $Settings.Enable) {
+			return
+		}
+	}
 	Process {
 		if ($null -ne $TestAst.Parent) {
 			return
@@ -371,7 +428,7 @@ function PSNxtEnforceNewLineAtEndOfFile {
 	}
 }
 
-function PSNxtIncompatibleFunction {
+function PSNxtAvoidSpecificFunction {
 	<#
 	.SYNOPSIS
 	Dont allow usage of PSADT functions which are not compatible with our extensions.
@@ -386,12 +443,14 @@ function PSNxtIncompatibleFunction {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
 	Begin {
-		[hashtable]$incompatibleFunctions = @{
-			'Update-SessionEnvironmentVariables'  = 'Due to security reasons we clear the environment at the start of the Deploy-Application.ps1. Reloading the environment would mitigate this security measure.'
-			'Refresh-SessionEnvironmentVariables' = 'Due to security reasons we clear the environment at the start of the Deploy-Application.ps1. Reloading the environment would mitigate this security measure.'
+		if ($false -eq $Settings.Enable) {
+			return
 		}
 	}
 	Process {
@@ -399,12 +458,12 @@ function PSNxtIncompatibleFunction {
 
 		[System.Management.Automation.Language.CommandAst[]]$commandAsts = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
-				$args[0].GetCommandName() -in $incompatibleFunctions.Keys
+				$args[0].GetCommandName() -in $Settings.Functions.Keys
 			}, $false)
 
 		foreach ($commandAst in $commandAsts) {
 			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'  = $incompatibleFunctions[$commandAst.GetCommandName()]
+					'Message'  = $Settings.Functions[$commandAst.GetCommandName()]
 					'Extent'   = $commandAst.Extent
 					'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
 					'Severity' = 'Warning'
@@ -415,7 +474,7 @@ function PSNxtIncompatibleFunction {
 	}
 }
 
-function PSNxtMigratableFunction {
+function PSNxtMigrateLegacyFunctionName {
 	<#
 	.SYNOPSIS
 	Checks that functions are named correctly.
@@ -430,30 +489,33 @@ function PSNxtMigratableFunction {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
 	Begin {
-		[hashtable]$commandMigrationTable = @{
-			'Close-BlockExecutionWindow' = 'Close-NxtBlockExecutionWindow'
+		if ($false -eq $Settings.Enable) {
+			return
 		}
 	}
 	Process {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.CommandAst[]]$commandsToMigrate = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
-				$args[0].GetCommandName() -in $commandMigrationTable.Keys
+				$args[0].GetCommandName() -in $Settings.Functions.Keys
 			}, $false)
 
 		foreach ($commandAst in $commandsToMigrate) {
 			$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
-			if ($commandMigrationTable[$commandAst.GetCommandName()] -is [string] -and $commandMigrationTable[$commandAst.GetCommandName()].Length -gt 0) {
+			if ($Settings.Functions[$commandAst.GetCommandName()] -is [string] -and $Settings.Functions[$commandAst.GetCommandName()].Length -gt 0) {
 				$null = $suggestedCorrections.Add(
 					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 						$commandAst.Extent.StartLineNumber,
 						$commandAst.Extent.EndLineNumber,
 						$commandAst.Extent.StartColumnNumber,
 						$commandAst.Extent.EndColumnNumber,
-						($commandAst.Extent.Text -replace ('^' + [Regex]::Escape($commandAst.GetCommandName())), $commandMigrationTable[$commandAst.GetCommandName()]),
+						($commandAst.Extent.Text -replace ('^' + [Regex]::Escape($commandAst.GetCommandName())), $Settings.Functions[$commandAst.GetCommandName()]),
 						$MyInvocation.MyCommand.Definition,
 						'Replace the function name with the new function name.'
 					)
@@ -473,7 +535,7 @@ function PSNxtMigratableFunction {
 	}
 }
 
-function PSNxtMissingParameter {
+function PSNxtEnforceOptionalParameter {
 	<#
 	.SYNOPSIS
 	Checks that functions contain all desired parameters.
@@ -488,11 +550,14 @@ function PSNxtMissingParameter {
 	Param (
 		[Parameter(Mandatory = $true)]
 		[System.Management.Automation.Language.ScriptBlockAst]
-		$TestAst
+		$TestAst,
+		[Parameter(Mandatory = $false)]
+		[hashtable]
+		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
 	)
 	Begin {
-		[hashtable]$requiredParameters = @{
-			'Write-Log' = @('Serverity', 'Source', 'Message')
+		if ($false -eq $Settings.Enable) {
+			return
 		}
 	}
 	Process {
@@ -504,8 +569,7 @@ function PSNxtMissingParameter {
 			}, $false)
 
 		foreach ($command in $commands) {
-			[string[]]$requiredParams = $requiredParameters[$command.GetCommandName()]
-			[string[]]$missingParams = $requiredParams | Where-Object { $command.CommandElements.ParameterName -notcontains $_ }
+			[string[]]$missingParams = $Settings.FunctionParameter[$command.GetCommandName()] | Where-Object { $command.CommandElements.ParameterName -notcontains $_ }
 			if ($missingParams.Count -gt 0) {
 				$null = $results.Add(
 					[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
@@ -520,5 +584,7 @@ function PSNxtMissingParameter {
 		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 	}
 }
+
+[hashtable]$AnalyzerSettings = Import-PowerShellDataFile -Path "$PSScriptRoot\..\PSScriptAnalyzerSettings.psd1"
 
 Export-ModuleMember -Function 'PSNxt*'
