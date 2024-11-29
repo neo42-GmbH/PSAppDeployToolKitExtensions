@@ -1,4 +1,4 @@
-function Get-NxtPSUseCorrectTokenCapitalization {
+function PSNxtUseCorrectTokenCapitalization {
 	<#
 	.SYNOPSIS
 	Checks that tokens are capitalized correctly.
@@ -59,7 +59,7 @@ function Get-NxtPSUseCorrectTokenCapitalization {
 	}
 }
 
-function Get-NxtPSVariablesInParamBlockShouldBeCapitalized {
+function PSNxtVariablesInParamBlockShouldBeCapitalized {
 	<#
 	.SYNOPSIS
 	Checks that parameter variables are capitalized.
@@ -104,7 +104,7 @@ function Get-NxtPSVariablesInParamBlockShouldBeCapitalized {
 	}
 }
 
-function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
+function PSNxtCapatalizedVariablesNeedToOriginateFromParamBlock {
 	<#
 	.SYNOPSIS
 	Checks that variables are capitalized and originate from the param block.
@@ -121,28 +121,34 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
+	Begin {
+		[string[]]$builtInVariables = @(
+			'ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'NestedPromptLevel', 'PID', 'PROFILE', 'PWD', 'Sender', 'ShellId', 'StackTrace'
+		)
+
+		[scriptblock]$getParentParamBlocks = {
+			Param (
+				[System.Management.Automation.Language.ScriptBlockAst]
+				$Ast
+			)
+			if ($Ast.Parent -is [System.Management.Automation.Language.ScriptBlockAst]) {
+				. $getParentParamBlock -Ast $Ast.Parent
+			}
+			if ($Ast.ParamBlock -is [System.Management.Automation.Language.ParamBlockAst]) {
+				return $Ast.ParamBlock
+			}
+		}
+	}
 	Process {
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.VariableExpressionAst[]]$capitalizedVariables = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
 				$args[0].VariablePath.UserPath -cmatch '^[A-Z]' -and
-				$args[0].VariablePath.UserPath -cnotmatch 'Preference$|^PS.+|Invocation$'
-				$args[0].VariablePath.UserPath -notin @('ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'NestedPromptLevel', 'PID', 'PROFILE', 'PWD', 'Sender', 'ShellId', 'StackTrace')
+				$args[0].VariablePath.UserPath -notmatch '.+Preference$|^PS.+|.+Invocation$' -and
+				$args[0].VariablePath.UserPath -notin $builtInVariables
 			}, $false)
 
-		[scriptblock]$getParentParamBlocks = {
-			Param (
-				[System.Management.Automation.Language.Ast]
-				$Ast
-			)
-			if ($null -ne $Ast.Parent) {
-				& $getParentParamBlock -Ast $Ast.Parent
-			}
-			if ($null -ne $Ast.ParamBlock) {
-				return $Ast.ParamBlock
-			}
-		}
-		[System.Management.Automation.Language.ParamBlockAst[]]$parentParamBlocks = $getParentParamBlocks.Invoke($TestAst)
+		[System.Management.Automation.Language.ParamBlockAst[]]$parentParamBlocks = . $getParentParamBlocks -Ast $TestAst
 
 		foreach ($variableAst in $capitalizedVariables) {
 			if ($variableAst.VariablePath.UserPath -notin $parentParamBlocks.Parameters.Name.VariablePath.UserPath) {
@@ -158,7 +164,7 @@ function Get-NxtPSCapatalizedVariablesNeedToOriginateFromParamBlock {
 	}
 }
 
-function Get-NxtPSParamBlockVariablesShouldBeTyped {
+function PSNxtParamBlockVariablesShouldBeTyped {
 	<#
 	.SYNOPSIS
 	Checks that parameter variables are typed.
@@ -202,7 +208,7 @@ function Get-NxtPSParamBlockVariablesShouldBeTyped {
 	}
 }
 
-function Get-NxtPSDontUseEmptyStringLiteral {
+function PSNxtDontUseEmptyStringLiteral {
 	<#
 	.SYNOPSIS
 	Checks that empty strings are not used.
@@ -256,7 +262,7 @@ function Get-NxtPSDontUseEmptyStringLiteral {
 	}
 }
 
-function Get-NxtPSEnforceConsistantConditionalStatement {
+function PSNxtEnforceConsistantConditionalStatement {
 	<#
 	.SYNOPSIS
 	Checks that conditional statements are consistent.
@@ -304,7 +310,7 @@ function Get-NxtPSEnforceConsistantConditionalStatement {
 	return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
 }
 
-function Get-NxtPSEnforceNewLineAtEndOfFile {
+function PSNxtEnforceNewLineAtEndOfFile {
 	<#
 	.SYNOPSIS
 	Checks that there is a new line at the end of the file.
@@ -365,7 +371,7 @@ function Get-NxtPSEnforceNewLineAtEndOfFile {
 	}
 }
 
-function Get-NxtPSIncompatibleFunction {
+function PSNxtIncompatibleFunction {
 	<#
 	.SYNOPSIS
 	Dont allow usage of PSADT functions which are not compatible with our extensions.
@@ -409,7 +415,7 @@ function Get-NxtPSIncompatibleFunction {
 	}
 }
 
-function Get-NxtPSMigratableFunction {
+function PSNxtMigratableFunction {
 	<#
 	.SYNOPSIS
 	Checks that functions are named correctly.
@@ -467,4 +473,51 @@ function Get-NxtPSMigratableFunction {
 	}
 }
 
-Export-ModuleMember -Function 'Get-NxtPS*'
+function PSNxtMissingParameter {
+	<#
+	.SYNOPSIS
+	Checks that functions contain all desired parameters.
+	.DESCRIPTION
+	Checks that functions contain all desired parameters.
+	.INPUTS
+	[System.Management.Automation.Language.ScriptBlockAst]
+	.OUTPUTS
+	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
+	#>
+	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[System.Management.Automation.Language.ScriptBlockAst]
+		$TestAst
+	)
+	Begin {
+		[hashtable]$requiredParameters = @{
+			'Write-Log' = @('Serverity', 'Source', 'Message')
+		}
+	}
+	Process {
+		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
+		[System.Management.Automation.Language.CommandAst[]]$commands = $TestAst.FindAll({
+				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
+				$args[0].GetCommandName() -in $requiredParameters.Keys
+			}, $false)
+
+		foreach ($command in $commands) {
+			[string[]]$requiredParams = $requiredParameters[$command.GetCommandName()]
+			[string[]]$missingParams = $requiredParams | Where-Object { $command.CommandElements.ParameterName -notcontains $_ }
+			if ($missingParams.Count -gt 0) {
+				$null = $results.Add(
+					[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+						'Message'  = "The function is missing the following parameters: $($missingParams -join ', ')"
+						'Extent'   = $command.Extent
+						'RuleName' = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
+						'Severity' = 'Error'
+					}
+				)
+			}
+		}
+		return ([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]$results)
+	}
+}
+
+Export-ModuleMember -Function 'PSNxt*'
