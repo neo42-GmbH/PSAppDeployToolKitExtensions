@@ -119,21 +119,21 @@
 		PSNxtEnforceNewLineAtEndOfFile                  = @{
 			Enable = $true
 		}
-		PSNxtAvoidSpecificFunction                  = @{
-			Enable = $true
+		PSNxtAvoidSpecificFunction                      = @{
+			Enable    = $true
 			Functions = @{
 				'Update-SessionEnvironmentVariables'  = 'Due to security reasons we clear the environment at the start of the Deploy-Application.ps1. Reloading the environment would mitigate this security measure.'
 				'Refresh-SessionEnvironmentVariables' = 'Due to security reasons we clear the environment at the start of the Deploy-Application.ps1. Reloading the environment would mitigate this security measure.'
 			}
 		}
-		PSNxtMigrateLegacyFunctionName                        = @{
-			Enable = $true
+		PSNxtMigrateLegacyFunctionName                  = @{
+			Enable    = $true
 			Functions = @{
 				'Close-BlockExecutionWindow' = 'Close-NxtBlockExecutionWindow'
 			}
 		}
-		PSNxtEnforceOptionalParameter                      = @{
-			Enable = $true
+		PSNxtEnforceOptionalParameter                   = @{
+			Enable            = $true
 			FunctionParameter = @{
 				'Write-Log' = @('Serverity', 'Source', 'Message')
 			}
