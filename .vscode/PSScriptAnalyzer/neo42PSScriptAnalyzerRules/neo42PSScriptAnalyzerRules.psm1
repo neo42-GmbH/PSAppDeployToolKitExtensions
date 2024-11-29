@@ -91,9 +91,6 @@ function PSNxtVariablesInParamBlockMustBeCapitalized {
 		}
 	}
 	Process {
-		if ($TestAst -is [System.Management.Automation.Language.ParamBlockAst]) {
-			return
-		}
 		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		[System.Management.Automation.Language.FunctionDefinitionAst[]]$functions = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
@@ -565,11 +562,11 @@ function PSNxtEnforceOptionalParameter {
 		[System.Management.Automation.Language.CommandAst[]]$commands = $TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.CommandAst] -and
 				$true -notin $args[0].CommandElements.Splatted -and
-				$args[0].GetCommandName() -in $requiredParameters.Keys
+				$args[0].GetCommandName() -in $Settings.Functions.Keys
 			}, $false)
 
 		foreach ($command in $commands) {
-			[string[]]$missingParams = $Settings.FunctionParameter[$command.GetCommandName()] | Where-Object { $command.CommandElements.ParameterName -notcontains $_ }
+			[string[]]$missingParams = $Settings.Functions[$command.GetCommandName()] | Where-Object { $command.CommandElements.ParameterName -notcontains $_ }
 			if ($missingParams.Count -gt 0) {
 				$null = $results.Add(
 					[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{

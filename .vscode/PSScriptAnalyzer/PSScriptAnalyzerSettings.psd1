@@ -134,8 +134,8 @@
 		}
 		PSNxtEnforceOptionalParameter                   = @{
 			Enable            = $true
-			FunctionParameter = @{
-				'Write-Log' = @('Serverity', 'Source', 'Message')
+			Functions = @{
+				'Write-Log' = @('Source')
 			}
 		}
 	}
