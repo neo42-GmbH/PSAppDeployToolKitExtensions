@@ -94,7 +94,7 @@
 		}
 	}
 	CustomRulePath      = @(
-		'.\.tests\PSScriptAnalyzer\neo42PSScriptAnalyzerRules',
-		'.\.tests\PSScriptAnalyzer\InjectionHunter'
+		'.\.vscode\PSScriptAnalyzer\neo42PSScriptAnalyzerRules',
+		'.\.vscode\PSScriptAnalyzer\InjectionHunter'
 	)
 }
