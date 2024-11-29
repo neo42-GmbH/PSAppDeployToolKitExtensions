@@ -1,12 +1,161 @@
 @{
-	IncludeDefaultRules = $true
-	Severity            = @(
+	Severity       = @(
 		'Error',
 		'Warning',
 		'Information'
 	)
-	ExcludeRules        = @()
-	Rules               = @{
+	Rules          = @{
+		# Rules extracted from PSScriptAnalyzer 1.23.0
+		# https://learn.microsoft.com/en-us/powershell/utility-modules/psscriptanalyzer/rules/readme?view=ps-modules
+		PSAlignAssignmentStatement                      = @{
+			Enable         = $true
+			CheckHashtable = $true
+		}
+		PSAvoidAssignmentToAutomaticVariable            = @{
+			Enable = $true
+		}
+		PSAvoidDefaultValueForMandatoryParameter        = @{
+			Enable = $true
+		}
+		PSAvoidDefaultValueSwitchParameter              = @{
+			Enable = $true
+		}
+		PSAvoidExclaimOperator                          = @{
+			Enable = $true
+		}
+		PSAvoidGlobalAliases                            = @{
+			Enable = $true
+		}
+		PSAvoidGlobalFunctions                          = @{
+			Enable = $true
+		}
+		PSAvoidGlobalVars                               = @{
+			Enable = $true
+		}
+		PSAvoidInvokingEmptyMembers                     = @{
+			Enable = $true
+		}
+		PSAvoidLongLines                                = @{
+			Enable            = $true
+			MaximumLineLength = 200
+		}
+		PSAvoidMultipleTypeAttributes                   = @{
+			Enable = $true
+		}
+		PSAvoidNullOrEmptyHelpMessageAttribute          = @{
+			Enable = $true
+		}
+		PSAvoidOverwritingBuiltInCmdlets                = @{
+			PowerShellVersion = @(
+				'desktop-5.1.14393.206-windows',
+				'core-6.1.0-windows'
+			)
+		}
+		PSAvoidSemicolonsAsLineTerminators              = @{
+			Enable    = $true
+			AllowList = @()
+		}
+		PSAvoidShouldContinueWithoutForceSwitch         = @{
+			Enable = $true
+		}
+		PSAvoidTrailingWhitespace                       = @{
+			Enable = $true
+		}
+		PSAvoidUsingAllowUnencryptedAuthentication      = @{
+			Enable = $true
+		}
+		PSAvoidUsingBrokenHashAlgorithms                = @{
+			Enable = $true
+		}
+		PSAvoidUsingCmdletAliases                       = @{
+			Enable = $true
+		}
+		PSAvoidUsingComputerNameHardcoded               = @{
+			Enable = $true
+		}
+		PSAvoidUsingConvertToSecureStringWithPlainText  = @{
+			Enable = $true
+		}
+		PSAvoidUsingDeprecatedManifestFields            = @{
+			Enable = $true
+		}
+		PSAvoidUsingDoubleQuotesForConstantString       = @{
+			Enable = $true
+		}
+		PSAvoidUsingEmptyCatchBlock                     = @{
+			Enable = $true
+		}
+		PSAvoidUsingInvokeExpression                    = @{
+			Enable = $true
+		}
+		PSAvoidUsingPlainTextForPassword                = @{
+			Enable = $true
+		}
+		PSAvoidUsingPositionalParameters                = @{
+			Enable           = $true
+			CommandAllowList = @()
+		}
+		PSAvoidUsingUsernameAndPasswordParams           = @{
+			Enable = $true
+		}
+		PSAvoidUsingWMICmdlet                           = @{
+			Enable = $true
+		}
+		PSAvoidUsingWriteHost                           = @{
+			Enable = $true
+		}
+		PSMisleadingBacktick                            = @{
+			Enable = $true
+		}
+		PSMissingModuleManifestField                    = @{
+			Enable = $true
+		}
+		PSPlaceCloseBrace                               = @{
+			Enable             = $true
+			NewLineAfter       = $true
+			IgnoreOneLineBlock = $true
+			NoEmptyLineBefore  = $true
+		}
+		PSPlaceOpenBrace                                = @{
+			Enable             = $true
+			OnSameLine         = $true
+			NewLineAfter       = $true
+			IgnoreOneLineBlock = $false
+		}
+		PSPossibleIncorrectComparisonWithNull           = @{
+			Enable = $true
+		}
+		PSPossibleIncorrectUsageOfAssignmentOperator    = @{
+			Enable = $true
+		}
+		PSPossibleIncorrectUsageOfRedirectionOperator   = @{
+			Enable = $true
+		}
+		PSProvideCommentHelp                            = @{
+			Enable                  = $true
+			ExportedOnly            = $false
+			BlockComment            = $true
+			VSCodeSnippetCorrection	= $true
+			Placement               = 'begin'
+		}
+		PSReservedCmdletChar                            = @{
+			Enable = $true
+		}
+		PSReservedParams                                = @{
+			Enable = $true
+		}
+		PSReviewUnusedParameters                        = @{
+			Enable = $true
+		}
+		PSUseApprovedVerbs                              = @{
+			Enable = $true
+		}
+		PSUseBOMForUnicodeEncodedFile                   = @{
+			Enable = $true
+		}
+		PSUseCmdletCorrectly                            = @{
+			Enable = $true
+		}
 		PSUseCompatibleCmdlets                          = @{
 			Enable         = $true
 			TargetProfiles = @(
@@ -47,12 +196,10 @@
 				'win-4_x64_10.0.18362.0_7.0.0_x64_3.1.2_core'
 			)
 		}
-		PSProvideCommentHelp                            = @{
-			Enable                  = $true
-			ExportedOnly            = $false
-			BlockComment            = $true
-			VSCodeSnippetCorrection	= $true
-			Placement               = 'begin'
+		PSUseConsistentIndentation                      = @{
+			Enable              = $true
+			PipelineIndentation = 'IncreaseIndentationForFirstPipeline'
+			Kind                = 'tab'
 		}
 		PSUseConsistentWhitespace                       = @{
 			Enable                                  = $true
@@ -66,36 +213,44 @@
 			CheckParameter                          = $true
 			IgnoreAssignmentOperatorInsideHashTable = $true
 		}
-		PSUseConsistentIndentation                      = @{
-			Enable              = $true
-			PipelineIndentation = 'IncreaseIndentationForFirstPipeline'
-			Kind                = 'tab'
-		}
 		PSUseCorrectCasing                              = @{
 			Enable = $true
 		}
-		PSPlaceOpenBrace                                = @{
-			Enable             = $true
-			OnSameLine         = $true
-			NewLineAfter       = $true
-			IgnoreOneLineBlock = $false
-		}
-		PSPlaceCloseBrace                               = @{
-			Enable             = $true
-			NewLineAfter       = $true
-			IgnoreOneLineBlock = $true
-			NoEmptyLineBefore  = $true
-		}
-		PSAvoidSemicolonsAsLineTerminators              = @{
+		PSUseDeclaredVarsMoreThanAssignments            = @{
 			Enable = $true
 		}
-		PSAvoidExclaimOperator                          = @{
+		PSUseLiteralInitializerForHashtable             = @{
 			Enable = $true
 		}
-		PSAvoidUsingPositionalParameters                = @{
-			Enable           = $true
-			CommandAllowList = @()
+		PSUseOutputTypeCorrectly                        = @{
+			Enable = $true
 		}
+		PSUseProcessBlockForPipelineCommand             = @{
+			Enable = $true
+		}
+		PSUsePSCredentialType                           = @{
+			Enable = $true
+		}
+		PSUseShouldProcessForStateChangingFunctions     = @{
+			Enable = $true
+		}
+		PSUseSingularNouns                              = @{
+			Enable = $true
+		}
+		PSUseSupportsShouldProcess                      = @{
+			Enable = $true
+		}
+		PSUseToExportFieldsInManifest                   = @{
+			Enable = $true
+		}
+		PSUseUsingScopeModifierInNewRunspaces           = @{
+			Enable = $true
+		}
+		PSUseUTF8EncodingForHelpFiles                   = @{
+			Enable = $true
+		}
+
+		# neo42
 		PSNxtUseCorrectTokenCapitalization              = @{
 			Enable   = $true
 			Keywords = @('if', 'else', 'elseif', 'function', 'foreach', 'for', 'while', 'do', 'in', 'switch', 'default', 'try', 'catch', 'finally', 'return', 'break', 'continue', 'throw', 'exit', 'Process', 'Begin', 'End', 'Param')
@@ -138,7 +293,7 @@
 			}
 		}
 	}
-	CustomRulePath      = @(
+	CustomRulePath = @(
 		'.\.vscode\PSScriptAnalyzer\neo42PSScriptAnalyzerRules',
 		'.\.vscode\PSScriptAnalyzer\InjectionHunter'
 	)
