@@ -582,57 +582,6 @@ function PSNxtEnforceOptionalParameter {
 	}
 }
 
-function PSNxtApplyTokenMigration {
-	<#
-	.SYNOPSIS
-	Applies token migration.
-	.DESCRIPTION
-	Applies token migration.
-	.INPUTS
-	[System.Management.Automation.Language.Token]
-	.OUTPUTS
-	[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
-	#>
-	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
-	Param (
-		[Parameter(Mandatory = $true)]
-		[System.Management.Automation.Language.Token]
-		$TestToken,
-		[Parameter(Mandatory = $false)]
-		[hashtable]
-		$Settings = $AnalyzerSettings.Rules[$MyInvocation.MyCommand.Name]
-	)
-	Begin {
-		if ($false -eq $Settings.Enable) {
-			return
-		}
-	}
-	Process {
-		[System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
-		if ($TestToken.Extent.Text.Trim() -in $Settings.Tokens.Keys.Trim()) {
-			$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
-			$null = $suggestedCorrections.Add(
-				[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
-					$TestToken.Extent.StartLineNumber,
-					$TestToken.Extent.EndLineNumber,
-					$TestToken.Extent.StartColumnNumber,
-					$TestToken.Extent.EndColumnNumber,
-					$Settings['Tokens'][$TestToken.Extent.Text],
-					$MyInvocation.MyCommand.Definition,
-					'Migrate token to new token.'
-				)
-			)
-			$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-					'Message'              = 'Token migration required.'
-					'Extent'               = $TestToken.Extent
-					'RuleName'             = Split-Path -Leaf $PSCmdlet.MyInvocation.InvocationName
-					'Severity'             = 'Warning'
-					'SuggestedCorrections' = $suggestedCorrections
-				})
-		}
-	}
-}
-
 [hashtable]$AnalyzerSettings = Import-PowerShellDataFile -Path "$PSScriptRoot\..\PSScriptAnalyzerSettings.psd1"
 
 Export-ModuleMember -Function 'PSNxt*'

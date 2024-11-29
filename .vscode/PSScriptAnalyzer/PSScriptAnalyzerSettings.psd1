@@ -138,15 +138,6 @@
 				'Write-Log' = @('Source')
 			}
 		}
-		PSNxtApplyTokenMigration                        = @{
-			Enable = $true
-			Tokens = @{
-				'## executes at after the uninstallation in the reinstall process' = '## executes after the successful uninstallation in the reinstall process'
-				'## executes after the installation in the reinstall process'      = '## executes after the successful installation in the reinstall process'
-				'## executes after the installation in the install process'        = '## executes after the successful installation in the install process'
-				'## executes after the uninstallation in the uninstall process'    = '## executes after the successful uninstallation in the uninstall process'
-			}
-		}
 	}
 	CustomRulePath      = @(
 		'.\.vscode\PSScriptAnalyzer\neo42PSScriptAnalyzerRules',
