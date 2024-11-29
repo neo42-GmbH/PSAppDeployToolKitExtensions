@@ -1,4 +1,3 @@
-# PSAppDeployToolkitExtension default rules for PSScriptAnalyser, to ensure compatibility with PowerSHell 5.1 and ensure coding standards are met.
 @{
 	IncludeDefaultRules = $true
 	Severity            = @(
