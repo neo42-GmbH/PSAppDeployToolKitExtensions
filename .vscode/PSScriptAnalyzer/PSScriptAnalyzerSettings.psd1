@@ -30,7 +30,8 @@
 				'Invoke-Pester',
 				'It',
 				'Should',
-				'Describe'
+				'Describe',
+				'Write-Log'
 			)
 		}
 		PSUseCompatibleSyntax                           = @{
