@@ -2181,7 +2181,7 @@ if ($true -eq $UserCanCloseAll) {
 else {
 	$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWorkWithoutCloseButton
 }
-$control_DeferTextTwo.Text = $xmlUIMessages.NxtWelcomePrompt_DeferalExpired
+$control_DeferTextTwo.Text = $xmlUIMessages.NxtWelcomePrompt_DeferralExpired
 $control_CloseButton.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
 $control_CancelButton.Content = $xmlUIMessages.NxtWelcomePrompt_Close
 $control_DeferButton.Content = $xmlUIMessages.NxtWelcomePrompt_Defer
@@ -2288,7 +2288,7 @@ $control_TitleText.Text = $installTitle
 & $fillCloseApplicationList $syncHash.UiItems
 
 if ([Int32]::TryParse($DeferTimes, [ref]$null) -and $DeferTimes -ge 0) {
-	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
+	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDeferrals -f $([Int32]$DeferTimes + 1)
 }
 if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 	$control_DeferDeadlineText.Text = $xmlUIMessages.DeferPrompt_Deadline + " " + $DeferDeadline
