@@ -146,16 +146,19 @@ function PSNxtAvoidCapitalizedVarsOutsideParamBlock {
 			'ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'NestedPromptLevel', 'PID', 'PROFILE', 'PWD', 'Sender', 'ShellId', 'StackTrace'
 		)
 
-		[scriptblock]$getParentParamBlocks = {
+		[scriptblock]$getAllParamBlocks = {
 			Param (
-				[System.Management.Automation.Language.ScriptBlockAst]
+				[System.Management.Automation.Language.Ast]
 				$Ast
 			)
-			if ($Ast.Parent -is [System.Management.Automation.Language.ScriptBlockAst]) {
-				. $getParentParamBlock -Ast $Ast.Parent
+			[System.Management.Automation.Language.ParamBlockAst]$paramBlock = $Ast.Find({
+					$args[0] -is [System.Management.Automation.Language.ParamBlockAst]
+				}, $false)
+			if ($null -ne $paramBlock) {
+				Write-Output $paramBlock
 			}
-			if ($Ast.ParamBlock -is [System.Management.Automation.Language.ParamBlockAst]) {
-				return $Ast.ParamBlock
+			if ($null -ne $Ast.Parent) {
+				. $getAllParamBlocks -Ast $Ast.Parent
 			}
 		}
 	}
@@ -168,10 +171,10 @@ function PSNxtAvoidCapitalizedVarsOutsideParamBlock {
 				$args[0].VariablePath.UserPath -notin $builtInVariables
 			}, $false)
 
-		[System.Management.Automation.Language.ParamBlockAst[]]$parentParamBlocks = . $getParentParamBlocks -Ast $TestAst
+		[System.Management.Automation.Language.ParamBlockAst[]]$paramBlocks = . $getAllParamBlocks -Ast $TestAst
 
 		foreach ($variableAst in $capitalizedVariables) {
-			if ($variableAst.VariablePath.UserPath -notin $parentParamBlocks.Parameters.Name.VariablePath.UserPath) {
+			if ($variableAst.VariablePath.UserPath -notin $paramBlocks.Parameters.Name.VariablePath.UserPath) {
 				$null = $results.Add([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'  = 'A capatalized variable needs to be defined in the param block'
 						'Extent'   = $variableAst.Extent
