@@ -30,9 +30,9 @@ function ConvertTo-Markdown {
 	[string]$markdownContent = [string]::Empty
 
 	foreach ($section in $HelpContent.PSObject.Properties | Where-Object { $false -eq [string]::IsNullOrWhiteSpace($_.Value) }) {
+		$markdownContent += '## ' + $section.Name + "`n"
 		switch -Regex ($section.TypeNameOfValue) {
 			'System.Collections.ObjectModel.ReadOnlyCollection' {
-				$markdownContent += "## " + $section.Name + "`n"
 				if ($section.Value.Count -eq 1) {
 					$markdownContent += $section.Value[0] + "`n"
 					break
@@ -45,14 +45,13 @@ function ConvertTo-Markdown {
 				break
 			}
 			'System.Collections.Generic.IDictionary' {
-				$markdownContent += "## " + $section.Name + "`n"
 				foreach ($entry in $section.Value.GetEnumerator()) {
 					$markdownContent += "- **" + $entry.Key + "**: " + $entry.Value + "`n"
 				}
 				break
 			}
 			default {
-				$markdownContent += '## ' + $section.Name + "`n" + $section.Value + "`n"
+				$markdownContent += $section.Value + "`n"
 				break
 			}
 		}
