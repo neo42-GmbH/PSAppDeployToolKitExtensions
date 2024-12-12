@@ -34,4 +34,22 @@ Describe "Stop-NxtProcess" {
             Stop-NxtProcess -Name "NonexistantProcess" | Should -BeNullOrEmpty
         }
     }
+    Context "When using positional parameters" {
+        BeforeEach {
+            $process = Start-Process -FilePath $global:simpleExe -PassThru
+        }
+        AfterEach {
+            if ($false -eq $process.HasExited) {
+                $process.Kill()
+            }
+        }
+        It "Should stop the process by name" {
+            Stop-NxtProcess $process.Name | Should -BeNullOrEmpty
+            $process.HasExited | Should -Be $true
+        }
+        It "Should stop the process using wql query" {
+            Stop-NxtProcess "Name = '$($process.Name).exe'" $true | Should -BeNullOrEmpty
+            $process.HasExited | Should -Be $true
+        }
+    }
 }
