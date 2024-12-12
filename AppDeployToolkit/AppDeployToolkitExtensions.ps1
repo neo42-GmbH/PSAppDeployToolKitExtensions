@@ -10257,11 +10257,11 @@ function Stop-NxtProcess {
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'Name')]
 	Param (
-		[Parameter(Mandatory = $true, ParameterSetName = 'Name')]
+		[Parameter(Mandatory = $true, ParameterSetName = 'Name', Position = 0)]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$Name,
-		[Parameter(Mandatory = $false, ParameterSetName = 'Name')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'Name', Position = 1)]
 		[bool]
 		$IsWql,
 		[Parameter(Mandatory = $true, ParameterSetName = 'Id')]
