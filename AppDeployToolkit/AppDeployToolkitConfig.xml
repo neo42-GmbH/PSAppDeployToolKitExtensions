@@ -362,7 +362,7 @@
 		<ClosePrompt_ButtonDefer>Udsæt</ClosePrompt_ButtonDefer>
 		<ClosePrompt_Message>Følgende programmer skal lukkes før installationen kan fortsætte.
 
-						Gem dit arbejde, luk programmerne og fortsæt. Alternativt kan du gemme dit arbejde og trykke på "Luk Programmer".</ClosePrompt_Message>
+			Gem dit arbejde, luk programmerne og fortsæt. Alternativt kan du gemme dit arbejde og trykke på "Luk Programmer".</ClosePrompt_Message>
 		<ClosePrompt_CountdownMessage>BEMÆRK: Programmet/Programmerne vil automatisk blive lukket om:</ClosePrompt_CountdownMessage>
 		<DeferPrompt_WelcomeMessage>Følgende applikation vil nu blive installeret:</DeferPrompt_WelcomeMessage>
 		<DeferPrompt_ExpiryMessage>Du kan vælge at udsætte installationen indtil udsættelsesperioden udløber:</DeferPrompt_ExpiryMessage>
@@ -452,7 +452,7 @@
 		<ClosePrompt_Message>Die folgenden Anwendungen müssen geschlossen werden, bevor die Installation fortgesetzt werden kann.
 
 			Bitte speichern Sie Ihre Arbeit, schließen Sie die Anwendungen und fahren Sie dann fort.
-		Alternativ können Sie Ihre Arbeit speichern und dann auf "Schließe Anwendungen" klicken.</ClosePrompt_Message>
+			Alternativ können Sie Ihre Arbeit speichern und dann auf "Schließe Anwendungen" klicken.</ClosePrompt_Message>
 		<ClosePrompt_CountdownMessage>HINWEIS: Diese Andwendungen werden automatisch geschlossen:</ClosePrompt_CountdownMessage>
 		<DeferPrompt_WelcomeMessage>Die folgende Anwendung soll installiert werden:</DeferPrompt_WelcomeMessage>
 		<DeferPrompt_ExpiryMessage>Sie können die Installation verzögern, bis die Rückstellung abläuft:</DeferPrompt_ExpiryMessage>
