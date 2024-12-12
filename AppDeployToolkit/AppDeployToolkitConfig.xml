@@ -831,7 +831,7 @@
 
 			Guarde su trabajo, cierre los programas y luego continúe.
 			Alternativamente, guarde su trabajo y haga clic en "Cerrar programas".</ClosePrompt_Message>
-        <closePrompt_CountdownMessage>NOTA: El/los programa(s) se cerrará(n) automáticamente en:</closePrompt_CountdownMessage>
+		<ClosePrompt_CountdownMessage>NOTA: El/los programa(s) se cerrará(n) automáticamente en:</ClosePrompt_CountdownMessage>
 		<DeferPrompt_WelcomeMessage>La siguiente aplicación está a punto de instalarse:</DeferPrompt_WelcomeMessage>
 		<DeferPrompt_ExpiryMessage>Puede optar por aplazar la instalación hasta que expire el aplazamiento:</DeferPrompt_ExpiryMessage>
 		<DeferPrompt_WarningMessage>Una vez vencido el aplazamiento, ya no tendrá la opción de aplazar.</DeferPrompt_WarningMessage>
