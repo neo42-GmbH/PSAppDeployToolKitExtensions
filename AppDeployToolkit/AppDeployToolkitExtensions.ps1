@@ -19,7 +19,7 @@
 	Copyright (c) 2024 neo42 GmbH, Germany.
 
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2024.09.19.1
+	ConfigVersion: 2024.11.13.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -4771,7 +4771,11 @@ function Get-NxtProcessTree {
 			)
 			## Recurse to get related processes of related processes
 			foreach ($process in $relatedProcesses) {
-				$relatedProcesses += & $getRelatedProcesses -Root $process -ProcessTable $ProcessTable -Parents:$Parents
+				$relatedProcesses += & $getRelatedProcesses -Root $process -Parents:$Parents -ProcessTable @(
+					$ProcessTable | Where-Object {
+						$relatedProcesses.ProcessId -notcontains $_.ProcessId
+					}
+				)
 			}
 			Write-Output $relatedProcesses
 		}

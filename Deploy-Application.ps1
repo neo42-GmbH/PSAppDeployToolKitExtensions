@@ -57,7 +57,7 @@
 	Copyright (c) 2024 neo42 GmbH, Germany.
 
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2024.09.19.1
+	ConfigVersion: 2024.11.13.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -65,12 +65,10 @@
 .LINK
 	http://psappdeploytoolkit.com
 #>
-[CmdletBinding(DefaultParameterSetName = 'Deployment')]
+[CmdletBinding()]
 Param (
-	[Parameter(Mandatory = $false, Position = 0, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false, Position = 0)]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
-	[Parameter(Mandatory = $false, ParameterSetName = 'SkipDeployment')]
-	[ValidateSet('Install', 'Uninstall', 'Repair')]
 	[string]
 	$DeploymentType = 'Install',
 	[Parameter(Mandatory = $false)]
@@ -92,7 +90,7 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[string]
 	$DeploymentSystem = [string]::Empty,
-	[Parameter(Mandatory = $false, DontShow = $true, ParameterSetName = 'SkipDeployment')]
+	[Parameter(Mandatory = $false, DontShow = $true)]
 	[switch]
 	$SkipDeployment = $false
 )
@@ -603,7 +601,7 @@ function Main {
 			}
 			'InstallUserPart' {
 				## START OF USERPARTINSTALL
-				[string]$userPartSuccess = 'true'
+				[string]$script:userPartSuccess = 'true'
 				CustomInstallUserPartBegin
 				CustomInstallUserPartEnd
 				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components\$($global:PackageConfig.PackageGUID)" -Name 'UserPartInstallSuccess' -Type 'String' -Value "$userPartSuccess"
@@ -611,7 +609,7 @@ function Main {
 			}
 			'UninstallUserPart' {
 				## START OF USERPARTUNINSTALL
-				[string]$userPartSuccess = 'true'
+				[string]$script:userPartSuccess = 'true'
 				CustomUninstallUserPartBegin
 				CustomUninstallUserPartEnd
 				Set-RegistryKey -Key "HKCU:\Software\Microsoft\Active Setup\Installed Components\$($global:PackageConfig.PackageGUID).uninstall" -Name 'UserPartUninstallSuccess' -Type 'String' -Value "$userPartSuccess"

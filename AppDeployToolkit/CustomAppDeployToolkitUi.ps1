@@ -555,6 +555,7 @@ function Get-RegistryKey {
 	}
 }
 #endregion
+#region Function Get-NxtProcessTree
 function Get-NxtProcessTree {
 	<#
 	.SYNOPSIS
@@ -596,7 +597,7 @@ function Get-NxtProcessTree {
 		## Get the name of this function and write header
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 		## Cache all processes
-		[System.Management.ManagementObject[]]$processes = Get-WmiObject -ClassName "Win32_Process"
+		[System.Management.ManagementObject[]]$processes = Get-WmiObject -ClassName 'Win32_Process'
 		## Define script block to get related processes
 		[scriptblock]$getRelatedProcesses = {
 			Param (
@@ -618,7 +619,11 @@ function Get-NxtProcessTree {
 			)
 			## Recurse to get related processes of related processes
 			foreach ($process in $relatedProcesses) {
-				$relatedProcesses += & $getRelatedProcesses -Root $process -ProcessTable $ProcessTable -Parents:$Parents
+				$relatedProcesses += & $getRelatedProcesses -Root $process -Parents:$Parents -ProcessTable @(
+					$ProcessTable | Where-Object {
+						$relatedProcesses.ProcessId -notcontains $_.ProcessId
+					}
+				)
 			}
 			Write-Output $relatedProcesses
 		}
@@ -644,6 +649,7 @@ function Get-NxtProcessTree {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
+#endregion
 #region Function Get-NxtRunningProcesses
 function Get-NxtRunningProcesses {
 	<#
@@ -2175,7 +2181,7 @@ if ($true -eq $UserCanCloseAll) {
 else {
 	$control_SaveWorkText.Text = $xmlUIMessages.NxtWelcomePrompt_SaveWorkWithoutCloseButton
 }
-$control_DeferTextTwo.Text = $xmlUIMessages.NxtWelcomePrompt_DeferalExpired
+$control_DeferTextTwo.Text = $xmlUIMessages.NxtWelcomePrompt_DeferralExpired
 $control_CloseButton.Content = $xmlUIMessages.NxtWelcomePrompt_CloseApplications
 $control_CancelButton.Content = $xmlUIMessages.NxtWelcomePrompt_Close
 $control_DeferButton.Content = $xmlUIMessages.NxtWelcomePrompt_Defer
@@ -2282,7 +2288,7 @@ $control_TitleText.Text = $installTitle
 & $fillCloseApplicationList $syncHash.UiItems
 
 if ([Int32]::TryParse($DeferTimes, [ref]$null) -and $DeferTimes -ge 0) {
-	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDefferals -f $([Int32]$DeferTimes + 1)
+	$control_DeferTimerText.Text = $xmlUIMessages.NxtWelcomePrompt_RemainingDeferrals -f $([Int32]$DeferTimes + 1)
 }
 if ($false -eq [string]::IsNullOrEmpty($DeferDeadline)) {
 	$control_DeferDeadlineText.Text = $xmlUIMessages.DeferPrompt_Deadline + " " + $DeferDeadline

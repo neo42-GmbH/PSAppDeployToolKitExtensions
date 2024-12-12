@@ -42,8 +42,7 @@ jobs:
           New-Item -ItemType Directory -Path "${{ github.workspace }}/components" -Force | Out-Null
           Set-Location -Path (Get-ChildItem -Path "${{ steps.download-artifact-release.outputs.download-path }}" | Select-Object -First 1).FullName
 
-          Move-Item -Path "./Tools" -Destination "./${{ needs.artifact.outputs.ARTIFACT_TAG }}" -Force
-          Compress-Archive -Path "./${{ needs.artifact.outputs.ARTIFACT_TAG }}" -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_${{ needs.artifact.outputs.ARTIFACT_TAG }}.zip"
+          Compress-Archive -Path "./${{ needs.artifact.outputs.ARTIFACT_TAG }}", "./Tools" -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_${{ needs.artifact.outputs.ARTIFACT_TAG }}.zip"
           Compress-Archive -Path "./Samples" -DestinationPath "${{ github.workspace }}/components/Samples.zip"
 
       - name: generate-hash-files
