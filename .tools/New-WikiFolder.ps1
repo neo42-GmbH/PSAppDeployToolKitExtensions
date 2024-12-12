@@ -14,9 +14,7 @@
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 #>
-
-
-function ConvertTo-Markdown {
+function ConvertTo-CommentHelpToMarkdown {
 	<#
 		.SYNOPSIS
 			Converts a comment-based help content to markdown
@@ -28,28 +26,67 @@ function ConvertTo-Markdown {
 	)
 
 	[string]$markdownContent = [string]::Empty
+	[string[]]$exportedSectionsInOrder = @(
+		'SYNOPSIS',
+		'DESCRIPTION',
+		'PARAMETERS',
+		'INPUTS',
+		'OUTPUTS',
+		'NOTES',
+		'EXAMPLES',
+		'LINKS'
+	)
+	[object[]]$sections = @($HelpContent.PSObject.Properties.GetEnumerator()) | Where-Object {
+		$null -ne $_.Value -and
+		$true -eq $exportedSectionsInOrder.Contains($_.Name.ToUpper())
+	} | Sort-Object {
+		$exportedSectionsInOrder.IndexOf($_.Name.ToUpper())
+	}
 
-	foreach ($section in $HelpContent.PSObject.Properties | Where-Object { $false -eq [string]::IsNullOrWhiteSpace($_.Value) }) {
+	foreach ($section in $sections) {
 		$markdownContent += '## ' + $section.Name + "`n"
+
 		switch -Regex ($section.TypeNameOfValue) {
+			# Case for multiple entries without key (e.g. EXAMPLE)
 			'System.Collections.ObjectModel.ReadOnlyCollection' {
+				# Let the default case handle single entries
 				if ($section.Value.Count -eq 1) {
-					$markdownContent += $section.Value[0] + "`n"
-					break
+					continue
 				}
-				[int]$index = 1
-				foreach ($entry in $section.Value) {
-					$markdownContent += "$index. $entry`n"
-					$index++
+				for ($index = 1; $index -le $section.Value.Count; $index++) {
+					[int]$indentation = $index.ToString().Length + 2
+					[string[]]$contentLines = $section.Value[$index - 1].Split("`n") | Select-Object -SkipLast 1
+					[string]$content = $contentLines[0] + "`n"
+					$contentLines | Select-Object -Skip 1 | ForEach-Object {
+						if ($true -eq [string]::IsNullOrWhiteSpace($_)) {
+							$content += "`n"
+						}
+						else {
+							$content += (' ' * $indentation) + $_ + "`n"
+						}
+					}
+					$markdownContent += "$index. $content`n`n"
 				}
 				break
 			}
+			# Case for named entries (e.g. PARAMETER)
 			'System.Collections.Generic.IDictionary' {
 				foreach ($entry in $section.Value.GetEnumerator()) {
-					$markdownContent += "- **" + $entry.Key + "**: " + $entry.Value + "`n"
+					[string[]]$contentLines = $entry.Value.Split("`n") | Select-Object -SkipLast 1
+					[string]$content = [string]::Empty
+					$contentLines | ForEach-Object {
+						if ($true -eq [string]::IsNullOrWhiteSpace($_)) {
+							$content += "`n"
+						}
+						else {
+							$content += '  ' + $_ + "`n"
+						}
+					}
+					$markdownContent += "- **$($entry.Key)**`n`n$content`n`n"
 				}
 				break
 			}
+			# Default case for single entries
 			default {
 				$markdownContent += $section.Value + "`n"
 				break
@@ -59,7 +96,6 @@ function ConvertTo-Markdown {
 
 	return $markdownContent
 }
-
 try {
 	[System.IO.FileInfo]$extensionFile = Get-ChildItem -Filter 'AppDeployToolkit\AppDeployToolkitExtensions.ps1' -Recurse -Depth 1 -Path "$PSScriptRoot\..\" -ErrorAction SilentlyContinue
 	[System.Management.Automation.Language.ScriptBlockAst]$ast = [System.Management.Automation.Language.Parser]::ParseFile($extensionFile.FullName, [ref]$null, [ref]$null)
