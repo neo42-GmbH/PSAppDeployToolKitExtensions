@@ -3,7 +3,7 @@ This file contains descriptions to all possible values in the file neo42PackageC
 ## good to know
 *By the way ***backtick*** is the general masking character for later usage of control characters inside powershell, but consider following masking rules for characters in json files at all:*
 
-| character | mask with | looks like | comments
+| character | mask with | looks like | comments |
 |:-----------:|:-----------:|:-----------:|:-----------:|
 | " | backtick | `" | necessary for expandable variable content in powershell |
 | $ | backtick | `$ | necessary for expandable variable content in powershell |
@@ -559,7 +559,7 @@ switch to define the usage of the value "UninstallKey" as search string for a di
 parent: /
 ```
 default value: false
-switch to control the interpretation of character '*' within the defined string with the value "UninstallKey" (valid are only 'true' and 'false')
+switch to control whether the character '*' is interpreted as a wildcard within the defined string for the value "UninstallKey" (valid values are 'true' and 'false')
 ```
 - **true** : '\*' is interpreted as a wildcard
 - **false**: '\*' is interpreted as part of the defined string
@@ -569,7 +569,7 @@ switch to control the interpretation of character '*' within the defined string 
 parent: /
 ```
 default value: false
-switch to control the interpretation of stored variables (such as '$($VariableName)') within the defined string with the value "UninstallKey" (valid are only 'true' and 'false')
+switch to control whether variables (e.g., '$($VariableName)') within the defined string for the value "UninstallKey" are interpreted as PowerShell variables (valid values are 'true' and 'false')
 ```
 - **true** : '$($var)' is interpreted as a PowerShell variable
 - **false**: '$($var)' is interpreted as part of the defined string
@@ -648,8 +648,8 @@ default value: false
 switch to control the behavior for using the defined parameters in value "InstPara" (valid are only 'true' and 'false')
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
 ```
-- **true** : appends the parameters to this one get from the corresponding parameters entry (if any) in ADT config file 'AppDeployToolkitConfig.xml'
-- **false**: replaces the parameters got from the corresponding parameters entry (if any) in ADT config file 'AppDeployToolkitConfig.xml'
+- **true** : appends the parameters to those obtained from the corresponding parameters entry (if any) in the ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: substitutes the parameters obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedInstallExitCodes"** *optional string value*
 
