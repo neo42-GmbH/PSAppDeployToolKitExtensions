@@ -8,7 +8,7 @@ if ((Get-Module -ListAvailable -Name 'Pester').Version.Major -notcontains 5) {
 Remove-Item "$env:TEMP\pester" -Recurse -Force -ErrorAction Stop
 
 # Clone PSAppDeployToolkit
-git clone 'https://github.com/PSAppDeployToolkit/PSAppDeployToolkit.git' "$env:TEMP\pester" --depth 1 --single-branch --branch 3.9.3 -c "advice.detachedHead=false"
+git clone 'https://github.com/PSAppDeployToolkit/PSAppDeployToolkit.git' "$env:TEMP\pester" --depth 1 --single-branch --branch 3.10.2 -c "advice.detachedHead=false"
 
 # Copy current repository to PSAppDeployToolkit
 Copy-Item "$PSScriptRoot\..\*" "$env:TEMP\pester\Toolkit" -Recurse -Container -Exclude "AppDeployToolkitMain*" -ErrorAction SilentlyContinue
