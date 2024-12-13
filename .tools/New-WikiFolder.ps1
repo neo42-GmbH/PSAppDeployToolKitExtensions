@@ -14,7 +14,7 @@
 	.LINK
 		https://neo42.de/psappdeploytoolkit
 #>
-function ConvertTo-CommentHelpToMarkdown {
+function ConvertTo-MarkdownFromCommentHelp {
 	<#
 		.SYNOPSIS
 			Converts a comment-based help content to markdown
@@ -116,6 +116,6 @@ New-Item -Name 'wiki' -ItemType Directory -Force -ErrorAction SilentlyContinue
 
 foreach ($functionDefinition in $functionDefinitions) {
 	if ($null -ne $functionDefinition.GetHelpContent()) {
-		Set-Content -Path "wiki\$($functionDefinition.Name).md" -Value (ConvertTo-Markdown -HelpContent $functionDefinition.GetHelpContent()) -Force
+		Set-Content -Path "wiki\$($functionDefinition.Name).md" -Value (ConvertTo-MarkdownFromCommentHelp -HelpContent $functionDefinition.GetHelpContent()) -Force
 	}
 }
