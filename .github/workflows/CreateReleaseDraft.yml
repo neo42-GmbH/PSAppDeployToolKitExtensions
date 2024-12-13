@@ -15,8 +15,8 @@ jobs:
       PSADT_VERSION: ${{ vars.TARGET_ADT_VERSION  }}
 
   test:
-    needs: artifact
     uses: ./.github/workflows/reusable_TestArtifact.yml
+    needs: artifact
 
   release:
     needs:
@@ -36,45 +36,29 @@ jobs:
         with:
           path: artifact
 
-      - name: checkout-release-manager-config
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          path: ${{ github.workspace }}/ghrm
-          sparse-checkout: .github/GithubReleaseManager/*
-          sparse-checkout-cone-mode: false
-
-      - name: install-dotnet
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.x.x'
-
-      - name: install-release-manager
-        shell: pwsh
-        run: dotnet tool install --global GitReleaseManager.Tool
-
       - name: zip-components
         shell: pwsh
         run: |
-          New-Item -Path "${{ github.workspace }}/components" -ItemType Directory -Force | Out-Null
-          $root = Get-ChildItem -Path "${{ steps.download-artifact-release.outputs.download-path }}" | Select-Object -First 1
-          Get-ChildItem -Path $root.FullName -Directory | ForEach-Object {
-            if ($_.Name -match '^\d{4}\.\d{2}\.\d{2}\.\d+') {
-              Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_$($_.Name).zip"
-              if (Test-Path "$($root.FullName)\Tools") {
-                Compress-Archive -Path "$($root.FullName)\Tools" -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_$($_.Name).zip" -Update
-              }
-            } elseif ($_.Name -eq 'Tools') {
-              ##do not zip the tools folder as it is already included in the PSAppdeployToolkit_with_neo42_extensions_Ver_ zip
-            } else {
-              Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
-            }
+          New-Item -ItemType Directory -Path "${{ github.workspace }}/components" -Force | Out-Null
+          Set-Location -Path (Get-ChildItem -Path "${{ steps.download-artifact-release.outputs.download-path }}" | Select-Object -First 1).FullName
+
+          Compress-Archive -Path "./${{ needs.artifact.outputs.ARTIFACT_TAG }}", "./Tools" -DestinationPath "${{ github.workspace }}/components/PSAppdeployToolkit_with_neo42_extensions_Ver_${{ needs.artifact.outputs.ARTIFACT_TAG }}.zip"
+          Compress-Archive -Path "./Samples" -DestinationPath "${{ github.workspace }}/components/Samples.zip"
+
+      - name: generate-hash-files
+        shell: pwsh
+        run: |
+          foreach ($component in (Get-ChildItem -File -Path "${{ github.workspace }}/components")) {
+            $hash = Get-FileHash -Path $component.FullName -Algorithm SHA256
+            Add-Content -Path "${{ github.workspace }}/components/$([System.IO.Path]::GetFileNameWithoutExtension($hash.Path)).SHA256" -Value "$($hash.Hash) *$([System.IO.Path]::GetFileName( $hash.Path ))" -Encoding Ascii
           }
 
       - name: update-milestones
-        if: ${{ github.ref_name == 'production' }}
+        if: ${{ needs.artifact.outputs.ARTIFACT_BRANCH == 'production' }}
         uses: actions/github-script@v7
+        id: milestone
         with:
+          result-encoding: string
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { data: milestones } = await github.rest.issues.listMilestones({
@@ -93,7 +77,8 @@ jobs:
                 milestone_number: milestone.number,
                 title: '${{ needs.artifact.outputs.ARTIFACT_VERSION }}',
                 description: 'Release version ${{ needs.artifact.outputs.ARTIFACT_VERSION }} built from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})',
-                due_on: isoDate
+                due_on: isoDate,
+                state: 'closed'
               });
             }
             else {
@@ -108,36 +93,57 @@ jobs:
               description: 'The next release',
             });
 
-      - name: create-release-draft
-        shell: pwsh
-        run: |
-          $params = @(
-            'create',
-            '--owner', '${{ github.repository_owner }}',
-            '--repository', '${{ github.event.repository.name }}',
-            '--token', '${{ secrets.GITHUB_TOKEN }}',
-            '--targetcommitish', '${{ github.sha }}',
-            '--targetDirectory', '${{ github.workspace }}/ghrm/.github/GithubReleaseManager',
-            '--assets', "$((Get-ChildItem -Path "${{ github.workspace }}/components").FullName -join ',')"
-          )
+            return milestone.number;
 
-          if ('${{ github.ref_name }}' -eq 'production') {
-            Write-Host "Creating production release draft."
-            # The milestone description will be part of the release notes.
-            $params += '--milestone', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
-            $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}'
-          }
-          else {
-            Write-Host "Creating pre-release from ref '${{ github.ref_name }}'"
-            Set-Content -Path '${{ github.workspace }}/prerelease.md' -Encoding UTF8 -Force -Value `
-            "This is a pre-release build from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }}). Releases like this are not intended for production use.
-            There will be no changelog or release notes for this build. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information.
+      - name: create-release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
+            var releaseNoteHeader = "# 🚨 Important 🚨 #\nReleases like this are not intended for production use. Please refer to the [latest stable](https://github.com/${{ github.repository }}/releases/latest) release for more information."
+            const { data: currentRelease } = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
 
-            If you have any questions or concerns, please contact the development team."
-            $params += '--pre'
-            $params += '--inputFilePath', '${{ github.workspace }}/prerelease.md'
-            $params += '--name', '${{ needs.artifact.outputs.ARTIFACT_VERSION }}-${{ github.ref_name }}-unstable'
-          }
+            if (!isPreRelease) {
+              const issueCount = (await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                milestone: '${{ steps.milestone.outputs.result }}'
+              })).data.length;
+              const issueText = issueCount === 1 ? `${issueCount} issue` : `${issueCount} issues`;
+              releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
+            }
 
-          $proc = Start-Process -FilePath dotnet-gitreleasemanager -ArgumentList $params -NoNewWindow -Wait -PassThru
-          exit $proc.ExitCode
+            const { data: releaseNotesGenerated } = await github.rest.repos.generateReleaseNotes({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
+              target_commitish: '${{ github.sha }}',
+              previous_tag_name: currentRelease.tag_name
+            });
+
+            const { data: newRelease } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
+              name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
+              target_commitish: '${{ github.sha }}',
+              draft: true,
+              prerelease: isPreRelease,
+              generate_release_notes: false,
+              body: `${releaseNoteHeader}\n\n${releaseNotesGenerated.body}`
+            });
+
+            for (const component of require('fs').readdirSync(`${{ github.workspace }}/components`)) {
+              console.log(`Uploading ${component} to release`);
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: newRelease.id,
+                name: component,
+                data: require('fs').readFileSync(`${{ github.workspace }}/components/${component}`)
+              });
+            }

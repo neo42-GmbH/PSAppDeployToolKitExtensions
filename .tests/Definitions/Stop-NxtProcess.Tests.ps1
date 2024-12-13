@@ -4,7 +4,7 @@ Describe "Stop-NxtProcess" {
             $process = Start-Process -FilePath $global:simpleExe -PassThru
         }
         AfterEach {
-            if (Get-Process -Id $process.Id -ErrorAction SilentlyContinue){
+            if ($false -eq $process.HasExited) {
                 $process.Kill()
             }
         }
@@ -26,6 +26,14 @@ Describe "Stop-NxtProcess" {
         }
         It "Should stop the process by ID" {
             Stop-NxtProcess -Id $process.Id | Should -BeNullOrEmpty
+            $process.HasExited | Should -Be $true
+        }
+        It 'Should stop the process by name when using positional parameter' {
+            Stop-NxtProcess $process.Name | Should -BeNullOrEmpty
+            $process.HasExited | Should -Be $true
+        }
+        It 'Should stop the process using wql query when using positional parameter' {
+            Stop-NxtProcess "Name = '$($process.Name).exe'" $true | Should -BeNullOrEmpty
             $process.HasExited | Should -Be $true
         }
     }

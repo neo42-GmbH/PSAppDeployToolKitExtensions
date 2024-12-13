@@ -19,7 +19,7 @@
 	Copyright (c) 2024 neo42 GmbH, Germany.
 
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2024.09.19.1
+	ConfigVersion: 2024.11.13.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -68,12 +68,12 @@ function Add-NxtContent {
 		Specifies the string that will be appended to the file.
 	.PARAMETER Encoding
 		Specifies the encoding that should be used to write the content. It defaults to the value obtained from `Get-NxtFileEncoding`.
-		Possible values include: "Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode",
-		"Byte", "Oem", "Unicode", "UTF32", "UTF8".
+		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
+		"Oem", "Unicode", "UTF32", "UTF8".
 	.PARAMETER DefaultEncoding
 		Specifies the encoding that should be used if the `Get-NxtFileEncoding` function is unable to detect the file's encoding.
-		Possible values include: "Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode",
-		"Byte", "Oem", "Unicode", "UTF32", "UTF8".
+		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
+		"Oem", "Unicode", "UTF32", "UTF8".
 	.EXAMPLE
 		Add-NxtContent -Path C:\Temp\testfile.txt -Value "Text to be appended to a file"
 		This example appends the text "Text to be appended to a file" to the `testfile.txt` in the `C:\Temp` directory.
@@ -94,11 +94,11 @@ function Add-NxtContent {
 		[String]
 		$Value,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$Encoding,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$DefaultEncoding
 	)
@@ -586,6 +586,14 @@ function Add-NxtXmlNode {
 		The attributes to add
 	.PARAMETER InnerText
 		The value to add to the node
+	.PARAMETER Encoding
+		Specifies the encoding that should be used to write the content. It defaults to the value obtained from `Get-NxtFileEncoding`.
+		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
+		"Oem", "Unicode", "UTF32", "UTF8", "UTF8withBom".
+	.PARAMETER DefaultEncoding
+		Specifies the encoding that should be used if the `Get-NxtFileEncoding` function is unable to detect the file's encoding.
+		Possible values include: "Ascii", "Default", "UTF7", "BigEndianUnicode",
+		"Oem", "Unicode", "UTF32", "UTF8", "UTF8withBom".
 	.EXAMPLE
 		Add-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
 		Adds a new node to the xml file xmlstuff.xml at the path /RootNode/Settings/Settings2/SubSubSetting3 with the attribute name=NewNode2 and the value NewValue2.
@@ -618,11 +626,19 @@ function Add-NxtXmlNode {
 		$Attributes,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InnerText
+		$InnerText,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
-		[string]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
 		try {
@@ -630,8 +646,14 @@ function Add-NxtXmlNode {
 				Write-Log -Message "File $FilePath does not exist" -Severity 3
 				throw "File $FilePath does not exist"
 			}
-			[xml]$xml = [xml]::new()
-			$xml.Load($FilePath)
+			[hashtable]$encodingParams = @{}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$encodingParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
+			}
+			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			[string]$parentNodePath = $NodePath.Substring(0, $NodePath.LastIndexOf("/"))
 			if ($true -eq ([string]::IsNullOrEmpty($parentNodePath))) {
 				throw "The provided node root path $NodePath does not exist"
@@ -639,13 +661,14 @@ function Add-NxtXmlNode {
 			[string]$lastNodeChild = $NodePath.Substring($NodePath.LastIndexOf("/") + 1)
 			# Test for Parent Node
 			if ($false -eq (Test-NxtXmlNodeExists -FilePath $FilePath -NodePath $parentNodePath)) {
-				Add-NxtXmlNode -FilePath $FilePath -NodePath $parentNodePath
-				[xml]$xml = [xml]::new()
-				$xml.Load($FilePath)
+				Write-Log -Message "Parent node $parentNodePath does not exist. Creating it." -Source ${cmdletName}
+				Add-NxtXmlNode @encodingParams -FilePath $FilePath -NodePath $parentNodePath
+				[System.Xml.XmlDocument]$xml = [System.Xml.XmlDocument]::new()
+				$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			}
 			[string]$message = "Adding node $NodePath to $FilePath"
 			# Create new node with the last part of the path
-			[System.Xml.XmlLinkedNode]$newNode = $xml.CreateElement( $LastNodeChild )
+			[System.Xml.XmlLinkedNode]$newNode = $xml.CreateElement( $lastNodeChild )
 			if ($false -eq [string]::IsNullOrEmpty($InnerText)) {
 				$newNode.InnerText = $InnerText
 				$message += " with innerText [$InnerText]"
@@ -659,15 +682,15 @@ function Add-NxtXmlNode {
 			$message += "."
 			Write-Log -Message $message -Source ${CmdletName}
 			$xml.SelectSingleNode($parentNodePath).AppendChild($newNode) | Out-Null
-			$xml.Save("$FilePath")
+			Save-NxtXmlFile @encodingParams -Xml $xml -Path $FilePath
 		}
 		catch {
-			Write-Log -Message "Failed to add node $NodePath to $FilePath." -Severity 3 -Source ${CmdletName}
+			Write-Log -Message "Failed to add node $NodePath to $FilePath." -Severity 3 -Source ${cmdletName}
 			throw $_
 		}
 	}
 	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -1516,6 +1539,50 @@ function ConvertFrom-NxtEncodedObject {
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+	}
+}
+#endregion
+#region Function ConvertFrom-NxtEscapedString
+function ConvertFrom-NxtEscapedString {
+	<#
+	.SYNOPSIS
+		Converts an escaped string into a list of components.
+	.DESCRIPTION
+		The ConvertFrom-NxtEscapedString function converts an escaped string into a list of string components split by whitespace characters.
+		Helpful when you need specific parts of a string that are separated by whitespace characters and the string itself contains escaped characters.
+	.PARAMETER InputString
+		The escaped string that you want to convert into a list of components. This parameter is mandatory.
+	.EXAMPLE
+		ConvertFrom-NxtEscapedString -InputString 'C:\my\ program.exe -Argument1 "Value 1" -Argument2 ''Value 2'' -Argument3 Value\ 3'
+	.OUTPUTS
+		[string[]]
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true, Position = 0)]
+		[Alias('EscapedString')]
+		[string]
+		$InputString
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		try {
+			[string[]]$result = $InputString -split '(?<!\\) (?=(?:[^"]|"[^"]*")*$)(?=(?:[^'']|''[^'']*'')*$)'
+			Write-Log "Converted escaped string to list of components with $($result.Count) members." -Source ${cmdletName}
+			Write-Output ($result -replace '^[''"]|[''"]$', [string]::Empty -replace '\\ ', ' ')
+		}
+		catch {
+			Write-Log -Message "Failed to convert escaped string to list of components. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to convert escaped string to list of components. `n$(Resolve-Error)"
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -3950,12 +4017,12 @@ function Get-NxtFileEncoding {
 		The Get-NxtFileEncoding function returns the estimated encoding of a file based on Byte Order Mark (BOM) detection. If the encoding cannot
 		be detected, it will default to the provided DefaultEncoding value or ASCII if no value is specified. This can be used to identify the
 		proper encoding for further file operations like reading or writing.
-		Returns the detected encoding or the specified default encoding if detection was not possible.
+		Returns the detected encoding or the specified default encoding if detection was not possible or file was not found.
 	.PARAMETER Path
 		Specifies the path to the file for which the encoding needs to be determined. This parameter is mandatory.
 	.PARAMETER DefaultEncoding
-		Specifies the encoding to be returned in case the encoding could not be detected. Valid options include "Ascii", "BigEndianUTF32",
-		"Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", and "UTF8".
+		Specifies the encoding to be returned in case the encoding could not be detected. Valid options include "Ascii",
+		"Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8" and "UTF8withBOM".
 	.EXAMPLE
 		Get-NxtFileEncoding -Path C:\Temp\testfile.txt
 		This example returns the estimated encoding of the file located at "C:\Temp\testfile.txt".
@@ -3973,7 +4040,7 @@ function Get-NxtFileEncoding {
 		[String]
 		$Path,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8", "UTF8withBOM")]
 		[String]
 		$DefaultEncoding
 	)
@@ -3982,15 +4049,27 @@ function Get-NxtFileEncoding {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		try {
-			[string]$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
-			if ($true -eq ([System.String]::IsNullOrEmpty($intEncoding))) {
-				[string]$intEncoding = $DefaultEncoding
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Message "File '$Path' does not exist." -Severity 2 -Source ${cmdletName}
+			if ($true -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
+				Write-Log -Message "No default encoding specified." -Severity 2 -Source ${cmdletName}
 			}
-			Write-Output $intEncoding
+			else {
+				Write-Log -Message "Returning default encoding '$DefaultEncoding'." -Severity 2 -Source ${cmdletName}
+				Write-Output $DefaultEncoding
+			}
 		}
-		catch {
-			Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+		else {
+			try {
+				[string]$intEncoding = [PSADTNXT.Extensions]::GetEncoding($Path)
+				if ($true -eq ([System.String]::IsNullOrEmpty($intEncoding))) {
+					[string]$intEncoding = $DefaultEncoding
+				}
+				Write-Output $intEncoding
+			}
+			catch {
+				Write-Log -Message "Failed to run the encoding detection `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			}
 		}
 	}
 	End {
@@ -4269,9 +4348,9 @@ function Get-NxtIsSystemProcess {
 		}
 		else {
 			[psobject]$owner = $process.GetOwner()
-			if ($null -eq $owner) {
+			if ($true -eq [string]::IsNullOrEmpty($owner.User)) {
 				if ($ProcessId -eq 4 -and $process.Name -eq "System") {
-					Write-Log -Message "Process with ID '$ProcessId' is the system process." -Severity 3 -Source ${cmdletName}
+					Write-Log -Message "Process with ID '$ProcessId' is the system process." -Source ${cmdletName}
 					Write-Output $true
 				}
 				else {
@@ -4644,10 +4723,8 @@ function Get-NxtProcessTree {
 	.PARAMETER IncludeParentProcesses
 		Indicates if parent processes should be included in the result.
 		Defaults to $true.
-	.PARAMETER ProcessIdsToExcludeFromRecursion
-		Process IDs to exclude from the recursion. Internal use only.
 	.OUTPUTS
-		System.Management.ManagementObject
+		System.Management.ManagementObject[]
 	.EXAMPLE
 		Get-NxtProcessTree -ProcessId 1234
 		Gets the process tree for process with ID 1234 including child and parent processes.
@@ -4658,44 +4735,70 @@ function Get-NxtProcessTree {
 		https://neo42.de/psappdeploytoolkit
 	#>
 	Param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[int]
 		$ProcessId,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
 		$IncludeChildProcesses = $true,
-		[Parameter(Mandatory=$false)]
+		[Parameter(Mandatory = $false)]
 		[bool]
-		$IncludeParentProcesses = $true,
-		[Parameter(Mandatory=$false)]
-		[AllowNull()]
-		[int[]]
-		$ProcessIdsToExcludeFromRecursion
+		$IncludeParentProcesses = $true
 	)
-	[System.Management.ManagementObject]$process = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ProcessId = $processId"
-	if ($null -ne $process) {
-		Write-Output $process
-		if ($true -eq $IncludeChildProcesses) {
-			[System.Management.ManagementBaseObject[]]$childProcesses = Get-WmiObject -Query "SELECT * FROM Win32_Process WHERE ParentProcessId = $($process.ProcessId)"
-			foreach ($child in $childProcesses) {
-				if (
-					$child.ProcessId -eq $process.ProcessId -and
-					$child.ProcessId -notin $ProcessIdsToExcludeFromRecursion
-				) {
-					return
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		## Cache all processes
+		[System.Management.ManagementObject[]]$processes = Get-WmiObject -ClassName "Win32_Process"
+		## Define script block to get related processes
+		[scriptblock]$getRelatedProcesses = {
+			Param (
+				[System.Management.ManagementObject]
+				$Root,
+				[System.Management.ManagementObject[]]
+				$ProcessTable,
+				[switch]
+				$Parents
+			)
+			## Get related processes
+			[System.Management.ManagementObject[]]$relatedProcesses = @(
+				$ProcessTable | Where-Object {
+					$_.ProcessId -ne $Root.ProcessId -and (
+						($true -eq $Parents -and $_.ProcessId -eq $Root.ParentProcessId) -or
+						($false -eq $Parents -and $_.ParentProcessId -eq $Root.ProcessId)
+					)
 				}
-				$ProcessIdsToExcludeFromRecursion += $process.ProcessId
-				Get-NxtProcessTree $child.ProcessId -IncludeParentProcesses $false -IncludeChildProcesses $IncludeChildProcesses -ProcessIdsToExcludeFromRecursion $ProcessIdsToExcludeFromRecursion
+			)
+			## Recurse to get related processes of related processes
+			foreach ($process in $relatedProcesses) {
+				$relatedProcesses += & $getRelatedProcesses -Root $process -Parents:$Parents -ProcessTable @(
+					$ProcessTable | Where-Object {
+						$relatedProcesses.ProcessId -notcontains $_.ProcessId
+					}
+				)
 			}
+			Write-Output $relatedProcesses
 		}
-		if (
-			($process.ParentProcessId -ne $ProcessId) -and
-			$IncludeParentProcesses -and
-			$process.ParentProcessId -notin $ProcessIdsToExcludeFromRecursion
-		) {
-			$ProcessIdsToExcludeFromRecursion += $process.ProcessId
-			Get-NxtProcessTree $process.ParentProcessId -IncludeChildProcesses $false -IncludeParentProcesses $IncludeParentProcesses -ProcessIdsToExcludeFromRecursion $ProcessIdsToExcludeFromRecursion
+	}
+	Process {
+		[System.Management.ManagementObject]$rootProcess = $processes | Where-Object {
+			$_.ProcessId -eq $ProcessId
 		}
+		if ($null -eq $rootProcess) {
+			Write-Log "Process with ID [$ProcessId] not found." -Source ${cmdletName}
+			return
+		}
+		[System.Management.ManagementObject[]]$processTree = @($rootProcess)
+		if ($true -eq $IncludeChildProcesses) {
+			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes
+		}
+		if ($true -eq $IncludeParentProcesses) {
+			$processTree += & $getRelatedProcesses -Root $rootProcess -ProcessTable $processes -Parents
+		}
+		Write-Output $processTree
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -5701,6 +5804,119 @@ function Import-NxtIniFileWithComments {
 	}
 }
 #endregion
+#region Function Import-NxtXmlFile
+function Import-NxtXmlFile {
+	<#
+	.SYNOPSIS
+		Imports an XML file into a PowerShell object.
+	.DESCRIPTION
+		This function reads the specified XML file and converts it into a PowerShell object.
+	.PARAMETER Path
+		The path to the XML file. This parameter is mandatory.
+	.PARAMETER Encoding
+		The encoding of the XML file.
+	.PARAMETER DefaultEncoding
+		The default encoding to use if the encoding of the XML file could not be determined.
+		The best practice is to use UTF8 with BOM as the default encoding.
+	.PARAMETER ContinueOnError
+		Specifies whether the function continues to execute if an error occurs. Accepts $true or $false. Defaults to $true.
+	.OUTPUTS
+		System.Xml.XmlDocument.
+	.EXAMPLE
+		Import-NxtXmlFile -Path C:\path\to\xml\file.xml
+		This example reads the specified XML file and converts it into a PowerShell object.
+	.EXAMPLE
+		Import-NxtXmlFile -Path C:\path\to\xml\file.xml -ContinueOnError $false
+		This example reads the specified XML file and converts it into a PowerShell object. If an error occurs, the function stops executing and throws an error.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		$DefaultEncoding = 'UTF8withBom',
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ContinueOnError = $true
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		if ($false -eq (Test-Path -Path $Path)) {
+			Write-Log -Message "File [$Path] not found." -Severity 3 -Source ${cmdletName}
+			if ($false -eq $ContinueOnError) {
+				throw "File [$Path] not found."
+			}
+		}
+		[String]$intEncoding = $Encoding
+		if ($true -eq [string]::IsNullOrEmpty($intEncoding)) {
+			try {
+				[hashtable]$getFileEncodingParams = @{
+					Path = $Path
+				}
+				if ($false -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
+					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+				}
+				$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+			}
+			catch {
+				$intEncoding = $DefaultEncoding
+			}
+		}
+		switch ($intEncoding) {
+			'UTF8' {
+				[System.Text.Encoding]$fileEncoding = New-Object System.Text.UTF8Encoding($false)
+			}
+			'UTF8withBom' {
+				[System.Text.Encoding]$fileEncoding = New-Object System.Text.UTF8Encoding($true)
+			}
+			default {
+				[System.Text.Encoding]$fileEncoding = [System.Text.Encoding]::$intEncoding
+			}
+		}
+		try {
+			[System.IO.StreamReader]$streamReader = [System.IO.StreamReader]::new($Path, $fileEncoding)
+			[string]$fileContent = $streamReader.ReadToEnd()
+			$streamReader.Close()
+		}
+		catch {
+			Write-Log -Message "Failed to read file content. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			if ($false -eq $ContinueOnError) {
+				throw "Failed to read file content."
+			}
+		}
+		finally {
+			$streamReader.Close()
+		}
+		try {
+			[System.Xml.XmlDocument]$xml = [System.Xml.XmlDocument]::new()
+			$xml.LoadXml($fileContent)
+			Write-Output $xml
+			Write-Log -Message "Read xml file [$path]. " -Source ${cmdletName}
+		}
+		catch {
+			Write-Log -Message "Failed to read xml file [$path]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			if ($false -eq $ContinueOnError) {
+				throw "Failed to read xml file [$path]: $($_.Exception.Message)"
+			}
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Initialize-NxtAppRootFolder
 function Initialize-NxtAppRootFolder {
 	<#
@@ -6650,6 +6866,11 @@ function Read-NxtSingleXmlNode {
 	.PARAMETER AttributeName
 		Attribute name to be read from the node.
 		Default is "Innertext".
+	.PARAMETER Encoding
+		Encoding of the XML file.
+	.PARAMETER DefaultEncoding
+		Default encoding of the XML file if the encoding is not specified or detected.
+		Best practice is to use UTF8withBom.
 	.EXAMPLE
 		Read-NxtSingleXmlNode -XmlFilePath "C:\Test\setup.xml" -SingleNodeName "//UserId"
 		Reads the content of the "UserId" node from the XML file located at "C:\Test\setup.xml."
@@ -6671,7 +6892,15 @@ function Read-NxtSingleXmlNode {
 		$SingleNodeName,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AttributeName = "Innertext"
+		$AttributeName = "Innertext",
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -6679,8 +6908,14 @@ function Read-NxtSingleXmlNode {
 	}
 	Process {
 		try {
-			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-			$xmlDoc.Load($XmlFilePath)
+			[hashtable]$encodingParams = @{}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$encodingParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
+			}
+			[System.Xml.XmlDocument]$xmlDoc = Import-NxtXmlFile @encodingParams -Path $XmlFilePath
 			[System.Xml.XmlNode]$selection = $xmlDoc.DocumentElement.SelectSingleNode($SingleNodeName)
 			if ($selection.ChildNodes.count -gt 1) {
 				Write-Log -Message "Found multiple child nodes for '$SingleNodeName'. Concated values will be returned." -Severity 3 -Source ${cmdletName}
@@ -7048,10 +7283,12 @@ function Remove-NxtDesktopShortcuts {
 	}
 	Process {
 		try {
-			foreach ($value in $DesktopShortcutsToDelete) {
+			foreach ($value in ($DesktopShortcutsToDelete | Where-Object {
+						$false -eq [string]::IsNullOrWhiteSpace($_)
+					})) {
 				Write-Log -Message "Removing desktop shortcut '$Desktop\$value'..." -Source ${cmdletName}
 				Remove-File -Path "$Desktop\$value"
-				Write-Log -Message "Desktop shortcut succesfully removed." -Source ${cmdletName}
+				Write-Log -Message 'Desktop shortcut succesfully removed.' -Source ${cmdletName}
 			}
 		}
 		catch {
@@ -8211,6 +8448,102 @@ function Resolve-NxtDependentPackage {
 	}
 }
 #endregion
+#region Function Save-NxtXmlFile
+function Save-NxtXmlFile {
+	<#
+	.SYNOPSIS
+		Saves a xml Object to an XML file.
+	.DESCRIPTION
+		The Save-NxtXmlFile function saves a xml object to an XML file.
+	.PARAMETER Path
+		The full path of the XML file to be saved. This parameter is mandatory.
+	.PARAMETER Xml
+		The XML object to be saved. This parameter is mandatory.
+	.PARAMETER Encoding
+		The encoding to be used when saving the XML file.
+	.PARAMETER DefaultEncoding
+		The default encoding to be used when saving the XML file.
+		Defaults to UTF8withBom, which is the best choice for most cases.
+	.EXAMPLE
+		Save-NxtXmlFile -Path "C:\path\to\file.xml" -Xml $xml
+		This example saves the XML object to the specified file.
+	.OUTPUTS
+		none.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
+	#>
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Path,
+		[Parameter(Mandatory = $true)]
+		[System.Xml.XmlDocument]
+		$Xml,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[string]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		$DefaultEncoding = "UTF8withBom"
+	)
+	Begin {
+		## Get the name of this function and write header
+		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+	}
+	Process {
+		[String]$intEncoding = $Encoding
+		[bool]$fileExists = Test-Path -Path $Path
+		if ($true -eq [string]::IsNullOrEmpty($intEncoding) ) {
+			if ($false -eq $fileExists) {
+				$intEncoding = $DefaultEncoding
+			}
+			else {
+				try {
+					[hashtable]$getFileEncodingParams = @{
+						Path = $Path
+					}
+					if ($false -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
+						[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
+					}
+					$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+				}
+				catch {
+					$intEncoding = $DefaultEncoding
+				}
+			}
+		}
+		switch ($intEncoding) {
+			'UTF8' {
+				[System.Text.Encoding]$fileEncoding = New-Object System.Text.UTF8Encoding($false)
+			}
+			'UTF8withBom' {
+				[System.Text.Encoding]$fileEncoding = New-Object System.Text.UTF8Encoding($true)
+			}
+			default {
+				[System.Text.Encoding]$fileEncoding = [System.Text.Encoding]::$intEncoding
+			}
+		}
+		try {
+			[System.IO.StreamWriter]$stream = [System.IO.StreamWriter]::new($Path, $false, $fileEncoding)
+			$Xml.Save($stream)
+			Write-Log -Message "Saving XML Using encoding [$intEncoding]." -Source ${cmdletName}
+		}
+		catch {
+			Write-Log -Message "Failed to save XML Document [$Path]. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			throw "Failed to save XML Document [$Path]."
+		}
+		finally {
+			$stream.Close()
+		}
+	}
+	End {
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
+	}
+}
+#endregion
 #region Function Set-NxtCustomSetupCfg
 function Set-NxtCustomSetupCfg {
 	<#
@@ -8911,6 +9244,11 @@ function Set-NxtXmlNode {
 		A hashtable containing attributes to filter the XML node to be updated.
 	.PARAMETER InnerText
 		The text to set as the value of the XML node.
+	.PARAMETER Encoding
+		The encoding to be used when saving the XML file.
+	.PARAMETER DefaultEncoding
+		The default encoding to be used when saving the XML file.
+		Defaults to UTF8withBom.
 	.EXAMPLE
 		Set-NxtXmlNode -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
 		Sets the value of the node located at /RootNode/Settings/Settings2/SubSubSetting3 to "NewValue2" and adds the attribute name="NewNode2".
@@ -8951,7 +9289,16 @@ function Set-NxtXmlNode {
 		$FilterAttributes,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InnerText
+		$InnerText,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$DefaultEncoding = "UTF8withBom"
+
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -8984,6 +9331,12 @@ function Set-NxtXmlNode {
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				$updateNxtXmlNodeParams.Add("FilterAttributes", $FilterAttributes)
 			}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$updateNxtXmlNodeParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$updateNxtXmlNodeParams['DefaultEncoding'] = $DefaultEncoding
+			}
 			Update-NxtXmlNode @updateNxtXmlNodeParams
 		}
 	else {
@@ -8996,6 +9349,12 @@ function Set-NxtXmlNode {
 			}
 			if ($false -eq [string]::IsNullOrEmpty($Attributes)) {
 				$addNxtXmlNodeParams.Add("Attributes", $Attributes)
+			}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$addNxtXmlNodeParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$addNxtXmlNodeParams['DefaultEncoding'] = $DefaultEncoding
 			}
 			Add-NxtXmlNode @addNxtXmlNodeParams
 		}
@@ -9051,6 +9410,8 @@ function Show-NxtInstallationWelcome {
 		Indicates if the function is being used for installation or uninstallation. This parameter is mandatory.
 	.PARAMETER ContinueType
 		Defines behavior after dialog timeout. Influences further actions. Default value is determined by the global SetupCfg object. This parameter is optional.
+	.PARAMETER ForceContinueAfterDeferrals
+		Defines behavior after the deferral deadline. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER UserCanCloseAll
 		Allows users to close all specified applications. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER UserCanAbort
@@ -9165,6 +9526,10 @@ function Show-NxtInstallationWelcome {
 		[ValidateNotNullorEmpty()]
 		[PSADTNXT.ContinueType]
 		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
+		## should the deadline be reached this continue type will be applied
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ForceContinueAfterDeferrals = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.ForceContinueAfterDeferrals)),
 		## Specifies if the user can close all applications
 		[Parameter(Mandatory = $false)]
 		[Switch]
@@ -9190,8 +9555,8 @@ function Show-NxtInstallationWelcome {
 	)
 	Begin {
 		## Get the name of this function and write header
-		[String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		[String]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
@@ -9290,15 +9655,15 @@ function Show-NxtInstallationWelcome {
 			}
 			if ($DeferTimes -ne 0) {
 				if ($deferHistoryTimes -ge 0) {
-					Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${CmdletName}
+					Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${cmdletName}
 					$DeferTimes = $deferHistory.DeferTimesRemaining - 1
 				}
 				else {
 					$DeferTimes = $DeferTimes - 1
 				}
-				Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${CmdletName}
+				Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${cmdletName}
 				if ($DeferTimes -lt 0) {
-					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					Write-Log -Message 'Deferral has expired.' -Source ${cmdletName}
 					$AllowDefer = $false
 				}
 			}
@@ -9310,15 +9675,15 @@ function Show-NxtInstallationWelcome {
 			}
 			if (($true -eq $checkDeferDays) -and ($true -eq $AllowDefer)) {
 				if ($null -ne $deferHistoryDeadline) {
-					Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${CmdletName}
+					Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${cmdletName}
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
 				}
 				else {
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime (Get-Date -Date ((Get-Date).AddDays($deferDays)) -Format ($culture).DateTimeFormat.UniversalDateTimePattern).ToString()
 				}
-				Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${CmdletName}
+				Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${cmdletName}
 				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
-					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					Write-Log -Message 'Deferral has expired.' -Source ${cmdletName}
 					$AllowDefer = $false
 				}
 			}
@@ -9328,14 +9693,18 @@ function Show-NxtInstallationWelcome {
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferDeadline -ErrorAction 'Stop'
 				}
 				catch {
-					Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+					Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 					throw "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z': $($_.Exception.Message)"
 				}
-				Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${CmdletName}
+				Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${cmdletName}
 				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
-					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					Write-Log -Message 'Deferral has expired.' -Source ${cmdletName}
 					$AllowDefer = $false
 				}
+			}
+			if ($false -eq $AllowDefer -and $true -eq $ForceContinueAfterDeferrals ) {
+				Write-Log "ForceContinueAfterDeferrals is set. Applying alternate ContinueType [Continue]." -Source ${cmdletName}
+				$ContinueType = [PSADTNXT.ContinueType]::Continue
 			}
 		}
 		if (($deferTimes -lt 0) -and ($false -eq $deferDeadlineUniversal)) {
@@ -9393,7 +9762,7 @@ function Show-NxtInstallationWelcome {
 					}
 				}
 				if ($true -eq ($promptResult.Contains('Cancel'))) {
-					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${cmdletName}
 
 					#  Restore minimized windows
 					$shellApp.UndoMinimizeAll() | Out-Null
@@ -9403,7 +9772,7 @@ function Show-NxtInstallationWelcome {
 				}
 				#  If the user has clicked OK, wait a few seconds for the process to terminate before evaluating the running processes again
 				if ($true -eq ($promptResult.Contains('Continue'))) {
-					Write-Log -Message 'The user selected to continue...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to continue...' -Source ${cmdletName}
 					Start-Sleep -Seconds 2
 
 					#  Break the while loop if there are no processes to close and the user has clicked OK to continue
@@ -9413,9 +9782,9 @@ function Show-NxtInstallationWelcome {
 				}
 				#  Force the applications to close
 				elseif ($true -eq ($promptResult.Contains('Close'))) {
-					Write-Log -Message 'The user selected to force the application(s) to close or timeout was reached with ContinueType set to Continue...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to force the application(s) to close or timeout was reached with ContinueType set to Continue...' -Source ${cmdletName}
 					if (($true -eq $PromptToSave) -and (($true -eq $SessionZero) -and ($false -eq $IsProcessUserInteractive))) {
-						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
+						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${cmdletName}
 					}
 					# Update the process list right before closing, in case it changed
 					if ($processIdToIgnore -gt 0) {
@@ -9434,11 +9803,11 @@ function Show-NxtInstallationWelcome {
 							$promptToSaveStopWatch.Reset()
 							foreach ($openWindow in $allOpenWindowsForRunningProcess) {
 								try {
-									Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${CmdletName}
+									Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${cmdletName}
 									[PSADT.UiAutomation]::BringWindowToFront($openWindow.WindowHandle) | Out-Null
 									[bool]$isCloseWindowCallSuccess = $runningProcess.CloseMainWindow()
 									if ($false -eq $isCloseWindowCallSuccess) {
-										Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${CmdletName}
+										Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${cmdletName}
 									}
 									else {
 										$promptToSaveStopWatch.Start()
@@ -9454,15 +9823,15 @@ function Show-NxtInstallationWelcome {
 										while (($true -eq $isWindowOpen) -and ($promptToSaveStopWatch.Elapsed -lt $promptToSaveTimeout))
 										$promptToSaveStopWatch.Reset()
 										if ($true -eq $isWindowOpen) {
-											Write-Log -Message "Exceeded the [$configInstallationPromptToSave] seconds timeout value for the user to save work associated with process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)]." -Severity 2 -Source ${CmdletName}
+											Write-Log -Message "Exceeded the [$configInstallationPromptToSave] seconds timeout value for the user to save work associated with process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)]." -Severity 2 -Source ${cmdletName}
 										}
 										else {
-											Write-Log -Message "Window [$($openWindow.WindowTitle)] for process [$($runningProcess.ProcessName)] was successfully closed." -Source ${CmdletName}
+											Write-Log -Message "Window [$($openWindow.WindowTitle)] for process [$($runningProcess.ProcessName)] was successfully closed." -Source ${cmdletName}
 										}
 									}
 								}
 								catch {
-									Write-Log -Message "Failed to close window [$($openWindow.WindowTitle)] for process [$($runningProcess.ProcessName)]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+									Write-Log -Message "Failed to close window [$($openWindow.WindowTitle)] for process [$($runningProcess.ProcessName)]. `r`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 									continue
 								}
 								finally {
@@ -9471,7 +9840,7 @@ function Show-NxtInstallationWelcome {
 							}
 						}
 						else {
-							Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${CmdletName}
+							Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${cmdletName}
 							Stop-NxtProcess -Name $runningProcess.ProcessName
 						}
 					}
@@ -9480,13 +9849,13 @@ function Show-NxtInstallationWelcome {
 					}
 					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
-						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
+						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${cmdletName}
 						Start-Sleep -Seconds 2
 					}
 				}
 				#  Stop the script (if not actioned before the timeout value)
 				elseif ($true -eq ($promptResult.Contains('Timeout'))) {
-					Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${CmdletName}
+					Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${cmdletName}
 					$BlockExecution = $false
 
 					if (($deferTimes -ge 0) -or ($deferDeadlineUniversal)) {
@@ -9508,7 +9877,7 @@ function Show-NxtInstallationWelcome {
 				}
 				#  Stop the script (user chose to defer)
 				elseif ($true -eq ($promptResult.Contains('Defer'))) {
-					Write-Log -Message 'Installation deferred by the user.' -Source ${CmdletName}
+					Write-Log -Message 'Installation deferred by the user.' -Source ${cmdletName}
 					$BlockExecution = $false
 
 					Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
@@ -9530,7 +9899,7 @@ function Show-NxtInstallationWelcome {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object {
 					$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
 				} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
-				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
+				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${cmdletName}
 				$runningProcesses.ProcessName | ForEach-Object -Process {
 					Stop-NxtProcess -Name $_
 				}
@@ -9553,20 +9922,20 @@ function Show-NxtInstallationWelcome {
 						[String]$notesNSDExecutable = Join-Path -Path $notesPath -ChildPath 'NSD.exe'
 						try {
 							if ($true -eq (Test-Path -LiteralPath $notesNSDExecutable -PathType 'Leaf' -ErrorAction 'Stop')) {
-								Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${CmdletName}
+								Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${cmdletName}
 								[Diagnostics.Process]$notesNSDProcess = Start-Process -FilePath $notesNSDExecutable -ArgumentList '-kill' -WindowStyle 'Hidden' -PassThru -ErrorAction 'SilentlyContinue'
 
 								if ($false -eq $notesNSDProcess.WaitForExit(10000)) {
-									Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${CmdletName}
+									Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${cmdletName}
 									Stop-NxtProcess -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
 								}
 							}
 						}
 						catch {
-							Write-Log -Message "Failed to launch [$notesNSDExecutable]. `r`n$(Resolve-Error)" -Source ${CmdletName}
+							Write-Log -Message "Failed to launch [$notesNSDExecutable]. `r`n$(Resolve-Error)" -Source ${cmdletName}
 						}
 
-						Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${CmdletName}
+						Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${cmdletName}
 
 						#  Force NSD process to stop in case the previous command was not successful
 						Stop-NxtProcess -Name 'NSD'
@@ -9589,23 +9958,23 @@ function Show-NxtInstallationWelcome {
 		if ($true -eq $BlockExecution) {
 			#  Make this variable globally available so we can check whether we need to call Unblock-NxtAppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
-			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
+			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${cmdletName}
 			[Array]$blockableProcesses = ($processObjects | Where-Object {
 				$true -ne $_.IsWql
 			})
 			if ($blockableProcesses.count -gt 0) {
-				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
+				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${cmdletName}
 				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName -BlockScriptLocation $BlockScriptLocation
 				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
 					Copy-File -Path "$ScriptRoot\$($xmlConfigFile.GetElementsByTagName('BannerIcon_Options').Icon_Filename)" -Destination "$BlockScriptLocation\BlockExecution\AppDeployToolkitLogo.ico"
-					Update-NxtXmlNode -FilePath "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico"
+					Update-NxtXmlNode -FilePath "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)" -NodePath "/AppDeployToolkit_Config/BannerIcon_Options/Icon_Filename" -InnerText "AppDeployToolkitLogo.ico" -Encoding UTF8withBom
 				}
 			}
 		}
 	}
 	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -9768,8 +10137,8 @@ function Show-NxtWelcomePrompt {
 
 	Begin {
 		## Get the name of this function and write header
-		[String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		[String]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
 		[int]$contiuneTypeValue = $ContinueType
@@ -9800,7 +10169,7 @@ function Show-NxtWelcomePrompt {
 		if ($ProcessIdToIgnore -gt 0) {
 			$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ProcessIdToIgnore" -Value $ProcessIdToIgnore
 		}
-		Write-Log "Searching for Sessions..." -Source ${CmdletName}
+		Write-Log "Searching for Sessions..." -Source ${cmdletName}
 		[int]$welcomeExitCode = 1618
 		[PsObject]$activeSessions = Get-LoggedOnUser
 		if ((Get-Process -Id $PID).SessionId -eq 0) {
@@ -9810,13 +10179,13 @@ function Show-NxtWelcomePrompt {
 					Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
 					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds)
 					[int]$welcomeExitCode = $askKillProcessesResult.ExitCode
-					[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
-					[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
+					[string]$logDomainName = $activeSessions | Where-Object sessionid -EQ $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
+					[string]$logUserName = $activeSessions | Where-Object sessionid -EQ $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
 					Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName"
 				}
 				catch {
 					if ($true -eq $ApplyContinueTypeOnError) {
-						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Applying ContinueType $contiuneTypeValue" -Severity 3 -Source ${CmdletName}
+						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Applying ContinueType $contiuneTypeValue" -Severity 3 -Source ${cmdletName}
 						if ($contiuneTypeValue -eq [PSADTNXT.ContinueType]::Abort) {
 							[int]$welcomeExitCode = 1002
 						}
@@ -9825,7 +10194,7 @@ function Show-NxtWelcomePrompt {
 						}
 					}
 					else {
-						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Not Applying ContinueType $contiuneTypeValue `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Not Applying ContinueType $contiuneTypeValue `r`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 						throw $_
 					}
 				}
@@ -9839,36 +10208,30 @@ function Show-NxtWelcomePrompt {
 		[string]$returnCode = [string]::Empty
 
 		switch ($welcomeExitCode) {
-			1001
-			{
+			1001 {
 				$returnCode = 'Close'
 			}
-			1002
-			{
+			1002 {
 				$returnCode = 'Cancel'
 			}
-			1003
-			{
+			1003 {
 				$returnCode = 'Defer'
 			}
-			1004
-			{
+			1004 {
 				$returnCode = 'Timeout'
 			}
-			1005
-			{
+			1005 {
 				$returnCode = 'Continue'
 			}
-			default
-			{
-				Write-Log "CustomAppDeployToolkitUi.ps1 returned an unknown exit code: $welcomeExitCode. Defaulting to 'Continue'..." -Severity 3 -Source ${CmdletName}
+			default {
+				Write-Log "CustomAppDeployToolkitUi.ps1 returned an unknown exit code: $welcomeExitCode. Defaulting to 'Continue'..." -Severity 3 -Source ${cmdletName}
 				$returnCode = 'Continue'
 			}
 		}
 		Write-Output -InputObject ($returnCode)
 	}
 	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -9898,11 +10261,11 @@ function Stop-NxtProcess {
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'Name')]
 	Param (
-		[Parameter(Mandatory = $true, ParameterSetName = 'Name')]
+		[Parameter(Mandatory = $true, ParameterSetName = 'Name', Position = 0)]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$Name,
-		[Parameter(Mandatory = $false, ParameterSetName = 'Name')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'Name', Position = 1)]
 		[bool]
 		$IsWql,
 		[Parameter(Mandatory = $true, ParameterSetName = 'Id')]
@@ -11036,11 +11399,11 @@ function Test-NxtStringInFile {
 		[bool]
 		$IgnoreCase = $true,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$Encoding,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
 		[String]
 		$DefaultEncoding
 	)
@@ -11066,7 +11429,7 @@ function Test-NxtStringInFile {
 				if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
 					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
+				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
 				if ($intEncoding -eq "UTF8") {
 					[bool]$noBOMDetected = $true
 				}
@@ -11079,14 +11442,14 @@ function Test-NxtStringInFile {
 				[string]$intEncoding = "UTF8"
 			}
 		}
-		[bool]$textFound = $false
 		[hashtable]$contentParams = @{
 			Path = $Path
 		}
 		if ($false -eq [string]::IsNullOrEmpty($intEncoding)) {
 			[string]$contentParams['Encoding'] = $intEncoding
 		}
-		[string]$content = Get-Content @contentParams -Raw
+		# Specifically cast into string to catch case where content is $null
+		[string]$content = "$(Get-Content @contentParams -Raw)"
 		[regex]$pattern = if ($true -eq $ContainsRegex) {
 			[regex]::new($SearchString)
 		}
@@ -11101,9 +11464,11 @@ function Test-NxtStringInFile {
 		}
 		[array]$regexMatches = [regex]::Matches($content, $pattern, $options)
 		if ($regexMatches.Count -gt 0) {
-			[bool]$textFound = $true
+			Write-Output $true
 		}
-		Write-Output $textFound
+		else {
+			Write-Output $false
+		}
 	}
 	End {
 		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
@@ -11123,6 +11488,10 @@ function Test-NxtXmlNodeExists {
 		The XPath to the node that needs to be tested for existence. This parameter is mandatory.
 	.PARAMETER FilterAttributes
 		A hashtable of attributes to filter the node. Optional parameter.
+	.PARAMETER Encoding
+		The encoding of the XML file. Optional parameter.
+	.PARAMETER DefaultEncoding
+		The default encoding to use if the file's encoding cannot be auto-detected. Optional parameter.
 	.EXAMPLE
 		Test-NxtXmlNodeExists -FilePath .\xmlstuff.xml -NodePath "/RootNode/Settings/Settings2/SubSubSetting3"
 		Tests for the existence of a node at the specified XPath in 'xmlstuff.xml'.
@@ -11147,7 +11516,15 @@ function Test-NxtXmlNodeExists {
 		$NodePath,
 		[Parameter(Mandatory = $false)]
 		[hashtable]
-		$FilterAttributes
+		$FilterAttributes,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet("Ascii", "Default", "UTF7", "BigEndianUnicode", "Oem", "Unicode", "UTF32", "UTF8")]
+		[string]
+		$DefaultEncoding
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -11158,8 +11535,14 @@ function Test-NxtXmlNodeExists {
 			Write-Log -Message "File $FilePath does not exist" -Severity 3
 			throw "File $FilePath does not exist"
 		}
-		[xml]$xml = [xml]::new()
-		$xml.Load($FilePath)
+		[hashtable]$encodingParams = @{}
+		if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+			$encodingParams["Encoding"] = $Encoding
+		}
+		if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+			$encodingParams["DefaultEncoding"] = $DefaultEncoding
+		}
+		[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 		[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($nodePath)
 		if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 			if ( @($nodes | Where-Object {
@@ -12340,11 +12723,11 @@ function Update-NxtTextInFile {
 		[Int]
 		$Count = [int]::MaxValue,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet('Ascii', 'Default', 'UTF7', 'BigEndianUnicode', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$Encoding,
 		[Parameter()]
-		[ValidateSet("Ascii", "BigEndianUTF32", "Default", "String", "Default", "Unknown", "UTF7", "BigEndianUnicode", "Byte", "Oem", "Unicode", "UTF32", "UTF8")]
+		[ValidateSet('Ascii', 'Default', 'UTF7', 'BigEndianUnicode', 'Oem', 'Unicode', 'UTF32', 'UTF8')]
 		[String]
 		$DefaultEncoding,
 		[Parameter()]
@@ -12357,8 +12740,8 @@ function Update-NxtTextInFile {
 	}
 	Process {
 		[String]$intEncoding = $Encoding
-		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq([String]::IsNullOrEmpty($intEncoding)))) {
-			[string]$intEncoding = "UTF8"
+		if (($false -eq (Test-Path -Path $Path)) -and ($true -eq ([String]::IsNullOrEmpty($intEncoding)))) {
+			[string]$intEncoding = 'UTF8'
 		}
 		elseif (($true -eq (Test-Path -Path $Path)) -and ($true -eq ([String]::IsNullOrEmpty($intEncoding)))) {
 			try {
@@ -12368,17 +12751,17 @@ function Update-NxtTextInFile {
 				if ($false -eq ([string]::IsNullOrEmpty($DefaultEncoding))) {
 					[string]$getFileEncodingParams['DefaultEncoding'] = $DefaultEncoding
 				}
-				[string]$intEncoding = (Get-NxtFileEncoding @GetFileEncodingParams)
-				if ($intEncoding -eq "UTF8") {
+				[string]$intEncoding = (Get-NxtFileEncoding @getFileEncodingParams)
+				if ($intEncoding -eq 'UTF8') {
 					[bool]$noBOMDetected = $true
 				}
-				elseif ($intEncoding -eq "UTF8withBom") {
+				elseif ($intEncoding -eq 'UTF8withBom') {
 					[bool]$noBOMDetected = $false
-					[string]$intEncoding = "UTF8"
+					[string]$intEncoding = 'UTF8'
 				}
 			}
 			catch {
-				[string]$intEncoding = "UTF8"
+				[string]$intEncoding = 'UTF8'
 			}
 		}
 		try {
@@ -12390,20 +12773,21 @@ function Update-NxtTextInFile {
 			}
 			[string]$content = Get-Content @contentParams -Raw
 			[regex]$pattern = $SearchString
-			[array]$regexMatches = $pattern.Matches($Content) | Select-Object -First $Count
+			[array]$regexMatches = $pattern.Matches($content) | Select-Object -First $Count
 			if ($regexMatches.count -eq 0) {
-				Write-Log -Message "Did not find anything to replace in file '$Path'."
+				Write-Log -Message "Did not find anything to replace in file [$Path]."
 				return
 			}
 			else {
-				Write-Log -Message "Replace found text in file '$Path'."
+				Write-Log -Message "Found $($regexMatches.Count) instances of search string [$SearchString] in file [$Path]."
 			}
 			[array]::Reverse($regexMatches)
 			foreach ($match in $regexMatches) {
 				$content = $content.Remove($match.index, $match.Length).Insert($match.index, $ReplaceString)
+				Write-Log -Message "Replaced [$($match.Value)] with [$ReplaceString] at index $($match.Index)"
 			}
-			if ($noBOMDetected -and ($intEncoding -eq "UTF8")) {
-				[System.IO.File]::WriteAllLines($Path, $Content)
+			if ($noBOMDetected -and ($intEncoding -eq 'UTF8')) {
+				[System.IO.File]::WriteAllLines($Path, $content)
 			}
 			else {
 				$content | Set-Content @contentParams -NoNewline
@@ -12435,6 +12819,10 @@ function Update-NxtXmlNode {
 		A hashtable of attributes to set or update on the selected node.
 	.PARAMETER InnerText
 		The text value to be set for the node.
+	.PARAMETER Encoding
+		Specifies the encoding of the file. Optional parameter.
+	.PARAMETER DefaultEncoding
+		Specifies the default encoding to use if the file's encoding cannot be auto-detected. Optional parameter.
 	.EXAMPLE
 		Update-NxtXmlNode -FilePath ".\xmlstuff.xml" -NodePath "/RootNode/Settings/Settings2/SubSubSetting3" -Attributes @{"name"="NewNode2"} -InnerText "NewValue2"
 		This updates the node's inner text to "NewValue2" and sets the attribute "name" to "NewNode2".
@@ -12463,7 +12851,15 @@ function Update-NxtXmlNode {
 		$FilterAttributes,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$InnerText
+		$InnerText,
+		[Parameter()]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[String]
+		$Encoding,
+		[Parameter()]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[String]
+		$DefaultEncoding = 'UTF8withBom'
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -12483,8 +12879,14 @@ function Update-NxtXmlNode {
 			throw "File $FilePath does not exist"
 		}
 		if ($true -eq (Test-NxtXmlNodeExists @testNxtXmlNodeExistsParams)) {
-			[xml]$xml = [xml]::new()
-			$xml.Load($FilePath)
+			[hashtable]$encodingParams = @{}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$encodingParams["Encoding"] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$encodingParams["DefaultEncoding"] = $DefaultEncoding
+			}
+			[System.Xml.XmlDocument]$xml = Import-NxtXmlFile @encodingParams -Path $FilePath
 			[psobject]$nodes = $xml.SelectNodes($NodePath)
 			if ($false -eq [string]::IsNullOrEmpty($FilterAttributes)) {
 				$nodes = $nodes | Where-Object {
@@ -12512,9 +12914,19 @@ function Update-NxtXmlNode {
 					$message += " and attribute [$($attribute.Key)] with value [$($attribute.Value)]"
 				}
 			}
+			[hashtable]$saveNxtXmlFileParams = @{
+				Xml = $xml
+				Path = $FilePath
+			}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$saveNxtXmlFileParams["Encoding"] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$saveNxtXmlFileParams["DefaultEncoding"] = $DefaultEncoding
+			}
+			Save-NxtXmlFile @saveNxtXmlFileParams
 			$message += "."
 			Write-Log -Message $message -Source ${cmdletName}
-			$xml.Save("$FilePath")
 		}
 		else {
 			Write-Log -Message "Node $NodePath does not exist" -Severity 3
@@ -13144,6 +13556,11 @@ function Write-NxtXmlNode {
 	Specifies the path to the XML file where the node will be added. This parameter is mandatory.
 	.PARAMETER Model
 	Defines the model of the XML node to be added, including its name, attributes, and child nodes. This parameter is mandatory.
+	.PARAMETER Encoding
+		Specifies the encoding of the file. Optional parameter.
+	.PARAMETER DefaultEncoding
+		Specifies the default encoding to use if the file's encoding cannot be auto-detected. Optional parameter.
+		Default value is 'UTF8withBom'.
 	.EXAMPLE
 	$newNode = New-Object PSADTNXT.XmlNodeModel
 	$newNode.name = "item"
@@ -13175,7 +13592,15 @@ function Write-NxtXmlNode {
 		$XmlFilePath,
 		[Parameter(Mandatory = $true)]
 		[PSADTNXT.XmlNodeModel]
-		$Model
+		$Model,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$Encoding,
+		[Parameter(Mandatory = $false)]
+		[ValidateSet('Ascii', 'BigEndianUnicode', 'Default', 'Unicode', 'UTF8', 'UTF8withBom')]
+		[string]
+		$DefaultEncoding = 'UTF8withBom'
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -13183,8 +13608,14 @@ function Write-NxtXmlNode {
 	}
 	Process {
 		try {
-			[System.Xml.XmlDocument]$xmlDoc = New-Object System.Xml.XmlDocument
-			$xmlDoc.Load($XmlFilePath)
+			[hashtable]$encodingParams = @{}
+			if ($false -eq [string]::IsNullOrEmpty($Encoding)) {
+				$encodingParams['Encoding'] = $Encoding
+			}
+			if ($false -eq [string]::IsNullOrEmpty($DefaultEncoding)) {
+				$encodingParams['DefaultEncoding'] = $DefaultEncoding
+			}
+			[System.Xml.XmlDocument]$xmlDoc = Import-NxtXmlFile @encodingParams -Path $XmlFilePath
 
 			[scriptblock]$createXmlNode = { Param ([System.Xml.XmlDocument]$doc, [PSADTNXT.XmlNodeModel]$child)
 				[System.Xml.XmlNode]$xmlNode = $doc.CreateNode("element", $child.Name, [string]::Empty)
@@ -13210,7 +13641,7 @@ function Write-NxtXmlNode {
 
 			[System.Xml.XmlLinkedNode]$newNode = &$createXmlNode -Doc $xmlDoc -Child $Model
 			[void]$xmlDoc.DocumentElement.AppendChild($newNode)
-			[void]$xmlDoc.Save($XmlFilePath)
+			Save-NxtXmlFile @encodingParams -Xml $xmlDoc -Path $XmlFilePath
 		}
 		catch {
 			Write-Log -Message "Failed to write node in xml file '$XmlFilePath'. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
