@@ -1060,7 +1060,6 @@ note: after parsing into variable set access to such a variable is done via '$gl
 
 **"Value"** *mandatory string value*
 
-
 parent: /PackageSpecificVariablesRaw/
 *(note: may contain reference to other defined variables, content will be expanded)*
 ```
@@ -1071,6 +1070,7 @@ note: especially consider masking rules for some characters inside the string
 **"ExpandVariables"** *optional bool value*
 
 parent: /PackageSpecificVariablesRaw/
+```
 Determines if variable extraction is required within the "Value" field (valid values are 'true' and 'false')
 note: this value may be omitted (that's equal to 'false')
 ```
