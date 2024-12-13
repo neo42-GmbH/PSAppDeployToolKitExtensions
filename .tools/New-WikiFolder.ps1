@@ -1,85 +1,121 @@
 <#
-    .SYNOPSIS
-        This script creates wiki md files based on the AppDeployToolkitExtensions.ps1
-    .DESCRIPTION
-        Place this script file in "AppDeployToolkit\"
-        and run with powershell. A wiki directory with md files will be created
-    .NOTES
-        # LICENSE #
-        This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-        You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+	.SYNOPSIS
+		This script creates wiki md files based on the AppDeployToolkitExtensions.ps1
+	.DESCRIPTION
+		Place this script file in "AppDeployToolkit\"
+		and run with powershell. A wiki directory with md files will be created
+	.NOTES
+		# LICENSE #
+		This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+		You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-        # COPYRIGHT #
-        Copyright (c) 2024 neo42 GmbH, Germany.
-    .LINK
-        https://neo42.de/psappdeploytoolkit
+		# COPYRIGHT #
+		Copyright (c) 2024 neo42 GmbH, Germany.
+	.LINK
+		https://neo42.de/psappdeploytoolkit
 #>
+function ConvertTo-MarkdownFromCommentHelp {
+	<#
+		.SYNOPSIS
+			Converts a comment-based help content to markdown
+	#>
+	Param (
+		[Parameter(Mandatory = $true)]
+		[System.Management.Automation.Language.CommentHelpInfo]
+		$HelpContent
+	)
 
+	[string]$markdownContent = [string]::Empty
+	[string[]]$exportedSectionsInOrder = @(
+		'SYNOPSIS',
+		'DESCRIPTION',
+		'PARAMETERS',
+		'INPUTS',
+		'OUTPUTS',
+		'NOTES',
+		'EXAMPLES',
+		'LINKS'
+	)
+	[object[]]$sections = @($HelpContent.PSObject.Properties.GetEnumerator()) | Where-Object {
+		$null -ne $_.Value -and
+		$true -eq $exportedSectionsInOrder.Contains($_.Name.ToUpper())
+	} | Sort-Object {
+		$exportedSectionsInOrder.IndexOf($_.Name.ToUpper())
+	}
 
-function ConvertTo-Markdown {
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$Content
-    )
+	foreach ($section in $sections) {
+		$markdownContent += '## ' + $section.Name + "`n"
 
-    [string]$markdownContent = $Content
-    [int]$firstParameterIndex = $markdownContent.IndexOf('.PARAMETER')
-    if ($firstParameterIndex -ge 0) {
-        $markdownContent = $markdownContent.Insert($firstParameterIndex, "## Parameters`n")
-    }
+		switch -Regex ($section.TypeNameOfValue) {
+			# Case for multiple entries without key (e.g. EXAMPLE)
+			'System.Collections.ObjectModel.ReadOnlyCollection' {
+				# Let the default case handle single entries
+				if ($section.Value.Count -eq 1) {
+					continue
+				}
+				for ($index = 1; $index -le $section.Value.Count; $index++) {
+					[int]$indentation = $index.ToString().Length + 2
+					[string[]]$contentLines = $section.Value[$index - 1].Split("`n") | Select-Object -SkipLast 1
+					[string]$content = $contentLines[0] + "`n"
+					$contentLines | Select-Object -Skip 1 | ForEach-Object {
+						if ($true -eq [string]::IsNullOrWhiteSpace($_)) {
+							$content += "`n"
+						}
+						else {
+							$content += (' ' * $indentation) + $_ + "`n"
+						}
+					}
+					$markdownContent += "$index. $content`n`n"
+				}
+				break
+			}
+			# Case for named entries (e.g. PARAMETER)
+			'System.Collections.Generic.IDictionary' {
+				foreach ($entry in $section.Value.GetEnumerator()) {
+					[string[]]$contentLines = $entry.Value.Split("`n") | Select-Object -SkipLast 1
+					[string]$content = [string]::Empty
+					$contentLines | ForEach-Object {
+						if ($true -eq [string]::IsNullOrWhiteSpace($_)) {
+							$content += "`n"
+						}
+						else {
+							$content += '  ' + $_ + "`n"
+						}
+					}
+					$markdownContent += "- **$($entry.Key)**`n`n$content`n`n"
+				}
+				break
+			}
+			# Default case for single entries
+			default {
+				$markdownContent += $section.Value + "`n"
+				break
+			}
+		}
+	}
 
-    [int]$firstExampleIndex = $markdownContent.IndexOf('.EXAMPLE')
-    if ($firstExampleIndex -ge 0) {
-        $markdownContent = $markdownContent.Insert($firstExampleIndex, "## Examples`n")
-    }
-
-    [array]$markdownLines = $markdownContent -split "`n"
-    [array]$markdownOutput = @()
-    [int]$exampleCounter = 1
-
-    foreach ($line in $markdownLines) {
-        $line = $line.Trim()
-        if ($line -match '\.DESCRIPTION') {
-            $markdownOutput += '## Description'
-        } elseif ($line -match '\.SYNOPSIS') {
-            $markdownOutput += '## Synopsis'
-        } elseif ($line -match '\.OUTPUTS') {
-            $markdownOutput += '## Outputs'
-        } elseif ($line -match '\.LINK') {
-            $markdownOutput += '## Link'
-        } elseif ($line -match '\.PARAMETER') {
-            $markdownOutput += '### ' + ($line -replace '\.PARAMETER', '')
-        } elseif ($line -match '\.EXAMPLE') {
-            $markdownOutput += "### Example $exampleCounter"
-            $exampleCounter++
-        } else {
-            $markdownOutput += $line -replace '<#', '' -replace '#>', ''
-        }
-    }
-
-    return ($markdownOutput -join "`n").Trim()
+	return $markdownContent
+}
+try {
+	[System.IO.FileInfo]$extensionFile = Get-ChildItem -Filter 'AppDeployToolkit\AppDeployToolkitExtensions.ps1' -Recurse -Depth 1 -Path "$PSScriptRoot\..\" -ErrorAction SilentlyContinue
+	[System.Management.Automation.Language.ScriptBlockAst]$ast = [System.Management.Automation.Language.Parser]::ParseFile($extensionFile.FullName, [ref]$null, [ref]$null)
+}
+catch {
+	Write-Warning 'AppDeployToolkitExtensions.ps1 not found, please place this script in the package directory'
+	Read-Host -Prompt 'Press Enter to continue, CTRL+C to abort'
 }
 
-[string]$scriptDirectory = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+New-Item -Name 'wiki' -ItemType Directory -Force -ErrorAction SilentlyContinue
 
-if ($false -eq (Test-Path "$scriptDirectory\AppDeployToolkitExtensions.ps1")) {
-    Write-Warning "AppDeployToolkitExtensions.ps1 not found, please place this script next to AppDeployToolkitExtensions.ps1"
-    Read-Host -Prompt "Press Enter to continue, CTRL+C to abort"
-}
+[System.Management.Automation.Language.FunctionDefinitionAst[]]$functionDefinitions = $ast.FindAll(
+	{
+		$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]
+	},
+	$false
+)
 
-[string]$scriptContent = Get-Content -Path "$scriptDirectory\AppDeployToolkitExtensions.ps1" -Raw
-[psobject]$ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$null, [ref]$null)
-
-New-Item -Name "wiki" -ItemType Directory -Force -ErrorAction SilentlyContinue
-
-[psobject]$functionDefinitions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
 foreach ($functionDefinition in $functionDefinitions) {
-    [string]$functionName = $functionDefinition.Name
-    [string]$summaryBlockPattern = '(?s)<#(.*?)#>'
-    [string]$summaryBlock = ([regex]::Matches($functionDefinition.Extent.Text, $summaryBlockPattern)).Value.Trim()
-
-    if (-not [string]::IsNullOrEmpty($summaryBlock)) {
-        [string]$markdownContent = ConvertTo-Markdown -Content $summaryBlock
-        Set-Content -Path "wiki\$functionName.md" -Value $markdownContent -Force
-    }
+	if ($null -ne $functionDefinition.GetHelpContent()) {
+		Set-Content -Path "wiki\$($functionDefinition.Name).md" -Value (ConvertTo-MarkdownFromCommentHelp -HelpContent $functionDefinition.GetHelpContent()) -Force
+	}
 }
