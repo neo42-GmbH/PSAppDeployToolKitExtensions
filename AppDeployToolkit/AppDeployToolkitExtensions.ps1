@@ -1453,11 +1453,11 @@ function Complete-NxtPackageUninstallation {
 			if ($false -eq [string]::IsNullOrEmpty($_.TargetName)) {
 				Write-Output $_.TargetName
 			}
-			elseif ($false -eq [string]::IsNullOrEmpty($_.Source)) {
+			elseif ($false -eq [string]::IsNullOrWhiteSpace($_.Source)) {
 				Write-Output (Split-Path -Path $_.Source -Leaf)
 			}
 			else {
-				Write-Log -Message "StartMenuShortcut is missing TargetName and Source. Skipping." -Source ${CmdletName}
+				Write-Log -Message "StartMenuShortcut is missing TargetName and Source. Skipping." -Source ${cmdletName} -Severity 3
 			}
 		}
 		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $shortCutsFromCopyToDesktop -Desktop $Desktop
