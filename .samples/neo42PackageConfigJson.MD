@@ -3,7 +3,7 @@ This file contains descriptions to all possible values in the file neo42PackageC
 ## good to know
 *By the way ***backtick*** is the general masking character for later usage of control characters inside powershell, but consider following masking rules for characters in json files at all:*
 
-| character | mask with | looks like | comments 
+| character | mask with | looks like | comments |
 |:-----------:|:-----------:|:-----------:|:-----------:|
 | " | backtick | `" | necessary for expandable variable content in powershell |
 | $ | backtick | `$ | necessary for expandable variable content in powershell |
@@ -110,7 +110,7 @@ initial date of script creation in format "DD/MM/YYYY"
 
 parent: /
 ```
-internal unique identifier with 11 digits with format: 3 digits employee name abbreviation + 8 digits random hexadecimal number
+internal unique identifier with 11 digits with format: 3 digits employee name abbreviation + 8 digits random hexadecimal number or if automatically generated starting with 'n' followed by 13 decimal numbers
 ```
 
 **"Description"** *optional informational string value*
@@ -141,10 +141,11 @@ for following well-known types of setups pre-defined parameter sets in file 'App
 - **NullSoft/NSIS**: if value is set to '*NullSoft*' only the default process execution with corresponding parameter set of legacy setup 'NullSoft' will be done
 - **BitRockInstaller**: all values like '*BitRock\**' will do default process execution with corresponding parameter set of legacy setup 'BitRockInstaller'
 - **none**: if value is set to '*none*' only any of the pre-defined procedures for well-known types of setups mentioned above will be skipped
+- **Setup**: is used by default to specify installation parameters for installation files that are not stored in the 'AppDeployToolkitConfig.xml' file
 
 following pre-defined parameter set will be used (see value "MSI_InstallParams"/"Nxt\<setup_type\>_InstallParams" in section "MSI_Options"/"Nxt\<setup_type>_Options" in file 'AppDeployToolkitConfig.xml'):
 ```
-MSI_InstallParams: MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn
+MSI_InstallParams                : MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1 /qn
 
 NxtInnoSetup_InstallParams       : /FORCEINSTALL /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010
 NxtNullsoft_InstallParams        : /AllUsers /S
@@ -173,10 +174,11 @@ for following well-known types of setups pre-defined parameter sets in file 'App
 - **NullSoft/NSIS**: if value is set to '*NullSoft*' only the default process execution with corresponding parameter set of legacy setup 'NullSoft' will be done
 - **BitRockInstaller**: all values like '*BitRock\**' will do default process execution with corresponding parameter set of legacy setup 'BitRockInstaller'
 - **none**: if value is set to '*none*' only any of the pre-defined procedures for well-known types of setups mentioned above will be skipped
+- **Setup**: is used by default to specify installation parameters for installation files that are not stored in the 'AppDeployToolkitConfig.xml' file
 
 following pre-defined parameter set will be used (see value "MSI_UninstallParams"/"Nxt\<setup_type\>_UninstallParams" in section "MSI_Options"/"Nxt\<setup_type>_Options" in file 'AppDeployToolkitConfig.xml'):
 ```
-MSI_UninstallParams: MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qn
+MSI_UninstallParams                : MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress /qn
 
 NxtInnoSetup_UninstallParams       : /VERYSILENT /SP- /SUPPRESSMSGBOXES /NOCANCEL /NORESTART /RESTARTEXITCODE=3010
 NxtNullsoft_UninstallParams        : /AllUsers /S
@@ -189,7 +191,7 @@ note: a log file parameter always will be appended, if supported by setup type (
 
 parent: /
 ```
-default value: "Reinstall", but "MSIRepair" is recommended for MSI setups (executes default MSI engine repair switch '/fvomus' with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters")
+default value: "Reinstall" (with default pre-defined parameter set for installation, to use customized parameters see values "InstPara" and "AppendInstParaToDefaultParameters")
 
 reinstall mode used for default setup execution in main routine
 
@@ -198,7 +200,7 @@ especially for MSI setups in case provided value "UninstallKey" is a display nam
 additionally the defined "AcceptedRepairExitCodes" are provided to the default process execution
 note: additionally valid value is "Install" (important: like for mode 'Reinstall' the related settings for the corresponding values "InstallMethod" and "UninstallMethod" will be used!)
 ```
-- **MSIRepair**: does a default MSI setup integrated repair procedure - note: usage with legacy setups will throw a controlled error!
+- **MSIRepair**: does a default MSI setup integrated repair procedure with MSI engine repair switch '/fvomus' - note: especially for MSI setup, usage with legacy setups will throw a controlled error!
 - **Reinstall**: does an external 2-step procedure with a regular uninstallation procedure first and an regular installation procedure again afterwards (note: an intermediate reboot may be required!)
 - **Install**: does a regular installation procedure (it's just an "over-installing", especially for MSI setups it may do an inplace upgrade if allowed by value 'MSIInplaceUpgradeable' in case of detecting installed application just with DISPLAYNAME instead of MSIGUID as Uninstallkey) - note: be careful, the application/setup has to support this procedure!
 
@@ -281,7 +283,7 @@ parent: /
 ```
 default value: "0"
 build number of the script starting with 0 for each revision (in general it is a numeric value as type 'string')
-note: increment this value if script is changed AND package is not already distributed to clients
+note: increment this value if script is changed AND package should not be triggered on all clients
 ```
 
 **"AppArch"** *mandatory string value*
@@ -336,6 +338,15 @@ application language of the packaged application
 note: basically only these values are valid and supported by neo42: "DEU", "ENU", "MUI"
 ```
 
+**"PackageGUID"** *mandatory string value*
+
+parent: /
+```
+universal unique identifier in regular GUID format with random hexadecimal numbers like "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXX}" for a single application to recognize other package versions of the same application serie
+note: the 3 very left digits inside of curly brackets are always "042"
+```
+this value may only be used once per each application series and has a direct effect on the update behavior of the package.
+
 **"ProductGUID"** *mandatory string value*
 
 parent: /
@@ -351,7 +362,7 @@ parent: /
 
 ```
 default value: false
-uninstalls all found application packages with same ProductGUID (product membership) assigned, but leaves them registered during installation process of current application package
+uninstalls all found application packages with same ProductGUID (product membership) assigned; however, these remain registered after the installation process of the current application package
 (valid are only 'true' and 'false')
 to prevent circle proceeding this functionality is working in first instance of script running level (script depth = 0) only!
 note: the product assignment will be stored for the application package always, but will be recognized for application management if this value is set to '$true' only (a value 'ProductGUID' has to be defined)
@@ -438,7 +449,7 @@ parent: /
 default value: "$($global:PackageConfig.AppRootFolder\\$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)"
 package cache folder on client system (i.e. possible user parts of package are executed from there)
 ```
- 
+
 **"UninstallOld"** *optional bool value*
 
 parent: /
@@ -485,7 +496,7 @@ parent: /
 note: this value is mandatory if the value "UserPartOnInstallation" and/or "UserPartOnUninstallation" is set to 'true'
 ```
 default value: ""
-uses a unique value for the user part of the package in comma separated format derived from value "ScriptDate" expanded by a counter starting with 0 like "2023,06,08,00"
+uses a unique value for the user part of the package in comma separated format derived from value "ScriptDate" expanded by a counter starting with 1 like "2023,06,08,01"
 note: to re-run the user part installation together with a package reinstallation the added counter has to be incremented
 ```
 
@@ -548,7 +559,7 @@ switch to define the usage of the value "UninstallKey" as search string for a di
 parent: /
 ```
 default value: false
-switch to control the interpretation of character '*' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
+switch to control whether the character '*' is interpreted as a wildcard within the defined string for the value "UninstallKey" (valid values are 'true' and 'false')
 ```
 - **true** : '\*' is interpreted as a wildcard
 - **false**: '\*' is interpreted as part of the defined string
@@ -558,9 +569,9 @@ switch to control the interpretation of character '*' in a defined string of val
 parent: /
 ```
 default value: false
-switch to control the interpretation of '$($variables)' in a defined string of value "UninstallKey" (valid are only 'true' and 'false')
+switch to control whether variables (e.g., '$($VariableName)') within the defined string for the value "UninstallKey" are interpreted as PowerShell variables (valid values are 'true' and 'false')
 ```
-- **true** : '$($var)' is interpreted as a PowerShell variable 
+- **true** : '$($var)' is interpreted as a PowerShell variable
 - **false**: '$($var)' is interpreted as part of the defined string
 
 **"DisplayNamesToExcludeFromAppSearches":** *optional string value list (has to be surrounded by ***[]***)*
@@ -637,8 +648,8 @@ default value: false
 switch to control the behavior for using the defined parameters in value "InstPara" (valid are only 'true' and 'false')
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
 ```
-- **true** : appends the parameters to this one get from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
-- **false**: replaces the parameters got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
+- **true** : appends the parameters to those obtained from the corresponding parameters entry (if any) in the ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: ignores the parameters obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedInstallExitCodes"** *optional string value*
 
@@ -657,7 +668,6 @@ parent: /
 ```
 default value: ""
 comma separated list of exit codes to accept a requested reboot after installation execution of the used setup installer file
-note: '*' is allowed for all exit codes
 ```
 
 **"UninstFile"** *optional string value*
@@ -690,8 +700,8 @@ default value: false
 switch to control the behavior for using the defined parameters in value "UninstPara" (valid are only 'true' and 'false')
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
 ```
-- **true** : appends the parameters to these one got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
-- **false**: replaces the parameters got from the corresponding msi parameters entry in ADT config file 'AppDeployToolkitConfig.xml'
+- **true** : appends the parameters to those obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: ignores the parameters obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedUninstallExitCodes"** *optional string value*
 
@@ -764,7 +774,7 @@ parent: /TestConditionsPreSetupSuccessCheck/
 value sub-collection provides an optional custom opportunity for checking conditions after finishing the default setup installation routine and checking for installation state on the client and is valid for process items and/or registry items in last step during default installation process
 
 note: empty lists for process items and/or registry items are allowed!
- 
+
 **"TotalSecondsToWaitFor"** *mandatory integer value*
 
 parent: /TestConditionsPreSetupSuccessCheck/Install/
@@ -969,7 +979,7 @@ link file name from somewhere inside of public start menu folder (including rela
 **"TargetName"** *optional string value*
 
 parent: /CommonStartMenuShortcutsToCopyToCommonDesktop/
-``` 
+```
 link file name on public desktop folder (necessary only if different name to Source)
 ```
 
@@ -1038,7 +1048,7 @@ parent: /
 
 value collection to define customer specific variables
 
-note: the following sub-structure (each member group curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "Name" and "Value" have to be provided for each item, but an empty list is allowed too (that means: "PackageSpecificVariablesRaw": [])!
+note: the following sub-structure (each member group curly brackets) may be copied any times it's necessary, has to be comma-separated and at least the values "Name" and "Value" have to be provided for each item, but an empty list is allowed too (that means: "PackageSpecificVariablesRaw": []), in addition the value "ExpandVariables" can be specified as 'true' or 'false' if a variable is present in the value "Value"!
 
 **"Name"** *mandatory string value*
 
@@ -1049,7 +1059,6 @@ note: after parsing into variable set access to such a variable is done via '$gl
 ```
 
 **"Value"** *mandatory string value*
-
 
 parent: /PackageSpecificVariablesRaw/
 *(note: may contain reference to other defined variables, content will be expanded)*
@@ -1062,6 +1071,6 @@ note: especially consider masking rules for some characters inside the string
 
 parent: /PackageSpecificVariablesRaw/
 ```
-value dependent of necessary value extraction (valid are only 'true' and 'false')
+Determines if variable extraction is required within the "Value" field (valid values are 'true' and 'false')
 note: this value may be omitted (that's equal to 'false')
 ```

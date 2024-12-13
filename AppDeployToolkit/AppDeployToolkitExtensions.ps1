@@ -19,7 +19,7 @@
 	Copyright (c) 2024 neo42 GmbH, Germany.
 
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2024.09.19.1
+	ConfigVersion: 2024.11.13.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -4774,7 +4774,11 @@ function Get-NxtProcessTree {
 			)
 			## Recurse to get related processes of related processes
 			foreach ($process in $relatedProcesses) {
-				$relatedProcesses += & $getRelatedProcesses -Root $process -ProcessTable $ProcessTable -Parents:$Parents
+				$relatedProcesses += & $getRelatedProcesses -Root $process -Parents:$Parents -ProcessTable @(
+					$ProcessTable | Where-Object {
+						$relatedProcesses.ProcessId -notcontains $_.ProcessId
+					}
+				)
 			}
 			Write-Output $relatedProcesses
 		}
@@ -9409,6 +9413,8 @@ function Show-NxtInstallationWelcome {
 		Indicates if the function is being used for installation or uninstallation. This parameter is mandatory.
 	.PARAMETER ContinueType
 		Defines behavior after dialog timeout. Influences further actions. Default value is determined by the global SetupCfg object. This parameter is optional.
+	.PARAMETER ForceContinueAfterDeferrals
+		Defines behavior after the deferral deadline. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER UserCanCloseAll
 		Allows users to close all specified applications. Default value is determined by the global SetupCfg object. This parameter is optional.
 	.PARAMETER UserCanAbort
@@ -9523,6 +9529,10 @@ function Show-NxtInstallationWelcome {
 		[ValidateNotNullorEmpty()]
 		[PSADTNXT.ContinueType]
 		$ContinueType = $global:SetupCfg.AskKillProcesses.ContinueType,
+		## should the deadline be reached this continue type will be applied
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$ForceContinueAfterDeferrals = [System.Convert]::ToBoolean([System.Convert]::ToInt32($global:SetupCfg.AskKillProcesses.ForceContinueAfterDeferrals)),
 		## Specifies if the user can close all applications
 		[Parameter(Mandatory = $false)]
 		[Switch]
@@ -9548,8 +9558,8 @@ function Show-NxtInstallationWelcome {
 	)
 	Begin {
 		## Get the name of this function and write header
-		[String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		[String]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
 		## To break the array references to the parent object we have to create new(copied) objects from the provided array.
@@ -9648,15 +9658,15 @@ function Show-NxtInstallationWelcome {
 			}
 			if ($DeferTimes -ne 0) {
 				if ($deferHistoryTimes -ge 0) {
-					Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${CmdletName}
+					Write-Log -Message "Defer history shows [$($deferHistory.DeferTimesRemaining)] deferrals remaining." -Source ${cmdletName}
 					$DeferTimes = $deferHistory.DeferTimesRemaining - 1
 				}
 				else {
 					$DeferTimes = $DeferTimes - 1
 				}
-				Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${CmdletName}
+				Write-Log -Message "The user has [$deferTimes] deferrals remaining." -Source ${cmdletName}
 				if ($DeferTimes -lt 0) {
-					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					Write-Log -Message 'Deferral has expired.' -Source ${cmdletName}
 					$AllowDefer = $false
 				}
 			}
@@ -9668,15 +9678,15 @@ function Show-NxtInstallationWelcome {
 			}
 			if (($true -eq $checkDeferDays) -and ($true -eq $AllowDefer)) {
 				if ($null -ne $deferHistoryDeadline) {
-					Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${CmdletName}
+					Write-Log -Message "Defer history shows a deadline date of [$deferHistoryDeadline]." -Source ${cmdletName}
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferHistoryDeadline
 				}
 				else {
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime (Get-Date -Date ((Get-Date).AddDays($deferDays)) -Format ($culture).DateTimeFormat.UniversalDateTimePattern).ToString()
 				}
-				Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${CmdletName}
+				Write-Log -Message "The user has until [$deferDeadlineUniversal] before deferral expires." -Source ${cmdletName}
 				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
-					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					Write-Log -Message 'Deferral has expired.' -Source ${cmdletName}
 					$AllowDefer = $false
 				}
 			}
@@ -9686,14 +9696,18 @@ function Show-NxtInstallationWelcome {
 					[String]$deferDeadlineUniversal = Get-UniversalDate -DateTime $deferDeadline -ErrorAction 'Stop'
 				}
 				catch {
-					Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+					Write-Log -Message "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z'. `r`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 					throw "Date is not in the correct format for the current culture. Type the date in the current locale format, such as 20/08/2014 (Europe) or 08/20/2014 (United States). If the script is intended for multiple cultures, specify the date in the universal sortable date/time format, e.g. '2013-08-22 11:51:52Z': $($_.Exception.Message)"
 				}
-				Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${CmdletName}
+				Write-Log -Message "The user has until [$deferDeadlineUniversal] remaining." -Source ${cmdletName}
 				if ((Get-UniversalDate) -gt $deferDeadlineUniversal) {
-					Write-Log -Message 'Deferral has expired.' -Source ${CmdletName}
+					Write-Log -Message 'Deferral has expired.' -Source ${cmdletName}
 					$AllowDefer = $false
 				}
+			}
+			if ($false -eq $AllowDefer -and $true -eq $ForceContinueAfterDeferrals ) {
+				Write-Log "ForceContinueAfterDeferrals is set. Applying alternate ContinueType [Continue]." -Source ${cmdletName}
+				$ContinueType = [PSADTNXT.ContinueType]::Continue
 			}
 		}
 		if (($deferTimes -lt 0) -and ($false -eq $deferDeadlineUniversal)) {
@@ -9751,7 +9765,7 @@ function Show-NxtInstallationWelcome {
 					}
 				}
 				if ($true -eq ($promptResult.Contains('Cancel'))) {
-					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to cancel or grace period to wait for closing processes was over...' -Source ${cmdletName}
 
 					#  Restore minimized windows
 					$shellApp.UndoMinimizeAll() | Out-Null
@@ -9761,7 +9775,7 @@ function Show-NxtInstallationWelcome {
 				}
 				#  If the user has clicked OK, wait a few seconds for the process to terminate before evaluating the running processes again
 				if ($true -eq ($promptResult.Contains('Continue'))) {
-					Write-Log -Message 'The user selected to continue...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to continue...' -Source ${cmdletName}
 					Start-Sleep -Seconds 2
 
 					#  Break the while loop if there are no processes to close and the user has clicked OK to continue
@@ -9771,9 +9785,9 @@ function Show-NxtInstallationWelcome {
 				}
 				#  Force the applications to close
 				elseif ($true -eq ($promptResult.Contains('Close'))) {
-					Write-Log -Message 'The user selected to force the application(s) to close or timeout was reached with ContinueType set to Continue...' -Source ${CmdletName}
+					Write-Log -Message 'The user selected to force the application(s) to close or timeout was reached with ContinueType set to Continue...' -Source ${cmdletName}
 					if (($true -eq $PromptToSave) -and (($true -eq $SessionZero) -and ($false -eq $IsProcessUserInteractive))) {
-						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${CmdletName}
+						Write-Log -Message 'Specified [-PromptToSave] option will not be available, because current process is running in session zero and is not interactive.' -Severity 2 -Source ${cmdletName}
 					}
 					# Update the process list right before closing, in case it changed
 					if ($processIdToIgnore -gt 0) {
@@ -9792,11 +9806,11 @@ function Show-NxtInstallationWelcome {
 							$promptToSaveStopWatch.Reset()
 							foreach ($openWindow in $allOpenWindowsForRunningProcess) {
 								try {
-									Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${CmdletName}
+									Write-Log -Message "Stopping process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] and prompt to save if there is work to be saved (timeout in [$configInstallationPromptToSave] seconds)..." -Source ${cmdletName}
 									[PSADT.UiAutomation]::BringWindowToFront($openWindow.WindowHandle) | Out-Null
 									[bool]$isCloseWindowCallSuccess = $runningProcess.CloseMainWindow()
 									if ($false -eq $isCloseWindowCallSuccess) {
-										Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${CmdletName}
+										Write-Log -Message "Failed to call the CloseMainWindow() method on process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)] because the main window may be disabled due to a modal dialog being shown." -Severity 3 -Source ${cmdletName}
 									}
 									else {
 										$promptToSaveStopWatch.Start()
@@ -9812,15 +9826,15 @@ function Show-NxtInstallationWelcome {
 										while (($true -eq $isWindowOpen) -and ($promptToSaveStopWatch.Elapsed -lt $promptToSaveTimeout))
 										$promptToSaveStopWatch.Reset()
 										if ($true -eq $isWindowOpen) {
-											Write-Log -Message "Exceeded the [$configInstallationPromptToSave] seconds timeout value for the user to save work associated with process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)]." -Severity 2 -Source ${CmdletName}
+											Write-Log -Message "Exceeded the [$configInstallationPromptToSave] seconds timeout value for the user to save work associated with process [$($runningProcess.ProcessName)] with window title [$($openWindow.WindowTitle)]." -Severity 2 -Source ${cmdletName}
 										}
 										else {
-											Write-Log -Message "Window [$($openWindow.WindowTitle)] for process [$($runningProcess.ProcessName)] was successfully closed." -Source ${CmdletName}
+											Write-Log -Message "Window [$($openWindow.WindowTitle)] for process [$($runningProcess.ProcessName)] was successfully closed." -Source ${cmdletName}
 										}
 									}
 								}
 								catch {
-									Write-Log -Message "Failed to close window [$($openWindow.WindowTitle)] for process [$($runningProcess.ProcessName)]. `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+									Write-Log -Message "Failed to close window [$($openWindow.WindowTitle)] for process [$($runningProcess.ProcessName)]. `r`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 									continue
 								}
 								finally {
@@ -9829,7 +9843,7 @@ function Show-NxtInstallationWelcome {
 							}
 						}
 						else {
-							Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${CmdletName}
+							Write-Log -Message "Stopping process $($runningProcess.ProcessName)..." -Source ${cmdletName}
 							Stop-NxtProcess -Name $runningProcess.ProcessName
 						}
 					}
@@ -9838,13 +9852,13 @@ function Show-NxtInstallationWelcome {
 					}
 					if ($runningProcesses = Get-NxtRunningProcesses -ProcessObjects $processObjects -DisableLogging -ProcessIdsToIgnore $processIdsToIgnore) {
 						# Apps are still running, give them 2s to close. If they are still running, the Welcome Window will be displayed again
-						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${CmdletName}
+						Write-Log -Message 'Sleeping for 2 seconds because the processes are still not closed...' -Source ${cmdletName}
 						Start-Sleep -Seconds 2
 					}
 				}
 				#  Stop the script (if not actioned before the timeout value)
 				elseif ($true -eq ($promptResult.Contains('Timeout'))) {
-					Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${CmdletName}
+					Write-Log -Message 'Installation not actioned before the timeout value.' -Source ${cmdletName}
 					$BlockExecution = $false
 
 					if (($deferTimes -ge 0) -or ($deferDeadlineUniversal)) {
@@ -9866,7 +9880,7 @@ function Show-NxtInstallationWelcome {
 				}
 				#  Stop the script (user chose to defer)
 				elseif ($true -eq ($promptResult.Contains('Defer'))) {
-					Write-Log -Message 'Installation deferred by the user.' -Source ${CmdletName}
+					Write-Log -Message 'Installation deferred by the user.' -Source ${cmdletName}
 					$BlockExecution = $false
 
 					Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
@@ -9888,7 +9902,7 @@ function Show-NxtInstallationWelcome {
 				[String]$runningProcessDescriptions = ($runningProcesses | Where-Object {
 					$false -eq [string]::IsNullOrEmpty($_.ProcessDescription)
 				} | Select-Object -ExpandProperty 'ProcessDescription') -join ','
-				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${CmdletName}
+				Write-Log -Message "Force closing application(s) [$($runningProcessDescriptions)] without prompting user." -Source ${cmdletName}
 				$runningProcesses.ProcessName | ForEach-Object -Process {
 					Stop-NxtProcess -Name $_
 				}
@@ -9911,20 +9925,20 @@ function Show-NxtInstallationWelcome {
 						[String]$notesNSDExecutable = Join-Path -Path $notesPath -ChildPath 'NSD.exe'
 						try {
 							if ($true -eq (Test-Path -LiteralPath $notesNSDExecutable -PathType 'Leaf' -ErrorAction 'Stop')) {
-								Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${CmdletName}
+								Write-Log -Message "Executing [$notesNSDExecutable] with the -kill argument..." -Source ${cmdletName}
 								[Diagnostics.Process]$notesNSDProcess = Start-Process -FilePath $notesNSDExecutable -ArgumentList '-kill' -WindowStyle 'Hidden' -PassThru -ErrorAction 'SilentlyContinue'
 
 								if ($false -eq $notesNSDProcess.WaitForExit(10000)) {
-									Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${CmdletName}
+									Write-Log -Message "[$notesNSDExecutable] did not end in a timely manner. Force terminate process." -Source ${cmdletName}
 									Stop-NxtProcess -Name 'NSD' -Force -ErrorAction 'SilentlyContinue'
 								}
 							}
 						}
 						catch {
-							Write-Log -Message "Failed to launch [$notesNSDExecutable]. `r`n$(Resolve-Error)" -Source ${CmdletName}
+							Write-Log -Message "Failed to launch [$notesNSDExecutable]. `r`n$(Resolve-Error)" -Source ${cmdletName}
 						}
 
-						Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${CmdletName}
+						Write-Log -Message "[$notesNSDExecutable] returned exit code [$($notesNSDProcess.ExitCode)]." -Source ${cmdletName}
 
 						#  Force NSD process to stop in case the previous command was not successful
 						Stop-NxtProcess -Name 'NSD'
@@ -9947,12 +9961,12 @@ function Show-NxtInstallationWelcome {
 		if ($true -eq $BlockExecution) {
 			#  Make this variable globally available so we can check whether we need to call Unblock-NxtAppExecution
 			Set-Variable -Name 'BlockExecution' -Value $BlockExecution -Scope 'Script'
-			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${CmdletName}
+			Write-Log -Message '[-BlockExecution] parameter specified.' -Source ${cmdletName}
 			[Array]$blockableProcesses = ($processObjects | Where-Object {
 				$true -ne $_.IsWql
 			})
 			if ($blockableProcesses.count -gt 0) {
-				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${CmdletName}
+				Write-Log -Message "Blocking execution of the following processes: $($blockableProcesses.ProcessName)" -Source ${cmdletName}
 				Block-NxtAppExecution -ProcessName $blockableProcesses.ProcessName -BlockScriptLocation $BlockScriptLocation
 				if ($true -eq (Test-Path -Path "$BlockScriptLocation\BlockExecution\$(Split-Path "$AppDeployConfigFile" -Leaf)")) {
 					## In case of showing a message for a blocked application by ADT there has to be a valid application icon in copied temporary ADT framework
@@ -9963,7 +9977,7 @@ function Show-NxtInstallationWelcome {
 		}
 	}
 	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -10126,8 +10140,8 @@ function Show-NxtWelcomePrompt {
 
 	Begin {
 		## Get the name of this function and write header
-		[String]${CmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -CmdletBoundParameters $PSBoundParameters -Header
+		[String]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -CmdletBoundParameters $PSBoundParameters -Header
 	}
 	Process {
 		[int]$contiuneTypeValue = $ContinueType
@@ -10158,7 +10172,7 @@ function Show-NxtWelcomePrompt {
 		if ($ProcessIdToIgnore -gt 0) {
 			$powershellCommand = Add-NxtParameterToCommand -Command $powershellCommand -Name "ProcessIdToIgnore" -Value $ProcessIdToIgnore
 		}
-		Write-Log "Searching for Sessions..." -Source ${CmdletName}
+		Write-Log "Searching for Sessions..." -Source ${cmdletName}
 		[int]$welcomeExitCode = 1618
 		[PsObject]$activeSessions = Get-LoggedOnUser
 		if ((Get-Process -Id $PID).SessionId -eq 0) {
@@ -10168,13 +10182,13 @@ function Show-NxtWelcomePrompt {
 					Write-Log "Start AskKillProcessesUI for sessions $sessionIds"
 					[PSADTNXT.NxtAskKillProcessesResult]$askKillProcessesResult = [PSADTNXT.SessionHelper]::StartProcessAndWaitForExitCode($powershellCommand, $sessionIds)
 					[int]$welcomeExitCode = $askKillProcessesResult.ExitCode
-					[string]$logDomainName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
-					[string]$logUserName = $activeSessions | Where-Object sessionid -eq $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
+					[string]$logDomainName = $activeSessions | Where-Object sessionid -EQ $askKillProcessesResult.SessionId | Select-Object -ExpandProperty DomainName
+					[string]$logUserName = $activeSessions | Where-Object sessionid -EQ $askKillProcessesResult.SessionId | Select-Object -ExpandProperty UserName
 					Write-Log "ExitCode from CustomAppDeployToolkitUi.ps1:: $welcomeExitCode, User: $logDomainName\$logUserName"
 				}
 				catch {
 					if ($true -eq $ApplyContinueTypeOnError) {
-						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Applying ContinueType $contiuneTypeValue" -Severity 3 -Source ${CmdletName}
+						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Applying ContinueType $contiuneTypeValue" -Severity 3 -Source ${cmdletName}
 						if ($contiuneTypeValue -eq [PSADTNXT.ContinueType]::Abort) {
 							[int]$welcomeExitCode = 1002
 						}
@@ -10183,7 +10197,7 @@ function Show-NxtWelcomePrompt {
 						}
 					}
 					else {
-						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Not Applying ContinueType $contiuneTypeValue `r`n$(Resolve-Error)" -Severity 3 -Source ${CmdletName}
+						Write-Log -Message "Failed to start CustomAppDeployToolkitUi.ps1. Not Applying ContinueType $contiuneTypeValue `r`n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
 						throw $_
 					}
 				}
@@ -10197,36 +10211,30 @@ function Show-NxtWelcomePrompt {
 		[string]$returnCode = [string]::Empty
 
 		switch ($welcomeExitCode) {
-			1001
-			{
+			1001 {
 				$returnCode = 'Close'
 			}
-			1002
-			{
+			1002 {
 				$returnCode = 'Cancel'
 			}
-			1003
-			{
+			1003 {
 				$returnCode = 'Defer'
 			}
-			1004
-			{
+			1004 {
 				$returnCode = 'Timeout'
 			}
-			1005
-			{
+			1005 {
 				$returnCode = 'Continue'
 			}
-			default
-			{
-				Write-Log "CustomAppDeployToolkitUi.ps1 returned an unknown exit code: $welcomeExitCode. Defaulting to 'Continue'..." -Severity 3 -Source ${CmdletName}
+			default {
+				Write-Log "CustomAppDeployToolkitUi.ps1 returned an unknown exit code: $welcomeExitCode. Defaulting to 'Continue'..." -Severity 3 -Source ${cmdletName}
 				$returnCode = 'Continue'
 			}
 		}
 		Write-Output -InputObject ($returnCode)
 	}
 	End {
-		Write-FunctionHeaderOrFooter -CmdletName ${CmdletName} -Footer
+		Write-FunctionHeaderOrFooter -CmdletName ${cmdletName} -Footer
 	}
 }
 #endregion
@@ -10256,11 +10264,11 @@ function Stop-NxtProcess {
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'Name')]
 	Param (
-		[Parameter(Mandatory = $true, ParameterSetName = 'Name')]
+		[Parameter(Mandatory = $true, ParameterSetName = 'Name', Position = 0)]
 		[ValidateNotNullOrEmpty()]
 		[string]
 		$Name,
-		[Parameter(Mandatory = $false, ParameterSetName = 'Name')]
+		[Parameter(Mandatory = $false, ParameterSetName = 'Name', Position = 1)]
 		[bool]
 		$IsWql,
 		[Parameter(Mandatory = $true, ParameterSetName = 'Id')]
@@ -12326,7 +12334,10 @@ function Unregister-NxtOld {
 		$AppLang = $global:PackageConfig.AppLang,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$UninstallOld = $global:PackageConfig.UninstallOld
+		$UninstallOld = $global:PackageConfig.UninstallOld,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentSystem = $global:DeploymentSystem
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -12410,8 +12421,13 @@ function Unregister-NxtOld {
 		[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
 		[string[]]$appNameList = @(($appNameWithoutAppLang, $AppName) | Sort-Object -Unique)
 		foreach ($regPackageRoot in @("HKLM:\Software\Wow6432Node", "HKLM:\Software")) {
-			foreach ($appName in $appNameList) {
-				[Microsoft.Win32.RegistryKey]$regProductKey = Get-Item -Path "$regPackageRoot\$RegPackagesKey\$AppVendor\$appName" -ErrorAction SilentlyContinue
+			if ($DeploymentSystem -eq "Empirum" -and $regPackageRoot -eq "HKLM:\Software") {
+				## in this case new PSADT package is wrapped by Empirum agent and must not be removed!
+				Write-Log -Message "DeploymentSystem is set to 'Empirum', skipping unregister of Empirum packages in 'HKLM:\Software'." -Source ${cmdletName}
+				continue
+			}
+			foreach ($appNameItem in $appNameList) {
+				[Microsoft.Win32.RegistryKey]$regProductKey = Get-Item -Path "$regPackageRoot\$RegPackagesKey\$AppVendor\$appNameItem" -ErrorAction SilentlyContinue
 				if ($null -eq $regProductKey) {
 					continue
 				}
@@ -12424,25 +12440,25 @@ function Unregister-NxtOld {
 				[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object {
 					$true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID"))
 				}
-				Write-Log -Message "Detected $($regVersionKeysOfNonADTPackages.Count) old Empirum installation(s) of '$appName'." -Source ${cmdletName}
+				Write-Log -Message "Detected $($regVersionKeysOfNonADTPackages.Count) traditional Empirum installation(s) of '$appNameItem'." -Source ${cmdletName}
 				foreach ($regVersionKey in $regVersionKeysOfNonADTPackages) {
 					[Microsoft.Win32.RegistryKey]$regSetupKey = Get-Item -Path (Join-Path $regVersionKey.PSPath "Setup")
 					## Remove this entry if the setup information is not available
 					if (($null -eq $regSetupKey) -or ($true -eq [string]::IsNullOrEmpty($regSetupKey.GetValue("Version")))) {
-						Write-Log "The setup information for the package '$appName' could not be found. Removing old entry." -Source ${CmdletName} -Severity 2
+						Write-Log "The setup information for the package '$appNameItem' could not be found. Removing old entry." -Source ${CmdletName} -Severity 2
 						Remove-Item -Path $regVersionKey.PSPath -Recurse
 						Remove-NxtEmptyRegistryKey -Path (Split-Path -Parent -Path $regVersionKey.Name)
 						continue
 					}
 					[string]$packageVersion = $regSetupKey.GetValue("Version")
 					## Obtain the uninstall key for the package
-					[Microsoft.Win32.RegistryKey]$regUninstallKey = Get-Item -Path "$regPackageRoot\Microsoft\Windows\CurrentVersion\Uninstall\neoPackage $AppVendor $appName $packageVersion" -ErrorAction SilentlyContinue
+					[Microsoft.Win32.RegistryKey]$regUninstallKey = Get-Item -Path "$regPackageRoot\Microsoft\Windows\CurrentVersion\Uninstall\neoPackage $AppVendor $appNameItem $packageVersion" -ErrorAction SilentlyContinue
 					if ($null -ne $regUninstallKey) {
-						Write-Log -Message "Removing the uninstall key for the package '$appName' with version '$packageVersion'." -Source ${CmdletName}
+						Write-Log -Message "Removing the uninstall key for the package '$appNameItem' with version '$packageVersion'." -Source ${CmdletName}
 						Remove-Item -Path $regUninstallKey.PSPath
 					}
 					else {
-						Write-Log -Message "The uninstall key for the package '$appName' with version '$packageVersion' could not be found." -Source ${CmdletName} -Severity 2
+						Write-Log -Message "The uninstall key for the package '$appNameItem' with version '$packageVersion' could not be found." -Source ${CmdletName} -Severity 2
 					}
 					Remove-Item -Path $regVersionKey.PSPath -Recurse
 					Remove-NxtEmptyRegistryKey -Path $regProductKey.Name
@@ -12450,7 +12466,7 @@ function Unregister-NxtOld {
 				}
 			}
 		}
-		## cleanup Empirum specific install key
+		## cleanup traditional Empirum specific uninstall keys
 		@(
 			## Get all keys on which detection should be performed (x86 and x64)
 			Get-ChildItem -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" -ErrorAction SilentlyContinue
@@ -12466,7 +12482,7 @@ function Unregister-NxtOld {
 			## Only get keys that dont have the same version
 			$_.GetValue("DisplayVersion") -ne $AppVersion
 		} | ForEach-Object {
-			Write-Log "Removing the Empirum specific uninstall key '$($_.PSChildName)' with version '$($_.GetValue('DisplayVersion'))'." -Source ${CmdletName}
+			Write-Log "Removing the traditional Empirum specific uninstall key '$($_.PSChildName)' with version '$($_.GetValue('DisplayVersion'))'." -Source ${CmdletName}
 			Remove-RegistryKey $_.Name
 		}
 		## Remove the old package cache
