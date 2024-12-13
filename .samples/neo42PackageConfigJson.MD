@@ -649,7 +649,7 @@ switch to control the behavior for using the defined parameters in value "InstPa
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
 ```
 - **true** : appends the parameters to those obtained from the corresponding parameters entry (if any) in the ADT config file 'AppDeployToolkitConfig.xml'
-- **false**: substitutes the parameters obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: ignores the parameters obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedInstallExitCodes"** *optional string value*
 
@@ -700,7 +700,7 @@ default value: false
 switch to control the behavior for using the defined parameters in value "UninstPara" (valid are only 'true' and 'false')
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
 - **true** : appends the parameters to those obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
-- **false**: substitutes the parameters obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: ignores the parameters obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedUninstallExitCodes"** *optional string value*
 
