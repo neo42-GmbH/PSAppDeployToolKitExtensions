@@ -1185,6 +1185,9 @@ function Complete-NxtPackageInstallation {
 	.PARAMETER AppRootFolder
 		Defines the root folder of the application package. This parameter is mandatory.
 		Defaults to the corresponding value from the PackageConfig object.
+	.PARAMETER Is64Bit
+		The operating system architecture. Defaults to PSADT main script's $Is64Bit variable. This is not intended to be used directly.
+		Defaults to PSADT Main Script's $Is64Bit variable.
 	.EXAMPLE
 		Complete-NxtPackageInstallation
 	.OUTPUTS
@@ -1224,7 +1227,7 @@ function Complete-NxtPackageInstallation {
 		[Parameter(Mandatory = $false)]
 		[string]
 		$StartMenu = $envCommonStartMenu,
-		[Parameter(Mandatory = $false)]
+		[Parameter(Mandatory = $false, DontShow = $true)]
 		[string]
 		$Wow6432Node = $global:Wow6432Node,
 		[Parameter(Mandatory = $false)]
@@ -1248,7 +1251,10 @@ function Complete-NxtPackageInstallation {
 		$ExecutionPolicy = $xmlConfigFile.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy,
 		[Parameter(Mandatory = $false)]
 		[string]
-		$AppRootFolder = $global:PackageConfig.AppRootFolder
+		$AppRootFolder = $global:PackageConfig.AppRootFolder,
+		[Parameter(Mandatory = $false)]
+		[bool]
+		$Is64Bit = $Is64Bit
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -1270,27 +1276,16 @@ function Complete-NxtPackageInstallation {
 			if ($false -eq [string]::IsNullOrEmpty($uninstallKeyToHide.KeyNameContainsWildCards)) {
 				$hideNxtParams["UninstallKeyContainsWildCards"] = $uninstallKeyToHide.KeyNameContainsWildCards
 			}
-			if ($false -eq $uninstallKeyToHide.Is64Bit) {
-				[bool]$thisUninstallKeyToHideIs64Bit = $false
-			}
-			else {
-				if ($true -eq $Is64Bit) {
-					[bool]$thisUninstallKeyToHideIs64Bit = $true
-				}
-				## in case of $AppArch="*" and running on x86 system
-				else {
-					[bool]$thisUninstallKeyToHideIs64Bit = $false
-				}
-			}
-			Write-Log -Message "Searching for uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$thisUninstallKeyToHideIs64Bit], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
-			[array]$installedAppResults = Get-NxtInstalledApplication @hideNxtParams | Where-Object Is64BitApplication -eq $thisUninstallKeyToHideIs64Bit
+			Write-Log -Message "Searching for uninstall key with KeyName [$($uninstallKeyToHide.KeyName)], Is64Bit [$($uninstallKeyToHide.Is64Bit)], KeyNameIsDisplayName [$($uninstallKeyToHide.KeyNameIsDisplayName)], KeyNameContainsWildCards [$($uninstallKeyToHide.KeyNameContainsWildCards)] and DisplayNamesToExcludeFromHiding [$($uninstallKeyToHide.DisplayNamesToExcludeFromHiding -join "][")]..." -Source ${CmdletName}
+			[array]$installedAppResults = Get-NxtInstalledApplication @hideNxtParams | Where-Object Is64BitApplication -EQ $uninstallKeyToHide.Is64Bit
 			if ($installedAppResults.Count -eq 1) {
 				Write-Log -Message "Hiding uninstall key with KeyName [$($installedAppResults.UninstallSubkey)]" -Source ${CmdletName}
-				[string]$wowEntry = [string]::Empty
-				if ($false -eq $thisUninstallKeyToHideIs64Bit -and $true -eq $Is64Bit) {
-					[string]$wowEntry = "\Wow6432Node"
+				if ($false -eq $uninstallKeyToHide.Is64Bit) {
+					Set-RegistryKey -Key "HKLM:\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent" -Type "Dword" -Value "1"
 				}
-				Set-RegistryKey -Key "HKLM:\Software$wowEntry\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent" -Type "Dword" -Value "1"
+				else {
+					Set-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($installedAppResults.UninstallSubkey)" -Name "SystemComponent" -Type "Dword" -Value "1"
+				}
 			}
 			else {
 				Write-Log -Message "Uninstall key search resulted in $($installedAppResults.Count) findings. No uninstall key will be hidden because unique result is required." -Severity 2 -Source ${CmdletName}
@@ -4212,9 +4207,9 @@ function Get-NxtInstalledApplication {
 		"*" inside this parameter will not be interpreted as WildCards. (This has no effect on the use of WildCards in other parameters!)
 		We recommend always adding "$global:PackageConfig.UninstallDisplayName" if used inside a package to exclude the current package itself, especially if combined with the "UninstallKeyContainsWildCards" parameter.
 		Defaults to the "DisplayNamesToExcludeFromAppSearches" value from the PackageConfig object.
-	.PARAMETER Is64Bit
-		The operating system architecture to use for the search. Defaults to PSADT main script's $Is64Bit variable. This is not intended to be used directly.
-		Defaults to PSADT Main Script's $Is64Bit variable.
+	.PARAMETER Wow6432Node
+		Switches between 32/64 Bit Registry Keys.
+		Defaults to the Variable $global:Wow6432Node populated by Set-NxtPackageArchitecture.
 	.PARAMETER InstallMethod
 		Filter the results by the installer type. Currently only "MSI" is supported.
 	.EXAMPLE
@@ -4247,8 +4242,8 @@ function Get-NxtInstalledApplication {
 		[string[]]
 		$DisplayNamesToExclude = $global:PackageConfig.DisplayNamesToExcludeFromAppSearches,
 		[Parameter(Mandatory = $false, DontShow = $true)]
-		[bool]
-		$Is64Bit = $Is64Bit,
+		[string]
+		$Wow6432Node = $global:Wow6432Node,
 		[Parameter(Mandatory = $false)]
 		[string]
 		$InstallMethod
@@ -4289,11 +4284,11 @@ function Get-NxtInstalledApplication {
 				if ("MSI" -eq $InstallMethod) {
 					$installedAppResults = $installedAppResults | Where-Object {
 						[string]$productRegKeyPath = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\"
-						if ($false -eq $_.Is64BitApplication -and $true -eq $Is64Bit) {
-							$productRegKeyPath = "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
+						if ($false -eq $_.Is64BitApplication) {
+							$productRegKeyPath = "HKLM:\Software$Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
 						}
 						try {
-							Write-Output ((Get-ItemProperty -Path ($productRegKeyPath + $_.UninstallSubkey) -ErrorAction Stop).WindowsInstaller -eq 1)
+							Write-Output ((Get-RegistryKey -Key ($productRegKeyPath + $_.UninstallSubkey) -Value "WindowsInstaller") -eq 1)
 						}
 						catch {
 							Write-Log "Filtered [$($_.DisplayName)] due to not being an MSI installer." -Source ${cmdletName}
@@ -5597,21 +5592,16 @@ function Get-NxtWindowsBits {
 		[string]${cmdletName} = $PSCmdlet.MyInvocation.MyCommand.Name
 	}
 	Process {
-		try {
-			switch ($ProcessorArchitecture.ToUpper()) {
-				"AMD64" {
-					Write-Output 64
-				}
-				"X86" {
-					Write-Output 32
-				}
-				Default {
-					Write-Error "$($ProcessorArchitecture) could not be translated to CPU bitness 'WindowsBits'"
-				}
+		switch -Regex ($ProcessorArchitecture.ToUpper()) {
+			"^(AMD64|ARM64)$" {
+				Write-Output 64
 			}
-		}
-		catch {
-			Write-Log -Message "Failed to translate $($ProcessorArchitecture) variable. `n$(Resolve-Error)" -Severity 3 -Source ${cmdletName}
+			"^(X86|ARM)$" {
+				Write-Output 32
+			}
+			Default {
+				Write-Log "$($ProcessorArchitecture) could not be translated to CPU bitness 'WindowsBits'" -Severity 3 -Source ${cmdletName}
+			}
 		}
 	}
 	End {
@@ -6201,6 +6191,9 @@ function Initialize-NxtUninstallApplication {
 	.PARAMETER UninstallKeysToHide
 		Specifies a list of UninstallKeys set by the Installer(s) in this Package, which the function will hide from the user (e.g. under "Apps" and "Programs and Features").
 		Defaults to the corresponding values from the PackageConfig object.
+	.PARAMETER Is64Bit
+		The operating system architecture. Defaults to PSADT main script's $Is64Bit variable. This is not intended to be used directly.
+		Defaults to PSADT Main Script's $Is64Bit variable.
 	.EXAMPLE
 		Initialize-NxtUninstallApplication
 	.EXAMPLE
@@ -6214,7 +6207,10 @@ function Initialize-NxtUninstallApplication {
 	Param (
 		[Parameter(Mandatory = $false)]
 		[PSCustomObject]
-		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide
+		$UninstallKeysToHide = $global:PackageConfig.UninstallKeysToHide,
+		[Parameter(Mandatory = $false, DontShow = $true)]
+		[string]
+		$Is64Bit = $Is64Bit
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -8921,14 +8917,14 @@ function Set-NxtPackageArchitecture {
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 				throw "Wrong setting for value 'appArch'."
 			}
-			elseif ($AppArch -eq 'x64' -and $PROCESSOR_ARCHITECTURE -eq 'x86') {
+			elseif ($AppArch -eq 'x64' -and $PROCESSOR_ARCHITECTURE -in @('x86', 'ARM')) {
 				[int32]$mainExitCode = 70001
 				[int32]$thisFunctionReturnCode = $mainExitCode
 				[string]$mainErrorMessage = "ERROR: This software package can only be installed on 64 bit Windows systems. Abort!"
 				Write-Log -Message $mainErrorMessage -Severity 3 -Source $DeployAppScriptFriendlyName
 				throw "This software is not allowed to run on this architecture."
 			}
-			elseif ($AppArch -eq 'x86' -and $PROCESSOR_ARCHITECTURE -eq 'AMD64') {
+			elseif ($AppArch -eq 'x86' -and $PROCESSOR_ARCHITECTURE -in @('AMD64', 'ARM64')) {
 				[string]$global:ProgramFilesDir = ${ProgramFiles(x86)}
 				[string]$global:ProgramFilesDirx86 = ${ProgramFiles(x86)}
 				[string]$global:ProgramW6432 = $ProgramFiles
