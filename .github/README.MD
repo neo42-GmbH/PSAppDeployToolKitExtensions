@@ -43,7 +43,7 @@ Based on our long experience, we have been able to integrate the silent paramete
 _Apart from these installers, any other installer can be addressed via the predefined fields in the configuration file._
 
 # Build instructions
-_Note: We always recommend obtaining the [latest production release](github.com//releases](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases)/latest) from the releases page._
+_Note: We always recommend obtaining the [latest production release](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/latest) from the releases page._
 
 * Get a [compatible](#requirements) release copy of the [PSAppDeploymentToolkit](#links)
 * Clone or download the contents of this repository
@@ -53,7 +53,7 @@ _Note: We always recommend obtaining the [latest production release](github.com/
         - It is recommended to remove all dot files before copying the contents
 
 # Requirements
-* PSAppDeployTookit 3.9.3
+* PSAppDeployTookit 3.10.2
 * PowerShell 5.1 Desktop (PowerShell Core is not supported)
 * .NET Framework 4
 
