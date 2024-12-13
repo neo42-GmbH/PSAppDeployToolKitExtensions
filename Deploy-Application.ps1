@@ -57,7 +57,7 @@
 	Copyright (c) 2024 neo42 GmbH, Germany.
 
 	Version: ##REPLACEVERSION##
-	ConfigVersion: 2024.09.19.1
+	ConfigVersion: 2024.11.13.1
 	Toolkit Exit Code Ranges:
 	60000 - 68999: Reserved for built-in exit codes in Deploy-Application.ps1, Deploy-Application.exe, and AppDeployToolkitMain.ps1
 	69000 - 69999: Recommended for user customized exit codes in Deploy-Application.ps1
@@ -65,12 +65,10 @@
 .LINK
 	http://psappdeploytoolkit.com
 #>
-[CmdletBinding(DefaultParameterSetName = 'Deployment')]
+[CmdletBinding()]
 Param (
-	[Parameter(Mandatory = $false, Position = 0, ParameterSetName = 'Deployment')]
+	[Parameter(Mandatory = $false, Position = 0)]
 	[ValidateSet('Install', 'Uninstall', 'Repair', 'InstallUserPart', 'UninstallUserPart', 'TriggerInstallUserPart', 'TriggerUninstallUserPart')]
-	[Parameter(Mandatory = $false, ParameterSetName = 'SkipDeployment')]
-	[ValidateSet('Install', 'Uninstall', 'Repair')]
 	[string]
 	$DeploymentType = 'Install',
 	[Parameter(Mandatory = $false)]
@@ -92,7 +90,7 @@ Param (
 	[Parameter(Mandatory = $false)]
 	[string]
 	$DeploymentSystem = [string]::Empty,
-	[Parameter(Mandatory = $false, DontShow = $true, ParameterSetName = 'SkipDeployment')]
+	[Parameter(Mandatory = $false, DontShow = $true)]
 	[switch]
 	$SkipDeployment = $false
 )
@@ -986,7 +984,7 @@ function CustomEnd {
 ## execute the main function to start the process
 if ($true -eq $SkipDeployment) {
 	Write-Log -Message 'Not executing Main due to SkipDeployment being [True]' -Source $deployAppScriptFriendlyName
-	# Do not use Exit-Script here, because we want dont want clean up to be executed.
+	# Do not use Exit-Script here, because we dont want clean up to be executed.
 	exit 0
 }
 Main
