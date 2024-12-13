@@ -1,7 +1,7 @@
 # neo42 PSADT Extensions Example Package: VLC
 
 You can download the complete package here:
-[Download Package](https://storage.neo42.de/api/download/public/66f13c6f3002a9bc1befe732)
+[Example packages + neo42 Package Config Editor](https://portal.neo42.de/Help/6748996f4c0539ebc80bf5d8?language=en)
 
 The files in this directory serve as a real-world example of a package created using the neo42 PSADT extensions, accompanied by the modified custom functions in the provided `DeployApplication.ps1`.
 
