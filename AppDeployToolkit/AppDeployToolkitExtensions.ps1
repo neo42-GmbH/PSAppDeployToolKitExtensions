@@ -1453,8 +1453,11 @@ function Complete-NxtPackageUninstallation {
 			if ($false -eq [string]::IsNullOrEmpty($_.TargetName)) {
 				Write-Output $_.TargetName
 			}
-			else {
+			elseif ($false -eq [string]::IsNullOrWhiteSpace($_.Source)) {
 				Write-Output (Split-Path -Path $_.Source -Leaf)
+			}
+			else {
+				Write-Log -Message "StartMenuShortcut is missing TargetName and Source. Skipping." -Source ${cmdletName} -Severity 3
 			}
 		}
 		Remove-NxtDesktopShortcuts -DesktopShortcutsToDelete $shortCutsFromCopyToDesktop -Desktop $Desktop
@@ -12331,7 +12334,10 @@ function Unregister-NxtOld {
 		$AppLang = $global:PackageConfig.AppLang,
 		[Parameter(Mandatory = $false)]
 		[bool]
-		$UninstallOld = $global:PackageConfig.UninstallOld
+		$UninstallOld = $global:PackageConfig.UninstallOld,
+		[Parameter(Mandatory = $false)]
+		[string]
+		$DeploymentSystem = $global:DeploymentSystem
 	)
 	Begin {
 		## Get the name of this function and write header
@@ -12415,8 +12421,13 @@ function Unregister-NxtOld {
 		[string]$appNameWithoutAppLang = "$(($AppName -Replace (" $([Regex]::Escape($AppLang))$",[string]::Empty)).TrimEnd())"
 		[string[]]$appNameList = @(($appNameWithoutAppLang, $AppName) | Sort-Object -Unique)
 		foreach ($regPackageRoot in @("HKLM:\Software\Wow6432Node", "HKLM:\Software")) {
-			foreach ($appName in $appNameList) {
-				[Microsoft.Win32.RegistryKey]$regProductKey = Get-Item -Path "$regPackageRoot\$RegPackagesKey\$AppVendor\$appName" -ErrorAction SilentlyContinue
+			if ($DeploymentSystem -eq "Empirum" -and $regPackageRoot -eq "HKLM:\Software") {
+				## in this case new PSADT package is wrapped by Empirum agent and must not be removed!
+				Write-Log -Message "DeploymentSystem is set to 'Empirum', skipping unregister of Empirum packages in 'HKLM:\Software'." -Source ${cmdletName}
+				continue
+			}
+			foreach ($appNameItem in $appNameList) {
+				[Microsoft.Win32.RegistryKey]$regProductKey = Get-Item -Path "$regPackageRoot\$RegPackagesKey\$AppVendor\$appNameItem" -ErrorAction SilentlyContinue
 				if ($null -eq $regProductKey) {
 					continue
 				}
@@ -12429,25 +12440,25 @@ function Unregister-NxtOld {
 				[Microsoft.Win32.RegistryKey[]]$regVersionKeysOfNonADTPackages = $regVersionKeys | Where-Object {
 					$true -eq [string]::IsNullOrEmpty($_.GetValue("PackageGUID"))
 				}
-				Write-Log -Message "Detected $($regVersionKeysOfNonADTPackages.Count) old Empirum installation(s) of '$appName'." -Source ${cmdletName}
+				Write-Log -Message "Detected $($regVersionKeysOfNonADTPackages.Count) traditional Empirum installation(s) of '$appNameItem'." -Source ${cmdletName}
 				foreach ($regVersionKey in $regVersionKeysOfNonADTPackages) {
 					[Microsoft.Win32.RegistryKey]$regSetupKey = Get-Item -Path (Join-Path $regVersionKey.PSPath "Setup")
 					## Remove this entry if the setup information is not available
 					if (($null -eq $regSetupKey) -or ($true -eq [string]::IsNullOrEmpty($regSetupKey.GetValue("Version")))) {
-						Write-Log "The setup information for the package '$appName' could not be found. Removing old entry." -Source ${CmdletName} -Severity 2
+						Write-Log "The setup information for the package '$appNameItem' could not be found. Removing old entry." -Source ${CmdletName} -Severity 2
 						Remove-Item -Path $regVersionKey.PSPath -Recurse
 						Remove-NxtEmptyRegistryKey -Path (Split-Path -Parent -Path $regVersionKey.Name)
 						continue
 					}
 					[string]$packageVersion = $regSetupKey.GetValue("Version")
 					## Obtain the uninstall key for the package
-					[Microsoft.Win32.RegistryKey]$regUninstallKey = Get-Item -Path "$regPackageRoot\Microsoft\Windows\CurrentVersion\Uninstall\neoPackage $AppVendor $appName $packageVersion" -ErrorAction SilentlyContinue
+					[Microsoft.Win32.RegistryKey]$regUninstallKey = Get-Item -Path "$regPackageRoot\Microsoft\Windows\CurrentVersion\Uninstall\neoPackage $AppVendor $appNameItem $packageVersion" -ErrorAction SilentlyContinue
 					if ($null -ne $regUninstallKey) {
-						Write-Log -Message "Removing the uninstall key for the package '$appName' with version '$packageVersion'." -Source ${CmdletName}
+						Write-Log -Message "Removing the uninstall key for the package '$appNameItem' with version '$packageVersion'." -Source ${CmdletName}
 						Remove-Item -Path $regUninstallKey.PSPath
 					}
 					else {
-						Write-Log -Message "The uninstall key for the package '$appName' with version '$packageVersion' could not be found." -Source ${CmdletName} -Severity 2
+						Write-Log -Message "The uninstall key for the package '$appNameItem' with version '$packageVersion' could not be found." -Source ${CmdletName} -Severity 2
 					}
 					Remove-Item -Path $regVersionKey.PSPath -Recurse
 					Remove-NxtEmptyRegistryKey -Path $regProductKey.Name
@@ -12455,7 +12466,7 @@ function Unregister-NxtOld {
 				}
 			}
 		}
-		## cleanup Empirum specific install key
+		## cleanup traditional Empirum specific uninstall keys
 		@(
 			## Get all keys on which detection should be performed (x86 and x64)
 			Get-ChildItem -Path "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\" -ErrorAction SilentlyContinue
@@ -12471,7 +12482,7 @@ function Unregister-NxtOld {
 			## Only get keys that dont have the same version
 			$_.GetValue("DisplayVersion") -ne $AppVersion
 		} | ForEach-Object {
-			Write-Log "Removing the Empirum specific uninstall key '$($_.PSChildName)' with version '$($_.GetValue('DisplayVersion'))'." -Source ${CmdletName}
+			Write-Log "Removing the traditional Empirum specific uninstall key '$($_.PSChildName)' with version '$($_.GetValue('DisplayVersion'))'." -Source ${CmdletName}
 			Remove-RegistryKey $_.Name
 		}
 		## Remove the old package cache
