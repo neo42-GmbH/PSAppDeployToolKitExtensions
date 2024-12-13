@@ -699,9 +699,8 @@ parent: /
 default value: false
 switch to control the behavior for using the defined parameters in value "UninstPara" (valid are only 'true' and 'false')
 note: by default a logfile always will be appended to used parameters (if supported/applied by setup), even if parameters will be replaced!
-```
-- **true** : appends the parameters to these one got from the corresponding parameters entry (if any) in ADT config file 'AppDeployToolkitConfig.xml'
-- **false**: replaces the parameters got from the corresponding parameters entry (if any) in ADT config file 'AppDeployToolkitConfig.xml'
+- **true** : appends the parameters to those obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
+- **false**: substitutes the parameters obtained from the corresponding entry in the ADT config file 'AppDeployToolkitConfig.xml'
 
 **"AcceptedUninstallExitCodes"** *optional string value*
 
@@ -1071,7 +1070,6 @@ note: especially consider masking rules for some characters inside the string
 **"ExpandVariables"** *optional bool value*
 
 parent: /PackageSpecificVariablesRaw/
-```
-value dependent of necessary variable extraction inside of value "Value" (valid are only 'true' and 'false')
+Determines if variable extraction is required within the "Value" field (valid values are 'true' and 'false')
 note: this value may be omitted (that's equal to 'false')
 ```
