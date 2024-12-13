@@ -30,7 +30,7 @@ __The neo42 Extensions offer over 100+ new functions__
 * Make use of observer functions that handle waiting for processes, files, registry keys and others easy
 * Extended ui for interactions with the user that also supports dark mode
 
-More details to the neo42 Extensions [neo42 Extensions Help Index](https://portal.neo42.de/Help/674885cc4c0539ebc80bf566?language=en)
+More details to the neo42 Extensions [neo42 Extensions Help Index](https://portal.neo42.de/Help/674885cc4c0539ebc80bf566)
 
 _All functions are tested to work in different deployment system contextes like Empirum, Intune or Workspace One_
 
@@ -67,5 +67,5 @@ This code is distributed WITHOUT ANY WARRANTY; without even the implied warranty
 # Links
 * https://github.com/PSAppDeployToolkit/PSAppDeployToolkit
 * https://www.gnu.org/licenses/licenses.html
-* [neo42 Extensions Help Index](https://portal.neo42.de/Help/674885cc4c0539ebc80bf566?language=en)
-* [Example packages + neo42 Package Config Editor](https://portal.neo42.de/Help/6748996f4c0539ebc80bf5d8?language=en)
+* [neo42 Extensions Help Index](https://portal.neo42.de/Help/674885cc4c0539ebc80bf566)
+* [Example packages + neo42 Package Config Editor](https://portal.neo42.de/Help/6748996f4c0539ebc80bf5d8)
