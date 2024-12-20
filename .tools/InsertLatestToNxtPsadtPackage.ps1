@@ -518,7 +518,10 @@ function Update-NxtPSAdtPackage {
 						if ($null -eq $iniToUpdate.$section.$key) {
 							Write-Warning "Missing key $key in section $section in $PackageToUpdatePath\setup.cfg, Please Add:"
 							foreach ($comment in $iniLatest.$section.$key.Comments) {
-								Write-Output ";$comment"
+								$commentLines = $comment -split "`n"
+								foreach ($line in $commentLines) {
+									Write-Output ";$line"
+								}
 							}
 							Write-Output "$key=$($iniLatest.$section.$key.Value)"
 							[bool]$missingIniValues = $true
