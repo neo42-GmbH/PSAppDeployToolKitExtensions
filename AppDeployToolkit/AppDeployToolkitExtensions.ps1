@@ -9769,7 +9769,10 @@ function Show-NxtInstallationWelcome {
 
 					#  Restore minimized windows
 					$shellApp.UndoMinimizeAll() | Out-Null
-
+					if ($true -eq $ForceContinueAfterDeferrals) {
+						Write-Log 'ForceContinueAfterDeferrals is set. Applying Defer History to Registry.' -Source ${cmdletName}
+						Set-DeferHistory -DeferTimesRemaining $DeferTimes -DeferDeadline $deferDeadlineUniversal
+					}
 					Write-Output $configInstallationUIExitCode
 					return
 				}
