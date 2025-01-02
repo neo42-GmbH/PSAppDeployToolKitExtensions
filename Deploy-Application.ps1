@@ -984,7 +984,7 @@ function CustomEnd {
 ## execute the main function to start the process
 if ($true -eq $SkipDeployment) {
 	Write-Log -Message 'Not executing Main due to SkipDeployment being [True]' -Source $deployAppScriptFriendlyName
-	# Do not use Exit-Script here, because we want dont want clean up to be executed.
+	# Do not use Exit-Script here, because we dont want clean up to be executed.
 	exit 0
 }
 Main

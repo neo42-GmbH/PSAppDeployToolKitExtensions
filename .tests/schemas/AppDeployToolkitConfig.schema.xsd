@@ -4,22 +4,6 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="Config_File">
-					<xs:annotation>
-						<xs:documentation> PSAppDeployToolkit - This XML configuration file is used
-							to set defaults for the PSADT core runtime and functions.
-							PSAppDeployToolkit is licensed under the GNU LGPLv3 License - (C) 2023
-							PSAppDeployToolkit Team (Sean Lillis, Dan Cunningham and Muhammad
-							Mashwani). This program is free software: you can redistribute it and/or
-							modify it under the terms of the GNU Lesser General Public License as
-							published by the Free Software Foundation, either version 3 of the
-							License, or any later version. This program is distributed in the hope
-							that it will be useful, but WITHOUT ANY WARRANTY; without even the
-							implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-							See the GNU General Public License for more details. You should have
-							received a copy of the GNU Lesser General Public License along with this
-							program. If not, see &lt;http://www.gnu.org/licenses/>. Configuration
-							File Details</xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:string" name="Config_Version" />
@@ -28,17 +12,9 @@
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="SetupCfg_Parameters">
-					<xs:annotation>
-						<xs:documentation>SetupCfg Parameters</xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="Options">
-								<xs:annotation>
-									<xs:documentation> Defines all necessary initial values just for
-										case setup.cfg is missing or value is not set inside; for
-										descriptions see default file 'setup.cfg'. </xs:documentation>
-								</xs:annotation>
 								<xs:complexType>
 									<xs:sequence>
 										<xs:element type="Byte01" name="DESKTOPSHORTCUT" />
@@ -66,13 +42,6 @@
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="NxtPowerShell_Options">
-					<xs:annotation>
-						<xs:documentation>SetupCfg ParametersPowerSehll Options Specify the default
-							excution policy with which the toolkit tries to invoke PowerShell.
-							Please choose one of these non interactive settings: Bypass, AllSigned,
-							RemoteSigned. Setting the GPO/CSP for the execution policy will override
-							this setting. </xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="NxtPowerShell_ExecutionPolicy">
@@ -91,69 +60,17 @@
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="Toolkit_Options">
-					<xs:annotation>
-						<xs:documentation>PowerShell OptionsToolkit Options Specify if log messages
-							should be written to the console. </xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:boolean" name="Toolkit_RequireAdmin" />
-							<xs:element type="xs:string" name="Toolkit_TempPath">
-								<xs:annotation>
-									<xs:documentation> Specify if Administrator Rights are required.
-										NB: Some functions won't work if this is set to false, such
-										as deferral, blockexecution, file &amp; registry RW access
-										and potentially logging. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_RegPath">
-								<xs:annotation>
-									<xs:documentation> Path used to store temporary Toolkit files
-										(with PSAppDeployToolkit as subdirectory), e.g. cache
-										toolkit for cleaning up blocked apps. Normally you don't
-										want this set to a path that is writable by regular users,
-										this might lead to a security vulnerability. The default
-										Temp variable for the LocalSystem account is
-										C:\Windows\Temp. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_LogPath">
-								<xs:annotation>
-									<xs:documentation> Registry key used to store toolkit
-										information (with PSAppDeployToolkit as child registry key),
-										e.g. deferral history. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_TempPathNoAdminRights">
-								<xs:annotation>
-									<xs:documentation> Log path used for Toolkit logging. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_RegPathNoAdminRights">
-								<xs:annotation>
-									<xs:documentation> Same as TempPath but used when RequireAdmin
-										is False. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="Toolkit_LogPathNoAdminRights">
-								<xs:annotation>
-									<xs:documentation> Same as RegPath but used when RequireAdmin is
-										False. Bear in mind that since this Registry Key should be
-										writable without admin permission, regular users can modify
-										it also. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:boolean" name="Toolkit_CompressLogs">
-								<xs:annotation>
-									<xs:documentation> Same as LogPath but used when RequireAdmin is
-										False. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:string" name="Toolkit_TempPath" />
+							<xs:element type="xs:string" name="Toolkit_RegPath" />
+							<xs:element type="xs:string" name="Toolkit_LogPath" />
+							<xs:element type="xs:string" name="Toolkit_TempPathNoAdminRights" />
+							<xs:element type="xs:string" name="Toolkit_RegPathNoAdminRights" />
+							<xs:element type="xs:string" name="Toolkit_LogPathNoAdminRights" />
+							<xs:element type="xs:boolean" name="Toolkit_CompressLogs" />
 							<xs:element name="Toolkit_LogStyle">
-								<xs:annotation>
-									<xs:documentation> Specify if the log files should be bundled
-										together in a compressed zip file </xs:documentation>
-								</xs:annotation>
 								<xs:simpleType>
 									<xs:restriction base="xs:string">
 										<xs:enumeration value="CMTrace" />
@@ -161,31 +78,17 @@
 									</xs:restriction>
 								</xs:simpleType>
 							</xs:element>
-							<xs:element type="xs:boolean" name="Toolkit_LogDebugMessage">
-								<xs:annotation>
-									<xs:documentation> Specify if log file should be a CMTrace
-										compatible log file or a Legacy text log file. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:int" name="Toolkit_LogMaxSize">
-								<xs:annotation>
-									<xs:documentation> Specify if debug messages such as bound
-										parameters passed to a function should be logged. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:boolean" name="Toolkit_LogWriteToHost">
-								<xs:annotation>
-									<xs:documentation> Specify maximum file size limit for log file
-										in megabytes (MB). </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:boolean" name="Toolkit_LogDebugMessage" />
+							<xs:element type="xs:boolean" name="Toolkit_LogWriteToHost" />
+							<xs:element type="xs:boolean" name="Toolkit_LogAppend" />
+							<xs:element type="xs:int" name="Toolkit_LogMaxSize" />
+							<xs:element type="xs:int" name="Toolkit_LogMaxHistory" />
+							<xs:element type="xs:boolean" name="Toolkit_UseRobocopy" />
+							<xs:element type="xs:string" name="Toolkit_CachePath" />
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="Toast_Options">
-					<xs:annotation>
-						<xs:documentation>Toolkit OptionsToast Notification Options</xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:boolean" name="Toast_Disable" />
@@ -194,370 +97,101 @@
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="BannerIcon_Options">
-					<xs:annotation>
-						<xs:documentation>Toast Notification OptionsBanner, Logo &amp; Icon Options
-							Set a maximum banner height. Overflow will be invisible. </xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:string" name="Icon_Filename" />
-							<xs:element type="xs:string" name="LogoImage_Filename">
-								<xs:annotation>
-									<xs:documentation> Specify filename of the icon. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="Banner_Filename">
-								<xs:annotation>
-									<xs:documentation> Specify filename of the logo. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:string" name="LogoImage_Filename" />
+							<xs:element type="xs:string" name="Banner_Filename" />
 							<xs:element type="xs:string" name="Banner_Filename_Dark" />
-							<xs:element type="xs:short" name="Banner_MaxHeight">
-								<xs:annotation>
-									<xs:documentation> Specify filename of the banner. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:short" name="Banner_MaxHeight" />
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="MSI_Options">
-					<xs:annotation>
-						<xs:documentation>Banner, Logo &amp; Icon OptionsMSI Options The length of
-							time in seconds to wait for the MSI installer service to become
-							available. Default is 600 seconds (10 minutes) </xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:string" name="MSI_LoggingOptions" />
-							<xs:element type="xs:string" name="MSI_LogPath">
-								<xs:annotation>
-									<xs:documentation> Logging level used for MSI logging. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="MSI_LogPathNoAdminRights">
-								<xs:annotation>
-									<xs:documentation> Log path used for MSI logging. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="MSI_InstallParams">
-								<xs:annotation>
-									<xs:documentation> Log path used for MSI logging when
-										RequireAdmin is False. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="MSI_SilentParams">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for MSI actions
-										in non-silent Deploy-Application call. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="MSI_UninstallParams">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for MSI actions
-										in silent Deploy-Application call. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:short" name="MSI_MutexWaitTime">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for MSI
-										uninstall actions. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:string" name="MSI_LogPath" />
+							<xs:element type="xs:string" name="MSI_LogPathNoAdminRights" />
+							<xs:element type="xs:string" name="MSI_InstallParams" />
+							<xs:element type="xs:string" name="MSI_SilentParams" />
+							<xs:element type="xs:string" name="MSI_UninstallParams" />
+							<xs:element type="xs:short" name="MSI_MutexWaitTime" />
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="NxtInnoSetup_Options">
-					<xs:annotation>
-						<xs:documentation>MSI OptionsNxtInnoSetup Options Installation parameters
-							used for InnoSetup uninstall actions. </xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:string" name="NxtInnoSetup_LogPath" />
-							<xs:element type="xs:string" name="NxtInnoSetup_LogPathNoAdminRights">
-								<xs:annotation>
-									<xs:documentation> Log path used for InnoSetup logging. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="NxtInnoSetup_InstallParams">
-								<xs:annotation>
-									<xs:documentation> Log path used for InnoSetup logging when
-										RequireAdmin is False. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="NxtInnoSetup_SilentParams">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for InnoSetup
-										actions in non-silent Deploy-Application call. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="NxtInnoSetup_UninstallParams">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for InnoSetup
-										actions in silent Deploy-Application call. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:string" name="NxtInnoSetup_LogPathNoAdminRights" />
+							<xs:element type="xs:string" name="NxtInnoSetup_InstallParams" />
+							<xs:element type="xs:string" name="NxtInnoSetup_SilentParams" />
+							<xs:element type="xs:string" name="NxtInnoSetup_UninstallParams" />
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="NxtNullsoft_Options">
-					<xs:annotation>
-						<xs:documentation>NxtInnoSetup OptionsNxtNullsoft Options Installation
-							parameters used for Nullsoft uninstall actions. </xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:string" name="NxtNullsoft_InstallParams" />
-							<xs:element type="xs:string" name="NxtNullsoft_SilentParams">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for Nullsoft
-										actions in non-silent Deploy-Application call. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="NxtNullsoft_UninstallParams">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for Nullsoft
-										actions in silent Deploy-Application call. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:string" name="NxtNullsoft_SilentParams" />
+							<xs:element type="xs:string" name="NxtNullsoft_UninstallParams" />
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="NxtBitRockInstaller_Options">
-					<xs:annotation>
-						<xs:documentation>NxtNullsoft OptionsNxtBitRockInstaller Options
-							Installation parameters used for BitRockInstaller uninstall actions. </xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:string" name="NxtBitRockInstaller_InstallParams" />
-							<xs:element type="xs:string" name="NxtBitRockInstaller_SilentParams">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for
-										BitRockInstaller actions in non-silent Deploy-Application
-										call. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:string" name="NxtBitRockInstaller_UninstallParams">
-								<xs:annotation>
-									<xs:documentation> Installation parameters used for
-										BitRockInstaller actions in silent Deploy-Application call. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:string" name="NxtBitRockInstaller_SilentParams" />
+							<xs:element type="xs:string" name="NxtBitRockInstaller_UninstallParams" />
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="UI_Options">
-					<xs:annotation>
-						<xs:documentation>NxtBitRockInstaller OptionsUI Options Time in seconds
-							after which to re-enumerate running processes while displaying the
-							Show-InstallationWelcome prompt. Default is 2 seconds. </xs:documentation>
-					</xs:annotation>
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element type="xs:string" name="InstallationUI_LanguageOverride" />
-							<xs:element type="xs:boolean" name="ShowBalloonNotifications">
-								<xs:annotation>
-									<xs:documentation> Specify a static UI language using the one of
-										the Language Codes listed below to override the language
-										culture detected on the system. Language Code Language |
-										Language Code Language ============= ======== |
-										============= ======== EN English | DA Danish FR French | DE
-										German IT Italian | JA Japanese NL Dutch | NB Norwegian
-										(Bokmål) PL Polish | PT Portuguese (Portugal) ES Spanish |
-										PT-BR Portuguese (Brazil) SV Swedish | AR Arabic HE Hebrew |
-										ZH-Hans Chinese (Simplified) KO Korean | ZH-Hant Chinese
-										(Traditional) RU Russian | SK Slovak HU Hungarian | CZ Czech
-										FI Finnish | </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:short" name="InstallationUI_Timeout">
-								<xs:annotation>
-									<xs:documentation> [true/false] - Used to turn automatic balloon
-										notifications on or off. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:short" name="InstallationUI_ExitCode">
-								<xs:annotation>
-									<xs:documentation> Time in seconds to automatically timeout
-										installation dialogs. Default is 1 hour and 55 minutes so
-										that dialogs timeout before SCCM times out. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:int" name="InstallationDefer_ExitCode">
-								<xs:annotation>
-									<xs:documentation> Exit code used when a UI prompt times out or
-										the user opts to defer. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:short" name="InstallationPrompt_PersistInterval">
-								<xs:annotation>
-									<xs:documentation> Exit code used when a user opts to defer. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+							<xs:element type="xs:boolean" name="ShowBalloonNotifications" />
+							<xs:element type="xs:short" name="InstallationUI_Timeout" />
+							<xs:element type="xs:short" name="InstallationUI_ExitCode" />
+							<xs:element type="xs:int" name="InstallationDefer_ExitCode" />
+							<xs:element type="xs:short" name="InstallationPrompt_PersistInterval" />
 							<xs:element type="xs:short"
-								name="InstallationRestartPrompt_PersistInterval">
-								<xs:annotation>
-									<xs:documentation> Time in seconds after which the prompt should
-										be repositioned centre screen when the -PersistPrompt
-										parameter is used. Default is 60 seconds. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element type="xs:short" name="InstallationPromptToSave_Timeout">
-								<xs:annotation>
-									<xs:documentation> Time in seconds after which the restart
-										prompt should be re-displayed/repositioned when the
-										-NoCountdown parameter is specified. Default is 600 seconds. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
-							<xs:element
-								type="xs:boolean"
-								name="InstallationWelcomePrompt_DynamicRunningProcessEvaluation">
-								<xs:annotation>
-									<xs:documentation> Time in seconds after which to re-prompt the
-										user to close applications in case they ignore the prompt or
-										they cancel the application's save prompt. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+								name="InstallationRestartPrompt_PersistInterval" />
+							<xs:element type="xs:short" name="InstallationPromptToSave_Timeout" />
+							<xs:element type="xs:boolean"
+								name="InstallationWelcomePrompt_DynamicRunningProcessEvaluation" />
 							<xs:element type="xs:short"
-								name="InstallationWelcomePrompt_DynamicRunningProcessEvaluationInterval">
-								<xs:annotation>
-									<xs:documentation> [true/false] - Specify whether to
-										re-enumerate running processes dynamically while displaying
-										Show-InstallationWelcome. If the CloseApps processes were
-										not running when the prompt was displayed, and are
-										subsequently detected to be running, the prompt will be
-										updated with the apps to close. If the CloseApps processes
-										were running when the prompt was displayed and are
-										subsequently detected not to be running then the
-										installation will automatically continue if deferral is not
-										available. If the running applications change (new CloseApps
-										processes launched or running processes closed), the list
-										box will dynamically update to reflect the currently running
-										applications. </xs:documentation>
-								</xs:annotation>
-							</xs:element>
+								name="InstallationWelcomePrompt_DynamicRunningProcessEvaluationInterval" />
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
-				<xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
-				<!-- Validate when UI translations are complete
-				<xs:element type="UI_Messages_Type" name="UI_Messages_EN">
-					<xs:annotation>
-						<xs:documentation>UI Options UI Messages - English </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_DA">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Danish </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_FR">
-					<xs:annotation>
-						<xs:documentation> UI Messages - French </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_DE">
-					<xs:annotation>
-						<xs:documentation> UI Messages - German </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_IT">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Italian </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_JA">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Japanese </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_NB">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Norwegian (Bokmål) </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_NL">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Dutch </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_PL">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Polish </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_PT">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Portuguese (Portugal) </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_PT-BR">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Portuguese (Brazil) </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_ES">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Spanish </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_SV">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Swedish </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_AR">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Arabic </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_HE">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Hebrew </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_KO">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Korean </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_RU">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Russian </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_ZH-Hans">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Chinese (Simplified) </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_ZH-Hant">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Chinese (Traditional) </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_SK">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Slovak </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_CZ">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Czech </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_HU">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Hungarian</xs:documentation>
-					</xs:annotation>
-				</xs:element>
-				<xs:element type="UI_Messages_Type" name="UI_Messages_FI">
-					<xs:annotation>
-						<xs:documentation> UI Messages - Finnish </xs:documentation>
-					</xs:annotation>
-				</xs:element>
-			-->
+				<xs:element type="UI_Messages_Type" name="UI_Messages_EN" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_DA" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_FR" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_DE" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_IT" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_JA" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_NB" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_NL" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_PL" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_PT" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_PT-BR" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_ES" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_SV" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_AR" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_HE" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_KO" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_RU" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_ZH-Hans" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_ZH-Hant" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_SK" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_CZ" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_HU" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_FI" />
+				<xs:element type="UI_Messages_Type" name="UI_Messages_TR" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -566,189 +200,59 @@
 	<!-- Reoccuring types defined below -->
 	<xs:complexType name="UI_Messages_Type">
 		<xs:sequence>
-			<xs:element type="xs:string" name="DiskSpace_Message">
-				<xs:annotation>
-					<xs:documentation> Close Program Prompt Text </xs:documentation>
-				</xs:annotation>
-			</xs:element>
+			<xs:element type="xs:string" name="DiskSpace_Message" />
 			<xs:element type="xs:string" name="ClosePrompt_ButtonContinue" />
-			<xs:element type="xs:string" name="ClosePrompt_ButtonContinueTooltip">
-				<xs:annotation>
-					<xs:documentation> Text displayed on the continue button when prompting to close
-						running programs. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="ClosePrompt_ButtonClose">
-				<xs:annotation>
-					<xs:documentation> Tooltip text displayed on the continue button when prompting
-						to close running programs. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="ClosePrompt_ButtonDefer">
-				<xs:annotation>
-					<xs:documentation> Text displayed on the close button when prompting to close
-						running programs. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="ClosePrompt_Message">
-				<xs:annotation>
-					<xs:documentation> Text displayed on the defer button when prompting to close
-						running programs. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="ClosePrompt_CountdownMessage">
-				<xs:annotation>
-					<xs:documentation> Text displayed when prompting to close running programs. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeferPrompt_WelcomeMessage">
-				<xs:annotation>
-					<xs:documentation> Text displayed when counting down to automatically closing
-						applications. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeferPrompt_ExpiryMessage">
-				<xs:annotation>
-					<xs:documentation> Text displayed when only the deferral dialog is to be
-						displayed and there are no applications to close. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeferPrompt_WarningMessage">
-				<xs:annotation>
-					<xs:documentation> Text displayed when a deferral option is available. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeferPrompt_RemainingDeferrals">
-				<xs:annotation>
-					<xs:documentation> Text displayed after the deferral options. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeferPrompt_Deadline">
-				<xs:annotation>
-					<xs:documentation> Text displayed when there are a specific number of deferrals
-						remaining. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="WelcomePrompt_CountdownMessage">
-				<xs:annotation>
-					<xs:documentation> Text displayed when there is a specific deferral deadline. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="WelcomePrompt_CustomMessage">
-				<xs:annotation>
-					<xs:documentation> The countdown message displayed at the Welcome Screen to
-						indicate when the install will continue if no response from user. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeploymentType_Install">
-				<xs:annotation>
-					<xs:documentation> This is a custom message to display at the Welcome Screen
-						window. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeploymentType_InstallVerb" />
-			<xs:element type="xs:string" name="DeploymentType_UnInstall">
-				<xs:annotation>
-					<xs:documentation> Name displayed in UI for installation deployment type. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeploymentType_UnInstallVerb" />
-			<xs:element type="xs:string" name="DeploymentType_Repair">
-				<xs:annotation>
-					<xs:documentation> Name displayed in UI for repair deployment type. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="DeploymentType_RepairVerb" />
-			<xs:element type="xs:string" name="BalloonText_Start">
-				<xs:annotation>
-					<xs:documentation> Name displayed in UI for repair deployment type. Balloon Tip
-						Text </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="BalloonText_Complete">
-				<xs:annotation>
-					<xs:documentation> Text displayed in the balloon tip for the start of a
-						deployment type. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="BalloonText_RestartRequired">
-				<xs:annotation>
-					<xs:documentation> Text displayed in the balloon tip for successful completion
-						of a deployment type. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="BalloonText_Error">
-				<xs:annotation>
-					<xs:documentation> Text displayed in the balloon tip for successful completion
-						of a deployment type. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="BalloonText_FastRetry">
-				<xs:annotation>
-					<xs:documentation> Text displayed in the balloon tip for a failed deployment
-						type. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="Progress_MessageInstall">
-				<xs:annotation>
-					<xs:documentation> Text displayed in the balloon tip for fast retry of a
-						deployment </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="Progress_MessageUninstall">
-				<xs:annotation>
-					<xs:documentation> Default text displayed in the progress bar for installations. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="Progress_MessageRepair">
-				<xs:annotation>
-					<xs:documentation> Default text displayed in the progress bar for
-						uninstallations. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="BlockExecution_Message">
-				<xs:annotation>
-					<xs:documentation> Default text displayed in the progress bar for repairs. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="RestartPrompt_Title">
-				<xs:annotation>
-					<xs:documentation> Text displayed when prompting user that an application has
-						been blocked. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
-			<xs:element type="xs:string" name="RestartPrompt_Message">
-				<xs:annotation>
-					<xs:documentation> Text displayed in the title of the restart prompt which helps
-						the script identify whether there is already a restart prompt being
-						displayed and not to duplicate it. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
+			<xs:element type="xs:string" name="ClosePrompt_ButtonContinueTooltip" />
+			<xs:element type="xs:string" name="ClosePrompt_ButtonClose" />
+			<xs:element type="xs:string" name="ClosePrompt_ButtonDefer" />
+			<xs:element type="xs:string" name="ClosePrompt_Message" />
+			<xs:element type="xs:string" name="ClosePrompt_CountdownMessage" />
+			<xs:element type="xs:string" name="DeferPrompt_WelcomeMessage" />
+			<xs:element type="xs:string" name="DeferPrompt_ExpiryMessage" />
+			<xs:element type="xs:string" name="DeferPrompt_WarningMessage" />
+			<xs:element type="xs:string" name="DeferPrompt_RemainingDeferrals" />
+			<xs:element type="xs:string" name="DeferPrompt_Deadline" />
+			<xs:element type="xs:string" name="WelcomePrompt_CountdownMessage" />
+			<xs:element type="xs:string" name="WelcomePrompt_CustomMessage" />
+			<xs:element type="xs:string" name="DeploymentType_Install" />
+			<xs:element type="xs:string" name="DeploymentType_UnInstall" />
+			<xs:element type="xs:string" name="DeploymentType_Repair" />
+			<xs:element type="xs:string" name="BalloonText_Start" />
+			<xs:element type="xs:string" name="BalloonText_Complete" />
+			<xs:element type="xs:string" name="BalloonText_RestartRequired" />
+			<xs:element type="xs:string" name="BalloonText_Error" />
+			<xs:element type="xs:string" name="BalloonText_FastRetry" />
+			<xs:element type="xs:string" name="Progress_MessageInstall" />
+			<xs:element type="xs:string" name="Progress_MessageUninstall" />
+			<xs:element type="xs:string" name="Progress_MessageRepair" />
+			<xs:element type="xs:string" name="BlockExecution_Message" />
+			<xs:element type="xs:string" name="RestartPrompt_Title" />
+			<xs:element type="xs:string" name="RestartPrompt_Message" />
 			<xs:element type="xs:string" name="RestartPrompt_MessageTime" />
 			<xs:element type="xs:string" name="RestartPrompt_MessageRestart" />
-			<xs:element type="xs:string" name="RestartPrompt_TimeRemaining">
-				<xs:annotation>
-					<xs:documentation> Text displayed on the restart prompt. </xs:documentation>
-				</xs:annotation>
-			</xs:element>
+			<xs:element type="xs:string" name="RestartPrompt_TimeRemaining" />
 			<xs:element type="xs:string" name="RestartPrompt_ButtonRestartLater" />
 			<xs:element type="xs:string" name="RestartPrompt_ButtonRestartNow" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_FollowApplication" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationClose" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_SaveWorkWithoutCloseButton" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_SaveWork" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationName" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_StartedBy" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_ChooseDefer" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_RemainingDefferals" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_DeferalExpired" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Abort" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Continue" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseApplications" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_Close" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_Defer" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpCloseApplicationText" />
-			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpSureToCloseText" />
+			<!-- Neo custom text -->
+			<xs:element type="xs:string" name="DeploymentType_InstallVerb" minOccurs="0" />
+			<xs:element type="xs:string" name="DeploymentType_UnInstallVerb" minOccurs="0" />
+			<xs:element type="xs:string" name="DeploymentType_RepairVerb" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_FollowApplication" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationClose" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_SaveWorkWithoutCloseButton" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_SaveWork" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_ApplicationName" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_StartedBy" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_ChooseDefer" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_RemainingDeferrals" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_DeferralExpired" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Abort" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseWithoutSaving_Continue" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_CloseApplications" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_Close" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_Defer" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpCloseApplicationText" minOccurs="0" />
+			<xs:element type="xs:string" name="NxtWelcomePrompt_PopUpSureToCloseText" minOccurs="0" />
 		</xs:sequence>
 	</xs:complexType>
 
