@@ -786,7 +786,7 @@ function Block-NxtAppExecution {
 					New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\reg.exe" -Argument "DELETE `"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$processName`" /v Debugger /f"
 				}
 				## Remove the temp block exec folder
-				New-ScheduledTaskAction -Execute "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NonInteractive -NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`""
+				New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NonInteractive -NoProfile -Command `"Remove-Item -Recurse -Force -Path '$blockExecutionTempPath'`""
 				## Remove the scheduled task
 				New-ScheduledTaskAction -Execute "$env:SystemRoot\system32\schtasks.exe" -Argument "/delete /tn `"$schTaskBlockedAppsName`" /f"
 			)
@@ -1328,7 +1328,7 @@ function Complete-NxtPackageInstallation {
 			Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$oldAppFolder\"
 			Start-Sleep -Seconds 1
 			[hashtable]$executeProcessSplat = @{
-				Path = 'powershell.exe'
+				Path = "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"
 				Parameters = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$oldAppFolder\Clean-Neo42AppFolder.ps1`""
 				NoWait = $true
 				WorkingDirectory = $env:TEMP
@@ -12601,7 +12601,7 @@ function Unregister-NxtPackage {
 								Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$assignedPackageGUIDAppPath\"
 								Start-Sleep -Seconds 1
 								[hashtable]$executeProcessSplat = @{
-									Path = 'powershell.exe'
+									Path = "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"
 									Parameters = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$assignedPackageGUIDAppPath\Clean-Neo42AppFolder.ps1`""
 									NoWait = $true
 									WorkingDirectory = $env:TEMP
@@ -12651,7 +12651,7 @@ function Unregister-NxtPackage {
 						Copy-File -Path "$ScriptRoot\Clean-Neo42AppFolder.ps1" -Destination "$App\"
 						Start-Sleep -Seconds 1
 						[hashtable]$executeSplat = @{
-							Path = 'powershell.exe'
+							Path = "$env:Systemroot\System32\WindowsPowerShell\v1.0\powershell.exe"
 							Parameters = "-ExecutionPolicy $ExecutionPolicy -NonInteractive -File `"$App\Clean-Neo42AppFolder.ps1`""
 							NoWait = $true
 							WorkingDirectory = $env:TEMP
