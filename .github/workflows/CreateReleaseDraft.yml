@@ -111,7 +111,8 @@ jobs:
               const issueCount = (await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                milestone: '${{ steps.milestone.outputs.result }}'
+                milestone: '${{ steps.milestone.outputs.result }}',
+                state: 'all'
               })).data.length;
               const issueText = issueCount === 1 ? `${issueCount} issue` : `${issueCount} issues`;
               releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
