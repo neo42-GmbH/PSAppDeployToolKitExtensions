@@ -108,14 +108,15 @@ jobs:
             });
 
             if (!isPreRelease) {
-              const issueCount = (await github.rest.issues.listForRepo({
+              const { data: milestone } = await github.rest.issues.get({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                milestone: '${{ steps.milestone.outputs.result }}',
-                state: 'all'
-              })).data.length;
+                milestone_number: ${{ steps.milestone.outputs.result }}
+              });
+
+              const issueCount = milestone.closed_issues + milestone.open_issues;
               const issueText = issueCount === 1 ? `${issueCount} issue` : `${issueCount} issues`;
-              releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url}}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
+              releaseNoteHeader = `As part of this release we had [${issueText}](${milestone.html_url}?closed=1) closed.`;
             }
 
             const { data: releaseNotesGenerated } = await github.rest.repos.generateReleaseNotes({
