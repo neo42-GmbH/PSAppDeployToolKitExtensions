@@ -108,7 +108,7 @@ jobs:
             });
 
             if (!isPreRelease) {
-              const { data: milestone } = await github.rest.issues.get({
+              const { data: milestone } = await github.rest.issues.getMilestone({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 milestone_number: ${{ steps.milestone.outputs.result }}
