@@ -8024,7 +8024,7 @@ function Remove-NxtProductMember {
 					Write-Log -Message "Processing product member application package with 'PackageGUID' [$assignedPackageGUID]..." -Source ${CmdletName}
 					if ($false -eq ([string]::IsNullOrEmpty($assignedPackageUninstallString))) {
 						Write-Log -Message "Removing package with uninstall call: '$assignedPackageUninstallString -SkipUnregister'." -Source ${CmdletName}
-						cmd /c "$assignedPackageUninstallString -SkipUnregister"
+						&"$env:SystemRoot\System32\cmd.exe" /c "$assignedPackageUninstallString -SkipUnregister"
 						if ($LASTEXITCODE -ne 0) {
 							Write-Log -Message "Removal of found product member application package failed with return code '$LASTEXITCODE'." -Severity 3 -Source ${CmdletName}
 							throw "Removal of found product member application package failed."
@@ -8387,7 +8387,7 @@ function Resolve-NxtDependentPackage {
 						## Trigger uninstallstring, throw exception if uninstall fails.
 						[string]$dependentPackageUninstallString = $(Get-RegistryKey -Key "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$($dependentPackage.GUID)" -Value 'UninstallString')
 						Write-Log -Message "Removing dependent application package with uninstall call: '$dependentPackageUninstallString -SkipUnregister'." -Source ${CmdletName}
-						cmd /c "$dependentPackageUninstallString -SkipUnregister"
+						&"$env:SystemRoot\System32\cmd.exe" /c "$dependentPackageUninstallString -SkipUnregister"
 						if ($LASTEXITCODE -ne 0) {
 							Write-Log -Message "Removal of dependent application package failed with return code '$LASTEXITCODE'." -Severity 3 -Source ${CmdletName}
 							throw "Removal of dependent application package failed."
@@ -12081,7 +12081,7 @@ function Uninstall-NxtOld {
 										if ($true -eq $match.Success -and $true -eq (Test-Path -Path $match.Groups["SETUPEXE"].Value) -and $true -eq (Test-Path -Path $match.Groups["SETUPINF"].Value)) {
 											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
 											[string]$appEmpLogDate = $currentDateTime | Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
+											&"$env:SystemRoot\System32\cmd.exe" /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
 											$uninstallOldResult.ApplicationExitCode = $LastExitCode
 										}
 										else {
@@ -12162,7 +12162,7 @@ function Uninstall-NxtOld {
 										if ($true -eq $match.Success -and $true -eq (Test-Path -Path $match.Groups["SETUPEXE"].Value) -and $true -eq (Test-Path -Path $match.Groups["SETUPINF"].Value)) {
 											[string]$appEmpLogPath = Get-RegistryKey -Key "$($appEmpirumPackageVersion.name)\Setup" -Value 'AppPath'
 											[string]$appEmpLogDate = $currentDateTime | Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-											cmd /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
+											&"$env:SystemRoot\System32\cmd.exe" /c "$appEmpUninstallString /X8 /S0$appendAW /F /E+`"$appEmpLogPath\$appEmpLogDate.log`"" | Out-Null
 											$uninstallOldResult.ApplicationExitCode = $LastExitCode
 										}
 										else {
@@ -12248,7 +12248,7 @@ function Uninstall-NxtOld {
 				}
 				if ($false -eq [string]::IsNullOrEmpty($regPackageGUID)) {
 					Write-Log -Message "Parameter 'UninstallOld' is set to true and an old package version was found: Uninstalling old package with PackageGUID [$(Split-Path -Path `"$regPackageGUID`" -Leaf)]..." -Source ${cmdletName}
-					cmd /c (Get-RegistryKey -Key "$regPackageGUID" -Value 'UninstallString') | Out-Null
+					&"$env:SystemRoot\System32\cmd.exe" /c (Get-RegistryKey -Key "$regPackageGUID" -Value 'UninstallString') | Out-Null
 					$uninstallOldResult.ApplicationExitCode = $LastExitCode
 					if ($true -eq (Test-RegistryValue -Key "$regPackageGUID" -Value 'UninstallString')) {
 						$uninstallOldResult.MainExitCode = 70001
