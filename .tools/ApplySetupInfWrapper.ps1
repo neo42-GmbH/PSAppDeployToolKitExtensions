@@ -165,6 +165,14 @@ if ($unmatchedPlaceholders.Count -gt 0) {
 	exit 1
 }
 
+## Apply /AW switch to command line options, if user part is active and config version is high enough
+[version]$awMinVersion = '2024.11.13.1'
+[version]$jsonVersion = $jsonContent.ConfigVersion
+if ($jsonVersion -ge $awMinVersion -and $jsonContent.UserPartOnInstallation) {
+	Write-Output 'Apply /AW switch to command line options'
+	$textContent = $textContent -replace '(?mi)(^Command line options\s*=[^\r\n]*)', '$1 /AW'
+}
+
 # Write the new inf content to disk
 Write-Output 'Write the new inf content to disk'
 Set-Content -Path $infPath -Value $textContent -Encoding UTF8
