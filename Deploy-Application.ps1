@@ -221,7 +221,7 @@ Remove-Variable -Name 'tempLoadPackageConfig'
 ##* Do not modify section below =============================================================================================================================================
 #region DoNotModify
 ## Set the script execution policy for this process
-[xml]$tempLoadToolkitConfig = Get-Content -Raw -Path "$global:AppDeployToolkitConfigPath"
+[xml]$tempLoadToolkitConfig = Get-Content -Raw -Encoding 'UTF8' -Path "$global:AppDeployToolkitConfigPath"
 [string]$powerShellOptionsExecutionPolicy = $tempLoadToolkitConfig.AppDeployToolkit_Config.NxtPowerShell_Options.NxtPowerShell_ExecutionPolicy
 if (($true -eq [string]::IsNullOrEmpty($powerShellOptionsExecutionPolicy)) -or ([Enum]::GetNames([Microsoft.Powershell.ExecutionPolicy]) -notcontains $powerShellOptionsExecutionPolicy)) {
 	Write-Error -Message "Invalid value for 'Toolkit_ExecutionPolicy' property in 'AppDeployToolkitConfig.xml'."
