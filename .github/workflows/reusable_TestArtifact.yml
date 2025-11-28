@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    runs-on: PSAppDeployToolKitExtensions-Runner
+    runs-on: windows-latest
     steps:
     - name: download-artifact
       id: download-artifact-test
@@ -19,6 +19,12 @@ jobs:
         path: test
         sparse-checkout: .tests/*
         sparse-checkout-cone-mode: false
+
+    - name: install-powershell-modules
+      shell: powershell
+      run: |
+        Install-Module -Name Pester -Force -SkipPublisherCheck
+        Install-Module -Name PSScriptAnalyzer -Force
 
     - name: run-pester
       shell: powershell
