@@ -186,7 +186,7 @@ switch ($DeploymentType) {
 			[System.Diagnostics.Process]$process = Start-NxtProcess -FilePath "$PSScriptRoot\DeployNxtApplication.exe" -Arguments '-DeploymentType UninstallUserPart'
 		}
 		else {
-			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -File `"& { & '$($script:MyInvocation.MyCommand.Path)' -DeploymentType UninstallUserPart }`"" | Out-Null
+			Start-NxtProcess -FilePath "$env:windir\system32\WindowsPowerShell\v1.0\powershell.exe" -Arguments "-ExecutionPolicy $(Get-ExecutionPolicy -Scope Process) -WindowStyle Hidden -NonInteractive -NoProfile -Command `"& { & '$($script:MyInvocation.MyCommand.Path)' -DeploymentType UninstallUserPart }`"" | Out-Null
 		}
 		exit
 	}
