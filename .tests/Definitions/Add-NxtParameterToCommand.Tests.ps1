@@ -3,7 +3,7 @@ Describe "Add-NxtParameterToCommand" {
         It "Should add the parameter to the command" {
             $result = Add-NxtParameterToCommand -Command 'text.exe' -Name 'test' -Value 'value'
             $result | Should -BeOfType [System.String]
-            $result | Should -Be 'text.exe -test "value"'
+            $result | Should -Be "text.exe -test 'value'"
         }
         It "Should add a switch to the command" {
             Add-NxtParameterToCommand -Command 'text.exe' -Name 'test' -Switch $true | Should -Be 'text.exe -test'
