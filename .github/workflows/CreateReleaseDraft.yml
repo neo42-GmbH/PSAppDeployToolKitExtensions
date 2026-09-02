@@ -1,0 +1,193 @@
+﻿name: Release Draft
+
+on:
+  workflow_dispatch:
+    inputs:
+      PSADT_VERSION:
+        type: string
+
+jobs:
+  artifact:
+    uses: ./.github/workflows/CreateArtifact.yml
+    with:
+      PSADT_VERSION: ${{ inputs.PSADT_VERSION }}
+
+  release:
+    needs:
+      - artifact
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
+      id-token: write
+
+    steps:
+      - name: download-artifact
+        id: download-artifact-release
+        uses: actions/download-artifact@v8
+        with:
+          path: artifact
+
+      - name: checkout-samples
+        uses: actions/checkout@v7
+        with:
+          path: ./Source
+          sparse-checkout: samples
+
+      - name: install-sign-tool
+        run: dotnet tool install --global azuresigntool
+
+      - name: azure-login
+        uses: azure/login@v3
+        with:
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+
+      - name: sign-files
+        uses: azure/powershell@v3
+        with:
+          azPSVersion: latest
+          inlineScript: |
+            $args = @(
+              'sign',
+              '--skip-signed',
+              '--azure-key-vault-managed-identity',
+              '--azure-key-vault-url', '${{ secrets.AZURE_KEY_VAULT }}',
+              '--azure-key-vault-certificate', '${{ secrets.AZURE_CERTIFICATE_NAME }}',
+              '--timestamp-rfc3161', 'http://timestamp.digicert.com',
+              '--timestamp-digest', 'SHA256'
+            ) + @(
+              '${{ steps.download-artifact-release.outputs.download-path }}/DeployNxtApplication.exe'
+            ) + @(
+              Get-ChildItem -Recurse -Path '${{ steps.download-artifact-release.outputs.download-path }}/PSAppDeployToolkit.Neo42.*' -Include '*.exe', '*.dll', '*.ps1', '*.psd1', '*.psm1', '*.ps1xml'
+            ).FullName
+
+            Start-Process -Wait -NoNewWindow -FilePath 'AzureSignTool.exe' -ArgumentList $args
+
+      - name: generate-artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "${{ github.workspace }}/components" -Force | Out-Null
+
+          Compress-Archive -Path "./Source/samples/" -DestinationPath "${{ github.workspace }}/components/Samples.zip"
+
+          Get-Item -Path "${{ steps.download-artifact-release.outputs.download-path }}/*" -Include 'PSAppDeployToolkit.Neo42.*' | ForEach-Object {
+            Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
+          }
+
+          Get-Item -Path "${{ steps.download-artifact-release.outputs.download-path }}/*" -Exclude "PSAppDeployToolkit.Neo42.Extensions.*" | ForEach-Object {
+            Compress-Archive -Update -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/Template.zip"
+          }
+
+      - name: update-milestones
+        if: ${{ needs.artifact.outputs.ARTIFACT_BRANCH == 'production' }}
+        uses: actions/github-script@v9
+        id: milestone
+        with:
+          result-encoding: string
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: milestones } = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+
+            // Update the milestone for the current release. Note: The description will be part of the release notes.
+            const milestone = milestones.find(m => m.title === 'Next');
+            if (milestone) {
+              await github.rest.issues.updateMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                milestone_number: milestone.number,
+                title: '${{ needs.artifact.outputs.ARTIFACT_VERSION }}',
+                description: 'Release version ${{ needs.artifact.outputs.ARTIFACT_VERSION }} built from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})',
+                due_on: new Date().toISOString(),
+                state: 'closed'
+              });
+            }
+            else {
+              throw new Error('Milestone not found');
+            }
+
+            // Create a new milestone for the next release
+            await github.rest.issues.createMilestone({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Next',
+              description: 'The next release',
+            });
+
+            return milestone.number;
+
+      - name: create-release-draft
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            var releaseNoteHeader = "# 🚨 Important 🚨 #\nReleases like this are not intended for production use. Please refer to the [latest stable](${{ github.server_url }}/${{ github.repository }}/releases/latest) release for more information."
+            const fs = require('fs');
+            const path = require('path');
+            const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
+            const componentPath = path.join(process.env.GITHUB_WORKSPACE, 'components');
+
+            if (!isPreRelease) {
+              const issueCount = (
+                await github.rest.issues.listForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  milestone: '${{ steps.milestone.outputs.result }}',
+                  state: 'all'
+                })
+              ).data.length
+              const issueText = issueCount === 1 ? `$ { issueCount } issue` : `$ { issueCount } issues`;
+              releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url }}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
+            }
+
+            const generateReleaseNotesParameters = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
+              target_commitish: '${{ github.sha }}'
+            }
+
+            try {
+              const response = await github.rest.repos.getLatestRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              })
+              generateReleaseNotesParameters.previous_tag_name = response.data.tag_name
+            } catch (error) {
+              if (error.status === 404) {
+                console.log('No previous release found. Generating release notes without previous_tag_name.')
+              } else {
+                throw error
+              }
+            }
+
+            const { data: releaseNotesGenerated } = await github.rest.repos.generateReleaseNotes(generateReleaseNotesParameters)
+
+            const { data: newRelease } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
+              name: '${{ needs.artifact.outputs.ARTIFACT_TAG }}',
+              target_commitish: '${{ github.sha }}',
+              draft: true,
+              prerelease: isPreRelease,
+              generate_release_notes: false,
+              body: `${releaseNoteHeader}\n\n${releaseNotesGenerated.body}`
+            })
+
+            for (const component of fs.readdirSync(componentPath)) {
+              console.log(`Uploading ${component} to release`)
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: newRelease.id,
+                name: component,
+                data: fs.readFileSync(path.join(componentPath, component))
+              })
+            }

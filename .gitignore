@@ -1,0 +1,14 @@
+# Folders
+/build/
+
+# Folder patterns
+/src/solutions/**/bin/
+/src/solutions/**/obj/
+
+# File patterns
+.vs/slnx.sqlite
+*.pdb
+*.exe.config
+*.dll.config
+*.exe
+*.msi

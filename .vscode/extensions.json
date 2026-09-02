@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "ms-vscode.PowerShell",
+        "ms-dotnettools.csharp",
+		"EditorConfig.EditorConfig"
+    ]
+}

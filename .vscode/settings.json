@@ -1,0 +1,76 @@
+{
+	"editor.detectIndentation": true,
+	"editor.formatOnPaste": true,
+	"editor.insertSpaces": false,
+	"editor.renderWhitespace": "boundary",
+	"editor.tabSize": 4,
+
+	"files.autoGuessEncoding": true,
+	"files.encoding": "utf8bom",
+	"files.insertFinalNewline": true,
+	"files.trimTrailingWhitespace": true,
+	"files.defaultLanguage": "powershell",
+	"files.eol": "\r\n",
+	"files.associations": {
+		"*.ps1xml": "xml"
+	},
+
+	"powershell.codeFormatting.addWhitespaceAroundPipe": true,
+	"powershell.codeFormatting.alignPropertyValuePairs": true,
+	"powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
+	"powershell.codeFormatting.ignoreOneLineBlock": true,
+	"powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
+	"powershell.codeFormatting.autoCorrectAliases": true,
+	"powershell.codeFormatting.trimWhitespaceAroundPipe": true,
+	"powershell.codeFormatting.useConstantStrings": true,
+	"powershell.codeFormatting.useCorrectCasing": true,
+	"powershell.codeFormatting.whitespaceAfterSeparator": true,
+	"powershell.codeFormatting.whitespaceAroundOperator": true,
+	"powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
+	"powershell.codeFormatting.whitespaceBeforeOpenParen": true,
+	"powershell.codeFormatting.whitespaceBetweenParameters": true,
+	"powershell.codeFormatting.whitespaceInsideBrace": true,
+	"powershell.codeFormatting.openBraceOnSameLine": true,
+	"powershell.codeFormatting.newLineAfterOpenBrace": true,
+	"powershell.codeFormatting.newLineAfterCloseBrace": true,
+	"powershell.powerShellDefaultVersion": "Windows PowerShell (x64)",
+	"powershell.helpCompletion": "BlockComment",
+	"powershell.debugging.createTemporaryIntegratedConsole": true,
+	"powershell.pester.codeLens": true,
+	"powershell.pester.outputVerbosity": "Detailed",
+	"powershell.scriptAnalysis.enable": true,
+	"powershell.scriptAnalysis.settingsPath": "./.vscode/PSScriptAnalyzerSettings.psd1",
+	"powershell.analyzeOpenDocumentsOnly": true,
+
+	"xml.format.maxLineWidth": 0,
+	"xml.validation.enabled": true,
+	"xml.validation.schema.enabled": "always",
+	"xml.validation.resolveExternalEntities": true,
+
+	"dotnet.defaultSolution": "./src/solutions/PSAppDeployToolkit.Neo42.Extensions.sln",
+	"dotnet.typeMembers.propertyGenerationBehavior": "preferAutoProperties",
+	"dotnet.formatting.organizeImportsOnFormat": true,
+
+	"markdown.validate.enabled": true,
+
+	"workbench.editorAssociations": {
+		"PSAppDeployToolkit.*.md": "vscode.markdown.editor"
+	},
+
+	"json.validate.enable": true,
+	"json.schemas": [
+		{
+			"fileMatch": [
+				"neo42PackageConfig*.json"
+			],
+			"url": "./tests/schemas/json/neo42LegacyPackageConfig.schema.json"
+		}
+	],
+
+	"github.copilot.chat.codeGeneration.useInstructionFiles": true,
+	"github.copilot.chat.localeOverride": "en",
+
+	"task.quickOpen.showAll": false,
+	"task.autoDetect": "off",
+	"task.saveBeforeRun": "always"
+}

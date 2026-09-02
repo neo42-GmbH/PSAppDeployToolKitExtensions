@@ -1,0 +1,32 @@
+﻿namespace PSADTNXT.Deployment
+{
+	public enum DeploymentHookPoint
+	{
+		CustomBegin,
+		CustomInstallAndReinstallAndSoftMigrationBegin,
+		CustomSoftMigrationBegin,
+		CustomInstallAndReinstallAndSoftMigrationEnd,
+		CustomInstallAndReinstallPreInstallAndReinstall,
+		CustomReinstallPreUninstall,
+		CustomReinstallPostUninstallOnError,
+		CustomReinstallPostUninstall,
+		CustomReinstallPreInstall,
+		CustomReinstallPostInstallOnError,
+		CustomReinstallPostInstall,
+		CustomUpgradePostUninstallOnError,
+		CustomUpgradePostInstallOnError,
+		CustomInstallBegin,
+		CustomInstallEndOnError,
+		CustomInstallEnd,
+		CustomInstallAndReinstallEnd,
+		CustomUninstallBegin,
+		CustomUninstallEndOnError,
+		CustomUninstallEnd,
+		CustomInstallUserPartBegin,
+		CustomInstallUserPartEnd,
+		CustomUninstallUserPartBegin,
+		CustomUninstallUserPartEnd,
+		CustomEnd,
+		CustomEndOnError
+	}
+}

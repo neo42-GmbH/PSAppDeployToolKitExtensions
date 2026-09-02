@@ -1,0 +1,316 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" revision="1.0" schemaVersion="1.0" xmlns="http://www.microsoft.com/GroupPolicy/PolicyDefinitions">
+	<policyNamespaces>
+		<target prefix="Neo42.Extensions" namespace="PSAppDeployToolkit.Neo42.Extensions" />
+		<using prefix="PSAppDeployToolkit" namespace="PSAppDeployToolkit" />
+	</policyNamespaces>
+	<resources minRequiredRevision="1.0" />
+	<supportedOn>
+		<definitions>
+			<definition name="SUPPORTED_Windows_10_0_RS1" displayName="$(string.SUPPORTED_Windows_10_0_RS1_Definition)" />
+		</definitions>
+	</supportedOn>
+	<categories>
+		<category name="NXT" displayName="$(string.Nxt_Category)">
+			<parentCategory ref="PSAppDeployToolkit:PSAppDeployToolkit" />
+		</category>
+
+		<category name="NxtPowerShell" displayName="$(string.NxtPowerShell_Category)">
+			<parentCategory ref="NXT" />
+		</category>
+		<category name="NxtToolkit" displayName="$(string.NxtToolkit_Category)">
+			<parentCategory ref="NXT" />
+		</category>
+		<category name="NxtUi" displayName="$(string.NxtUi_Category)">
+			<parentCategory ref="NXT" />
+		</category>
+		<category name="NxtDeployment" displayName="$(string.NxtDeployment_Category)">
+			<parentCategory ref="NXT" />
+		</category>
+		<category name="NxtSetupCfg" displayName="$(string.NxtSetupCfg_Category)">
+			<parentCategory ref="NXT" />
+		</category>
+
+		<category name="NxtDeploymentInnoSetup" displayName="$(string.NxtDeploymentInnoSetup_Category)">
+			<parentCategory ref="NxtDeployment" />
+		</category>
+		<category name="NxtDeploymentNullsoft" displayName="$(string.NxtDeploymentNullsoft_Category)">
+			<parentCategory ref="NxtDeployment" />
+		</category>
+		<category name="NxtDeploymentBitRockInstaller" displayName="$(string.NxtDeploymentBitRockInstaller_Category)">
+			<parentCategory ref="NxtDeployment" />
+		</category>
+		<category name="NxtDeploymentBurn" displayName="$(string.NxtDeploymentBurn_Category)">
+			<parentCategory ref="NxtDeployment" />
+		</category>
+		<category name="NxtDeploymentAppx" displayName="$(string.NxtDeploymentAppx_Category)">
+			<parentCategory ref="NxtDeployment" />
+		</category>
+	</categories>
+	<policies>
+		<policy name="NxtPowerShellExecutionPolicy" class="Machine" displayName="$(string.NxtPowerShellExecutionPolicy_Display)" explainText="$(string.NxtPowerShellExecutionPolicy_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\PowerShell" presentation="$(presentation.NxtPowerShellExecutionPolicy)">
+			<parentCategory ref="NxtPowerShell" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<enum id="ExecutionPolicy" valueName="ExecutionPolicy">
+					<item displayName="$(string.NxtPowerShellExecutionPolicy_0)"><value><string>Bypass</string></value></item>
+					<item displayName="$(string.NxtPowerShellExecutionPolicy_1)"><value><string>RemoteSigned</string></value></item>
+					<item displayName="$(string.NxtPowerShellExecutionPolicy_2)"><value><string>AllSigned</string></value></item>
+				</enum>
+			</elements>
+		</policy>
+		<policy name="NxtPowerShellErrorActionPreference" class="Machine" displayName="$(string.NxtPowerShellErrorActionPreference_Display)" explainText="$(string.NxtPowerShellErrorActionPreference_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\PowerShell" presentation="$(presentation.NxtPowerShellErrorActionPreference)">
+			<parentCategory ref="NxtPowerShell" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<enum id="ErrorActionPreference" valueName="ErrorActionPreference">
+					<item displayName="$(string.NxtPowerShellActionPreference_0)">
+						<value>
+							<string>SilentlyContinue</string>
+						</value>
+					</item>
+					<item displayName="$(string.NxtPowerShellActionPreference_1)">
+						<value>
+							<string>Stop</string>
+						</value>
+					</item>
+					<item displayName="$(string.NxtPowerShellActionPreference_2)">
+						<value>
+							<string>Continue</string>
+						</value>
+					</item>
+				</enum>
+			</elements>
+		</policy>
+		<policy name="NxtPowerShellVerboseActionPreference" class="Machine" displayName="$(string.NxtPowerShellVerboseActionPreference_Display)" explainText="$(string.NxtPowerShellVerboseActionPreference_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\PowerShell" presentation="$(presentation.NxtPowerShellVerboseActionPreference)">
+			<parentCategory ref="NxtPowerShell" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<enum id="VerboseActionPreference" valueName="VerboseActionPreference">
+					<item displayName="$(string.NxtPowerShellActionPreference_0)">
+						<value>
+							<string>SilentlyContinue</string>
+						</value>
+					</item>
+					<item displayName="$(string.NxtPowerShellActionPreference_1)">
+						<value>
+							<string>Stop</string>
+						</value>
+					</item>
+					<item displayName="$(string.NxtPowerShellActionPreference_2)">
+						<value>
+							<string>Continue</string>
+						</value>
+					</item>
+				</enum>
+			</elements>
+		</policy>
+		<policy name="NxtPowerShellProgressActionPreference" class="Machine" displayName="$(string.NxtPowerShellProgressActionPreference_Display)" explainText="$(string.NxtPowerShellProgressActionPreference_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\PowerShell" presentation="$(presentation.NxtPowerShellProgressActionPreference)">
+			<parentCategory ref="NxtPowerShell" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<enum id="ProgressActionPreference" valueName="ProgressActionPreference">
+					<item displayName="$(string.NxtPowerShellActionPreference_0)">
+						<value>
+							<string>SilentlyContinue</string>
+						</value>
+					</item>
+					<item displayName="$(string.NxtPowerShellActionPreference_1)">
+						<value>
+							<string>Stop</string>
+						</value>
+					</item>
+					<item displayName="$(string.NxtPowerShellActionPreference_2)">
+						<value>
+							<string>Continue</string>
+						</value>
+					</item>
+				</enum>
+			</elements>
+		</policy>
+		<policy name="NxtPowerShellOutputEncoding" class="Machine" displayName="$(string.NxtPowerShellOutputEncoding_Display)" explainText="$(string.NxtPowerShellOutputEncoding_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\PowerShell" presentation="$(presentation.NxtPowerShellOutputEncoding)">
+			<parentCategory ref="NxtPowerShell" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="OutputEncoding" valueName="OutputEncoding" required="true" />
+			</elements>
+		</policy>
+		<policy name="NxtPowerShellStrictModeVersion" class="Machine" displayName="$(string.NxtPowerShellStrictModeVersion_Display)" explainText="$(string.NxtPowerShellStrictModeVersion_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\PowerShell" presentation="$(presentation.NxtPowerShellStrictModeVersion)">
+			<parentCategory ref="NxtPowerShell" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="StrictModeVersion" valueName="StrictModeVersion" maxLength="3" required="true"/>
+			</elements>
+		</policy>
+
+		<policy name="NxtToolkitSupportLegacyConfig" class="Machine" displayName="$(string.NxtToolkitSupportLegacyConfig_Display)" explainText="$(string.NxtToolkitSupportLegacyConfig_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Toolkit" valueName="SupportLegacyConfig">
+			<parentCategory ref="NxtToolkit" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<enabledValue>
+				<string>True</string>
+			</enabledValue>
+			<disabledValue>
+				<delete />
+			</disabledValue>
+		</policy>
+		<policy name="NxtToolkitBlockExecution" class="Machine" displayName="$(string.NxtToolkitBlockExecution_Display)" explainText="$(string.NxtToolkitBlockExecution_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Toolkit" valueName="BlockExecution">
+			<parentCategory ref="NxtToolkit" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<enabledValue>
+				<string>True</string>
+			</enabledValue>
+			<disabledValue>
+				<delete />
+			</disabledValue>
+		</policy>
+		<policy name="NxtToolkitAppendVersionToPackageName" class="Machine" displayName="$(string.NxtToolkitAppendVersionToPackageName_Display)" explainText="$(string.NxtToolkitAppendVersionToPackageName_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Toolkit" valueName="AppendVersionToPackageName">
+			<parentCategory ref="NxtToolkit" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<enabledValue>
+				<string>True</string>
+			</enabledValue>
+			<disabledValue>
+				<delete />
+			</disabledValue>
+		</policy>
+		<policy name="NxtToolkitUserPartOnTerminalServer" class="Machine" displayName="$(string.NxtToolkitUserPartOnTerminalServer_Display)" explainText="$(string.NxtToolkitUserPartOnTerminalServer_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Toolkit" valueName="UserPartOnTerminalServer">
+			<parentCategory ref="NxtToolkit" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<enabledValue>
+				<string>True</string>
+			</enabledValue>
+			<disabledValue>
+				<delete />
+			</disabledValue>
+		</policy>
+
+		<policy name="NxtUiUseLegacyUi" class="Machine" displayName="$(string.NxtUiUseLegacyUi_Display)" explainText="$(string.NxtUiUseLegacyUi_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Ui" valueName="UseLegacyUi">
+			<parentCategory ref="NxtUi" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<enabledValue>
+				<string>True</string>
+			</enabledValue>
+			<disabledValue>
+				<delete />
+			</disabledValue>
+		</policy>
+
+		<policy name="NxtDeploymentInnoSetupInstallParams" class="Machine" displayName="$(string.NxtDeploymentInstallParams_Display)" explainText="$(string.NxtDeploymentInstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\InnoSetup" presentation="$(presentation.NxtDeploymentInnoSetupInstallParams)">
+			<parentCategory ref="NxtDeploymentInnoSetup" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="InstallParams" valueName="InstallParams"/>
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentInnoSetupSilentParams" class="Machine" displayName="$(string.NxtDeploymentSilentParams_Display)" explainText="$(string.NxtDeploymentSilentParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\InnoSetup" presentation="$(presentation.NxtDeploymentInnoSetupSilentParams)">
+			<parentCategory ref="NxtDeploymentInnoSetup" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="SilentParams" valueName="SilentParams"/>
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentInnoSetupUninstallParams" class="Machine" displayName="$(string.NxtDeploymentUninstallParams_Display)" explainText="$(string.NxtDeploymentUninstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\InnoSetup" presentation="$(presentation.NxtDeploymentInnoSetupUninstallParams)">
+			<parentCategory ref="NxtDeploymentInnoSetup" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="UninstallParams" valueName="UninstallParams"/>
+			</elements>
+		</policy>
+
+		<policy name="NxtDeploymentNullsoftInstallParams" class="Machine" displayName="$(string.NxtDeploymentInstallParams_Display)" explainText="$(string.NxtDeploymentInstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Nullsoft" presentation="$(presentation.NxtDeploymentNullsoftInstallParams)">
+			<parentCategory ref="NxtDeploymentNullsoft" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="InstallParams" valueName="InstallParams"/>
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentNullsoftSilentParams" class="Machine" displayName="$(string.NxtDeploymentSilentParams_Display)" explainText="$(string.NxtDeploymentSilentParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Nullsoft" presentation="$(presentation.NxtDeploymentNullsoftSilentParams)">
+			<parentCategory ref="NxtDeploymentNullsoft" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="SilentParams" valueName="SilentParams"/>
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentNullsoftUninstallParams" class="Machine" displayName="$(string.NxtDeploymentUninstallParams_Display)" explainText="$(string.NxtDeploymentUninstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Nullsoft" presentation="$(presentation.NxtDeploymentNullsoftUninstallParams)">
+			<parentCategory ref="NxtDeploymentNullsoft" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="UninstallParams" valueName="UninstallParams"/>
+			</elements>
+		</policy>
+
+		<policy name="NxtDeploymentBitRockInstallerInstallParams" class="Machine" displayName="$(string.NxtDeploymentInstallParams_Display)" explainText="$(string.NxtDeploymentInstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\BitRockInstaller" presentation="$(presentation.NxtDeploymentBitRockInstallerInstallParams)">
+			<parentCategory ref="NxtDeploymentBitRockInstaller" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="InstallParams" valueName="InstallParams"/>
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentBitRockInstallerSilentParams" class="Machine" displayName="$(string.NxtDeploymentSilentParams_Display)" explainText="$(string.NxtDeploymentSilentParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\BitRockInstaller" presentation="$(presentation.NxtDeploymentBitRockInstallerSilentParams)">
+			<parentCategory ref="NxtDeploymentBitRockInstaller" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="SilentParams" valueName="SilentParams"/>
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentBitRockInstallerUninstallParams" class="Machine" displayName="$(string.NxtDeploymentUninstallParams_Display)" explainText="$(string.NxtDeploymentUninstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\BitRockInstaller" presentation="$(presentation.NxtDeploymentBitRockInstallerUninstallParams)">
+			<parentCategory ref="NxtDeploymentBitRockInstaller" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="UninstallParams" valueName="UninstallParams"/>
+			</elements>
+		</policy>
+
+		<policy name="NxtDeploymentBurnInstallParams" class="Machine" displayName="$(string.NxtDeploymentInstallParams_Display)" explainText="$(string.NxtDeploymentInstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Burn" presentation="$(presentation.NxtDeploymentBurnInstallParams)">
+			<parentCategory ref="NxtDeploymentBurn" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="InstallParams" valueName="InstallParams" />
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentBurnSilentParams" class="Machine" displayName="$(string.NxtDeploymentSilentParams_Display)" explainText="$(string.NxtDeploymentSilentParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Burn" presentation="$(presentation.NxtDeploymentBurnSilentParams)">
+			<parentCategory ref="NxtDeploymentBurn" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="SilentParams" valueName="SilentParams" />
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentBurnUninstallParams" class="Machine" displayName="$(string.NxtDeploymentUninstallParams_Display)" explainText="$(string.NxtDeploymentUninstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Burn" presentation="$(presentation.NxtDeploymentBurnUninstallParams)">
+			<parentCategory ref="NxtDeploymentBurn" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="UninstallParams" valueName="UninstallParams" />
+			</elements>
+		</policy>
+
+		<policy name="NxtDeploymentAppxInstallParams" class="Machine" displayName="$(string.NxtDeploymentInstallParams_Display)" explainText="$(string.NxtDeploymentInstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Appx" presentation="$(presentation.NxtDeploymentAppxInstallParams)">
+			<parentCategory ref="NxtDeploymentAppx" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="InstallParams" valueName="InstallParams" />
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentAppxSilentParams" class="Machine" displayName="$(string.NxtDeploymentSilentParams_Display)" explainText="$(string.NxtDeploymentSilentParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Appx" presentation="$(presentation.NxtDeploymentAppxSilentParams)">
+			<parentCategory ref="NxtDeploymentAppx" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="SilentParams" valueName="SilentParams" />
+			</elements>
+		</policy>
+		<policy name="NxtDeploymentAppxUninstallParams" class="Machine" displayName="$(string.NxtDeploymentUninstallParams_Display)" explainText="$(string.NxtDeploymentUninstallParams_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\Deployment\Appx" presentation="$(presentation.NxtDeploymentAppxUninstallParams)">
+			<parentCategory ref="NxtDeploymentAppx" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<text id="UninstallParams" valueName="UninstallParams" />
+			</elements>
+		</policy>
+
+		<policy name="NxtSetupCfgOverrideValues" class="Machine" displayName="$(string.NxtSetupCfgOverrideValues_Display)" explainText="$(string.NxtSetupCfgOverrideValues_Explain)" key="SOFTWARE\Policies\PSAppDeployToolkit\Config\NXT\SetupCfg\Overrides" presentation="$(presentation.NxtSetupCfgOverrideValues)">
+			<parentCategory ref="NxtSetupCfg" />
+			<supportedOn ref="SUPPORTED_Windows_10_0_RS1" />
+			<elements>
+				<list id="Overrides" />
+			</elements>
+		</policy>
+	</policies>
+</policyDefinitions>

@@ -1,0 +1,283 @@
+// Portions of this file were generated using New-VSCodeTask.ps1
+// Modify the build script or tasks-merge.json and recreate.
+// https://code.visualstudio.com/docs/editor/tasks
+// Available variables which can be used inside of strings.
+// https://code.visualstudio.com/docs/editor/variables-reference#_predefined-variables
+// ${workspaceFolder}: path of the folder opened in VS Code
+// ${workspaceFolderBasename} - name of the folder opened in VS Code without any slashes (/)
+// ${file}: current opened file
+// ${fileWorkspaceFolder} - current opened file's workspace folder
+// ${relativeFile}: the current opened file relative to workspaceFolder
+// ${relativeFileDirname}: current opened file's dirname relative to workspaceFolder
+// ${fileBasename}: current opened file's basename
+// ${fileBasenameNoExtension} - current opened file's basename with no file extension
+// ${fileDirname}: current opened file's dirname
+// ${fileExtname}: current opened file's extension
+// ${cwd}: the current working directory of the spawned process
+// ${lineNumber} - current selected line number in the active file
+// ${selectedText} - current selected text in the active file
+// ${execPath} - path to the running VS Code executable
+// ${defaultBuildTask} - name of the default build task
+// ${pathSeparator} or ${/} - character used by the operating system to separate components in file paths
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Export Module",
+			"hide": true,
+			"type": "shell",
+			"command": "${workspaceFolder}${/}Export-Module.ps1 -Source (gci -Path '${workspaceFolder}${/}src${/}modules' -Directory)",
+			"group": "build",
+			"promptOnClose": false,
+			"presentation": {
+				"panel": "dedicated",
+				"focus": false,
+				"reveal": "silent",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"options": {
+				"shell": {
+					"executable": "powershell.exe"
+				}
+			}
+		},
+		{
+			"label": "Generate Documentation",
+			"type": "shell",
+			"hide": true,
+			"command": ". '${workspaceFolder}${/}Export-ModuleHelp.ps1'",
+			"group": "build",
+			"promptOnClose": false,
+			"presentation": {
+				"panel": "dedicated",
+				"focus": false,
+				"reveal": "silent",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"dependsOn": [
+				"Quick Build Project"
+			],
+			"options": {
+				"shell": {
+					"executable": "powershell.exe"
+				}
+			}
+		},
+		{
+			"label": "Compile Library",
+			"type": "shell",
+			"hide": true,
+			"command": "${workspaceFolder}/Invoke-Compile.ps1",
+			"group": "build",
+			"promptOnClose": false,
+			"presentation": {
+				"echo": true,
+				"reveal": "never",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"dependsOn": [
+				"Download Modules"
+			]
+		},
+		{
+			"label": "Pester Test Function",
+			"type": "shell",
+			"command": "Invoke-Pester -Configuration @{Run=@{Path='${workspaceFolder}${/}tests${/}pester${/}function-tests${/}${fileBasenameNoExtension}.Tests.ps1'.Replace('.Tests.Tests.ps1','.Tests.ps1');Throw=$true};Output=@{Verbosity='Diagnostic';StackTraceVerbosity='FirstLine'}}",
+			"group": "test",
+			"promptOnClose": false,
+			"dependsOn": [
+				"Quick Build Project"
+			],
+			"problemMatcher": [
+				"$pester"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"options": {
+				"shell": {
+					"executable": "powershell.exe"
+				}
+			}
+		},
+		{
+			"label": "Pester Test Project",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"promptOnClose": false,
+			"dependsOn": [
+				"Pester Test Project (Desktop)",
+				"Pester Test Project (Core)"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "never",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true
+			}
+		},
+		{
+			"label": "Pester Test Project (Desktop)",
+			"type": "shell",
+			"command": "${workspaceFolder}${/}Invoke-PesterTests.ps1",
+			"group": "test",
+			"promptOnClose": false,
+			"hide": true,
+			"dependsOn": [
+				"Quick Build Project"
+			],
+			"problemMatcher": [
+				"$pester"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"group": "PesterProject"
+			},
+			"options": {
+				"shell": {
+					"executable": "powershell.exe"
+				}
+			}
+		},
+		{
+			"label": "Pester Test Project (Core)",
+			"type": "shell",
+			"command": "${workspaceFolder}${/}Invoke-PesterTests.ps1",
+			"group": "test",
+			"promptOnClose": false,
+			"hide": true,
+			"dependsOn": [
+				"Quick Build Project",
+			],
+			"problemMatcher": [
+				"$pester"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"group": "PesterProject"
+			},
+			"options": {
+				"shell": {
+					"executable": "pwsh.exe",
+					"args": ["-NoLogo", "-NoProfile", "-Command"]
+				}
+			}
+		},
+		{
+			"label": "Build Project",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"dependsOn": [
+				"Quick Build Project",
+				"Generate Documentation"
+			]
+		},
+		{
+			"label": "Quick Build Project",
+			"group": "build",
+			"presentation": {
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"dependsOn": [
+				"Export Module",
+				"Compile Library"
+			],
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
+		},
+		{
+			"label": "Update Package",
+			"type": "shell",
+			"command": ". '${workspaceFolder}${/}Update-Package.ps1' -Out '${input:PackageUpdateOutputPath}' -Reference '${workspaceFolder}${/}build'",
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"options": {
+				"shell": {
+					"executable": "powershell.exe",
+					"args": [
+						"-NonInteractive",
+						"-NoLogo",
+						"-NoProfile",
+						"-Command"
+					]
+				}
+			}
+		},
+		{
+			"label": "Download Modules",
+			"type": "shell",
+			"command": ". '${workspaceFolder}${/}Install-RequiredModule.ps1'",
+			"group": "build",
+			"hide": true,
+			"presentation": {
+				"reveal": "silent",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"runOptions": {
+				"instanceLimit": 1
+			}
+		}
+	],
+	"inputs": [
+		{
+			"type": "promptString",
+			"id": "PackageUpdateOutputPath",
+			"default": "${workspaceFolder}\\.output",
+			"description": "The destination path for updated packages."
+		}
+	]
+}

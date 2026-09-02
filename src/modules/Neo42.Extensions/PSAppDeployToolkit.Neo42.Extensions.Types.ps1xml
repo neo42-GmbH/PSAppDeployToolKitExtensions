@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- *******************************************************************
+This file is part of the PowerShell App Deployment Toolkit Neo42 Extensions module.
+It is used to define custom types and their members for PowerShell objects.
+******************************************************************** -->
+<Types xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/PowerShell/PowerShell/refs/heads/master/src/Schemas/Types.xsd">
+	<Type>
+		<Name>System.Diagnostics.Process</Name>
+		<Members>
+			<ScriptMethod>
+				<Name>GetParent</Name>
+				<Script>
+					try { [PSADT.ProcessManagement.ProcessUtilities]::GetParentProcess($this) } catch { $null }
+				</Script>
+			</ScriptMethod>
+			<ScriptMethod>
+				<Name>GetChildren</Name>
+				<Script>
+					[PSADTNXT.Extensions.NxtProcessExtensions]::GetChildProcesses($this)
+				</Script>
+			</ScriptMethod>
+			<ScriptProperty>
+				<Name>IsElevated</Name>
+				<GetScriptBlock>
+					[PSADTNXT.Extensions.NxtProcessExtensions]::IsElevated($this)
+				</GetScriptBlock>
+			</ScriptProperty>
+		</Members>
+	</Type>
+	<Type>
+		<Name>PSADT.Types.InstalledApplication</Name>
+		<Members>
+			<ScriptMethod>
+				<Name>GetRegisteredPackage</Name>
+				<Script>
+					$package = $null
+					if ([PSADTNXT.Package.NxtRegisteredPackage]::TryGetPackage($this, [ref]$package)) { $package }
+				</Script>
+			</ScriptMethod>
+			<ScriptProperty>
+				<Name>InnoSetupInstaller</Name>
+				<GetScriptBlock>
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::IsNullSoftInstaller($this)
+				</GetScriptBlock>
+			</ScriptProperty>
+			<ScriptProperty>
+				<Name>BurnInstaller</Name>
+				<GetScriptBlock>
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::IsBurnInstaller($this)
+				</GetScriptBlock>
+			</ScriptProperty>
+		</Members>
+	</Type>
+	<Type>
+		<Name>System.String</Name>
+		<Members>
+			<ScriptMethod>
+				<Name>Expand</Name>
+				<Script>
+					$ExecutionContext.InvokeCommand.ExpandString($this)
+				</Script>
+			</ScriptMethod>
+		</Members>
+	</Type>
+</Types>

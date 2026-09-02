@@ -1,0 +1,21 @@
+name: Test Artifact
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: download-artifact
+        id: download-artifact-test
+        uses: actions/download-artifact@v8
+        with:
+          path: artifact
+
+      - name: checkout-tests
+        uses: actions/checkout@v7
+
+      - name: run-pester
+        shell: powershell
+        run: .\Invoke-PesterTests.ps1 -ModuleDirectory '${{ steps.download-artifact-test.outputs.download-path }}'

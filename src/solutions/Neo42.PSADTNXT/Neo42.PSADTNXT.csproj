@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>PSADTNXT</RootNamespace>
+    <AssemblyName>PSADTNXT</AssemblyName>
+    <OutputType>Library</OutputType>
+
+    <Company>neo42 GmbH</Company>
+    <Title>Neo42.Extension Library for PSAppDeployToolkit</Title>
+    <Copyright>Copyright © 2026 neo42 GmbH. All rights reserved.</Copyright>
+    <Description>Neo42.Extension Library for PSAppDeployToolkit</Description>
+    <PackageProjectUrl>https://neo42.de/psappdeploytoolkit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions</RepositoryUrl>
+
+    <Deterministic>true</Deterministic>
+    <Platforms>AnyCPU</Platforms>
+    <TargetFrameworks>net8.0;net472</TargetFrameworks>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <RootOutputPath>..\..\..\build</RootOutputPath>
+    <PublishDir>$(RootOutputPath)\PSAppDeployToolkit.Neo42.Extensions\lib\$(TargetFramework)</PublishDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <WarningLevel>3</WarningLevel>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" PrivateAssets="all" />
+    <Reference Include="Microsoft.Dism.PowerShell" HintPath="C:\Windows\system32\WindowsPowerShell\v1.0\Modules\Dism\Microsoft.Dism.PowerShell.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PSADT" HintPath="$(RootOutputPath)\PSAppDeployToolkit\lib\PSADT.dll" Private="false" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,109 @@
+{
+  "ConfigVersion": "2025.3.15.0",
+  "ScriptAuthor": "neo42 GmbH",
+  "ScriptDate": "17/09/2024",
+  "InventoryID": "hsn32323532",
+  "Description": "neo42 PackageConfigEditor 1.1.2.0",
+  "InstallMethod": "MSI",
+  "UninstallMethod": "MSI",
+  "ReinstallMode": "MSIRepair",
+  "MSIInplaceUpgradeable": false,
+  "MSIDowngradeable": false,
+  "SoftMigration": {
+    "File": {
+      "FullNameToCheck": "",
+      "VersionToCheck": ""
+    }
+  },
+  "TestedOn": "Win10 x64, Win11 x64",
+  "Dependencies": "",
+  "LastChange": "17/09/2024",
+  "Build": "0",
+  "AppArch": "x64",
+  "AppVendor": "neo42",
+  "AppName": "PackageConfigEditor",
+  "AppVersion": "1.1.2.0",
+  "AppRevision": "0",
+  "AppLang": "MUI",
+  "ProductGUID": "{0427B2D0-28F7-4AEA-9EE6-AC2F2740C437}",
+  "RemovePackagesWithSameProductGUID": false,
+  "PackageGUID": "{0428729D-9D33-456B-BB44-F090638DBD53}",
+  "DependentPackages": [],
+  "RegPackagesKey": "neoPackages",
+  "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)",
+  "AppRootFolder": "neo42Pkgs",
+  "App": "$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
+  "UninstallOld": true,
+  "Reboot": 0,
+  "UserPartOnInstallation": false,
+  "UserPartOnUninstallation": false,
+  "UserPartRevision": "2024,09,17,01",
+  "HidePackageUninstallButton": false,
+  "HidePackageUninstallEntry": false,
+  "DisplayVersion": "1.1.2.0",
+  "InstallerVersion": "1.1.2.0",
+  "UninstallKey": "{B4B79BC4-A1BD-4115-BC10-FA3EF4457A14}",
+  "UninstallKeyIsDisplayName": false,
+  "UninstallKeyContainsWildCards": false,
+  "UninstallKeyContainsExpandVariables": false,
+  "DisplayNamesToExcludeFromAppSearches": [
+    "$($global:PackageConfig.UninstallDisplayName)"
+  ],
+  "InstallLocation": "$envProgramFiles\\neo42\\PackageConfigEditor",
+  "InstLogFile": "Install.$global:DeploymentTimestamp.log",
+  "UninstLogFile": "Uninstall.$global:DeploymentTimestamp.log",
+  "InstFile": "neo42_PackageConfigEditor_1.1.2.0.msi",
+  "InstPara": "",
+  "AppendInstParaToDefaultParameters": true,
+  "AcceptedInstallExitCodes": "",
+  "AcceptedInstallRebootCodes": "",
+  "UninstFile": "",
+  "UninstPara": "",
+  "AppendUninstParaToDefaultParameters": true,
+  "AcceptedUninstallExitCodes": "",
+  "AcceptedUninstallRebootCodes": "",
+  "AppKillProcesses": [
+    {
+      "Name": "Neo42.PackageConfigEditor",
+      "Description": "neo42 Package Config Editor"
+    }
+  ],
+  "BlockExecution": false,
+  "TestConditionsPreSetupSuccessCheck": {
+    "Install": {
+      "ProcessesToWaitFor": [],
+      "ProcessOperator": "AND",
+      "RegKeyOperator": "AND",
+      "RegKeysToWaitFor": [],
+      "TotalSecondsToWaitFor": 30
+    },
+    "Uninstall": {
+      "ProcessesToWaitFor": [],
+      "ProcessOperator": "AND",
+      "RegKeyOperator": "AND",
+      "RegKeysToWaitFor": [],
+      "TotalSecondsToWaitFor": 30
+    }
+  },
+  "CommonDesktopShortcutsToDelete": [
+    "PackageConfigEditor.lnk"
+  ],
+  "CommonStartMenuShortcutsToCopyToCommonDesktop": [
+    {
+      "Source": "Programs\\neo42\\PackageConfigEditor\\PackageConfigEditor.lnk",
+      "TargetName": "PackageConfigEditor.lnk"
+    }
+  ],
+  "UninstallKeysToHide": [
+    {
+      "KeyName": "$($global:PackageConfig.UninstallKey)",
+      "Is64Bit": true,
+      "KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)",
+      "KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)",
+      "DisplayNamesToExcludeFromHiding": [
+        "$($global:PackageConfig.UninstallDisplayName)"
+      ]
+    }
+  ],
+  "PackageSpecificVariablesRaw": []
+}

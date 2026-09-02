@@ -1,0 +1,84 @@
+name: Post Release
+
+on:
+  release:
+    types:
+      - released
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: checkout-extensions
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          path: ./Source
+
+      - name: generate-function-documentation
+        shell: pwsh
+        run: |
+          . "./Source/Export-ModuleHelp.ps1" `
+            -Module "./Source/PSAppDeployToolkit.Neo42.Extensions" `
+            -OutputFile "./Source/docs/PSAppDeployToolkit.Neo42.Extensions.Functions.md"
+
+      - name: upload-documentation
+        shell: pwsh
+        run: |
+          @{
+            '685951ce0c79506d8454936f' = 'PSAppDeployToolkit.Neo42.Extensions.Functions.md'
+            '6859533d0c79506d84549370' = 'PSAppDeployToolkit.Neo42.Extensions.Variables.md'
+            '685953ae0c79506d84549371' = 'PSAppDeployToolkit.Neo42.Extensions.V4Migration.md'
+          }.GetEnumerator() | ForEach-Object -Begin {
+            $header = @{ 'Accept' = 'application/json' }
+            $header['Authorization'] = 'Bearer ' + (Invoke-RestMethod -Uri "${{ secrets.SERVICE_PORTAL_URI }}/api/identity/jwt" -Method Post -Headers $header -Body (ConvertTo-Json -InputObject @{ User = '${{ secrets.SERVICE_PORTAL_USERNAME }}'; Password = '${{ secrets.SERVICE_PORTAL_PASSWORD }}' }) -ContentType 'application/json' -ErrorAction Stop).token
+          } -Process {
+            Invoke-RestMethod -Uri "${{ secrets.SERVICE_PORTAL_URI }}/api/sp/AdminMarkdownDocument/$($_.Name)/en" -Method Post -ContentType 'text/markdown' -Headers $header -Body (Get-Content -Raw -Path "./Source/docs/$($_.Value)")
+          }
+
+      - name: reply-to-and-close-issues
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: milestones } = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed'
+            });
+            const milestone = milestones.find(m => m.title === '${{ github.event.release.tag_name }}');
+            if (!milestone) {
+              throw new Error('Milestone not found');
+            }
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              milestone: milestone.number
+            });
+
+            for (const issue of issues) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `:tada: This issue will be addressed in version ${milestone.title} :tada:
+            Once the release is published, it will be available on:
+              * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${milestone.title})
+
+            <sub>This is an auto-generated message from your friendly release assistant :package::rocket:</sub>`
+              });
+
+              if (issue.state !== 'closed') {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed'
+                });
+              }
+            }

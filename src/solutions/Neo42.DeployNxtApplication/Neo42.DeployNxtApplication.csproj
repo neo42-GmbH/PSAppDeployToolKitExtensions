@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ProjectGuid>{3C0E157F-6FD0-456F-9C3B-33157F6E3662}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+
+    <Company>neo42 GmbH</Company>
+    <Title>Neo42.Extension Library for PSAppDeployToolkit</Title>
+    <Copyright>Copyright © 2026 neo42 GmbH. All rights reserved.</Copyright>
+    <Description>Neo42.Extension Library for PSAppDeployToolkit</Description>
+    <PackageProjectUrl>https://neo42.de/psappdeploytoolkit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions</RepositoryUrl>
+
+    <Platform>AnyCPU</Platform>
+    <StartupObject>Neo42.DeployNxtApplication.DeployNxtApplication</StartupObject>
+    <RootNamespace>Neo42.DeployNxtApplication</RootNamespace>
+    <AssemblyName>DeployNxtApplication</AssemblyName>
+    <TargetFramework>net472</TargetFramework>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <SelfContained>true</SelfContained>
+    <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
+    <GenerateAppConfigFile>false</GenerateAppConfigFile>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+    <RootOutputPath>..\..\..\build</RootOutputPath>
+    <PublishDir>$(RootOutputPath)</PublishDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Windows.Forms" />
+    <PackageReference Include="Microsoft.PowerShell.5.1.ReferenceAssemblies" Version="1.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <WarningLevel>3</WarningLevel>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' != 'net472'">
+    <IsPublishable>false</IsPublishable>
+  </PropertyGroup>
+</Project>

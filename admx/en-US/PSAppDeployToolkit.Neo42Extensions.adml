@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitionResources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" revision="1.0" schemaVersion="1.0" xmlns="http://www.microsoft.com/GroupPolicy/PolicyDefinitions">
+	<displayName>PSAppDeployToolkit.Neo42.Extensions</displayName>
+	<description>Extra settings for PSAppDeployToolkit for use with Neo42.Extensions</description>
+	<resources>
+		<stringTable>
+			<string id="SUPPORTED_Windows_10_0_RS1_Definition">At least Windows Server 2016, Windows 10 Version 1607</string>
+
+			<!-- #region Categories -->
+			<string id="Nxt_Category">Neo42 Extension</string>
+
+			<string id="NxtPowerShell_Category">PowerShell Options</string>
+			<string id="NxtToolkit_Category">Toolkit Options</string>
+			<string id="NxtDeployment_Category">UI Options</string>
+			<string id="NxtDeployment_Category">Deployment Options</string>
+			<string id="NxtSetupCfg_Category">SetupCfg Options</string>
+
+			<string id="NxtDeploymentInnoSetup_Category">InnoSetup</string>
+			<string id="NxtDeploymentNullsoft_Category">Nullsoft</string>
+			<string id="NxtDeploymentBitRockInstaller_Category">BitRockInstaller</string>
+			<string id="NxtDeploymentBurn_Category">Burn</string>
+			<string id="NxtDeploymentAppx_Category">Appx</string>
+			<!-- #endregion Categories -->
+
+			<!-- #region Settings -->
+			<string id="NxtPowerShellExecutionPolicy_Display">PowerShell Execution Policy</string>
+			<string id="NxtPowerShellExecutionPolicy_Explain">Sets the PowerShell execution policy for the deployment process. External policies take precedence. If security is a concern, consider alternative methods to set the policy.</string>
+			<string id="NxtPowerShellExecutionPolicy_0">Bypass</string>
+			<string id="NxtPowerShellExecutionPolicy_1">RemoteSigned</string>
+			<string id="NxtPowerShellExecutionPolicy_2">AllSigned</string>
+			<string id="NxtPowerShellErrorActionPreference_Display">PowerShell Error Action Preference</string>
+			<string id="NxtPowerShellErrorActionPreference_Explain">Sets the PowerShell error action preference for the deployment process.</string>
+			<string id="NxtPowerShellVerboseActionPreference_Display">PowerShell Verbose Action Preference</string>
+			<string id="NxtPowerShellVerboseActionPreference_Explain">Sets the PowerShell verbose action preference for the deployment process.</string>
+			<string id="NxtPowerShellProgressActionPreference_Display">PowerShell Progress Action Preference</string>
+			<string id="NxtPowerShellProgressActionPreference_Explain">Sets the PowerShell progress action preference for the deployment process.</string>
+			<string id="NxtPowerShellStrictModeVersion_Display">PowerShell StrictMode Version</string>
+			<string id="NxtPowerShellStrictModeVersion_Explain">Sets the PowerShell StrictMode version for the deployment process.</string>
+			<string id="NxtPowerShellActionPreference_0">SilentlyContinue</string>
+			<string id="NxtPowerShellActionPreference_1">Stop</string>
+			<string id="NxtPowerShellActionPreference_2">Continue</string>
+			<string id="NxtPowerShellOutputEncoding_Display">PowerShell Output Encoding</string>
+			<string id="NxtPowerShellOutputEncoding_Explain">Sets the encoding for the PowerShell output. Must be a compatible IANA encoding name. Visit https://www.iana.org/assignments/character-sets/character-sets.xhtml for more information.</string>
+
+			<string id="NxtToolkitSupportLegacyConfig_Display">Support Legacy Config</string>
+			<string id="NxtToolkitSupportLegacyConfig_Explain">If enabled, the toolkit will support legacy configuration options for backward compatibility.</string>
+			<string id="NxtToolkitBlockExecution_Display">Block Execution</string>
+			<string id="NxtToolkitBlockExecution_Explain">If enabled, processes defined in the package will be prevented from executing during the deployment process.</string>
+			<string id="NxtToolkitAppendVersionToPackageName_Display">Append Version to Package Name</string>
+			<string id="NxtToolkitAppendVersionToPackageName_Explain">If enabled, the version number will be appended to the package name in the application management interface.</string>
+			<string id="NxtToolkitUserPartOnTerminalServer_Display">Run UserParts on Terminal Server</string>
+			<string id="NxtToolkitUserPartOnTerminalServer_Explain">If disabled, user parts of the installation and uninstallation will be skipped when the toolkit detects that it is running on a terminal server. This is useful in scenarios where the user context is not relevant, e.g. when user profiles are not persistent or PowerShell is disabled for users.</string>
+
+			<string id="NxtUiUseLegacyUi_Display">Use the neo42 legacy UI mode.</string>
+			<string id="NxtUiUseLegacyUi_Explain">If enabled, the legacy UI will be used. Otherwise will use the new PSADT based UI components.</string>
+
+			<string id="NxtDeploymentInstallParams_Display">Install Parameters</string>
+			<string id="NxtDeploymentInstallParams_Explain">Parameters to be passed to the given deployment method. Please note that the parameters are not validated.</string>
+			<string id="NxtDeploymentSilentParams_Display">Silent Parameters</string>
+			<string id="NxtDeploymentSilentParams_Explain">Parameters to be passed to the given deployment method when the deploymentmode is 'Silent'. Please note that the parameters are not validated.</string>
+			<string id="NxtDeploymentUninstallParams_Display">Uninstall Parameters</string>
+			<string id="NxtDeploymentUninstallParams_Explain">Parameters to be passed to the given deployment method on uninstallation. Please note that the parameters are not validated.</string>
+
+			<string id="NxtSetupCfgOverrideValues_Display">SetupCfg Override Values</string>
+			<string id="NxtSetupCfgOverrideValues_Explain">Values defined here will override values defined in the SetupCfg. Make sure to use the format SECTION;SETTING;VALUE</string>
+			<!-- #endregion Settings -->
+		</stringTable>
+		<presentationTable>
+			<presentation id="NxtPowerShellExecutionPolicy">
+				<dropdownList refId="ExecutionPolicy" noSort="true" defaultItem="2" />
+			</presentation>
+			<presentation id="NxtPowerShellErrorActionPreference">
+				<dropdownList refId="ErrorActionPreference" noSort="true" defaultItem="0" />
+			</presentation>
+			<presentation id="NxtPowerShellVerboseActionPreference">
+				<dropdownList refId="VerboseActionPreference" noSort="true" defaultItem="0" />
+			</presentation>
+			<presentation id="NxtPowerShellProgressActionPreference">
+				<dropdownList refId="ProgressActionPreference" noSort="true" defaultItem="0" />
+			</presentation>
+			<presentation id="NxtPowerShellOutputEncoding">
+				<textBox refId="OutputEncoding">
+					<label>Encoding</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtPowerShellStrictModeVersion">
+				<textBox refId="StrictModeVersion">
+					<label>Strict Mode Version</label>
+				</textBox>
+			</presentation>
+
+			<presentation id="NxtDeploymentInnoSetupInstallParams">
+				<textBox refId="InstallParams">
+					<label>Install Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentInnoSetupSilentParams">
+				<textBox refId="SilentParams">
+					<label>Silent Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentInnoSetupUninstallParams">
+				<textBox refId="UninstallParams">
+					<label>Uninstall Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentNullsoftInstallParams">
+				<textBox refId="InstallParams">
+					<label>Install Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentNullsoftSilentParams">
+				<textBox refId="SilentParams">
+					<label>Silent Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentNullsoftUninstallParams">
+				<textBox refId="UninstallParams">
+					<label>Uninstall Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentBitRockInstallerInstallParams">
+				<textBox refId="InstallParams">
+					<label>Install Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentBitRockInstallerSilentParams">
+				<textBox refId="SilentParams">
+					<label>Silent Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentBitRockInstallerUninstallParams">
+				<textBox refId="UninstallParams">
+					<label>Uninstall Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentBurnInstallParams">
+				<textBox refId="InstallParams">
+					<label>Install Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentBurnSilentParams">
+				<textBox refId="SilentParams">
+					<label>Silent Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentBurnUninstallParams">
+				<textBox refId="UninstallParams">
+					<label>Uninstall Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentAppxInstallParams">
+				<textBox refId="InstallParams">
+					<label>Install Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentAppxSilentParams">
+				<textBox refId="SilentParams">
+					<label>Silent Parameters</label>
+				</textBox>
+			</presentation>
+			<presentation id="NxtDeploymentAppxUninstallParams">
+				<textBox refId="UninstallParams">
+					<label>Uninstall Parameters</label>
+				</textBox>
+			</presentation>
+
+			<presentation id="NxtSetupCfgOverrideValues">
+				<listBox refId="Overrides" />
+			</presentation>
+		</presentationTable>
+	</resources>
+</policyDefinitionResources>

@@ -1,0 +1,73 @@
+name: "Bug Report"
+description: "Having issues with functions from the Extensions? Write a bug report!"
+labels: ["Bug", "Triage"]
+body:
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: "Confirmation"
+      description: "Please confirm that your issue is not related to services neo42 provides"
+      options:
+        - label: "My issue is not related to the behaviour of a package or product provided by neo42"
+          required: true
+        - label: "I understand that issues created in this repository are not subject to any support agreements made with neo42"
+          required: true
+  - type: markdown
+    attributes:
+      value: |
+        <sub>If you need help with these products please consider contacting us at [neosupport@neo42.de](mailto:neosupport@neo42.de)</sub>
+        ## Issue description
+  - type: textarea
+    id: issue
+    attributes:
+      label: "Description"
+      description: "Please describe your issue in detail. Especially helpful are reproductive steps, the desired behaviour or any insights you might have already aquired"
+  - type: input
+    id: version
+    attributes:
+      label: "Release"
+      description: "Whats the affected version? If the issue is new, name the version you frist encountered it in"
+      placeholder: "1970.01.01.01-1"
+    validations:
+      required: true
+  - type: input
+    id: os-build
+    attributes:
+      label: "Windows build"
+      description: "Name an operating system build that the issue can be expirienced on"
+      placeholder: "22631.4037"
+    validations:
+      required: false
+  - type: dropdown
+    id: arch
+    attributes:
+      label: "Architecture"
+      description: "What OS architecture was the issue exprienced on"
+      multiple: true
+      options:
+        - "x64"
+        - "x86"
+        - "ARM"
+        - "other"
+    validations:
+      required: false
+  - type: dropdown
+    id: deploy
+    attributes:
+      label: "Deployment System"
+      description: "What deployment system did you exprience this issue on."
+      multiple: true
+      options:
+        - "Matrix42 Empirum (incl. Cloud)"
+        - "Microsoft Intune"
+        - "Omnissa Workspace One"
+        - "Microsoft Configuration Manager"
+        - "Other (specify in issue description)"
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Please copy and paste any relevant log output here
+      render: shell

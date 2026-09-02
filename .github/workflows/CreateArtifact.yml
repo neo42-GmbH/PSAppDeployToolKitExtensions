@@ -1,0 +1,115 @@
+name: Create Artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      PSADT_VERSION:
+        description: The version of the PSADT source
+        required: false
+        type: string
+      PSADT_URL:
+        description: The URL to the PSADT source zip file (optional, will be determined from the version if not provided)
+        required: false
+        type: string
+
+  workflow_call:
+    inputs:
+      PSADT_VERSION:
+        description: The version of the PSADT source
+        required: true
+        type: string
+    outputs:
+      ARTIFACT_VERSION:
+        value: ${{ jobs.artifact.outputs.VERSION }}
+      ARTIFACT_TAG:
+        value: ${{ jobs.artifact.outputs.TAG }}
+      ARTIFACT_BRANCH:
+        value: ${{ jobs.artifact.outputs.BRANCH }}
+
+jobs:
+  artifact:
+    runs-on: windows-latest
+    outputs:
+      VERSION: ${{ steps.release-info.outputs.RELEASE_VERSION }}
+      TAG: ${{ steps.release-info.outputs.RELEASE_TAG }}
+      BRANCH: ${{ steps.release-info.outputs.RELEASE_BRANCH }}
+
+    steps:
+      - name: checkout-extensions
+        uses: actions/checkout@v7
+
+      - name: get-release-info
+        id: release-info
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format 'yyyy.M.d'
+          $runId = '${{ github.run_number }}'
+          $version = "$date.$runId"
+
+          $branch = '${{ github.head_ref || github.ref_name }}'.Replace('refs/heads/', '')
+          $suffix = if ([string]::IsNullOrEmpty($branch)) { 'PreRelease' } else { $branch }
+          $tag = if ($branch -in @('production', 'main', 'master')) { $version } else { "$version-$suffix" }
+
+          "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
+          "RELEASE_BRANCH=$branch" >> $env:GITHUB_OUTPUT
+          "RELEASE_TAG=$tag" >> $env:GITHUB_OUTPUT
+          Write-Host "Determined version [$version] and branch [$branch]. Tagging as [$tag]"
+
+      - name: copy-template
+        run: |
+          Copy-Item -Recurse -Path './template' -Destination './build'
+
+      - name: download-psadt
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+
+          [uri]$uri = if ('${{ inputs.PSADT_URL }}') {
+            '${{ inputs.PSADT_URL }}'
+          }
+          else {
+            Invoke-RestMethod -Uri "https://api.github.com/repos/PSAppDeployToolkit/PSAppDeployToolkit/releases/tags/${{ inputs.PSADT_VERSION }}" |
+              Select-Object -ExpandProperty assets |
+              Where-Object { $_.name -match '^PSAppDeployToolkit_ModuleOnly\.(zip|7z)$' } |
+              Select-Object -First 1 -ExpandProperty 'browser_download_url'
+          }
+
+          $file = [System.IO.Path]::GetFileName($uri.AbsolutePath)
+          Invoke-WebRequest -Uri $uri -OutFile $file
+
+          & 7z.exe x $file -o"./build/" -y
+          Get-ChildItem -File './build' | Unblock-File
+
+          'opt', 'ADMX', 'Frontend' | ForEach-Object {
+             Remove-Item -Force -Recurse -ErrorAction Ignore -LiteralPath "./build/PSAppDeployToolkit/$_"
+          }
+
+      - name: build-modules
+        shell: pwsh
+        run: |
+           ./Export-Module.ps1 -Source (Get-ChildItem -Path './src/modules' -Directory)
+
+      - name: inject-version
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path './build/PSAppDeployToolkit.Neo42.*' -Include 'PSAppDeployToolkit.Neo42.*.psd1' | ForEach-Object {
+            (Get-Content -Raw -Path $_.FullName) `
+              -replace "(ModuleVersion\s*=\s*)'(0\.0\.0\.0)'", '$1''${{ steps.release-info.outputs.RELEASE_VERSION }}''' |
+              Set-Content -Path $_.FullName -Encoding UTF8
+          }
+
+          (Get-Content -Raw -Path "./build/Deploy-Application.ps1") `
+            -replace "Version: 0\.0\.0\.0", "Version: ${{ steps.release-info.outputs.RELEASE_VERSION }}" |
+            Set-Content -Path "./build/Deploy-Application.ps1" -Encoding UTF8
+
+      - name: compile-library
+        shell: pwsh
+        run: |
+          . ./Invoke-Compile.ps1 -Version '${{ steps.release-info.outputs.RELEASE_TAG }}' -Config 'Release'
+
+      - name: upload-artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ModuleBuild_${{ steps.release-info.outputs.RELEASE_TAG }}
+          path: ./build
+          compression-level: 9
+          retention-days: 1

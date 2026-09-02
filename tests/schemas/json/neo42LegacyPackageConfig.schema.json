@@ -1,0 +1,809 @@
+{
+	"$schema": "https://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"ConfigVersion": {
+			"type": "string",
+			"description": "Each package is written against a specific version of the configuration schema which represents a package framework generation.\nA generational change might require changes to the package configuration file.\nTherefor this field is mandatory and must be set to the current schema version.",
+			"$ref": "#/$defs/SystemVersionString"
+		},
+		"ScriptAuthor":{
+			"type": "string",
+			"description": "The packager who create this configuration and the associated deployment script.",
+			"minLength": 1,
+			"default": "neo42 GmbH"
+		},
+		"ScriptDate": {
+			"description": "The date the deploy script file was created.\nMust be a date of the format: dd/MM/yyyy.",
+			"markdownDescription": "The date the deploy script file was created.\n\nMust be a date of the format: `dd/MM/yyyy`.",
+			"$ref": "#/$defs/DateDDMMYYYYwithSlash"
+		},
+		"InventoryID": {
+			"type": "string",
+			"description": "An identifier used for internal tracking. Is used by some deployment systems.\nNeo follows the following format:\n* First digit of the author first name\n* First digit of the author last name\n* Last digit of the author name\n* Eight random digits\nExample: ABC12345678",
+			"markdownDescription": "An identifier used for internal tracking. Is used by some deployment systems.\nNeo follows the following format:\n\n* First digit of the author first name\n* First digit of the author last name\n* Last digit of the author name\n* Eight random digits\n\nExample: `ABC12345678`",
+			"minLength": 5,
+			"maxLength": 63,
+			"defaultSnippets": [
+				{
+					"label": "New InventoryID",
+					"body": "$1${RANDOM}${RANDOM/.{4}//}"
+				}
+			]
+		},
+		"Description": {
+			"type": "string",
+			"description": "An optional field to describe the package. Used by some deployment systems to display additional information."
+		},
+		"InstallMethod": {
+			"$ref": "#/$defs/DeployMethod"
+		},
+		"UninstallMethod": {
+			"$ref": "#/$defs/DeployMethod"
+		},
+		"ReinstallMode": {
+			"type": "string",
+			"description": "Based on the InstallMethod, the ReinstallMode defines the behavior when the package is already installed. MSIs can be repaired, reinstalled or installed. Other methods can only be reinstalled or installed.",
+			"markdownDescription": "Based on the `InstallMethod`, the `ReinstallMode` defines the behavior when the package is already installed.\n\n* `MSI`: Can be repaired, reinstalled or installed.\n* `Others`: Can only be reinstalled or installed.",
+			"default": "Reinstall"
+		},
+		"MSIInplaceUpgradeable": {
+			"type": "boolean",
+			"description": "Required property when InstallMethod is set to MSI to determine the final ReinstallMode based on the current package installation state.",
+			"markdownDescription": "Required property when `InstallMethod` is set to `MSI` to determine the final `ReinstallMode` based on the current package installation state.",
+			"default": false
+		},
+		"MSIDowngradeable": {
+			"type": "boolean",
+			"description": "Required property when InstallMethod is set to MSI to determine the final ReinstallMode based on the current package installation state.",
+			"markdownDescription": "Required property when `InstallMethod` is set to `MSI` to determine the final `ReinstallMode` based on the current package installation state.",
+			"default": false
+		},
+		"SoftMigration": {
+			"type": "object",
+			"description": "Optional configuration based tests to check if a soft migration is possible. Alternatively use Custom* functions inside the deployment script.",
+			"markdownDescription": "Optional configuration based tests to check if a soft migration is possible. Alternatively use `Custom*` functions inside the deployment script.",
+			"properties": {
+				"File": {
+					"type": "object",
+					"description": "File based tests.",
+					"properties": {
+						"FullNameToCheck": {
+							"$ref": "#/$defs/ValidFileName",
+							"description": "The full path to a file that must exist for the soft migration to be possible."
+						},
+						"VersionToCheck": {
+							"description": "Optionally, the version of the file that must match.",
+							"$ref": "#/$defs/SystemVersionString"
+						}
+					},
+					"additionalProperties": false,
+					"required": [
+						"FullNameToCheck"
+					]
+				}
+			},
+			"additionalProperties": false
+		},
+		"TestedOn": {
+			"type": "string",
+			"description": "TestedOn is a comma separated list of operating systems and architectures the package was tested on. Required for some deployment systems."
+		},
+		"Dependencies": {
+			"type": "string",
+			"description": "Dependencies is a descriptive string naming dependencies of the package.\nThis information is displayed in some deployment systems but has no effect on the installation."
+		},
+		"LastChange": {
+			"description": "The date of the last update to this package.\nUsed for tracking changes to the package on some deployment systems.\nMust be a date of the format: dd/MM/yyyy.",
+			"markdownDescription": "The date of the last update to this package.\n\nUsed for tracking changes to the package on some deployment systems.\n\nMust be a date of the format: `dd/MM/yyyy`.",
+			"$ref": "#/$defs/DateDDMMYYYYwithSlash"
+		},
+		"Build": {
+			"type": "string",
+			"description": "A mandatory revision counter for the package.\nMust be increased with every change to the package where the version did not change.\nUsed to track the package's revision.",
+			"pattern": "^\\d+$"
+		},
+		"AppArch": {
+			"type": "string",
+			"description": "The architecture of the application.\nSpecifying '*' will allow the package to be installed on any architecture,\notherwise the system will check the architecture of the system before installing the package.",
+			"enum": [
+				"*",
+				"x86",
+				"x64"
+			],
+			"default": "*"
+		},
+		"AppVendor": {
+			"description": "The name of the vendor of the application.\nDue to use in filesystem paths it must not contain characters that are incompatible with filesystem paths.",
+			"$ref": "#/$defs/ValidFileName"
+		},
+		"AppName": {
+			"description": "The name of the application.\nDue to use in filesystem paths it must not contain characters that are incompatible with filesystem paths.",
+			"$ref": "#/$defs/ValidFileName"
+		},
+		"AppVersion": {
+			"description": "The version of the application. Must be a valid version string.",
+			"$ref": "#/$defs/SystemVersionString"
+		},
+		"AppRevision": {
+			"type": "string",
+			"description": "The revision of the application. Is used for installation tracking.",
+			"default": "0",
+			"pattern": "^\\d+$"
+		},
+		"AppLang": {
+			"type": "string",
+			"description": "Describes the language of the application as a three digit language code.\nNeo42 follow the MS-LCID 3-digit language code standard.\nAdditionally MUI is used for multi-language applications.",
+			"markdownDescription": "Describes the language of the application as a three digit language code.\n\nNeo42 follow the [MS-LCID 3-digit language code](https://learn.microsoft.com/en-us/mem/configmgr/core/servers/deploy/install/language-packs#server-languages) standard.\n\nIn addition `MUI` is used for multi-language applications.",
+			"pattern": "^[A-Z]{3}$",
+			"default": "MUI"
+		},
+		"PackageGUID": {
+			"$ref": "#/$defs/NeoGUID",
+			"description": "The GUID of the package in the format of {042...}.\nMust be unique for each package.\nThis ID is used to identify the package in the package registry.",
+			"markdownDescription": "The GUID of the package in the format of `{042...}`.\n\nMust be unique for each package.\n\nThis ID is used to identify the package in the package registry."
+		},
+		"DependentPackages": {
+			"type": "array",
+			"description": "A list of package dependencies. Each dependency is evaluated before the package is installed.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"GUID": {
+						"$ref": "#/$defs/NeoGUID",
+						"description": "The GUID of the dependent package. It is a reference to the PackageGUID of another package.",
+						"markdownDescription": "The GUID of the dependent package. It is a reference to the `PackageGUID` of another package."
+					},
+					"DesiredState": {
+						"type": "string",
+						"description": "The desired state of the dependent package.",
+						"enum": [
+							"Present",
+							"Absent"
+						]
+					},
+					"OnConflict": {
+						"type": "string",
+						"description": "The action that should be taken if the desired state of the dependent package conflicts with the current state.",
+						"enum": [
+							"Fail",
+							"Uninstall",
+							"Warn",
+							"Continue"
+						]
+					}
+				},
+				"required": [
+					"GUID",
+					"DesiredState",
+					"OnConflict"
+				],
+				"unevaluatedProperties": false,
+				"if" : {
+					"properties": {
+						"OnConflict": {
+							"enum": [
+								"Fail",
+								"Warn"
+							]
+						}
+					}
+				},
+				"then": {
+					"properties": {
+						"ErrorMessage": {
+							"type": "string",
+							"description": "DependentPackages.ErrorMessage is optional and must be a string."
+						}
+					}
+				}
+			}
+		},
+		"RegPackagesKey": {
+			"description": "The key name for the package registry. This key is rooted in HKLM\\Software\\",
+			"markdownDescription": "The root key name for the package registry. This key is rooted in `HKLM\\Software\\`",
+			"$ref": "#/$defs/ValidFileName",
+			"default": "neoPackages"
+		},
+		"UninstallDisplayName": {
+			"description": "The display name of the package that will be shown in the system control settings.",
+			"default": "neoPackage $((Get-ADTSession).AppVendor) $((Get-ADTSession).AppName) $((Get-ADTSession).AppVersion)",
+			"$ref": "#/$defs/ValidFileNameGlob"
+		},
+		"AppRootFolder": {
+			"description": "The filesystem path to the package storage.\nIf not rooted the path is relative to program data.\nWill be expanded to the full path upon initialization.\nOn conflict with existing folders, a name extension will be added.",
+			"default": "neo42Pkgs",
+			"$ref": "#/$defs/ValidFileName"
+		},
+		"App": {
+			"description": "A subdirectory of AppRootFolder where the package is stored.\nWill be expanded to the full path upon initialization.\bThe path must not be rooted.",
+			"default": "$((Get-ADTSession).AppVendor)\\$((Get-ADTSession).AppName)\\$((Get-ADTSession).AppVersion)",
+			"$ref": "#/$defs/ValidFileNameNotRooted"
+		},
+		"UninstallOld": {
+			"type": "boolean",
+			"description": "Determines if the package and its related predecessor packages should be uninstalled before installing the new package.",
+			"default": true
+		},
+		"Reboot": {
+			"type": "integer",
+			"default": 0,
+			"description": "Determine how reboots are handled. Default will respect the application response.",
+			"oneOf": [
+				{
+					"const": 0,
+					"description": "Default: Respect the application response."
+				},
+				{
+					"const": 1,
+					"description": "Force a reboot after installation/uninstallation."
+				},
+				{
+					"const": 2,
+					"description": "Suppress any reboot requests."
+				}
+			]
+		},
+		"UserPartOnInstallation": {
+			"type": "boolean",
+			"description": "Defines if the user installation routines should be enabled.",
+			"default": false
+		},
+		"UserPartOnUninstallation": {
+			"type": "boolean",
+			"description": "Defines if the user uninstallation routines should be enabled.",
+			"default": false
+		},
+		"UserPartRevision": {
+			"type": "string",
+			"description": "An ActiveSetup compatible revision string.\nMust be a date of the format YYYY,MM,DD,HH.\nUsed for determining if the user part should be executed.\nEach change to the user part must increase this value.",
+			"markdownDescription": "An ActiveSetup compatible revision string.\n\nMust be a date of the format `YYYY,MM,DD,HH`.\n\nUsed for determining if the user part should be executed.\n\nEach change to the user part must increase this value.",
+			"pattern": "^[0-9]{4},[0-9]{2},[0-9]{2},[0-9]{2}$",
+			"defaultSnippets": [
+				{
+					"label": "New UserPartRevision",
+					"body": "$CURRENT_YEAR,$CURRENT_MONTH,$CURRENT_DATE,01"
+				}
+			]
+		},
+		"HidePackageUninstallButton": {
+			"type": "boolean",
+			"description": "Determines if the uninstall button on the package's entry in the system control settings should be hidden.",
+			"default": false
+		},
+		"HidePackageUninstallEntry": {
+			"type": "boolean",
+			"description": "Determines if the package's entry in the system control settings should be hidden.",
+			"default": false
+		},
+		"DisplayVersion": {
+			"type": "string",
+			"description": "If set, this value will be used for installation and soft migration detection instead of AppVersion. An attempt is made to parse the value as a version string, but if it fails, the value will be used as is in a string comparison."
+		},
+		"InstallerVersion": {
+			"type": "string",
+			"description": "A purely informational field that can be used to track the version of the installer. This field is not used by the framework."
+		},
+		"UninstallKey": {
+			"description": "The base field for the application uninstall key detection. The behavior can be modified with the accompanying properties.",
+			"$ref": "#/$defs/ValidFileNameGlob"
+		},
+		"UninstallKeyIsDisplayName": {
+			"type": "boolean",
+			"description": "Determines that the UninstallKey property represent the display name of an uninstall key.",
+			"markdownDescription": "Determines that the `UninstallKey` property represent the display name of an uninstall key.",
+			"default": false
+		},
+		"UninstallKeyContainsWildCards": {
+			"type": "boolean",
+			"description": "If set to true, wildcards will be evaluated.",
+			"default": false
+		},
+		"UninstallKeyContainsExpandVariables": {
+			"type": "boolean",
+			"description": "Determines that the UninstallKey property contains expandable variables.",
+			"markdownDescription": "Determines that the `UninstallKey` property contains expandable variables.",
+			"default": false
+		},
+		"DisplayNamesToExcludeFromAppSearches": {
+			"type": "array",
+			"description": "List of display names to exclude from app searches.",
+			"items": {
+				"$ref": "#/$defs/ValidFileNameGlob"
+			},
+			"default" : [
+				"$($global:PackageConfig.UninstallDisplayName)"
+			]
+		},
+		"InstallLocation": {
+			"description": "The rooted path where the application will be installed to. Will be used as fallback to calculate the application's size.",
+			"$ref": "#/$defs/ValidFileNameRooted"
+		},
+		"InstLogFile": {
+			"description": "The name of the installation log file for for the given InstallMethod. This does not affect the toolkit log file name.",
+			"markdownDescription": "The name of the installation log file for for the given `InstallMethod`. This does not affect the toolkit log file name.",
+			"$ref": "#/$defs/ValidFileName"
+		},
+		"UninstLogFile": {
+			"description": "The name of the uninstallation log file for for the given InstallMethod. This does not affect the toolkit log file name.",
+			"markdownDescription": "The name of the uninstallation log file for for the given `InstallMethod`. This does not affect the toolkit log file name.",
+			"$ref": "#/$defs/ValidFileName"
+		},
+		"InstFile": {
+			"description": "A path to the installation file. If not rooted the DirFiles path will be used as root.",
+			"markdownDescription": "A path to the installation file. If not rooted the `DirFiles` path will be used as root.",
+			"$ref": "#/$defs/ValidFileName"
+		},
+		"InstPara": {
+			"type": "string",
+			"description": "An argument string that will be passed to the installation.\nReplacements for '%LogFile%', '%DirFiles%' and '%DirSupportFiles%' are available that will be replaced when the installation is started pointing to the full path of the property.",
+			"markdownDescription": "An argument string that will be passed to the installation.\n\nReplacements for `%LogFile%`, `%DirFiles%` and `%DirSupportFiles%` are available that will be replaced when the installation is started pointing to the full path of the property."
+		},
+		"AppendInstParaToDefaultParameters": {
+			"type": "boolean",
+			"description": "Determines if the parameters will be appended to the InstallMethod's default parameters defined in the toolkit configuration.",
+			"markdownDescription": "Determines if the parameters will be appended to the `InstallMethod`'s default parameters defined in the toolkit configuration.",
+			"default": true
+		},
+		"AcceptedInstallExitCodes": {
+			"description": "A comma separated list of accepted install exit codes. Must not contain values from AcceptedInstallRebootCodes. Supports '*' as wildcard.",
+			"markdownDescription": "A comma separated list of accepted install exit codes. Must not contain values from `AcceptedInstallRebootCodes`. Supports `*` as wildcard.",
+			"$ref": "#/$defs/ExitCodeString",
+			"default": "0"
+		},
+		"AcceptedInstallRebootCodes": {
+			"description": "A comma separated list of accepted install reboot codes. Must not contain values from AcceptedInstallExitCodes. Supports '*' as wildcard.",
+			"markdownDescription": "A comma separated list of accepted install reboot codes. Must not contain values from `AcceptedInstallExitCodes`. Supports `*` as wildcard.",
+			"$ref": "#/$defs/ExitCodeString",
+			"default": "1641,3010"
+		},
+		"UninstFile": {
+			"description": "A path to the uninstallation file. If not rooted the DirFiles path will be used as root.",
+			"$ref": "#/$defs/ValidFileName"
+		},
+		"UninstPara": {
+			"type": "string",
+			"description": "An argument string that will be passed to the uninstallation.\nReplacements for '%LogFile%', '%DirFiles%' and '%DirSupportFiles%' are available that will be replaced when the uninstallation is started pointing to the full path of the property.",
+			"markdownDescription": "An argument string that will be passed to the uninstallation.\n\nReplacements for `%LogFile%`, `%DirFiles%` and `%DirSupportFiles%` are available that will be replaced when the uninstallation is started pointing to the full path of the property."
+		},
+		"AppendUninstParaToDefaultParameters": {
+			"type": "boolean",
+			"description": "Determines if the parameters will be appended to the UninstallMethod's default parameters defined in the toolkit configuration.",
+			"markdownDescription": "Determines if the parameters will be appended to the `UninstallMethod`'s default parameters defined in the toolkit configuration.",
+			"default": true
+		},
+		"AcceptedUninstallExitCodes": {
+			"description": "A comma separated list of accepted uninstall exit codes. Must not contain values from AcceptedUninstallRebootCodes. Supports '*' as wildcard.",
+			"markdownDescription": "A comma separated list of accepted uninstall exit codes. Must not contain values from `AcceptedUninstallRebootCodes`. Supports `*` as wildcard.",
+			"$ref": "#/$defs/ExitCodeString",
+			"default": "0"
+		},
+		"AcceptedUninstallRebootCodes": {
+			"description": "A comma separated list of accepted uninstall reboot codes. Must not contain values from AcceptedUninstallExitCodes. Supports '*' as wildcard.",
+			"markdownDescription": "A comma separated list of accepted uninstall reboot codes. Must not contain values from `AcceptedUninstallExitCodes`. Supports `*` as wildcard.",
+			"$ref": "#/$defs/ExitCodeString",
+			"default": "1641,3010"
+		},
+		"AppKillProcesses": {
+			"type": "array",
+			"description": "List of processes that block the deployment from proceeding. Process handling will be determined by the user configuration in the Setup.cfg",
+			"markdownDescription": "List of processes that block the deployment from proceeding. Process handling will be determined by the user configuration in the `Setup.cfg`",
+			"items": {
+				"type": "object",
+				"properties": {
+					"Name": {
+						"type": "string",
+						"description": "Name of the running binary."
+					},
+					"Description": {
+						"type": "string",
+						"description": "If specified, will be shown in place of the process name in the user interface."
+					}
+				},
+				"additionalProperties": false,
+				"required": [
+					"Name"
+				]
+			}
+		},
+		"TestConditionsPreSetupSuccessCheck": {
+			"type": "object",
+			"description": "TestConditionsPreSetupSuccessCheck allows to evaluate conditions before the setup is executed.\nIt is also used to evaluate post installation conditions.",
+			"markdownDescription": "`TestConditionsPreSetupSuccessCheck` allows to evaluate conditions before the setup is executed.\n\nIt is also used to evaluate post installation conditions.",
+			"properties": {
+				"Install": {
+					"$ref": "#/$defs/TestCondition"
+				},
+				"Uninstall": {
+					"$ref": "#/$defs/TestCondition"
+				}
+			},
+			"additionalProperties": false
+		},
+		"CommonDesktopShortcutsToDelete": {
+			"type": "array",
+			"description": "A list of desktop shortcuts that might be created by the deployment that should additionally be deleted.\nRequires the path relative to the common desktop directory.",
+			"items": {
+				"$ref": "#/$defs/ValidFileNameNotRooted"
+			}
+		},
+		"CommonStartMenuShortcutsToCopyToCommonDesktop": {
+			"type": "array",
+			"description": "A list of start menu shortcuts that should be copied to the common desktop after installation.\nThey will be removed upon uninstallation.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"Source": {
+						"description": "The relative path from the common start menu directory to the shortcut to copy.",
+						"$ref": "#/$defs/ValidFileNameNotRooted",
+						"minLength": 1
+					},
+					"TargetName": {
+						"description": "An optional alternative name for the shortcut on the common desktop.",
+						"$ref": "#/$defs/ValidFileNameNotRooted",
+						"minLength": 1
+					}
+				},
+				"additionalProperties": false,
+				"required": [
+					"Source"
+				]
+			}
+		},
+		"UninstallKeysToHide": {
+			"type": "array",
+			"description": "A list of of uninstall key search patterns that will be hidden from the system control settings.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"KeyName": {
+						"description": "The key name to hide. This property can be expanded with variables.",
+						"$ref": "#/$defs/ValidFileNameGlob",
+						"default": "$($global:PackageConfig.UninstallKey)"
+					},
+					"Is64Bit": {
+						"type": "boolean",
+						"description": "Determines in which registry view the key can be found.",
+						"default": true
+					},
+					"KeyNameIsDisplayName": {
+						"description": "If set to true, the key name will be evaluated as a display name. This property can be expanded with variables.",
+						"oneOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"default": "$($global:PackageConfig.UninstallKeyIsDisplayName)"
+					},
+					"KeyNameContainsWildCards": {
+						"description": "If set to true, wildcards will be evaluated. This property can be expanded with variables.",
+						"oneOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "string"
+							}
+						],
+						"default": "$($global:PackageConfig.UninstallKeyContainsWildCards)"
+					},
+					"DisplayNamesToExcludeFromHiding": {
+						"type": "array",
+						"description": "List of display names to exclude from hiding.",
+						"items": {
+							"$ref": "#/$defs/ValidFileName"
+						},
+						"default" : [
+							"$($global:PackageConfig.UninstallDisplayName)"
+						]
+					}
+				},
+				"additionalProperties": false,
+				"required": [
+					"KeyName"
+				]
+			}
+		},
+		"PackageSpecificVariablesRaw": {
+			"type": "array",
+			"description": "A list of pre-defined variables that can be used in the package configuration. These variables will be exported to the PackageVariables property.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"Name": {
+						"description": "Name of the variable.",
+						"minLength": 1,
+						"$ref": "#/$defs/ValidFileName"
+					},
+					"Value": {
+						"description": "Value of the variable.",
+						"minLength": 1,
+						"type": "string"
+					},
+					"ExpandVariables": {
+						"type": "boolean",
+						"description": "Determines if the value should be expanded with other variables.",
+						"default": false
+					}
+				},
+				"additionalProperties": false,
+				"required": [
+					"Name",
+					"Value"
+				]
+			}
+		}
+	},
+	"required": [
+		"ConfigVersion",
+		"InstallMethod",
+		"UninstallMethod",
+		"ReinstallMode",
+		"AppArch",
+		"AppVendor",
+		"AppName",
+		"AppVersion",
+		"PackageGUID",
+		"UninstallDisplayName"
+	],
+	"allOf": [
+		{
+			"if": {
+				"properties": {
+					"AppendUninstParaToDefaultParameters": {
+						"const": true
+					}
+				}
+			},
+			"then": {
+				"required": [
+					"UninstPara"
+				]
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"AppendInstParaToDefaultParameters": {
+						"const": true
+					}
+				}
+			},
+			"then": {
+				"required": [
+					"InstPara"
+				]
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"InstallMethod": {
+						"const": "MSI"
+					}
+				}
+			},
+			"then": {
+				"properties": {
+					"ReinstallMode": {
+						"enum": [
+							"MSIRepair",
+							"Reinstall",
+							"Install"
+						]
+					}
+				},
+				"required": [
+					"MSIInplaceUpgradeable",
+					"MSIDowngradeable"
+				]
+			},
+			"else": {
+				"properties": {
+					"ReinstallMode": {
+						"enum": [
+							"Reinstall",
+							"Install"
+						]
+					}
+				}
+			}
+		},
+		{
+			"if": {
+				"anyOf": [
+					{
+						"properties": {
+							"UserPartOnInstallation": {
+								"const": true
+							}
+						}
+					},
+					{
+						"properties": {
+							"UserPartOnUninstallation": {
+								"const": true
+							}
+						}
+					}
+				]
+
+			},
+			"then": {
+				"required": [
+					"UserPartRevision"
+				]
+			}
+		}
+	],
+	"$defs": {
+		"DeployMethod": {
+			"type": "string",
+			"description": "One of the framework supported deployment methods. Each method contains its own built-in logic.\nIf the desired method is not listed, choose either Setup or none.\n* Setup will call the specified installation file with the specified parameters.\n* none will not run any built-in deployment logic.",
+			"markdownDescription": "One of the framework supported deployment methods.\n\nIf the desired method is not listed, choose either Setup or none.\n\n* `Setup` will call the specified installation file with the specified parameters.\n* `None` will not run any built-in deployment logic.",
+			"enum": [
+				"None",
+				"Setup",
+				"MSI",
+				"InnoSetup",
+				"Nullsoft",
+				"BitRockInstaller"
+			]
+		},
+		"NeoGUID": {
+			"type": "string",
+			"pattern": "\\{042[A-F0-9]{5}[-]?([A-F0-9]{4}[-]?){3}[A-F0-9]{12}\\}",
+			"defaultSnippets": [
+				{
+					"label": "New neo42 compliant GUID",
+					"body": "{${UUID/^(.{3})(.*)/042${2:/upcase}/}}"
+				}
+			]
+		},
+		"PrintableAscii": {
+			"type": "string",
+			"pattern": "^[\\x20-\\x7E]*$"
+		},
+		"ValidFileName": {
+			"type": "string",
+			"pattern": "^(?!^\\s+)(\\w\\:)?[^:*?\"<>|]+(?<!\\s)$|\\$(.+)|^$"
+		},
+		"ValidFileNameGlob": {
+			"type": "string",
+			"pattern": "^(?!^\\s+)(\\w\\:)?[^:\"<>|]+(?<!\\s)$|\\$(.+)|^$"
+		},
+		"ValidFileNameNotRooted": {
+			"type": "string",
+			"pattern": "^(?!^\\s+|\\w\\:)[^:*?\"<>|]+(?<!\\s)$|\\$(.+)|^$"
+		},
+		"ValidFileNameRooted": {
+			"type": "string",
+			"pattern": "^\\w\\:[^:*?\"<>|]+(?<!\\s)$|\\$(.+)|^$"
+		},
+		"ExitCodeString": {
+			"type": "string",
+			"pattern": "^(\\*|-?\\d+(,-?\\d+)*)$|^$"
+		},
+		"TestCondition": {
+			"type": "object",
+			"properties": {
+				"TotalSecondsToWaitFor": {
+					"type": "integer",
+					"description": "A timeout in seconds for the test conditions to be successful.",
+					"default": 30,
+					"minimum": 1,
+					"maximum": 3600
+				},
+				"ProcessOperator": {
+					"type": "string",
+					"description": "Determines if all or any of the ProcessesToWaitFor conditions must be successful.",
+					"markdownDescription": "Determines if all or any of the `ProcessesToWaitFor` conditions must be successful.",
+					"default": "And",
+					"enum": [
+						"And",
+						"Or"
+					]
+				},
+				"ProcessesToWaitFor": {
+					"type": "array",
+					"description": "List of processes conditions",
+					"items": {
+						"type": "object",
+						"properties": {
+							"Name": {
+								"description": "Name of the running binary.",
+								"$ref": "#/$defs/ValidFileName"
+							},
+							"ShouldExist": {
+								"type": "boolean",
+								"description": "Switch to determine if the process should be running or not.",
+								"default": true
+							}
+						},
+						"additionalProperties": false,
+						"required": [
+							"Name"
+						]
+					}
+				},
+				"RegKeyOperator": {
+					"type": "string",
+					"description": "Determines if all or any of the RegKeysToWaitFor conditions must be successful.",
+					"markdownDescription": "Determines if all or any of the `RegKeysToWaitFor` conditions must be successful.",
+					"default": "And",
+					"enum": [
+						"And",
+						"Or"
+					]
+				},
+				"RegKeysToWaitFor": {
+					"type": "array",
+					"description": "List of registry conditions",
+					"items": {
+						"type": "object",
+						"properties": {
+							"KeyPath": {
+								"description": "The path to the registry key.",
+								"$ref": "#/$defs/PrintableAscii"
+							},
+							"ValueName": {
+								"description": "If set, the KeyPath must contain this value.",
+								"type": "string",
+								"minLength": 1
+							},
+							"ValueData": {
+								"description": "If set, the ValueName must contain this data.",
+								"type": "string",
+								"minLength": 1
+							},
+							"ShouldExist": {
+								"type": "boolean",
+								"description": "Switch to determine if the conditions should be met or not.",
+								"default": true
+							}
+						},
+						"dependentRequired": {
+							"ValueData": [
+								"ValueName"
+							]
+						},
+						"additionalProperties": false,
+						"required": [
+							"KeyPath"
+						]
+					}
+				}
+			},
+			"anyOf": [
+				{
+					"required": [
+						"ProcessesToWaitFor"
+					]
+				},
+				{
+					"required": [
+						"RegKeysToWaitFor"
+					]
+				}
+			],
+			"additionalProperties": false
+		},
+		"DateDDMMYYYYwithSlash": {
+			"type": "string",
+			"pattern": "^\\d{2}/\\d{2}/\\d{4}$",
+			"defaultSnippets": [
+				{
+					"label": "Current Date",
+					"body": "$CURRENT_DATE/$CURRENT_MONTH/$CURRENT_YEAR"
+				}
+			]
+		},
+		"SystemVersionString": {
+			"type": "string",
+			"pattern": "^(\\d+\\.){1,3}\\d+$|^$"
+		}
+	}
+}

@@ -1,0 +1,23 @@
+name: "Ask a question"
+description: "Any question related to the extensions are welcome here."
+labels: ["Question", "Triage"]
+body:
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: "Confirmation"
+      description: "Please confirm that your issue is not related to services neo42 provides"
+      options:
+        - label: "My issue is not related to the behaviour of a package or product provided by neo42"
+          required: true
+        - label: "I understand that issues created in this repository are not subject to any support agreements made with neo42"
+          required: true
+  - type: markdown
+    attributes:
+      value: |
+        <sub>If you need help with these products please consider contacting us at [neosupport@neo42.de](mailto:neosupport@neo42.de)</sub>
+  - type: textarea
+    id: question
+    attributes:
+      label: "Your question"
+      description: "Sometimes answers might be related to the version you use, the system you are on and so forth. Please try to provide any information possible"

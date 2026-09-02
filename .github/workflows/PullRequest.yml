@@ -1,0 +1,17 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - production
+
+jobs:
+  artifact:
+    uses: ./.github/workflows/CreateArtifact.yml
+    with:
+      PSADT_VERSION: ${{ vars.TARGET_PSADT_VERSION }}
+
+  test:
+    needs: artifact
+    uses: ./.github/workflows/TestArtifact.yml
