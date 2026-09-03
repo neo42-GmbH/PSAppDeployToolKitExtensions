@@ -72,8 +72,8 @@
 			$invokeUninstallParams['ArgumentList'] = $ADTSession.NXT.Uninstall.Arguments
 		}
 
-		if ($ADTSession.NXT.Install.Awaiters) {
-			$invokeInstallParams['Awaiter'] = $ADTSession.NXT.Uninstall.Awaiters
+		if ($ADTSession.NXT.Uninstall.Awaiters) {
+			$invokeUninstallParams['Awaiter'] = $ADTSession.NXT.Uninstall.Awaiters
 		}
 
 		Write-ADTLogEntry "Invoking session based [$($invokeUninstallParams.Method)] uninstallation logic."
