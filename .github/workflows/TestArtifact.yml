@@ -1,4 +1,4 @@
-name: Test Artifact
+﻿name: Test Artifact
 
 on:
   workflow_call:
@@ -7,14 +7,14 @@ jobs:
   test:
     runs-on: windows-latest
     steps:
+      - name: checkout-tests
+        uses: actions/checkout@v7
+
       - name: download-artifact
         id: download-artifact-test
         uses: actions/download-artifact@v8
         with:
-          path: artifact
-
-      - name: checkout-tests
-        uses: actions/checkout@v7
+          path: build
 
       - name: run-pester
         shell: powershell

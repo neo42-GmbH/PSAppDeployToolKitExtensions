@@ -1,5 +1,6 @@
 ﻿#Requires -Modules Pester
 param(
+	[ValidateScript({ $_.Exists })]
 	[System.IO.DirectoryInfo]
 	$ModuleDirectory = "$($PWD.Path)\build"
 )
