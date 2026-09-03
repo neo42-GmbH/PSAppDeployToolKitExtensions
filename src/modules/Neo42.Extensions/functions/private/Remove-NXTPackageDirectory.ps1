@@ -21,7 +21,7 @@
 	if ($ExecutionContext.SessionState.Module.ModuleBase.StartsWith($ADTSession.NXT.Package.Directory.FullName, [System.StringComparison]::OrdinalIgnoreCase)) {
 		Write-ADTLogEntry -Message 'Starting process to remove the package cache post deployment.'
 		[System.String]$removeScript = ConvertTo-NXTPsBinaryArgument `
-			-Command "Wait-Process $PID 60;rm -r (`$cwd=gi `$args[1] -ea 1);while((`$cwd=`$cwd.Parent) -and `$cwd.FullName.StartsWith(`$args[0])){rm `$cwd}" `
+			-Command "Wait-Process $PID 60 -ea 0;rm -v -r (`$d=gi `$args[1] -ea 1).FullName;while((`$d=`$d.Parent) -and `$d.FullName.StartsWith(`$args[0])){rm -v `$d.FullName}" `
 			-Arguments @{ 0 = $ADTSession.NXT.Package.RootDirectory.FullName; 1 = $ADTSession.NXT.Package.Directory.FullName }
 
 		Start-ADTProcess -NoWait -UseShellExecute -WindowStyle Hidden `
