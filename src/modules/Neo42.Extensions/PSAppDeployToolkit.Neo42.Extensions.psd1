@@ -117,6 +117,9 @@
 
 			# ReleaseNotes of this module
 			ReleaseNotes = 'https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/latest'
+
+			# Prerelease tag for PSGallery.
+			# Prerelease = ''
 		}
 	}
 

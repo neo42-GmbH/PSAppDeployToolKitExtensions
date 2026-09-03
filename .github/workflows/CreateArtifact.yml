@@ -11,12 +11,20 @@ on:
         description: The URL to the PSADT source zip file (optional, will be determined from the version if not provided)
         required: false
         type: string
+      PRE_RELEASE_SUFFIX:
+        description: The suffix to append to the version for pre-release builds (optional)
+        required: false
+        type: string
 
   workflow_call:
     inputs:
       PSADT_VERSION:
         description: The version of the PSADT source
         required: true
+        type: string
+      PRE_RELEASE_SUFFIX:
+        description: The suffix to append to the version for pre-release builds (optional)
+        required: false
         type: string
     outputs:
       ARTIFACT_VERSION:
@@ -25,6 +33,8 @@ on:
         value: ${{ jobs.artifact.outputs.TAG }}
       ARTIFACT_BRANCH:
         value: ${{ jobs.artifact.outputs.BRANCH }}
+      ARTIFACT_SUFFIX:
+        value: ${{ jobs.artifact.outputs.SUFFIX }}
 
 jobs:
   artifact:
@@ -35,6 +45,7 @@ jobs:
       VERSION: ${{ steps.release-info.outputs.RELEASE_VERSION }}
       TAG: ${{ steps.release-info.outputs.RELEASE_TAG }}
       BRANCH: ${{ steps.release-info.outputs.RELEASE_BRANCH }}
+      SUFFIX: ${{ steps.release-info.outputs.PRE_RELEASE_SUFFIX }}
 
     steps:
       - name: checkout-extensions
@@ -49,12 +60,13 @@ jobs:
           $version = "$date.$runId"
 
           $branch = '${{ github.head_ref || github.ref_name }}'.Replace('refs/heads/', '')
-          $suffix = if ([string]::IsNullOrEmpty($branch)) { 'PreRelease' } else { $branch }
-          $tag = if ($branch -in @('production', 'main', 'master')) { $version } else { "$version-$suffix" }
+          $suffix = if ('${{ inputs.PRE_RELEASE_SUFFIX }}' -ne '') { '${{ inputs.PRE_RELEASE_SUFFIX }}' } elseif ($branch -notin @('production', 'main', 'master')) { $branch } else { '' }
+          $tag = if ($suffix -ne '') { "$version-$suffix" } else { $version }
 
           "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
           "RELEASE_BRANCH=$branch" >> $env:GITHUB_OUTPUT
           "RELEASE_TAG=$tag" >> $env:GITHUB_OUTPUT
+          "PRE_RELEASE_SUFFIX=$suffix" >> $env:GITHUB_OUTPUT
           Write-Host "Determined version [$version] and branch [$branch]. Tagging as [$tag]"
 
       - name: copy-template
@@ -88,20 +100,23 @@ jobs:
       - name: build-modules
         shell: pwsh
         run: |
-           ./Export-Module.ps1 -Source (Get-ChildItem -Path './src/modules' -Directory)
+           ./Export-Module.ps1 -Source (Get-ChildItem -Path './src/modules' -Directory) -Output './build'
 
       - name: inject-version
         shell: pwsh
         run: |
-          Get-ChildItem -Path './build/PSAppDeployToolkit.Neo42.*' -Include 'PSAppDeployToolkit.Neo42.*.psd1' | ForEach-Object {
-            (Get-Content -Raw -Path $_.FullName) `
-              -replace "(ModuleVersion\s*=\s*)'(0\.0\.0\.0)'", '$1''${{ steps.release-info.outputs.RELEASE_VERSION }}''' |
-              Set-Content -Path $_.FullName -Encoding UTF8
+          Get-Item -Path './build/PSAppDeployToolkit.Neo42.*/PSAppDeployToolkit.Neo42.*.psd1' | ForEach-Object {
+            $moduleContent = Get-Content -Raw -Path $_.FullName
+            $moduleContent = $moduleContent -replace '(ModuleVersion\s*=\s*)''0\.0\.0\.0''', '$1''${{ steps.release-info.outputs.RELEASE_VERSION }}'''
+            if ('${{ steps.release-info.outputs.PRE_RELEASE_SUFFIX }}' -ne '') {
+              $moduleContent = $moduleContent -replace '#\s*(Prerelease\s*=\s*)''''', '$1''${{ steps.release-info.outputs.PRE_RELEASE_SUFFIX }}'''
+            }
+            Set-Content -Path $_.FullName -Value $moduleContent -Encoding UTF8
           }
 
-          (Get-Content -Raw -Path "./build/Deploy-Application.ps1") `
-            -replace "Version: 0\.0\.0\.0", "Version: ${{ steps.release-info.outputs.RELEASE_VERSION }}" |
-            Set-Content -Path "./build/Deploy-Application.ps1" -Encoding UTF8
+          $deployContent = Get-Content -Raw -Path './build/Deploy-Application.ps1'
+          $deployContent = $deployContent -replace '(Version\s*:\s*)0\.0\.0\.0', '$1${{ steps.release-info.outputs.RELEASE_VERSION }}'
+          Set-Content -Path './build/Deploy-Application.ps1' -Value $deployContent -Encoding UTF8
 
       - name: compile-library
         shell: pwsh

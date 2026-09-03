@@ -5,12 +5,17 @@ on:
     inputs:
       PSADT_VERSION:
         type: string
+        required: true
+      PRE_RELEASE_SUFFIX:
+        type: string
+        required: false
 
 jobs:
   artifact:
     uses: ./.github/workflows/CreateArtifact.yml
     with:
       PSADT_VERSION: ${{ inputs.PSADT_VERSION }}
+      PRE_RELEASE_SUFFIX: ${{ inputs.PRE_RELEASE_SUFFIX }}
     permissions:
       contents: read
 
@@ -92,7 +97,7 @@ jobs:
           }
 
       - name: update-milestones
-        if: ${{ needs.artifact.outputs.ARTIFACT_BRANCH == 'production' }}
+        if: ${{ needs.artifact.outputs.ARTIFACT_SUFFIX != '' }}
         uses: actions/github-script@v9
         id: milestone
         with:
@@ -140,7 +145,7 @@ jobs:
             var releaseNoteHeader = "# 🚨 Important 🚨 #\nReleases like this are not intended for production use. Please refer to the [latest stable](${{ github.server_url }}/${{ github.repository }}/releases/latest) release for more information."
             const fs = require('fs');
             const path = require('path');
-            const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_BRANCH }}' !== 'production';
+            const isPreRelease = '${{ needs.artifact.outputs.ARTIFACT_SUFFIX }}' !== '';
             const componentPath = path.join(process.env.GITHUB_WORKSPACE, 'components');
 
             if (!isPreRelease) {
@@ -153,7 +158,7 @@ jobs:
                 })
               ).data.length
               const issueText = issueCount === 1 ? `$ { issueCount } issue` : `$ { issueCount } issues`;
-              releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url }}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.`;
+              releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url }}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.\n\nBuilt for __PSAppDeployToolkit v${{ inputs.PSADT_VERSION }}__.`;
             }
 
             const generateReleaseNotesParameters = {
