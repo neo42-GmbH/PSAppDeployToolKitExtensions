@@ -1,4 +1,4 @@
-name: Pull Request
+﻿name: Pull Request
 
 on:
   pull_request:
@@ -11,7 +11,9 @@ jobs:
     uses: ./.github/workflows/CreateArtifact.yml
     with:
       PSADT_VERSION: ${{ vars.TARGET_PSADT_VERSION }}
+    permissions: {}
 
   test:
     needs: artifact
     uses: ./.github/workflows/TestArtifact.yml
+    permissions: {}
