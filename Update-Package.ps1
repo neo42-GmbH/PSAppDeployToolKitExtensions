@@ -231,7 +231,7 @@ Write-Host -ForegroundColor Green ' OK.'
 #region SetupCfg migration
 Write-Host -NoNewline 'Merging new reference settings and metadata to Setup.cfg...'
 [PSADTNXT.Configuration.NxtIniDocument]$packageCfg = [PSADTNXT.Configuration.NxtIniDocument]::CreateFrom("$Package\Setup.cfg")
-[PSADTNXT.Configuration.NxtIniDocument]$setupCfg = [PSADTNXT.Configuration.NxtIniDocument]::CreateFrom("$Reference\PSAppDeployToolkit.Neo42.Extensions\Setup.cfg")
+[PSADTNXT.Configuration.NxtIniDocument]$setupCfg = [PSADTNXT.Configuration.NxtIniDocument]::CreateFrom("$Reference\Setup.cfg")
 
 # Merge new reference settings and update comments
 [System.Int32]$sectionIdx = 0
