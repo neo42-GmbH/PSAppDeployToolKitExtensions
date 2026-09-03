@@ -11,7 +11,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 	/// Validates that a path is valid.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
-	public class ValidScriptBlock : ValidationAttribute
+	internal sealed class ValidScriptBlock : ValidationAttribute
 	{
 		public bool Strict { get; set; }
 

@@ -5,7 +5,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 {
 
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
-	public class ValidTimeSpan : ValidationAttribute
+	internal sealed class ValidTimeSpan : ValidationAttribute
 	{
 		public TimeSpan Minimum { get; set; } = TimeSpan.Zero;
 

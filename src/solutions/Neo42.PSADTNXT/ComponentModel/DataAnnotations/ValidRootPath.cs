@@ -1,6 +1,6 @@
 ﻿namespace PSADTNXT.ComponentModel.DataAnnotations
 {
-	public enum ValidPathRoot
+	internal enum ValidPathRoot
 	{
 		Any,
 		Rooted,

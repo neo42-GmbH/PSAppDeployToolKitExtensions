@@ -3,7 +3,7 @@ using PSADTNXT.Application;
 
 namespace PSADTNXT.Deployment
 {
-	public sealed class NxtInstallationDetection
+	public sealed record NxtInstallationDetection
 	{
 		public bool Enabled { get; set; }
 

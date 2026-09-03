@@ -8,7 +8,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 	/// Validates that a path is valid.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
-	public class ValidGuidAttribute : ValidationAttribute
+	internal sealed class ValidGuidAttribute : ValidationAttribute
 	{
 		public bool AllowEmpty { get; set; }
 

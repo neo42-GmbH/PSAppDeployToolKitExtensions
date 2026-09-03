@@ -6,7 +6,7 @@ using System.Text;
 
 namespace PSADTNXT.WinGet.Configuration
 {
-	public record WinGetConfigModel
+	public sealed class WinGetConfigModel
 	{
 		public string? ProductCode { get; set; }
 

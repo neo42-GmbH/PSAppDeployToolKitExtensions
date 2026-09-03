@@ -4,7 +4,7 @@ using PSADTNXT.Extensions;
 
 namespace PSADTNXT.Collections
 {
-	internal class DictionaryMapperDefaultConverter : IDictionaryMapperConverter
+	internal sealed class DictionaryMapperDefaultConverter : IDictionaryMapperConverter
 	{
 		public bool TryConvert(object value, PropertyInfo member, out object? result)
 		{

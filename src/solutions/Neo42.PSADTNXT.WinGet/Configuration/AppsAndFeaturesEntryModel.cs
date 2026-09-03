@@ -1,6 +1,6 @@
 ﻿namespace PSADTNXT.WinGet.Configuration
 {
-	public record AppsAndFeaturesEntryModel
+	public sealed record AppsAndFeaturesEntryModel
 	{
 		public string? DisplayName { get; set; }
 

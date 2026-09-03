@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace PSADTNXT.Collections
 {
-	internal class DictionaryMapperStaticMethodConverter<T>(string method) : IDictionaryMapperConverter
+	internal sealed class DictionaryMapperStaticMethodConverter<T>(string method) : IDictionaryMapperConverter
 	{
 		private readonly string _methodName = method ?? throw new ArgumentNullException(nameof(method));
 

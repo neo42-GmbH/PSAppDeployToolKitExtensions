@@ -10,7 +10,7 @@ namespace PSADTNXT.Text
 	/// <summary>
 	/// Allows for PowerShell auto-completion on <see cref="System.Text.Encoding"/> parameters based on enum values.
 	/// </summary>
-	public class NxtEncodingArgumentCompleter : IArgumentCompleter
+	public sealed class NxtEncodingArgumentCompleter : IArgumentCompleter
 	{
 		public IEnumerable<CompletionResult> CompleteArgument(string commandName, string parameterName, string wordToComplete, CommandAst commandAst, IDictionary fakeBoundParameters)
 		{

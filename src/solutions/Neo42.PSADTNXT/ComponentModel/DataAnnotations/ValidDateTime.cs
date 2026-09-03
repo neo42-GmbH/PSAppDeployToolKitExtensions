@@ -8,7 +8,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 	/// Validates that a path is valid.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
-	public class ValidDateTime : ValidationAttribute
+	internal sealed class ValidDateTime : ValidationAttribute
 	{
 		public DateTimeStyles DateTimeStyles { get; set; } = DateTimeStyles.None;
 

@@ -8,5 +8,5 @@ namespace PSADTNXT.Deployment
 	/// <remarks
 	/// This exception is only intended to be used in PowerShell directly, and not in the C# code.
 	/// </remarks>
-	public class NxtDeploymentCancelException(string message, Exception? innerException = null) : Exception(message, innerException) { }
+	public sealed class NxtDeploymentCancelException(string message, Exception? innerException = null) : Exception(message, innerException) { }
 }

@@ -1,11 +1,10 @@
-using System;
+﻿using System;
 using Microsoft.Win32;
 using System.IO;
 using System.Linq;
 using PSADTNXT.Shell;
 using PSADTNXT.Extensions;
 using System.Collections.Generic;
-using PSADT.ProcessManagement;
 using PSADT.Types;
 
 namespace PSADTNXT.Package

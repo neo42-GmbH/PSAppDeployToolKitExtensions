@@ -10,7 +10,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 	/// Validates that a path is valid.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
-	public class ValidRegistryPathAttribute : ValidationAttribute
+	internal sealed class ValidRegistryPathAttribute : ValidationAttribute
 	{
 		public ValidPathRoot Root { get; set; } = ValidPathRoot.Any;
 

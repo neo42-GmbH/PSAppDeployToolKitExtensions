@@ -6,7 +6,6 @@ using PSADTNXT.ComponentModel.DataAnnotations;
 namespace PSADTNXT.Deployment.Configuration
 {
 	public sealed record NxtPackageConfigurationModel : IValidatableObject
-
 	{
 		[Required]
 		[ValidVersion(maximumVersion: "2025.12.1.0", minimumVersion: "2025.12.1.0")]

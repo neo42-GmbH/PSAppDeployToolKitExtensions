@@ -2,7 +2,7 @@
 
 namespace PSADTNXT.Deployment
 {
-	public class NxtSoftMigration
+	public sealed record NxtSoftMigration
 	{
 		public bool Enabled { get; set; }
 

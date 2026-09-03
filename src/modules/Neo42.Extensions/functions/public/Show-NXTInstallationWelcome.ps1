@@ -165,14 +165,14 @@
 			# Also track processes that should be opened post-deployment separately based on the ReopenMode of the CloseProcesses definition.
 			# TODO: Track https://github.com/PSAppDeployToolkit/PSAppDeployToolkit/issues/1072 for native support of this in PSADT.
 			[System.Collections.Generic.List[PSADT.ProcessManagement.RunningProcess]]$runningProcesses = [System.Collections.Generic.List[PSADT.ProcessManagement.RunningProcess]]::new()
-			[System.Collections.Generic.List[PSADTNXT.ProcessManagement.NxtOpenProcess]]$appsToReopen = [System.Collections.Generic.List[PSADTNXT.ProcessManagement.NxtOpenProcess]]::new()
+			[System.Collections.Generic.List[PSADTNXT.ProcessManagement.NxtClosedProcess]]$appsToReopen = [System.Collections.Generic.List[PSADTNXT.ProcessManagement.NxtClosedProcess]]::new()
 			foreach ($definition in $CloseProcesses) {
 				Get-ADTRunningProcesses -ProcessObjects $definition.ProcessDefinition -InformationAction SilentlyContinue | & {
 					process {
 						$runningProcesses.Add($_)
 						if ($definition.ReopenMode -ne [PSADTNXT.ProcessManagement.ReopenMode]::None) {
 							$appsToReopen.Add(
-								[PSADTNXT.ProcessManagement.NxtOpenProcess]::new(
+								[PSADTNXT.ProcessManagement.NxtClosedProcess]::new(
 									$_.Username,
 									$_.FileName,
 									$(if ($definition.ReopenMode -eq [PSADTNXT.ProcessManagement.ReopenMode]::Commandline) { $_.Arguments } else { [System.String]::Empty }),

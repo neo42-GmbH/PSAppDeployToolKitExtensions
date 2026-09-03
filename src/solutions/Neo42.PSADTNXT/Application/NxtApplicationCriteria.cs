@@ -4,18 +4,13 @@ using System.Management.Automation;
 
 namespace PSADTNXT.Application
 {
-	public sealed class NxtApplicationCriteria
+	public sealed record NxtApplicationCriteria
 	{
 		public ApplicationStore Store { get; }
 
 		public string? Identifier { get; }
 
 		public ScriptBlock? Filter { get; }
-
-		public override string ToString()
-		{
-			return $"{Store} Application Criteria";
-		}
 
 		public NxtApplicationCriteria(
 			ApplicationStore store,
@@ -53,31 +48,72 @@ namespace PSADTNXT.Application
 			Filter = filter;
 		}
 
-		public NxtApplicationCriteria(Hashtable hashtable)
+		public static implicit operator NxtApplicationCriteria(Hashtable hashtable)
 		{
-			if (!hashtable.ContainsKey("Store") || !Enum.TryParse<ApplicationStore>(hashtable["Store"]?.ToString(), true, out var store))
+			return FromHashtable(hashtable);
+		}
+
+		public static NxtApplicationCriteria FromHashtable(Hashtable hashtable)
+		{
+			if (hashtable == null)
 			{
-				throw new ArgumentException("The hashtable must contain a 'Store' key with a valid value.", nameof(hashtable));
+				throw new ArgumentNullException(nameof(hashtable));
 			}
-			Store = store;
 
-			Identifier = hashtable["Identifier"] as string;
-			Filter = hashtable["Filter"] as ScriptBlock;
+			var store = hashtable.ContainsKey("Store") && Enum.TryParse<ApplicationStore>(hashtable["Store"]?.ToString(), true, out var parsedStore)
+				? parsedStore
+				: throw new ArgumentException("The hashtable must contain a 'Store' key with a valid value.", nameof(hashtable));
 
-			if (Identifier is null && Filter is null)
+			string? identifier = null;
+			if (hashtable.ContainsKey("Identifier"))
+			{
+				if (hashtable["Identifier"] is string id)
+				{
+					AssertNotEmpty(id, nameof(identifier));
+					identifier = id;
+				}
+				else
+				{
+					throw new ArgumentException($"Invalid value for Identifier: {hashtable["Identifier"]}");
+				}
+			}
+
+			ScriptBlock? filter = null;
+			if (hashtable.ContainsKey("Filter"))
+			{
+				if (hashtable["Filter"] is ScriptBlock sb)
+				{
+					AssertNotEmpty(sb.ToString(), nameof(filter));
+					filter = sb;
+				}
+				else
+				{
+					throw new ArgumentException($"Invalid value for Filter: {hashtable["Filter"]}");
+				}
+			}
+
+			if (identifier is null && filter is null)
 			{
 				throw new ArgumentException("The hashtable must contain at least an 'Identifier' or a 'Filter' key.", nameof(hashtable));
 			}
 
-			if (Identifier is not null)
+			if (identifier is not null && filter is not null)
 			{
-				AssertNotEmpty(Identifier, nameof(Identifier));
+				return new NxtApplicationCriteria(store, identifier, filter);
 			}
+			else if (identifier is not null)
+			{
+				return new NxtApplicationCriteria(store, identifier);
+			}
+			else // filter is not null
+			{
+				return new NxtApplicationCriteria(store, filter!);
+			}
+		}
 
-			if (Filter is not null)
-			{
-				AssertNotEmpty(Filter.ToString(), nameof(Filter));
-			}
+		public override string ToString()
+		{
+			return $"{Store} Application Criteria";
 		}
 
 		private static void AssertNotEmpty(string? value, string paramName)

@@ -2,7 +2,7 @@
 
 namespace PSADTNXT.Collections
 {
-	public interface IDictionaryMapperConverter
+	internal interface IDictionaryMapperConverter
 	{
 		bool TryConvert(object value, PropertyInfo member, out object? result);
 	}

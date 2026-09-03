@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Linq;
 using System.Management.Automation;
-using PSADTNXT.IO;
 
 namespace PSADTNXT.Deployment
 {
@@ -22,6 +22,35 @@ namespace PSADTNXT.Deployment
 			Exists = exists;
 			Timeout = timeout ?? TimeSpan.FromSeconds(30);
 			_pattern = new WildcardPattern(Name, WildcardOptions.IgnoreCase);
+		}
+
+		public static implicit operator NxtProcessAwaiter(Hashtable hashtable)
+		{
+			return FromHashtable(hashtable);
+		}
+
+		public static NxtProcessAwaiter FromHashtable(Hashtable hashtable)
+		{
+			if (hashtable == null)
+			{
+				throw new ArgumentNullException(nameof(hashtable));
+			}
+
+			var name = hashtable.ContainsKey("Name") && hashtable["Name"] is string nameValue
+				? nameValue
+				: throw new ArgumentException("Missing or invalid 'Name' value in the provided hashtable.");
+
+#pragma warning disable IDE0075
+			var exists = hashtable.ContainsKey("Exists")
+				? hashtable["Exists"] is bool existsValue ? existsValue : throw new ArgumentException($"Invalid value for Exists: {hashtable["Exists"]}")
+				: true;
+#pragma warning restore IDE0075
+
+			var timeout = hashtable.ContainsKey("Timeout")
+				? TimeSpan.TryParse(hashtable["Timeout"]?.ToString(), out var timeoutValue) ? timeoutValue : throw new ArgumentException($"Invalid value for Timeout: {hashtable["Timeout"]}")
+				: TimeSpan.FromSeconds(30);
+
+			return new NxtProcessAwaiter(name, exists, timeout);
 		}
 
 		public bool Evaluate()

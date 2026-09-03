@@ -10,7 +10,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 	/// Validates that a path is valid.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
-	public class ValidFileNameAttribute : ValidationAttribute
+	internal sealed class ValidFileNameAttribute : ValidationAttribute
 	{
 		public string[] FileExtension { get; set; } = [];
 

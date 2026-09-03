@@ -2,7 +2,7 @@
 
 namespace PSADTNXT.Deployment
 {
-	public sealed class NxtInstallationInstructions
+	public sealed record NxtInstallationInstructions
 	{
 		public DeploymentMethod? Method { get; set; }
 

@@ -51,7 +51,7 @@ namespace PSADTNXT.Deployment
 
 		// Do not show, might be implemented upstream
 		[Hidden]
-		public List<NxtOpenProcess> ClosedProcesses { get; } = [];
+		public List<NxtClosedProcess> ClosedProcesses { get; } = [];
 
 		public List<NxtShortcutOperation> ManagedShortcuts { get; }
 

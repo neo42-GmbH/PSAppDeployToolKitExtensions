@@ -8,7 +8,7 @@ namespace PSADTNXT.Attributes
 	/// <summary>
 	/// Transforms objects into a <see cref="Encoding"/>.
 	/// </summary>
-	public class NxtEncodingTransformationAttribute : ArgumentTransformationAttribute
+	public sealed class NxtEncodingTransformationAttribute : ArgumentTransformationAttribute
 	{
 		public override object Transform(EngineIntrinsics engineIntrinsics, object inputData)
 		{
