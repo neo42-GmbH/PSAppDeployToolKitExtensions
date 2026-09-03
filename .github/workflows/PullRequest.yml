@@ -11,9 +11,12 @@ jobs:
     uses: ./.github/workflows/CreateArtifact.yml
     with:
       PSADT_VERSION: ${{ vars.TARGET_PSADT_VERSION }}
-    permissions: {}
+    permissions:
+      contents: read
 
   test:
     needs: artifact
     uses: ./.github/workflows/TestArtifact.yml
-    permissions: {}
+    permissions:
+      contents: read
+
