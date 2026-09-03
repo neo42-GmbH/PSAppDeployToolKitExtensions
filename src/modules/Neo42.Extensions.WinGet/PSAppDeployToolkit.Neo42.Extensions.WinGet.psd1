@@ -1,7 +1,4 @@
 ﻿# Module manifest for module 'PSAppDeployToolkit.Neo42.Extensions'
-#
-# Generated on: 2024-12-10
-#
 
 @{
 	# Script module or binary module file associated with this manifest.

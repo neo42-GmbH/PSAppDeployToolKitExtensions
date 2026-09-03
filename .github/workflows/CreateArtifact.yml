@@ -115,7 +115,7 @@ jobs:
           }
 
           $deployContent = Get-Content -Raw -Path './build/Deploy-Application.ps1'
-          $deployContent = $deployContent -replace '(Version\s*:\s*)0\.0\.0\.0', '$1${{ steps.release-info.outputs.RELEASE_VERSION }}'
+          $deployContent = $deployContent -replace '(Version\s*:)\s*0\.0\.0\.0', '$1 ${{ steps.release-info.outputs.RELEASE_VERSION }}'
           Set-Content -Path './build/Deploy-Application.ps1' -Value $deployContent -Encoding UTF8
 
       - name: compile-library
