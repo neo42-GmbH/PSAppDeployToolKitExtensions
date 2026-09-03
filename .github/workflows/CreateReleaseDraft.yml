@@ -12,9 +12,15 @@ jobs:
     with:
       PSADT_VERSION: ${{ inputs.PSADT_VERSION }}
 
+  test:
+    needs:
+      - artifact
+    uses: ./.github/workflows/TestArtifact.yml
+
   release:
     needs:
       - artifact
+      - test
     runs-on: windows-latest
     permissions:
       contents: write
