@@ -49,7 +49,10 @@
 					}
 				) | & {
 					process {
-						[System.String]$currentPath = Get-ADTRegistryKey -LiteralPath $_ -Name 'PATH' -DoNotExpandEnvironmentNames -InformationAction SilentlyContinue
+						if (-not ([System.String]$currentPath = Get-ADTRegistryKey -LiteralPath $_ -Name 'PATH' -DoNotExpandEnvironmentNames -InformationAction SilentlyContinue)) {
+							Write-ADTLogEntry -Severity Warning -Message "There are no environment variables set in [$_]" -DebugMessage
+							return
+						}
 						[System.Collections.Generic.List[System.String]]$currentPathComponents = $currentPath.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries)
 						[System.String[]]$lookupEntries = $pathEntry.TrimEnd($pathSeparators), $pathEntryResolved.TrimEnd($pathSeparators)
 						if ($currentPathComponents.RemoveAll({ $args[0].TrimEnd($pathSeparators) -in $lookupEntries })) {

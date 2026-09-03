@@ -114,7 +114,7 @@
 		}
 		foreach ($user in $users) {
 			Write-ADTLogEntry -Message "Starting user part for [$($user.NTAccount)]."
-			$processes[$user] = Start-ADTProcessAsUser -FilePath $binary -ArgumentList $invokeArgs -Username $user.NTAccount -NoStreamLogging -DenyUserTermination -WindowStyle Hidden -NoWait -PassThru
+			$processes[$user] = Start-ADTProcessAsUser -FilePath $binary -ArgumentList $invokeArgs -Username $user.NTAccount -DenyUserTermination -WindowStyle Hidden -NoWait -PassThru
 
 			Write-ADTLogEntry -Message "Registering active setup status for user [$($user.NTAccount)]." -DebugMessage
 			[Microsoft.Win32.RegistryKey]$userKey = $usersKey.CreateSubKey([System.IO.Path]::Combine($user.SID, $activeSetupSubKey, $currentKeyName))

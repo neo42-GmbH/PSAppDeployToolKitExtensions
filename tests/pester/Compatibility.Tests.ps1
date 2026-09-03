@@ -50,6 +50,7 @@ Describe 'PSADT Compatibility' {
 				{
 					$args[0] -is [System.Management.Automation.Language.CommandAst] -and
 					-not [System.String]::IsNullOrWhitespace($args[0].GetCommandName()) -and # We can only resolve non dynamic commands
+					$args[0].Parent -isnot [System.Management.Automation.Language.PipelineAst] -and # We cannot resolve pipeline input
 					-not ($args[0].Find({ $args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and $args[0].Splatted }, $false)) # We cannot resolve splatting
 				},
 				$true
