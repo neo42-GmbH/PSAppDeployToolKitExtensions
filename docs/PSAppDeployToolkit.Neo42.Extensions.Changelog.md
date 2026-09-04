@@ -10,8 +10,6 @@
 
 - **PackageConfig**: The value `App` has been removed and is not present in the new package config format. The use within the package config has been replaced by meta variables.
 
-- **PackageConfig**: The value `BlockExecution` has been moved to the toolkit configuration. Each app can opt in/out of this behavior separately in the new format.
-
 - **PackageConfig**: The logic for `ProductGUID` and `RemovePackagesWithSameProductGUID` has been removed and is not present in the new package config format.
 
 - **PackageConfig**: The `AppKillProcesses` value `IsWql` has been dropped due to incompatibility. To mitigate some of the use cases, support for full paths in process names was added.
@@ -123,6 +121,8 @@ The new format improves the following aspects:
 - If applicable, the user part execution is now evaluated during the installation phase. This will allow for better timing and error handling of user part related issues.
 
 - Extension properties extend the native PSADT types like `InstalledApplication` with info parameters like `.IsInnoSetup` to make working with these objects easier.
+
+- `BlockExection` can now be controlled at the toolkit level, allowing for more widely scoped control.
 
 #### With new format only
 
