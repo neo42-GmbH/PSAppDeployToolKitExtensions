@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Linq;
 using System.Management.Automation;
+using PSADTNXT.IO;
 
 namespace PSADTNXT.Deployment
 {
@@ -21,7 +22,7 @@ namespace PSADTNXT.Deployment
 			Name = name;
 			Exists = exists;
 			Timeout = timeout ?? TimeSpan.FromSeconds(30);
-			_pattern = new WildcardPattern(Name, WildcardOptions.IgnoreCase);
+			_pattern = new WildcardPattern(NxtPath.GetExecutableName(Name), WildcardOptions.IgnoreCase);
 		}
 
 		public static implicit operator NxtProcessAwaiter(Hashtable hashtable)
@@ -55,7 +56,7 @@ namespace PSADTNXT.Deployment
 
 		public bool Evaluate()
 		{
-			return Process.GetProcesses().Any(p => _pattern.IsMatch(p.ProcessName));
+			return Process.GetProcesses().Any(p => _pattern.IsMatch(p.ProcessName)) == Exists;
 		}
 
 		public override string ToString()
