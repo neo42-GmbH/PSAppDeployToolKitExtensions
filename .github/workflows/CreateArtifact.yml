@@ -61,7 +61,7 @@ jobs:
 
           $branch = '${{ github.head_ref || github.ref_name }}'.Replace('refs/heads/', '')
           $suffix = if ('${{ inputs.PRE_RELEASE_SUFFIX }}' -ne '') { '${{ inputs.PRE_RELEASE_SUFFIX }}' } elseif ($branch -notin @('production', 'main', 'master')) { $branch } else { '' }
-          $tag = if ($suffix -ne '') { "$version-$suffix" } else { $version }
+          $tag = if ($suffix -ne '') { "v$version-$suffix" } else { "v$version" }
 
           "RELEASE_VERSION=$version" >> $env:GITHUB_OUTPUT
           "RELEASE_BRANCH=$branch" >> $env:GITHUB_OUTPUT
@@ -121,7 +121,7 @@ jobs:
       - name: compile-library
         shell: pwsh
         run: |
-          . ./Invoke-Compile.ps1 -Version '${{ steps.release-info.outputs.RELEASE_TAG }}' -Config 'Release'
+          . ./Invoke-Compile.ps1 -Version '${{ steps.release-info.outputs.RELEASE_VERSION }}' -Config 'Release'
 
       - name: upload-artifact
         uses: actions/upload-artifact@v7
