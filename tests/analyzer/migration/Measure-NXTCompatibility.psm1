@@ -339,6 +339,7 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 	RegSoftwarePath                                                        = $null
 	RegSoftwarePathx86                                                     = '$envRegistrySoftwareW3264'
 	System                                                                 = $null
+	Wow6432Node                                                            = '$envWow6432Node'
 	DeployApplicationPath                                                  = '$PSCommandPath'
 	AppDeployToolkitExtensionsPath                                         = $null
 	AppDeployToolkitConfigPath                                             = $null

@@ -33,11 +33,11 @@
 - The UI now supports native PSADT UIs. Switch between Classic and Fluent styles in the Toolkit configuration. This release defaults to the old UI style which can be disabled within the toolkit config. As of this release, only the legacy UI supports multi user sessions. If you require this feature, please use the legacy UI until multi user support is added by the PSADT team. All new UIs are implemented only through PSADT's native UI framework and therefore do also not support multi user sessions (yet).
 
 - The old `CustomAppDeployToolkitUi.ps1` has been moved to the module in the `Scripts` directory. The file has been heavily overhauled to be compatible with v4 and should no longer be edited. Any customizations should be done via PSADT's native UI customization options. The neo42 Application Package Center will offer suitable pipeline tasks to customize the UI.
-  - The UI does not longer require extension code and encoded objects.
+  - The UI does no longer require extension code and encoded objects.
 
 - A configurable **progress bar** has been added. It can be enabled via the Setup.cfg option `Options.SHOWPROGRESS`. The dialog will be shown for the duration of the deployment.
 
-- The UI **accent color** is now configurable via the Toolkit configuration `UI.FluentAccentColor`. The legacy neo42 AppKillProcesses window supports this new setting.
+- The UI **accent color** is now configurable via the Toolkit configuration `UI.FluentAccentColor` and `UI.FluentAccentColorDark`. The legacy neo42 AppKillProcesses window supports this new setting.
 
 - A hard **defer deadline** can now be specified via the Setup.cfg option `AskKillProcesses.DEFERDEADLINE`. This allows to specify a date and time after which the installation cannot be deferred anymore. The soonest of all defer options will be the one applied.
 
@@ -49,7 +49,7 @@
 
 - A **restart prompt** can now be shown by the toolkit itself. This can be enabled via the Setup.cfg option `Options.SHOWRESTARTPROMPT`. If the deployment is in interactive mode, the user will be prompted to restart the system with a window that cannot be dismissed without action. In silent mode, the dialog will be suppressed and no action will be taken.
 
-- The option to cancel a dialog was merged into the deferral logic. The user must now be able to defer the deployment if cancelling was previously allowed.. The differentiation between cancel and defer was ambiguous and lead to undesired behavior in certain scenarios. Deferring and cancelling had the same effect of ending the deployment temporarily.
+- The option to cancel a dialog was merged into the deferral logic. The user must now be able to defer the deployment if cancelling was previously allowed. The differentiation between cancel and defer was ambiguous and lead to undesired behavior in certain scenarios. Deferring and cancelling had the same effect of ending the deployment temporarily.
 
 - The UI will now run in the user's context. Which makes it compatible with screen readers.
   - An incompatibility with Workspace ONE has been resolved, where no UI could spawn in SYSTEM context.
@@ -60,7 +60,7 @@
   - For toolkit configuration overwrites create or update `Config\config.psd1`.
   - For translation overwrites create `Strings\strings.psd1`(English) and/or `Strings\<LANGUAGE CODE>\strings.psd1`.
   - For asset overwrites (e.g. logos/ banners) create `Assets\<Asset>`.
-  - nAny folder starting with `Overrides.` at the root of the package will also be scanned for configurations.
+  - Any folder starting with `Overrides.` at the root of the package will also be scanned for configurations.
 
 - The deployment script will now load any module named `PSAppDeployToolkit.*` that is placed in the package root. This allows:
   - Customers to write their own extensions without having to edit the deployment file internals.
@@ -76,7 +76,7 @@
   - Logging options.
   - And many more. Check the toolkit configuration for all available options.
 
-- Empirum specific logic was moved to its dedicated module `PSAppDeployToolkit.Neo42.Empirum.Extensions`. This module is loaded automatically if the deployment is running within an Empirum managed environment and it is present in the package root.
+- Empirum specific logic was moved to its dedicated module `PSAppDeployToolkit.Neo42.Extensions.Empirum`. This module is loaded automatically if the deployment is running within an Empirum managed environment and it is present in the package root.
 
 - The source code of the `DeployNxtApplication.exe` is now part of the repository and build process.
 
@@ -120,9 +120,9 @@ The new format improves the following aspects:
 
 - If applicable, the user part execution is now evaluated during the installation phase. This will allow for better timing and error handling of user part related issues.
 
-- Extension properties extend the native PSADT types like `InstalledApplication` with info parameters like `.IsInnoSetup` to make working with these objects easier.
+- Extension properties extend the native PSADT types like `InstalledApplication` with info parameters like `.InnoSetupInstaller` or `.BurnInstaller` to make working with these objects easier.
 
-- `BlockExection` can now be controlled at the toolkit level, allowing for more widely scoped control.
+- `BlockExecution` can now be controlled at the toolkit level, allowing for more widely scoped control.
 
 #### With new format only
 
@@ -159,7 +159,7 @@ The new format improves the following aspects:
 
 - All variables exposed by the toolkit are protected against modification. Attempting to change these variables will result in an error.
 
-- Performance optimizations have been made to the package deployment process to reduce deployment times and resource consumption significantly.
+- Performance optimizations have been made to the package deployment process to reduce deployment times and resource consumtion significantly.
 
 - The use of Windows Management Instrumentation (WMI) has been dropped from the codebase. This improves performance and reliability, especially on systems with WMI issues.
 

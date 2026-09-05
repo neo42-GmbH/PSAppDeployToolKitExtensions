@@ -84,9 +84,9 @@ The path to the file(s) to add content to.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -97,7 +97,7 @@ The literal path to the file(s) to add content to.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -112,7 +112,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -125,7 +125,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -138,7 +138,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Value
 
@@ -149,7 +149,7 @@ The content to add to the file(s).
 |Type:|String[]|
 |Position:|1|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -252,7 +252,7 @@ The command information object representing the custom function to be executed a
 |Type:|CommandInfo[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -264,6 +264,7 @@ If this parameter is omitted, the name of the callback will be used to determine
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|False|
@@ -361,9 +362,9 @@ The path to the folder(s) to add permissions to.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -374,7 +375,7 @@ The literal path to the folder(s) to add permissions to.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -389,7 +390,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -402,7 +403,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -415,7 +416,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -FullControl
 
@@ -541,7 +542,7 @@ The path(s) to add to the PATH variable.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -667,9 +668,9 @@ The path to the XML file(s) to add the node to.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -680,7 +681,7 @@ The literal path to the XML file(s) to add the node to.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -758,7 +759,7 @@ The XPath to the node to add the new node to.
 |Type:|String|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -772,7 +773,7 @@ The name can contain a namespace prefix (e.g. 'ns:nodeName') if the node is in a
 |Type:|String|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -872,9 +873,10 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -931,7 +933,7 @@ The version to compare.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -944,7 +946,7 @@ The target version to compare against.
 |Type:|String|
 |Position:|1|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -997,7 +999,7 @@ The escaped string that you want to convert into a list of components.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -1047,7 +1049,7 @@ The Base64-encoded and compressed string to decode.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -1112,7 +1114,7 @@ The JSON string to convert.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -1174,7 +1176,7 @@ The installer product code that you want to convert into a product GUID.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -1228,7 +1230,7 @@ The object to convert.
 |Type:|Object|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -1290,7 +1292,7 @@ The product GUID that you want to convert into an installer product code.
 |Type:|Guid|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -1339,7 +1341,7 @@ The product GUID that you want to convert into an installer product code.
 |Type:|Guid|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -1403,7 +1405,7 @@ The dictionary object to convert. If the keys are integers, they will be treated
 |Type:|Hashtable|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -1536,7 +1538,7 @@ The message to be displayed in the exception.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -1563,7 +1565,7 @@ Apply a predefined exit code and message representing the given status.
 |Enum values:|Complete, RestartRequired, FastRetry, Error|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -1576,7 +1578,7 @@ A quick access switch to set the exit code to 3010, NoRegistration to true and a
 |Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -1665,9 +1667,9 @@ The path to the file(s) to expand variables in.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -1678,7 +1680,7 @@ The literal path to the file(s) to expand variables in.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -1693,7 +1695,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -1706,7 +1708,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -1719,7 +1721,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Encoding
 
@@ -1811,7 +1813,7 @@ The application search criteria used to find the application(s).
 |Type:|NxtApplicationCriteria|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -1953,9 +1955,9 @@ The path to the file(s) to get content from.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -1966,7 +1968,7 @@ The literal path to the file(s) to get content from.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -1981,7 +1983,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -1994,7 +1996,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -2007,7 +2009,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Force
 
@@ -2106,7 +2108,7 @@ A string representing the drive letter.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -2190,7 +2192,7 @@ A string representing the drive letter.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -2260,9 +2262,9 @@ The path to the file(s) to check for encoding.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -2273,7 +2275,7 @@ The literal path to the file(s) to check for encoding.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -2288,7 +2290,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -2301,7 +2303,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -2314,7 +2316,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Force
 
@@ -2405,7 +2407,71 @@ System.UInt64 - The size of the folder(s) in the specified unit.
 
 ### PARAMETERS
 
-**This function does not have any documented parameters.**
+#### -Path
+
+Specifies the path to the folder(s) to calculate the size of. Wildcards are supported.
+
+|Property|Value|
+|:---|:---|
+|Type:|String[]|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|True|
+
+#### -LiteralPath
+
+Specifies the literal path to the folder(s) to calculate the size of.
+
+|Property|Value|
+|:---|:---|
+|Type:|String[]|
+|Position:|Named|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|True (ByPropertyName)|
+|Accept wildcard characters:|False|
+
+#### -Filter
+
+A filter to qualify the Path parameter.
+
+|Property|Value|
+|:---|:---|
+|Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|True|
+
+#### -Exclude
+
+A filter to exclude items from the Path parameter.
+
+|Property|Value|
+|:---|:---|
+|Type:|String[]|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|True|
+
+#### -Include
+
+A filter to include items in the Path parameter.
+
+|Property|Value|
+|:---|:---|
+|Type:|String[]|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|True|
+
 ## Get-NXTParentProcess
 
 Retrieves the parent process of a given process ID.
@@ -2694,6 +2760,45 @@ Excludes the specified package IDs from the results.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+#### -RegPackagesKey
+
+Filters the results based on the specified registry packages key.
+
+|Property|Value|
+|:---|:---|
+|Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Application
+
+Gets the package related to the specified InstalledApplication object.
+
+|Property|Value|
+|:---|:---|
+|Type:|InstalledApplication|
+|Position:|Named|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -ADTSession
+
+Gets the package related to the specified NxtDeploymentSession object.
+
+|Property|Value|
+|:---|:---|
+|Type:|NxtDeploymentSession|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 ## Get-NXTStrictMode
 
 Returns the currently applied strict mode version.
@@ -2818,9 +2923,9 @@ The path to the XML file(s) to remove the node from.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -2831,7 +2936,7 @@ The literal path to the XML file(s) to remove the node from.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -2909,7 +3014,7 @@ The XPath to the node to remove.
 |Type:|String|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -3002,9 +3107,9 @@ The path to the INI file(s) to import.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -3015,7 +3120,7 @@ The literal path to the INI file(s) to import.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -3030,7 +3135,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -3043,7 +3148,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -3056,7 +3161,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -AsIniDocument
 
@@ -3162,9 +3267,9 @@ The path to the XML file(s) to import.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -3175,7 +3280,7 @@ The literal path to the XML file(s) to import.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -3190,7 +3295,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -3203,7 +3308,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -3216,7 +3321,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Encoding
 
@@ -3338,7 +3443,7 @@ The path or other identifier of the installer.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -3488,7 +3593,7 @@ Specifies that any exit code from the installation process should be ignored and
 |Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -3641,9 +3746,9 @@ The path to the folder to create.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -FullControl
 
@@ -3824,7 +3929,7 @@ The invocation of the deploy script to retrieve the parameters from.
 |Type:|InvocationInfo|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -3992,9 +4097,9 @@ The path to the XML file(s) to create the node in.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -4005,7 +4110,7 @@ The literal path to the XML file(s) to create the node in.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -4083,7 +4188,7 @@ The XPath to the node to create the new node in.
 |Type:|String|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -4096,7 +4201,7 @@ The name of the new node to create.
 |Type:|String|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -4209,6 +4314,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|False|
@@ -4283,9 +4389,9 @@ The path to the folder(s) to remove.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -4296,7 +4402,7 @@ The literal path to the folder(s) to remove.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -4311,7 +4417,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -4324,7 +4430,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -4337,7 +4443,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Force
 
@@ -4429,9 +4535,9 @@ The path to the INI file(s) to remove.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -4442,7 +4548,7 @@ The literal path to the INI file(s) to remove.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -4457,7 +4563,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -4470,7 +4576,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -4483,7 +4589,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 ## Remove-NXTEmptyRegistryKey
 
@@ -4535,9 +4641,9 @@ The registry key(s) to remove.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Wow6432Node
 
@@ -4623,7 +4729,7 @@ The path(s) to remove from the PATH variable.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -4700,7 +4806,7 @@ The name(s) of the service(s) to remove.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -4816,9 +4922,9 @@ The path to the XML file(s) to remove the node from.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -4829,7 +4935,7 @@ The literal path to the XML file(s) to remove the node from.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -4907,7 +5013,7 @@ The XPath to the node to remove.
 |Type:|String|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -5066,9 +5172,9 @@ The path to resolve.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -5079,7 +5185,7 @@ The literal path to resolve.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -5094,7 +5200,7 @@ A filter to apply to the resolved paths.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -5107,7 +5213,7 @@ An array of patterns to exclude from the resolved paths.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -5120,7 +5226,7 @@ An array of patterns to include in the resolved paths.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Force
 
@@ -5150,6 +5256,9 @@ Useful for example to filter for files or directories.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+### RELATED LINKS
+
+https://github.com/PowerShell/PowerShell/blob/master/src/System.Management.Automation/namespaces/LocationGlobber.cs
 ## Restart-NXTDeployScript
 
 Restart the script if one of the conditions is met.
@@ -5204,7 +5313,7 @@ The invocation information of the current script.
 |Type:|InvocationInfo|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -5318,9 +5427,9 @@ The path to the file(s) to set content to.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -5331,7 +5440,7 @@ The literal path to the file(s) to set content to.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -5346,7 +5455,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -5359,7 +5468,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -5372,7 +5481,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Value
 
@@ -5383,7 +5492,7 @@ The content to set to the file(s).
 |Type:|String[]|
 |Position:|1|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -5523,9 +5632,9 @@ The path to the folder(s) to set permissions on.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -5536,7 +5645,7 @@ The literal path to the folder(s) to set permissions on.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -5551,7 +5660,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -5564,7 +5673,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -5577,7 +5686,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -FullControl
 
@@ -5778,9 +5887,9 @@ The path to the XML file(s) to update the node in.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -5791,7 +5900,7 @@ The literal path to the XML file(s) to update the node in.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -5869,7 +5978,7 @@ The XPath to the node to update.
 |Type:|String|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -6346,9 +6455,9 @@ The name of the process to stop.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Id
 
@@ -6359,7 +6468,7 @@ The ID of the process to stop.
 |Type:|UInt32[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -6372,7 +6481,7 @@ The process object to stop.
 |Type:|Process[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -6385,7 +6494,7 @@ The process definition to stop.
 |Type:|ProcessDefinition[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -6447,7 +6556,7 @@ The path to the file to test.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -6503,7 +6612,7 @@ The path to the folder whose permissions are to be checked.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -6721,7 +6830,7 @@ The name(s) of the process to check for. This parameter is mandatory.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -6734,7 +6843,7 @@ The ID(s) of the process to check for. This parameter is optional and can be use
 |Type:|UInt32|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -6747,7 +6856,7 @@ The process definition to check for.
 |Type:|ProcessDefinition|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -6802,7 +6911,7 @@ The path to the file to search in.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -6815,7 +6924,7 @@ The query string to search for in the file.
 |Type:|String|
 |Position:|1|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -6980,7 +7089,7 @@ The path to the XML file(s) to test the node in.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -7019,7 +7128,7 @@ The XPath to the node to test the node in.
 |Type:|String|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -7186,7 +7295,7 @@ The path to the uninstaller file.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -7322,7 +7431,7 @@ Determines if the function should ignore exit codes and not treat them as errors
 |Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -7457,9 +7566,9 @@ The path to the file(s) to update.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -LiteralPath
 
@@ -7470,7 +7579,7 @@ The literal path to the file(s) to update.
 |Type:|String[]|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -7485,7 +7594,7 @@ A filter to qualify the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Exclude
 
@@ -7498,7 +7607,7 @@ A filter to exclude items from the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Include
 
@@ -7511,7 +7620,7 @@ A filter to include items in the Path parameter.
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Query
 
@@ -7522,7 +7631,7 @@ The string to search for in the file(s).
 |Type:|String|
 |Position:|1|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -7535,7 +7644,7 @@ The string to replace the query string with.
 |Type:|String|
 |Position:|2|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
@@ -7650,7 +7759,7 @@ The path to the file to check.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -7717,7 +7826,7 @@ The path to the file or directory to monitor.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -7795,7 +7904,7 @@ The path to the file or directory to monitor.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -7891,7 +8000,7 @@ The name of the process to monitor.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -7904,7 +8013,7 @@ The ID of the process to monitor.
 |Type:|UInt32|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -7917,7 +8026,7 @@ The process definition to monitor.
 |Type:|ProcessDefinition|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -8023,9 +8132,9 @@ The name of the process to monitor.
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Id
 
@@ -8036,7 +8145,7 @@ The process ID to monitor. Can be a single ID or an array of IDs.
 |Type:|UInt32|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -8049,7 +8158,7 @@ The process definition object to monitor.
 |Type:|ProcessDefinition|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
@@ -8117,9 +8226,9 @@ The path to the registry key to monitor.
 |Type:|String[]|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
-|Accept wildcard characters:|False|
+|Accept wildcard characters:|True|
 
 #### -Wow6432Node
 
@@ -8208,7 +8317,7 @@ The path to the registry key(s) to monitor. Can be a single key or an array of k
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
 |Accept wildcard characters:|False|
 

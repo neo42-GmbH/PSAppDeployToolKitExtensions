@@ -11,6 +11,20 @@
 	System.IO.DirectoryInfo[] - The folder(s) to calculate the size of.
 	.OUTPUTS
 	System.UInt64 - The size of the folder(s) in the specified unit.
+	.PARAMETER Path
+	Specifies the path to the folder(s) to calculate the size of. Wildcards are supported.
+	.PARAMETER LiteralPath
+	Specifies the literal path to the folder(s) to calculate the size of.
+	.PARAMETER Path
+	The path to the folder(s) to calculate the size of. Wildcards are supported.
+	.PARAMETER LiteralPath
+	The literal path to the folder(s) to calculate the size of.
+	.PARAMETER Filter
+	A filter to qualify the Path parameter.
+	.PARAMETER Exclude
+	A filter to exclude items from the Path parameter.
+	.PARAMETER Include
+	A filter to include items in the Path parameter.
 	.EXAMPLE
 	Get-NxtFolderSize "D:\setup\"
 

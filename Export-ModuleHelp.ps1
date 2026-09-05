@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Creates the markdown documentation for the functions in a PowerShell module.
 .NOTES
@@ -203,23 +203,29 @@ foreach ($functionInfo in $publicFunctions) {
 			$null = $functionMd.AppendLine('|Property|Value|')
 			$null = $functionMd.AppendLine('|:---|:---|')
 			$null = $functionMd.AppendLine("|Type:|$(Format-TypeName $parameterMetadata.ParameterType)|")
-			if ($parameterMetadata.ParameterType.IsEnum) {
-				$null = $functionMd.AppendLine("|Enum values:|$([System.String]::Join(', ', [System.Enum]::GetNames($parameterMetadata.ParameterType)))|")
+			[System.Type]$enumType = if ($parameterMetadata.ParameterType.IsEnum) {
+				$parameterMetadata.ParameterType
+			}
+			elseif ($parameterMetadata.ParameterType.IsArray -and $parameterMetadata.ParameterType.GetElementType().IsEnum) {
+				$parameterMetadata.ParameterType.GetElementType()
+			}
+			if ($enumType) {
+				$null = $functionMd.AppendLine("|Enum values:|$([System.String]::Join(', ', [System.Enum]::GetNames($enumType)))|")
 			}
 			$null = $functionMd.AppendLine("|Position:|$position|")
 			$null = $functionMd.AppendLine("|Default value:|$defaultValueString|")
-			$null = $functionMd.AppendLine("|Required:|$($true -in $parameterMetadata.Attributes.Required)|")
+			$null = $functionMd.AppendLine("|Required:|$($true -in $parameterMetadata.Attributes.Mandatory)|")
 			$null = $functionMd.AppendLine("|Accept pipeline input:|$($hasPipelineInput.Count -gt 0)$(if ($hasPipelineInput.Count -gt 0) { ' (' + ($hasPipelineInput -join ', ') + ')' })|")
-			$null = $functionMd.AppendLine("|Accept wildcard characters:|$($true -eq $parameter.Attributes.TypeId.Name -contains 'SupportsWildcards')|")
+			$null = $functionMd.AppendLine("|Accept wildcard characters:|$('SupportsWildcardsAttribute' -in $parameterMetadata.Attributes.TypeId.Name)|")
 			$null = $functionMd.AppendLine()
 		}
 	}
 
 	# MARK: Function Related Links
-	if ($null -ne $help.Links -and $help.Links.Count -gt 0) {
+	if ($null -ne $helpInfo.Links -and $helpInfo.Links.Count -gt 0) {
 		$null = $functionMd.AppendLine('### RELATED LINKS')
 		$null = $functionMd.AppendLine()
-		$help.Links | ForEach-Object { $null = $functionMd.AppendLine($_) }
+		$helpInfo.Links | ForEach-Object { $null = $functionMd.AppendLine($_) }
 	}
 }
 Set-Content -Path $OutputFile.FullName -Value $functionMd.ToString() -Encoding UTF8

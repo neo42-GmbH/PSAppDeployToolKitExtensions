@@ -4,12 +4,14 @@
 	Removes a specific hook.
 	.DESCRIPTION
 	The Remove-NXTDeploymentCallback function removes a custom hook from the deployment session that was previously added with Add-NXTDeploymentCallback.
+	.PARAMETER Callback
+	The callback function to remove from the deployment session.
 	.PARAMETER HookPoint
 	The name of the deployment hook point after which the custom hook should be executed.
 	.EXAMPLE
-	Add-NXTDeploymentCallback -HookPoint 'CustomInstallEnd' -Callback (Get-Command -Name 'My-CustomFunction')
+	Remove-NXTDeploymentCallback -HookPoint 'CustomInstallEnd' -Callback (Get-Command -Name 'My-CustomFunction')
 
-	This example adds a custom hook that executes the 'My-CustomFunction' function after the 'CustomInstallEnd' deployment hook point.
+	This example removes a custom callback function named 'My-CustomFunction' from the 'CustomInstallEnd' hook point in the deployment session.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'No state change.')]
 	[CmdletBinding()]

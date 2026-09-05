@@ -15,6 +15,10 @@
 	PSADT.ProcessManagement.ProcessResult - The result of the uninstallation process.
 	.PARAMETER Target
 	The path to the uninstaller file.
+	.PARAMETER Application
+	The installed application object to use for the uninstallation.
+	.PARAMETER Package
+	The registered package object to use for the uninstallation.
 	.PARAMETER UninstallKey
 	The full path to the uninstall key that this invocation uninstalls. Used for collection information about the uninstall process.
 	.PARAMETER Method

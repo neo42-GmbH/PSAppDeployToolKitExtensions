@@ -13,6 +13,12 @@
 	Filters the results based on the installation state of the package.
 	.PARAMETER Exclude
 	Excludes the specified package IDs from the results.
+	.PARAMETER RegPackagesKey
+	Filters the results based on the specified registry packages key.
+	.PARAMETER Application
+	Gets the package related to the specified InstalledApplication object.
+	.PARAMETER ADTSession
+	Gets the package related to the specified NxtDeploymentSession object.
 	.EXAMPLE
 	Get-NxtRegisteredPackage -Package "{12345678-1234-1234-1234-123456789012}" -Installed $false
 

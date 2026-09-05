@@ -1,4 +1,4 @@
-function New-NXTEnvironmentTable {
+﻿function New-NXTEnvironmentTable {
 	<#
 	.SYNOPSIS
 	Creates a new environment table.
@@ -41,7 +41,7 @@ function New-NXTEnvironmentTable {
 
 			# Architecture based information
 			$newEnvironment['envWindowsBits'] = if ([System.Environment]::Is64BitOperatingSystem) { [System.Byte]64 } else { [System.Byte]32 }
-			$newEnvironment['Wow6432Node'] = [System.String]::Empty
+			$newEnvironment['envWow6432Node'] = [System.String]::Empty
 			$newEnvironment['envRegistrySoftware'] = 'Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE'
 			if ([System.Environment]::Is64BitOperatingSystem) {
 				if ([System.Environment]::Is64BitProcess) {

@@ -2,6 +2,13 @@
 	<#
 	.SYNOPSIS
 	Invokes the session's application detection and updates the detection status accordingly.
+	.DESCRIPTION
+	The Update-NXTDetectionStatus function checks the session's application detection criteria and updates the detection status based on the results.
+	It sets the IsInstalled property to true if the application is found, false if not found, and updates the VersionStatus property based on the comparison with the TargetVersion.
+	.PARAMETER ADTSession
+	The NxtDeploymentSession object representing the current deployment session. If not provided, the function will attempt to retrieve the current session using Get-ADTSession.
+	.EXAMPLE
+	Update-NXTDetectionStatus -ADTSession $adtSession
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'The state change is expected and desired when calling this function.')]
 	[CmdletBinding()]
