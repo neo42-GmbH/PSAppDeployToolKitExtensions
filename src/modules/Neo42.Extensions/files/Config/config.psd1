@@ -201,27 +201,18 @@
 			# mimics the behavior of PSADTv3 as closely as possible.
 			# It is highly recommended to migrate packages to the new format and disable this option as soon as possible.
 			# Note that some features may not be available when legacy mode is enabled.
-			SupportLegacyConfig             = $true
+			SupportLegacyConfig        = $true
 
 			# Enable or disable the blocking of application execution while the deployment is running.
 			# This feature may be flagged by some antivirus solutions as it hooks into process creation APIs.
-			BlockExecution                  = $false
-
-			# Define whether the uninstall entry should be hidden from the Windows Apps & Features list.
-			HidePackageUninstallButton      = $false
-
-			# Define whether the uninstall entry should be marked as a system component in the Windows Apps & Features list and thus hidden.
-			HidePackageUninstallEntry       = $false
-
-			# Define whether the managed applications should be marked as system components in the Windows Apps & Features list and thus hidden.
-			HideApplicationUninstallEntries = $true
+			BlockExecution             = $false
 
 			# Define wether package display names should be appended the package version in the Windows Apps & Features list.
-			AppendVersionToPackageName      = $true
+			AppendVersionToPackageName = $true
 
 			# Conditionally disable user parts if the toolkit detects that it is running on a terminal server.
 			# This is useful in scenarios where the user context is not relevant, e.g. when user profiles are not persistent or PowerShell is disabled for users.
-			UserPartOnTerminalServer        = $true
+			UserPartOnTerminalServer   = $true
 		}
 
 		UI         = @{
