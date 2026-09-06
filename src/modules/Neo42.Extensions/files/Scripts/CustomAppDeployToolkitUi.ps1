@@ -6,7 +6,7 @@ This is a ported version of the V3 CustomAppDeployToolkitUi.ps1 making it compat
 Most of the codebase is changed but the functionality is the same.
 This script is not intended to be used directly but is called by the Show-NXTInstallationWelcome function.
 #>
-[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidLongLines', '', Justification = 'XML includes long lines')]
+[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseCompatibleTypes', '', Justification = 'Types are added.')]
 [CmdletBinding()]
 param (
 	[Parameter(Mandatory)]
@@ -57,11 +57,13 @@ Set-StrictMode -Version '3.0'
 [System.String]$moduleRoot = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\..\")
 $ScriptDirectory = $ScriptDirectory | & { process { if ([System.IO.Path]::IsPathRooted($_)) { $_ } else { [System.IO.Path]::Combine($moduleRoot, $_) } } }
 
+Add-Type -AssemblyName PresentationFramework, System.Drawing
 Import-Module -Force -Name "$moduleRoot\PSAppDeployToolkit"
 Initialize-ADTModule -ScriptDirectory $ScriptDirectory
 [System.Collections.Hashtable]$adtStrings = Get-ADTStringTable
 [System.Collections.Hashtable]$adtConfig = Get-ADTConfig
 $script:Timeout = if (-not $PSBoundParameters.ContainsKey('Timeout')) { [System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout']) } else { $Timeout }
+[System.Diagnostics.Process]$script:ParentProcess = [PSADT.ProcessManagement.ProcessUtilities]::GetParentProcess()
 
 [System.Collections.Hashtable]$script:ExitCodes = @{
 	Close    = 1001
@@ -69,8 +71,6 @@ $script:Timeout = if (-not $PSBoundParameters.ContainsKey('Timeout')) { [System.
 	Timeout  = 1004
 	Continue = 1005
 }
-
-Add-Type -AssemblyName PresentationFramework
 #endregion Initialization
 
 #region Window and control variables
@@ -159,6 +159,10 @@ $welcomeTimer.Interval = [System.TimeSpan]::FromSeconds(1)
 		$control_MainWindow.Tag = $script:ExitCodes['Timeout']
 		$control_MainWindow.Close()
 	}
+	elseif ($script:ParentProcess.HasExited) {
+		$control_MainWindow.Tag = 1
+		$control_MainWindow.Close()
+	}
 	else {
 		$control_Progress.Value = $script:Timeout.TotalSeconds
 		$control_TimerBlock.Text = [System.String]::Format('{0}:{1:d2}:{2:d2}', $script:Timeout.Days * 24 + $script:Timeout.Hours, $script:Timeout.Minutes, $script:Timeout.Seconds)
@@ -167,8 +171,7 @@ $welcomeTimer.Interval = [System.TimeSpan]::FromSeconds(1)
 $welcomeTimer.add_Tick($welcomeTimer_Tick)
 
 [System.Management.Automation.ScriptBlock]$mainWindowLoaded = {
-	$control_Progress.Maximum = $script:Timeout.TotalSeconds
-	$control_Progress.Value = $script:Timeout.TotalSeconds
+	$control_Progress.Maximum = $control_Progress.Value = $script:Timeout.TotalSeconds
 	$control_TimerBlock.Text = [System.String]::Format('{0}:{1:d2}:{2:d2}', $script:Timeout.Days * 24 + $script:Timeout.Hours, $script:Timeout.Minutes, $script:Timeout.Seconds)
 	$timerRunningProcesses.Start()
 	$welcomeTimer.Start()
@@ -176,11 +179,11 @@ $welcomeTimer.add_Tick($welcomeTimer_Tick)
 $control_MainWindow.Add_Loaded($mainWindowLoaded)
 
 [System.Management.Automation.ScriptBlock]$mainWindowClosed = {
-	if ((Get-Variable -Name 'welcomeTimerPersist' -ErrorAction 'SilentlyContinue')) {
+	if ((Get-Variable -Name 'welcomeTimerPersist' -ErrorAction SilentlyContinue)) {
 		$welcomeTimerPersist.remove_Tick($welcomeTimerPersist_Tick)
 		$welcomeTimerPersist.Stop()
 	}
-	if ((Get-Variable -Name 'timerRunningProcesses' -ErrorAction 'SilentlyContinue')) {
+	if ((Get-Variable -Name 'timerRunningProcesses' -ErrorAction SilentlyContinue)) {
 		$timerRunningProcesses.remove_Tick($timerRunningProcesses_Tick)
 		$timerRunningProcesses.Stop()
 	}
@@ -227,18 +230,36 @@ if ([Microsoft.Win32.RegistryKey]$themeKey = [Microsoft.Win32.RegistryKey]::Open
 	}
 }
 
-$control.Resources['MainColor'] = if ($adtConfig['UI']['FluentAccentColor'] -and ($isLightTheme -or -not $adtConfig['UI']['FluentAccentColorDark'])) {
-	[System.Windows.Media.ColorConverter]::ConvertFromString('#' + $adtConfig['UI']['FluentAccentColor'].ToString('x8'))
+function Convert-AssetToBitmapImage {
+	<#
+	.SYNOPSIS
+	Assets may be Base64 encoded. (Default Assets in 4.2 or GPO based)
+	#>
+	param (
+		[Parameter(Mandatory)]
+		[System.String]
+		$InputObject
+	)
+	# Assume a path if a . is included (file extension)
+	[System.IO.Stream]$stream = if ($InputObject.Contains('.')) { [System.IO.FileStream]::new($InputObject, [System.IO.FileMode]::Open) } else { [System.IO.MemoryStream]::new([System.Convert]::FromBase64String($InputObject)) }
+	try {
+		[System.Windows.Media.Imaging.BitmapImage]$bitmap = [System.Windows.Media.Imaging.BitmapImage]::new()
+		$bitmap.BeginInit()
+		$bitmap.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+		$bitmap.StreamSource = $stream
+		$bitmap.EndInit()
+		return $bitmap
+	}
+	finally {
+		if ($stream) { $stream.Dispose() }
+	}
 }
-elseif (-not $isLightTheme -and $adtConfig['UI']['FluentAccentColorDark']) {
-	[System.Windows.Media.ColorConverter]::ConvertFromString('#' + $adtConfig['UI']['FluentAccentColorDark'].ToString('x8'))
-}
-else {
-	[System.Windows.Media.Color]::FromRgb(227, 0, 15)
-}
-$control_Banner.Source = $adtConfig['Assets']['Banner']
 
+$control_Banner.Source = Convert-AssetToBitmapImage -InputObject $adtConfig['Assets']['Banner']
 if ($isLightTheme) {
+	if ($adtConfig['UI']['FluentAccentColor']) {
+		$control.Resources['MainColor'] = [System.Windows.Media.ColorConverter]::ConvertFromString('#' + $adtConfig['UI']['FluentAccentColor'].ToString('x8'))
+	}
 	$control.Resources['BackColor'] = [System.Windows.Media.Color]::FromRgb(246, 246, 246)
 	$control.Resources['BackLightColor'] = [System.Windows.Media.Color]::FromRgb(218, 218, 218)
 	$control.Resources['ForeColor'] = [System.Windows.Media.Color]::FromRgb(0, 0, 0)
@@ -246,8 +267,11 @@ if ($isLightTheme) {
 	$control.Resources['PressedColor'] = [System.Windows.Media.Color]::FromRgb(218, 218, 218)
 }
 else {
+	if ($adtConfig['UI']['FluentAccentColorDark']) {
+		$control.Resources['MainColor'] = [System.Windows.Media.ColorConverter]::ConvertFromString('#' + $adtConfig['UI']['FluentAccentColorDark'].ToString('x8'))
+	}
 	if ($adtConfig['Assets']['BannerDark']) {
-		$control_Banner.Source = $adtConfig['Assets']['BannerDark']
+		$control_Banner.Source = Convert-AssetToBitmapImage -InputObject $adtConfig['Assets']['BannerDark']
 	}
 }
 #endregion
