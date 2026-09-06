@@ -271,14 +271,13 @@
 			# Construct the parameters for the installation welcome dialog
 			[System.Collections.Hashtable]$showInstallationWelcome = Remove-ADTHashtableNullOrEmptyValues -Hashtable (
 				@{
-					Title                    = $Title
-					AllowDeferCloseProcesses = $AllowDeferCloseProcesses
-					PersistPrompt            = [System.Boolean]$PersistPrompt
-					CustomText               = [System.Boolean]$CustomText
-					MinimizeWindows          = [System.Boolean]$MinimizeWindows
-					NotTopMost               = [System.Boolean]$NotTopMost
-					HideCloseButton          = [System.Boolean]$HideCloseButton
-					AllowMove                = [System.Boolean]$AllowMove
+					Title           = $Title
+					PersistPrompt   = [System.Boolean]$PersistPrompt
+					CustomText      = [System.Boolean]$CustomText
+					MinimizeWindows = [System.Boolean]$MinimizeWindows
+					NotTopMost      = [System.Boolean]$NotTopMost
+					HideCloseButton = [System.Boolean]$HideCloseButton
+					AllowMove       = [System.Boolean]$AllowMove
 				} + $(
 					if ($legacyUi) {
 						@{
@@ -298,7 +297,9 @@
 			)
 
 			# Place the defer dependent parameters
-			if ($showInstallationWelcome['AllowDeferCloseProcesses']) {
+			if ($AllowDeferCloseProcesses) {
+				$showInstallationWelcome['AllowDeferCloseProcesses'] = $true
+
 				if ($null -ne $deferHistorySplat['DeferTimesRemaining']) {
 					Write-ADTLogEntry -Message "The user can defer the deployment [$DeferTimes] more times."
 					$showInstallationWelcome['DeferTimes'] = $deferHistorySplat['DeferTimesRemaining'] + 1
