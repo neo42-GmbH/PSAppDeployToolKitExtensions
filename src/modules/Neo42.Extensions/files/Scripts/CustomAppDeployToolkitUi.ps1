@@ -155,7 +155,7 @@ $control_PopupCancel.add_Click($popupCancelClickHandler)
 $welcomeTimer.Interval = [System.TimeSpan]::FromSeconds(1)
 [System.Management.Automation.ScriptBlock]$welcomeTimer_Tick = {
 	$script:Timeout = $script:Timeout.Add([System.TimeSpan]::FromSeconds(-1))
-	if ($script:Timeout -lt [System.TimeSpan]::Zero) {
+	if ($script:Timeout -le [System.TimeSpan]::Zero) {
 		$control_MainWindow.Tag = $script:ExitCodes['Timeout']
 		$control_MainWindow.Close()
 	}
