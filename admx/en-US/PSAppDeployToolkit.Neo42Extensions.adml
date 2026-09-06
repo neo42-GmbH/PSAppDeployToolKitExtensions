@@ -11,7 +11,7 @@
 
 			<string id="NxtPowerShell_Category">PowerShell Options</string>
 			<string id="NxtToolkit_Category">Toolkit Options</string>
-			<string id="NxtDeployment_Category">UI Options</string>
+			<string id="NxtUi_Category">UI Options</string>
 			<string id="NxtDeployment_Category">Deployment Options</string>
 			<string id="NxtSetupCfg_Category">SetupCfg Options</string>
 
