@@ -121,7 +121,7 @@ jobs:
       - name: compile-library
         shell: pwsh
         run: |
-          . ./.tools/Invoke-Compile.ps1 -Version '${{ steps.release-info.outputs.RELEASE_VERSION }}' -Config 'Release'
+          . ./.tools/Invoke-Compile.ps1 -Version '${{ steps.release-info.outputs.RELEASE_VERSION }}' -Config 'Release' -Output './build'
 
       - name: upload-artifact
         uses: actions/upload-artifact@v7

@@ -4,22 +4,29 @@
 Invoke the test suite for this repo.
 .PARAMETER ModuleDirectory
 The directory to load the PSADT modules from.
+.PARAMETER TestRoot
+The directory that is scanned for ps1 files to test.
 #>
 param(
 	[ValidateScript({ $_.Exists })]
 	[System.IO.DirectoryInfo]
-	$ModuleDirectory = "$($PWD.Path)\build"
+	$ModuleDirectory = "$($PWD.Path)\build",
+	[ValidateScript({ $_.Exists })]
+	[System.IO.DirectoryInfo]
+	$TestRoot = "$($PWD.Path)\src\modules",
+	[System.IO.DirectoryInfo]
+	$PesterTestDirectory = "$($PWD.Path)\tests\pester"
 )
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName PresentationFramework # Import to remove false positives in UI scripts
 
-[System.IO.FileInfo[]]$sourceFiles = Get-ChildItem -Recurse -File -Path "$PSScriptRoot\src\modules\" | Where-Object { $_.Extension -eq '.ps1' }
+[System.IO.FileInfo[]]$sourceFiles = Get-ChildItem -Recurse -File -Path $TestRoot.FullName | Where-Object { $_.Extension -eq '.ps1' }
 [System.Collections.Generic.List[Pester.ContainerInfo]]$containers = [System.Collections.Generic.List[Pester.ContainerInfo]]::new()
-$containers.Add((New-PesterContainer -Path "$PSScriptRoot\tests\pester\Compatibility.Tests.ps1" -Data @{ FilePath = $sourceFiles }))
-$containers.AddRange([Pester.ContainerInfo[]]@(New-PesterContainer -Path "$PSScriptRoot\tests\pester\function-tests"))
+$containers.Add((New-PesterContainer -Path "$($PesterTestDirectory.FullName)\Compatibility.Tests.ps1" -Data @{ FilePath = $sourceFiles }))
+$containers.AddRange([Pester.ContainerInfo[]]@(New-PesterContainer -Path "$($PesterTestDirectory.FullName)\function-tests"))
 
-[System.IO.DirectoryInfo]$mockData = "$PSScriptRoot\tests\pester\mock-data"
+[System.IO.DirectoryInfo]$mockData = "$($PesterTestDirectory.FullName)\mock-data"
 [System.IO.DirectoryInfo]$psadt = "$($ModuleDirectory.FullName)\PSAppDeployToolkit"
 [System.IO.DirectoryInfo]$neo42Extensions = "$($ModuleDirectory.FullName)\PSAppDeployToolkit.Neo42.Extensions"
 

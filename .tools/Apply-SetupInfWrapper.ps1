@@ -4,7 +4,7 @@ This script applies the Setup.inf wrapper to the current directory.
 Place this script at the root of a created package and run it via PowerShell.
 A Setup.inf file is generated and the folder structure is adjusted so that the package is prepared for import into Empirum.
 The script will remove itself once completed.
-.PARAMETER Wrapper
+.PARAMETER LocalWrapperPath
 Provide a local path to a custom wrapper file.
 If this parameter is not provided, the script will download the latest wrapper from neo42.
 .NOTES
@@ -21,9 +21,8 @@ https://neo42.de/psappdeploytoolkit
 [CmdletBinding()]
 param (
 	[ValidateScript({ $_.Exists })]
-	[Alias('LocalWrapperPath')]
 	[System.IO.DirectoryInfo]
-	$Wrapper
+	$LocalWrapperPath
 )
 
 Set-StrictMode -Version 3.0
