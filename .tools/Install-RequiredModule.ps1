@@ -1,4 +1,14 @@
-﻿param (
+﻿<#
+.SYNOPSIS
+Installs all PowerShell requirements for building this module.
+.DESCRIPTION
+Requirements that need to be installed is the appropriate PSADT release and PowerShell Modules.
+.PARAMETER Root
+The directory where to place the build artifacts.
+.PARAMETER ModuleManifest
+The manifest to read the required PSADT version from.
+#>
+param (
 	[ValidateScript({ $_.Exists } )]
 	[ValidateNotNullOrEmpty()]
 	[System.IO.DirectoryInfo]

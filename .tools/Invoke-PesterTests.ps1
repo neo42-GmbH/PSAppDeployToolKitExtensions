@@ -1,4 +1,10 @@
 ﻿#Requires -Modules Pester
+<#
+.SYNOPSIS
+Invoke the test suite for this repo.
+.PARAMETER ModuleDirectory
+The directory to load the PSADT modules from.
+#>
 param(
 	[ValidateScript({ $_.Exists })]
 	[System.IO.DirectoryInfo]

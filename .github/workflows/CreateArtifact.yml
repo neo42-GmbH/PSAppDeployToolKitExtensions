@@ -100,7 +100,7 @@ jobs:
       - name: build-modules
         shell: pwsh
         run: |
-           ./Export-Module.ps1 -Source (Get-ChildItem -Path './src/modules' -Directory) -Output './build'
+           ./.tools/Export-Module.ps1 -Source (Get-ChildItem -Path './src/modules' -Directory) -Output './build'
 
       - name: inject-version
         shell: pwsh
@@ -121,7 +121,7 @@ jobs:
       - name: compile-library
         shell: pwsh
         run: |
-          . ./Invoke-Compile.ps1 -Version '${{ steps.release-info.outputs.RELEASE_VERSION }}' -Config 'Release'
+          . ./.tools/Invoke-Compile.ps1 -Version '${{ steps.release-info.outputs.RELEASE_VERSION }}' -Config 'Release'
 
       - name: upload-artifact
         uses: actions/upload-artifact@v7

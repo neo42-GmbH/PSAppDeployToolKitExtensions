@@ -21,4 +21,4 @@ jobs:
 
       - name: run-pester
         shell: powershell
-        run: .\Invoke-PesterTests.ps1 -ModuleDirectory '${{ steps.download-artifact-test.outputs.download-path }}'
+        run: .\.tools\Invoke-PesterTests.ps1 -ModuleDirectory '${{ steps.download-artifact-test.outputs.download-path }}'

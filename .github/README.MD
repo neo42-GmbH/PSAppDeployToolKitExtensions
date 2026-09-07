@@ -1,4 +1,4 @@
-# neo42 Extensions for PSAppDeployToolkit
+﻿# neo42 Extensions for PSAppDeployToolkit
 
 ## Introduction
 
@@ -69,9 +69,9 @@ _Note: We always recommend obtaining the latest production release from the [rel
 * Build the project by one of the following methods:
   * (Recommended) Using the predefined [VSCode](#links) build tasks
   * Manually:
-    * Download required [PSADT dependency](#requirements), use `Install-RequiredModule.ps1` for convinience
-    * Run the `Export-Module.ps1` script
-    * dotnet publish the `src\solutions` folder or use `Invoke-Compile.ps1`
+    * Download required [PSADT dependency](#requirements), use `.tools\Install-RequiredModule.ps1` for convinience
+    * Run the `.tools\Export-Module.ps1` script
+    * dotnet publish the `src\solutions` folder or use `.tools\Invoke-Compile.ps1`
 
 ### Requirements
 

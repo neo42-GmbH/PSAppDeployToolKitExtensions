@@ -3018,6 +3018,32 @@ The XPath to the node to remove.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+#### -Attribute
+
+The name of the attribute to retrieve from the node(s) at the specified XPath location. If not specified, the entire node(s) will be returned.
+
+|Property|Value|
+|:---|:---|
+|Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Single
+
+Determines if only the first node found at the specified XPath location should be returned.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 #### -Force
 
 Determines if hidden files should be processed.
@@ -4292,10 +4318,10 @@ The Remove-NXTDeploymentCallback function removes a custom hook from the deploym
 #### Example 1
 
 ```PowerShell
-Add-NXTDeploymentCallback -HookPoint 'CustomInstallEnd' -Callback (Get-Command -Name 'My-CustomFunction')
+Remove-NXTDeploymentCallback -HookPoint 'CustomInstallEnd' -Callback (Get-Command -Name 'My-CustomFunction')
 ```
 
-This example adds a custom hook that executes the 'My-CustomFunction' function after the 'CustomInstallEnd' deployment hook point.
+This example removes a custom callback function named 'My-CustomFunction' from the 'CustomInstallEnd' hook point in the deployment session.
 
 ### INPUTS
 
@@ -4306,6 +4332,19 @@ This example adds a custom hook that executes the 'My-CustomFunction' function a
 **This function does not return any output.**
 
 ### PARAMETERS
+
+#### -Callback
+
+The callback function to remove from the deployment session.
+
+|Property|Value|
+|:---|:---|
+|Type:|CommandInfo[]|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
 
 #### -HookPoint
 
@@ -7299,6 +7338,32 @@ The path to the uninstaller file.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+#### -Application
+
+The installed application object to use for the uninstallation.
+
+|Property|Value|
+|:---|:---|
+|Type:|InstalledApplication|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|True (ByValue)|
+|Accept wildcard characters:|False|
+
+#### -Package
+
+The registered package object to use for the uninstallation.
+
+|Property|Value|
+|:---|:---|
+|Type:|NxtRegisteredPackage|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|True (ByValue)|
+|Accept wildcard characters:|False|
+
 #### -UninstallKey
 
 The full path to the uninstall key that this invocation uninstalls. Used for collection information about the uninstall process.
@@ -7465,7 +7530,6 @@ Determines if the function should exit with an error if the process fails. If th
 
 Invokes the session's application detection and updates the detection status accordingly.
 
-
 ### SYNTAX
 
 ```PowerShell
@@ -7476,6 +7540,16 @@ Update-NXTDetectionStatus
 
 ### DESCRIPTION
 
+The Update-NXTDetectionStatus function checks the session's application detection criteria and updates the detection status based on the results.
+It sets the IsInstalled property to true if the application is found, false if not found, and updates the VersionStatus property based on the comparison with the TargetVersion.
+
+### EXAMPLES
+
+#### Example 1
+
+```PowerShell
+Update-NXTDetectionStatus -ADTSession $adtSession
+```
 
 ### INPUTS
 
@@ -7487,7 +7561,19 @@ Update-NXTDetectionStatus
 
 ### PARAMETERS
 
-**This function does not have any documented parameters.**
+#### -ADTSession
+
+The NxtDeploymentSession object representing the current deployment session. If not provided, the function will attempt to retrieve the current session using Get-ADTSession.
+
+|Property|Value|
+|:---|:---|
+|Type:|NxtDeploymentSession|
+|Position:|0|
+|Default value:|(& $script:CommandTable.'Get-ADTSession')|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 ## Update-NXTTextInFile
 
 Updates text within a file by replacing specified strings.

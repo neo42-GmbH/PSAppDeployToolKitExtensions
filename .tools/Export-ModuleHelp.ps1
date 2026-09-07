@@ -1,8 +1,16 @@
 ﻿<#
 .SYNOPSIS
 Creates the markdown documentation for the functions in a PowerShell module.
+.PARAMETER Module
+The module to create a help document for.
+Defaults to the build directory for the extension within the release repository.
+.PARAMETER RequiredModules
+All the additional modules required to loaded into the session in order to evaluate type information.
+.PARAMETER OutputFile
+The file to write the documentation to.
+Defaults to the module name within the docs directory.
 .NOTES
-Style is adopted from Microsoft's PowerShell documentation
+Style is adopted from Microsoft's PowerShell documentation.
 .LINK
 https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core
 #>

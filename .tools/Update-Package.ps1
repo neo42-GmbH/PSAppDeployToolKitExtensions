@@ -1,6 +1,14 @@
 ﻿<#
 .SYNOPSIS
-Updates a package to the latest version of the PSADTNXT.Nxt) module.
+Updates a package to the latest version of the PSAppDeployToolkit.Neo42.Extenions module.
+.PARAMETER Package
+The package to upgrade to a newer release.
+.PARAMETER Reference
+The template data to use as reference for the upgrade.
+.PARAMETER Out
+The directory where to place the newly build package.
+.PARAMETER AnalyzerDirectory
+The folder containing the analyzer data required for this migration.
 .NOTES
 Migrations are not 100% reliable. This script is not a replacement for manual testing.
 This only compatible with neo42 template and APD packages.
