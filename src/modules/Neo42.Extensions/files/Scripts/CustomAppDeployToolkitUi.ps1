@@ -57,7 +57,7 @@ Set-StrictMode -Version '3.0'
 [System.String]$moduleRoot = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\..\")
 $ScriptDirectory = $ScriptDirectory | & { process { if ([System.IO.Path]::IsPathRooted($_)) { $_ } else { [System.IO.Path]::Combine($moduleRoot, $_) } } }
 
-Add-Type -AssemblyName PresentationFramework, System.Drawing
+Add-Type -AssemblyName PresentationFramework, PresentationCore
 Import-Module -Force -Name "$moduleRoot\PSAppDeployToolkit"
 Initialize-ADTModule -ScriptDirectory $ScriptDirectory
 [System.Collections.Hashtable]$adtStrings = Get-ADTStringTable
@@ -230,13 +230,9 @@ if ([Microsoft.Win32.RegistryKey]$themeKey = [Microsoft.Win32.RegistryKey]::Open
 	}
 }
 
-function Convert-AssetToBitmapImage {
-	<#
-	.SYNOPSIS
-	Assets may be Base64 encoded. (Default Assets in 4.2 or GPO based)
-	#>
+[System.Management.Automation.ScriptBlock]$assetToBitmap = {
 	param (
-		[Parameter(Mandatory)]
+		[Parameter(Position = 0, Mandatory)]
 		[System.String]
 		$InputObject
 	)
@@ -255,7 +251,7 @@ function Convert-AssetToBitmapImage {
 	}
 }
 
-$control_Banner.Source = Convert-AssetToBitmapImage -InputObject $adtConfig['Assets']['Banner']
+$control_Banner.Source = if ($isLightTheme -or -not $adtConfig['Assets']['BannerDark']) { & $assetToBitmap $adtConfig['Assets']['Banner'] } else { & $assetToBitmap $adtConfig['Assets']['BannerDark'] }
 if ($isLightTheme) {
 	if ($adtConfig['UI']['FluentAccentColor']) {
 		$control.Resources['MainColor'] = [System.Windows.Media.ColorConverter]::ConvertFromString('#' + $adtConfig['UI']['FluentAccentColor'].ToString('x8'))
@@ -269,9 +265,6 @@ if ($isLightTheme) {
 else {
 	if ($adtConfig['UI']['FluentAccentColorDark']) {
 		$control.Resources['MainColor'] = [System.Windows.Media.ColorConverter]::ConvertFromString('#' + $adtConfig['UI']['FluentAccentColorDark'].ToString('x8'))
-	}
-	if ($adtConfig['Assets']['BannerDark']) {
-		$control_Banner.Source = Convert-AssetToBitmapImage -InputObject $adtConfig['Assets']['BannerDark']
 	}
 }
 #endregion
