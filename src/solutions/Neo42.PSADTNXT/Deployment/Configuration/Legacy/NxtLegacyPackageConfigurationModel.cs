@@ -65,7 +65,8 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		public string AppLang { get; set; } = string.Empty;
 
 		[Obsolete("Value is not used anymore.")]
-		public string ProductGUID { get; set; } = string.Empty;
+		[ValidGuid]
+		public string? ProductGUID { get; set; } = string.Empty;
 
 		[Obsolete("Value is not used anymore.")]
 		public bool RemovePackagesWithSameProductGUID { get; set; }
