@@ -1,4 +1,4 @@
-{
+﻿{
   "ConfigVersion": "2025.3.15.0",
   "ScriptAuthor": "neo42 GmbH",
   "ScriptDate": "17/09/2024",
@@ -25,14 +25,14 @@
   "AppVersion": "1.1.2.0",
   "AppRevision": "0",
   "AppLang": "MUI",
-  "ProductGUID": "{0427B2D0-28F7-4AEA-9EE6-AC2F2740C437}",
+  "ProductGUID": "",
   "RemovePackagesWithSameProductGUID": false,
   "PackageGUID": "{0428729D-9D33-456B-BB44-F090638DBD53}",
   "DependentPackages": [],
   "RegPackagesKey": "neoPackages",
   "UninstallDisplayName": "neoPackage $($global:PackageConfig.AppVendor) $($global:PackageConfig.AppName) $($global:PackageConfig.AppVersion)",
   "AppRootFolder": "neo42Pkgs",
-  "App": "$($global:PackageConfig.appVendor)\\$($global:PackageConfig.AppName)\\$($global:PackageConfig.AppVersion)",
+  "App": "",
   "UninstallOld": true,
   "Reboot": 0,
   "UserPartOnInstallation": false,
