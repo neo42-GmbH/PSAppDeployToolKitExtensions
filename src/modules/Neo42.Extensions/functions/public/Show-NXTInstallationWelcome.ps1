@@ -94,6 +94,7 @@
 		$ContinueType = 'Abort',
 		[System.Management.Automation.SwitchParameter]
 		$DeploymentDefaults,
+		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession)
 	)
@@ -355,7 +356,7 @@
 			}
 			elseif ($adtEnvironment.IsProcessUserInteractive) {
 				Write-ADTLogEntry -Message 'Process is not running in session zero, as service or as non interative user. Assuming we run as user.' -DebugMessage
-				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -WindowStyle Hidden -PassThru `
+				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -PassThru `
 					-SuccessExitCodes ([System.Enum]::GetValues([PSADTNXT.UI.LegacyWelcomeWindowCodes])).value__ `
 					-Timeout ([System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout']))
 			}

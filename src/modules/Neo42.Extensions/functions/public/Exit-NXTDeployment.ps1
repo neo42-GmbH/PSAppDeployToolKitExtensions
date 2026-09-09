@@ -30,6 +30,7 @@
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'ExitCode')]
 	param (
+		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession),
 		[Parameter(Position = 1, ParameterSetName = 'ExitCode')]

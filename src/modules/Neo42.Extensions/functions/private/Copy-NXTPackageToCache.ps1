@@ -5,6 +5,7 @@
 	#>
 	[CmdletBinding()]
 	param (
+		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession)
 	)

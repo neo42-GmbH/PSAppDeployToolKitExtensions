@@ -5,6 +5,7 @@
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Purge', Justification = 'Parameter is used in script block.')]
 	param (
+		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession),
 		[System.Management.Automation.SwitchParameter]

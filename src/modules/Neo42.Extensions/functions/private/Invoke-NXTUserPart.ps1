@@ -7,6 +7,7 @@
 	[OutputType([PSADT.ProcessManagement.ProcessResult])]
 	[CmdletBinding()]
 	param (
+		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession)
 	)

@@ -4,6 +4,7 @@
 	Post deployment tasks for NXT deployment sessions.
 	#>
 	param (
+		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession),
 		[System.String]

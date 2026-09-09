@@ -1,4 +1,4 @@
-function Register-NXTPackage {
+﻿function Register-NXTPackage {
 	<#
 	.SYNOPSIS
 	This function writes the status to the registry and closes the session.
@@ -8,6 +8,7 @@ function Register-NXTPackage {
 	#>
 	[CmdletBinding()]
 	param (
+		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession),
 		[System.Management.Automation.SwitchParameter]
