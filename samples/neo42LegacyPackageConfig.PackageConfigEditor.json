@@ -25,7 +25,7 @@
   "AppVersion": "1.1.2.0",
   "AppRevision": "0",
   "AppLang": "MUI",
-  "ProductGUID": "",
+  "ProductGUID": "{00000000-0000-0000-0000-000000000000}",
   "RemovePackagesWithSameProductGUID": false,
   "PackageGUID": "{0428729D-9D33-456B-BB44-F090638DBD53}",
   "DependentPackages": [],
