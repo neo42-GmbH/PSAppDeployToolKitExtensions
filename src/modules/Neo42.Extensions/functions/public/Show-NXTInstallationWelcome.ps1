@@ -55,6 +55,9 @@
 	#>
 	[CmdletBinding()]
 	param (
+		[ValidateNotNull()]
+		[PSADTNXT.Foundation.NxtDeploymentSession]
+		$ADTSession = (Get-ADTSession),
 		[System.String]
 		$Title = $ADTSession.InstallTitle,
 		[PSADTNXT.ProcessManagement.NxtCloseProcess[]]
@@ -93,10 +96,7 @@
 		[PSADTNXT.UI.ContinueType]
 		$ContinueType = 'Abort',
 		[System.Management.Automation.SwitchParameter]
-		$DeploymentDefaults,
-		[ValidateNotNull()]
-		[PSADTNXT.Foundation.NxtDeploymentSession]
-		$ADTSession = (Get-ADTSession)
+		$DeploymentDefaults
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -109,7 +109,6 @@
 		try {
 			# Apply deployment defaults if specified
 			if ($DeploymentDefaults) {
-				if (-not $PSBoundParameters.ContainsKey('Title')) { $Title = $ADTSession.InstallTitle }
 				if (-not $PSBoundParameters.ContainsKey('CloseProcesses')) { $CloseProcesses = $ADTSession.NXT.CloseProcesses }
 				if (-not $PSBoundParameters.ContainsKey('ContinueType')) { $ContinueType = $ADTSession.NXT.SetupCfg['AskKillProcesses']['CONTINUETYPE'] }
 				if (-not $PSBoundParameters.ContainsKey('MinimizeWindows')) { $MinimizeWindows = $ADTSession.NXT.SetupCfg['AskKillProcesses']['MINIMIZEALLWINDOWS'] -eq '1' }
