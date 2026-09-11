@@ -38,7 +38,9 @@ namespace PSADTNXT.Package
 		/// <summary>
 		/// The GUID of the package.
 		/// </summary>
-		public string Id { get; }
+#pragma warning disable CA1720
+		public string GUID { get; }
+#pragma warning restore CA1720
 
 		/// <summary>
 		/// The name of the registered application.
@@ -91,33 +93,29 @@ namespace PSADTNXT.Package
 		/// <remarks>
 		/// This property is null if the application is not installed.
 		/// </remarks>
-		public InstalledApplication? InstalledApplication { get; }
+		public InstalledApplication? Application { get; }
 
 		private NxtRegisteredPackage(RegistryKey packageKey)
 		{
-			var keyNameParts = packageKey.Name.Split(['\\'], StringSplitOptions.RemoveEmptyEntries);
-			var is64Bit = Environment.Is64BitOperatingSystem && packageKey.View != RegistryView.Registry32;
-			var wow6432Node = is64Bit ? string.Empty : "Wow6432Node\\";
-
+			PSPath = packageKey.ToPSProviderPath();
+			var keyNameParts = PSPath.Split(['\\'], StringSplitOptions.RemoveEmptyEntries);
+			PSParentPath = Path.Combine([.. keyNameParts.Take(keyNameParts.Length - 1)]);
+			PSChildName = GUID = keyNameParts.Last();
 			RegistryName = keyNameParts[keyNameParts.Length - 2];
-			Id = keyNameParts.Last();
 
-			PSChildName = keyNameParts.Last();
-			PSParentPath = $"Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\{wow6432Node}{RegistryName}";
-			PSPath = Path.Combine(PSParentPath, PSChildName);
-
-			using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, is64Bit ? RegistryView.Registry64 : RegistryView.Registry32);
-			using var installedKey = baseKey.OpenSubKey($"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{PSChildName}");
-			IsInstalled = installedKey != null;
-			InstalledApplication = installedKey?.ToInstalledApplication();
 			Name = packageKey.GetValue("ProductName")?.ToString();
 			Developer = packageKey.GetValue("DeveloperName")?.ToString();
 			PackageDirectory = packageKey.GetValue("AppPath") is string packageDirectory ? new DirectoryInfo(packageDirectory) : null;
-			RegistrationDate = packageKey.GetValue("Date") is string registrationDate ? DateTime.Parse(registrationDate) : null;
+			RegistrationDate = packageKey.GetValue("Date") is string registrationDateString && DateTime.TryParse(registrationDateString, out var registrationDate) ? registrationDate : null;
 			SoftMigrated = packageKey.GetValue("SoftMigrationOccured")?.ToString() == "1";
 			Version = packageKey.GetValue("Version") is string version ? new Version(version) : null;
 			Revision = uint.TryParse(packageKey.GetValue("Revision")?.ToString(), out var rev) ? rev : null;
 			UninstallString = packageKey.GetValue("UninstallString")?.ToString();
+
+			using var baseKey = packageKey.GetBaseKey();
+			using var installedKey = baseKey.OpenSubKey($"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{PSChildName}");
+			IsInstalled = installedKey != null;
+			Application = installedKey?.ToInstalledApplication();
 		}
 
 		public override string ToString()
