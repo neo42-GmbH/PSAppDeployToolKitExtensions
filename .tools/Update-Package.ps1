@@ -43,12 +43,15 @@ Set-StrictMode -Version '3.0'
 [System.String[]]$copyFromPackage = @(
 	'Setup.ico',
 	'Files',
-	'SupportFiles'
+	'SupportFiles',
+	'Assets',
+	'Strings'
 )
 
 [System.String[]]$copyFromReference = @(
 	'PSAppDeployToolkit*',
-	'DeployNxtApplication.exe'
+	'DeployNxtApplication.exe',
+	'neo42PackageMetadata.json',
 	'PSAppDeployToolkit.Neo42.Extensions\Config'
 )
 
