@@ -34,7 +34,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 				return ValidationResult.Success!;
 			}
 
-			return new ValidationResult("The registry path for for '{validationContext.MemberName}' in '{validationContext.ObjectInstance.GetType().Name}' is not valid.");
+			return new ValidationResult($"The registry path for for '{validationContext.MemberName}' in '{validationContext.ObjectInstance.GetType().Name}' is not valid.");
 		}
 
 		private bool IsValidPath(string path)
