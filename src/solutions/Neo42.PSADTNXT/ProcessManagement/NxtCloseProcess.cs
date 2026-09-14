@@ -9,9 +9,9 @@ namespace PSADTNXT.ProcessManagement
 	{
 		public ProcessDefinition ProcessDefinition { get; }
 
-		public bool AllowBlocking { get; }
+		public bool AllowBlocking { get; set; }
 
-		public ReopenMode ReopenMode { get; }
+		public ReopenMode ReopenMode { get; set; }
 
 		public NxtCloseProcess(string name)
 		{
