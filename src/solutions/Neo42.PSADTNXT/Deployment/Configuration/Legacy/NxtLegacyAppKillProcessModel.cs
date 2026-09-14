@@ -12,7 +12,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		public string Description { get; set; } = string.Empty;
 
-		[Obsolete("Wql filter are deprecated")]
-		public bool IsWql { get; set; }
+		[Obsolete("WQL filter are deprecated")]
+		public bool IsWQL { get; set; }
 	}
 }

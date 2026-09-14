@@ -247,7 +247,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		{
 #pragma warning disable CS0618
 			return legacyModel.AppKillProcesses?
-				.Select(p => p.IsWql
+				.Select(p => p.IsWQL
 					? throw new NotSupportedException("WQL process detection is not supported in the new package configuration format.")
 					: new NxtCloseProcessesModel()
 					{

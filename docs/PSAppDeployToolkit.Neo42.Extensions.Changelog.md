@@ -12,7 +12,7 @@
 
 - **PackageConfig**: The logic for `ProductGUID` and `RemovePackagesWithSameProductGUID` has been removed and is not present in the new package config format.
 
-- **PackageConfig**: The `AppKillProcesses` value `IsWql` has been dropped due to incompatibility. To mitigate some of the use cases, support for full paths in process names was added.
+- **PackageConfig**: The `AppKillProcesses` value `IsWQL` has been dropped due to incompatibility. To mitigate some of the use cases, support for full paths in process names was added.
 
 - **DeployApplication**: Custom functions no longer have parameters. If you require access to the deployment data, obtain it from the session object.
 
