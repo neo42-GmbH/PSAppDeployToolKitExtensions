@@ -1,4 +1,4 @@
-function Invoke-NXTDeployment {
+﻿function Invoke-NXTDeployment {
 	<#
 	.SYNOPSIS
 	This is the main function to deploy software packages.
@@ -134,8 +134,8 @@ function Invoke-NXTDeployment {
 						if ($ADTSession.NXT.SoftMigration.Enabled -and
 							$ADTSession.NXT.SetupCfg['Options']['SOFTMIGRATION'] -ne '0' -and
 							(
-								-not ([PSADTNXT.Package.NxtRegisteredPackage]$package = $ADTSession.NXT.Package.GetRegisteredPackage()) -or
-								(Compare-NXTVersion -Version $package.Version -Target $ADTSession.AppVersion) -eq [PSADTNXT.Application.VersionCompareResult]::Update
+								-not ([PSADTNXT.Package.NxtRegisteredPackage]$registeredPackage = $ADTSession.NXT.Package.GetRegisteredPackage()) -or
+								(Compare-NXTVersion -Version $registeredPackage.Version -Target $ADTSession.NXT.Package.Version) -eq [PSADTNXT.Application.VersionCompareResult]::Update
 							)
 						) {
 							Write-ADTLogEntry -Message 'The current state of the system indicates that Soft Migration might be applicable. Starting Soft Migration checks...'
