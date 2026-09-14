@@ -94,6 +94,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		public bool UserPartOnUninstallation { get; set; }
 
+		[Obsolete("Value is now calculated from AppVersion.")]
 		public string UserPartRevision { get; set; } = string.Empty;
 
 		public bool HidePackageUninstallButton { get; set; }

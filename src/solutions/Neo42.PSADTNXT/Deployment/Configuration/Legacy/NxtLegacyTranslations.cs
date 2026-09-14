@@ -439,7 +439,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			variables["Legacy_Description"] = legacyModel.Description;
 			variables["Legacy_TestedOn"] = legacyModel.TestedOn;
 			variables["Legacy_Dependencies"] = legacyModel.Dependencies;
-			variables["Legacy_ProductGUID"] = legacyModel.ProductGUID;
+			variables["Legacy_ProductGUID"] = legacyModel.ProductGUID ?? string.Empty;
 			variables["Legacy_RemovePackagesWithSameProductGUID"] = legacyModel.RemovePackagesWithSameProductGUID;
 			variables["Legacy_HidePackageUninstallButton"] = legacyModel.HidePackageUninstallButton;
 			variables["Legacy_HidePackageUninstallEntry"] = legacyModel.HidePackageUninstallEntry;
