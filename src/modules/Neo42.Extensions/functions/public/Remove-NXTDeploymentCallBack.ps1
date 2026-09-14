@@ -20,6 +20,8 @@
 		[ValidateNotNull()]
 		[System.Management.Automation.CommandInfo[]]
 		$Callback,
+		[Parameter(Mandatory)]
+		[ValidateNotNullOrEmpty()]
 		[PSADTNXT.Deployment.DeploymentHookPoint[]]
 		$HookPoint
 	)

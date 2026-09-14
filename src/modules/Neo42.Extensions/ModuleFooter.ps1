@@ -1,4 +1,4 @@
-#region Initialization
+﻿#region Initialization
 # Make sure the module is loaded via the psd1 file.
 if ([System.Environment]::StackTrace -notlike '*Microsoft.PowerShell.Commands.ModuleCmdletBase.LoadModuleManifest(*') {
 	throw [System.InvalidOperationException]::new('This module must be imported via its .psd1 file, which is recommended for all modules that supply a .psd1 file.')
@@ -97,13 +97,17 @@ $ExecutionContext.SessionState.Provider.GetOne('Microsoft.PowerShell.Core\Regist
 
 # Define the deployment callback store.
 New-Variable -Name 'DeploymentCallbacks' -Option Constant -Force -Scope Script -Value (
-	[System.Collections.ObjectModel.ReadOnlyDictionary[PSADTNXT.Deployment.DeploymentHookPoint, System.Collections.Generic.List[System.Management.Automation.CommandInfo]]]::new(
-		$(
+	[System.Enum]::GetValues([PSADTNXT.Deployment.DeploymentHookPoint]) | & {
+		begin {
 			$dict = [System.Collections.Generic.Dictionary[PSADTNXT.Deployment.DeploymentHookPoint, System.Collections.Generic.List[System.Management.Automation.CommandInfo]]]::new()
-			[System.Enum]::GetValues([PSADTNXT.Deployment.DeploymentHookPoint]) | . { process { $dict.Add($_, [System.Collections.Generic.List[System.Management.Automation.CommandInfo]]::new()) } }
-			$dict
-		)
-	)
+		}
+		process {
+			$dict.Add($_, [System.Collections.Generic.List[System.Management.Automation.CommandInfo]]::new())
+		}
+		end {
+			[System.Collections.ObjectModel.ReadOnlyDictionary[PSADTNXT.Deployment.DeploymentHookPoint, System.Collections.Generic.List[System.Management.Automation.CommandInfo]]]::new($dict)
+		}
+	}
 )
 
 # Add our initialization hooks to the PSADT command table.

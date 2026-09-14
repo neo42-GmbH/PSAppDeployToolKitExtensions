@@ -23,6 +23,7 @@
 		[ValidateNotNull()]
 		[System.Management.Automation.CommandInfo[]]
 		$Callback,
+		[ValidateNotNullOrEmpty()]
 		[PSADTNXT.Deployment.DeploymentHookPoint[]]
 		$HookPoint,
 		[System.Management.Automation.SwitchParameter]
@@ -33,7 +34,7 @@
 	}
 	process {
 		try {
-			if ($HookPoint) {
+			if ($PSBoundParameters.ContainsKey('HookPoint')) {
 				$HookPoint | & {
 					process {
 						if ($Prepend) {
