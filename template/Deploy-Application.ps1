@@ -322,16 +322,18 @@ try {
 	# Remove all prior instances of PSAppDeployToolkit modules
 	Remove-Module -Name 'PSAppDeployToolkit*' -Force
 	# Import the PSADT and extension modules from the script directory and unblock all files to prevent issues with downloaded modules.
-	Get-ChildItem -Directory -LiteralPath $PSScriptRoot -Filter 'PSAppDeployToolkit*' | ForEach-Object {
-		Get-ChildItem -LiteralPath $PSItem.FullName -File -Recurse | Unblock-File
-		Import-Module -Name $PSItem.FullName -Force -ErrorAction Stop
-	}
+	Get-ChildItem -LiteralPath $PSScriptRoot -Directory -Filter 'PSAppDeployToolkit*' |
+		Sort-Object -Property 'Name' |
+		ForEach-Object {
+			Get-ChildItem -LiteralPath $PSItem.FullName -File -Recurse | Unblock-File
+			Import-Module -Name $PSItem.FullName -Force -ErrorAction Stop
+		}
 	# Restarting is required to not have blocking processes on ActiveSetup.
 	Restart-NXTDeployScript -Invocation $MyInvocation -WhenTriggerDeployment -When32on64Bit
 	# Initialize and open the ADT session.
 	Initialize-ADTModule -AdditionalEnvironmentVariables (New-NXTEnvironmentTable) -ScriptDirectory (
 		@("$PSScriptRoot\PSAppDeployToolkit.Neo42.Extensions", $PSScriptRoot) +
-		@(Get-ChildItem -LiteralPath $PSScriptRoot -Directory -Filter 'Overrides.*' | Select-Object -ExpandProperty 'FullName')
+		@(Get-ChildItem -LiteralPath $PSScriptRoot -Directory -Filter 'Overrides.*' | Sort-Object -Property 'Name' | Select-Object -ExpandProperty 'FullName')
 	)
 	Add-NXTDeploymentCallback -Callback (Get-Item -Path 'Function:\Custom*')
 	# Open the ADT session with the parameters collected from the script and the customizations.
