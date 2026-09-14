@@ -6094,6 +6094,7 @@ Shows an installation welcome dialog to the user, optionally allowing them to de
 
 ```PowerShell
 Show-NXTInstallationWelcome
+    [[-ADTSession] <NxtDeploymentSession>]
     [[-Title] <string>]
     [[-CloseProcesses] <NxtCloseProcess[]>]
     [[-DeferTimes] <uint32>]
@@ -6102,7 +6103,6 @@ Show-NXTInstallationWelcome
     [[-DeferRunInterval] <timespan>]
     [[-Timeout] <timespan>]
     [[-ContinueType] <ContinueType>]
-    [[-ADTSession] <NxtDeploymentSession>]
     [-MinimizeWindows]
     [-CustomText]
     [-AllowDeferCloseProcesses]
@@ -6146,7 +6146,7 @@ The title of the installation welcome dialog.
 |Property|Value|
 |:---|:---|
 |Type:|String|
-|Position:|0|
+|Position:|1|
 |Default value:|$ADTSession.InstallTitle|
 |Required:|False|
 |Accept pipeline input:|False|
@@ -6159,7 +6159,7 @@ A list of processes that may block the installation.
 |Property|Value|
 |:---|:---|
 |Type:|NxtCloseProcess[]|
-|Position:|1|
+|Position:|2|
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
@@ -6173,7 +6173,7 @@ The type of action to take if the the dialog times out.
 |:---|:---|
 |Type:|ContinueType|
 |Enum values:|Abort, Continue|
-|Position:|7|
+|Position:|8|
 |Default value:|Abort|
 |Required:|False|
 |Accept pipeline input:|False|
@@ -6226,7 +6226,7 @@ The number of times the user can defer the installation.
 |Property|Value|
 |:---|:---|
 |Type:|UInt32|
-|Position:|2|
+|Position:|3|
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
@@ -6240,7 +6240,7 @@ This option qualifies the DeferTimes option and is only used if DeferTimes is se
 |Property|Value|
 |:---|:---|
 |Type:|UInt32|
-|Position:|3|
+|Position:|4|
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
@@ -6253,7 +6253,7 @@ The date and time when the installation can no longer be deferred. If DeferDays 
 |Property|Value|
 |:---|:---|
 |Type:|Nullable[DateTime]|
-|Position:|4|
+|Position:|5|
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
@@ -6266,7 +6266,7 @@ A time span before the next interactive deployment is attempted.
 |Property|Value|
 |:---|:---|
 |Type:|TimeSpan|
-|Position:|5|
+|Position:|6|
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
@@ -6370,7 +6370,7 @@ The time to wait before the dialog times out.
 |Property|Value|
 |:---|:---|
 |Type:|TimeSpan|
-|Position:|6|
+|Position:|7|
 |Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
@@ -6397,7 +6397,7 @@ The current ADT session. Requires the extension session to be initialized.
 |Property|Value|
 |:---|:---|
 |Type:|NxtDeploymentSession|
-|Position:|8|
+|Position:|0|
 |Default value:|(& $script:CommandTable.'Get-ADTSession')|
 |Required:|False|
 |Accept pipeline input:|False|
