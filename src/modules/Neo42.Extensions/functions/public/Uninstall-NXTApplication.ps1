@@ -344,13 +344,13 @@
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::NullSoft) {
 					$backupFileSelector = [System.IO.Path]::GetFileName($Target)
-					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('AU_', $true, [System.TimeSpan]::FromMinutes(10)))
-					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('Un_A', $true, [System.TimeSpan]::FromMinutes(10)))
-					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('Un', $true, [System.TimeSpan]::FromMinutes(10)))
+					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('AU_', $false, [System.TimeSpan]::FromMinutes(10)))
+					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('Un_A', $false, [System.TimeSpan]::FromMinutes(10)))
+					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('Un', $false, [System.TimeSpan]::FromMinutes(10)))
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::BitRockInstaller) {
 					$backupFileSelector = 'unins*.exe'
-					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('_Uninstall*', $true, [System.TimeSpan]::FromMinutes(10)))
+					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('_Uninstall*', $false, [System.TimeSpan]::FromMinutes(10)))
 				}
 				{ $true } {
 					# Try to retrieve the backup file path if the uninstaller file does not exist
