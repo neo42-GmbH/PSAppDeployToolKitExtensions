@@ -249,15 +249,15 @@ Write-Host -NoNewline 'Merging new reference settings and metadata to Setup.cfg.
 foreach ($packageCfgSection in $packageCfg.GetEnumerator()) {
 	if (-not $setupCfg.ContainsKey($packageCfgSection.Key)) {
 		$setupCfg.Insert($sectionIdx, $packageCfgSection.Key, $packageCfgSection.Value, $packageCfg.GetComment($packageCfgSection.Key))
-		continue
 	}
-	[System.Int32]$settingIdx = 0
-	foreach ($packageCfgSetting in $packageCfgSection.Value.GetEnumerator()) {
-		if (-not $setupCfg[$packageCfgSection.Key].ContainsKey($packageCfgSetting.Key)) {
-			$setupCfg[$packageCfgSection.Key].Insert($settingIdx, $packageCfgSetting.Key, $packageCfgSetting.Value, $packageCfgSection.Value.GetComment($packageCfgSetting.Key))
-			continue
+	else {
+		[System.Int32]$settingIdx = 0
+		foreach ($packageCfgSetting in $packageCfgSection.Value.GetEnumerator()) {
+			if (-not $setupCfg[$packageCfgSection.Key].ContainsKey($packageCfgSetting.Key)) {
+				$setupCfg[$packageCfgSection.Key].Insert($settingIdx, $packageCfgSetting.Key, $packageCfgSetting.Value, $packageCfgSection.Value.GetComment($packageCfgSetting.Key))
+			}
+			$settingIdx++
 		}
-		$settingIdx++
 	}
 	$sectionIdx++
 }
