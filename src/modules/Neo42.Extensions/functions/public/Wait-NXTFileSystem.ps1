@@ -58,7 +58,7 @@
 				return $fsItem
 			}
 			else {
-				return $false
+				return $true
 			}
 		}
 		catch {
