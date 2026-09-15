@@ -97,7 +97,7 @@ jobs:
           }
 
       - name: update-milestones
-        if: ${{ needs.artifact.outputs.ARTIFACT_SUFFIX != '' }}
+        if: ${{ needs.artifact.outputs.ARTIFACT_SUFFIX == '' }}
         uses: actions/github-script@v9
         id: milestone
         with:
