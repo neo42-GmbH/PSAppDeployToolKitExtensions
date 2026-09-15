@@ -2678,7 +2678,7 @@ Get-NXTRegisteredPackage
     [-PackageId <guid>]
     [-Installed <bool>]
     [-Exclude <guid[]>]
-    [-RegPackagesKey <string>]
+    [-RegistryKey <string>]
     [<CommonParameters>]
 ```
 
@@ -2760,7 +2760,7 @@ Excludes the specified package IDs from the results.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
-#### -RegPackagesKey
+#### -RegistryKey
 
 Filters the results based on the specified registry packages key.
 
@@ -4305,7 +4305,7 @@ Removes a specific hook.
 ```PowerShell
 Remove-NXTDeploymentCallback
     [-Callback] <CommandInfo[]>
-    [[-HookPoint] <DeploymentHookPoint[]>]
+    [-HookPoint] <DeploymentHookPoint[]>
     [<CommonParameters>]
 ```
 
@@ -4356,7 +4356,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
-|Required:|False|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -6926,7 +6926,7 @@ It supports regular expression searches, case-insensitive searches, and can hand
 #### Example 1
 
 ```PowerShell
-Test-NXTStringInFile -Path 'C:\Temp\test.txt' -Query 'Hello World' -PatternType 'Exact'
+Test-NXTStringInFile -Path 'C:\Temp\test.txt' -Query 'Hello World' -PatternType 'Equals'
 ```
 
 Searches for the exact string 'Hello World' in the file 'C:\Temp\test.txt'.
@@ -6969,7 +6969,7 @@ The query string to search for in the file.
 
 #### -PatternType
 
-The type of pattern to use for the search. Can be 'Exact', 'Wildcard', or 'Regex'.
+The type of pattern to use for the search.
 
 |Property|Value|
 |:---|:---|
@@ -7628,7 +7628,7 @@ The function can target a specific number of occurrences and use various encodin
 #### Example 1
 
 ```PowerShell
-`Update-NXTTextInFile -Path 'C:\Temp\test.txt' -Query 'Hello' -Value 'Hi'`
+Update-NXTTextInFile -Path 'C:\Temp\test.txt' -Query 'Hello' -Value 'Hi'
 ```
 
 Updates the text 'Hello' to 'Hi' in the file 'C:\Temp\test.txt'.
@@ -8269,7 +8269,7 @@ Watches a specified registry key for a given duration.
 
 ```PowerShell
 Wait-NXTRegistryKey
-    [-Key] <string[]>
+    [-Key] <string>
     [-Wow6432Node]
     [-Timeout <timespan>]
     [-PassThru]
@@ -8299,7 +8299,7 @@ Microsoft.Win32.RegistryKey - The registry key to monitor.
 
 System.Boolean - Returns true if the registry key exist within the timeout period, otherwise false.
 
-Microsoft.Win32.RegistryKey - Returns the registry key if PassThru was specified
+PSCustomObject - Returns the registry key values as custom object if PassThru was specified
 
 ### PARAMETERS
 
@@ -8309,12 +8309,12 @@ The path to the registry key to monitor.
 
 |Property|Value|
 |:---|:---|
-|Type:|String[]|
+|Type:|String|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
-|Accept wildcard characters:|True|
+|Accept wildcard characters:|False|
 
 #### -Wow6432Node
 
@@ -8379,7 +8379,7 @@ It is useful for scenarios where the presence of a registry key is required for 
 #### Example 1
 
 ```PowerShell
-Wait-NXTRegistryKeyIsRemoved -Path "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+Wait-NXTRegistryKeyIsRemoved -Key "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
 ```
 
 This example monitors the specified registry key and waits up to 60 seconds to check its existence has ended.

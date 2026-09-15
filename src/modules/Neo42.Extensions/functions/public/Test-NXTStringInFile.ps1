@@ -14,7 +14,7 @@
 	.PARAMETER Query
 	The query string to search for in the file.
 	.PARAMETER PatternType
-	The type of pattern to use for the search. Can be 'Exact', 'Wildcard', or 'Regex'.
+	The type of pattern to use for the search.
 	.PARAMETER CaseSensitive
 	Specifies whether the search should be case-sensitive.
 	.PARAMETER Encoding
@@ -22,7 +22,7 @@
 	.PARAMETER Force
 	Determines if hidden files should be processed.
 	.EXAMPLE
-	Test-NXTStringInFile -Path 'C:\Temp\test.txt' -Query 'Hello World' -PatternType 'Exact'
+	Test-NXTStringInFile -Path 'C:\Temp\test.txt' -Query 'Hello World' -PatternType 'Equals'
 
 	Searches for the exact string 'Hello World' in the file 'C:\Temp\test.txt'.
 	#>
