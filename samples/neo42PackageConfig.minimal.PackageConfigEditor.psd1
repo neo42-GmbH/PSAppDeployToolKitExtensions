@@ -11,8 +11,8 @@
 		Enabled           = $true
 		UsePackageVersion = $true
 		Criteria          = @{
-			Store  = 'ARP64'
-			Filter = { $_.UpgradeCode -eq '{8BB4167C-B28D-4BC6-BA0D-A52F2DCCB259}' }
+			Store      = 'ARP64'
+			Identifier = '{B4B79BC4-A1BD-4115-BC10-FA3EF4457A14}'
 		}
 	}
 	SoftMigration    = @{
@@ -21,7 +21,6 @@
 	CloseProcesses   = @(
 		@{
 			Name   = 'Neo42.PackageConfigEditor'
-			Reopen = 'Binary'
 		}
 	)
 	ManagedShortcuts = @(
