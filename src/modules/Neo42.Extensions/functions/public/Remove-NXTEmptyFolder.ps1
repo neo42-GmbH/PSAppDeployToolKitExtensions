@@ -60,9 +60,7 @@
 	process {
 		try {
 			foreach ($directory in (Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -AsProviderPath -PathType Container -IncludeNonExistent)) {
-				if (-not $PSBoundParameters.ContainsKey('RootPath')) {
-					$RootPath = $directory
-				}
+				if (-not $PSBoundParameters.ContainsKey('RootPath')) { $RootPath = [System.IO.Path]::GetFullPath("$directory\..") }
 				[System.Collections.Generic.List[System.String]]$pathComponents = $directory.TrimEnd($pathSeparators).Split($pathSeparators)
 				[System.Collections.Generic.List[System.String]]$rootComponents = $RootPath.TrimEnd($pathSeparators).Split($pathSeparators)
 
