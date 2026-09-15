@@ -13,7 +13,7 @@
 	Filters the results based on the installation state of the package.
 	.PARAMETER Exclude
 	Excludes the specified package IDs from the results.
-	.PARAMETER RegPackagesKey
+	.PARAMETER RegistryKey
 	Filters the results based on the specified registry packages key.
 	.PARAMETER Application
 	Gets the package related to the specified InstalledApplication object.
@@ -37,11 +37,13 @@
 		[System.Boolean]
 		$Installed,
 		[Parameter(ParameterSetName = 'Filter')]
+		[ValidateNotNullOrEmpty()]
 		[System.Guid[]]
 		$Exclude,
 		[Parameter(ParameterSetName = 'Filter')]
+		[Alias('RegPackagesKey')]
 		[System.String]
-		$RegPackagesKey,
+		$RegistryKey,
 
 		[Parameter(ParameterSetName = 'Application', Mandatory)]
 		[ValidateNotNull()]
@@ -60,15 +62,14 @@
 		try {
 			switch ($PSCmdlet.ParameterSetName) {
 				'Filter' {
+					[System.Collections.Generic.Dictionary[System.String, System.Object]]$params = $PSBoundParameters
 					return [PSADTNXT.Package.NxtRegisteredPackage]::GetPackages() | & {
 						process {
-							if ((-not $PSBoundParameters.ContainsKey('RegPackagesKey') -or $_.RegPackagesKey -eq $RegPackagesKey) -and
-								(-not $PSBoundParameters.ContainsKey('PackageId') -or $_.Id -eq $PackageId.ToString('B')) -and
-								(-not $PSBoundParameters.ContainsKey('IsInstalled') -or $_.IsInstalled -eq $Installed) -and
-								(-not $PSBoundParameters.ContainsKey('Exclude') -or $_.Id -notin $Exclude.ToString('B'))
-							) {
-								return $_
-							}
+							if ((-not $params.ContainsKey('RegistryKey') -or $_.RegistryName -eq $RegistryKey) -and
+								(-not $params.ContainsKey('PackageId') -or $_.GUID -eq $PackageId.ToString('B')) -and
+								(-not $params.ContainsKey('Installed') -or $_.IsInstalled -eq $Installed) -and
+								(-not $params.ContainsKey('Exclude') -or $_.GUID -notin $Exclude.ToString('B'))
+							) { return $_ }
 						}
 					}
 				}
