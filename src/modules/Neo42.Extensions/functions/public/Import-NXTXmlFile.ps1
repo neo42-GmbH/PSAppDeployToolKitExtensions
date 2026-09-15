@@ -68,7 +68,7 @@
 	}
 	process {
 		try {
-			foreach ($file in (Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf -Force:$Force)) {
+			foreach ($file in (Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) {
 				[System.Xml.XmlDocument]$xml = [System.Xml.XmlDocument]::new()
 				$xml.XmlResolver = $null
 				$xml.LoadXml((Get-NXTContent -LiteralPath $file @encodingSplat))
