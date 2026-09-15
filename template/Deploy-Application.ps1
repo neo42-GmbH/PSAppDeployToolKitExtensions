@@ -94,7 +94,7 @@ function CustomSoftMigrationBegin {
 function CustomInstallAndReinstallAndSoftMigrationEnd {
 	<#
 	.DESCRIPTION
-	This function is called on any successful deployment regardless of the logic that was executed.
+	This function is called after an install deployment after the install or reinstall logic was successfully processed or a soft migration was done.
 	Information about executed installers might be available in the $adtSession.NXT.ProcessResults object.
 	#>
 	#region CustomInstallAndReinstallAndSoftMigrationEnd content
@@ -134,7 +134,7 @@ function CustomReinstallPostUninstall {
 	<#
 	.DESCRIPTION
 	This function is called after the successful uninstallation in the reinstall logic.
-	The $adtSession.NXT.ProcessResults might contain information about the uninstallation process depending on the uninstall logic used.
+	The $adtSession.NXT.ProcessResults might contain information about the uninstallation process depending on the reinstall logic used.
 	#>
 	#region CustomReinstallPostUninstall content
 	#endregion CustomReinstallPostUninstall content
@@ -163,7 +163,7 @@ function CustomReinstallPostInstall {
 	<#
 	.DESCRIPTION
 	This function is called after the successful installation in the reinstall logic.
-	The $adtSession.NXT.ProcessResults might contain information about the installation process depending on the install logic used.
+	The $adtSession.NXT.ProcessResults might contain information about the installation process depending on the reinstall logic used.
 	#>
 	#region CustomReinstallPostInstall content
 	#endregion CustomReinstallPostInstall content
@@ -171,8 +171,8 @@ function CustomReinstallPostInstall {
 function CustomUpgradePostUninstallOnError {
 	<#
 	.DESCRIPTION
-	This function is called after ending the deployment process in case there was an error during the uninstallation of an upgrade process in the reinstall logic.
-	The $adtSession.NXT.ProcessResults might contain information about the uninstallation process depending on the uninstall logic used.
+	This function is called after ending the deployment process in case there was an error during the uninstallation part of an upgrade process in the reinstall logic.
+	The $adtSession.NXT.ProcessResults might contain information about the upgrade process depending on the reinstall logic used.
 	#>
 	#region CustomUpgradePostUninstallOnError content
 	#endregion CustomUpgradePostUninstallOnError content
@@ -181,8 +181,8 @@ function CustomUpgradePostUninstallOnError {
 function CustomUpgradePostInstallOnError {
 	<#
 	.DESCRIPTION
-	This function is called after ending the deployment process in case there was an error during the installation of an upgrade process in the reinstall logic.
-	The $adtSession.NXT.ProcessResults might contain information about the installation process depending on the install logic used.
+	This function is called after ending the deployment process in case there was an error during the installation part of an upgrade process in the reinstall logic.
+	The $adtSession.NXT.ProcessResults might contain information about the upgrade process depending on the reinstall logic used.
 	#>
 	#region CustomUpgradePostInstallOnError content
 	#endregion CustomUpgradePostInstallOnError content
@@ -200,7 +200,7 @@ function CustomInstallBegin {
 function CustomInstallEndOnError {
 	<#
 	.DESCRIPTION
-	This function is called after ending the deployment process in case there was an error during the installation in the install logic.
+	This function is called after ending the deployment process in case there was an error during processing of the install logic.
 	The information about the error is available in the $adtSession.NXT.ProcessResults object.
 	#>
 	#region CustomInstallEndOnError content
@@ -210,8 +210,8 @@ function CustomInstallEndOnError {
 function CustomInstallEnd {
 	<#
 	.DESCRIPTION
-	This function is called after the successful installation in the install logic.
-	The $adtSession.NXT.ProcessResults might contain information about the installation process depending on the install logic used.
+	This function is called after the successful processing of the install logic.
+	The $adtSession.NXT.ProcessResults might contain information about the processed tasks depending on the install logic used.
 	#>
 	#region CustomInstallEnd content
 	#endregion CustomInstallEnd content
@@ -221,7 +221,7 @@ function CustomInstallAndReinstallEnd {
 	<#
 	.DESCRIPTION
 	This function is called after the successful installation in the install logic or a successful completed reinstallation in the reinstall logic.
-	The $adtSession.NXT.ProcessResults might contain information about the installation process depending on the install logic used.
+	The $adtSession.NXT.ProcessResults might contain information about the installation or reinstallation process depending on the install logic used.
 	#>
 	#region CustomInstallAndReinstallEnd content
 	#endregion CustomInstallAndReinstallEnd content
@@ -230,7 +230,7 @@ function CustomInstallAndReinstallEnd {
 function CustomUninstallBegin {
 	<#
 	.DESCRIPTION
-	This function is called before the uninstall deployment in the uninstall logic.
+	This function is called before the uninstall deployment process of the uninstall logic.
 	#>
 	#region CustomUninstallBegin content
 	#endregion CustomUninstallBegin content
@@ -239,7 +239,7 @@ function CustomUninstallBegin {
 function CustomUninstallEndOnError {
 	<#
 	.DESCRIPTION
-	This function is called after ending the deployment process in case there was an error during the uninstallation in the uninstall logic.
+	This function is called after ending the deployment process in case there was an error during processing of the uninstall logic.
 	The information about the error is available in the $adtSession.NXT.ProcessResults object.
 	#>
 	#region CustomUninstallEndOnError content
@@ -249,8 +249,8 @@ function CustomUninstallEndOnError {
 function CustomUninstallEnd {
 	<#
 	.DESCRIPTION
-	This function is called after the successful uninstallation in the uninstall logic.
-	The $adtSession.NXT.ProcessResults might contain information about the uninstallation process depending on the uninstall logic used.
+	This function is called after the successful processing of the uninstall logic.
+	The $adtSession.NXT.ProcessResults might contain information about the uninstallation process.
 	#>
 	#region CustomUninstallEnd content
 	#endregion CustomUninstallEnd content
@@ -305,7 +305,7 @@ function CustomEnd {
 function CustomEndOnError {
 	<#
 	.DESCRIPTION
-	This function is called if an error occurs at any point during the deployment process, after all tasks of the deployment process are executed.
+	This function is called if an error occurs at any point during the deployment process and after the deployment process ends.
 	The information about the error may available in the $adtSession.NXT.ProcessResults object.
 	#>
 	#region CustomEndOnError content
