@@ -50,6 +50,8 @@
 
 			Write-ADTLogEntry -Severity Success -Message 'Post uninstallation logic completed successfully.'
 		}
+
+		Update-ADTDesktop
 	}
 	catch {
 		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
