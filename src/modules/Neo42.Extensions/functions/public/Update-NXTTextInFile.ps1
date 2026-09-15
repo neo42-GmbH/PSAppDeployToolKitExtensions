@@ -32,7 +32,7 @@
 	.PARAMETER Force
 	Determines if hidden files should be processed or if the Read-Only attribute should be ignored when setting the content of the file.
 	.EXAMPLE
-	`Update-NXTTextInFile -Path 'C:\Temp\test.txt' -Query 'Hello' -Value 'Hi'`
+	Update-NXTTextInFile -Path 'C:\Temp\test.txt' -Query 'Hello' -Value 'Hi'
 
 	Updates the text 'Hello' to 'Hi' in the file 'C:\Temp\test.txt'.
 	#>
