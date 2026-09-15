@@ -39,7 +39,7 @@
 		[System.String]
 		$Query,
 		[PSADTNXT.Text.StringCompareOperator]
-		$PatternType = 'Wildcard',
+		$PatternType = 'Contains',
 		[System.Management.Automation.SwitchParameter]
 		$CaseSensitive,
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
