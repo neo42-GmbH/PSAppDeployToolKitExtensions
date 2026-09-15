@@ -53,13 +53,17 @@
 
 	Uninstalls the application using the MSI method with the specified arguments.
 	.EXAMPLE
+	Get-NXTApplication -Identifier '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
+
+	Uninstalls the application using a application object obtained from the NXT function.
+	.EXAMPLE
 	Get-ADTApplication -Name 'Test' | Uninstall-NXTApplication
 
-	Uninstalls the application using a application object.
+	Uninstalls the application using a application object obtained from the ADT function.
 	.EXAMPLE
 	Get-NXTRegisteredPackage -PackageId '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
 
-	Uninstalls the application using a registered package object.
+	Uninstalls the application referenced by a registered package object.
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'ManualExitCodes')]
 	[OutputType([PSADT.ProcessManagement.ProcessResult])]
