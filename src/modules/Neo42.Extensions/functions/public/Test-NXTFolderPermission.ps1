@@ -71,9 +71,8 @@
 
 			foreach ($permissionLevel in @('FullControl', 'Modify', 'Write', 'ReadAndExecute')) {
 				if (-not $PSBoundParameters.ContainsKey($permissionLevel)) { continue }
-				[System.Security.Principal.SecurityIdentifier[]]$sids = $PSBoundParameters[$permissionLevel]
 				$accessCompareProperties.Add($permissionLevel)
-				foreach ($id in $sids) {
+				foreach ($id in $PSBoundParameters[$permissionLevel]) {
 					$security.AddAccessRule(
 						[System.Security.AccessControl.FileSystemAccessRule]::new(
 							$id,
