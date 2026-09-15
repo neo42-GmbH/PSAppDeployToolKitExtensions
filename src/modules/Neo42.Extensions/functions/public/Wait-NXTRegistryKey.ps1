@@ -11,7 +11,7 @@ function Wait-NXTRegistryKey {
 	.OUTPUTS
 	System.Boolean - Returns true if the registry key exist within the timeout period, otherwise false.
 
-	Microsoft.Win32.RegistryKey - Returns the registry key if PassThru was specified
+	PSCustomObject - Returns the registry key values as custom object if PassThru was specified
 	.PARAMETER Key
 	The path to the registry key to monitor.
 	.PARAMETER Wow6432Node
@@ -26,13 +26,13 @@ function Wait-NXTRegistryKey {
 	This example monitors the specified registry key and waits up to 60 seconds to check its existence.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'The parameter is used in the function body.')]
-	[OutputType([System.Boolean], [Microsoft.Win32.RegistryKey])]
+	[OutputType([System.Boolean], [PSCustomObject])]
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipelineByPropertyName)]
 		[Alias('PSPath', 'Name')]
-		[SupportsWildcards()][ValidateNotNullOrEmpty()]
-		[System.String[]]
+		[ValidateNotNullOrEmpty()]
+		[System.String]
 		$Key,
 		[System.Management.Automation.SwitchParameter]
 		$Wow6432Node,
@@ -49,7 +49,7 @@ function Wait-NXTRegistryKey {
 		try {
 			[System.String]$convertedKey = Convert-ADTRegistryPath -Key $Key -Wow6432Node:$Wow6432Node
 			[System.DateTime]$endTime = [System.DateTime]::Now.Add($Timeout)
-			while (-not ([Microsoft.Win32.RegistryKey]$keyObj = Get-ADTRegistryKey -Key $convertedKey -WarningAction SilentlyContinue -InformationAction SilentlyContinue)) {
+			while ($null -eq ([PSCustomObject]$keyObj = Get-ADTRegistryKey -Key $convertedKey -WarningAction SilentlyContinue -InformationAction SilentlyContinue)) {
 				if ([System.DateTime]::Now -ge $endTime) {
 					Write-ADTLogEntry -Severity Warning -Message "Tthe specified registry key is still not created after [$Timeout]." -DebugMessage
 					if ($PassThru) {
