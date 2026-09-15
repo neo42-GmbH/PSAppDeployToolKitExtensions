@@ -212,7 +212,7 @@
 		{
 			"label": "Update Package",
 			"type": "shell",
-			"command": ". '${workspaceFolder}${/}.tools${/}Update-Package.ps1' -Out '${input:PackageUpdateOutputPath}' -Reference '${workspaceFolder}${/}build'",
+			"command": ". '${workspaceFolder}${/}.tools${/}Update-Package.ps1' -Output '${input:PackageUpdateOutputPath}' -Reference '${workspaceFolder}${/}build'",
 			"group": "build",
 			"presentation": {
 				"reveal": "always",
