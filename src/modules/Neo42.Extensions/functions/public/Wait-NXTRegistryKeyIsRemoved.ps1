@@ -17,7 +17,7 @@ function Wait-NXTRegistryKeyIsRemoved {
 	.PARAMETER Timeout
 	The maximum time to wait for the registry key(s) to be created.
 	.EXAMPLE
-	Wait-NXTRegistryKeyIsRemoved -Path "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
+	Wait-NXTRegistryKeyIsRemoved -Key "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
 
 	This example monitors the specified registry key and waits up to 60 seconds to check its existence has ended.
 	#>
