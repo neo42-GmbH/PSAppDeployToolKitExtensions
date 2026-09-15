@@ -39,6 +39,7 @@
 				}
 				throw $_ # rethrow the exception
 			}
+			return $false
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
