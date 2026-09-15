@@ -100,21 +100,24 @@
 					# Validate the provider
 					if ($ProviderName) {
 						[System.Management.Automation.ProviderInfo]$desiredProvider = $ExecutionContext.SessionState.Provider.GetOne($ProviderName)
-						# If the path was not qualified with a provider, use the desired provider to resolve the path.
-						if (-not $ExecutionContext.SessionState.Path.IsProviderQualified($_)) {
-							$providerInfo = $desiredProvider
-							$providerPath = $_
-						}
-						# If the provider is specified, but the path does not match the provider, throw an error.
-						elseif (-not $providerInfo.Equals($desiredProvider)) {
-							[System.Collections.Hashtable]$errorParams = @{
-								Exception         = [System.Management.Automation.ProviderInvocationException]::new("Given path is not a valid path for the specified provider [$ProviderName].")
-								Category          = [System.Management.Automation.ErrorCategory]::InvalidArgument
-								ErrorId           = 'InvalidProviderPath'
-								RecommendedAction = 'Ensure that the path is valid for the required provider.'
-								TargetObject      = $_
+						# If the provider does not already match, try attaching one
+						if ($providerInfo -ne $desiredProvider) {
+							# If the path was not qualified with a provider, treat it as a native path of the desired provider.
+							if (-not $ExecutionContext.SessionState.Path.IsProviderQualified($_)) {
+								$providerInfo = $desiredProvider
+								$providerPath = $_
 							}
-							throw (New-ADTErrorRecord @errorParams)
+							# If the provider is specified, but the path does not match the provider, throw an error.
+							else {
+								[System.Collections.Hashtable]$errorParams = @{
+									Exception         = [System.Management.Automation.ProviderInvocationException]::new("Given path is not a valid path for the specified provider [$ProviderName].")
+									Category          = [System.Management.Automation.ErrorCategory]::InvalidArgument
+									ErrorId           = 'InvalidProviderPath'
+									RecommendedAction = 'Ensure that the path is valid for the required provider.'
+									TargetObject      = $_
+								}
+								throw (New-ADTErrorRecord @errorParams)
+							}
 						}
 					}
 
