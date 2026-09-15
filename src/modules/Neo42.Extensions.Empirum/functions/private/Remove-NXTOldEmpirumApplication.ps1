@@ -29,11 +29,16 @@
 
 		$empirumAppKey.GetSubKeyNames() | & {
 			process {
+				if ($_ -eq $adtSession.NXT.Package.Version) { return } # Prevent uninstalling self
+
+				[Microsoft.Win32.RegistryKey]$empirumSetupKey = $empirumAppKey.OpenSubKey("$_\Setup", $false)
+
 				if ($adtSession.NXT.Package.UninstallOld) {
 					Write-ADTLogEntry -Message "Uninstalling old Empirum package [$($empirumAppKey.Name)\$_]."
-					[Microsoft.Win32.RegistryKey]$empirumSetupKey = $empirumAppKey.OpenSubKey("$_\Setup", $false)
 
-					if ($empirumSetupKey -and -not ([System.String]::IsNullOrWhiteSpace(([System.String]$uninstallString = $empirumSetupKey.GetValue('UninstallString'))))) {
+					if ($empirumSetupKey -and
+						-not ([System.String]::IsNullOrWhiteSpace(([System.String]$uninstallString = $empirumSetupKey.GetValue('UninstallString'))))
+					) {
 						[System.Collections.Generic.List[System.String]]$arguments = [System.Collections.Generic.List[System.String]]::new()
 						[System.String[]]$uninstallStringParts = ConvertFrom-NXTCommandLine -InputObject $uninstallString
 						if ($uninstallStringParts -and $uninstallStringParts.Count -gt 1) {
@@ -54,10 +59,19 @@
 					else {
 						Write-ADTLogEntry -Severity Warning -Message "Empirum application version [$_] does not contain uninstall information. Proceeding with unregister."
 					}
+				}
 
-					if ($empirumSetupKey) {
-						$empirumSetupKey.Close()
+				if ($empirumSetupKey) {
+					# Clear the old Empirum app path
+					if (-not ([System.String]::IsNullOrWhiteSpace(([System.String]$appPath = $empirumSetupKey.GetValue('AppPath')))) -and
+						[System.IO.Directory]::Exists($appPath)
+					) {
+						Write-ADTLogEntry -Message "Clearing old Empirum directory [$appPath]."
+						[System.IO.Directory]::Delete($appPath, $true)
+						Remove-NXTEmptyFolder -Path "$appPath\.." -RootPath "$appPath\..\.."
 					}
+
+					$empirumSetupKey.Close()
 				}
 
 				Write-ADTLogEntry -Message "Unregistering old Empirum application registration for version [$_]"
