@@ -135,7 +135,7 @@
 							$ADTSession.NXT.SetupCfg['Options']['SOFTMIGRATION'] -ne '0' -and
 							(
 								-not ([PSADTNXT.Package.NxtRegisteredPackage]$registeredPackage = $ADTSession.NXT.Package.GetRegisteredPackage()) -or
-								(Compare-NXTVersion -Version $registeredPackage.Version -Target $ADTSession.NXT.Package.Version) -eq [PSADTNXT.Application.VersionCompareResult]::Update
+								(Compare-NXTVersion -Version $registeredPackage.Version -Target $ADTSession.AppVersion) -eq [PSADTNXT.Application.VersionCompareResult]::Update
 							)
 						) {
 							Write-ADTLogEntry -Message 'The current state of the system indicates that Soft Migration might be applicable. Starting Soft Migration checks...'
