@@ -22,7 +22,7 @@
 	.PARAMETER CustomDirectorySecurity
 	A custom DirectorySecurity object to use as a base for the folder permissions. If not specified, a new DirectorySecurity object is created.
 	.PARAMETER IsInherited
-	Test if permissions are inherited from the parent folder.
+	Test if permissions are inherited from the parent folder. Only access rules with a matching inheritance state are taken into account when the requested permissions are verified.
 	.EXAMPLE
 	Test-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
 
@@ -38,24 +38,30 @@
 		[System.String]
 		$Path,
 		[Alias('FullControlPermissions')]
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$FullControl,
 		[Alias('WritePermissions')]
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$Write,
 		[Alias('ModifyPermissions')]
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$Modify,
 		[Alias('ReadAndExecutePermissions')]
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$ReadAndExecute,
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference]
 		$Owner,
+		[ValidateNotNull()]
 		[System.Security.AccessControl.DirectorySecurity]
 		$CustomDirectorySecurity,
 		[System.Boolean]
@@ -66,14 +72,10 @@
 	}
 	process {
 		try {
-			[System.Collections.Generic.List[System.String]]$accessCompareProperties = [System.Collections.Generic.List[System.String]]::new()
 			[System.Security.AccessControl.DirectorySecurity]$security = if ($null -ne $CustomDirectorySecurity) { $CustomDirectorySecurity } else { [System.Security.AccessControl.DirectorySecurity]::new() }
-
-			if ($PSBoundParameters.ContainsKey('IsInherited')) { $accessCompareProperties.Add('IsInherited') }
 
 			foreach ($permissionLevel in @('FullControl', 'Modify', 'Write', 'ReadAndExecute')) {
 				if (-not $PSBoundParameters.ContainsKey($permissionLevel)) { continue }
-				$accessCompareProperties.Add($permissionLevel)
 				foreach ($id in $PSBoundParameters[$permissionLevel]) {
 					$security.AddAccessRule(
 						[System.Security.AccessControl.FileSystemAccessRule]::new(
@@ -88,15 +90,62 @@
 			}
 
 			[System.Security.AccessControl.DirectorySecurity]$actualAcl = Get-Acl -Path $Path
-			if ($PSBoundParameters.ContainsKey('Owner') -and $Owner -ne $actualAcl.Owner) {
-				Write-ADTLogEntry -Severity Warning -Message "Owner mismatch. Expected: [$Owner]. Actual: [$($actualAcl.Owner)]." -DebugMessage
-				return $false
+
+			## Identities may be given as NTAccount or SecurityIdentifier, so they are normalized to a SID before they are compared.
+			[System.Management.Automation.ScriptBlock]$resolveSid = {
+				param (
+					[System.Security.Principal.IdentityReference]$Identity
+				)
+				try {
+					return $Identity.Translate([System.Security.Principal.SecurityIdentifier])
+				}
+				catch {
+					Write-ADTLogEntry -Severity Warning -Message "Failed to resolve identity [$Identity] to a security identifier." -DebugMessage
+					return $null
+				}
 			}
 
-			[System.Management.Automation.PSObject[]]$differences = @(Compare-Object @($actualAcl.Access) @($security.Access) -Property $accessCompareProperties)
-			if ($differences.Count -gt 0) {
-				Write-ADTLogEntry -Severity Warning -Message 'Access control list mismatch.' -DebugMessage
-				return $false
+			if ($PSBoundParameters.ContainsKey('Owner')) {
+				[System.Security.Principal.SecurityIdentifier]$expectedOwnerSid = & $resolveSid $Owner
+				[System.Security.Principal.SecurityIdentifier]$actualOwnerSid = $actualAcl.GetOwner([System.Security.Principal.SecurityIdentifier])
+				if ($null -eq $expectedOwnerSid -or $expectedOwnerSid.Value -ne $actualOwnerSid.Value) {
+					Write-ADTLogEntry -Severity Warning -Message "Owner mismatch. Expected: [$Owner]. Actual: [$($actualAcl.Owner)]." -DebugMessage
+					return $false
+				}
+			}
+
+			## An identity can be covered by more than one access rule, so the rights are accumulated per identity. The actual rules are requested as SIDs to avoid resolving identities that no longer exist.
+			[System.Collections.Generic.Dictionary[System.String, System.Security.AccessControl.FileSystemRights]]$allowedRights = [System.Collections.Generic.Dictionary[System.String, System.Security.AccessControl.FileSystemRights]]::new()
+			[System.Collections.Generic.Dictionary[System.String, System.Security.AccessControl.FileSystemRights]]$deniedRights = [System.Collections.Generic.Dictionary[System.String, System.Security.AccessControl.FileSystemRights]]::new()
+			foreach ($actualRule in $actualAcl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])) {
+				if ($PSBoundParameters.ContainsKey('IsInherited') -and $actualRule.IsInherited -ne $IsInherited) { continue }
+				$rightsPerIdentity = if ($actualRule.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Deny) { $deniedRights } else { $allowedRights }
+				[System.String]$actualSid = $actualRule.IdentityReference.Value
+				$rightsPerIdentity[$actualSid] = if ($rightsPerIdentity.ContainsKey($actualSid)) { $rightsPerIdentity[$actualSid] -bor $actualRule.FileSystemRights } else { $actualRule.FileSystemRights }
+			}
+
+			foreach ($expectedRule in $security.Access) {
+				[System.Security.Principal.SecurityIdentifier]$expectedSid = & $resolveSid $expectedRule.IdentityReference
+				if ($null -eq $expectedSid) { return $false }
+				[System.Security.AccessControl.FileSystemRights]$expectedRights = $expectedRule.FileSystemRights
+				[System.Security.AccessControl.FileSystemRights]$grantedRights = if ($allowedRights.ContainsKey($expectedSid.Value)) { $allowedRights[$expectedSid.Value] } else { 0 }
+				[System.Security.AccessControl.FileSystemRights]$blockedRights = if ($deniedRights.ContainsKey($expectedSid.Value)) { $deniedRights[$expectedSid.Value] } else { 0 }
+
+				if ($expectedRule.AccessControlType -eq [System.Security.AccessControl.AccessControlType]::Deny) {
+					if (($blockedRights -band $expectedRights) -ne $expectedRights) {
+						Write-ADTLogEntry -Severity Warning -Message "Identity [$($expectedRule.IdentityReference)] is not denied the [$([System.Security.AccessControl.FileSystemRights]($expectedRights -band -bnot $blockedRights))] rights on [$Path]." -DebugMessage
+						return $false
+					}
+					continue
+				}
+				if (($grantedRights -band $expectedRights) -ne $expectedRights) {
+					Write-ADTLogEntry -Severity Warning -Message "Identity [$($expectedRule.IdentityReference)] is missing the [$([System.Security.AccessControl.FileSystemRights]($expectedRights -band -bnot $grantedRights))] rights on [$Path]." -DebugMessage
+					return $false
+				}
+				if (($blockedRights -band $expectedRights) -ne 0) {
+					Write-ADTLogEntry -Severity Warning -Message "Identity [$($expectedRule.IdentityReference)] is denied the [$([System.Security.AccessControl.FileSystemRights]($blockedRights -band $expectedRights))] rights on [$Path]." -DebugMessage
+					return $false
+				}
 			}
 			return $true
 		}

@@ -45,24 +45,30 @@
 		[System.String[]]
 		$Path,
 		[Alias('FullControlPermissions')]
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$FullControl,
 		[Alias('WritePermissions')]
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$Write,
 		[Alias('ModifyPermissions')]
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$Modify,
 		[Alias('ReadAndExecutePermissions')]
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$ReadAndExecute,
+		[ValidateNotNull()]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference]
 		$Owner,
+		[ValidateNotNull()]
 		[System.Security.AccessControl.DirectorySecurity]
 		$CustomDirectorySecurity,
 		[System.Management.Automation.SwitchParameter]
