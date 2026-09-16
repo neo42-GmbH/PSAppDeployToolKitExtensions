@@ -12,7 +12,21 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 	{
 		public string[] Values { get; set; } = null!;
 
-		public StringComparison StringComparison { get; set; }
+		public StringComparison StringComparison { get; set; } = StringComparison.Ordinal;
+
+		public ValidSet()
+			: base("The string is is not valid for set.")
+		{
+		}
+
+		public ValidSet(Type enumType)
+		{
+			if (!enumType.IsEnum)
+			{
+				throw new ArgumentException("Type must be an enum.", nameof(enumType));
+			}
+			Values = Enum.GetNames(enumType);
+		}
 
 		/// <summary>
 		/// Validates the specified value.
