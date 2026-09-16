@@ -24,11 +24,17 @@ namespace PSADTNXT.Application
 	public sealed class NxtVersion : IComparable, ISerializable, ICloneable
 	{
 		public int Major { get; }
+
 		public int Minor { get; } = -1;
+
 		public int Patch { get; } = -1;
+
 		public int Revision { get; } = -1;
+
 		public string PreRelease { get; } = string.Empty;
+
 		public string Build { get; } = string.Empty;
+
 		public bool IsPreRelease { get; }
 
 		private static readonly Lazy<Regex> _strictVersionConstructRegex = new(() => new Regex(
@@ -440,6 +446,26 @@ namespace PSADTNXT.Application
 			if (IsPreRelease && !other.IsPreRelease)
 			{
 				return 1;
+			}
+
+			if (IsPreRelease && other.IsPreRelease)
+			{
+				return PreRelease.CompareTo(other.IsPreRelease);
+			}
+
+			if (Build is null && other.Build is not null)
+			{
+				return -1;
+			}
+
+			if (Build is not null && other.Build is null)
+			{
+				return 1;
+			}
+
+			if (Build is not null && other.Build is not null)
+			{
+				return Build.CompareTo(other.Build);
 			}
 
 			return 0;
