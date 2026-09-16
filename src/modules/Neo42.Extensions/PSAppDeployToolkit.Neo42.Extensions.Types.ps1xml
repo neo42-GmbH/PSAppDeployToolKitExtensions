@@ -38,6 +38,12 @@ It is used to define custom types and their members for PowerShell objects.
 				</Script>
 			</ScriptMethod>
 			<ScriptProperty>
+				<Name>UpgradeCode</Name>
+				<GetScriptBlock>
+					if ($this.WindowsInstaller -and $this.ProductCode) { [PSADTNXT.Extensions.NxtPsadtExtensions]::GetUpgradeCode($this.ProductCode).ToString("B") }
+				</GetScriptBlock>
+			</ScriptProperty>
+			<ScriptProperty>
 				<Name>InnoSetupInstaller</Name>
 				<GetScriptBlock>
 					[PSADTNXT.Extensions.NxtPsadtExtensions]::IsNullSoftInstaller($this)

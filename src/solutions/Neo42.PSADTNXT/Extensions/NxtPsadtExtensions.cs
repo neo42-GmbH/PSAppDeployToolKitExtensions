@@ -11,6 +11,8 @@ namespace PSADTNXT.Extensions
 {
 	public static class NxtPsadtExtensions
 	{
+		private const string UPGRADE_CODE_REGISTRY = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\UpgradeCodes";
+
 		private const string PROVISIONED_PACKAGE_SUBKEY = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore\Applications";
 
 		/// <summary>
@@ -154,6 +156,91 @@ namespace PSADTNXT.Extensions
 		{
 			using var key = application.PSPath.ToRegistryKeyFromPSProviderPath();
 			return key != null && key.GetValue("BundleProviderKey", null) is string providerKey && providerKey.Equals(application.PSChildName);
+		}
+
+		[Obsolete("Implemented in 4.2.0")]
+		public static Guid? GetUpgradeCode(Guid productCode)
+		{
+			var packedProductCode = CompressGuid(productCode);
+
+			using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+			using var upgradeCodeBaseKey = baseKey.OpenSubKey(UPGRADE_CODE_REGISTRY);
+			if (upgradeCodeBaseKey == null)
+			{
+				return null;
+			}
+
+			foreach (var packedUpgradeCode in upgradeCodeBaseKey.GetSubKeyNames())
+			{
+				using var upgradeCodeKey = upgradeCodeBaseKey.OpenSubKey(packedUpgradeCode);
+				if (upgradeCodeKey?.GetValue(packedProductCode) != null && TryDecompressGuid(packedUpgradeCode, out var upgradeCode))
+				{
+					return upgradeCode;
+				}
+			}
+
+			return null;
+		}
+
+		/// <summary>
+		/// Converts a <see cref="Guid"/> into the packed form Windows Installer uses as registry key and value names.
+		/// </summary>
+		/// <param name="unpacked">The guid to pack.</param>
+		/// <returns>32 uppercase hexadecimal characters, each byte of the guid written low nibble first.</returns>
+		[Obsolete("Implemented in 4.2.0")]
+		private static string CompressGuid(Guid unpacked)
+		{
+			static char ToHexUpper(int nibble)
+			{
+				return (char)(nibble < 10 ? '0' + nibble : 'A' + (nibble - 10));
+			}
+
+			var bytes = unpacked.ToByteArray();
+			var packed = new char[bytes.Length * 2];
+			for (var i = 0; i < bytes.Length; i++)
+			{
+				packed[i * 2] = ToHexUpper(bytes[i] & 0x0F);
+				packed[(i * 2) + 1] = ToHexUpper(bytes[i] >> 4);
+			}
+
+			return new string(packed);
+		}
+
+		/// <summary>
+		/// Converts a packed Windows Installer guid back into a <see cref="Guid"/>.
+		/// </summary>
+		/// <param name="packed">The packed guid, as produced by <see cref="CompressGuid"/>.</param>
+		/// <param name="unpacked">The decoded guid, or <see cref="Guid.Empty"/> if the input is not a packed guid.</param>
+		/// <returns><see langword="true"/> if the input was a packed guid, otherwise <see langword="false"/>.</returns>
+		[Obsolete("Implemented in 4.2.0")]
+		private static bool TryDecompressGuid(string packed, out Guid unpacked)
+		{
+			static int FromHexNibble(char c)
+			{
+				return c is >= '0' and <= '9' ? c - '0' : c is >= 'A' and <= 'F' ? c - 'A' + 10 : c is >= 'a' and <= 'f' ? c - 'a' + 10 : -1;
+			}
+
+			unpacked = Guid.Empty;
+			var bytes = new byte[16];
+			if (packed.Length != bytes.Length * 2)
+			{
+				return false;
+			}
+
+			for (var i = 0; i < bytes.Length; i++)
+			{
+				var low = FromHexNibble(packed[i * 2]);
+				var high = FromHexNibble(packed[(i * 2) + 1]);
+				if (low < 0 || high < 0)
+				{
+					return false;
+				}
+
+				bytes[i] = (byte)((high << 4) | low);
+			}
+
+			unpacked = new Guid(bytes);
+			return true;
 		}
 	}
 }
