@@ -30,15 +30,12 @@
 	}
 	process {
 		try {
+			if (-not [System.IO.File]::Exists($Path)) { return $false }
 			try {
 				[System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read).Dispose()
 			}
 			catch [System.IO.IOException] {
-				# Check we get a file locked exception
-				if ($_.Exception.HResult -band 0xFFFF) {
-					return $true
-				}
-				throw $_ # rethrow the exception
+				return $true
 			}
 			return $false
 		}
