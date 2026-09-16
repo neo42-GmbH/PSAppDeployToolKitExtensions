@@ -338,19 +338,19 @@ foreach ($referenceCustomFunction in $referenceCustomFunctions) {
 	# Retrieve content markers
 	[System.Management.Automation.Language.Token]$referenceStartToken = $referenceTokens | Where-Object {
 		$_.Kind -eq [System.Management.Automation.Language.TokenKind]::Comment -and
-		$_.Text -eq "#region $($referenceCustomFunction.Name) content"
+		$_.Text -match "#region $($referenceCustomFunction.Name) content\s*"
 	}
 	if (-not $referenceStartToken) { throw "No start token found for [$($referenceCustomFunction.Name)] in [$Reference\Deploy-Application.ps1]" }
 
 	[System.Management.Automation.Language.Token]$packageStartToken = $packageTokens | Where-Object {
 		$_.Kind -eq [System.Management.Automation.Language.TokenKind]::Comment -and
-		$_.Text -eq "#region $($referenceCustomFunction.Name) content"
+		$_.Text -match "#region $($referenceCustomFunction.Name) content\s*"
 	}
 	if (-not $packageStartToken) { throw "No start token found for [$($referenceCustomFunction.Name)] in [$Package\Deploy-Application.ps1]" }
 
 	[System.Management.Automation.Language.Token]$packageEndToken = $packageTokens | Where-Object {
 		$_.Kind -eq [System.Management.Automation.Language.TokenKind]::Comment -and
-		$_.Text -eq "#endregion $($referenceCustomFunction.Name) content"
+		$_.Text -match "#endregion $($referenceCustomFunction.Name) content\s*"
 	}
 	if (-not $packageEndToken) { throw "No end token found for [$($referenceCustomFunction.Name)] in [$Package\Deploy-Application.ps1]" }
 
