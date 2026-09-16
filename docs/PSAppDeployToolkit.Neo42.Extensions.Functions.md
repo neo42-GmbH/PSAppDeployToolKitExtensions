@@ -6552,7 +6552,7 @@ Include all child processes when stopping the specified process.
 
 ## Test-NXTFileInUse
 
-Test if a file is in use by another process.
+Test if a file is in locked by another process.
 
 ### SYNTAX
 
@@ -6564,7 +6564,8 @@ Test-NXTFileInUse
 
 ### DESCRIPTION
 
-Test if a file is in use by another process. It can only successfully test if the process has read/write access to the file.
+Test if a file is locked by another process.
+It can only successfully test if the process has read/write access to the file.
 
 ### EXAMPLES
 
@@ -6574,7 +6575,7 @@ Test if a file is in use by another process. It can only successfully test if th
 Test-NXTFileInUse -Path 'C:\Temp\file.txt'
 ```
 
-Check if the file 'C:\Temp\file.txt' is in use by another process.
+Check if the file 'C:\Temp\file.txt' is locked another process.
 
 ### INPUTS
 
@@ -6582,7 +6583,7 @@ System.IO.FileInfo - The file to test.
 
 ### OUTPUTS
 
-System.Boolean - Returns true if the file is in use by another process, otherwise false.
+System.Boolean - Returns true if the file is locked, otherwise false.
 
 ### PARAMETERS
 
@@ -6976,7 +6977,7 @@ The type of pattern to use for the search.
 |Type:|StringCompareOperator|
 |Enum values:|Equals, Contains, StartsWith, EndsWith, Wildcard, Regex|
 |Position:|Named|
-|Default value:|Wildcard|
+|Default value:|Contains|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -7298,18 +7299,26 @@ Uninstalls the application using the MSI method with the specified arguments.
 #### Example 2
 
 ```PowerShell
+Get-NXTApplication -Identifier '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
+```
+
+Uninstalls the application using a application object obtained from the NXT function.
+
+#### Example 3
+
+```PowerShell
 Get-ADTApplication -Name 'Test' | Uninstall-NXTApplication
 ```
 
-Uninstalls the application using a application object.
+Uninstalls the application using a application object obtained from the ADT function.
 
-#### Example 3
+#### Example 4
 
 ```PowerShell
 Get-NXTRegisteredPackage -PackageId '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
 ```
 
-Uninstalls the application using a registered package object.
+Uninstalls the application referenced by a registered package object.
 
 ### INPUTS
 
