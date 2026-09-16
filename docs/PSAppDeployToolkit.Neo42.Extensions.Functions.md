@@ -2896,10 +2896,26 @@ Retrieves nodes from an existing XML document. The nodes are retrieved at the sp
 #### Example 1
 
 ```PowerShell
-Remove-NXTXmlNode -Path 'C:\Temp\test.xml' -XPath '/root/parent/child'
+Get-NXTXmlNode -Path 'C:\Temp\test.xml' -XPath '/root/parent/child'
 ```
 
-Removes the node 'child' from the XML document 'C:\Temp\test.xml' at the XPath location '/root/parent/child'.
+Retrieves the node 'child' from the XML document 'C:\Temp\test.xml' at the XPath location '/root/parent/child'.
+
+#### Example 2
+
+```PowerShell
+Get-NXTXmlNode -Path 'C:\Temp\test.xml' -XPath '/root/parent/child' -Attribute 'InnerText' -Single
+```
+
+Retrieves the first child node's inner text from the 'C:\Temp\test.xml' document.
+
+#### Example 3
+
+```PowerShell
+[xml]'<root><child id="1"/></root>' | Get-NXTXmlNode -XPath '/root/child' -Attribute 'id'
+```
+
+Retrieves the 'id' attribute from the child node of an existing xml object.
 
 ### INPUTS
 
@@ -2910,6 +2926,7 @@ System.IO.FileInfo[] - The XML file(s) to add the new node to.
 ### OUTPUTS
 
 System.Xml.XmlDocument[] - The XML document(s) that were modified if the `-PassThru` parameter is specified.
+
 System.String[] - The attribute value(s) of the node(s) that were retrieved.
 
 ### PARAMETERS
