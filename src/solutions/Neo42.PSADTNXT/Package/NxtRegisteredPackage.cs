@@ -6,6 +6,7 @@ using PSADTNXT.Shell;
 using PSADTNXT.Extensions;
 using System.Collections.Generic;
 using PSADT.Types;
+using PSADT.ProcessManagement;
 
 namespace PSADTNXT.Package
 {
@@ -56,6 +57,16 @@ namespace PSADTNXT.Package
 		/// The uninstall string of the registered application.
 		/// </summary>
 		public string? UninstallString { get; }
+
+		/// <summary>
+		/// The full path to the binary extracted from the uninstall string.
+		/// </summary>
+		public string? UninstallStringFilePath { get; }
+
+		/// <summary>
+		/// The arguments excluding the binary.
+		/// </summary>
+		public IReadOnlyList<string>? UninstallStringArgumentList { get; } = [];
 
 		/// <summary>
 		/// A boolean value indicating whether the associated application is installed.
@@ -112,6 +123,13 @@ namespace PSADTNXT.Package
 			Revision = uint.TryParse(packageKey.GetValue("Revision")?.ToString(), out var rev) ? rev : null;
 			UninstallString = packageKey.GetValue("UninstallString")?.ToString();
 
+			if (!string.IsNullOrWhiteSpace(UninstallString))
+			{
+				var commandLine = CommandLineUtilities.CommandLineToArgumentList(UninstallString!);
+				UninstallStringFilePath = commandLine[0];
+				UninstallStringArgumentList = [.. commandLine.Skip(1)];
+			}
+
 			using var baseKey = packageKey.GetBaseKey();
 			using var installedKey = baseKey.OpenSubKey($"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{PSChildName}");
 			IsInstalled = installedKey != null;
@@ -144,8 +162,7 @@ namespace PSADTNXT.Package
 					{
 						using var applicationKey = uninstallKey.OpenSubKey(productCode);
 						if (applicationKey?.GetValue("neoRegPackagesKeyRef") is string packageReference
-							&& TryGetPackage($"SOFTWARE\\{packageReference}", out var package)
-							)
+							&& TryGetPackage(packageReference, out var package))
 						{
 							yield return package!;
 						}

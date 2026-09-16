@@ -181,13 +181,13 @@
 			# Parse the different parameter sets into the 'Manual' set
 			switch ($PSCmdlet.ParameterSetName) {
 				{ $_ -like 'Package*' } {
-					$Target = $Package.UninstallTarget
-					$UninstallKey = $Package.PSPath
-					$Method = $Package.UninstallMethod
+					$Target = $Package.UninstallStringFilePath
+					$Method = [PSADTNXT.Deployment.DeploymentMethod]::Setup
 					$CacheDirectory = $Package.PackageDirectory
+					if ($Package.Application) { $UninstallKey = $Package.Application.PSPath }
 					if (-not $PSBoundParameters.ContainsKey('LogFileName')) { $LogFileName = "$($Package.Name).$($adtEnvironment.DeploymentTimestamp)_Uninstall.log" }
 
-					$null = $finalArguments.Insert(0, $Package.UninstallArguments + ' ')
+					$null = $finalArguments.Insert(0, [PSADT.ProcessManagement.CommandLineUtilities]::ArgumentListToCommandLine($Package.UninstallStringArgumentList) + ' ')
 					break
 				}
 				{ $_ -like 'Application*' } {
