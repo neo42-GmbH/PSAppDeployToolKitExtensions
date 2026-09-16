@@ -12,24 +12,17 @@ namespace PSADTNXT.Attributes
 	{
 		public override object Transform(EngineIntrinsics engineIntrinsics, object inputData)
 		{
-			if (inputData is PSObject psObject)
-			{
-				inputData = psObject.BaseObject;
-			}
-			if (inputData is null)
-			{
-				throw new ArgumentNullException(nameof(inputData), "Cannot transform null into an Encoding");
-			}
+			var baseObj = (inputData is PSObject psObj ? psObj.BaseObject : inputData) ?? throw new ArgumentNullException(paramName: nameof(inputData), "Cannot transform null to IdentityReference.");
 
-			if (inputData is Encoding enc)
+			if (baseObj is Encoding enc)
 			{
 				return enc;
 			}
-			else if (inputData is FileEncoding encoding)
+			if (baseObj is FileEncoding encoding)
 			{
 				return NxtEncoding.GetEncoding(encoding);
 			}
-			else if (inputData is string strEncoding)
+			if (baseObj is string strEncoding)
 			{
 				if (Enum.TryParse<FileEncoding>(strEncoding, true, out var parsedNxtEncoding))
 				{
@@ -44,10 +37,8 @@ namespace PSADTNXT.Attributes
 					throw new ArgumentException("The input string cannot be parsed as an Encoding.", nameof(inputData));
 				}
 			}
-			else
-			{
-				throw new ArgumentException("Input data must be of type FileEncoding or Encoding.", nameof(inputData));
-			}
+
+			throw new ArgumentException("Input data must be of type FileEncoding or Encoding.", nameof(inputData));
 		}
 
 		private static bool TryParseEncoding(string encodingName, out Encoding? encoding)

@@ -336,7 +336,7 @@ It is capable of applying these settings to both the target folder and its sub-f
 #### Example 1
 
 ```PowerShell
-Add-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
+Add-NXTFolderPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
 ```
 
 Add permissions to folder 'C:\Temp\MyFolder' granting full control permissions for 'DOMAIN\User1' and 'Administrators', write permissions for 'Everyone'.
@@ -971,7 +971,7 @@ Interprets the input string as a command line, and returns an array of strings t
 #### Example 1
 
 ```PowerShell
-ConvertFrom-NXTEscapedString -InputObject '"C:\my program.exe" -Argument1 "Value 1" -Argument2 '''Value 2''''
+ConvertFrom-NXTCommandLine -InputObject '"C:\my program.exe" -Argument1 "Value 1" -Argument2 '''Value 2''''
 ```
 
 This will return an array of strings: 'C:\my program.exe', '-Argument1', 'Value 1', '-Argument2', 'Value 2'.
