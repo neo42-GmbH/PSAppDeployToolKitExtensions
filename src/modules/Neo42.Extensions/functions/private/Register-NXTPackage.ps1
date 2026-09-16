@@ -72,8 +72,9 @@
 				@{ Name = 'AppPath'; Value = $ADTSession.NXT.Package.Directory.FullName },
 				@{ Name = 'UninstallOld'; Value = $ADTSession.NXT.Package.UninstallOld; Type = [Microsoft.Win32.RegistryValueKind]::DWord },
 				@{ Name = 'UserPartOnInstallation'; Value = $ADTSession.NXT.Install.UserPart; Type = [Microsoft.Win32.RegistryValueKind]::DWord },
-				@{ Name = 'UserPartOnUninstallation'; Value = $ADTSession.NXT.Uninstall.UserPart; Type = [Microsoft.Win32.RegistryValueKind]::DWord }
-				@{ Name = 'SoftMigrationOccurred'; Value = [System.Boolean]$ADTSession.NXT.SoftMigration.Result; Type = [Microsoft.Win32.RegistryValueKind]::String }
+				@{ Name = 'UserPartOnUninstallation'; Value = $ADTSession.NXT.Uninstall.UserPart; Type = [Microsoft.Win32.RegistryValueKind]::DWord },
+				@{ Name = 'UserPartRevision'; Value = $ADTSession.NXT.UserPartRevision }
+				@{ Name = 'SoftMigrationOccurred'; Value = ([System.Boolean]$ADTSession.NXT.SoftMigration.Result).ToString().ToLower(); Type = [Microsoft.Win32.RegistryValueKind]::String }
 
 				if ($AsError) {
 					@{ Name = 'ErrorTimeStamp'; Value = [System.DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::InvariantInfo.UniversalSortableDateTimePattern) },
@@ -126,7 +127,7 @@
 				@{ Name = 'PackageVersion'; Value = $ADTSession.AppVersion }
 				@{ Name = 'DisplayIcon'; Value = [System.IO.Path]::Combine($ADTSession.NXT.Package.Directory.FullName, 'neo42-install', 'Setup.ico') }
 				@{ Name = 'UninstallString'; Value = $uninstallString }
-				@{ Name = 'SoftMigrationOccurred'; Value = [System.Boolean]$ADTSession.NXT.SoftMigration.Result; Type = [Microsoft.Win32.RegistryValueKind]::String }
+				@{ Name = 'SoftMigrationOccurred'; Value = ([System.Boolean]$ADTSession.NXT.SoftMigration.Result).ToString().ToLower(); Type = [Microsoft.Win32.RegistryValueKind]::String }
 				@{ Name = 'EstimatedSize'; Value = $size; Type = [Microsoft.Win32.RegistryValueKind]::DWord }
 				@{ Name = 'InstallSource'; Value = $ADTSession.NXT.DeployAppScript.Directory.FullName }
 				@{ Name = 'VersionMajor'; Value = $ADTSession.AppVersion.Split('.')[0]; Type = [Microsoft.Win32.RegistryValueKind]::DWord }
