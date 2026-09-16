@@ -101,7 +101,19 @@
 				Write-ADTLogEntry -Message "Creating folder [$directory] with defined permissions."
 				[System.IO.DirectoryInfo]$directory = [System.IO.DirectoryInfo]::new($directory)
 				if ($PSCmdlet.ShouldProcess($directory, 'Create folder with permissions')) {
-					if ($directory.Exists -and $Force) { $directory.Delete($true) }
+					if ($directory.Exists) {
+						if (-not $Force) {
+							[System.Collections.Hashtable]$errorParams = @{
+								Exception         = [System.InvalidOperationException]::new("The directory [$directory] already exists. Cannot create folder with correct permission.")
+								Category          = [System.Management.Automation.ErrorCategory]::NotImplemented
+								ErrorId           = 'DirectoryExist'
+								RecommendedAction = 'Remove the folder first or use the -Force parameter to ignore this issue.'
+								TargetObject      = $directory
+							}
+							throw (New-ADTErrorRecord @errorParams)
+						}
+						Write-ADTLogEntry -Severity Warning -Message "The directory [$directory] was supposed to be created, but already existed. The [-Force] parameter was specified so the error will be ignored."
+					}
 					[PSADTNXT.IO.NxtPath]::CreateDirectory($directory.FullName, $security)
 					if ($Hide) { $directory.Attributes = $directory.Attributes -band [System.IO.FileAttributes]::Hidden }
 					if ($PassThru) { $directory }

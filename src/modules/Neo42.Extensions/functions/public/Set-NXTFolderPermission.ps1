@@ -38,7 +38,7 @@
 	.PARAMETER Recurse
 	Specifies that the permissions should be applied to all sub-folders of the specified folder.
 	.EXAMPLE
-	New-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
+	Set-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
 
 	Sets permissions for folder 'C:\Temp\MyFolder' to full control permissions for 'DOMAIN\User1' and 'Administrators', write permissions for 'Everyone' and sets 'DOMAIN\User1' as the owner.
 	#>

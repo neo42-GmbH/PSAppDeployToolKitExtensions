@@ -5645,7 +5645,7 @@ It is capable of applying these settings to both the target folder and its sub-f
 #### Example 1
 
 ```PowerShell
-New-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
+Set-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
 ```
 
 Sets permissions for folder 'C:\Temp\MyFolder' to full control permissions for 'DOMAIN\User1' and 'Administrators', write permissions for 'Everyone' and sets 'DOMAIN\User1' as the owner.
