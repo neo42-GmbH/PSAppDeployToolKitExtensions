@@ -293,6 +293,12 @@ try {
 		if (-not $legacyConfig.AppendUninstParaToDefaultParameters -and [System.String]::IsNullOrWhiteSpace($legacyConfig.UninstPara)) {
 			Write-Host -ForegroundColor Yellow '[AppendUninstParaToDefaultParameters] is false and no uninstall parameters are specified. Appending default parameters anyway was removed. Set [AppendUninstParaToDefaultParameters] to true to retain the old behavior.'
 		}
+		foreach ($akp in $legacyConfig.AppKillProcesses) {
+			if ($akp.IsWQL) {
+				Write-Host -ForegroundColor Red "[IsWQL] is set to true on [$($akp.Name)]. Switch to false in Order for migration to proceed. Please update afterwards!"
+				$akp.IsWQL = $false
+			}
+		}
 
 		[PSADTNXT.Deployment.Configuration.NxtPackageConfigurationModel]$script:packageConfig = [PSADTNXT.Deployment.Configuration.NxtPackageConfigurationFactory]::Translate($legacyConfig)
 	}
