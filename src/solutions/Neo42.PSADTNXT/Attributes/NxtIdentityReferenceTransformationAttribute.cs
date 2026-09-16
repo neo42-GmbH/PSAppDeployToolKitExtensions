@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Management.Automation;
 using System.Reflection;
 using System.Security.Principal;
@@ -29,6 +31,20 @@ namespace PSADTNXT.Attributes
 		public override object Transform(EngineIntrinsics engineIntrinsics, object? inputData)
 		{
 			var baseObj = (inputData is PSObject psObj ? psObj.BaseObject : inputData) ?? throw new ArgumentNullException(paramName: nameof(inputData), "Cannot transform null to IdentityReference.");
+
+			if (baseObj is not string and IEnumerable enumerable)
+			{
+				var objects = new List<IdentityReference>();
+				foreach (var item in enumerable)
+				{
+					if (Transform(engineIntrinsics, item) is not IdentityReference collectionReferenceItem)
+					{
+						throw new InvalidOperationException("Cannot convert multilevel object collections");
+					}
+					objects.Add(collectionReferenceItem);
+				}
+				return objects;
+			}
 			if (baseObj is IdentityReference identity)
 			{
 				return identity;
