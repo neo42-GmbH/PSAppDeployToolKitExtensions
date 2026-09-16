@@ -19,14 +19,15 @@ function Wait-NXTRegistryKey {
 	.PARAMETER Timeout
 	The maximum time to wait for the registry key to be created.
 	.PARAMETER PassThru
-	Instead of returning a boolean, return the object.
+	Instead of returning a boolean, return the object containing the properties.
+	If no properties exist, the key itself is returned.
 	.EXAMPLE
 	Wait-NXTRegistryKey -Key "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
 
 	This example monitors the specified registry key and waits up to 60 seconds to check its existence.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'The parameter is used in the function body.')]
-	[OutputType([System.Boolean], [PSCustomObject])]
+	[OutputType([System.Boolean], [PSCustomObject], [Microsoft.Win32.RegistryKey])]
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipelineByPropertyName)]
@@ -49,7 +50,7 @@ function Wait-NXTRegistryKey {
 		try {
 			[System.String]$convertedKey = Convert-ADTRegistryPath -Key $Key -Wow6432Node:$Wow6432Node
 			[System.DateTime]$endTime = [System.DateTime]::Now.Add($Timeout)
-			while ($null -eq ([PSCustomObject]$keyObj = Get-ADTRegistryKey -Key $convertedKey -WarningAction SilentlyContinue -InformationAction SilentlyContinue)) {
+			while ($null -eq ($keyObj = Get-ADTRegistryKey -Key $convertedKey -ReturnEmptyKeyIfExists -WarningAction SilentlyContinue -InformationAction SilentlyContinue)) {
 				if ([System.DateTime]::Now -ge $endTime) {
 					Write-ADTLogEntry -Severity Warning -Message "Tthe specified registry key is still not created after [$Timeout]." -DebugMessage
 					if ($PassThru) {
