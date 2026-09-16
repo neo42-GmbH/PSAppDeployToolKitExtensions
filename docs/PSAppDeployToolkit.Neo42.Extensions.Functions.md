@@ -8370,7 +8370,8 @@ The maximum time to wait for the registry key to be created.
 
 #### -PassThru
 
-Instead of returning a boolean, return the object.
+Instead of returning a boolean, return the object containing the properties.
+If no properties exist, the key itself is returned.
 
 |Property|Value|
 |:---|:---|

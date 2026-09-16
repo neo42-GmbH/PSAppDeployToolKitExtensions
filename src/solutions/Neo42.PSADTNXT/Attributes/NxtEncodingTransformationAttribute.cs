@@ -25,7 +25,7 @@ namespace PSADTNXT.Attributes
 			{
 				return enc;
 			}
-			if (inputData is FileEncoding encoding)
+			else if (inputData is FileEncoding encoding)
 			{
 				return NxtEncoding.GetEncoding(encoding);
 			}

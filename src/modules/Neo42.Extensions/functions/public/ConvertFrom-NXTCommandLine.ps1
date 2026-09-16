@@ -15,7 +15,7 @@
 	.PARAMETER InputObject
 	The escaped string that you want to convert into a list of components.
 	.EXAMPLE
-	ConvertFrom-NXTEscapedString -InputObject '"C:\my program.exe" -Argument1 "Value 1" -Argument2 '''Value 2''''
+	ConvertFrom-NXTCommandLine -InputObject '"C:\my program.exe" -Argument1 "Value 1" -Argument2 '''Value 2''''
 
 	This will return an array of strings: 'C:\my program.exe', '-Argument1', 'Value 1', '-Argument2', 'Value 2'.
 	#>

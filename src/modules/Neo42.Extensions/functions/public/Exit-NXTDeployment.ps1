@@ -60,7 +60,7 @@
 	# Check if the function is called from within a hook function inside Invoke-NXTDeployment.
 	if ($callStack.FunctionName -notcontains 'Invoke-NXTDeployment<Process>') {
 		[System.Collections.Hashtable]$errorParams = @{
-			Exception         = [System.InvalidOperationException]::new('Invalid invocation context.')
+			Exception         = [System.InvalidOperationException]::new('Invalid invocation context. Exit-NXTDeployment can only be called from within a deployment.')
 			Category          = [System.Management.Automation.ErrorCategory]::InvalidOperation
 			Reason            = 'This function can only be called from within a deployment hook function.'
 			ErrorId           = 'InvalidContext'
