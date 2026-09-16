@@ -105,7 +105,7 @@
 						if (-not $Force) {
 							[System.Collections.Hashtable]$errorParams = @{
 								Exception         = [System.InvalidOperationException]::new("The directory [$directory] already exists. Cannot create folder with correct permission.")
-								Category          = [System.Management.Automation.ErrorCategory]::NotImplemented
+								Category          = [System.Management.Automation.ErrorCategory]::ResourceExists
 								ErrorId           = 'DirectoryExist'
 								RecommendedAction = 'Remove the folder first or use the -Force parameter to ignore this issue.'
 								TargetObject      = $directory
