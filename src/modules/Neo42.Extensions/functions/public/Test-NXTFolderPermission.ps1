@@ -66,8 +66,10 @@
 	}
 	process {
 		try {
-			[System.Collections.Generic.List[System.String]]$accessCompareProperties = if ($PSBoundParameters.ContainsKey('IsInherited')) { @('IsInherited') } else { @() }
+			[System.Collections.Generic.List[System.String]]$accessCompareProperties = [System.Collections.Generic.List[System.String]]::new()
 			[System.Security.AccessControl.DirectorySecurity]$security = if ($null -ne $CustomDirectorySecurity) { $CustomDirectorySecurity } else { [System.Security.AccessControl.DirectorySecurity]::new() }
+
+			if ($PSBoundParameters.ContainsKey('IsInherited')) { $accessCompareProperties.Add('IsInherited') }
 
 			foreach ($permissionLevel in @('FullControl', 'Modify', 'Write', 'ReadAndExecute')) {
 				if (-not $PSBoundParameters.ContainsKey($permissionLevel)) { continue }

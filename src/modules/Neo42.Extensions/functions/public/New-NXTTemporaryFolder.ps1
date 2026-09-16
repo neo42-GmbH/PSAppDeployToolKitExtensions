@@ -34,7 +34,7 @@
 
 			if (-not $pathBase.Exists) {
 				Write-ADTLogEntry -Message "Base path for temporary folder [$($pathBase.FullName)] does not exist. Creating folder with predefined permissions."
-				New-NXTFolderWithPermission @newFolderSplat -Path $pathBase -Force
+				$null = New-NXTFolderWithPermission @newFolderSplat -Path $pathBase -Force
 			}
 
 			[System.UInt32]$folderNumber = $pathBase.EnumerateDirectories() | & {

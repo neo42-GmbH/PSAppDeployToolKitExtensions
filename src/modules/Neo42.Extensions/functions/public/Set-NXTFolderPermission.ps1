@@ -113,11 +113,11 @@
 				}
 			}
 
-			[System.String[]]$directories = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Container | & {
+			[System.String[]]$directories = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Container -AsProviderPath | & {
 				process {
-					$_.FullName
+					$_
 					if ($Recurse) {
-						[System.IO.Directory]::EnumerateDirectories($_.FullName, '*', [System.IO.SearchOption]::AllDirectories)
+						[System.IO.Directory]::EnumerateDirectories($_, '*', [System.IO.SearchOption]::AllDirectories)
 					}
 				}
 			}
