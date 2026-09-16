@@ -64,11 +64,14 @@
 				'Filter' {
 					[System.Collections.Generic.Dictionary[System.String, System.Object]]$params = $PSBoundParameters
 					return [PSADTNXT.Package.NxtRegisteredPackage]::GetPackages() | & {
+						begin {
+							[System.String[]]$excludes = if ($params.ContainsKey('Exclude')) { $Exclude | & { process { $_.ToString('B') } } } else { @() }
+						}
 						process {
 							if ((-not $params.ContainsKey('RegistryKey') -or $_.RegistryName -eq $RegistryKey) -and
 								(-not $params.ContainsKey('PackageId') -or $_.GUID -eq $PackageId.ToString('B')) -and
 								(-not $params.ContainsKey('Installed') -or $_.IsInstalled -eq $Installed) -and
-								(-not $params.ContainsKey('Exclude') -or $_.GUID -notin $Exclude.ToString('B'))
+								(-not $params.ContainsKey('Exclude') -or $_.GUID -notin $excludes)
 							) { return $_ }
 						}
 					}
