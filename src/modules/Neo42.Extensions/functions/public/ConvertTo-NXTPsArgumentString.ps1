@@ -1,4 +1,4 @@
-function ConvertTo-NXTPsArgumentString {
+﻿function ConvertTo-NXTPsArgumentString {
 	<#
 	.SYNOPSIS
 	Converts a dictionary object to an argument list.
@@ -102,7 +102,14 @@ function ConvertTo-NXTPsArgumentString {
 				) + ')'
 			}
 			else {
-				return "${StringDelimiter}$($Value.ToString().Replace($StringDelimiter, $StringDelimiterReplacement))${StringDelimiter}"
+				[System.String]$stringValue = $Value.ToString()
+				if ([PSADTNXT.Shell.NxtPowerShell]::ContainsEscapableCharacters($stringValue)) {
+					return "${StringDelimiter}$($stringValue.Replace($StringDelimiter, $StringDelimiterReplacement))${StringDelimiter}"
+				}
+				else {
+					return $stringValue
+				}
+
 			}
 		}
 	}
