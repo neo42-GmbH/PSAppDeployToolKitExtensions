@@ -780,7 +780,7 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 			'Arguments'            = { "-ArgumentList $_" }
 			'Parameters'           = { "-ArgumentList $_" }
 			'SecureParameters'     = '-SecureArgumentList' # Should inspect switch values here in case of -Switch:$false
-			'IgnoreExitCodes'      = { '-IgnoreExitCodes ' + ($_.Extent.Text -replace '"|''', [System.String]::Empty) }
+			'IgnoreExitCodes'      = { $(if ($_.Extent.Text.Contains('*')) { '-IgnoreExitCodes ' } else { '-SuccessExitCodes 0,' }) + ($_.Extent.Text -replace '"|''', [System.String]::Empty) }
 			'ExitOnProcessFailure' = {
 				$exitOnProcessFailure = if ($null -eq $boundParameters.ExitOnProcessFailure.Value.Extent) { $true } else { $boundParameters.ExitOnProcessFailure.Value.SafeGetValue() }
 				if ($exitOnProcessFailure) { '-ExitOnProcessFailure' }
@@ -802,7 +802,7 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 			'Transform'            = { "-Transforms $(if ($_ -match "^'") { $_ -replace ';', "','" } elseif ($_ -match '^"') { $_ -replace ';', '","' } else { $_ })" }
 			'LogName'              = { "-LogFileName $_" }
 			'private:LogName'      = { "-LogFileName $_" }
-			'IgnoreExitCodes'      = { '-IgnoreExitCodes ' + ($_.Extent.Text -replace '"|''', [System.String]::Empty) }
+			'IgnoreExitCodes'      = { $(if ($_.Extent.Text.Contains('*')) { '-IgnoreExitCodes ' } else { '-SuccessExitCodes 0,' }) + ($_.Extent.Text -replace '"|''', [System.String]::Empty) }
 			'ExitOnProcessFailure' = {
 				$exitOnProcessFailure = if ($null -eq $boundParameters.ExitOnProcessFailure.Value.Extent) { $true } else { $boundParameters.ExitOnProcessFailure.Value.SafeGetValue() }
 				if ($exitOnProcessFailure) { '-ExitOnProcessFailure' }
