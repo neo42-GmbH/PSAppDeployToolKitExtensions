@@ -1,4 +1,4 @@
-function Open-NXTSession {
+﻿function Open-NXTSession {
 	<#
 	.SYNOPSIS
 	This function is called upon every call of the Open-ADTSession function.
@@ -31,10 +31,20 @@ function Open-NXTSession {
 
 	# Validate the package architecture against the operating system architecture
 	if ($adtSession.AppArch -like '*64' -and -not [System.Environment]::Is64BitOperatingSystem) {
-		throw [System.PlatformNotSupportedException]::new('This 64-bit application cannot be deployed on a 32-bit operating system.')
+		[System.Collections.Hashtable]$errorParams = @{
+			Exception = [System.InvalidOperationException]::('A 64-bit application cannot be deployed on a 32-bit operating system.')
+			Category  = [System.Management.Automation.ErrorCategory]::DeviceError
+			ErrorId   = 'IncompatibleHost'
+		}
+		throw (New-ADTErrorRecord @errorParams)
 	}
 	if ($adtSession.AppArch -like 'ARM*' -and $osInfo.Architecture -notin @([System.Runtime.InteropServices.Architecture]::Arm, [System.Runtime.InteropServices.Architecture]::Arm64)) {
-		throw [System.PlatformNotSupportedException]::new('This ARM application cannot be deployed on a non-ARM operating system.')
+		[System.Collections.Hashtable]$errorParams = @{
+			Exception = [System.InvalidOperationException]::('An ARM application cannot be deployed on non ARM operating system.')
+			Category  = [System.Management.Automation.ErrorCategory]::DeviceError
+			ErrorId   = 'IncompatibleHost'
+		}
+		throw (New-ADTErrorRecord @errorParams)
 	}
 
 	# Apply the PowerShell variables to the caller environment
