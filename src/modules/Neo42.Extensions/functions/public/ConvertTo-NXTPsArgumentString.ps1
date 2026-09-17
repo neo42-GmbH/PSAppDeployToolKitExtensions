@@ -55,13 +55,15 @@
 				[Parameter(Mandatory)]
 				[AllowNull()]
 				[System.Object]
-				$Value
+				$Value,
+				[System.Management.Automation.SwitchParameter]
+				$ForceEscapeString
 			)
 			if ($null -eq $Value) {
 				return '$null'
 			}
 			elseif ($Value -is [System.Boolean] -or $Value -is [System.Management.Automation.SwitchParameter]) {
-				return "`$$($Value.ToString().ToLower())"
+				return "`$$Value".ToLower()
 			}
 			elseif ($Value -is [System.DateTime]) {
 				return "${StringDelimiter}$($Value.ToUniversalTime().ToString([System.Globalization.DateTimeFormatInfo]::InvariantInfo.UniversalSortableDateTimePattern))${StringDelimiter}"
@@ -85,10 +87,10 @@
 						$Value.GetEnumerator() | & {
 							process {
 								if ($_.Key.ToString().Contains($StringDelimiter) -or [PSADTNXT.Shell.NxtPowerShell]::ContainsEscapableCharacters($_.Key.ToString())) {
-									"${StringDelimiter}$($_.Key.Replace($StringDelimiter, $StringDelimiterReplacement))${StringDelimiter}=$(& $formatValue -Value $_.Value)"
+									"${StringDelimiter}$($_.Key.Replace($StringDelimiter, $StringDelimiterReplacement))${StringDelimiter}=$(& $formatValue -Value $_.Value -ForceEscapeString)"
 								}
 								else {
-									"$($_.Key)=$(& $formatValue -Value $_.Value)"
+									"$($_.Key)=$(& $formatValue -Value $_.Value -ForceEscapeString)"
 								}
 							}
 						}
@@ -98,18 +100,17 @@
 			elseif ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [System.String]) {
 				return '@(' + [System.String]::Join(
 					',',
-					@($Value | & { process { & $formatValue -Value $_ } })
+					@($Value | & { process { & $formatValue -Value $_ -ForceEscapeString } })
 				) + ')'
 			}
 			else {
 				[System.String]$stringValue = $Value.ToString()
-				if ([PSADTNXT.Shell.NxtPowerShell]::ContainsEscapableCharacters($stringValue)) {
+				if ($ForceEscapeString -or [PSADTNXT.Shell.NxtPowerShell]::ContainsEscapableCharacters($stringValue)) {
 					return "${StringDelimiter}$($stringValue.Replace($StringDelimiter, $StringDelimiterReplacement))${StringDelimiter}"
 				}
 				else {
 					return $stringValue
 				}
-
 			}
 		}
 	}

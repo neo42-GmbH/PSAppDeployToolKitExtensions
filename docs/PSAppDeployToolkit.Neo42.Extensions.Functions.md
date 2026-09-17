@@ -6753,7 +6753,7 @@ A custom DirectorySecurity object to use as a base for the folder permissions. I
 
 #### -IsInherited
 
-Test if permissions are inherited from the parent folder.
+Test if permissions are inherited from the parent folder. Only access rules with a matching inheritance state are taken into account when the requested permissions are verified.
 
 |Property|Value|
 |:---|:---|

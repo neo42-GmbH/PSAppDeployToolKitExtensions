@@ -1,4 +1,4 @@
-BeforeDiscovery { . "$PSScriptRoot\..\Initialize-PesterPsadtEnvironment.ps1" }
+﻿BeforeDiscovery { . "$PSScriptRoot\..\Initialize-PesterPsadtEnvironment.ps1" }
 
 Describe 'ConvertTo-NXTPsArgumentString' {
 	Context 'When converting simple key-value pairs' {
@@ -92,7 +92,7 @@ Describe 'ConvertTo-NXTPsArgumentString' {
 			[System.String]$resultValue = ConvertTo-NXTPsArgumentString -InputObject $inputHashtable -UseEnumValue
 
 			# Assert
-			$resultName | Should -Be '-DayOfWeek:"Monday"'
+			$resultName | Should -Be '-DayOfWeek:Monday'
 			$resultValue | Should -Be '-DayOfWeek:1'
 		}
 
@@ -169,7 +169,7 @@ Describe 'ConvertTo-NXTPsArgumentString' {
 			[System.String]$result = $inputHashtable | ConvertTo-NXTPsArgumentString
 
 			# Assert
-			$result | Should -Be '-PipelineKey:"PipelineValue"'
+			$result | Should -Be '-PipelineKey:PipelineValue'
 		}
 
 		It 'Should handle PSBoundParameters via pipeline' {
@@ -186,7 +186,7 @@ Describe 'ConvertTo-NXTPsArgumentString' {
 			[System.String]$result = Test-PipelineArguments -Param1 'Test' -Param2 42
 
 			# Assert
-			$result | Should -Match '-Param1:"Test"'
+			$result | Should -Match '-Param1:Test'
 			$result | Should -Match '-Param2:42'
 		}
 	}
