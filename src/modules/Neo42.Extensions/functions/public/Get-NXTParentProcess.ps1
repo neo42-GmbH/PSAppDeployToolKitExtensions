@@ -6,7 +6,7 @@
 	Retrieves the parent process(es) of a given process ID in order.
 	It can optionally retrieve the entire parent hierarchy by using the `-Recurse` switch.
 	.INPUTS
-	System.UInt32 - The process ID to check.
+	System.Int32 - The process ID to check.
 
 	System.Diagnostics.Process - The process to check.
 
@@ -31,9 +31,10 @@
 	[OutputType([System.Diagnostics.Process[]])]
 	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, ValueFromPipelineByPropertyName = $true)]
+		[Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName = $true)]
+		[ValidateRange(0, [System.Int32]::MaxValue)]
 		[Alias('Pid', 'ProcessId')]
-		[System.UInt32]
+		[System.Int32]
 		$Id = $PID,
 		[System.Management.Automation.SwitchParameter]
 		$Recurse,

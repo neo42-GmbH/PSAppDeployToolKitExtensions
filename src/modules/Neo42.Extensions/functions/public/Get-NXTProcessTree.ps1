@@ -5,7 +5,7 @@
 	.DESCRIPTION
 	It retrieves the parent process(es) and child process(es) of the specified process ID in order.
 	.INPUTS
-	System.UInt32 - The process ID to check.
+	System.Int32 - The process ID to check.
 
 	System.Diagnostics.Process - The process to check.
 
@@ -33,9 +33,10 @@
 	[OutputType([System.Diagnostics.Process[]])]
 	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, ValueFromPipelineByPropertyName)]
+		[Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+		[ValidateRange(0, [System.Int32]::MaxValue)]
 		[Alias('Pid', 'ProcessId')]
-		[System.UInt32]
+		[System.Int32]
 		$Id = $PID,
 		[System.Management.Automation.SwitchParameter]
 		$NoChildren,

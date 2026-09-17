@@ -2480,7 +2480,7 @@ Retrieves the parent process of a given process ID.
 
 ```PowerShell
 Get-NXTParentProcess
-    [[-Id] <uint32>]
+    [[-Id] <int>]
     [-Recurse]
     [-Depth <uint16>]
     [<CommonParameters>]
@@ -2511,7 +2511,7 @@ Retrieves the parent process hierarchy of the process with ID 1234, up to a dept
 
 ### INPUTS
 
-System.UInt32 - The process ID to check.
+System.Int32 - The process ID to check.
 
 System.Diagnostics.Process - The process to check.
 
@@ -2529,11 +2529,11 @@ The process ID of the child process.
 
 |Property|Value|
 |:---|:---|
-|Type:|UInt32|
+|Type:|Int32|
 |Position:|0|
 |Default value:|$PID|
 |Required:|False|
-|Accept pipeline input:|True (ByPropertyName)|
+|Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
 #### -Recurse
@@ -2570,7 +2570,7 @@ Get the process tree for a given process ID
 
 ```PowerShell
 Get-NXTProcessTree
-    [[-Id] <uint32>]
+    [[-Id] <int>]
     [-NoChildren]
     [-NoParents]
     [-Depth <uint16>]
@@ -2601,7 +2601,7 @@ Retrieves the child processes of the process with ID 1234, without retrieving pa
 
 ### INPUTS
 
-System.UInt32 - The process ID to check.
+System.Int32 - The process ID to check.
 
 System.Diagnostics.Process - The process to check.
 
@@ -2619,11 +2619,11 @@ The process ID of the process to get the tree for.
 
 |Property|Value|
 |:---|:---|
-|Type:|UInt32|
+|Type:|Int32|
 |Position:|0|
 |Default value:|$PID|
 |Required:|False|
-|Accept pipeline input:|True (ByPropertyName)|
+|Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
 #### -NoChildren
@@ -6439,7 +6439,7 @@ Stop-NXTProcess
 ```PowerShell
 # ParameterSet Id
 Stop-NXTProcess
-    -Id <uint32[]>
+    -Id <int[]>
     [-KillProcessTree]
     [-WhatIf]
     [-Confirm]
@@ -6484,7 +6484,7 @@ This example stops all instances of Notepad running on the system.
 
 System.String - The name of the process to stop.
 
-System.UInt32 - The process ID to check.
+System.Int32 - The process ID to check.
 
 System.Diagnostics.Process - The process to check.
 
@@ -6517,15 +6517,15 @@ The name of the process to stop.
 
 #### -Id
 
-The ID of the process to stop.
+The ID of the process to stop. Id 0 is not allowed.
 
 |Property|Value|
 |:---|:---|
-|Type:|UInt32[]|
+|Type:|Int32[]|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
-|Accept pipeline input:|True (ByPropertyName)|
+|Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
 #### -Process
@@ -6772,7 +6772,7 @@ Checks if a process is running as the system account.
 
 ```PowerShell
 Test-NXTIsSystemProcess
-    [[-Id] <uint32>]
+    [[-Id] <int>]
     [<CommonParameters>]
 ```
 
@@ -6792,7 +6792,7 @@ Checks if the process with ID 1234 is running as the system account.
 
 ### INPUTS
 
-System.UInt32 - The process ID to check.
+System.Int32 - The process ID to check.
 
 System.Diagnostics.Process - The process to check.
 
@@ -6810,11 +6810,11 @@ The process ID to check.
 
 |Property|Value|
 |:---|:---|
-|Type:|UInt32|
+|Type:|Int32|
 |Position:|0|
 |Default value:|$PID|
 |Required:|False|
-|Accept pipeline input:|True (ByPropertyName)|
+|Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
 ## Test-NXTProcess
@@ -6833,7 +6833,7 @@ Test-NXTProcess
 ```PowerShell
 # ParameterSet Id
 Test-NXTProcess
-    -Id <uint32>
+    -Id <int>
     [<CommonParameters>]
 ```
 
@@ -6862,7 +6862,7 @@ Tests if any instance of Notepad is running on the system.
 
 System.String - The name of the process to monitor.
 
-System.UInt32 - The process ID to monitor.
+System.Int32 - The process ID to monitor.
 
 System.Diagnostics.Process - The process to monitor.
 
@@ -6893,15 +6893,15 @@ The name(s) of the process to check for. This parameter is mandatory.
 
 #### -Id
 
-The ID(s) of the process to check for. This parameter is optional and can be used instead of the Name parameter.
+The ID(s) of the process to check for.
 
 |Property|Value|
 |:---|:---|
-|Type:|UInt32|
+|Type:|Int32|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
-|Accept pipeline input:|True (ByPropertyName)|
+|Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
 #### -ProcessDefinition
@@ -8051,7 +8051,7 @@ Wait-NXTProcess
 ```PowerShell
 # ParameterSet Id
 Wait-NXTProcess
-    -Id <uint32>
+    -Id <int>
     [-Timeout <timespan>]
     [-PassThru]
     [<CommonParameters>]
@@ -8085,7 +8085,7 @@ Monitors for 'notepad.exe' to start and waits up to 120 seconds for it to appear
 
 System.String - The name of the process to monitor.
 
-System.UInt32 - The process ID to monitor.
+System.Int32 - The process ID to monitor.
 
 System.Diagnostics.Process - The process to monitor.
 
@@ -8122,11 +8122,11 @@ The ID of the process to monitor.
 
 |Property|Value|
 |:---|:---|
-|Type:|UInt32|
+|Type:|Int32|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
-|Accept pipeline input:|True (ByPropertyName)|
+|Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
 #### -ProcessDefinition
@@ -8217,7 +8217,7 @@ This example monitors for 'notepad.exe' and waits up to 120 seconds for it to st
 
 System.String - The name of the process to monitor.
 
-System.UInt32 - The process ID to monitor.
+System.Int32 - The process ID to monitor.
 
 System.Diagnostics.Process - The process to monitor.
 
@@ -8258,7 +8258,7 @@ The process ID to monitor. Can be a single ID or an array of IDs.
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
-|Accept pipeline input:|True (ByPropertyName)|
+|Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
 #### -ProcessDefinition

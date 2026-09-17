@@ -5,7 +5,7 @@
 	.DESCRIPTION
 	Checks if a process is running as the system account.
 	.INPUTS
-	System.UInt32 - The process ID to check.
+	System.Int32 - The process ID to check.
 
 	System.Diagnostics.Process - The process to check.
 
@@ -23,9 +23,10 @@
 	[OutputType([System.Boolean])]
 	[CmdletBinding()]
 	param (
-		[Parameter(Position = 0, ValueFromPipelineByPropertyName)]
+		[Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+		[ValidateRange(0, [System.Int32]::MaxValue)]
 		[Alias('Pid', 'ProcessId')]
-		[System.UInt32]
+		[System.Int32]
 		$Id = $PID
 	)
 	begin {

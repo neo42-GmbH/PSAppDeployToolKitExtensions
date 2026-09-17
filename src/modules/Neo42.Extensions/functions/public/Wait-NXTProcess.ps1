@@ -8,7 +8,7 @@
 	.INPUTS
 	System.String - The name of the process to monitor.
 
-	System.UInt32 - The process ID to monitor.
+	System.Int32 - The process ID to monitor.
 
 	System.Diagnostics.Process - The process to monitor.
 
@@ -43,9 +43,10 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Name,
-		[Parameter(ParameterSetName = 'Id', Mandatory, ValueFromPipelineByPropertyName)]
+		[Parameter(ParameterSetName = 'Id', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+		[ValidateRange(0, [System.Int32]::MaxValue)]
 		[Alias('Pid', 'ProcessId')]
-		[System.UInt32]
+		[System.Int32]
 		$Id,
 		[Parameter(ParameterSetName = 'ProcessDefinition', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
 		[ValidateNotNull()]

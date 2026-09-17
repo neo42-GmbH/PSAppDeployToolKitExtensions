@@ -7,7 +7,7 @@
 	.INPUTS
 	System.String - The name of the process to stop.
 
-	System.UInt32 - The process ID to check.
+	System.Int32 - The process ID to check.
 
 	System.Diagnostics.Process - The process to check.
 
@@ -21,7 +21,7 @@
 	.PARAMETER Name
 	The name of the process to stop.
 	.PARAMETER Id
-	The ID of the process to stop.
+	The ID of the process to stop. Id 0 is not allowed.
 	.PARAMETER Process
 	The process object to stop.
 	.PARAMETER ProcessDefinition
@@ -40,9 +40,10 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Name,
-		[Parameter(ParameterSetName = 'Id', Mandatory, ValueFromPipelineByPropertyName)]
+		[Parameter(ParameterSetName = 'Id', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
 		[Alias('Pid', 'ProcessId')]
-		[System.UInt32[]]
+		[ValidateRange(1, [System.Int32]::MaxValue)]
+		[System.Int32[]]
 		$Id,
 		[Parameter(ParameterSetName = 'Process', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
 		[System.Diagnostics.Process[]]

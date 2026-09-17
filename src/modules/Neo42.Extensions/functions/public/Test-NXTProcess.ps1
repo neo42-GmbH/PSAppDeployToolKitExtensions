@@ -7,7 +7,7 @@
 	.INPUTS
 	System.String - The name of the process to monitor.
 
-	System.UInt32 - The process ID to monitor.
+	System.Int32 - The process ID to monitor.
 
 	System.Diagnostics.Process - The process to monitor.
 
@@ -21,7 +21,7 @@
 	.PARAMETER Name
 	The name(s) of the process to check for. This parameter is mandatory.
 	.PARAMETER Id
-	The ID(s) of the process to check for. This parameter is optional and can be used instead of the Name parameter.
+	The ID(s) of the process to check for.
 	.PARAMETER ProcessDefinition
 	The process definition to check for.
 	.EXAMPLE
@@ -36,9 +36,10 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Name,
-		[Parameter(ParameterSetName = 'Id', Mandatory, ValueFromPipelineByPropertyName)]
+		[Parameter(ParameterSetName = 'Id', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+		[ValidateRange(0, [System.Int32]::MaxValue)]
 		[Alias('Pid', 'ProcessId')]
-		[System.UInt32]
+		[System.Int32]
 		$Id,
 		[Parameter(ParameterSetName = 'ProcessDefinition', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
 		[ValidateNotNull()]
