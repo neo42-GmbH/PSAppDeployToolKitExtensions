@@ -450,7 +450,12 @@ namespace PSADTNXT.Application
 
 			if (IsPreRelease && other.IsPreRelease)
 			{
-				return PreRelease.CompareTo(other.IsPreRelease);
+				// Allow fallback to build if prerelease is equal
+				var releaseResult = PreRelease.CompareTo(other.PreRelease);
+				if (releaseResult != 0 || (Build is null && other.Build is null))
+				{
+					return releaseResult;
+				}
 			}
 
 			if (Build is null && other.Build is not null)

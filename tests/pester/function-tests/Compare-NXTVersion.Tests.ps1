@@ -29,11 +29,17 @@ Describe 'Compare-NXTVersion' {
 	}
 
 	Context 'When comparing complex versions' {
-		It 'it should handle all versions correctly' {
+		It 'Should handle all versions correctly' {
 			Compare-NXTVersion -Version '1.2.3.A' -Target '1.2.3.A' | Should -Be ([PSADTNXT.Application.VersionCompareResult]::Equal)
 			Compare-NXTVersion -Version 'v1' -Target 'v1' | Should -Be ([PSADTNXT.Application.VersionCompareResult]::Equal)
 			Compare-NXTVersion -Version '1.2-pre+build' -Target '1.2-pre+build' | Should -Be ([PSADTNXT.Application.VersionCompareResult]::Equal)
 			Compare-NXTVersion -Version 'beta64' -Target 'beta64' | Should -Be ([PSADTNXT.Application.VersionCompareResult]::Equal)
+		}
+
+		It 'Should get the correct result' {
+			Compare-NXTVersion -Version '1.0a' -Target '1.0b' | Should -Be ([PSADTNXT.Application.VersionCompareResult]::Update)
+			Compare-NXTVersion -Version '1.0-pre-1' -Target '1.0-pre-2' | Should -Be ([PSADTNXT.Application.VersionCompareResult]::Update)
+			Compare-NXTVersion -Version '1.0-pre0-1' -Target '1.0-pre1-0' | Should -Be ([PSADTNXT.Application.VersionCompareResult]::Update)
 		}
 	}
 
