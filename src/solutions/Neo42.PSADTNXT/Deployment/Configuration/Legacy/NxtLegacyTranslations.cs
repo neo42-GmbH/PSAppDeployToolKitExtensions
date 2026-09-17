@@ -73,6 +73,8 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					hideKey.KeyNameContainsWildCards = ps.ExpandString(hideKey.KeyNameContainsWildCards);
 					hideKey.DisplayNamesToExcludeFromHiding = hideKey.DisplayNamesToExcludeFromHiding?.Select(ps.ExpandString).ToList();
 				}
+				// Default reference to UninstallKey may result in empty, which will not pass validation. Remove it as it serves no purpose
+				hideKeys.RemoveAll(k => string.IsNullOrWhiteSpace(k.KeyName));
 			}
 
 			legacyModel.CommonDesktopShortcutsToDelete = legacyModel.CommonDesktopShortcutsToDelete?.Select(ps.ExpandString).ToList();
@@ -288,7 +290,6 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		internal static List<NxtApplicationCriteriaModel> TranslateManagedApplicationModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-
 			var managedApplications = new List<NxtApplicationCriteriaModel>();
 			if (legacyModel.UninstallKeysToHide is List<NxtLegacyKeyHideModel> uninstallKeysToHide)
 			{
