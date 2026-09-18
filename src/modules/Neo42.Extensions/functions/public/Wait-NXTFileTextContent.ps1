@@ -1,34 +1,35 @@
-﻿function Wait-NXTFileSystem {
+﻿function Wait-NXTFileTextContent {
 	<#
 	.SYNOPSIS
-	Monitors the presence or removal of a specified path within a set timeout period.
+	Monitors the content of a specified file for the presence of a string within a set timeout period.
 	.DESCRIPTION
-	This function checks for the existence or disappearance of a specified file or folder within a given time frame.
-	The function also supports the resolution of CMD environment variables in the filesystem path.
+	This function checks for the presence of a string within the content of a specified file within a given time frame.
 	.INPUTS
-	System.IO.FileSystemInfo - The filesystem object to monitor.
+	System.String - The string to search for within the file.
 	.OUTPUTS
-	System.Boolean - Returns true if the path appears within the timeout period, otherwise false.
-	System.IO.FileSystemInfo - Returns the filesystem object if PassThru is specified.
-	With the -IsRemoved switch, the test will be inverted.
+	System.Boolean - Returns true if the string is found within the timeout period, otherwise false.
+	.OUTPUTS
+	System.Boolean - Returns true if the string is found within the timeout period, otherwise false.
 	.PARAMETER Path
-	The path to the file or directory to monitor.
+	The path to the file to monitor.
+	.PARAMETER SearchString
+	The string to search for within the file.
 	.PARAMETER Timeout
-	The maximum time to wait for the path to appear or disappear.
+	The maximum time to wait for the string to be found.
 	.PARAMETER TestInterval
-	The interval at which to check for the path's presence or removal.
+	The interval at which to check for the string's presence.
 	.PARAMETER PassThru
 	Instead of returning a boolean, return the object.
 	.PARAMETER IsRemoved
-	Instead of checking for the presence of the path, check for its removal.
+	Instead of checking for the presence of the string, check for its removal.
 	.EXAMPLE
-	Wait-NXTFileSystem -Path "C:\Temp\Sources\Installer.exe" -Timeout '00:02:00'
+	Wait-NXTFileTextContent -Path "C:\Temp\Sources\Installer.exe" -SearchString "Installation" -Timeout '00:02:00'
 
-	Monitors for 'Installer.exe' in the specified directory and waits up to 120 seconds for it to appear.
+	Monitors for the string "Installation" in the specified file and waits up to 120 seconds for it to be found.
 	.EXAMPLE
-	Wait-NXTFileSystem -Path "C:\Temp\Sources\Installer.exe" -Timeout '00:02:00' -IsRemoved
+	Wait-NXTFileTextContent -Path "C:\Temp\Sources\Installer.exe" -SearchString "Installation" -Timeout '00:02:00' -IsRemoved
 
-	Monitors for 'Installer.exe' in the specified directory and waits up to 120 seconds for it to disappear.
+	Monitors for the string "Installation" in the specified file and waits up to 120 seconds for it to be removed.
 	#>
 	[OutputType([System.Boolean], [System.IO.FileSystemInfo])]
 	param (
@@ -37,6 +38,11 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Path,
+		[Parameter(Position = 1, Mandatory)]
+		[Alias('String', 'Text')]
+		[ValidateNotNullOrEmpty()]
+		[System.String]
+		$SearchString,
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
 		$Timeout = '00:01:00',
