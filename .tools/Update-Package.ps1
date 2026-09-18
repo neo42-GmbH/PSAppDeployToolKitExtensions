@@ -59,7 +59,7 @@ Set-StrictMode -Version '3.0'
 			[System.String]
 			$Content
 		)
-		if ($sourceGenerationVersion -ge 4) { return }
+		if ($sourceGenerationVersion -ge 4) { return $Content }
 		if ($script:packageConfig.Package.Architecture -match '^(x86|ARM)$') {
 			return $Content `
 				-replace '\$(global:)?ProgramFilesDir\b', '$envProgramFilesW3264' `
@@ -91,7 +91,7 @@ Set-StrictMode -Version '3.0'
 			[System.String]
 			$Content
 		)
-		if ($sourceGenerationVersion -ge 4) { return }
+		if ($sourceGenerationVersion -ge 4) { return $Content }
 		[System.IO.FileInfo]$deployApplicationFile = New-Item -ItemType File -Path "$([System.IO.Path]::GetTempPath())\$([System.IO.Path]::GetRandomFileName()).ps1"
 		Set-Content -LiteralPath $deployApplicationFile.FullName -Value $Content
 		Invoke-ScriptAnalyzer -Fix -Path $deployApplicationFile.FullName -CustomRulePath "$AnalyzerDirectory\migration\Measure-NXTCompatibility.psm1" -IncludeRule 'Measure-NXTDeprecatedType' | Write-DiagnosticMessage
