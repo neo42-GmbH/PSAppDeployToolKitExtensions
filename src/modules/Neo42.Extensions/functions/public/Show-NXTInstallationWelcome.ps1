@@ -397,7 +397,7 @@
 						Write-ADTLogEntry -Severity Warning -Message 'The installation welcome timed but the user had the option to defer the installation and ContinueType is set to [Abort].'
 						Set-ADTDeferHistory @deferHistorySplat
 						$ADTSession.NXT.ClosedProcesses.AddRange($appsToReopen)
-						Close-ADTSession -ExitCode $adtConfig['UI']['DeferExitCode']
+						Close-ADTSession -ExitCode $adtConfig['UI']['DefaultExitCode']
 					}
 					else {
 						Write-ADTLogEntry -Severity Warning -Message 'The installation welcome timed out and deployment is set to continue or the user had no option to defer the installation.'
