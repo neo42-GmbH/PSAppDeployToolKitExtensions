@@ -69,6 +69,7 @@
 				@{ Name = 'StartupProcessOwner'; Value = "$($adtEnvironment.envUserDomain)\$($adtEnvironment.envUserName)" },
 				@{ Name = 'StartupProcessOwnerSID'; Value = $adtEnvironment.CurrentProcessSID },
 				@{ Name = 'DebugLogFile'; Value = [System.IO.Path]::Combine($ADTSession.LogPath, $ADTSession.LogName) },
+				@{ Name = 'DebugLogPath'; Value = $ADTSession.LogPath },
 				@{ Name = 'AppPath'; Value = $ADTSession.NXT.Package.Directory.FullName },
 				@{ Name = 'UninstallOld'; Value = $ADTSession.NXT.Package.UninstallOld; Type = [Microsoft.Win32.RegistryValueKind]::DWord },
 				@{ Name = 'UserPartOnInstallation'; Value = $ADTSession.NXT.Install.UserPart; Type = [Microsoft.Win32.RegistryValueKind]::DWord },
