@@ -62,25 +62,25 @@
 			if ($null -eq $Value) {
 				return '$null'
 			}
-			elseif ($Value -is [System.Boolean] -or $Value -is [System.Management.Automation.SwitchParameter]) {
+			if ($Value -is [System.Boolean] -or $Value -is [System.Management.Automation.SwitchParameter]) {
 				return "`$$Value".ToLower()
 			}
-			elseif ($Value -is [System.DateTime]) {
+			if ($Value -is [System.DateTime]) {
 				return "${StringDelimiter}$($Value.ToUniversalTime().ToString([System.Globalization.DateTimeFormatInfo]::InvariantInfo.UniversalSortableDateTimePattern))${StringDelimiter}"
 			}
-			elseif ($Value -is [System.Enum] -and $UseEnumValue) {
+			if ($Value -is [System.Enum] -and $UseEnumValue) {
 				return $Value.value__.ToString()
 			}
-			elseif ($Value -is [System.Management.Automation.ScriptBlock]) {
-				return "{$Value}"
+			if ($Value -is [System.Management.Automation.ScriptBlock]) {
+				return $Value.Ast.Extent.Text
 			}
-			elseif ($Value.GetType() -in @([System.Int16], [System.Int32], [System.Int64], [System.UInt16], [System.UInt32], [System.UInt64], [System.Byte], [System.SByte], [System.Decimal], [System.Single], [System.Double])) {
+			if ($Value.GetType() -in @([System.Int16], [System.Int32], [System.Int64], [System.UInt16], [System.UInt32], [System.UInt64], [System.Byte], [System.SByte], [System.Decimal], [System.Single], [System.Double])) {
 				return $Value.ToString()
 			}
-			elseif ($Value -is [System.IO.FileSystemInfo]) {
+			if ($Value -is [System.IO.FileSystemInfo]) {
 				return "${StringDelimiter}$($Value.FullName)${StringDelimiter}"
 			}
-			elseif ($Value -is [System.Collections.IDictionary]) {
+			if ($Value -is [System.Collections.IDictionary]) {
 				return '@{' + [System.String]::Join(
 					';',
 					(
@@ -97,20 +97,20 @@
 					)
 				) + '}'
 			}
-			elseif ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [System.String]) {
+			if ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [System.String]) {
 				return '@(' + [System.String]::Join(
 					',',
 					@($Value | & { process { & $formatValue -Value $_ -ForceEscapeString } })
 				) + ')'
 			}
+
+			# Default behaviour is to output string representation
+			[System.String]$stringValue = $Value.ToString()
+			if ($ForceEscapeString -or [PSADTNXT.Shell.NxtPowerShell]::ContainsEscapableCharacters($stringValue)) {
+				return "${StringDelimiter}$($stringValue.Replace($StringDelimiter, $StringDelimiterReplacement))${StringDelimiter}"
+			}
 			else {
-				[System.String]$stringValue = $Value.ToString()
-				if ($ForceEscapeString -or [PSADTNXT.Shell.NxtPowerShell]::ContainsEscapableCharacters($stringValue)) {
-					return "${StringDelimiter}$($stringValue.Replace($StringDelimiter, $StringDelimiterReplacement))${StringDelimiter}"
-				}
-				else {
-					return $stringValue
-				}
+				return $stringValue
 			}
 		}
 	}

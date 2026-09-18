@@ -40,7 +40,7 @@ namespace PSADTNXT.Shell
 		/// <summary>
 		/// Characters that require escaping in PowerShell inline strings (e.g. when used in a command argument).
 		/// </summary>
-		private static readonly char[] _escapableCharacters = [' ', '\t', '\n', ';', '$', '{', '}', '"', '\''];
+		private static readonly char[] _escapableCharacters = [' ', '\t', '\n', ';', ':', '$', '{', '}', '"', '\''];
 
 		/// <summary>
 		/// Checks if the input string contains any characters that need to be escaped in PowerShell inline strings.
