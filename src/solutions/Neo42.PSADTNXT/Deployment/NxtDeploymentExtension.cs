@@ -96,7 +96,7 @@ namespace PSADTNXT.Deployment
 			var packageConfig = parameters["PackageConfig"] is NxtPackageConfigurationModel config ? config : throw new ArgumentException("PackageConfig parameter is required and must be of type NxtPackageConfigurationModel.");
 			var nxtConfig = ModuleDatabase.GetConfig()["NXT"] as Hashtable;
 			var nxtToolkitConfig = nxtConfig?["Toolkit"] as Hashtable;
-			var packageRootDir = InitializePackageRootDirectory(packageConfig.Package.DirectoryName, packageConfig.Package.KeyName, DeploymentType);
+			var packageRootDir = InitializePackageRootDirectory(packageConfig.Package.DirectoryName, packageConfig.Package.KeyName);
 			var appendVersion = nxtToolkitConfig?["AppendVersionToPackageName"] is bool append && append;
 
 			Package = GetPackageMetadata(packageConfig, packageRootDir, appendVersion);
@@ -334,26 +334,18 @@ namespace PSADTNXT.Deployment
 			return $"Neo42.Extensions for PSAppDeployToolkit v{GetType().Assembly.GetName().Version}";
 		}
 
-		private DirectoryInfo InitializePackageRootDirectory(string folderName, string keyName, NxtDeploymentType deploymentType)
+		private DirectoryInfo InitializePackageRootDirectory(string folderName, string keyName)
 		{
 			using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-			using var packageRootKey = deploymentType.IsMachinePart
-				? baseKey.CreateSubKey($"SOFTWARE\\{keyName}", true)
-				: baseKey.OpenSubKey($"SOFTWARE\\{keyName}")
-				?? throw new InvalidOperationException("Failed to access or create package root registry key. Administrative privileges may be required.");
+			using var packageRootKey = baseKey.OpenSubKey($"SOFTWARE\\{keyName}") ?? baseKey.CreateSubKey($"SOFTWARE\\{keyName}");
 			var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
 			var knownNames = packageRootKey.GetValue("AppRootFolderNames") as string[] ?? [];
-			var validNameRegex = new Regex($"^{Regex.Escape(folderName)}([0-9a-f]{8})?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+			var validNameRegex = new Regex($"^{Regex.Escape(folderName)}([0-9a-f]{{8}})?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 			var existingName = knownNames.FirstOrDefault(n => validNameRegex.IsMatch(n) && Directory.Exists(Path.Combine(programData, n)));
 
 			if (!string.IsNullOrWhiteSpace(existingName))
 			{
 				return new DirectoryInfo(Path.Combine(programData, existingName));
-			}
-
-			if (!Process.GetCurrentProcess().IsElevated())
-			{
-				throw new InvalidOperationException("Package root directory does not exist and cannot be created without administrative privileges.");
 			}
 
 			var fullName = Path.Combine(programData, folderName);
@@ -390,7 +382,8 @@ namespace PSADTNXT.Deployment
 			var dir = NxtPath.CreateDirectory(fullName, acl);
 
 			// Only register the new directory, when the method did not throw an exception, to avoid registering a directory that does not exist or is not accessible.
-			packageRootKey.SetValue("AppRootFolderNames", knownNames.Concat([folderName]).Distinct().Where(n => Directory.Exists(Path.Combine(programData, n))).ToArray(), RegistryValueKind.MultiString);
+			using var packageRootKeyWriteable = baseKey.OpenSubKey($"SOFTWARE\\{keyName}", true)!;
+			packageRootKeyWriteable.SetValue("AppRootFolderNames", knownNames.Concat([folderName]).Distinct().Where(n => Directory.Exists(Path.Combine(programData, n))).ToArray(), RegistryValueKind.MultiString);
 
 			return dir;
 		}
