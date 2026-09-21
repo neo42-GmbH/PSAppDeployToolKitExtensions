@@ -54,12 +54,12 @@
 	process {
 		try {
 			if ($IsRemoved) {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Test-NXTFileInUse -Path $Path) }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { Get-Item -LiteralPath $Path -Force -ErrorAction Ignore }
 				[System.String]$successMessage = "Path [$Path] disappeared within the specified timeout period of [$Timeout]."
 				[System.String]$failureMessage = "Path [$Path] did not disappear within the specified timeout period of [$Timeout]."
 			}
 			else {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Get-Item -LiteralPath $Path -ErrorAction Ignore) }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Get-Item -LiteralPath $Path -Force -ErrorAction Ignore) }
 				[System.String]$successMessage = "Path [$Path] appeared within the specified timeout period of [$Timeout]."
 				[System.String]$failureMessage = "Path [$Path] did not appear within the specified timeout period of [$Timeout]."
 			}
