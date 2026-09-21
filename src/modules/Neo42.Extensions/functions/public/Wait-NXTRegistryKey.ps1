@@ -14,6 +14,10 @@ function Wait-NXTRegistryKey {
 	If the -IsRemoved switch is specified, the test will be inverted.
 	.PARAMETER Key
 	The path to the registry key to monitor.
+	.Parameter Name
+	The name of the registry key to monitor.
+	.Parameter Value
+	The value of the registry key to monitor.
 	.PARAMETER Wow6432Node
 	Specifies that the registry key is located in the Wow6432Node.
 	.PARAMETER Timeout
@@ -34,14 +38,19 @@ function Wait-NXTRegistryKey {
 
 	This example monitors the specified registry key and waits up to 60 seconds to check its existence has ended.
 	#>
+	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'The values will be used in scriptblocks.')]
 	[OutputType([System.Boolean], [PSCustomObject], [Microsoft.Win32.RegistryKey])]
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipelineByPropertyName)]
-		[Alias('PSPath', 'Name')]
+		[Alias('PSPath', 'Path')]
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Key,
+		[System.String]
+		$Name,
+		[System.String]
+		$Value,
 		[System.Management.Automation.SwitchParameter]
 		$Wow6432Node,
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
@@ -61,14 +70,33 @@ function Wait-NXTRegistryKey {
 	process {
 		try {
 			[System.String]$convertedKey = Convert-ADTRegistryPath -Key $Key -Wow6432Node:$Wow6432Node
-			[System.Management.Automation.ScriptBlock]$getKey = { Get-ADTRegistryKey -Key $convertedKey -ReturnEmptyKeyIfExists -WarningAction SilentlyContinue -InformationAction SilentlyContinue }
+			[System.Management.Automation.ScriptBlock]$getKey = {
+				[System.Collections.Hashtable]$getKeyParam = @{
+					Path                   = $convertedKey
+					ReturnEmptyKeyIfExists = $true
+					InformationAction      = 'SilentlyContinue'
+					WarningAction          = 'SilentlyContinue'
+					ErrorAction            = 'SilentlyContinue'
+				}
+				if (-not [System.String]::IsNullOrWhiteSpace($Name)) { $getKeyParam.Add('Name', $Name) }
+				$keyObj = Get-ADTRegistryKey @getKeyParam
+				if (-not [System.String]::IsNullOrWhiteSpace($Value)) {
+					if ($keyObj) {
+						return $Value -eq $keyObj
+					}
+					else {
+						return $false
+					}
+				}
+				return $null -ne $keyObj
+			}
 			if ($IsRemoved) {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { $null -ne ($getKey.Invoke()) }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { $getKey.Invoke() }
 				[System.String]$successMessage = "The registry key [$convertedKey] was removed within the specified timeout of  [$Timeout]."
 				[System.String]$failureMessage = "The registry key [$convertedKey] is still present after the specified timeout of [$Timeout]."
 			}
 			else {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { $null -eq ($getKey.Invoke()) }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { -not $getKey.Invoke() }
 				[System.String]$successMessage = "The registry key [$convertedKey] was created within the specified timeout of [$Timeout]."
 				[System.String]$failureMessage = "The registry key [$convertedKey] is still not created after the specified timeout of [$Timeout]."
 			}
