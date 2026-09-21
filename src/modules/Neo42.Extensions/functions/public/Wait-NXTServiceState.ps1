@@ -21,6 +21,8 @@
 	Instead of returning a boolean, return the object.
 	.PARAMETER IsNotRunning
 	Instead of checking for the running status of the service, check for its stopped status.
+	.PARAMETER WaitForService
+	Instead of throwing an error if the service is not found, wait for it to be available and then check its status.
 	.EXAMPLE
 	Wait-NXTServiceState -Name "Spooler" -Timeout '00:02:00'
 
@@ -47,14 +49,15 @@
 		[System.Management.Automation.SwitchParameter]
 		$PassThru,
 		[System.Management.Automation.SwitchParameter]
-		$IsNotRunning
+		$IsNotRunning,
+		[System.Management.Automation.SwitchParameter]
+		$WaitForService
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
 	}
 	process {
 		try {
-			[System.ServiceProcess.ServiceController]$service = Get-Service -Name $Name
 			if ($IsNotRunning) {
 				[System.Management.Automation.ScriptBlock]$waitWhile = { $service.Status -eq 'Running' }
 				[System.String]$successMessage = "The service [$Name] was paused or stopped within the specified timeout of [$Timeout]."
@@ -69,6 +72,21 @@
 			[System.String]$severity = 'Info'
 			[System.String]$message = $successMessage
 			[System.DateTime]$endTime = [System.DateTime]::Now.Add($Timeout)
+			if ($WaitForService) {
+				while (-not $service) {
+					if ([System.DateTime]::Now -ge $endTime) {
+						$result = $false
+						$severity = 'Warning'
+						$message = "The service [$Name] was not found within the specified timeout of [$Timeout]."
+						break
+					}
+					Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+					[System.ServiceProcess.ServiceController]$service = Get-Service -Name $Name -ErrorAction SilentlyContinue
+				}
+			}
+			else {
+				[System.ServiceProcess.ServiceController]$service = Get-Service -Name $Name -ErrorAction Stop
+			}
 			while ($waitWhile.Invoke()) {
 				if ([System.DateTime]::Now -ge $endTime) {
 					$result = $false
