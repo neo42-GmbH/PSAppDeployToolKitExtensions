@@ -36,7 +36,13 @@
 				foreach ($callback in $callbacks) {
 					Write-ADTLogEntry -Message "Invoking callback [$($callback.Name)] for hook point [$HookPoint]."
 					$ADTSession.InstallPhase = $HookPoint
-					$ExecutionContext.InvokeCommand.InvokeScript($ADTSession.NXT.DeployAppScriptSessionState, { & $args[0] }.Ast.GetScriptBlock(), $callBack)
+					try {
+						$ExecutionContext.InvokeCommand.InvokeScript($ADTSession.NXT.DeployAppScriptSessionState, { & $args[0] }.Ast.GetScriptBlock(), $callBack)
+					}
+					catch {
+						# Always announce the exception from the actual script
+						throw $_.Exception.InnerException
+					}
 					$ADTSession.InstallPhase = $currentPhase
 				}
 			}
