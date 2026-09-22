@@ -21,7 +21,6 @@
 		[System.Collections.Hashtable]$invokeUninstallParams = @{
 			Method         = $ADTSession.NXT.Uninstall.Method
 			CacheDirectory = $ADTSession.NXT.Package.Directory
-			UninstallKey   = if ($ADTSession.NXT.Detection.Application) { $ADTSession.NXT.Detection.Application.PSPath } else { $null }
 		}
 
 		if (-not [System.String]::IsNullOrWhiteSpace($ADTSession.NXT.Uninstall.LogName)) {
@@ -56,6 +55,10 @@
 				ErrorId   = 'NoUninstallTarget'
 			}
 			throw (New-ADTErrorRecord @errorParams)
+		}
+
+		if ($ADTSession.NXT.Detection.Application) {
+			$invokeUninstallParams['UninstallKey'] = $ADTSession.NXT.Detection.Application.PSPath
 		}
 
 		if ($ADTSession.NXT.Uninstall.IgnoreExitCodes) {
