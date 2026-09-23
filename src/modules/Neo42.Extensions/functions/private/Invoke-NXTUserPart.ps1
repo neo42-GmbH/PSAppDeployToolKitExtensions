@@ -133,17 +133,14 @@
 				[PSADT.ProcessManagement.ProcessResult]$result = $processHandle.Task.GetAwaiter().GetResult()
 				$ADTSession.NXT.ProcessResults.Add($result)
 
-				[PSADT.Module.DeploymentStatus]$adtSessionStatus = $ADTSession.GetDeploymentStatus()
 				[System.Boolean]$isSuccessCode = $ADTSession.AppSuccessExitCodes.Contains($result.ExitCode)
 				[System.Boolean]$isRestartCode = $ADTSession.AppRebootExitCodes.Contains($result.ExitCode)
 				[System.Boolean]$isFailureCode = -not $isSuccessCode -and -not $isRestartCode
 				if ($isFailureCode) {
 					Write-ADTLogEntry -Severity Error -Message "User part failed for [$userName] with exit code [$($result.ExitCode)]."
-					if ($adtSessionStatus -le [PSADT.Module.DeploymentStatus]::Error) { $ADTSession.SetExitCode($result.ExitCode) }
 				}
 				elseif ($isRestartCode) {
 					Write-ADTLogEntry -Severity Warning -Message "User part requires a reboot for [$userName] with exit code [$($result.ExitCode)]."
-					if ($adtSessionStatus -le [PSADT.Module.DeploymentStatus]::RestartRequired) { $ADTSession.SetExitCode($result.ExitCode) }
 				}
 				else {
 					Write-ADTLogEntry -Severity Success -Message "User part completed successfully for [$userName] with exit code [$($result.ExitCode)]."
@@ -158,9 +155,8 @@
 
 		$localMachineKey.Close()
 		$usersKey.Close()
-		if ($ADTSession.GetDeploymentStatus() -ne [PSADT.Module.DeploymentStatus]::Error) {
-			Write-ADTLogEntry -Severity Success -Message 'User part execution completed.'
-		}
+
+		Write-ADTLogEntry -Message 'User part execution completed.'
 	}
 	catch {
 		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
