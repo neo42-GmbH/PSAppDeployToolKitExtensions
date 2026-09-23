@@ -1,14 +1,14 @@
 ﻿function Wait-NXTFileNotInUse {
 	<#
 	.SYNOPSIS
-	Wait until a file is no longer in use or in use by another process.
+	Wait until a file is no longer in use by another process.
 	.DESCRIPTION
-	Wait until a file is no longer in use or in use by another process.
+	Wait until a file is no longer in use by another process.
 	.INPUTS
 	System.IO.FileInfo - The file to check.
 	.OUTPUTS
-	System.Boolean - Returns true if the file is no longer in use, otherwise false.
-	System.IO.FileSystemInfo - Returns the filesystem object if PassThru is specified.
+	System.Boolean - Returns $true if the file is no longer in use; otherwise, returns $false.
+	System.IO.FileSystemInfo - Returns the file system object when -PassThru is specified.
 	With the -IsInUse switch, the test will be inverted.
 	.PARAMETER Path
 	The path to the file to check.

@@ -1,9 +1,9 @@
 ﻿function Wait-NXTProcess {
 	<#
 	.SYNOPSIS
-	Monitors the startup or stop of a specified process within a set timeout period.
+	Monitors the startup of a specified process within a set timeout period.
 	.DESCRIPTION
-	This function checks for the startup or stop of a process.
+	This function checks for the startup of a process.
 	The function continuously checks for the process's presence until it starts or stops or the timeout is reached.
 	.INPUTS
 	System.String - The name of the process to monitor.
@@ -18,8 +18,8 @@
 
 	PSADTNXT.ProcessManagement.NxtCloseProcess - The process definition to stop.
 	.OUTPUTS
-	System.Boolean - Returns true if the process starts within the timeout period, otherwise false.
-	System.Diagnostics.Process - Returns the process if PassThru is specified
+	System.Boolean - Returns $true if the process starts within the timeout period; otherwise, returns $false.
+	System.Diagnostics.Process - Returns the process when -PassThru is specified.
 	With the -IsStopped switch, the test will be inverted.
 	.PARAMETER Name
 	The name of the process to monitor.

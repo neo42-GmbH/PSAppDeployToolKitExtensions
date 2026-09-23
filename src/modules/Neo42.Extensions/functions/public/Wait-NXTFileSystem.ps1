@@ -1,15 +1,15 @@
 ﻿function Wait-NXTFileSystem {
 	<#
 	.SYNOPSIS
-	Monitors the presence or removal of a specified path within a set timeout period.
+	Monitors the presence of a specified filesystem path within a set timeout period.
 	.DESCRIPTION
-	This function checks for the existence or disappearance of a specified file or folder within a given time frame.
+	This function checks for the existence of a specified file or folder within a given time frame.
 	The function also supports the resolution of CMD environment variables in the filesystem path.
 	.INPUTS
 	System.IO.FileSystemInfo - The filesystem object to monitor.
 	.OUTPUTS
-	System.Boolean - Returns true if the path appears within the timeout period, otherwise false.
-	System.IO.FileSystemInfo - Returns the filesystem object if PassThru is specified.
+	System.Boolean - Returns $true if the path appears within the timeout period; otherwise, returns $false.
+	System.IO.FileSystemInfo - Returns the file system object when -PassThru is specified.
 	With the -IsRemoved switch, the test will be inverted.
 	.PARAMETER Path
 	The path to the file or directory to monitor.

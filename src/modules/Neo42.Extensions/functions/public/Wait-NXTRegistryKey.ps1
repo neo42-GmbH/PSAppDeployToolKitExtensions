@@ -1,16 +1,16 @@
 ﻿function Wait-NXTRegistryKey {
 	<#
 	.SYNOPSIS
-	Watches a specified registry key for its existence or removal for a given duration.
+	Watches a specified registry key for its existence for a given duration.
 	.DESCRIPTION
-	This command monitors a specified registry key and checks for its existence or removal within a defined timeout period.
+	This command monitors a specified registry key and checks for its existence within a defined timeout period.
 	It is useful for scenarios where the presence or absence of a registry key is required for certain processes or checks.
 	.INPUTS
 	Microsoft.Win32.RegistryKey - The registry key to monitor.
 	.OUTPUTS
-	System.Boolean - Returns true if the registry key exist within the timeout period, otherwise false.
-	PSCustomObject - Returns the registry key values as custom object if PassThru was specified
-	If the -IsRemoved switch is specified, the test will be inverted.
+	System.Boolean - Returns $true if the registry key exist within the timeout period; otherwise, returns $false.
+	PSCustomObject - Returns the registry key values as custom object when -PassThru is specified.
+	With the -IsRemoved switch, the test will be inverted.
 	.PARAMETER Key
 	The path to the registry key to monitor.
 	.Parameter Name
