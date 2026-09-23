@@ -18,10 +18,10 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		private static readonly IReadOnlyDictionary<string, string> _runtimeVariableMapping = new Dictionary<string, string>
 		{
-			{ "LogFolder", "%LogFolder%" },
+			{ "AppLogFolder", "%LogFolder%" },
 			{ "DirFiles", "%DirFiles%" },
 			{ "DirSupportFiles", "%DirSupportFiles%" },
-			{ "PackageDirectory", "%PackageDirectory%" },
+			{ "App", "%PackageDirectory%" },
 		};
 
 		internal static void Expand(this NxtLegacyPackageConfigurationModel legacyModel, IDictionary<string, object> adtEnvironment, params SessionStateVariableEntry[] extraVariables)
