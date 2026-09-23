@@ -29,7 +29,7 @@
 	The process definition to monitor.
 	.PARAMETER Timeout
 	The maximum time to wait for the process to start or stop.
-	.PARAMETER TestInterval
+	.PARAMETER Interval
 	The interval at which to check for the process's presence or disappearance.
 	.PARAMETER PassThru
 	Instead of returning a boolean, return the object.
@@ -65,7 +65,7 @@
 		$Timeout = '00:01:00',
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
-		$TestInterval = '00:00:01.000',
+		$Interval = '00:00:01.000',
 		[System.Management.Automation.SwitchParameter]
 		$PassThru,
 		[System.Management.Automation.SwitchParameter]
@@ -74,7 +74,7 @@
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
 		$null = $PSBoundParameters.Remove('Timeout')
-		$null = $PSBoundParameters.Remove('TestInterval')
+		$null = $PSBoundParameters.Remove('Interval')
 		$null = $PSBoundParameters.Remove('PassThru')
 		$null = $PSBoundParameters.Remove('IsStopped')
 	}
@@ -101,7 +101,7 @@
 					$message = $failureMessage
 					break
 				}
-				Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+				Start-Sleep -Milliseconds $Interval.TotalMilliseconds
 			}
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {

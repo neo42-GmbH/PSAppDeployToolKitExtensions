@@ -14,7 +14,7 @@
 	The path to the file to check.
 	.PARAMETER Timeout
 	The maximum time to wait for the file to be released.
-	.PARAMETER TestInterval
+	.PARAMETER Interval
 	The interval at which to check for the file's usage status.
 	.PARAMETER PassThru
 	Instead of returning a boolean, return the object.
@@ -37,7 +37,7 @@
 		$Timeout = '00:01:00',
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
-		$TestInterval = '00:00:01.000',
+		$Interval = '00:00:01.000',
 		[System.Management.Automation.SwitchParameter]
 		$PassThru,
 		[System.Management.Automation.SwitchParameter]
@@ -69,7 +69,7 @@
 					$message = $failureMessage
 					break
 				}
-				Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+				Start-Sleep -Milliseconds $Interval.TotalMilliseconds
 			}
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {

@@ -1,5 +1,4 @@
-﻿
-function Wait-NXTRegistryKey {
+﻿function Wait-NXTRegistryKey {
 	<#
 	.SYNOPSIS
 	Watches a specified registry key for its existence or removal for a given duration.
@@ -22,7 +21,7 @@ function Wait-NXTRegistryKey {
 	Specifies that the registry key is located in the Wow6432Node.
 	.PARAMETER Timeout
 	The maximum time to wait for the registry key to be created or removed.
-	.PARAMETER TestInterval
+	.PARAMETER Interval
 	The interval at which to check for the registry key's presence or removal.
 	.PARAMETER PassThru
 	Instead of returning a boolean, return the object containing the properties.
@@ -58,7 +57,7 @@ function Wait-NXTRegistryKey {
 		$Timeout = '00:01:00',
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
-		$TestInterval = '00:00:01.000',
+		$Interval = '00:00:01.000',
 		[System.Management.Automation.SwitchParameter]
 		$PassThru,
 		[System.Management.Automation.SwitchParameter]
@@ -111,7 +110,7 @@ function Wait-NXTRegistryKey {
 					$message = $failureMessage
 					break
 				}
-				Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+				Start-Sleep -Milliseconds $Interval.TotalMilliseconds
 			}
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {
