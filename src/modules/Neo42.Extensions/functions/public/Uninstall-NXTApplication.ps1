@@ -57,7 +57,7 @@
 
 	Uninstalls the application using a application object obtained from the NXT function.
 	.EXAMPLE
-	Get-ADTApplication -Name 'Test' | Uninstall-NXTApplication
+	Get-ADTApplication -Name 'Test' -NameMatch 'Exact' | Uninstall-NXTApplication
 
 	Uninstalls the application using a application object obtained from the ADT function.
 	.EXAMPLE
