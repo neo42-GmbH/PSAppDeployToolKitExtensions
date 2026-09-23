@@ -69,14 +69,14 @@
 	process {
 		try {
 			[System.String]$convertedKey = Convert-ADTRegistryPath -Key $Key -Wow6432Node:$Wow6432Node
+			[System.Collections.Hashtable]$getKeyParam = @{
+				Path                   = $convertedKey
+				ReturnEmptyKeyIfExists = $true
+				InformationAction      = 'SilentlyContinue'
+				WarningAction          = 'SilentlyContinue'
+				ErrorAction            = 'SilentlyContinue'
+			}
 			[System.Management.Automation.ScriptBlock]$getKey = {
-				[System.Collections.Hashtable]$getKeyParam = @{
-					Path                   = $convertedKey
-					ReturnEmptyKeyIfExists = $true
-					InformationAction      = 'SilentlyContinue'
-					WarningAction          = 'SilentlyContinue'
-					ErrorAction            = 'SilentlyContinue'
-				}
 				if (-not [System.String]::IsNullOrWhiteSpace($Name)) { $getKeyParam.Add('Name', $Name) }
 				$keyObj = Get-ADTRegistryKey @getKeyParam
 				if (-not [System.String]::IsNullOrWhiteSpace($Value)) {
