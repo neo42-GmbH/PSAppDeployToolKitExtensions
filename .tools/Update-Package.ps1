@@ -297,6 +297,16 @@ try {
 				$akp.IsWQL = $false
 			}
 		}
+		[System.String[]]$incompatibleVariables = @('AppLogFolder', 'DirFiles', 'DirSupportFiles', 'App')
+		foreach ($psv in $legacyConfig.PackageSpecificVariablesRaw[0]) {
+			foreach ($incompatibleVariable in $incompatibleVariables) {
+				if (([System.Int32]$varIndex = $psv.Value.IndexOf($incompatibleVariable, [System.StringComparison]::OrdinalIgnoreCase)) -gt 0 -and
+					$psv.Value[$varIndex - 1] -in @(':', '$')
+				) {
+					Write-Host -ForegroundColor Red "Found [$incompatibleVariable] in [PackageSpecificVariablesRaw]. There is no automatic translation. This will not work."
+				}
+			}
+		}
 
 		[PSADTNXT.Deployment.Configuration.NxtPackageConfigurationModel]$script:packageConfig = [PSADTNXT.Deployment.Configuration.NxtPackageConfigurationFactory]::Translate($legacyConfig)
 	}
