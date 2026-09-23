@@ -1,14 +1,14 @@
 ﻿function Wait-NXTSystemLoadIsLow {
 	<#
 	.SYNOPSIS
-	Monitors the system load and waits for it to be low or high within a specified timeout.
+	Monitors the system load and waits for it to be low within a specified timeout.
 	.DESCRIPTION
-	This function checks for a low or high system load condition.
+	This function checks for a low system load condition.
 	The function continuously checks the system load until it meets the criteria or the timeout is reached.
 	.INPUTS
 	None
 	.OUTPUTS
-	System.Boolean - Returns true if the system load condition is met within the timeout period, otherwise false.
+	System.Boolean - Returns $true if the system load condition is met within the timeout period; otherwise, returns $false.
 	With the -IsHigh switch, the test will be inverted.
 	.PARAMETER CpuThreshold
 	The CPU usage threshold to consider the load as high.

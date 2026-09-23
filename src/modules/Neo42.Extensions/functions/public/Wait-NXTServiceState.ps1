@@ -1,15 +1,15 @@
 ﻿function Wait-NXTServiceState {
 	<#
 	.SYNOPSIS
-	Monitors the status of a specified service within a set timeout period.
+	Monitors if a specified service is running within a set timeout period.
 	.DESCRIPTION
-	This function checks for the running or stopped status of a service.
+	This function checks for the running status of a service.
 	The function continuously checks for the service's status until it changes or the timeout is reached.
 	.INPUTS
 	System.String - The name of the service to monitor.
 	.OUTPUTS
-	System.Boolean - Returns true if the service status changes within the timeout period, otherwise false.
-	System.ServiceProcess.ServiceController - Returns the service controller if PassThru is specified
+	System.Boolean - Returns $true if the service status changes within the timeout period; otherwise, returns $false.
+	System.ServiceProcess.ServiceController - Returns the service controller when -PassThru is specified.
 	With the -IsNotRunning switch, the test will be inverted.
 	.PARAMETER Name
 	The name of the service to monitor.

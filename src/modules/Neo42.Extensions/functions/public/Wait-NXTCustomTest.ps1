@@ -8,7 +8,7 @@
 	.INPUTS
 	System.Management.Automation.ScriptBlock - The script block containing the custom test to be executed.
 	.OUTPUTS
-	System.Boolean - Returns true if the custom test passes within the specified timeout, otherwise returns false.
+	System.Boolean - Returns $true if the custom test passes within the specified timeout; otherwise, returns $false.
 	.PARAMETER ScriptBlock
 	A script block that contains the custom test to be executed.
 	.PARAMETER Timeout
