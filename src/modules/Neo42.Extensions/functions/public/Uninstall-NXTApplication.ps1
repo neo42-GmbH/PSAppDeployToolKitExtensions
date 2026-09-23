@@ -393,6 +393,7 @@
 					}
 
 					# Start the uninstallation process
+					$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
 					$result = Start-ADTProcess @startSplat
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {

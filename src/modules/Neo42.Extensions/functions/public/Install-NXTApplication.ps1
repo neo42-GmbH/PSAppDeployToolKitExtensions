@@ -218,6 +218,7 @@
 				}
 				# The default install method for every installer. (Only one that 'Setup' uses)
 				{ $true } {
+					$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
 					$result = Start-ADTProcess @startSplat
 					Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
 
