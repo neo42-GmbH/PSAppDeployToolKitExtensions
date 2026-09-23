@@ -1760,6 +1760,8 @@ Retrieves the application matching the application search criteria.
 Get-NXTApplication
     [-Store <ApplicationStore>]
     [-Identifier <string>]
+    [-Name <string>]
+    [-NamePattern <StringCompareOperator>]
     [-Filter <scriptblock>]
     [<CommonParameters>]
 ```
@@ -1844,6 +1846,33 @@ The identifier to search for in the specified store. This parameter is used when
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+#### -Name
+
+Filter for a specific name of an application based on NamePattern detection.
+
+|Property|Value|
+|:---|:---|
+|Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -NamePattern
+
+The string pattern to use with the name parameter.
+
+|Property|Value|
+|:---|:---|
+|Type:|StringCompareOperator|
+|Enum values:|Equals, Contains, StartsWith, EndsWith, Wildcard, Regex|
+|Position:|Named|
+|Default value:|Equals|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 #### -Filter
 
 An optional script block used to filter the retrieved applications. The script block should return $true for the desired application(s). This parameter is used when the Criteria parameter set is not used.
@@ -1859,7 +1888,7 @@ An optional script block used to filter the retrieved applications. The script b
 
 ## Get-NXTCommandTable
 
-Retrieves the NXT command table of this module.
+Retrieves the complete command table of this module.
 
 ### SYNTAX
 
@@ -7324,7 +7353,7 @@ Uninstalls the application using a application object obtained from the NXT func
 #### Example 3
 
 ```PowerShell
-Get-ADTApplication -Name 'Test' | Uninstall-NXTApplication
+Get-ADTApplication -Name 'Test' -NameMatch 'Exact' | Uninstall-NXTApplication
 ```
 
 Uninstalls the application using a application object obtained from the ADT function.

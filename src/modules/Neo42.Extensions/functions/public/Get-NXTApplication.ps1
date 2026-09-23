@@ -12,6 +12,10 @@
 	The application store to query for applications. This parameter is used when the Criteria parameter set is not used.
 	.PARAMETER Identifier
 	The identifier to search for in the specified store. This parameter is used when the Criteria parameter set is not used.
+	.PARAMETER Name
+	Filter for a specific name of an application based on NamePattern detection.
+	.PARAMETER NamePattern
+	The string pattern to use with the name parameter.
 	.PARAMETER Filter
 	An optional script block used to filter the retrieved applications. The script block should return $true for the desired application(s). This parameter is used when the Criteria parameter set is not used.
 	.EXAMPLE
@@ -37,6 +41,13 @@
 		[System.String]
 		$Identifier,
 		[Parameter(ParameterSetName = 'Manual')]
+		[ValidateNotNullOrEmpty()]
+		[System.String]
+		$Name,
+		[Parameter(ParameterSetName = 'Manual')]
+		[PSADTNXT.Text.StringCompareOperator]
+		$NamePattern = 'Equals',
+		[Parameter(ParameterSetName = 'Manual')]
 		[System.Management.Automation.ScriptBlock]
 		$Filter
 	)
@@ -49,6 +60,16 @@
 				$Store = $Criteria.Store
 				$Identifier = $Criteria.Identifier
 				$Filter = $Criteria.Filter
+			}
+
+			if ($PSBoundParameters.ContainsKey('Name')) {
+				[System.String]$nameFilterText = "[PSADTNXT.Extensions.NxtStringExtensions]::IsMatch(`$_.DisplayName, '$Name', '$NamePattern', `$true)"
+				$Filter = if ($null -ne $Filter) {
+					[System.Management.Automation.ScriptBlock]::Create($nameFilterText + ' -and ' + $Filter.ToString())
+				}
+				else {
+					[System.Management.Automation.ScriptBlock]::Create($nameFilterText)
+				}
 			}
 
 			Get-NXTStoreApplication -Store $Store -Identifier $Identifier | & {
