@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using PSADTNXT.Application;
 using PSADTNXT.Package;
+using PSADTNXT.ProcessManagement;
 using PSADTNXT.Shell;
 
 namespace PSADTNXT.Deployment.Configuration.Legacy
@@ -219,6 +220,25 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				detectionModel.Criteria.Filter = ScriptBlock.Create(detectionScript.ToString());
 			}
 
+			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaStore")) is NxtLegacyVariableModel detectionStoreVar
+				&& !string.IsNullOrWhiteSpace(detectionStoreVar.Value))
+			{
+				detectionModel.Criteria ??= new NxtApplicationCriteriaModel();
+				detectionModel.Criteria.Store = Enum.TryParse<ApplicationStore>(detectionStoreVar.Value, true, out var varStore)
+					? varStore
+					: throw new InvalidDataException($"The value [{detectionStoreVar.Value}] of [{detectionStoreVar.Name}] cannot be parsed into an [ApplicationStore].");
+			}
+
+			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaFilter")) is NxtLegacyVariableModel detectionFilterVar
+				&& !string.IsNullOrWhiteSpace(detectionFilterVar.Value))
+			{
+				detectionModel.Criteria ??= new NxtApplicationCriteriaModel
+				{
+					Store = ApplicationStore.ARP
+				};
+				detectionModel.Criteria.Filter = ScriptBlock.Create(detectionFilterVar.Value);
+			}
+
 			return detectionModel;
 		}
 
@@ -248,7 +268,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		internal static List<NxtCloseProcessesModel> TranslateCloseProcessModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 #pragma warning disable CS0618
-			return legacyModel.AppKillProcesses?
+			var closeProcessesList = legacyModel.AppKillProcesses?
 				.Select(p => p.IsWQL
 					? throw new NotSupportedException("WQL process detection is not supported in the new package configuration format.")
 					: new NxtCloseProcessesModel()
@@ -259,6 +279,28 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					}
 				)
 				.ToList() ?? [];
+
+			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("CloseProcessesReopen")) is NxtLegacyVariableModel closeProcessesVar
+				&& !string.IsNullOrWhiteSpace(closeProcessesVar.Value))
+			{
+				var entries = closeProcessesVar.Value
+					.Split(',')
+					.Select(e => Enum.TryParse<ReopenMode>(e.Trim(), true, out var varMode)
+						? varMode
+						: throw new InvalidDataException($"The value [{e}] of [{closeProcessesVar.Name}] cannot be parsed into a [ReopenMode]."))
+					.ToList();
+
+				if (entries.Count() != closeProcessesList.Count())
+				{
+					throw new InvalidDataException("[CloseProcessesReopen] was specified, but did not match the number of entries in [AskKillProcesses]. Mapping not possible");
+				}
+				for (var i = 0; i < entries.Count(); i++)
+				{
+					closeProcessesList[i].ReopenMode = entries[i];
+				}
+			}
+
+			return closeProcessesList;
 #pragma warning restore CS0618
 		}
 
