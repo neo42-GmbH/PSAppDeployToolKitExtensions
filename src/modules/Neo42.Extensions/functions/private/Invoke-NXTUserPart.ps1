@@ -158,8 +158,9 @@
 
 		$localMachineKey.Close()
 		$usersKey.Close()
-
-		Write-ADTLogEntry -Severity Success -Message 'User part execution completed.'
+		if ($ADTSession.GetDeploymentStatus() -ne [PSADT.Module.DeploymentStatus]::Error) {
+			Write-ADTLogEntry -Severity Success -Message 'User part execution completed.'
+		}
 	}
 	catch {
 		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
