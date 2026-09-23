@@ -1797,6 +1797,14 @@ Get-NXTApplication -Store 'ARP' -Filter { $_.DisplayVersion -like '1.*' }
 
 Retrieves all applications from the ARP store with a display version starting with '1.'.
 
+#### Example 3
+
+```PowerShell
+Get-NXTApplication -Name 'MyApp' -NamePattern 'Contains'
+```
+
+Retrieves all ARP applications that contain 'MyApp' in their name.
+
 ### INPUTS
 
 **This function does not take any pipeline input.**

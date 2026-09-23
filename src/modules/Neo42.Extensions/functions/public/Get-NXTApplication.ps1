@@ -26,6 +26,10 @@
 	Get-NXTApplication -Store 'ARP' -Filter { $_.DisplayVersion -like '1.*' }
 
 	Retrieves all applications from the ARP store with a display version starting with '1.'.
+	.EXAMPLE
+	Get-NXTApplication -Name 'MyApp' -NamePattern 'Contains'
+
+	Retrieves all ARP applications that contain 'MyApp' in their name.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Filter', Justification = 'The Filter parameter is used in the script block.')]
 	[OutputType([PSADT.Types.InstalledApplication])]
@@ -63,7 +67,7 @@
 			}
 
 			if ($PSBoundParameters.ContainsKey('Name')) {
-				[System.String]$nameFilterText = "[PSADTNXT.Extensions.NxtStringExtensions]::IsMatch(`$_.DisplayName, '$Name', '$NamePattern', `$true)"
+				[System.String]$nameFilterText = "[PSADTNXT.Extensions.NxtStringExtensions]::IsMatch(`$_.DisplayName, '$($Name.Replace('''', ''''''))', '$($NamePattern.Replace('''', ''''''))', `$true)"
 				$Filter = if ($null -ne $Filter) {
 					[System.Management.Automation.ScriptBlock]::Create($nameFilterText + ' -and ' + $Filter.ToString())
 				}
