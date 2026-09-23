@@ -88,12 +88,12 @@
 
 		# Register the active setup keys for the user part.
 		Write-ADTLogEntry -Message "Registering system active setup key [$currentKeyName]."
-		[System.String]$binary, [System.String]$invokeArgs = Resolve-NXTDeployString -Root "$($ADTSession.NXT.Package.Directory.FullName)\neo42-Install" -BinarySeparate -Arguments @{
+		[System.String]$binary, [System.String]$invokeArgs = Resolve-NXTDeployString -Root "$($ADTSession.NXT.Package.Directory.FullName)\neo42-Install" -BinarySeparate -PreferExecutable -Arguments @{
 			DeploymentType   = if ($ADTSession.NXT.DeploymentType.IsInstall) { [PSADTNXT.Deployment.NxtDeploymentType]::TriggerInstallUserPart } else { [PSADTNXT.Deployment.NxtDeploymentType]::TriggerUninstallUserPart }
 			DeployMode       = [PSADT.Module.DeployMode]::Silent
 			DeploymentSystem = $ADTSession.NXT.DeploymentSystem
 		}
-		Set-ADTActiveSetup -StubExePath $binary -Key $currentKeyName -Version $ADTSession.NXT.UserPartRevision -NoExecuteForCurrentUser -Arguments $invokeArgs
+		Set-ADTActiveSetup -StubExePath $binary -Key $currentKeyName -Description $ADTSession.InstallTitle -Version $ADTSession.NXT.UserPartRevision -NoExecuteForCurrentUser -Arguments $invokeArgs
 
 		# Run the user part for all logged on users.
 		Write-ADTLogEntry -Message 'Querying logged on users.' -DebugMessage
