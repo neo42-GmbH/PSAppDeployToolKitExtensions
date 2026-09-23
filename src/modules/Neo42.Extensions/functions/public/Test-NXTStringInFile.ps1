@@ -55,39 +55,12 @@
 	}
 	process {
 		try {
-			[System.String]$content = Get-NXTContent -LiteralPath $Path @encodingSplat -Force:$Force
-			[System.StringComparison]$comparison = if ($CaseSensitive) { [System.StringComparison]::Ordinal } else { [System.StringComparison]::OrdinalIgnoreCase }
-			switch ($PatternType) {
-				([PSADTNXT.Text.StringCompareOperator]::Equals) {
-					return $content.Equals($Query, $comparison)
-				}
-				([PSADTNXT.Text.StringCompareOperator]::Contains) {
-					return $content.IndexOf($Query, $comparison) -ge 0
-				}
-				([PSADTNXT.Text.StringCompareOperator]::StartsWith) {
-					return $content.StartsWith($Query, $comparison)
-				}
-				([PSADTNXT.Text.StringCompareOperator]::EndsWith) {
-					return $content.EndsWith($Query, $comparison)
-				}
-				([PSADTNXT.Text.StringCompareOperator]::Wildcard) {
-					[System.Management.Automation.WildcardOptions]$options = if (-not $CaseSensitive) { [System.Management.Automation.WildcardOptions]::IgnoreCase } else { [System.Management.Automation.WildcardOptions]::None }
-					return [System.Management.Automation.WildcardPattern]::new($Query, $options).IsMatch($content)
-				}
-				([PSADTNXT.Text.StringCompareOperator]::Regex) {
-					[System.Text.RegularExpressions.RegexOptions]$options = if (-not $CaseSensitive) { [System.Text.RegularExpressions.RegexOptions]::IgnoreCase } else { [System.Text.RegularExpressions.RegexOptions]::None }
-					return [System.Text.RegularExpressions.Regex]::IsMatch($content, $Query, $options)
-				}
-				default {
-					[System.Collections.Hashtable]$errorParams = @{
-						Exception    = [System.NotImplementedException]::new("Pattern type [$PatternType] is not implemented.")
-						Category     = [System.Management.Automation.ErrorCategory]::NotImplemented
-						ErrorId      = 'PatternTypeNotImplemented'
-						TargetObject = $PatternType
-					}
-					throw (New-ADTErrorRecord @errorParams)
-				}
-			}
+			return [PSADTNXT.Extensions.NxtStringExtensions]::IsMatch(
+				(Get-NXTContent -LiteralPath $Path @encodingSplat -Force:$Force),
+				$Query,
+				$PatternType,
+				-not $CaseSensitive.ToBool()
+			)
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
