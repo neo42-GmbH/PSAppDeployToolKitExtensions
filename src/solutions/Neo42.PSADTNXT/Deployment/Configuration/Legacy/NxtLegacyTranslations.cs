@@ -373,7 +373,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		internal static NxtInstallationModel TranslateInstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-			return new NxtInstallationModel
+			var installModel = new NxtInstallationModel
 			{
 				Method = MapLegacyDeploymentMethodToEnum(legacyModel.InstallMethod),
 				Target = legacyModel.InstFile,
@@ -419,6 +419,15 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				UserPart = legacyModel.UserPartOnInstallation,
 			};
 
+			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DeploymentInstallationUpgradeMode")) is NxtLegacyVariableModel upgradeModeVar
+				&& !string.IsNullOrWhiteSpace(upgradeModeVar.Value))
+			{
+				installModel.UpgradeMode = Enum.TryParse<UpgradeMode>(upgradeModeVar.Value, true, out var varUpgradeMode)
+					? varUpgradeMode
+					: throw new InvalidDataException($"The value [{upgradeModeVar.Value}] of [{upgradeModeVar.Name}] cannot be parsed into an [ApplicationStore].");
+			}
+
+			return installModel;
 		}
 
 		internal static NxtUninstallationModel TranslateUninstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)

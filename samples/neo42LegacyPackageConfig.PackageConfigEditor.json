@@ -120,6 +120,11 @@
       "Name": "CloseProcessesReopen",
       "Value": "",
       "ExpandVariables": false
+    },
+    {
+      "Name": "DeploymentInstallationUpgradeMode",
+      "Value": "",
+      "ExpandVariables": false
     }
   ]
 }
