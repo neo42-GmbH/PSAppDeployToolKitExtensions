@@ -43,7 +43,7 @@
 
 - A minimum **defer interval** can now be specified via the Setup.cfg option `AskKillProcesses.DEFERINTERVAL`. This allows to specify a minimum time in minutes that must pass after a deferral before another attempt at the deployment is allowed. This is useful to suppress quick consecutive retries in case of fast retry exit codes by the deployment system. Make sure this is compatible with your deployment system's retry logic to avoid unexpected behavior.
 
-- The toolkit can now attempt to **reopen applications** that were closed due to the deployment. This can be enabled via the Setup.cfg option `Options.OPENCLOSEDAPPS`. Please note that this feature is implemented on a best effort basis and might not work for all applications. Using this feature will also require the new package configuration format. neo42 Packages will not be using the new format on release.
+- The toolkit can now attempt to **reopen applications** that were closed due to the deployment. This can be enabled via the Setup.cfg option `Options.OPENCLOSEDAPPS`. Please note that this feature is implemented on a best effort basis and might not work for all applications.
 
 - An option to respect **Do Not Disturb** cues has been added. A Setup.cfg option `AskKillProcesses.DONOTDISTURB` allows to suppress the deployment UI if the user has enabled Do Not Disturb on their system. Do not disturb is equivalent to deferring the deployment.
 
