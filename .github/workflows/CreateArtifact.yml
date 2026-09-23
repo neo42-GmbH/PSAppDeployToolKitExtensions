@@ -74,6 +74,8 @@ jobs:
           Copy-Item -Recurse -Path './template' -Destination './build'
 
       - name: download-psadt
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $ProgressPreference = 'SilentlyContinue'
 
@@ -88,7 +90,7 @@ jobs:
           }
 
           $file = [System.IO.Path]::GetFileName($uri.AbsolutePath)
-          Invoke-WebRequest -Uri $uri -OutFile $file
+          Invoke-WebRequest -Uri $uri -OutFile $file -Headers @{ Authorization = "Bearer $env:GH_TOKEN" }
 
           & 7z.exe x $file -o"./build/" -y
           Get-ChildItem -File './build' | Unblock-File
