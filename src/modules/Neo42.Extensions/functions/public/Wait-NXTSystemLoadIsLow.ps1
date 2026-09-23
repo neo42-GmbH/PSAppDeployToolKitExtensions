@@ -16,7 +16,7 @@
 	The RAM usage threshold to consider the load as high.
 	.PARAMETER Timeout
 	The maximum time to wait for the system load condition to be as desired.
-	.PARAMETER TestInterval
+	.PARAMETER Interval
 	The interval at which to check for the system load condition.
 	.PARAMETER IsHigh
 	Instead of checking for the system load to be low, check for it to be high.
@@ -42,7 +42,7 @@
 		$Timeout = '00:05:00',
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
-		$TestInterval = '00:00:01.000',
+		$Interval = '00:00:01.000',
 		[System.Management.Automation.SwitchParameter]
 		$IsHigh
 	)
@@ -92,7 +92,7 @@
 					$message = $failureMessage
 					break
 				}
-				Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+				Start-Sleep -Milliseconds $Interval.TotalMilliseconds
 			}
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			return $result

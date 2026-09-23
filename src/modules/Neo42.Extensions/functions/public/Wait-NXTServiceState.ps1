@@ -15,7 +15,7 @@
 	The name of the service to monitor.
 	.PARAMETER Timeout
 	The maximum time to wait for the service status to change.
-	.PARAMETER TestInterval
+	.PARAMETER Interval
 	The interval at which to check for the service's status change.
 	.PARAMETER PassThru
 	Instead of returning a boolean, return the object.
@@ -45,7 +45,7 @@
 		$Timeout = '00:01:00',
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
-		$TestInterval = '00:00:01.000',
+		$Interval = '00:00:01.000',
 		[System.Management.Automation.SwitchParameter]
 		$PassThru,
 		[System.Management.Automation.SwitchParameter]
@@ -80,7 +80,7 @@
 						$message = "The service [$Name] was not found within the specified timeout of [$Timeout]."
 						break
 					}
-					Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+					Start-Sleep -Milliseconds $Interval.TotalMilliseconds
 					[System.ServiceProcess.ServiceController]$service = Get-Service -Name $Name -ErrorAction SilentlyContinue
 				}
 			}
@@ -94,7 +94,7 @@
 					$message = $failureMessage
 					break
 				}
-				Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+				Start-Sleep -Milliseconds $Interval.TotalMilliseconds
 			}
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {

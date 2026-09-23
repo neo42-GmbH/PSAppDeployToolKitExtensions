@@ -13,22 +13,22 @@
 	A script block that contains the custom test to be executed.
 	.PARAMETER Timeout
 	The maximum time to wait for the test result to be successful.
-	.PARAMETER TestInterval
+	.PARAMETER Interval
 	The interval at which to check for the test result.
 	.PARAMETER ConsistencyTestTime
 	The time to wait after the test succeeds to ensure that the desired state remains consistent.
 	.EXAMPLE
-	Wait-NXTCustomTest ScriptBlock { Get-ADTWindowTitle -WindowTitle 'Microsoft Word' } -Timeout '00:05:00' -TestInterval '00:00:05' -consistencyTestTime '00:00:10.000'
+	Wait-NXTCustomTest ScriptBlock { Get-ADTWindowTitle -WindowTitle 'Microsoft Word' } -Timeout '00:05:00' -Interval '00:00:05' -consistencyTestTime '00:00:10.000'
 
 	Monitors whether the Microsoft Word window is open and waits up to 5 minutes with checks every 5 seconds.
 	Once the test passes, it will then check for 10 seconds to ensure that the window remains open to ensure that no other process closes it.
 	.EXAMPLE
-	Wait-NXTCustomTest ScriptBlock { Test-ADTNetworkConnection -InterfaceType 'eth0.10' } -Timeout '00:10:00' -TestInterval '00:00:05' -consistencyTestTime '00:01:00.000'
+	Wait-NXTCustomTest ScriptBlock { Test-ADTNetworkConnection -InterfaceType 'eth0.10' } -Timeout '00:10:00' -Interval '00:00:05' -consistencyTestTime '00:01:00.000'
 
 	Monitors whether the network adapter 'eth0.10' is up and waits up to 10 minutes with checks every 5 seconds.
 	Once the test passes, it will then check for 60 seconds to ensure that the network adapter remains up to ensure that no other process brings it down.
 	.EXAMPLE
-	Wait-NXTCustomTest ScriptBlock { -not Test-ADTUserIsBusy } -Timeout '00:30:00' -TestInterval '00:00:05' -consistencyTestTime '00:01:00.000'
+	Wait-NXTCustomTest ScriptBlock { -not Test-ADTUserIsBusy } -Timeout '00:30:00' -Interval '00:00:05' -consistencyTestTime '00:01:00.000'
 
 	Monitors whether the user is busy and waits up to 30 minutes with checks every 5 seconds until the user is not busy.
 	Once the test passes, it will then check for 60 seconds to ensure that the user remains not busy to get a timespan to start actions without disturbing the user.
@@ -47,7 +47,7 @@
 		$Timeout = '00:01:00',
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
-		$TestInterval = '00:00:01.000',
+		$Interval = '00:00:01.000',
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
 		$ConsistencyTestTime = '00:00:00'
@@ -72,7 +72,7 @@
 					$severity = 'Warning'
 					break
 				}
-				Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+				Start-Sleep -Milliseconds $Interval.TotalMilliseconds
 			}
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($result -and ($ConsistencyTestTime -gt [System.TimeSpan]::Zero)) {
@@ -86,7 +86,7 @@
 						$message = $consistencyFailureMessage
 						break
 					}
-					Start-Sleep -Milliseconds $TestInterval.TotalMilliseconds
+					Start-Sleep -Milliseconds $Interval.TotalMilliseconds
 				}
 				Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			}
