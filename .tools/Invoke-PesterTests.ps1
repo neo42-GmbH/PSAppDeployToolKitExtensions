@@ -142,7 +142,7 @@ if ($containers.Count -ge 0) {
 		foreach ($container in $containers) {
 			foreach ($filename in $ExcludeTestFilesLike) {
 				if ($container.Item.Name -like $filename) {
-					$containersFiltered.Remove($container)
+					$null = $containersFiltered.Remove($container)
 				}
 			}
 		}
