@@ -194,19 +194,27 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				detectionModel.Criteria = new NxtApplicationCriteriaModel
 				{
 					Store = ApplicationStore.ARP,
-					Identifier = !legacyModel.UninstallKeyIsDisplayName && !legacyModel.UninstallKeyContainsWildCards ? legacyModel.UninstallKey : null,
 				};
+
 				var detectionScript = new StringBuilder();
-				if (legacyModel.UninstallKeyIsDisplayName)
+				if (!legacyModel.UninstallKeyIsDisplayName && !legacyModel.UninstallKeyContainsWildCards)
 				{
-					_ = detectionScript.Append("$_.DisplayName");
-					_ = detectionScript.Append(legacyModel.UninstallKeyContainsWildCards ? " -like " : " -eq ");
-					_ = detectionScript.Append($"'{legacyModel.UninstallKey.Replace("'", "''")}'");
+					detectionModel.Criteria.Identifier = legacyModel.UninstallKey;
 				}
-				else if (legacyModel.UninstallKeyContainsWildCards)
+				else
 				{
-					_ = detectionScript.Append($"$_.PSChildName -like '{legacyModel.UninstallKey.Replace("'", "''")}'");
+					if (legacyModel.UninstallKeyIsDisplayName)
+					{
+						_ = detectionScript.Append("$_.DisplayName");
+						_ = detectionScript.Append(legacyModel.UninstallKeyContainsWildCards ? " -like " : " -eq ");
+						_ = detectionScript.Append($"'{legacyModel.UninstallKey.Replace("'", "''")}'");
+					}
+					else
+					{
+						_ = detectionScript.Append($"$_.PSChildName -like '{legacyModel.UninstallKey.Replace("'", "''")}'");
+					}
 				}
+
 				if (legacyModel.DisplayNamesToExcludeFromAppSearches is List<string> displayNamesToExclude && displayNamesToExclude.Count != 0)
 				{
 					if (detectionScript.Length > 0)
@@ -217,12 +225,17 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					_ = detectionScript.Append(string.Join(", ", displayNamesToExclude.Select(name => $"'{name.Replace("'", "''")}'")));
 					_ = detectionScript.Append(')');
 				}
-				detectionModel.Criteria.Filter = ScriptBlock.Create(detectionScript.ToString());
+
+				if (detectionScript.Length > 0)
+				{
+					detectionModel.Criteria.Filter = ScriptBlock.Create(detectionScript.ToString());
+				}
 			}
 
 			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaStore")) is NxtLegacyVariableModel detectionStoreVar
 				&& !string.IsNullOrWhiteSpace(detectionStoreVar.Value))
 			{
+				detectionModel.Enabled = true;
 				detectionModel.Criteria ??= new NxtApplicationCriteriaModel();
 				detectionModel.Criteria.Store = Enum.TryParse<ApplicationStore>(detectionStoreVar.Value, true, out var varStore)
 					? varStore
@@ -232,6 +245,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaFilter")) is NxtLegacyVariableModel detectionFilterVar
 				&& !string.IsNullOrWhiteSpace(detectionFilterVar.Value))
 			{
+				detectionModel.Enabled = true;
 				detectionModel.Criteria ??= new NxtApplicationCriteriaModel
 				{
 					Store = ApplicationStore.ARP
