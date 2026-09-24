@@ -250,6 +250,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				{
 					Store = ApplicationStore.ARP
 				};
+				detectionModel.Criteria.Identifier = null;
 				detectionModel.Criteria.Filter = ScriptBlock.Create(detectionFilterVar.Value);
 			}
 
