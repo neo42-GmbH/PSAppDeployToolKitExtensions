@@ -1,4 +1,4 @@
-[System.Collections.Generic.HashSet[System.String]]$script:BuiltInVariables = [System.Collections.Generic.HashSet[System.String]]::new(
+﻿[System.Collections.Generic.HashSet[System.String]]$script:BuiltInVariables = [System.Collections.Generic.HashSet[System.String]]::new(
 	[System.String[]]@(
 		'ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber', 'ExecutionContext', 'HOME', 'Host', 'IsCoreCLR', 'MyInvocation',
 		'IsLinux', 'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'NestedPromptLevel', 'PID', 'PROFILE', 'PWD', 'Sender', 'ShellId', 'StackTrace', 'OutputEncoding',
@@ -23,7 +23,7 @@ function Resolve-TypeFullName {
 		$null = $name.Append((Resolve-TypeFullName -Type $Type.DeclaringType))
 		$null = $name.Append('+')
 	}
-	else {
+	elseif (-not [System.String]::IsNullOrWhiteSpace($Type.Namespace)) {
 		$null = $name.Append($Type.Namespace)
 		$null = $name.Append('.')
 	}
