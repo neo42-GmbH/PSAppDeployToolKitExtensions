@@ -11,6 +11,7 @@
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession)
 	)
+
 	try {
 		[PSADT.ProcessManagement.ProcessResult]$result = $null
 		switch ($ADTSession.NXT.Install.Method) {

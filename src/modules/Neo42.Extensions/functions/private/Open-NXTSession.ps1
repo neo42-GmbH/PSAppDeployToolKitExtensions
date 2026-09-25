@@ -65,9 +65,7 @@
 	$adtConfig['NXT']['Deployment']['MSI'] = [System.Collections.Hashtable]::new($adtConfig['MSI'], [System.StringComparer]::OrdinalIgnoreCase)
 
 	# Remove user environment variables if not a user deployment
-	if ($adtSession.NXT.DeploymentType.IsMachinePart) {
-		Remove-NXTUserEnvironment
-	}
+	if ($adtSession.NXT.DeploymentType.IsMachinePart) { Clear-NXTUserEnvironmentVariable }
 
 	# Apply config overrides from setup config to the toolkit config
 	if ($adtSession.NXT.SetupCfg['Options']['SHOWBALLOONNOTIFICATIONS'] -eq '1') {
