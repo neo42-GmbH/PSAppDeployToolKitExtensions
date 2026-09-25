@@ -39,7 +39,7 @@
 						$callBack.Module.Name
 					}
 					elseif ($callBack -is [System.Management.Automation.FunctionInfo] -and -not [System.String]::IsNullOrWhiteSpace($callBack.ScriptBlock.File)) {
-						[System.IO.Path]::GetFileName($callBack.ScriptBlock.File)
+						[System.IO.Path]::GetFileNameWithoutExtension($callBack.ScriptBlock.File)
 					}
 					else {
 						[System.String]::Empty
