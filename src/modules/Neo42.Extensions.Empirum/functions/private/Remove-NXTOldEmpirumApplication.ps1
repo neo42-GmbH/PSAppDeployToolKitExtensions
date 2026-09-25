@@ -29,7 +29,7 @@
 
 		$empirumAppKey.GetSubKeyNames() | & {
 			process {
-				if ($_ -eq $adtSession.NXT.Package.Version) { return } # Prevent uninstalling self
+				if ($_ -eq $adtSession.AppVersion) { return } # Prevent uninstalling self
 
 				[Microsoft.Win32.RegistryKey]$empirumSetupKey = $empirumAppKey.OpenSubKey("$_\Setup", $false)
 
