@@ -75,6 +75,8 @@ namespace PSADTNXT.Deployment
 
 		public List<ProcessResult> ProcessResults { get; } = [];
 
+		public DeploymentHookPoint? LastRunHookPoint { get; set; }
+
 		public NxtIniDocument SetupCfg { get; }
 
 		public Dictionary<string, object> Variables { get; }

@@ -305,11 +305,11 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 						: throw new InvalidDataException($"The value [{e}] of [{closeProcessesVar.Name}] cannot be parsed into a [ReopenMode]."))
 					.ToList();
 
-				if (entries.Count() != closeProcessesList.Count())
+				if (entries.Count != closeProcessesList.Count)
 				{
 					throw new InvalidDataException("[CloseProcessesReopen] was specified, but did not match the number of entries in [AskKillProcesses]. Mapping not possible");
 				}
-				for (var i = 0; i < entries.Count(); i++)
+				for (var i = 0; i < entries.Count; i++)
 				{
 					closeProcessesList[i].ReopenMode = entries[i];
 				}
@@ -528,31 +528,31 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			// Arch specific variables
 			if (arch.Equals("x86", StringComparison.OrdinalIgnoreCase) || arch.Equals("arm", StringComparison.OrdinalIgnoreCase))
 			{
-				result.Add(new SessionStateVariableEntry("ProgramFilesDir", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("ProgramW6432", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonFilesDir", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonFilesDirx86", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonProgramW6432", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("RegSoftwarePath", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("RegSoftwarePathx86", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("System", adtEnvironment["envSystemX86"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramFilesDir", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramW6432", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonFilesDir", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonFilesDirx86", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonProgramW6432", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("RegSoftwarePath", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("RegSoftwarePathx86", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("System", adtEnvironment["envSystemX86"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			}
 			else
 			{
-				result.Add(new SessionStateVariableEntry("ProgramFilesDir", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("ProgramW6432", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonFilesDir", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonFilesDirx86", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonProgramW6432", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("RegSoftwarePath", adtEnvironment["envRegistrySoftware"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("RegSoftwarePathx86", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("System", adtEnvironment["envSystemX64"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramFilesDir", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramW6432", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonFilesDir", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonFilesDirx86", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonProgramW6432", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("RegSoftwarePath", adtEnvironment["envRegistrySoftware"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("RegSoftwarePathx86", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("System", adtEnvironment["envSystemX64"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			}
 
-			result.Add(new SessionStateVariableEntry("UserPartDir", string.Empty, string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-			result.Add(new SessionStateVariableEntry("AppLogFolder", "%LogFolder%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new("UserPartDir", string.Empty, string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new("AppLogFolder", "%LogFolder%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 
 			return result;
 		}
