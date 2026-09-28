@@ -34,8 +34,6 @@
 	The exit codes that indicate a successful installation. If the exit code of the process is in this list, the installation is considered successful.
 	.PARAMETER RebootExitCodes
 	The exit codes that indicate a reboot is required after the installation. If the exit code of the process is in this list, the installation is considered successful and a reboot is requested.
-	.PARAMETER ExitOnProcessFailure
-	Determines if the function should exit with an error if the process fails. If this parameter is specified, the deployment will be aborted.
 	.PARAMETER IgnoreExitCodes
 	Specifies that any exit code from the installation process should be ignored and treated as a success.
 	.PARAMETER NoCache
@@ -75,9 +73,6 @@
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter,
 
-		[Parameter(ParameterSetName = 'ExitCodes')]
-		[System.Management.Automation.SwitchParameter]
-		$ExitOnProcessFailure,
 		[Parameter(ParameterSetName = 'ExitCodes')]
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
@@ -139,13 +134,11 @@
 			[System.IO.FileInfo]$logFile = [System.IO.Path]::Combine($adtSession.LogPath, $LogFileName)
 
 			[System.Collections.Hashtable]$startSplat = Remove-ADTHashtableNullOrEmptyValues @{
-				FilePath             = if ([System.IO.Path]::IsPathRooted($Target)) { $Target } else { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) }
-				PassThru             = $true
-				SuccessExitCodes     = $SuccessExitCodes
-				RebootExitCodes      = $RebootExitCodes
-				ExitOnProcessFailure = $ExitOnProcessFailure.ToBool()
-				ArgumentList         = $finalArguments.ToString().Trim()
-				ErrorAction          = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
+				FilePath        = if ([System.IO.Path]::IsPathRooted($Target)) { $Target } else { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) }
+				PassThru        = $true
+				ArgumentList    = $finalArguments.ToString().Trim()
+				IgnoreExitCodes = '*' # If not set in 4.1.8 the session exit code is set regardless of actual success of the result
+				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
 			}
 
 			[System.IO.DirectoryInfo]$uninstallFileBackupDirectory = $null
@@ -160,28 +153,12 @@
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
-						if ($ExitOnProcessFailure) {
-							Write-ADTLogEntry -Severity Warning -Message "An error occurred while trying to copy the file [$Target]."
-							Write-ADTLogEntry -Severity Warning -Message (Resolve-ADTErrorRecord -ErrorRecord $_)
-							Close-ADTSession -ExitCode 1
-						}
-						elseif ($IgnoreExitCodes) {
-							Write-ADTLogEntry -Severity Warning -Message "An error occurred while trying to copy the file [$Target], but the error is ignored."
-							$result = [PSADT.ProcessManagement.ProcessResult]::new(
-								0,
-								[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
-								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
-								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
-							)
-						}
-						else {
-							$result = [PSADT.ProcessManagement.ProcessResult]::new(
-								1,
-								[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
-								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
-								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
-							)
-						}
+						$result = [PSADT.ProcessManagement.ProcessResult]::new(
+							$_.HResult,
+							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
+							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
+							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
+						)
 					}
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::MSI) {
@@ -202,41 +179,40 @@
 				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
 					$startSplat['ArgumentList'] = $startSplat['ArgumentList'] + " /LOG=`"$($logFile.FullName)`""
 				}
-				# The default install method for every installer.
-				{ $true } {
-					# Only run, if no result is already set
-					if (-not $result) {
-						$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
-						$result = Start-ADTProcess @startSplat
-					}
-
-					Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
-
-					if ($Criteria) {
-						[PSADT.Types.InstalledApplication[]]$app = @(Get-NXTApplication -Criteria $Criteria)
-						if ($app.Length -ne 1) {
-							[System.Collections.Hashtable]$errorParams = @{
-								Exception    = [System.Management.Automation.ItemNotFoundException]::new("Application lookup criteria were provided but [$($app.Length)] applications were found after installation. Must be exactly [1].")
-								Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
-								ErrorId      = if ($app.Length -gt 1) { 'MultipleApplicationsFound' } else { 'NoApplicationFound' }
-								TargetObject = $Criteria
-							}
-							throw (New-ADTErrorRecord @errorParams)
-						}
-
-						if (-not $NoCache -and
-							$CacheDirectory -and
-							-not [System.String]::IsNullOrWhiteSpace($app[0].UninstallStringFilePath)
-						) {
-							$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($app[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
-							$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $app[0].PSChildName)
-						}
-					}
+				# The default install method for every installer that has not published a result yet
+				{ -not $result } {
+					$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
+					$result = Start-ADTProcess @startSplat
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
 					if ($uninstallFiles) {
 						$uninstallFiles.AddRange([System.IO.FileInfo[]]@(Get-Item -Path "$($uninstallFiles[0].Directory.FullName)\unins[0-9][0-9][0-9].*" -ErrorAction SilentlyContinue))
 					}
+				}
+			}
+
+			Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -IgnoreExitCodes:$IgnoreExitCodes
+
+			Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
+
+			if ($Criteria) {
+				[PSADT.Types.InstalledApplication[]]$app = @(Get-NXTApplication -Criteria $Criteria)
+				if ($app.Length -ne 1) {
+					[System.Collections.Hashtable]$errorParams = @{
+						Exception    = [System.Management.Automation.ItemNotFoundException]::new("Application lookup criteria were provided but [$($app.Length)] applications were found after installation. Must be exactly [1].")
+						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
+						ErrorId      = if ($app.Length -gt 1) { 'MultipleApplicationsFound' } else { 'NoApplicationFound' }
+						TargetObject = $Criteria
+					}
+					throw (New-ADTErrorRecord @errorParams)
+				}
+
+				if (-not $NoCache -and
+					$CacheDirectory -and
+					-not [System.String]::IsNullOrWhiteSpace($app[0].UninstallStringFilePath)
+				) {
+					$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($app[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
+					$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $app[0].PSChildName)
 				}
 			}
 

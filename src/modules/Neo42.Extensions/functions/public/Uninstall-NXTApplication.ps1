@@ -49,8 +49,6 @@
 	Determines if the function should ignore exit codes and not treat them as errors.
 	.PARAMETER NoCache
 	Determines if the function should avoid using cached uninstaller files.
-	.PARAMETER ExitOnProcessFailure
-	Determines if the function should exit with an error if the process fails. If this parameter is specified, the deployment will be aborted.
 	.EXAMPLE
 	Uninstall-NXTApplication -Target '$envProgramFiles\myprogram\uninstall.exe' -ArgumentList '\q'
 
@@ -150,11 +148,6 @@
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
 		$RebootExitCodes,
-		[Parameter(ParameterSetName = 'PackageExitCodes')]
-		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
-		[Parameter(ParameterSetName = 'ManualExitCodes')]
-		[System.Management.Automation.SwitchParameter]
-		$ExitOnProcessFailure,
 		[Parameter(ParameterSetName = 'PackageIgnoreExitCodes', Mandatory)]
 		[Parameter(ParameterSetName = 'ApplicationIgnoreExitCodes', Mandatory)]
 		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes', Mandatory)]
@@ -307,13 +300,11 @@
 			[System.IO.FileInfo]$logFile = [System.IO.Path]::Combine($adtSession.LogPath, $LogFileName)
 
 			[System.Collections.Hashtable]$startSplat = Remove-ADTHashtableNullOrEmptyValues @{
-				FilePath             = if (-not [System.IO.Path]::IsPathRooted($Target) -and $adtSession.DirFiles) { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) } else { $Target }
-				ArgumentList         = $finalArguments.ToString().Trim()
-				PassThru             = $true
-				SuccessExitCodes     = $SuccessExitCodes
-				RebootExitCodes      = $RebootExitCodes
-				ExitOnProcessFailure = $ExitOnProcessFailure.ToBool()
-				ErrorAction          = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
+				FilePath        = if (-not [System.IO.Path]::IsPathRooted($Target) -and $adtSession.DirFiles) { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) } else { $Target }
+				ArgumentList    = $finalArguments.ToString().Trim()
+				PassThru        = $true
+				IgnoreExitCodes = '*' # If not set in 4.1.8 the session exit code is set regardless of actual success of the result
+				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
 			}
 
 			[System.String]$backupFileSelector = [System.String]::Empty
@@ -328,13 +319,8 @@
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
-						if ($ExitOnProcessFailure) {
-							Write-ADTLogEntry -Severity Warning -Message "An error occurred while trying to delete the folder [$Target]."
-							Write-ADTLogEntry -Severity Warning -Message (Resolve-ADTErrorRecord -ErrorRecord $_)
-							Close-ADTSession -ExitCode 1
-						}
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(
-							(-not $IgnoreExitCodes).ToInt32($null),
+							$_.HResult,
 							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
 							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
 							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
@@ -404,36 +390,24 @@
 					$backupFileSelector = 'unins*.exe'
 					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('_Uninstall*', $false, [System.TimeSpan]::FromMinutes(10)))
 				}
-				# The default uninstall method for every uninstaller.
-				{ $true } {
-					# Only run, if no result is already set
-					if (-not $result) {
-						# Try to retrieve the backup file path if the uninstaller file does not exist
-						if (-not [System.IO.File]::Exists($startSplat['FilePath'])) {
-							Write-ADTLogEntry -Severity Warning -Message "The original uninstaller file [$($startSplat['FilePath'])] does not exist. Trying to use the backup uninstaller file."
+				# The default uninstall method for every uninstaller if no result is available yet.
+				{ -not $result } {
+					# Try to retrieve the backup file path if the uninstaller file does not exist
+					if (-not [System.IO.File]::Exists($startSplat['FilePath'])) {
+						Write-ADTLogEntry -Severity Warning -Message "The original uninstaller file [$($startSplat['FilePath'])] does not exist. Trying to use the backup uninstaller file."
 
-							if (-not $NoCache -and
-								-not [System.String]::IsNullOrWhiteSpace($backupFileSelector) -and
-								$uninstallFileBackupDirectory
-							) {
-								Write-ADTLogEntry -Message 'Searching for the backup uninstaller file in the cache directory.' -DebugMessage
-								[System.String]$backupFullPathSelector = [System.IO.Path]::Combine($uninstallFileBackupDirectory.FullName, $backupFileSelector)
-								[System.String]$targetDirectory = [System.IO.Path]::GetDirectoryName($startSplat.FilePath)
-								if (-not [System.IO.Directory]::Exists($targetDirectory)) { $null = [System.IO.Directory]::CreateDirectory($targetDirectory) }
-								Copy-Item -Path $backupFullPathSelector -Destination $targetDirectory -Force
-								if (-not [System.IO.File]::Exists($startSplat.FilePath)) {
-									[System.Collections.Hashtable]$errorParams = @{
-										Exception    = [System.InvalidOperationException]::new("The backup did not contain the required [$($startSplat.FilePath)] file.")
-										Category     = [System.Management.Automation.ErrorCategory]::InvalidOperation
-										ErrorId      = 'NoBackupAvailable'
-										TargetObject = $startSplat.FilePath
-									}
-									throw (New-ADTErrorRecord @errorParams)
-								}
-							}
-							else {
+						if (-not $NoCache -and
+							-not [System.String]::IsNullOrWhiteSpace($backupFileSelector) -and
+							$uninstallFileBackupDirectory
+						) {
+							Write-ADTLogEntry -Message 'Searching for the backup uninstaller file in the cache directory.' -DebugMessage
+							[System.String]$backupFullPathSelector = [System.IO.Path]::Combine($uninstallFileBackupDirectory.FullName, $backupFileSelector)
+							[System.String]$targetDirectory = [System.IO.Path]::GetDirectoryName($startSplat.FilePath)
+							if (-not [System.IO.Directory]::Exists($targetDirectory)) { $null = [System.IO.Directory]::CreateDirectory($targetDirectory) }
+							Copy-Item -Path $backupFullPathSelector -Destination $targetDirectory -Force
+							if (-not [System.IO.File]::Exists($startSplat.FilePath)) {
 								[System.Collections.Hashtable]$errorParams = @{
-									Exception    = [System.InvalidOperationException]::new("The uninstall method [$Method] does not support backups or caching is disabled.")
+									Exception    = [System.InvalidOperationException]::new("The backup did not contain the required [$($startSplat.FilePath)] file.")
 									Category     = [System.Management.Automation.ErrorCategory]::InvalidOperation
 									ErrorId      = 'NoBackupAvailable'
 									TargetObject = $startSplat.FilePath
@@ -441,11 +415,20 @@
 								throw (New-ADTErrorRecord @errorParams)
 							}
 						}
-
-						# Start the uninstallation process
-						$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
-						$result = Start-ADTProcess @startSplat
+						else {
+							[System.Collections.Hashtable]$errorParams = @{
+								Exception    = [System.InvalidOperationException]::new("The uninstall method [$Method] does not support backups or caching is disabled.")
+								Category     = [System.Management.Automation.ErrorCategory]::InvalidOperation
+								ErrorId      = 'NoBackupAvailable'
+								TargetObject = $startSplat.FilePath
+							}
+							throw (New-ADTErrorRecord @errorParams)
+						}
 					}
+
+					# Start the uninstallation process
+					$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
+					$result = Start-ADTProcess @startSplat
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
 					# Only run, if the package family was found
@@ -456,7 +439,7 @@
 						}
 						catch {
 							$result = [PSADT.ProcessManagement.ProcessResult]::new(
-								1,
+								$_.HResult,
 								[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
 								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
 								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
@@ -465,6 +448,8 @@
 					}
 				}
 			}
+
+			Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -IgnoreExitCodes:$IgnoreExitCodes
 
 			Wait-NXTDeploymentAwaiter -Awaiter $waits
 
