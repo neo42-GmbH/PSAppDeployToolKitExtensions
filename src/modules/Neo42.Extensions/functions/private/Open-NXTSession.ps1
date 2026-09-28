@@ -59,7 +59,11 @@
 	}
 
 	# Apply the PowerShell process execution policy to the whole execution environment
-	[System.Environment]::SetEnvironmentVariable('PSExecutionPolicyPreference', [Microsoft.PowerShell.ExecutionPolicy]$adtConfig['NXT']['PowerShell']['ExecutionPolicy'], [System.EnvironmentVariableTarget]::Process)
+	[Microsoft.PowerShell.ExecutionPolicy]$configExecPolicy = $adtConfig['NXT']['PowerShell']['ExecutionPolicy']
+	[System.Environment]::SetEnvironmentVariable('PSExecutionPolicyPreference', $configExecPolicy, [System.EnvironmentVariableTarget]::Process)
+	if (([Microsoft.PowerShell.ExecutionPolicy]$activeExecPolicy = Get-ExecutionPolicy) -ne $configExecPolicy) {
+		Write-ADTLogEntry -Severity Warning -Message "The policy based ExecutionPolicy [$activeExecPolicy] takes precedence over the toolkit configured [$configExecPolicy] value."
+	}
 
 	# Copy MSI parameters into NXT installer block for easier access. Make it unlinked to not overwrite the toolkit configuration
 	$adtConfig['NXT']['Deployment']['MSI'] = [System.Collections.Hashtable]::new($adtConfig['MSI'], [System.StringComparer]::OrdinalIgnoreCase)
