@@ -23,8 +23,7 @@
 
 	# Make sure to inform about unsigned scripts
 	if ($adtSession.NXT.DeploymentType.IsMachinePart -and
-		([System.String]$scriptPath = (Get-PSCallStack)[0].ScriptName) -and
-		(Get-AuthenticodeSignature -FilePath $scriptPath).Status -ne [System.Management.Automation.SignatureStatus]::Valid
+		(Get-AuthenticodeSignature -FilePath $adtSession.NXT.DeployAppScript.FullName).Status -ne [System.Management.Automation.SignatureStatus]::Valid
 	) {
 		Write-ADTLogEntry -Severity Warning -Message "The script [$scriptPath] is not signed or trusted. Running untrusted code is not recommended and may be blocked by security policies."
 	}
