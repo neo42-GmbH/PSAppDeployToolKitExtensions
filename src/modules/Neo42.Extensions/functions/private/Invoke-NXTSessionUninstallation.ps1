@@ -57,8 +57,8 @@
 			throw (New-ADTErrorRecord @errorParams)
 		}
 
-		if ($ADTSession.NXT.Detection.Application) {
-			$invokeUninstallParams['UninstallKey'] = $ADTSession.NXT.Detection.Application.PSPath
+		if ($ADTSession.NXT.Detection.Criteria) {
+			$invokeUninstallParams['Criteria'] = $ADTSession.NXT.Detection.Criteria
 		}
 
 		if ($ADTSession.NXT.Uninstall.IgnoreExitCodes) {

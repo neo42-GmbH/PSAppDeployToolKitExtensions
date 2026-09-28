@@ -24,8 +24,9 @@
 	This file will reside in the log directory of the ADT session.
 	The resulting full path is available as %LogFile% in the ArgumentList.
 	.PARAMETER Criteria
-	An instance of NxtApplicationCriteria to search for the application. Is used for advanced scenarios like caching the uninstaller post installation.
-	Usually not required, as the ADT session will provide a default instance.
+	The application lookup criteria used to find the application in a application store.
+	The resulting data is used for defaults, validation and backup mechanics.
+	If the application is already installed, its display name is used for the default LogFileName.
 	.PARAMETER CacheDirectory
 	The directory where the package cache is located. This is used to store the uninstaller files if the NoCache parameter is not specified.
 	.PARAMETER Awaiter
@@ -67,11 +68,10 @@
 		[PSADTNXT.Application.NxtApplicationCriteria]
 		$Criteria,
 		[ValidateScript({ $_ -like '*.log' })]
-		[PSDefaultValue(Value = 'ID.$deploymentTimestamp.log')]
 		[System.String]
 		$LogFileName,
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
-		[System.String]
+		[System.IO.DirectoryInfo]
 		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory,
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter,
@@ -101,7 +101,7 @@
 	}
 	process {
 		try {
-			[PSADT.ProcessManagement.ProcessResult]$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
+			[PSADT.ProcessManagement.ProcessResult]$result = $null
 			[System.Text.StringBuilder]$finalArguments = [System.Text.StringBuilder]::new()
 			if ($PSBoundParameters.ContainsKey('ArgumentList') -and $ArgumentList) {
 				if ($ArgumentList.Length -gt 1) {
@@ -168,8 +168,10 @@
 			Write-ADTLogEntry -Message "Running installation process for target [$Target] with method [$Method]."
 			switch ($Method) {
 				([PSADTNXT.Deployment.DeploymentMethod]::Copy) {
+					$NoCache = $true
 					try {
 						Copy-ADTFile -Path ([System.IO.Path]::Combine($adtSession.DirFiles, '*')) -Destination $Target -Recurse
+						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
 						if ($ExitOnProcessFailure) {
@@ -195,12 +197,10 @@
 							)
 						}
 					}
-					break
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::MSI) {
+					$NoCache = $true
 					$result = Start-ADTMsiProcess @startSplat -Action Install -SkipMSIAlreadyInstalledCheck -NoDesktopRefresh -LogFileName ($LogFileName -replace '_Install\.log$', [System.String]::Empty)
-					Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
-					break
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
 					$startSplat['ArgumentList'] = "/Online /NoRestart /English /LogPath:`"$($logFile.FullName)`" /Add-ProvisionedAppxPackage /PackagePath:`"$($startSplat['FilePath'])`"" + $startSplat['ArgumentList']
@@ -216,26 +216,40 @@
 				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
 					$startSplat['ArgumentList'] = $startSplat['ArgumentList'] + " /LOG=`"$($logFile.FullName)`""
 				}
-				# The default install method for every installer. (Only one that 'Setup' uses)
+				# The default install method for every installer.
 				{ $true } {
-					$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
-					$result = Start-ADTProcess @startSplat
+					# Only run, if no result is already set
+					if (-not $result) {
+						$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
+						$result = Start-ADTProcess @startSplat
+					}
+
 					Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
 
-					if (-not $NoCache -and
-						-not [System.String]::IsNullOrWhiteSpace($CacheDirectory) -and
-						$Criteria -and
-						([PSADT.Types.InstalledApplication[]]$app = @(Get-NXTApplication -Criteria $Criteria)) -and
-						$app.Length -eq 1 -and
-						-not [System.String]::IsNullOrWhiteSpace($app[0].UninstallStringFilePath)
-					) {
-						$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($app[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
-						$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory, 'neo42-Source', $app[0].PSChildName)
+					if ($Criteria) {
+						[PSADT.Types.InstalledApplication[]]$app = @(Get-NXTApplication -Criteria $Criteria)
+						if ($app.Length -ne 1) {
+							[System.Collections.Hashtable]$errorParams = @{
+								Exception    = [System.Management.Automation.ItemNotFoundException]::new("Application lookup criteria were provided but [$($app.Length)] applications were found after installation. Must be exactly [1].")
+								Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
+								ErrorId      = if ($app.Length -gt 1) { 'MultipleApplicationsFound' } else { 'NoApplicationFound' }
+								TargetObject = $Criteria
+							}
+							throw (New-ADTErrorRecord @errorParams)
+						}
+
+						if (-not $NoCache -and
+							$CacheDirectory -and
+							-not [System.String]::IsNullOrWhiteSpace($app[0].UninstallStringFilePath)
+						) {
+							$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($app[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
+							$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $app[0].PSChildName)
+						}
 					}
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
 					if ($uninstallFiles) {
-						$uninstallFiles.AddRange([System.IO.FileInfo[]]@(Get-Item -Path "$($uninstallFiles[0].Directory.FullName)\unins[0-9][0-9][0-9].*" -ErrorAction 'SilentlyContinue'))
+						$uninstallFiles.AddRange([System.IO.FileInfo[]]@(Get-Item -Path "$($uninstallFiles[0].Directory.FullName)\unins[0-9][0-9][0-9].*" -ErrorAction SilentlyContinue))
 					}
 				}
 			}
