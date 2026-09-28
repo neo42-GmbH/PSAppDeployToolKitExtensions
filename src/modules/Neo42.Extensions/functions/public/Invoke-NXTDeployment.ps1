@@ -59,8 +59,16 @@
 						# Always announce the exception from the actual script
 						throw $_.Exception.InnerException
 					}
-					$ADTSession.InstallPhase = $currentPhase
+					if ($HookPoint.ToString() -notlike '*OnError' -and
+						$HookPoint -ne [PSADTNXT.Deployment.DeploymentHookPoint]::CustomEnd -and
+						$ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error
+					) {
+						[System.String]$errorMessage = "[$($ADTSession.InstallPhase)] changed the deployment exit code to [$($ADTSession.GetExitCode())] which indicated a failure. Aborting further processing."
+						Write-ADTLogEntry -Severity Error -Message $errorMessage
+						throw [PSADTNXT.Deployment.NxtDeploymentCancelException]::new($errorMessage)
+					}
 				}
+				$ADTSession.InstallPhase = $currentPhase
 			}
 			else {
 				Write-ADTLogEntry -Message "No callbacks registered for trigger [$HookPoint]."
@@ -79,9 +87,9 @@
 			process {
 				$ADTSession.NXT.ProcessResults.Add($Result)
 				if ($ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error) {
-					if (-not [System.String]::IsNullOrWhiteSpace($FailHook)) { . $callHook $FailHook }
+					if ($FailHook) { . $callHook $FailHook }
 					[System.Collections.Hashtable]$errorParams = @{
-						Exception    = [System.ApplicationException]::new($ADTSession.NXT.DeploymentType.ToString() + ' failed.')
+						Exception    = [System.ApplicationException]::new('Session [' + $ADTSession.NXT.DeploymentType.ToString() + '] failed.')
 						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
 						ErrorId      = "$($ADTSession.NXT.DeploymentType)Failed"
 						TargetObject = $Result

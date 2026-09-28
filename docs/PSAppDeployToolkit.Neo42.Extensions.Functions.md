@@ -1824,7 +1824,7 @@ The application search criteria used to find the application(s).
 |Position:|0|
 |Default value:|None|
 |Required:|True|
-|Accept pipeline input:|True (ByValue)|
+|Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
 #### -Store
@@ -3457,9 +3457,8 @@ Install-NXTApplication
     [-Method <DeploymentMethod>]
     [-Criteria <NxtApplicationCriteria>]
     [-LogFileName <string>]
-    [-CacheDirectory <string>]
+    [-CacheDirectory <DirectoryInfo>]
     [-Awaiter <INxtAwaiter[]>]
-    [-ExitOnProcessFailure]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
     [-NoCache]
@@ -3476,7 +3475,7 @@ Install-NXTApplication
     [-Method <DeploymentMethod>]
     [-Criteria <NxtApplicationCriteria>]
     [-LogFileName <string>]
-    [-CacheDirectory <string>]
+    [-CacheDirectory <DirectoryInfo>]
     [-Awaiter <INxtAwaiter[]>]
     [-NoCache]
     [<CommonParameters>]
@@ -3574,21 +3573,21 @@ The method to use for the installation.
 
 The path to the log file ending with a .log extension.
 This file will reside in the log directory of the ADT session.
-The resulting full path is available as %LogFile% in the ArgumentList.
 
 |Property|Value|
 |:---|:---|
 |Type:|String|
 |Position:|Named|
-|Default value:|ID.$deploymentTimestamp.log|
+|Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
 #### -Criteria
 
-An instance of NxtApplicationCriteria to search for the application. Is used for advanced scenarios like caching the uninstaller post installation.
-Usually not required, as the ADT session will provide a default instance.
+The application lookup criteria used to find the application in a application store.
+The resulting data is used for defaults, validation and backup mechanics.
+If the application is already installed, its display name is used for the default LogFileName.
 
 |Property|Value|
 |:---|:---|
@@ -3605,7 +3604,7 @@ The directory where the package cache is located. This is used to store the unin
 
 |Property|Value|
 |:---|:---|
-|Type:|String|
+|Type:|DirectoryInfo|
 |Position:|Named|
 |Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory|
 |Required:|False|
@@ -3647,19 +3646,6 @@ The exit codes that indicate a reboot is required after the installation. If the
 |Type:|Int32[]|
 |Position:|Named|
 |Default value:| - Defaults depend on the method and session configuration.|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -ExitOnProcessFailure
-
-Determines if the function should exit with an error if the process fails. If this parameter is specified, the deployment will be aborted.
-
-|Property|Value|
-|:---|:---|
-|Type:|SwitchParameter|
-|Position:|Named|
-|Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -7248,17 +7234,16 @@ Uninstalls an application based on the neo42 logic.
 ```PowerShell
 # ParameterSet ManualExitCodes
 Uninstall-NXTApplication
-    [-Target] <string>
-    [-UninstallKey <string>]
+    [[-Target] <string>]
+    [-Criteria <NxtApplicationCriteria>]
     [-Method <DeploymentMethod>]
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
-    [-CacheDirectory <string>]
+    [-CacheDirectory <DirectoryInfo>]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
-    [-ExitOnProcessFailure]
     [-NoCache]
     [<CommonParameters>]
 ```
@@ -7282,7 +7267,6 @@ Uninstall-NXTApplication
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
-    [-ExitOnProcessFailure]
     [-NoCache]
     [<CommonParameters>]
 ```
@@ -7295,7 +7279,7 @@ Uninstall-NXTApplication
     [-Method <DeploymentMethod>]
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
-    [-CacheDirectory <string>]
+    [-CacheDirectory <DirectoryInfo>]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-NoCache]
@@ -7309,12 +7293,11 @@ Uninstall-NXTApplication
     [-Method <DeploymentMethod>]
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
-    [-CacheDirectory <string>]
+    [-CacheDirectory <DirectoryInfo>]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
-    [-ExitOnProcessFailure]
     [-NoCache]
     [<CommonParameters>]
 ```
@@ -7322,13 +7305,13 @@ Uninstall-NXTApplication
 ```PowerShell
 # ParameterSet ManualIgnoreExitCodes
 Uninstall-NXTApplication
-    [-Target] <string>
+    [[-Target] <string>]
     -IgnoreExitCodes
-    [-UninstallKey <string>]
+    [-Criteria <NxtApplicationCriteria>]
     [-Method <DeploymentMethod>]
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
-    [-CacheDirectory <string>]
+    [-CacheDirectory <DirectoryInfo>]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-NoCache]
@@ -7345,12 +7328,28 @@ Supports multiple parameter sets to allow for different types of application def
 #### Example 1
 
 ```PowerShell
-Uninstall-NXTApplication -Target 'C:\Temp\test.msi' -ArgumentList '/quiet /norestart' -Method MSI
+Uninstall-NXTApplication -Target '$envProgramFiles\myprogram\uninstall.exe' -ArgumentList '\q'
 ```
 
-Uninstalls the application using the MSI method with the specified arguments.
+Starts the uninstall.exe with the '\q' parameter but without any further logic attached to it (Method: Setup)
 
 #### Example 2
+
+```PowerShell
+Uninstall-NXTApplication -Target '{5DE0DE9D-5ABE-453E-8A84-A4BF443FC24B}' -Method MSI
+```
+
+Uninstalls the MSI application that is registered with above product code.
+
+#### Example 3
+
+```PowerShell
+Uninstall-NXTApplication -Criteria @{ Store = 'ARP'; Identifier = 'TestApp' }
+```
+
+Uninstalls the application found by the criteria using its registered uninstall information and validates its removal afterwards.
+
+#### Example 4
 
 ```PowerShell
 Get-NXTApplication -Identifier '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
@@ -7358,7 +7357,7 @@ Get-NXTApplication -Identifier '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninst
 
 Uninstalls the application using a application object obtained from the NXT function.
 
-#### Example 3
+#### Example 5
 
 ```PowerShell
 Get-ADTApplication -Name 'Test' -NameMatch 'Exact' | Uninstall-NXTApplication
@@ -7366,13 +7365,21 @@ Get-ADTApplication -Name 'Test' -NameMatch 'Exact' | Uninstall-NXTApplication
 
 Uninstalls the application using a application object obtained from the ADT function.
 
-#### Example 4
+#### Example 6
 
 ```PowerShell
 Get-NXTRegisteredPackage -PackageId '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
 ```
 
 Uninstalls the application referenced by a registered package object.
+
+#### Example 7
+
+```PowerShell
+Uninstall-NXTApplication -Target 'Microsoft.WindowsScan_8wekyb3d8bbwe' -Method Appx
+```
+
+Deprovisions the Windows Scanner Appx app for all users.
 
 ### INPUTS
 
@@ -7391,13 +7398,14 @@ PSADT.ProcessManagement.ProcessResult - The result of the uninstallation process
 #### -Target
 
 The path to the uninstaller file.
+If not specified, the target is resolved from the application found by the Criteria.
 
 |Property|Value|
 |:---|:---|
 |Type:|String|
 |Position:|0|
 |Default value:|None|
-|Required:|True|
+|Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -7427,13 +7435,16 @@ The registered package object to use for the uninstallation.
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
-#### -UninstallKey
+#### -Criteria
 
-The full path to the uninstall key that this invocation uninstalls. Used for collection information about the uninstall process.
+The application lookup criteria used to find the application in a application store.
+The resulting data is used for defaults, validation and backup mechanics.
+Values that are not specified (Target, Method, ArgumentList, LogFileName) default to the data of the found application.
+After the uninstallation, the criteria must no longer match any application.
 
 |Property|Value|
 |:---|:---|
-|Type:|String|
+|Type:|NxtApplicationCriteria|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -7489,7 +7500,7 @@ The package directory to use for the uninstallation.
 
 |Property|Value|
 |:---|:---|
-|Type:|String|
+|Type:|DirectoryInfo|
 |Position:|Named|
 |Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory|
 |Required:|False|
@@ -7513,7 +7524,6 @@ Optional awaiter objects that should be evaluated post uninstallation.
 
 The path to the log file ending with a .log extension.
 This file will reside in the log directory of the ADT session.
-The resulting full path is available as %LogFile% in the ArgumentList.
 
 |Property|Value|
 |:---|:---|
@@ -7566,19 +7576,6 @@ Determines if the function should ignore exit codes and not treat them as errors
 #### -NoCache
 
 Determines if the function should avoid using cached uninstaller files.
-
-|Property|Value|
-|:---|:---|
-|Type:|SwitchParameter|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -ExitOnProcessFailure
-
-Determines if the function should exit with an error if the process fails. If this parameter is specified, the deployment will be aborted.
 
 |Property|Value|
 |:---|:---|
