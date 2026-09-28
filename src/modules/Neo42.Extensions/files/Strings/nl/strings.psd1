@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Er is een fout opgetreden tijdens de installatie van de toepassing. Raadpleeg het logbestand voor meer informatie.'
-			Repair    = 'Er is een fout opgetreden tijdens de reparatie van de toepassing. Raadpleeg het logbestand voor meer informatie.'
-			Uninstall = 'Er is een fout opgetreden tijdens de deïnstallatie van de toepassing. Raadpleeg het logbestand voor meer informatie.'
-		}
+		ErrorMessage  = "De implementatie van {0} is mislukt tijdens `"{1}`" met fout {2}.`nFoutmelding:`n`n{3}`n`nRaadpleeg de logbestanden voor meer informatie of neem contact op met een beheerder voor verdere hulp."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Sla uw werk op en sluit de toepassingen.'

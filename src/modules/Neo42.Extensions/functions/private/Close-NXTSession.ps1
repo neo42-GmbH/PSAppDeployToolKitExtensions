@@ -1,4 +1,4 @@
-function Close-NXTSession {
+﻿function Close-NXTSession {
 	<#
 	.SYNOPSIS
 	This function is invoked at the end of every Close-ADTSession call.
@@ -74,6 +74,13 @@ function Close-NXTSession {
 		$null = Show-ADTInstallationPrompt -ButtonRightText OK -NoWait `
 			-NotTopMost:($adtSession.NXT.SetupCfg['AskKillProcesses']['TOPMOSTWINDOW'] -ne '2') `
 			-Title $adtStrings['BalloonTip']['Error'][$adtSession.DeploymentType.ToString()] `
-			-Message $adtStrings['NXT']['ErrorMessage'][$adtSession.DeploymentType.ToString()]
+			-Message ([System.String]::Format(
+				$adtStrings['NXT']['ErrorMessage'],
+				$adtSession.InstallTitle,
+				$adtSession.NXT.ErrorPhase,
+				$adtSession.GetExitCode(),
+				$adtSession.NXT.ErrorMessage
+			)
+		)
 	}
 }

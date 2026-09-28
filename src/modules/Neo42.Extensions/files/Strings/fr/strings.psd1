@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Une erreur s''est produite lors de l''installation de l''application. Veuillez consulter le fichier journal pour plus d''informations.'
-			Repair    = 'Une erreur s''est produite lors de la réparation de l''application. Veuillez consulter le fichier journal pour plus d''informations.'
-			Uninstall = 'Une erreur s''est produite lors de la désinstallation de l''application. Veuillez consulter le fichier journal pour plus d''informations.'
-		}
+		ErrorMessage  = "Le déploiement de {0} a échoué pendant `"{1}`" avec l'erreur {2}.`nMessage d'erreur :`n`n{3}`n`nVeuillez consulter les journaux pour plus d'informations ou contacter un administrateur pour obtenir de l'aide."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Veuillez enregistrer votre travail et fermer les applications.'

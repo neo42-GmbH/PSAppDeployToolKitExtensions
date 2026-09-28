@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Ett fel uppstod under installationen av programmet. Kontrollera loggfilen för mer information.'
-			Repair    = 'Ett fel uppstod under reparationen av programmet. Kontrollera loggfilen för mer information.'
-			Uninstall = 'Ett fel uppstod under avinstallationen av programmet. Kontrollera loggfilen för mer information.'
-		}
+		ErrorMessage  = "Distributionen av {0} misslyckades under `"{1}`" med fel {2}.`nFelmeddelande:`n`n{3}`n`nKontrollera loggarna för mer information eller kontakta en administratör för ytterligare hjälp."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Spara ditt arbete och stäng programmen.'

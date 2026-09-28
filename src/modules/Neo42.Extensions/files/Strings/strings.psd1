@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'An error occurred during the installation of the application. Please check the log file for more information.'
-			Repair    = 'An error occurred during the repair of the application. Please check the log file for more information.'
-			Uninstall = 'An error occurred during the uninstallation of the application. Please check the log file for more information.'
-		}
+		ErrorMessage  = "Deployment of {0} failed during `"{1}`" with error {2}.`nError message:`n`n{3}`n`nPlease check the logs for more information or contact an administrator for further assistance."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Please save your work and close the applications.'

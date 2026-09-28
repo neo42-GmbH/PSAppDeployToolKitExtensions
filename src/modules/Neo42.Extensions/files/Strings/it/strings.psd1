@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Si è verificato un errore durante l''installazione dell''applicazione. Controllare il file di registro per ulteriori informazioni.'
-			Repair    = 'Si è verificato un errore durante la riparazione dell''applicazione. Controllare il file di registro per ulteriori informazioni.'
-			Uninstall = 'Si è verificato un errore durante la disinstallazione dell''applicazione. Controllare il file di registro per ulteriori informazioni.'
-		}
+		ErrorMessage  = "La distribuzione di {0} non è riuscita durante `"{1}`" con l'errore {2}.`nMessaggio di errore:`n`n{3}`n`nControllare i registri per ulteriori informazioni o contattare un amministratore per ulteriore assistenza."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Salvare il lavoro e chiudere le applicazioni.'

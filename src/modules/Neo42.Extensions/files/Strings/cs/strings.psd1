@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Během instalace aplikace došlo k chybě. Další informace najdete v souboru protokolu.'
-			Repair    = 'Během opravy aplikace došlo k chybě. Další informace najdete v souboru protokolu.'
-			Uninstall = 'Během odinstalace aplikace došlo k chybě. Další informace najdete v souboru protokolu.'
-		}
+		ErrorMessage  = "Nasazení {0} selhalo během `"{1}`" s chybou {2}.`nChybová zpráva:`n`n{3}`n`nDalší informace najdete v protokolech, případně se obraťte na správce s žádostí o další pomoc."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Uložte prosím svou práci a zavřete aplikace.'

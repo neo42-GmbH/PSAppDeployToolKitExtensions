@@ -75,6 +75,13 @@ namespace PSADTNXT.Deployment
 
 		public List<ProcessResult> ProcessResults { get; } = [];
 
+		[Hidden]
+		public string? ErrorMessage { get; set; }
+
+		[Hidden]
+		public string? ErrorPhase { get; set; }
+
+		[Hidden]
 		public DeploymentHookPoint? LastRunHookPoint { get; set; }
 
 		public NxtIniDocument SetupCfg { get; }

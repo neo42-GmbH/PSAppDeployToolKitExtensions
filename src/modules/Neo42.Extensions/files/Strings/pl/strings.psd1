@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Podczas instalacji aplikacji wystąpił błąd. Sprawdź plik dziennika, aby uzyskać więcej informacji.'
-			Repair    = 'Podczas naprawy aplikacji wystąpił błąd. Sprawdź plik dziennika, aby uzyskać więcej informacji.'
-			Uninstall = 'Podczas odinstalowywania aplikacji wystąpił błąd. Sprawdź plik dziennika, aby uzyskać więcej informacji.'
-		}
+		ErrorMessage  = "Wdrażanie {0} nie powiodło się w fazie `"{1}`" z błędem {2}.`nKomunikat o błędzie:`n`n{3}`n`nSprawdź dzienniki, aby uzyskać więcej informacji, lub skontaktuj się z administratorem w celu uzyskania dalszej pomocy."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Zapisz swoją pracę i zamknij aplikacje.'

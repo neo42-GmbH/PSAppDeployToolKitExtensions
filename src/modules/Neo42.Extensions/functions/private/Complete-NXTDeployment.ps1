@@ -6,15 +6,13 @@
 	param (
 		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
-		$ADTSession = (Get-ADTSession),
-		[System.String]
-		$ErrorMessage
+		$ADTSession = (Get-ADTSession)
 	)
 	try {
 		$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Completion"
 
 		if ($ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error) {
-			Register-NXTPackage -ADTSession $ADTSession -AsError -ErrorMessage $ErrorMessage
+			Register-NXTPackage -ADTSession $ADTSession -AsError -ErrorMessage $ADTSession.NXT.ErrorMessage
 			return
 		}
 

@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Sovelluksen asennuksen aikana tapahtui virhe. Tarkista lokitiedosto saadaksesi lisätietoja.'
-			Repair    = 'Sovelluksen korjauksen aikana tapahtui virhe. Tarkista lokitiedosto saadaksesi lisätietoja.'
-			Uninstall = 'Sovelluksen asennuksen poiston aikana tapahtui virhe. Tarkista lokitiedosto saadaksesi lisätietoja.'
-		}
+		ErrorMessage  = "Kohteen {0} käyttöönotto epäonnistui vaiheessa `"{1}`" virheellä {2}.`nVirheilmoitus:`n`n{3}`n`nTarkista lokit saadaksesi lisätietoja tai ota yhteyttä järjestelmänvalvojaan saadaksesi lisäapua."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Tallenna työsi ja sulje sovellukset.'

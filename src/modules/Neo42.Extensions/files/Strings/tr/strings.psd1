@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Uygulamanın kurulumu sırasında bir hata oluştu. Daha fazla bilgi için lütfen günlük dosyasını kontrol edin.'
-			Repair    = 'Uygulamanın onarımı sırasında bir hata oluştu. Daha fazla bilgi için lütfen günlük dosyasını kontrol edin.'
-			Uninstall = 'Uygulamanın kaldırılması sırasında bir hata oluştu. Daha fazla bilgi için lütfen günlük dosyasını kontrol edin.'
-		}
+		ErrorMessage  = "{0} dağıtımı `"{1}`" aşamasında {2} hatasıyla başarısız oldu.`nHata iletisi:`n`n{3}`n`nDaha fazla bilgi için lütfen günlükleri kontrol edin veya daha fazla yardım için bir yöneticiye başvurun."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Lütfen çalışmanızı kaydedin ve uygulamaları kapatın.'

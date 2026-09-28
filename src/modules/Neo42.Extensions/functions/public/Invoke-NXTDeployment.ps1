@@ -46,11 +46,12 @@
 					}
 					if ([System.String]::IsNullOrWhiteSpace($source)) {
 						Write-ADTLogEntry -Message "Invoking callback [$($callback.Name)] for hook point [$HookPoint]."
+						$ADTSession.InstallPhase = $HookPoint
 					}
 					else {
 						Write-ADTLogEntry -Message "Invoking [$source] callback [$($callback.Name)] for hook point [$HookPoint]."
+						$ADTSession.InstallPhase = "${source}:${HookPoint}"
 					}
-					$ADTSession.InstallPhase = $HookPoint
 					try {
 						$ExecutionContext.InvokeCommand.InvokeScript($ADTSession.NXT.DeployAppScriptSessionState, { & $args[0] }.Ast.GetScriptBlock(), $callBack)
 					}
@@ -58,9 +59,7 @@
 						# Always announce the exception from the actual script
 						throw $_.Exception.InnerException
 					}
-					finally {
-						if (Test-ADTSessionActive) { $ADTSession.InstallPhase = $currentPhase }
-					}
+					$ADTSession.InstallPhase = $currentPhase
 				}
 			}
 			else {
@@ -96,7 +95,6 @@
 	process {
 		try {
 			try {
-				[System.String]$errorMessage = [System.String]::Empty
 				$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Preparation"
 				Write-ADTLogEntry -Message "Starting Neo42.Extension's [$($ADTSession.NXT.DeploymentType)] deployment logic for [$($ADTSession.InstallTitle)]."
 
@@ -120,6 +118,8 @@
 							if ($ADTSession.GetDeploymentStatus() -ne [PSADT.Module.DeploymentStatus]::Error) {
 								$ADTSession.SetExitCode(60001)
 							}
+							$ADTSession.NXT.ErrorMessage = $_.Exception.Message
+							$ADTSession.NXT.ErrorPhase = $ADTSession.InstallPhase
 						}
 						finally {
 							# Update the active setup registry key to indicate the package was successfully installed
@@ -339,16 +339,19 @@
 			}
 			catch [PSADTNXT.Deployment.NxtDeploymentCancelException] {
 				Write-ADTLogEntry -Message 'The deployment was intentionally cancelled.' -DebugMessage
+				$ADTSession.NXT.ErrorMessage = $_.Exception.Message
+				$ADTSession.NXT.ErrorPhase = $ADTSession.InstallPhase
 			}
 			catch {
 				Write-ADTLogEntry -Severity Error -Message (Resolve-ADTErrorRecord -ErrorRecord $_ -IncludeErrorInnerException)
 				if ($ADTSession.GetDeploymentStatus() -ne [PSADT.Module.DeploymentStatus]::Error) { $ADTSession.SetExitCode(69000) }
-				$errorMessage = $_.Exception.Message
+				$ADTSession.NXT.ErrorMessage = $_.Exception.Message
+				$ADTSession.NXT.ErrorPhase = $ADTSession.InstallPhase
 			}
 
 			if ($ADTSession.NXT.DeploymentType.IsMachinePart) {
 				try {
-					Complete-NXTDeployment -ADTSession $ADTSession -ErrorMessage $errorMessage
+					Complete-NXTDeployment -ADTSession $ADTSession
 				}
 				catch {
 					Write-ADTLogEntry -Severity Error -Message (Resolve-ADTErrorRecord -ErrorRecord $_ -IncludeErrorInnerException)
