@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Management.Automation;
+using System.Net;
 
 namespace PSADTNXT.Application
 {
@@ -51,6 +52,16 @@ namespace PSADTNXT.Application
 		public static implicit operator NxtApplicationCriteria(Hashtable hashtable)
 		{
 			return FromHashtable(hashtable);
+		}
+
+		public static implicit operator NxtApplicationCriteria(ScriptBlock scriptBlock)
+		{
+			return FromScriptBlock(scriptBlock);
+		}
+
+		public static implicit operator NxtApplicationCriteria(string identifier)
+		{
+			return FromString(identifier);
 		}
 
 		public static NxtApplicationCriteria FromHashtable(Hashtable hashtable)
@@ -109,6 +120,16 @@ namespace PSADTNXT.Application
 			{
 				return new NxtApplicationCriteria(store, filter!);
 			}
+		}
+
+		public static NxtApplicationCriteria FromScriptBlock(ScriptBlock scriptBlock)
+		{
+			return new NxtApplicationCriteria(ApplicationStore.ARP, scriptBlock);
+		}
+
+		public static NxtApplicationCriteria FromString(string identifier)
+		{
+			return new NxtApplicationCriteria(ApplicationStore.ARP, identifier);
 		}
 
 		public override string ToString()
