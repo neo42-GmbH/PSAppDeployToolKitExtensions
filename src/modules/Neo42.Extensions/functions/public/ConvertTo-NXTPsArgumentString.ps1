@@ -145,7 +145,9 @@
 			}
 
 			# Remove the leading space and return the argument string
-			$null = $arguments.Remove(0, 1)
+			if ($arguments.Length -gt 0) {
+				$null = $arguments.Remove(0, 1)
+			}
 			return $arguments.ToString()
 		}
 		catch {

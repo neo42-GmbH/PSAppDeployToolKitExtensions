@@ -1,4 +1,4 @@
-function Restart-NXTDeployScript {
+﻿function Restart-NXTDeployScript {
 	<#
 	.SYNOPSIS
 	Restart the script if one of the conditions is met.
@@ -54,8 +54,8 @@ function Restart-NXTDeployScript {
 			if ($unconditional) { return }
 
 			# Determine if restart conditions are met
-			[System.Boolean]$isTrigger = $WhenTriggerDeployment -and $parameters.ContainsKey('DeploymentType') -and [PSADTNXT.Deployment.NxtDeploymentType]::new($parameters.DeploymentType).IsTrigger
-			[System.Boolean]$is32on64 = $When32on64Bit -and [System.Environment]::Is64BitOperatingSystem -and -not [System.Environment]::Is64BitProcess
+			[System.Boolean]$isTrigger = $WhenTriggerDeployment.ToBool() -and $parameters.ContainsKey('DeploymentType') -and [PSADTNXT.Deployment.NxtDeploymentType]::new($parameters.DeploymentType).IsTrigger
+			[System.Boolean]$is32on64 = $When32on64Bit.ToBool() -and [System.Environment]::Is64BitOperatingSystem -and -not [System.Environment]::Is64BitProcess
 
 			if (-not ($isTrigger -or $is32on64)) { return }
 			$PSCmdlet.WriteWarning('Restarting the script...')
