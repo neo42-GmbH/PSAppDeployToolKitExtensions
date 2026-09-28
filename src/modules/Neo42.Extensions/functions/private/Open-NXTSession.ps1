@@ -25,7 +25,7 @@
 	if ($adtSession.NXT.DeploymentType.IsMachinePart -and
 		(Get-AuthenticodeSignature -FilePath $adtSession.NXT.DeployAppScript.FullName).Status -ne [System.Management.Automation.SignatureStatus]::Valid
 	) {
-		Write-ADTLogEntry -Severity Warning -Message "The script [$scriptPath] is not signed or trusted. Running untrusted code is not recommended and may be blocked by security policies."
+		Write-ADTLogEntry -Severity Warning -Message "The script [$($adtSession.NXT.DeployAppScript.FullName))] is not signed or trusted. Running untrusted code is not recommended and may be blocked by security policies."
 	}
 
 	# Validate the package architecture against the operating system architecture
