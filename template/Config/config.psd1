@@ -1,7 +1,7 @@
 ﻿@{
 	Assets  = @{
 		# Specify filename or Base64 string of the logo.
-		Logo        = '..\Assets\Logo.png'
+		Logo        = '..\Setup.ico'
 
 		# Specify filename or Base64 string of the logo (for dark mode).
 		LogoDark    = $null
