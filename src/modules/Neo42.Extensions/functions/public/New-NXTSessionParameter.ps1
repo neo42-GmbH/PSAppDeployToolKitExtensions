@@ -32,7 +32,7 @@
 		[ValidateScript({ $_.Exists -and $_.Extension -eq '.cfg' })]
 		[PSDefaultValue(Value = 'Setup.cfg, CustomSetup.cfg')]
 		[System.IO.FileInfo[]]
-		$SetupCfg = $([System.String[]]@("$($ScriptDirectory.FullName)\Setup.cfg", "$($ScriptDirectory.FullName)\CustomSetup.cfg" | & { process { if ([System.IO.File]::Exists($_)) { $_ } } }))
+		$SetupCfg = @(Get-Item -LiteralPath "$($ScriptDirectory.FullName)\Setup.cfg", "$($ScriptDirectory.FullName)\CustomSetup.cfg" -ErrorAction Ignore)
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState

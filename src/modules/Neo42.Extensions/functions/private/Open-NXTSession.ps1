@@ -54,7 +54,12 @@
 
 	# Apply the defined strict mode
 	if (-not [System.String]::IsNullOrWhiteSpace($adtConfig['NXT']['PowerShell']['StrictModeVersion'])) {
-		$null = $ExecutionContext.InvokeCommand.InvokeScript($adtSession.NXT.DeployAppScriptSessionState, { . $args[0] -Version $args[1] }.Ast.GetScriptBlock(), $script:CommandTable.'Set-StrictMode', $adtConfig['NXT']['PowerShell']['StrictModeVersion'])
+		$null = $ExecutionContext.InvokeCommand.InvokeScript(
+			$adtSession.NXT.DeployAppScriptSessionState,
+			{ . $args[0] -Version $args[1] -ErrorAction Stop }.Ast.GetScriptBlock(),
+			$script:CommandTable.'Set-StrictMode',
+			$adtConfig['NXT']['PowerShell']['StrictModeVersion']
+		)
 	}
 
 	# Apply the PowerShell process execution policy to the whole execution environment
