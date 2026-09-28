@@ -41,7 +41,6 @@
 	.PARAMETER LogFileName
 	The path to the log file ending with a .log extension.
 	This file will reside in the log directory of the ADT session.
-	The resulting full path is available as %LogFile% in the ArgumentList.
 	.PARAMETER SuccessExitCodes
 	The exit codes that indicate a successful uninstallation.
 	.PARAMETER RebootExitCodes
@@ -211,6 +210,7 @@
 				}
 				else {
 					Write-ADTLogEntry -Severity Warning -Message 'Application lookup criteria were provided but no application was found before uninstallation. Continuing without application defaults.'
+					return [PSADT.ProcessManagement.ProcessResult]::new(0)
 				}
 			}
 
@@ -305,19 +305,6 @@
 			# Escape any invalid and whitespace characters in the log file name and build the log file path.
 			$LogFileName = [PSADTNXT.Extensions.NxtStringExtensions]::ToFileNameCompatible($LogFileName, $true, '_')
 			[System.IO.FileInfo]$logFile = [System.IO.Path]::Combine($adtSession.LogPath, $LogFileName)
-
-			# Replace known variables in the target and arguments
-			@{
-				'%LogFile%'          = $logFile.FullName
-				'%DirFiles%'         = if ($adtSession.DirFiles) { $adtSession.DirFiles } else { [System.String]::Empty }
-				'%DirSupportFiles%'  = if ($adtSession.DirSupportFiles) { $adtSession.DirSupportFiles } else { [System.String]::Empty }
-				'%PackageDirectory%' = $adtSession.NXT.Package.Directory.FullName
-			}.GetEnumerator() | & {
-				process {
-					$Target = $Target.Replace($_.Key, $_.Value)
-					$null = $finalArguments.Replace($_.Key, $_.Value)
-				}
-			}
 
 			[System.Collections.Hashtable]$startSplat = Remove-ADTHashtableNullOrEmptyValues @{
 				FilePath             = if (-not [System.IO.Path]::IsPathRooted($Target) -and $adtSession.DirFiles) { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) } else { $Target }
