@@ -123,7 +123,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			};
 		}
 
-		internal static DeploymentMethod? MapLegacyDeploymentMethodToEnum(string method)
+		private static DeploymentMethod? MapLegacyDeploymentMethodToEnum(string method)
 		{
 			return method.Equals("None", StringComparison.OrdinalIgnoreCase)
 				? null
@@ -136,7 +136,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				: DeploymentMethod.Setup;
 		}
 
-		internal static NxtPackageMetadataModel TranslatePackageMetadataModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtPackageMetadataModel TranslatePackageMetadataModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			return new NxtPackageMetadataModel
 			{
@@ -163,7 +163,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			};
 		}
 
-		internal static List<NxtRequirementModel> TranslateRequirementModels(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static List<NxtRequirementModel> TranslateRequirementModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			return legacyModel.DependentPackages?
 				.Select(d => new NxtRequirementModel()
@@ -180,7 +180,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				.ToList() ?? [];
 		}
 
-		internal static NxtApplicationDetectionModel TranslateDetectionModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtApplicationDetectionModel TranslateDetectionModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var detectionModel = new NxtApplicationDetectionModel()
 			{
@@ -232,18 +232,16 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				}
 			}
 
-			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaStore")) is NxtLegacyVariableModel detectionStoreVar
-				&& !string.IsNullOrWhiteSpace(detectionStoreVar.Value))
+			if (legacyModel.TryGetCompatVariable("DetectionCriteriaStore", out var detectionStoreVar))
 			{
 				detectionModel.Enabled = true;
 				detectionModel.Criteria ??= new NxtApplicationCriteriaModel();
-				detectionModel.Criteria.Store = Enum.TryParse<ApplicationStore>(detectionStoreVar.Value, true, out var varStore)
+				detectionModel.Criteria.Store = Enum.TryParse<ApplicationStore>(detectionStoreVar, true, out var varStore)
 					? varStore
-					: throw new InvalidDataException($"The value [{detectionStoreVar.Value}] of [{detectionStoreVar.Name}] cannot be parsed into an [ApplicationStore].");
+					: throw new InvalidDataException($"The value [{detectionStoreVar}] of [DetectionCriteriaStore] cannot be parsed into an [ApplicationStore].");
 			}
 
-			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaFilter")) is NxtLegacyVariableModel detectionFilterVar
-				&& !string.IsNullOrWhiteSpace(detectionFilterVar.Value))
+			if (legacyModel.TryGetCompatVariable("DetectionCriteriaFilter", out var detectionFilterVar))
 			{
 				detectionModel.Enabled = true;
 				detectionModel.Criteria ??= new NxtApplicationCriteriaModel
@@ -251,18 +249,15 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					Store = ApplicationStore.ARP
 				};
 				detectionModel.Criteria.Identifier = null;
-				detectionModel.Criteria.Filter = ScriptBlock.Create(detectionFilterVar.Value);
+				detectionModel.Criteria.Filter = ScriptBlock.Create(detectionFilterVar);
 			}
 
 			return detectionModel;
 		}
 
-		internal static NxtSoftMigrationModel TranslateSoftmigrationModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtSoftMigrationModel TranslateSoftmigrationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-			var softMigrationModel = new NxtSoftMigrationModel()
-			{
-				Enabled = false,
-			};
+			var softMigrationModel = new NxtSoftMigrationModel();
 			if (!string.IsNullOrWhiteSpace(legacyModel.SoftMigration?.File?.FullNameToCheck))
 			{
 				softMigrationModel.Enabled = true;
@@ -270,7 +265,9 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				softMigrationModel.Target = legacyModel.SoftMigration!.File!.FullNameToCheck;
 				softMigrationModel.Version = legacyModel.SoftMigration.File?.VersionToCheck;
 			}
-			else if (!string.IsNullOrWhiteSpace(legacyModel.DisplayVersion) && !string.IsNullOrWhiteSpace(legacyModel.UninstallKey))
+			else if (!string.IsNullOrWhiteSpace(legacyModel.DisplayVersion)
+					&& (!string.IsNullOrWhiteSpace(legacyModel.UninstallKey) || legacyModel.TryGetCompatVariable("DetectionCriteriaFilter", out _))
+			)
 			{
 				softMigrationModel.Enabled = true;
 				softMigrationModel.Mode = SoftMigrationDetectionMode.Detection;
@@ -280,7 +277,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			return softMigrationModel;
 		}
 
-		internal static List<NxtCloseProcessesModel> TranslateCloseProcessModels(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static List<NxtCloseProcessesModel> TranslateCloseProcessModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 #pragma warning disable CS0618
 			var closeProcessesList = legacyModel.AppKillProcesses?
@@ -295,14 +292,13 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				)
 				.ToList() ?? [];
 
-			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("CloseProcessesReopen")) is NxtLegacyVariableModel closeProcessesVar
-				&& !string.IsNullOrWhiteSpace(closeProcessesVar.Value))
+			if (legacyModel.TryGetCompatVariable("CloseProcessesReopen", out var closeProcessesVar))
 			{
-				var entries = closeProcessesVar.Value
+				var entries = closeProcessesVar!
 					.Split(',')
 					.Select(e => Enum.TryParse<ReopenMode>(e.Trim(), true, out var varMode)
 						? varMode
-						: throw new InvalidDataException($"The value [{e}] of [{closeProcessesVar.Name}] cannot be parsed into a [ReopenMode]."))
+						: throw new InvalidDataException($"The value [{e}] of [CloseProcessesReopen] cannot be parsed into a [ReopenMode]."))
 					.ToList();
 
 				if (entries.Count != closeProcessesList.Count)
@@ -319,7 +315,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 #pragma warning restore CS0618
 		}
 
-		internal static List<NxtShortcutModel> TranslateManagedShortcutModels(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static List<NxtShortcutModel> TranslateManagedShortcutModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var managedShortcuts = new List<NxtShortcutModel>();
 			managedShortcuts.AddRange(
@@ -345,7 +341,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			return managedShortcuts;
 		}
 
-		internal static List<NxtApplicationCriteriaModel> TranslateManagedApplicationModels(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static List<NxtApplicationCriteriaModel> TranslateManagedApplicationModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var managedApplications = new List<NxtApplicationCriteriaModel>();
 			if (legacyModel.UninstallKeysToHide is List<NxtLegacyKeyHideModel> uninstallKeysToHide)
@@ -376,7 +372,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			return managedApplications;
 		}
 
-		internal static NxtDeploymentContainerModel TranslateDeploymentContainerModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtDeploymentContainerModel TranslateDeploymentContainerModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			return new NxtDeploymentContainerModel
 			{
@@ -386,7 +382,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			};
 		}
 
-		internal static NxtInstallationModel TranslateInstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtInstallationModel TranslateInstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var installModel = new NxtInstallationModel
 			{
@@ -434,18 +430,17 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				UserPart = legacyModel.UserPartOnInstallation,
 			};
 
-			if (legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DeploymentInstallationUpgradeMode")) is NxtLegacyVariableModel upgradeModeVar
-				&& !string.IsNullOrWhiteSpace(upgradeModeVar.Value))
+			if (legacyModel.TryGetCompatVariable("DeploymentInstallationUpgradeMode", out var upgradeModeVar))
 			{
-				installModel.UpgradeMode = Enum.TryParse<UpgradeMode>(upgradeModeVar.Value, true, out var varUpgradeMode)
+				installModel.UpgradeMode = Enum.TryParse<UpgradeMode>(upgradeModeVar, true, out var varUpgradeMode)
 					? varUpgradeMode
-					: throw new InvalidDataException($"The value [{upgradeModeVar.Value}] of [{upgradeModeVar.Name}] cannot be parsed into an [ApplicationStore].");
+					: throw new InvalidDataException($"The value [{upgradeModeVar}] of [DeploymentInstallationUpgradeMode] cannot be parsed into an [ApplicationStore].");
 			}
 
 			return installModel;
 		}
 
-		internal static NxtUninstallationModel TranslateUninstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtUninstallationModel TranslateUninstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			return new NxtUninstallationModel
 			{
@@ -492,7 +487,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		}
 
-		internal static Dictionary<string, object> TranslateVariables(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static Dictionary<string, object> TranslateVariables(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var variables = new Dictionary<string, object>();
 			if (legacyModel.PackageSpecificVariablesRaw is List<NxtLegacyVariableModel> packageSpecificVariables)
@@ -555,6 +550,12 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			result.Add(new("AppLogFolder", "%LogFolder%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 
 			return result;
+		}
+
+		private static bool TryGetCompatVariable(this NxtLegacyPackageConfigurationModel legacyModel, string name, out string? value)
+		{
+			value = legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaStore") && !string.IsNullOrWhiteSpace(psvr.Value))?.Value;
+			return value != null;
 		}
 	}
 }
