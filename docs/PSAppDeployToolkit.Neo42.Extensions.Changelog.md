@@ -76,7 +76,7 @@
   - Logging options.
   - And many more. Check the toolkit configuration for all available options.
 
-- Empirum specific logic was moved to its dedicated module `PSAppDeployToolkit.Neo42.Extensions.Empirum`. This module is loaded automatically if the deployment is running within an Empirum managed environment and it is present in the package root.
+- Empirum specific logic was moved to a dedicated deployment system module named `PSAppDeployToolkit.Neo42.Extensions.DeploymentSystem`. This module is loaded automatically and applies the deployment system specific logic.
 
 - The source code of the `DeployNxtApplication.exe` is now part of the repository and build process.
 

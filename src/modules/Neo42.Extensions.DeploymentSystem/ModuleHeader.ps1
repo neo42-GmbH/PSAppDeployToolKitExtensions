@@ -1,8 +1,8 @@
-<#
+﻿<#
 .SYNOPSIS
-This module extends the Neo42.Extensions for PSAppDeployToolkit with Empirum specific logic.
+This module extends the Neo42.Extensions for PSAppDeployToolkit with deployment system specific logic.
 .DESCRIPTION
-This module is not intended to be used directly. It is loaded by the PSAppDeployToolkit.Neo42.Extensions module.
+This module is not intended to be used directly. It is loaded by the PSAppDeployToolkit.Neo42.DeploymentSystem module.
 .NOTES
 # LICENSE #
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.

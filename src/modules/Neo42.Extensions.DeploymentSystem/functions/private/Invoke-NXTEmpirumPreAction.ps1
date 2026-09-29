@@ -11,7 +11,6 @@
 	process {
 		try {
 			[PSADTNXT.Foundation.NxtDeploymentSession]$adtSession = Get-ADTSession
-			if ($adtSession.NXT.DeploymentSystem -ne 'Empirum') { return }
 
 			# Import variables set in Empirum to the SetupConfig
 			if ($script:EMP.ComputerValues.Exists) {

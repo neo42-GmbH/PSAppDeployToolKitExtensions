@@ -109,7 +109,7 @@
 				SessionClass                = [PSADTNXT.Foundation.NxtDeploymentSession]
 
 				# External NXT parameters
-				DeploymentSystem            = if ($Invocation.BoundParameters.ContainsKey('DeploymentSystem')) { $Invocation.BoundParameters['DeploymentSystem'] } else { Get-NXTDeploymentSystem }
+				DeploymentSystem            = if ($Invocation.BoundParameters.ContainsKey('DeploymentSystem')) { $Invocation.BoundParameters['DeploymentSystem'] } else { 'Unknown' }
 				DeployAppScriptPath         = $Invocation.MyCommand.Definition
 				PackageConfig               = $packageConfig
 				SetupCfg                    = $setupCfgObj
