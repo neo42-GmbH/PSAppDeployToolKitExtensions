@@ -12,13 +12,8 @@
 	)
 
 	# A collection of easy access variables for the current scope.
-	[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$rootKeys = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetAllViews() | & {
-		process { [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, $_) }
-	}
-
-	[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$neo42PackageKeys = foreach ($key in $rootKeys) {
-		if ([Microsoft.Win32.RegistryKey]$result = $key.OpenSubKey($ADTSession.NXT.Package.RegistryKey)) { $result }
-	}
+	[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$rootKeys = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetAllViews() | & { process { [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, $_) } }
+	[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$neo42PackageKeys = $rootKeys | & { process { if ([Microsoft.Win32.RegistryKey]$packageKey = $_.OpenSubKey($ADTSession.NXT.Package.RegistryKey)) { $packageKey } } }
 
 	foreach ($packageKey in $neo42PackageKeys) {
 		if ((Compare-NXTVersion -Version $packageKey.GetValue('Version') -Target $ADTSession.AppVersion) -eq [PSADTNXT.Application.VersionCompareResult]::Update) {
@@ -44,7 +39,9 @@
 				else {
 					[System.String]::Empty
 				}
-				$ADTSession.NXT.ProcessResults.Add((Start-ADTProcess -PassThru -WindowStyle Hidden -ExitOnProcessFailure -FilePath $uninstallBinary -ArgumentList $argumentString))
+				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -PassThru -WindowStyle Hidden -FilePath $uninstallBinary -ArgumentList $argumentString
+				$ADTSession.NXT.ProcessResults.Add($result)
+				Update-NXTDeploymentStatus -ExitCode $result.ExitCode
 			}
 			elseif ([System.IO.Directory]::Exists($appPath)) {
 				Write-ADTLogEntry -Message "Removing old neo42 package directory [$appPath]."

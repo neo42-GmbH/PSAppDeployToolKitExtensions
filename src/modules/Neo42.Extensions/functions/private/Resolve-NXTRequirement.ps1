@@ -60,7 +60,9 @@
 						Show-NXTInstallationWelcome -ADTSession $ADTSession -DeploymentDefaults -NoBalloonTip
 						foreach ($application in $applications) {
 							Write-ADTLogEntry -Message "Uninstalling [$($application.DisplayName)] as per requirement."
-							$ADTSession.NXT.ProcessResults.Add((Uninstall-NXTApplication -Application $application -ExitOnProcessFailure))
+							[PSADT.ProcessManagement.ProcessResult]$result = Uninstall-NXTApplication -Application $application
+							$ADTSession.NXT.ProcessResults.Add($result)
+							Update-NXTDeploymentStatus -ExitCode $result.ExitCode
 						}
 					}
 				}
