@@ -17,7 +17,7 @@
 			switch ($adtSession.NXT.DeploymentSystem) {
 				'Empirum' {
 					Write-ADTLogEntry -Message 'Activating [Empirum] based deployment logic for this session.'
-					Initialize-NXTModule
+					Initialize-NXTEmpirum
 
 					Add-ADTModuleCallback -HookPoint PostOpen -Callback $script:CommandTable.'Invoke-NXTEmpirumPreAction'
 					Add-ADTModuleCallback -HookPoint PostClose -Callback $script:CommandTable.'Invoke-NXTEmpirumPostAction'

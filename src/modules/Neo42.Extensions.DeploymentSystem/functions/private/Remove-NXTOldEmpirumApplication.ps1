@@ -47,7 +47,7 @@
 				process {
 					if ($_ -eq $adtSession.AppVersion) { return }
 					[Microsoft.Win32.RegistryKey]$staticEmpirumMachineVersionKey = $staticEmpirumMachineAppKey.OpenSubKey($_)
-					if ($staticEmpirumMachineVersionKey.Name -notin @($empirumVersionKeys | Select-Object -ExpandProperty Name)) {
+					if ($staticEmpirumMachineVersionKey.Name -notin @($empirumMachineVersionKeys | Select-Object -ExpandProperty Name)) {
 						$empirumMachineVersionKeys.Add($staticEmpirumMachineVersionKey)
 					}
 				}
@@ -71,7 +71,9 @@
 							$arguments.AddRange(([System.String[]]@('/X8', '/S0', '/F', "/E+$logFilePath")))
 							if ($machineSetup) { $arguments.Add('/AW') }
 
-							$adtSession.NXT.ProcessResults.Add((Start-ADTProcess -PassThru -FilePath $uninstallBinary -ArgumentList $arguments -IgnoreExitCodes '*'))
+							[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -PassThru -FilePath $uninstallBinary -ArgumentList $arguments -IgnoreExitCodes '*'
+							$adtSession.NXT.ProcessResults.Add($result)
+							Update-NXTDeploymentStatus -ExitCode $result.ExitCode
 						}
 						else {
 							Write-ADTLogEntry -Severity Error -Message 'Cannot run uninstallation, as uninstall string is not valid.'
@@ -83,24 +85,23 @@
 				}
 
 				# Clear the old Empirum app path
-				if (([System.String]$appPath = $empirumSetupKey.GetValue('AppPath')) -and [System.IO.Directory]::Exists($appPath)) {
+				if (([System.String]$appPath = $empirumMachineSetupKey.GetValue('AppPath')) -and [System.IO.Directory]::Exists($appPath)) {
 					Write-ADTLogEntry -Message "Clearing old Empirum directory [$appPath]."
 					[System.IO.Directory]::Delete($appPath, $true)
 					Remove-NXTEmptyFolder -Path "$appPath\.." -RootPath "$appPath\..\.."
 				}
 
-				$empirumSetupKey.Close()
+				$empirumMachineSetupKey.Close()
 			}
-			$empirumMachineVersionKey.Close()
 
 			Write-ADTLogEntry -Message "Deleting old Empirum registration [$($empirumMachineVersionKey.Name)]."
 			[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($empirumMachineVersionKey)
-			[Microsoft.Win32.RegistryKey]$empriumAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empirumMachineVersionKey)
-			$empriumAppKey.Close()
-			Remove-NXTEmptyRegistryKey -Key $empriumAppKey
-			[Microsoft.Win32.RegistryKey]$empirumVendorKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumAppKey)
-			$empirumVendorKey.Close()
-			Remove-NXTEmptyRegistryKey -Key $empirumVendorKey
+			[Microsoft.Win32.RegistryKey]$empriumMachineAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empirumMachineVersionKey)
+			$empriumMachineAppKey.Close()
+			Remove-NXTEmptyRegistryKey -Key $empriumMachineAppKey
+			[Microsoft.Win32.RegistryKey]$empirumMachineVendorKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumMachineAppKey)
+			$empirumMachineVendorKey.Close()
+			Remove-NXTEmptyRegistryKey -Key $empirumMachineVendorKey
 		}
 
 		$empirumMachineUninstallKeys | & {
