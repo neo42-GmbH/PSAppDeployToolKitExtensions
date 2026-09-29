@@ -246,7 +246,7 @@
 										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreUninstall)
 
 										Write-ADTLogEntry -Message 'Deployment is configured to perform a reinstallation on upgrade. Uninstalling current application prior to reinstallation.'
-										. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUpgradePostUninstallOnError)
+										. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostUninstallOnError)
 
 										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostUninstall)
 									}
@@ -255,7 +255,7 @@
 										Write-ADTLogEntry -Message 'Starting the installation.'
 										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreInstall)
 
-										. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUpgradePostInstallOnError)
+										. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostInstallOnError)
 										$installerRan = $true
 										break
 									}

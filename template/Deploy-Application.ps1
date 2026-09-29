@@ -168,25 +168,6 @@ function CustomReinstallPostInstall {
 	#region CustomReinstallPostInstall content
 	#endregion CustomReinstallPostInstall content
 }
-function CustomUpgradePostUninstallOnError {
-	<#
-	.DESCRIPTION
-	This function is called after ending the deployment process in case there was an error during the uninstallation part of an upgrade process in the reinstall logic.
-	The $adtSession.NXT.ProcessResults might contain information about the upgrade process depending on the reinstall logic used.
-	#>
-	#region CustomUpgradePostUninstallOnError content
-	#endregion CustomUpgradePostUninstallOnError content
-}
-
-function CustomUpgradePostInstallOnError {
-	<#
-	.DESCRIPTION
-	This function is called after ending the deployment process in case there was an error during the installation part of an upgrade process in the reinstall logic.
-	The $adtSession.NXT.ProcessResults might contain information about the upgrade process depending on the reinstall logic used.
-	#>
-	#region CustomUpgradePostInstallOnError content
-	#endregion CustomUpgradePostInstallOnError content
-}
 
 function CustomInstallBegin {
 	<#

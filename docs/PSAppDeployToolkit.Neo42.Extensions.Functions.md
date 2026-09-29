@@ -264,7 +264,7 @@ If this parameter is omitted, the name of the callback will be used to determine
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|False|
@@ -873,7 +873,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -4393,7 +4393,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|True|
@@ -7582,6 +7582,96 @@ Determines if the function should avoid using cached uninstaller files.
 |Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+## Update-NXTDeploymentStatus
+
+Update the deployment exit code according to parameters.
+
+### SYNTAX
+
+```PowerShell
+Update-NXTDeploymentStatus
+    [-ExitCode] <int>
+    [-ADTSession <NxtDeploymentSession>]
+    [-SuccessExitCodes <int[]>]
+    [-RebootExitCodes <int[]>]
+    [<CommonParameters>]
+```
+
+### DESCRIPTION
+
+Update the deployment exit code according to parameters.
+An update is only applied if the provided code will either keep or degrade the deployment status to a higher value.
+Order: Complete > Restart > FastRetry > Error
+If required, the input code will be translated into a maching session exit code.
+
+> **NOTE**
+>
+> This function is born to the missing implementation of PSADT 4.1.8.
+> The behaviour of this function is baked into PSADT 4.2+ functions by default.
+> 
+> 
+### INPUTS
+
+**This function does not take any pipeline input.**
+
+### OUTPUTS
+
+**This function does not return any output.**
+
+### PARAMETERS
+
+#### -ExitCode
+
+The exit code to update the session with.
+
+|Property|Value|
+|:---|:---|
+|Type:|Int32|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -SuccessExitCodes
+
+Codes that would be considered successful.
+
+|Property|Value|
+|:---|:---|
+|Type:|Int32[]|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -RebootExitCodes
+
+Codes that would indicate a reboot is required.
+
+|Property|Value|
+|:---|:---|
+|Type:|Int32[]|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -ADTSession
+
+The current deployment session to update the status for.
+
+|Property|Value|
+|:---|:---|
+|Type:|NxtDeploymentSession|
+|Position:|Named|
+|Default value:|(& $script:CommandTable.'Get-ADTSession')|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
