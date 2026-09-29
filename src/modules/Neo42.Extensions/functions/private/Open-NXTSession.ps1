@@ -25,21 +25,15 @@
 	if ($adtSession.NXT.DeploymentType.IsMachinePart -and
 		(Get-AuthenticodeSignature -FilePath $adtSession.NXT.DeployAppScript.FullName).Status -ne [System.Management.Automation.SignatureStatus]::Valid
 	) {
-		Write-ADTLogEntry -Severity Warning -Message "The script [$($adtSession.NXT.DeployAppScript.FullName))] is not signed or trusted. Running untrusted code is not recommended and may be blocked by security policies."
+		Write-ADTLogEntry -Severity Warning -Message "The script [$($adtSession.NXT.DeployAppScript.FullName)] is not signed or trusted. Running untrusted code is not recommended and may be blocked by security policies."
 	}
 
 	# Validate the package architecture against the operating system architecture
-	if ($adtSession.AppArch -like '*64' -and -not [System.Environment]::Is64BitOperatingSystem) {
+	if (($adtSession.AppArch -like '*64' -and -not [System.Environment]::Is64BitOperatingSystem) -or
+		($adtSession.AppArch -like 'ARM*' -and $osInfo.Architecture -notin @([System.Runtime.InteropServices.Architecture]::Arm, [System.Runtime.InteropServices.Architecture]::Arm64))
+	) {
 		[System.Collections.Hashtable]$errorParams = @{
-			Exception = [System.InvalidOperationException]::('A 64-bit application cannot be deployed on a 32-bit operating system.')
-			Category  = [System.Management.Automation.ErrorCategory]::DeviceError
-			ErrorId   = 'IncompatibleHost'
-		}
-		throw (New-ADTErrorRecord @errorParams)
-	}
-	if ($adtSession.AppArch -like 'ARM*' -and $osInfo.Architecture -notin @([System.Runtime.InteropServices.Architecture]::Arm, [System.Runtime.InteropServices.Architecture]::Arm64)) {
-		[System.Collections.Hashtable]$errorParams = @{
-			Exception = [System.InvalidOperationException]::('An ARM application cannot be deployed on non ARM operating system.')
+			Exception = [System.InvalidOperationException]::("A [$($adtSession.AppArch)] package is not compatible with a [$($osInfo.Architecture)] operating system.")
 			Category  = [System.Management.Automation.ErrorCategory]::DeviceError
 			ErrorId   = 'IncompatibleHost'
 		}
