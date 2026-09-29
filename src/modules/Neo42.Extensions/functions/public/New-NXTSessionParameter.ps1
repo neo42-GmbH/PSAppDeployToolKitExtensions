@@ -76,7 +76,7 @@
 				AppScriptAuthor             = $packageConfig.Package.Author
 				AppSuccessExitCodes         = @(0)
 				AppRebootExitCodes          = @(3010)
-				AppProcessesToClose         = @($packageConfig.CloseProcesses | & { process { if ($_) { [PSADT.ProcessManagement.ProcessDefinition]::new($_.Name, $_.Description) } } })
+				AppProcessesToClose         = @($packageConfig.CloseProcesses | & { process { [PSADT.ProcessManagement.ProcessDefinition]::new($_.Name, $_.Description) } })
 
 				# External PSADT parameters
 				DeploymentType              = $nxtDeploymentType -as [PSADT.Module.DeploymentType]
@@ -89,7 +89,15 @@
 				# PSADT behavior parameters
 				RequireAdmin                = $nxtDeploymentType.IsMachinePart
 				DirFiles                    = if ([System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\Files")) { "$($ScriptDirectory.FullName)\Files" } else { [System.String]::Empty }
-				DirSupportFiles             = if ($nxtDeploymentType.IsUserPart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles\User")) { "$($ScriptDirectory.FullName)\SupportFiles\User" } else { [System.String]::Empty }
+				DirSupportFiles             = if ($nxtDeploymentType.IsMachinePart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles")) {
+					"$($ScriptDirectory.FullName)\SupportFiles"
+				}
+				elseif ($nxtDeploymentType.IsUserPart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles\User")) {
+					"$($ScriptDirectory.FullName)\SupportFiles\User"
+				}
+				else {
+					[System.String]::Empty
+				}
 
 				# Extension-specific PSADT parameters
 				InstallTitle                = [System.String]::Join(' ', @($packageConfig.Package.Vendor, $packageConfig.Package.Name)).Replace('_', ' ').Trim()
