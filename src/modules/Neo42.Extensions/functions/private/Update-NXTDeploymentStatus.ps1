@@ -79,8 +79,10 @@
 			}
 
 			if ($ADTSession.GetDeploymentStatus() -le $resolvedStatus) {
-				Write-ADTLogEntry -Message "Deployment status updated from [$($ADTSession.GetDeploymentStatus())] to [$resolvedStatus]."
-				$ADTSession.SetExitCode($ExitCode)
+				if ($ADTSession.GetDeploymentStatus() -ne $resolvedStatus) {
+					Write-ADTLogEntry -Message "Deployment status updated from [$($ADTSession.GetDeploymentStatus())] to [$resolvedStatus]."
+				}
+				$ADTSession.SetExitCode($resolvedExitCode)
 			}
 			else {
 				Write-ADTLogEntry -Message "The exit code was not applied to the session as it would have upgraded the current status [$($ADTSession.GetDeploymentStatus())] to [$resolvedStatus]."
