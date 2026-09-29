@@ -82,6 +82,9 @@ namespace PSADTNXT.Deployment
 		[Hidden]
 		public DeploymentHookPoint? LastRunHookPoint { get; set; }
 
+		[Hidden]
+		public bool DeploymentInvoked { get; set; }
+
 		public NxtIniDocument SetupCfg { get; }
 
 		public Dictionary<string, object> Variables { get; }

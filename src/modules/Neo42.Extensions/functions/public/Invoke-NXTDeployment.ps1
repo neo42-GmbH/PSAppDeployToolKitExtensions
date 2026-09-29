@@ -104,6 +104,7 @@
 			try {
 				$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Preparation"
 				Write-ADTLogEntry -Message "Starting Neo42.Extension's [$($ADTSession.NXT.DeploymentType)] deployment logic for [$($ADTSession.InstallTitle)]."
+				$ADTSession.NXT.DeploymentInvoked = $true
 
 				# Set the initial detection status at the beginning of the deployment
 				Update-NXTDetectionStatus -ADTSession $ADTSession
@@ -356,7 +357,7 @@
 				$ADTSession.NXT.ErrorPhase = $ADTSession.InstallPhase
 			}
 
-			if ($ADTSession.NXT.DeploymentType.IsMachinePart) {
+			if ($ADTSession.NXT.DeploymentType.IsMachinePart -and $ADTSession.GetDeploymentStatus() -ne [PSADT.Module.DeploymentStatus]::Error) {
 				try {
 					Complete-NXTDeployment -ADTSession $ADTSession
 				}

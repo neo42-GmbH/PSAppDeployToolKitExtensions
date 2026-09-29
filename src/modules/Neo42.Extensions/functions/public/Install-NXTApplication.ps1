@@ -36,6 +36,8 @@
 	The exit codes that indicate a reboot is required after the installation. If the exit code of the process is in this list, the installation is considered successful and a reboot is requested.
 	.PARAMETER IgnoreExitCodes
 	Specifies that any exit code from the installation process should be ignored and treated as a success.
+	.PARAMETER ExitOnProcessFailure
+	The session will be immediatly closed if the execution fails.
 	.PARAMETER NoCache
 	For specific methods a copy of the uninstaller will be created in the cache directory. Specify this parameter to skip this step.
 	.EXAMPLE
@@ -81,6 +83,9 @@
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
 		$RebootExitCodes,
+		[Parameter(ParameterSetName = 'ExitCodes')]
+		[System.Management.Automation.SwitchParameter]
+		$ExitOnProcessFailure,
 		[Parameter(ParameterSetName = 'IgnoreExitCodes', Mandatory)]
 		[System.Management.Automation.SwitchParameter]
 		$IgnoreExitCodes,
@@ -140,6 +145,9 @@
 				IgnoreExitCodes = '*' # If not set in 4.1.8 the session exit code is set regardless of actual success of the result
 				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
 			}
+			if ($ExitOnProcessFailure) {
+				startSplat['ExitOnProcessFailure'] = $true
+			}
 
 			[System.IO.DirectoryInfo]$uninstallFileBackupDirectory = $null
 			[System.Collections.Generic.List[System.IO.FileInfo]]$uninstallFiles = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
@@ -153,6 +161,7 @@
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
+						if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(
 							$_.HResult,
 							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),

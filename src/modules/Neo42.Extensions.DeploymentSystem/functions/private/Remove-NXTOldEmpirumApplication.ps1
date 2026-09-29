@@ -73,9 +73,7 @@
 							$arguments.AddRange(([System.String[]]@('/X8', '/S0', '/F', "/E+$logFilePath")))
 							if ($machineSetup) { $arguments.Add('/AW') }
 
-							[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -PassThru -FilePath $uninstallBinary -ArgumentList $arguments -IgnoreExitCodes '*'
-							$adtSession.NXT.ProcessResults.Add($result)
-							Update-NXTDeploymentStatus -ExitCode $result.ExitCode
+							$adtSession.NXT.ProcessResults.Add((Start-ADTProcess -PassThru -FilePath $uninstallBinary -ArgumentList $arguments -ExitOnProcessFailure))
 						}
 						else {
 							Write-ADTLogEntry -Severity Error -Message 'Cannot run uninstallation, as uninstall string is not valid.'

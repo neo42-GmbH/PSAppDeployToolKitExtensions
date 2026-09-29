@@ -11,11 +11,6 @@
 	try {
 		$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Completion"
 
-		if ($ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error) {
-			Register-NXTPackage -ADTSession $ADTSession -AsError -ErrorMessage $ADTSession.NXT.ErrorMessage
-			return
-		}
-
 		if ($ADTSession.NXT.DeploymentType.IsInstall) {
 			if ($ADTSession.NXT.Package.Register) {
 				Write-ADTLogEntry -Message 'Copying package to cache.'
@@ -27,8 +22,6 @@
 			Invoke-NXTArpKeyOperation -ADTSession $ADTSession
 
 			Invoke-NXTUserPart -ADTSession $ADTSession
-
-			Register-NXTPackage -ADTSession $ADTSession
 
 			Write-ADTLogEntry -Severity Success -Message 'Post installation logic completed successfully.'
 		}

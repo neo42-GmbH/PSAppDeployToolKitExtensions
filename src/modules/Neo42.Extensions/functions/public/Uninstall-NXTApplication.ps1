@@ -47,6 +47,8 @@
 	The exit codes that indicate a reboot is required after the uninstallation.
 	.PARAMETER IgnoreExitCodes
 	Determines if the function should ignore exit codes and not treat them as errors.
+	.PARAMETER ExitOnProcessFailure
+	The session will be immediatly closed if the execution fails.
 	.PARAMETER NoCache
 	Determines if the function should avoid using cached uninstaller files.
 	.EXAMPLE
@@ -148,6 +150,11 @@
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
 		$RebootExitCodes,
+		[Parameter(ParameterSetName = 'PackageExitCodes')]
+		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
+		[Parameter(ParameterSetName = 'ManualExitCodes')]
+		[System.Management.Automation.SwitchParameter]
+		$ExitOnProcessFailure,
 		[Parameter(ParameterSetName = 'PackageIgnoreExitCodes', Mandatory)]
 		[Parameter(ParameterSetName = 'ApplicationIgnoreExitCodes', Mandatory)]
 		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes', Mandatory)]
@@ -306,6 +313,9 @@
 				IgnoreExitCodes = '*' # If not set in 4.1.8 the session exit code is set regardless of actual success of the result
 				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
 			}
+			if ($ExitOnProcessFailure) {
+				startSplat['ExitOnProcessFailure'] = $true
+			}
 
 			[System.String]$backupFileSelector = [System.String]::Empty
 			[System.Collections.Generic.List[PSADTNXT.Deployment.INxtAwaiter]]$waits = [System.Collections.Generic.List[PSADTNXT.Deployment.INxtAwaiter]]::new()
@@ -319,6 +329,7 @@
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
+						if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(
 							$_.HResult,
 							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
@@ -438,6 +449,7 @@
 							Remove-AppxPackage -AllUsers -Package $identifiers[0]
 						}
 						catch {
+							if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
 							$result = [PSADT.ProcessManagement.ProcessResult]::new(
 								$_.HResult,
 								[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),

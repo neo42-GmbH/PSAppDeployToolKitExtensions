@@ -52,6 +52,9 @@
 				}
 			}
 
+			# Register the package state here in order to cache normal exits
+			if ($adtSession.NXT.DeploymentType.IsMachinePart) { Register-NXTPackage -ADTSession $adtSession }
+
 			# Only explicitly show the progress balloon it will not be shown by Close-ADTInstallationProgress anyway
 			if ($adtSession.NXT.SetupCfg['Options']['SHOWPROGRESS'] -ne '1' -and
 				$adtSession.NXT.SetupCfg['Options']['SHOWBALLOONNOTIFICATIONS'] -in @('1', '2')
@@ -83,7 +86,7 @@
 						$adtSession.InstallTitle,
 						$adtSession.NXT.ErrorPhase,
 						$adtSession.GetExitCode(),
-						$adtSession.NXT.ErrorMessage
+						$(if ($adtSession.NXT.ErrorMessage) { $adtSession.NXT.ErrorMessage } else { 'No error message provided.' })
 					)
 				)
 			}

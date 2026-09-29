@@ -39,9 +39,7 @@
 				else {
 					[System.String]::Empty
 				}
-				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -PassThru -WindowStyle Hidden -FilePath $uninstallBinary -ArgumentList $argumentString
-				$ADTSession.NXT.ProcessResults.Add($result)
-				Update-NXTDeploymentStatus -ExitCode $result.ExitCode
+				$ADTSession.NXT.ProcessResults.Add((Start-ADTProcess -PassThru -WindowStyle Hidden -FilePath $uninstallBinary -ArgumentList $argumentString -ExitOnProcessFailure))
 			}
 			elseif ([System.IO.Directory]::Exists($appPath)) {
 				Write-ADTLogEntry -Message "Removing old neo42 package directory [$appPath]."
