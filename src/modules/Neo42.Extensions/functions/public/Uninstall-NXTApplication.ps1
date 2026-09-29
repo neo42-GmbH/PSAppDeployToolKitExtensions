@@ -449,7 +449,9 @@
 				}
 			}
 
-			Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -IgnoreExitCodes:$IgnoreExitCodes
+			if (-not $IgnoreExitCodes) {
+				Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -IgnoreExitCodes:$IgnoreExitCodes
+			}
 
 			Wait-NXTDeploymentAwaiter -Awaiter $waits
 
