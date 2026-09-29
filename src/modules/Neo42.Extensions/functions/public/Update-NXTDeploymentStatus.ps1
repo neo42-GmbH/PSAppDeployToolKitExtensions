@@ -1,12 +1,30 @@
 ﻿function Update-NXTDeploymentStatus {
 	<#
 	.SYNOPSIS
-	Update the deployment exit code according to code parameters.
+	Update the deployment exit code according to parameters.
+	.DESCRIPTION
+	Update the deployment exit code according to parameters.
+	An update is only applied if the provided code will either keep or degrade the deployment status to a higher value.
+	Order: Complete > Restart > FastRetry > Error
+	If required, the input code will be translated into a maching session exit code.
+	.PARAMETER ExitCode
+	The exit code to update the session with.
+	.PARAMETER SuccessExitCodes
+	Codes that would be considered successful.
+	.PARAMETER RebootExitCodes
+	Codes that would indicate a reboot is required.
+	.PARAMETER ADTSession
+	The current deployment session to update the status for.
+	.NOTES
+	This function is born to the missing implementation of PSADT 4.1.8.
+	The behaviour of this function is baked into PSADT 4.2+ functions by default.
 	#>
-	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'This is a private function')]
-	[OutputType([System.Boolean])]
+	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'The update is non-distructive.')]
 	[CmdletBinding()]
 	param (
+		[ValidateNotNull()]
+		[PSADTNXT.Foundation.NxtDeploymentSession]
+		$ADTSession = (Get-ADTSession),
 		[Parameter(Position = 0, Mandatory)]
 		[System.Int32]
 		$ExitCode,
@@ -15,12 +33,7 @@
 		$SuccessExitCodes,
 		[AllowNull()]
 		[System.Int32[]]
-		$RebootExitCodes,
-		[System.Management.Automation.SwitchParameter]
-		$IgnoreExitCodes,
-		[ValidateNotNull()]
-		[PSADTNXT.Foundation.NxtDeploymentSession]
-		$ADTSession = (Get-ADTSession)
+		$RebootExitCodes
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -28,8 +41,6 @@
 	}
 	process {
 		try {
-			if ($IgnoreExitCodes) { return }
-
 			# Upgrade to TrySetExitCode in PSADT 4.2
 			[PSADT.Module.DeploymentStatus]$resolvedStatus, [System.Int32]$resolvedExitCode = if ($RebootExitCodes -and $ExitCode -in $RebootExitCodes) {
 				[PSADT.Module.DeploymentStatus]::RestartRequired
