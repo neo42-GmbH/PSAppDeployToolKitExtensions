@@ -34,6 +34,7 @@
 			$ADTSession.NXT.LastRunHookPoint = $HookPoint
 			if (([System.Collections.Generic.List[System.Management.Automation.CommandInfo]]$callbacks = $script:DeploymentCallBacks[$HookPoint])) {
 				[System.String]$currentPhase = $ADTSession.InstallPhase
+				$ADTSession.InstallPhase = $HookPoint
 				foreach ($callback in $callbacks) {
 					[System.String]$source = if ($callBack.Module) {
 						$callBack.Module.Name
@@ -45,12 +46,10 @@
 						[System.String]::Empty
 					}
 					if ([System.String]::IsNullOrWhiteSpace($source)) {
-						Write-ADTLogEntry -Message "Invoking callback [$($callback.Name)] for hook point [$HookPoint]."
-						$ADTSession.InstallPhase = $HookPoint
+						Write-ADTLogEntry -Message "Invoking callback [$($callback.Name)]."
 					}
 					else {
-						Write-ADTLogEntry -Message "Invoking [$source] callback [$($callback.Name)] for hook point [$HookPoint]."
-						$ADTSession.InstallPhase = "${source}:${HookPoint}"
+						Write-ADTLogEntry -Message "Invoking [$source] callback [$($callback.Name)]."
 					}
 					try {
 						$ExecutionContext.InvokeCommand.InvokeScript($ADTSession.NXT.DeployAppScriptSessionState, { & $args[0] }.Ast.GetScriptBlock(), $callBack)

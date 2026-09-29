@@ -16,7 +16,6 @@
 		[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$empirumMachineVersionKeys = [System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]::new()
 		[System.String]$keyRef = "*\$($adtSession.AppVendor)\$($adtSession.AppName)\*"
 
-
 		# These keys were previously used to register empirum packages. Unregister them and use them to lookup the backreference.
 		[Microsoft.Win32.RegistryKey[]]$empirumMachineUninstallKeys = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetAllViews() | & {
 			process {
@@ -111,7 +110,7 @@
 			}
 		}
 
-		Invoke-ADTAllUsersRegistryAction -UserProfiles (Get-ADTUserProfiles -ExcludeDefaultUser) -ScriptBlock {
+		Invoke-ADTAllUsersRegistryAction -UserProfiles (Get-ADTUserProfiles -ExcludeDefaultUser -InformationAction SilentlyContinue) -InformationAction SilentlyContinue -ScriptBlock {
 			[System.String]$sidValue = $_.SID.Value
 			[PSADTNXT.Extensions.NxtRegistryExtensions]::GetAllViews() | & {
 				process {
