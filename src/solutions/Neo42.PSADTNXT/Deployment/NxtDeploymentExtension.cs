@@ -85,6 +85,9 @@ namespace PSADTNXT.Deployment
 		[Hidden]
 		public bool DeploymentInvoked { get; set; }
 
+		[Hidden]
+		public bool IsCached { get; set; }
+
 		public NxtIniDocument SetupCfg { get; }
 
 		public Dictionary<string, object> Variables { get; }

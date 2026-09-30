@@ -85,7 +85,7 @@
 					@{ Name = 'ErrorMessage'; Value = if ($adtSession.NXT.ErrorMessage) { $adtSession.NXT.ErrorMessage } else { 'No error message provided.' } }
 					@{ Name = 'ErrorPhase'; Value = $adtSession.NXT.ErrorPhase }
 				}
-				else {
+				elseif ($adtSession.NXT.IsCached) {
 					@{ Name = 'UninstallString'; Value = $uninstallString }
 				}
 			)
@@ -102,8 +102,8 @@
 			}
 			$regPackagesKey.Close()
 
-			# Do not register the ARP entry if the session is an error
-			if ($asError) { return }
+			# Do not register the ARP entry if the session is an error or it has not been cached yet
+			if ($asError -or -not $adtSession.NXT.IsCached) { return }
 
 			# Determine size property
 			[System.UInt32]$size = 0
