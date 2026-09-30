@@ -1,11 +1,7 @@
-﻿[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Justification = 'Plain text password for a local test user on a test machine is no security issue')]
-param(
+﻿param(
 	[Parameter(Mandatory)]
 	[System.String]
 	$Name,
-
-	[System.Security.SecureString]
-	$Password,
 
 	[System.Management.Automation.SwitchParameter]
 	$Force
@@ -18,9 +14,6 @@ Set-StrictMode -Version Latest
 [System.String]$sid = [System.String]::Empty
 
 try {
-	# Set default password
-	if (-not $Password) { $Password = ConvertTo-SecureString -String 'Test1234' -Force -AsPlainText }
-
 	# Load user values
 	$user = Get-LocalUser | Where-Object -FilterScript { $_.Name -eq $Name }
 
@@ -43,9 +36,7 @@ try {
 		# Create user (for evaluation)
 		$null = New-LocalUser `
 			-Name $Name `
-			-Password $Password `
-			-PasswordNeverExpires `
-			-UserMayNotChangePassword `
+			-NoPassword `
 			-Description 'Test user with created profile'
 
 		# Load user values
