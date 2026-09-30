@@ -340,7 +340,7 @@
 			[System.String]$argumentList = ConvertTo-NXTPsBinaryArgument -File "$($MyInvocation.MyCommand.Module.ModuleBase)\Scripts\CustomAppDeployToolkitUi.ps1" -Arguments $showInstallationWelcome -UseLastExitCode
 			if ($adtEnvironment.SessionZero -or $adtEnvironment.IsServiceAccount -or ($adtEnvironment.IsAdmin -and -not $adtEnvironment.IsProcessUserInteractive)) {
 				Write-ADTLogEntry -Message 'Process is running as system, service or non interactive user. Using session helper to spawn in all sessions.' -DebugMessage
-				if ([System.Int32[]]$sessionIds = Get-ADTLoggedOnUser | Select-Object -ExpandProperty 'SessionId') {
+				if ([System.Int32[]]$sessionIds = Get-ADTLoggedOnUser | & { process { if ($_.IsActiveUserSession) { $_.SessionId } } }) {
 					[PSADT.ProcessManagement.ProcessResult]$result = [PSADTNXT.ProcessManagement.NxtSessionHelper]::StartProcessInSessions(
 						(Get-ADTPowerShellProcessPath),
 						$argumentList,

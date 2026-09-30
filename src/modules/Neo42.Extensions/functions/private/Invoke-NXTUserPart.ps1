@@ -97,7 +97,7 @@
 
 		# Run the user part for all logged on users.
 		Write-ADTLogEntry -Message 'Querying logged on users.' -DebugMessage
-		if (-not ([System.Collections.ObjectModel.ReadOnlyCollection[PSADT.TerminalServices.SessionInfo]]$users = Get-ADTLoggedOnUser -InformationAction SilentlyContinue)) {
+		if (-not ([PSADT.TerminalServices.SessionInfo[]]$users = Get-ADTLoggedOnUser -InformationAction SilentlyContinue | & { process { if ($_.IsActiveUserSession) { $_ } } })) {
 			Write-ADTLogEntry -Message 'No users are logged on. Skipping user part execution.'
 			return
 		}
