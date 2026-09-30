@@ -103,7 +103,6 @@ Describe 'Test-NXTProcess' {
 		}
 
 		It 'Should be true if data type is System.Diagnostics.Process with existing process' {
-			[PSADT.ProcessManagement.RunningProcess]$cmdProcRun = Get-ADTRunningProcesses -ProcessObjects ([PSADT.ProcessManagement.ProcessDefinition]::new('cmd'))
 			$cmdProc | Test-NXTProcess | Should -BeTrue
 		}
 
