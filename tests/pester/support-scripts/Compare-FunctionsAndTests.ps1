@@ -6,7 +6,9 @@
 	[System.IO.DirectoryInfo]
 	$TestsDirectory = "$PSScriptRoot\..\function-tests",
 	[System.Management.Automation.SwitchParameter]
-	$CreateTests
+	$CreateTests,
+	[System.Management.Automation.SwitchParameter]
+	$ListEmptyTests
 )
 
 # Options
@@ -32,12 +34,14 @@ Describe 'FUNCTIONNAME' {
 '@.Replace('PREPARATIONSCRIPTPATH', $prepScriptPath)
 
 # Functions
-function Convert-TitleString ([System.String]$TitleString) {
+function Convert-TitleString {
 	<#
 	.SYNOPSIS
-	Convert a string to a lower than 40 characters length
-	Wait until a file is no longer in use by another process.
+    Fill a string with whitespace to create column-like indentation
 	#>
+    param(
+        [System.String]$TitleString
+    )
 	[System.Int32]$dest = 40
 	[System.Int32]$diff = $dest - $TitleString.Length
 	if ($diff -gt 0) { return "$($TitleString)$(' '*$diff)" }
@@ -57,6 +61,7 @@ try {
 		foreach ($testFile in $testFiles) {
 			if ($functionFile.Name.Replace('.ps1', '') -eq $testFile.Name.Replace('.Tests.ps1', '')) {
 				$found = $true
+                break
 			}
 		}
 		if (-not $found) {
@@ -69,6 +74,7 @@ try {
 		foreach ($functionFile in $functionFiles) {
 			if ($testFile.Name.Replace('.Tests.ps1', '') -eq $functionFile.Name.Replace('.ps1', '')) {
 				$found = $true
+                break
 			}
 		}
 		if (-not $found) {
@@ -86,6 +92,19 @@ try {
 			$defaultTestContent.Replace('FUNCTIONNAME', $file.Replace('.Tests.ps1', '')) | Out-File -FilePath $newTestFilePath -Encoding utf8
 			Write-Output "$(Convert-TitleString -TitleString $file) : File created."
 		}
+	}
+	if ($ListEmptyTests) {
+        $testFiles = Get-ChildItem -Path $TestsDirectory -Recurse -File -Include '*.Tests.ps1'
+	    [System.Collections.Generic.List[System.String]]$defaultTestFiles = [System.Collections.Generic.List[System.String]]::new()
+		foreach ($file in $testFiles) {
+			[System.String]$fileContent = Get-Content -Path $file.FullName -Raw
+            [System.String]$defaultContent = $defaultTestContent.Replace('FUNCTIONNAME', $file.Name.Replace('.Tests.ps1', ''))
+            if ($fileContent.Trim() -eq $defaultContent.Trim()) {
+                $defaultTestFiles.Add("$(Convert-TitleString -TitleString $file.Name) ($($file.Length) bytes)")
+            }
+		}
+		Write-Output ''
+        Write-Output "Tests files with default content:$($defaultTestFiles | ForEach-Object -Process { "`n    $_" })"
 	}
 }
 catch {
