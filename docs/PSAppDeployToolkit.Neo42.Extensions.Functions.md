@@ -3461,6 +3461,7 @@ Install-NXTApplication
     [-Awaiter <INxtAwaiter[]>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
+    [-ExitOnProcessFailure]
     [-NoCache]
     [<CommonParameters>]
 ```
@@ -3660,6 +3661,19 @@ Specifies that any exit code from the installation process should be ignored and
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -ExitOnProcessFailure
+
+The session will be immediatly closed if the execution fails.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -7244,6 +7258,7 @@ Uninstall-NXTApplication
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
+    [-ExitOnProcessFailure]
     [-NoCache]
     [<CommonParameters>]
 ```
@@ -7267,6 +7282,7 @@ Uninstall-NXTApplication
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
+    [-ExitOnProcessFailure]
     [-NoCache]
     [<CommonParameters>]
 ```
@@ -7298,6 +7314,7 @@ Uninstall-NXTApplication
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
+    [-ExitOnProcessFailure]
     [-NoCache]
     [<CommonParameters>]
 ```
@@ -7570,6 +7587,19 @@ Determines if the function should ignore exit codes and not treat them as errors
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -ExitOnProcessFailure
+
+The session will be immediatly closed if the execution fails.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
