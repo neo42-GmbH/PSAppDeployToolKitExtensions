@@ -76,7 +76,7 @@
 				AppScriptAuthor             = $packageConfig.Package.Author
 				AppSuccessExitCodes         = @(0)
 				AppRebootExitCodes          = @(3010)
-				AppProcessesToClose         = @($packageConfig.CloseProcesses | & { process { [PSADT.ProcessManagement.ProcessDefinition]::new($_.Name, $_.Description) } })
+				AppProcessesToClose         = if ($packageConfig.CloseProcesses) { @($packageConfig.CloseProcesses | & { process { [PSADT.ProcessManagement.ProcessDefinition]::new($_.Name, $_.Description) } }) } else { $null }
 
 				# External PSADT parameters
 				DeploymentType              = $nxtDeploymentType -as [PSADT.Module.DeploymentType]
