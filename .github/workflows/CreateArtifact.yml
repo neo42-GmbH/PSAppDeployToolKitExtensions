@@ -83,7 +83,7 @@ jobs:
             '${{ inputs.PSADT_URL }}'
           }
           else {
-            Invoke-RestMethod -Uri "https://api.github.com/repos/PSAppDeployToolkit/PSAppDeployToolkit/releases/tags/${{ inputs.PSADT_VERSION }}" |
+            Invoke-RestMethod -Uri "https://api.github.com/repos/PSAppDeployToolkit/PSAppDeployToolkit/releases/tags/${{ inputs.PSADT_VERSION }}" -Headers @{ Authorization = "Bearer $env:GH_TOKEN" } |
               Select-Object -ExpandProperty assets |
               Where-Object { $_.name -match '^PSAppDeployToolkit_ModuleOnly\.(zip|7z)$' } |
               Select-Object -First 1 -ExpandProperty 'browser_download_url'
