@@ -1,6 +1,4 @@
-﻿#Requires -Modules @{ ModuleName='Pester'; MaximumVersion='6.1.0' }
-
-<#
+﻿<#
     .SYNOPSIS
     Invoke the test suite for this repo.
 

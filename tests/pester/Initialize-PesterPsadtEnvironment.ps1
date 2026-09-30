@@ -17,22 +17,21 @@ Set-StrictMode -Version Latest
 [System.String]$modulesToFindPath = "$($ModuleDirectory)\PSAppDeployToolkit*"
 [System.Collections.Hashtable[]]$modulesToInstall = @(
 	@{
-		Name           = 'Pester'
+		ModuleName     = 'Pester'
+		ModuleVersion  = '5.6'
 		MaximumVersion = '6.1.0'
-	},
-	@{
-		Name           = 'PSScriptAnalyzer'
-		MaximumVersion = '99999.99999.99999.99999'
+		GUID           = 'a699dea5-2c73-4616-a270-1f7abb777e71'
 	}
 )
 
 # Import modules from local repository and install them from online repository if necessary
 $modulesToInstall | ForEach-Object -Process {
-	if (-not (Get-Module -Name $_.Name)) {
-		if (-not (Get-Module -ListAvailable $_.Name)) {
-			Install-Module -Scope AllUsers -SkipPublisherCheck -Force @_
+	if (-not (Get-Module -FullyQualifiedName $_)) {
+		if (-not (Get-Module -ListAvailable -FullyQualifiedName $_)) {
+			Install-Module -Repository PSGallery -Scope AllUsers -SkipPublisherCheck -Force `
+				-Name $_.ModuleName -MinimumVersion $_.ModuleVersion -MaximumVersion $_.MaximumVersion
 		}
-		Import-Module -Name $_.Name -Force -Global
+		Import-Module -FullyQualifiedName $_ -Force -Global
 	}
 }
 
