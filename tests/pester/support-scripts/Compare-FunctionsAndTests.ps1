@@ -39,9 +39,9 @@ function Convert-TitleString {
 	.SYNOPSIS
     Fill a string with whitespace to create column-like indentation
 	#>
-    param(
-        [System.String]$TitleString
-    )
+	param(
+		[System.String]$TitleString
+	)
 	[System.Int32]$dest = 40
 	[System.Int32]$diff = $dest - $TitleString.Length
 	if ($diff -gt 0) { return "$($TitleString)$(' '*$diff)" }
@@ -61,7 +61,7 @@ try {
 		foreach ($testFile in $testFiles) {
 			if ($functionFile.Name.Replace('.ps1', '') -eq $testFile.Name.Replace('.Tests.ps1', '')) {
 				$found = $true
-                break
+				break
 			}
 		}
 		if (-not $found) {
@@ -74,7 +74,7 @@ try {
 		foreach ($functionFile in $functionFiles) {
 			if ($testFile.Name.Replace('.Tests.ps1', '') -eq $functionFile.Name.Replace('.ps1', '')) {
 				$found = $true
-                break
+				break
 			}
 		}
 		if (-not $found) {
@@ -86,7 +86,7 @@ try {
 	Write-Output "Missing function files:$($missingFunctionFiles | ForEach-Object -Process { "`n    $_" })"
 	if ($CreateTests) {
 		Write-Output ''
-        Write-Output 'Test file creation:'
+		Write-Output 'Test file creation:'
 		foreach ($file in $missingTestFiles) {
 			[System.String]$newTestFilePath = [System.IO.Path]::Combine($TestsDirectory, $file)
 			$defaultTestContent.Replace('FUNCTIONNAME', $file.Replace('.Tests.ps1', '')) | Out-File -FilePath $newTestFilePath -Encoding utf8
@@ -94,17 +94,17 @@ try {
 		}
 	}
 	if ($ListEmptyTests) {
-        $testFiles = Get-ChildItem -Path $TestsDirectory -Recurse -File -Include '*.Tests.ps1'
-	    [System.Collections.Generic.List[System.String]]$defaultTestFiles = [System.Collections.Generic.List[System.String]]::new()
+		$testFiles = Get-ChildItem -Path $TestsDirectory -Recurse -File -Include '*.Tests.ps1'
+		[System.Collections.Generic.List[System.String]]$defaultTestFiles = [System.Collections.Generic.List[System.String]]::new()
 		foreach ($file in $testFiles) {
 			[System.String]$fileContent = Get-Content -Path $file.FullName -Raw
-            [System.String]$defaultContent = $defaultTestContent.Replace('FUNCTIONNAME', $file.Name.Replace('.Tests.ps1', ''))
-            if ($fileContent.Trim() -eq $defaultContent.Trim()) {
-                $defaultTestFiles.Add("$(Convert-TitleString -TitleString $file.Name) ($($file.Length) bytes)")
-            }
+			[System.String]$defaultContent = $defaultTestContent.Replace('FUNCTIONNAME', $file.Name.Replace('.Tests.ps1', ''))
+			if ($fileContent.Trim() -eq $defaultContent.Trim()) {
+				$defaultTestFiles.Add("$(Convert-TitleString -TitleString $file.Name) ($($file.Length) bytes)")
+			}
 		}
 		Write-Output ''
-        Write-Output "Tests files with default content:$($defaultTestFiles | ForEach-Object -Process { "`n    $_" })"
+		Write-Output "Tests files with default content:$($defaultTestFiles | ForEach-Object -Process { "`n    $_" })"
 	}
 }
 catch {
