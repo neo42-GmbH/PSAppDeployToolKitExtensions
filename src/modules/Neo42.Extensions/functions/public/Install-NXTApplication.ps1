@@ -146,7 +146,7 @@
 				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
 			}
 			if ($ExitOnProcessFailure) {
-				startSplat['ExitOnProcessFailure'] = $true
+				$startSplat['ExitOnProcessFailure'] = $true
 			}
 
 			[System.IO.DirectoryInfo]$uninstallFileBackupDirectory = $null
