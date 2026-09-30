@@ -81,8 +81,7 @@
 		}
 
 		Write-ADTLogEntry "Invoking session based [$($invokeUninstallParams.Method)] uninstallation logic."
-		[PSADT.ProcessManagement.ProcessResult]$result = Uninstall-NXTApplication @invokeUninstallParams
-		return $result
+		return (Uninstall-NXTApplication @invokeUninstallParams)
 	}
 	catch {
 		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
