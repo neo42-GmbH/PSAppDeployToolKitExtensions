@@ -1,15 +1,15 @@
 ﻿BeforeDiscovery { . "$PSScriptRoot\..\Initialize-PesterPsadtEnvironment.ps1" }
 
 Describe 'Get-NXTParentProcess' {
+	BeforeAll {
+		$cmdProc = Start-Process -FilePath 'cmd.exe' -PassThru -WindowStyle Hidden
+	}
+
+	AfterAll {
+		if (-not $cmdProc.HasExited) { $cmdProc.Kill() }
+	}
+
 	Context 'When calculating folder sizes' {
-		BeforeAll {
-			$cmdProc = Start-Process -FilePath 'cmd.exe' -PassThru -WindowStyle Hidden
-		}
-
-		AfterAll {
-			if (-not $cmdProc.HasExited) { $cmdProc.Kill() }
-		}
-
 		It 'Should return the parent process of a child process' {
 			$parentProcess = Get-NXTParentProcess -ProcessId $cmdProc.Id
 			$parentProcess | Should -Not -BeNullOrEmpty
