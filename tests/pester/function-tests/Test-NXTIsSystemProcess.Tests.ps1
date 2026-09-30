@@ -7,7 +7,7 @@ Describe 'Test-NXTIsSystemProcess' {
 		Start-Sleep -Milliseconds 500
 
 		$sysProc = Get-Process | Where-Object -FilterScript { $_.SI -eq 0 } | Select-Object -First 1
-		$dummyProcId = '123456789'
+		$dummyProcId = 123456789
 	}
 
 	AfterAll {

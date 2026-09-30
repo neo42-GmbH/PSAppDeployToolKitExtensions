@@ -11,7 +11,7 @@ Describe 'Test-NXTProcess' {
 		$dummyProcDef = [PSADT.ProcessManagement.ProcessDefinition]::new('dummy')
 		$dummyProcClose = [PSADTNXT.ProcessManagement.NxtCloseProcess]::new('dummy')
 		$dummyProcName = 'dummy'
-		$dummyProcId = '123456789'
+		$dummyProcId = 123456789
 	}
 
 	AfterAll {
