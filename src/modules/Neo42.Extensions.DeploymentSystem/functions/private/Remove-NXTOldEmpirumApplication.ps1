@@ -25,11 +25,12 @@
 				$uninstallRoot.GetSubKeyNames() | & {
 					process {
 						[Microsoft.Win32.RegistryKey]$uninstallKey = $uninstallRoot.OpenSubKey($_)
-						if ($uninstallKey.GetValue('MachineKeyName') -like $keyRef -and
-							$uninstallKey.Name -notlike "*\$($adtSession.AppVersion)" -and
+						[System.String]$machineKeyName = $uninstallKey.GetValue('MachineKeyName')
+						if ($machineKeyName -like $keyRef -and
+							$machineKeyName -notlike "*\$($adtSession.AppVersion)" -and
 							$uninstallKey.GetValue('UninstallString') -like '*\setup.exe*\setup.inf*'
 						) {
-							if (([Microsoft.Win32.RegistryKey]$machineKey = $baseKey.OpenSubKey('SOFTWARE\' + $uninstallKey.GetValue('MachineKeyName')))) {
+							if (([Microsoft.Win32.RegistryKey]$machineKey = $baseKey.OpenSubKey('SOFTWARE\' + $machineKeyName))) {
 								$empirumMachineVersionKeys.Add($machineKey)
 							}
 							return $uninstallKey
@@ -60,27 +61,21 @@
 			if ([Microsoft.Win32.RegistryKey]$empirumMachineSetupKey = $empirumMachineVersionKey.OpenSubKey('Setup')) {
 				if ($adtSession.NXT.Package.UninstallOld) {
 					Write-ADTLogEntry -Message "Uninstalling old Empirum package [$($empirumMachineVersionKey.Name)]."
+					[System.Collections.Generic.List[System.String]]$arguments = [System.Collections.Generic.List[System.String]]::new()
+					[System.String[]]$uninstallStringParts = ConvertFrom-NXTCommandLine -InputObject ($empirumMachineSetupKey.GetValue('UninstallString'))
+					if ($uninstallStringParts -and $uninstallStringParts.Count -gt 1) {
+						[System.String]$uninstallBinary = [PSADTNXT.Shell.NxtCommandLine]::SearchPath($uninstallStringParts[0], [System.EnvironmentVariableTarget]::Machine)
+						[System.Boolean]$machineSetup = [System.Byte]$empirumMachineSetupKey.GetValue('MachineSetup', 0)
+						[System.String]$logFilePath = [System.IO.Path]::Combine($adtSession.LogPath, "emp_old_uninstall_$($adtEnvironment.DeploymentTimestamp).log")
 
-					if (-not ([System.String]::IsNullOrWhiteSpace(([System.String]$uninstallString = $empirumMachineSetupKey.GetValue('UninstallString'))))) {
-						[System.Collections.Generic.List[System.String]]$arguments = [System.Collections.Generic.List[System.String]]::new()
-						[System.String[]]$uninstallStringParts = ConvertFrom-NXTCommandLine -InputObject $uninstallString
-						if ($uninstallStringParts -and $uninstallStringParts.Count -gt 1) {
-							[System.String]$uninstallBinary = [PSADTNXT.Shell.NxtCommandLine]::SearchPath($uninstallStringParts[0], [System.EnvironmentVariableTarget]::Machine)
-							[System.Boolean]$machineSetup = [System.Byte]$empirumMachineSetupKey.GetValue('MachineSetup', 0)
-							[System.String]$logFilePath = [System.IO.Path]::Combine($adtSession.LogPath, "emp_old_uninstall_$($adtEnvironment.DeploymentTimestamp).log")
+						$arguments.AddRange([System.String[]]$uninstallStringParts[1..($uninstallStringParts.Length - 1)])
+						$arguments.AddRange(([System.String[]]@('/X8', '/S0', '/F', "/E+$logFilePath")))
+						if ($machineSetup) { $arguments.Add('/AW') }
 
-							$arguments.AddRange([System.String[]]$uninstallStringParts[1..($uninstallStringParts.Length - 1)])
-							$arguments.AddRange(([System.String[]]@('/X8', '/S0', '/F', "/E+$logFilePath")))
-							if ($machineSetup) { $arguments.Add('/AW') }
-
-							$adtSession.NXT.ProcessResults.Add((Start-ADTProcess -PassThru -FilePath $uninstallBinary -ArgumentList $arguments -ExitOnProcessFailure))
-						}
-						else {
-							Write-ADTLogEntry -Severity Error -Message 'Cannot run uninstallation, as uninstall string is not valid.'
-						}
+						$adtSession.NXT.ProcessResults.Add((Start-ADTProcess -PassThru -FilePath $uninstallBinary -ArgumentList $arguments -ExitOnProcessFailure))
 					}
 					else {
-						Write-ADTLogEntry -Severity Warning -Message "Empirum application version [$_] does not contain uninstall information. Proceeding with unregister."
+						Write-ADTLogEntry -Severity Error -Message 'Cannot run uninstallation, as uninstall string is not valid.'
 					}
 				}
 
@@ -118,11 +113,12 @@
 					$uninstallRoot.GetSubKeyNames() | & {
 						process {
 							[Microsoft.Win32.RegistryKey]$uninstallKey = $uninstallRoot.OpenSubKey($_)
-							if ($uninstallKey.GetValue('MachineKeyName') -like $keyRef -and
-								$uninstallKey.Name -notlike "*\$($adtSession.AppVersion)" -and
+							[System.String]$machineKeyName = $uninstallKey.GetValue('MachineKeyName')
+							if ($machineKeyName -like $keyRef -and
+								$machineKeyName -notlike "*\$($adtSession.AppVersion)" -and
 								$uninstallKey.GetValue('UninstallString') -like '*\setup.exe*\setup.inf*'
 							) {
-								if (([Microsoft.Win32.RegistryKey]$empirumUserVersionKey = $baseKey.OpenSubKey('SOFTWARE\' + $uninstallKey.GetValue('MachineKeyName')))) {
+								if (([Microsoft.Win32.RegistryKey]$empirumUserVersionKey = $baseKey.OpenSubKey('SOFTWARE\' + $machineKeyName))) {
 									[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($empirumUserVersionKey)
 									[Microsoft.Win32.RegistryKey]$empriumUserAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumUserAppKey)
 									Remove-NXTEmptyRegistryKey -Key $empriumUserAppKey.Name
