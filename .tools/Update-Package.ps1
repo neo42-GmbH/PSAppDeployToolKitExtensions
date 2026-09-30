@@ -303,7 +303,7 @@ try {
 				if (([System.Int32]$varIndex = $psv.Value.IndexOf($incompatibleVariable, [System.StringComparison]::OrdinalIgnoreCase)) -gt 0 -and
 					$psv.Value[$varIndex - 1] -in @(':', '$')
 				) {
-					Write-Host -ForegroundColor Red "Found [$incompatibleVariable] in [PackageSpecificVariablesRaw]. There is no automatic translation. This will not work."
+					Write-Host -ForegroundColor Red "Found [$incompatibleVariable] in [PackageSpecificVariablesRaw]. Please use the meta variables for compatibility. No automatic migration possible."
 				}
 			}
 		}
