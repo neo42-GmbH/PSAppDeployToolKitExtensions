@@ -8,7 +8,9 @@
 	[System.Management.Automation.SwitchParameter]
 	$CreateTests,
 	[System.Management.Automation.SwitchParameter]
-	$ListEmptyTests
+	$ListEmptyTests,
+	[System.String]
+	$FileNameFilter = '*'
 )
 
 # Options
@@ -53,8 +55,8 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 try {
-	[System.IO.FileInfo[]]$functionFiles = Get-ChildItem -Path $FunctionsDirectory -Recurse -File -Include '*.ps1'
-	[System.IO.FileInfo[]]$testFiles = Get-ChildItem -Path $TestsDirectory -Recurse -File -Include '*.Tests.ps1'
+	[System.IO.FileInfo[]]$functionFiles = Get-ChildItem -Path $FunctionsDirectory -Recurse -File -Include '*.ps1' | Where-Object -FilterScript { $_.Name -like $FileNameFilter }
+	[System.IO.FileInfo[]]$testFiles = Get-ChildItem -Path $TestsDirectory -Recurse -File -Include '*.Tests.ps1' | Where-Object -FilterScript { $_.Name -like $FileNameFilter }
 	[System.Collections.Generic.List[System.String]]$missingTestFiles = [System.Collections.Generic.List[System.String]]::new()
 	foreach ($functionFile in $functionFiles) {
 		[System.Boolean]$found = $false
@@ -94,7 +96,7 @@ try {
 		}
 	}
 	if ($ListEmptyTests) {
-		$testFiles = Get-ChildItem -Path $TestsDirectory -Recurse -File -Include '*.Tests.ps1'
+		$testFiles = Get-ChildItem -Path $TestsDirectory -Recurse -File -Include '*.Tests.ps1' | Where-Object -FilterScript { $_.Name -like $FileNameFilter }
 		[System.Collections.Generic.List[System.String]]$defaultTestFiles = [System.Collections.Generic.List[System.String]]::new()
 		foreach ($file in $testFiles) {
 			[System.String]$fileContent = Get-Content -Path $file.FullName -Raw
