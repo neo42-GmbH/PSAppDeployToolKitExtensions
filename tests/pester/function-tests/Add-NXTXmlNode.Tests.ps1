@@ -4,7 +4,7 @@ Describe 'Add-NXTXmlNode' {
 	BeforeAll {
 		# Create a temporary XML file for testing
 		[System.String]$xmlFilePath = [System.IO.Path]::GetTempFileName()
-		[System.String]$simpleXml = @'
+		[System.String]$xmlContent = @'
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
 	<parent>
@@ -12,7 +12,7 @@ Describe 'Add-NXTXmlNode' {
 	</parent>
 </root>
 '@
-		Set-Content -Path $xmlFilePath -Value $simpleXml -Encoding UTF8
+		Set-Content -Path $xmlFilePath -Value $xmlContent -Encoding UTF8
 	}
 
 	AfterAll {
@@ -23,7 +23,7 @@ Describe 'Add-NXTXmlNode' {
 	Context 'When adding nodes to an XML file' {
 		AfterEach {
 			# Reset the test file after each test
-			Set-Content -Path $xmlFilePath -Value $simpleXml -Encoding UTF8
+			Set-Content -Path $xmlFilePath -Value $xmlContent -Encoding UTF8
 		}
 
 		It 'Should add a simple node to the specified XPath location' {
@@ -55,13 +55,13 @@ Describe 'Add-NXTXmlNode' {
 
 	Context 'When working with XML objects directly' {
 		It 'Should add nodes to an XML object when using InputObject' {
-			$xmlDoc = [System.Xml.XmlDocument]$simpleXml
+			$xmlDoc = [System.Xml.XmlDocument]$xmlContent
 			Add-NXTXmlNode -InputObject $xmlDoc -XPath '/root/parent' -Name 'objectchild' -PassThru | Should -BeOfType [System.Xml.XmlDocument]
 			$xmlDoc.SelectSingleNode('/root/parent/objectchild') | Should -Not -BeNullOrEmpty
 		}
 
 		It 'Should add nodes to a specific XML node when using InputObject' {
-			$xmlDoc = [System.Xml.XmlDocument]$simpleXml
+			$xmlDoc = [System.Xml.XmlDocument]$xmlContent
 			$parentNode = $xmlDoc.SelectSingleNode('/root/parent')
 			Add-NXTXmlNode -InputObject $parentNode -XPath '.' -Name 'childnode' -PassThru | Should -BeOfType [System.Xml.XmlNode]
 			$xmlDoc.SelectSingleNode('/root/parent/childnode') | Should -Not -Be $null

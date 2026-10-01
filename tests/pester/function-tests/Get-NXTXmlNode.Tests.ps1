@@ -4,15 +4,14 @@ Describe 'Get-NXTXmlNode' {
 	Context 'When accessing a xml document' {
 		BeforeAll {
 			$xml = [System.Xml.XmlDocument]'<root>
-						<single>
-							<child property="pvalue">Value</child>
-						</single>
-						<multiple>
-							<child>AnotherValue</child>
-							<child>YetAnotherValue</child>
-						</multiple>
-					</root>'
-
+					<single>
+						<child property="pvalue">Value</child>
+					</single>
+					<multiple>
+						<child>AnotherValue</child>
+						<child>YetAnotherValue</child>
+					</multiple>
+				</root>'
 
 			$file = [System.IO.Path]::GetTempFileName()
 			$xml.Save($file)

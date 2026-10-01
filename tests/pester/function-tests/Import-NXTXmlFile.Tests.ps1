@@ -6,7 +6,7 @@ Describe 'Import-NXTXmlFile' {
 	}
 
 	AfterAll {
-		Remove-Item -Path $file -ErrorAction SilentlyContinue
+		Remove-Item -Path $file -Force -ErrorAction SilentlyContinue
 	}
 
 	Context 'When importing a legitimate XML file' {
