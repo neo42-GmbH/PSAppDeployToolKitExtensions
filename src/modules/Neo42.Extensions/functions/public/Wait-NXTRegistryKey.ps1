@@ -43,14 +43,16 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipelineByPropertyName)]
-		[Alias('PSPath', 'Path')]
+		[Alias('PSPath', 'Name')]
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Key,
+		[ValidateNotNullOrEmpty()]
 		[System.String]
-		$Name,
+		$Keyname,
+		[ValidateNotNullOrEmpty()]
 		[System.String]
-		$Value,
+		$Keyvalue,
 		[System.Management.Automation.SwitchParameter]
 		$Wow6432Node,
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
@@ -77,17 +79,16 @@
 				WarningAction          = 'SilentlyContinue'
 				ErrorAction            = 'SilentlyContinue'
 			}
+			if ($PSBoundParameters.ContainsKey('Keyname')) { $getKeyParam.Add('Name', $Keyname) }
 			[System.Management.Automation.ScriptBlock]$getKey = {
-				if (-not [System.String]::IsNullOrWhiteSpace($Name)) { $getKeyParam.Add('Name', $Name) }
+				param([System.Management.Automation.SwitchParameter]$ReturnObject)
 				$keyObj = Get-ADTRegistryKey @getKeyParam
-				if (-not [System.String]::IsNullOrWhiteSpace($Value)) {
-					if ($keyObj) {
-						return $Value -eq $keyObj
-					}
-					else {
-						return $false
+				if ($keyObj -and $(Get-Variable 'PSBoundParameters' -Scope 2).Value.ContainsKey('Keyvalue')) {
+					if ($keyObj -ne $Keyvalue) {
+						$keyObj = $null
 					}
 				}
+				if ($ReturnObject) { return $keyObj }
 				return $null -ne $keyObj
 			}
 			if ($IsRemoved) {
@@ -116,10 +117,10 @@
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {
 				if ($IsRemoved) {
-					return $(if ($result) { $null } else { $getKey.Invoke() })
+					return $(if ($result) { $null } else { $getKey.Invoke($true) })
 				}
 				else {
-					return $(if ($result) { $getKey.Invoke() } else { $null })
+					return $(if ($result) { $getKey.Invoke($true) } else { $null })
 				}
 			}
 			else {
