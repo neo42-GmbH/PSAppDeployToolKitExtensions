@@ -116,10 +116,10 @@
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {
 				if ($IsRemoved) {
-					return (if ($result) { $null } else { $getKey.Invoke() })
+					return $(if ($result) { $null } else { $getKey.Invoke() })
 				}
 				else {
-					return (if ($result) { $getKey.Invoke() } else { $null })
+					return $(if ($result) { $getKey.Invoke() } else { $null })
 				}
 			}
 			else {

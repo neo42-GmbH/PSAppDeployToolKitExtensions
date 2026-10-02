@@ -107,10 +107,10 @@
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {
 				if ($IsStopped) {
-					return (if ($result) { $null } else { Resolve-NXTProcess @PSBoundParameters })
+					return $(if ($result) { $null } else { Resolve-NXTProcess @PSBoundParameters })
 				}
 				else {
-					return (if ($result) { Resolve-NXTProcess @PSBoundParameters } else { $null })
+					return $(if ($result) { Resolve-NXTProcess @PSBoundParameters } else { $null })
 				}
 			}
 			else {

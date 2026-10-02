@@ -75,10 +75,10 @@
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {
 				if ($IsInUse) {
-					return (if ($result) { $null } else { Get-Item -LiteralPath $Path })
+					return $(if ($result) { $null } else { Get-Item -LiteralPath $Path })
 				}
 				else {
-					return (if ($result) { Get-Item -LiteralPath $Path } else { $null })
+					return $(if ($result) { Get-Item -LiteralPath $Path } else { $null })
 				}
 			}
 			else {
