@@ -10,7 +10,6 @@
 	.OUTPUTS
 	System.Boolean - Returns $true if the path appears within the timeout period; otherwise, returns $false.
 	System.IO.FileSystemInfo - Returns the file system object when -PassThru is specified.
-	With the -IsRemoved switch, the test will be inverted.
 	.PARAMETER Path
 	The path to the file or directory to monitor.
 	.PARAMETER Timeout
@@ -29,6 +28,8 @@
 	Wait-NXTFileSystem -Path "C:\Temp\Sources\Installer.exe" -Timeout '00:02:00' -IsRemoved
 
 	Monitors for 'Installer.exe' in the specified directory and waits up to 120 seconds for it to disappear.
+	.NOTES
+	With the -IsRemoved switch, the test will be inverted.
 	#>
 	[OutputType([System.Boolean], [System.IO.FileSystemInfo])]
 	param (
@@ -64,14 +65,14 @@
 				[System.String]$failureMessage = "Path [$Path] did not appear within the specified timeout period of [$Timeout]."
 			}
 			[System.Boolean]$result = $true
-			[System.String]$severity = 'Info'
 			[System.String]$message = $successMessage
+			[PSADT.Module.LogSeverity]$severity = [PSADT.Module.LogSeverity]::Info
 			[System.DateTime]$endTime = [System.DateTime]::Now.Add($Timeout)
 			while ($waitWhile.Invoke()) {
 				if ([System.DateTime]::Now -ge $endTime) {
 					$result = $false
-					$severity = 'Warning'
 					$message = $failureMessage
+					$severity = [PSADT.Module.LogSeverity]::Warning
 					break
 				}
 				Start-Sleep -Milliseconds $Interval.TotalMilliseconds

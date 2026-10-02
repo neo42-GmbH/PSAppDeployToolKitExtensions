@@ -9,7 +9,6 @@
 	.OUTPUTS
 	System.Boolean - Returns $true if the file is no longer in use; otherwise, returns $false.
 	System.IO.FileSystemInfo - Returns the file system object when -PassThru is specified.
-	With the -IsInUse switch, the test will be inverted.
 	.PARAMETER Path
 	The path to the file to check.
 	.PARAMETER Timeout
@@ -24,6 +23,8 @@
 	Wait-NXTFileNotInUse -Path 'C:\Temp\file.txt' -Timeout '00:02:00'
 
 	Wait until the file 'C:\Temp\file.txt' is no longer in use by another process or until the timeout of 120 seconds is reached.
+	.NOTES
+	With the -IsInUse switch, the test will be inverted.
 	#>
 	[OutputType([System.Boolean], [System.IO.FileSystemInfo])]
 	param (
@@ -59,14 +60,14 @@
 				[System.String]$failureMessage = "The file [$Path] was still in use after the specified timeout period of [$Timeout]."
 			}
 			[System.Boolean]$result = $true
-			[System.String]$severity = 'Info'
 			[System.String]$message = $successMessage
+			[PSADT.Module.LogSeverity]$severity = [PSADT.Module.LogSeverity]::Info
 			[System.DateTime]$endTime = [System.DateTime]::Now.Add($Timeout)
 			while ($waitWhile.Invoke()) {
 				if ([System.DateTime]::Now -ge $endTime) {
 					$result = $false
-					$severity = 'Warning'
 					$message = $failureMessage
+					$severity = [PSADT.Module.LogSeverity]::Warning
 					break
 				}
 				Start-Sleep -Milliseconds $Interval.TotalMilliseconds

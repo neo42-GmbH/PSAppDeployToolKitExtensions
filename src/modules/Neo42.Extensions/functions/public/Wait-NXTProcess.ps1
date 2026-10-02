@@ -20,7 +20,6 @@
 	.OUTPUTS
 	System.Boolean - Returns $true if the process starts within the timeout period; otherwise, returns $false.
 	System.Diagnostics.Process - Returns the process when -PassThru is specified.
-	With the -IsStopped switch, the test will be inverted.
 	.PARAMETER Name
 	The name of the process to monitor.
 	.PARAMETER Id
@@ -43,6 +42,8 @@
 	Wait-NXTProcess -Name "notepad.exe" -Timeout '00:02:00' -IsStopped
 
 	This example monitors for 'notepad.exe' and waits up to 120 seconds for it to stop.
+	.NOTES
+	With the -IsStopped switch, the test will be inverted.
 	#>
 	[OutputType([System.Boolean], [System.Diagnostics.Process])]
 	[CmdletBinding(DefaultParameterSetName = 'Name')]
@@ -91,14 +92,14 @@
 				[System.String]$failureMessage = "The specified process is still not available after the specified timeout of [$Timeout]."
 			}
 			[System.Boolean]$result = $true
-			[System.String]$severity = 'Info'
 			[System.String]$message = $successMessage
+			[PSADT.Module.LogSeverity]$severity = [PSADT.Module.LogSeverity]::Info
 			[System.DateTime]$endTime = [System.DateTime]::Now.Add($Timeout)
 			while ($waitWhile.Invoke()) {
 				if ([System.DateTime]::Now -ge $endTime) {
 					$result = $false
-					$severity = 'Warning'
 					$message = $failureMessage
+					$severity = [PSADT.Module.LogSeverity]::Warning
 					break
 				}
 				Start-Sleep -Milliseconds $Interval.TotalMilliseconds

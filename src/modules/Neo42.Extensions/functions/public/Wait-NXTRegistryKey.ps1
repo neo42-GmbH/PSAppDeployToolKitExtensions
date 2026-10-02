@@ -10,7 +10,6 @@
 	.OUTPUTS
 	System.Boolean - Returns $true if the registry key exist within the timeout period; otherwise, returns $false.
 	PSCustomObject - Returns the registry key values as custom object when -PassThru is specified.
-	With the -IsRemoved switch, the test will be inverted.
 	.PARAMETER Key
 	The path to the registry key to monitor.
 	.Parameter Name
@@ -36,6 +35,8 @@
 	Wait-NXTRegistryKey -Key "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams" -IsRemoved
 
 	This example monitors the specified registry key and waits up to 60 seconds to check its existence has ended.
+	.NOTES
+	With the -IsRemoved switch, the test will be inverted.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'The values will be used in scriptblocks.')]
 	[OutputType([System.Boolean], [PSCustomObject], [Microsoft.Win32.RegistryKey])]
@@ -100,14 +101,14 @@
 				[System.String]$failureMessage = "The registry key [$convertedKey] is still not created after the specified timeout of [$Timeout]."
 			}
 			[System.Boolean]$result = $true
-			[System.String]$severity = 'Info'
 			[System.String]$message = $successMessage
+			[PSADT.Module.LogSeverity]$severity = [PSADT.Module.LogSeverity]::Info
 			[System.DateTime]$endTime = [System.DateTime]::Now.Add($Timeout)
 			while ($waitWhile.Invoke()) {
 				if ([System.DateTime]::Now -ge $endTime) {
 					$result = $false
-					$severity = 'Warning'
 					$message = $failureMessage
+					$severity = [PSADT.Module.LogSeverity]::Warning
 					break
 				}
 				Start-Sleep -Milliseconds $Interval.TotalMilliseconds
