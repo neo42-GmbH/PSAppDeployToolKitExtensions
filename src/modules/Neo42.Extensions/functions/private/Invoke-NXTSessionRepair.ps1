@@ -20,7 +20,7 @@
 					if ([System.IO.Path]::IsPathRooted($ADTSession.NXT.Install.Target)) {
 						$ADTSession.NXT.Install.Target
 					}
-					elseif ([System.String]::IsNullOrWhiteSpace($ADTSession.DirFiles)) {
+					elseif (-not [System.String]::IsNullOrWhiteSpace($ADTSession.DirFiles)) {
 						[System.IO.Path]::Combine($ADTSession.DirFiles, $ADTSession.NXT.Install.Target)
 					}
 				}
