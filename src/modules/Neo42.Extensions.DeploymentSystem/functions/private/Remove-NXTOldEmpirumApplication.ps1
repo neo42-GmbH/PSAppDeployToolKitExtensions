@@ -57,6 +57,10 @@
 			}
 		}
 
+		if ($empirumMachineVersionKeys) {
+			Show-NXTInstallationWelcome -ADTSession $adtSession -DeploymentDefaults -NoBalloonTip
+		}
+
 		foreach ($empirumMachineVersionKey in $empirumMachineVersionKeys) {
 			if ([Microsoft.Win32.RegistryKey]$empirumMachineSetupKey = $empirumMachineVersionKey.OpenSubKey('Setup')) {
 				if ($adtSession.NXT.Package.UninstallOld) {
