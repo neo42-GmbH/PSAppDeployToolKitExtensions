@@ -1,4 +1,5 @@
-﻿<#
+﻿#Requires -Modules Pester
+<#
     .SYNOPSIS
     Invoke the test suite for this repo.
 
@@ -52,7 +53,6 @@
 	PassThru: [Pester.Run] result object
 #>
 
-[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSNxtAvoidTypeAccelerator', '', Justification = '[PesterConfiguration] is the FullName and no Accelerator')]
 param(
 	[ValidateScript({ $_.Exists })]
 	[System.IO.DirectoryInfo]
@@ -108,40 +108,35 @@ Add-Type -AssemblyName 'PresentationFramework'  # to remove false positives in U
 . $initEnvScript.FullName -ModuleDirectory $ModuleDirectory
 
 # Create the test container
-[System.Collections.Generic.List[Pester.ContainerInfo]]$containers = [System.Collections.Generic.List[Pester.ContainerInfo]]::new()
+[System.Collections.Generic.List[Pester.ContainerInfo]]$pContainers = [System.Collections.Generic.List[Pester.ContainerInfo]]::new()
 
 # Build test container for testing compatibility factors of existing script files, such as function files
 [System.IO.FileInfo[]]$sourceFiles = Get-ChildItem -Recurse -File -Path $CompatibilityTestDirectory.FullName | Where-Object -FilterScript { $_.Extension -eq '.ps1' }
-[Pester.ContainerInfo]$pContainer = [Pester.ContainerInfo](New-PesterContainer -Path $compScript -Data @{ FilePath = $sourceFiles })
-$containers.Add($pContainer)
+$pContainers.Add((New-PesterContainer -Path $compScript -Data @{ FilePath = $sourceFiles }))
 
 # Build test container for testing functions via defined test files
-[Pester.ContainerInfo[]]$pContainers = [Pester.ContainerInfo[]]@(New-PesterContainer -Path $fcnDir)
-$containers.AddRange($pContainers)
+$pContainers.AddRange([Pester.ContainerInfo[]]@(New-PesterContainer -Path $fcnDir))
 
 # Exclude and include files
-[System.Collections.Generic.List[Pester.ContainerInfo]]$containersFiltered = [System.Collections.Generic.List[Pester.ContainerInfo]]::new()
-if ($containers.Count -ge 0) {
-	if (-not [System.String]::IsNullOrWhiteSpace($IncludeTestFilesLike)) {
-		foreach ($container in $containers) {
-			[System.Boolean]$found = $false
-			foreach ($filename in $IncludeTestFilesLike) {
-				if ($container.Item.Name -like $filename) {
-					$found = $true
-				}
+[System.Collections.Generic.List[Pester.ContainerInfo]]$pContainersFiltered = [System.Collections.Generic.List[Pester.ContainerInfo]]::new()
+if ($PSBoundParameters.ContainsKey('IncludeTestFilesLike')) {
+	foreach ($container in $pContainers) {
+		foreach ($filename in $IncludeTestFilesLike) {
+			if ($container.Item.Name -like $filename) {
+				$pContainersFiltered.Add($container)
+				break
 			}
-			if ($found) { $containersFiltered.Add($container) }
 		}
 	}
-	else {
-		$containersFiltered.AddRange($containers)
-	}
-	if (-not [System.String]::IsNullOrWhiteSpace($ExcludeTestFilesLike)) {
-		foreach ($container in $containers) {
-			foreach ($filename in $ExcludeTestFilesLike) {
-				if ($container.Item.Name -like $filename) {
-					$null = $containersFiltered.Remove($container)
-				}
+}
+else {
+	$pContainersFiltered.AddRange($pContainers)
+}
+if ($PSBoundParameters.ContainsKey('ExcludeTestFilesLike')) {
+	foreach ($container in $pContainers) {
+		foreach ($filename in $ExcludeTestFilesLike) {
+			if ($container.Item.Name -like $filename) {
+				$null = $pContainersFiltered.Remove($container)
 			}
 		}
 	}
@@ -150,7 +145,7 @@ if ($containers.Count -ge 0) {
 # Start test process
 [PesterConfiguration]$pConf = New-PesterConfiguration -Hashtable @{
 	Run          = @{
-		Container = $containersFiltered
+		Container = $pContainersFiltered
 		PassThru  = $PassThru.ToBool()
 		SkipRun   = $SkipRun.ToBool()
 		Exit      = $Exit.ToBool()
