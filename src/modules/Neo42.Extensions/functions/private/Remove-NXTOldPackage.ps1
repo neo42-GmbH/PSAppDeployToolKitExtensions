@@ -16,8 +16,7 @@
 	[Microsoft.Win32.RegistryKey]$localMachineKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64)
 	$rootKeys.Add($localMachineKey)
 	if ([PSADTNXT.Extensions.NxtRegistryExtensions]::Is64BitOperatingSystem) {
-		$rootKeys.Add([Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
-)
+		$rootKeys.Add([Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32))
 	}
 	[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$neo42PackageKeys = $rootKeys | & {
 		process {
