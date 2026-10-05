@@ -37,6 +37,8 @@
 						}
 					}
 				}
+				$uninstallRoot.Close()
+				$baseKey.Close()
 			}
 		}
 
@@ -55,6 +57,7 @@
 					}
 				}
 			}
+			$staticEmpirumMachineAppKey.Close()
 		}
 
 		if ($empirumMachineVersionKeys) {
@@ -126,13 +129,17 @@
 									[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($empirumUserVersionKey)
 									[Microsoft.Win32.RegistryKey]$empriumUserAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumUserAppKey)
 									Remove-NXTEmptyRegistryKey -Key $empriumUserAppKey.Name
+									$empriumUserAppKey.Close()
 									[Microsoft.Win32.RegistryKey]$empirumUserVendorKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumUserAppKey)
 									Remove-NXTEmptyRegistryKey -Key $empirumUserVendorKey.Name
+									$empirumUserVendorKey.Close()
 								}
 								[PSADTNXT.Extensions.NxtRegistryExtensions]::Delete($uninstallKey)
 							}
 						}
 					}
+					$uninstallRoot.Close()
+					$baseKey.Close()
 				}
 			}
 			if (([Microsoft.Win32.RegistryKey]$staticEmpirumUserAppKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
@@ -146,6 +153,7 @@
 						[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($staticEmpirumUserAppKey.OpenSubKey($_))
 					}
 				}
+				$staticEmpirumUserAppKey.Close()
 			}
 		}
 	}
