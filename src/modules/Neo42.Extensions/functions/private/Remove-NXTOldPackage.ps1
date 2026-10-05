@@ -12,7 +12,13 @@
 	)
 
 	# A collection of easy access variables for the current scope.
-	[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$rootKeys = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetAllViews() | & { process { [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, $_) } }
+	[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$rootKeys = [System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]::new()
+	[Microsoft.Win32.RegistryKey]$localMachineKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64)
+	$rootKeys.Add($localMachineKey)
+	if ([PSADTNXT.Extensions.NxtRegistryExtensions]::Is64BitOperatingSystem) {
+		$rootKeys.Add([Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
+)
+	}
 	[System.Collections.Generic.List[Microsoft.Win32.RegistryKey]]$neo42PackageKeys = $rootKeys | & {
 		process {
 			if (([Microsoft.Win32.RegistryKey]$packageKey = $_.OpenSubKey($ADTSession.NXT.Package.RegistryKey)) -and
@@ -57,6 +63,21 @@
 		[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($packageKey)
 
 		Update-NXTDetectionStatus -ADTSession $ADTSession
+	}
+
+	# We need to purge old active setup keys.
+	[System.String]$activeSetupSubKey = 'SOFTWARE\Microsoft\Active Setup\Installed Components'
+	[System.String]$installKeyName = $ADTSession.NXT.Package.GUID
+	[System.String]$uninstallKeyName = $installKeyName + '.uninstall'
+
+	if ($localMachineKey.OpenSubKey([System.IO.Path]::Combine($activeSetupSubKey, $installKeyName))) {
+		Write-ADTLogEntry -Message "Found previous active setup key [$installKeyName] for install user part. Purging previous key."
+		Set-ADTActiveSetup -PurgeActiveSetupKey -Key $key
+	}
+
+	if ($localMachineKey.OpenSubKey([System.IO.Path]::Combine($activeSetupSubKey, $uninstallKeyName))) {
+		Write-ADTLogEntry -Message "Found previous active setup key [$uninstallKeyName] for uninstall user part. Purging previous key."
+		Set-ADTActiveSetup -PurgeActiveSetupKey -Key $key
 	}
 
 	foreach ($key in $rootKeys) {
