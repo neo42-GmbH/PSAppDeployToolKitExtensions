@@ -2,9 +2,11 @@
 
 Describe 'Stop-NXTProcess' {
 	BeforeAll {
+		$procStartWait = 100
+
 		Stop-Process -Name 'cmd' -Force -ErrorAction SilentlyContinue
 		$cmdProc = Start-Process -FilePath 'cmd.exe' -PassThru -WindowStyle Hidden
-		Start-Sleep -Milliseconds 500
+		Start-Sleep -Milliseconds $procStartWait
 
 		$cmdProcDef = [PSADT.ProcessManagement.ProcessDefinition]::new('cmd')
 		$cmdProcClose = [PSADTNXT.ProcessManagement.NxtCloseProcess]::new('cmd')
@@ -22,7 +24,7 @@ Describe 'Stop-NXTProcess' {
 		AfterEach {
 			Stop-Process -Name 'cmd' -Force -ErrorAction SilentlyContinue
 			$cmdProc = Start-Process -FilePath 'cmd.exe' -PassThru -WindowStyle Hidden
-			Start-Sleep -Milliseconds 500
+			Start-Sleep -Milliseconds $procStartWait
 		}
 
 		It 'Should be false with existing process' {
@@ -51,7 +53,7 @@ Describe 'Stop-NXTProcess' {
 		AfterEach {
 			Stop-Process -Name 'cmd' -Force -ErrorAction SilentlyContinue
 			$cmdProc = Start-Process -FilePath 'cmd.exe' -PassThru -WindowStyle Hidden
-			Start-Sleep -Milliseconds 500
+			Start-Sleep -Milliseconds $procStartWait
 		}
 
 		It 'Should be false with existing process' {
@@ -80,7 +82,7 @@ Describe 'Stop-NXTProcess' {
 		AfterEach {
 			Stop-Process -Name 'cmd' -Force -ErrorAction SilentlyContinue
 			$cmdProc = Start-Process -FilePath 'cmd.exe' -PassThru -WindowStyle Hidden
-			Start-Sleep -Milliseconds 500
+			Start-Sleep -Milliseconds $procStartWait
 		}
 
 		It 'Should be false with existing process' {
@@ -105,7 +107,7 @@ Describe 'Stop-NXTProcess' {
 		AfterEach {
 			Stop-Process -Name 'cmd' -Force -ErrorAction SilentlyContinue
 			$cmdProc = Start-Process -FilePath 'cmd.exe' -PassThru -WindowStyle Hidden
-			Start-Sleep -Milliseconds 500
+			Start-Sleep -Milliseconds $procStartWait
 		}
 
 		It 'Should be true with existing process' {
@@ -135,7 +137,7 @@ Describe 'Stop-NXTProcess' {
 		AfterEach {
 			Stop-Process -Name 'cmd' -Force -ErrorAction SilentlyContinue
 			$cmdProc = Start-Process -FilePath 'cmd.exe' -PassThru -WindowStyle Hidden
-			Start-Sleep -Milliseconds 500
+			Start-Sleep -Milliseconds $procStartWait
 		}
 
 		It 'Should be false if data type is String with existing process' {
@@ -201,7 +203,7 @@ Describe 'Stop-NXTProcess' {
 			[System.String]$cmdChildProcName = 'notepad'
 			Stop-Process -Name $cmdChildProcName -Force -ErrorAction SilentlyContinue
 			$cmdWithChildProc = Start-Process -FilePath 'cmd.exe' -ArgumentList "/k start /min /low $($cmdChildProcName).exe" -PassThru -WindowStyle Hidden
-			Start-Sleep -Milliseconds 500
+			Start-Sleep -Milliseconds $procStartWait
 			Stop-NXTProcess -Id $cmdWithChildProc.Id -KillProcessTree
 			((Test-NXTProcess -Id $cmdWithChildProc.Id) -or (Test-NXTProcess -Name $cmdChildProcName)) | Should -BeFalse
 		}
