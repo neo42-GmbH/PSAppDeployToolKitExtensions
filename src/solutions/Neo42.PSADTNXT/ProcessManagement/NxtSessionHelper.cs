@@ -22,7 +22,16 @@ namespace PSADTNXT.ProcessManagement
 		private const string SE_TCB_PRIVILEGE = "SeTcbPrivilege";
 		private static readonly List<string> _sePrivs = ["SeDebugPrivilege", "SeAssignPrimaryTokenPrivilege", "SeIncreaseQuotaPrivilege"];
 
-		public static ProcessResult StartProcessInSessions(string file, string arguments, ICollection<uint> sessionIds, TimeSpan timeout)
+		/// <summary>
+		/// Starts the given file in each of the given sessions and returns the result of the first process which exits.
+		/// </summary>
+		/// <param name="file">The file to start.</param>
+		/// <param name="arguments">The command line passed to the started processes.</param>
+		/// <param name="sessionIds">The sessions to start the file in.</param>
+		/// <param name="timeout">The time to wait for one of the processes to exit.</param>
+		/// <param name="encoding">The encoding the started processes write their output with. Defaults to the OEM code page of the system.</param>
+		/// <returns>The exit code and output of the first process which exited.</returns>
+		public static ProcessResult StartProcessInSessions(string file, string arguments, ICollection<uint> sessionIds, TimeSpan timeout, Encoding? encoding = null)
 		{
 			if (string.IsNullOrWhiteSpace(file))
 			{
@@ -31,6 +40,7 @@ namespace PSADTNXT.ProcessManagement
 
 			var handler = new List<IntPtr>();
 			var processes = new List<ProcessContainer>();
+			var outputEncoding = encoding ?? GetConsoleOutputEncoding();
 			var extraPrivileges = _sePrivs.Except(NxtProcessSecurity.GetPrivileges()).ToList();
 			var securityAttributes = new SECURITY_ATTRIBUTES
 			{
@@ -113,8 +123,8 @@ namespace PSADTNXT.ProcessManagement
 
 					// Read both pipes on background threads. The threads append to the collections of the
 					// container, so the output is available once they have been joined.
-					process.StdOutThread = StartPipeReader(process.StdOutReadHandle, process.StdOutLines, process.InterleavedLines);
-					process.StdErrThread = StartPipeReader(process.StdErrReadHandle, process.StdErrLines, process.InterleavedLines);
+					process.StdOutThread = StartPipeReader(process.StdOutReadHandle, process.StdOutLines, process.InterleavedLines, outputEncoding);
+					process.StdErrThread = StartPipeReader(process.StdErrReadHandle, process.StdErrLines, process.InterleavedLines, outputEncoding);
 
 					// Start the process in the session. The extended startup information restricts handle
 					// inheritance to the pipes of this process and, if the job object of the current process
@@ -258,15 +268,34 @@ namespace PSADTNXT.ProcessManagement
 		}
 
 		/// <summary>
+		/// Determines the encoding the created processes write their redirected output with.
+		/// </summary>
+		/// <remarks>
+		/// As the processes are created without a window, each of them gets a new console which uses
+		/// the OEM code page of the system. Console applications such as PowerShell write redirected
+		/// output in the code page of their console, so the output has to be decoded with it as well.
+		/// </remarks>
+		/// <returns>The encoding of the OEM code page of the system.</returns>
+		private static Encoding GetConsoleOutputEncoding()
+		{
+#if NET8_0_OR_GREATER
+			// .NET only provides the OEM code pages once their provider has been registered
+			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+#endif
+			return Encoding.GetEncoding((int)Kernel32.GetOEMCP());
+		}
+
+		/// <summary>
 		/// Starts a background thread which reads the given pipe until its end.
 		/// </summary>
 		/// <param name="handle">The reading end of the pipe. It stays owned by the caller.</param>
 		/// <param name="output">Receives the lines read from the pipe.</param>
 		/// <param name="interleaved">Receives the lines of both pipes of the process in the order they arrive.</param>
+		/// <param name="encoding">The encoding to decode the received data with.</param>
 		/// <returns>The started thread, which has to be joined to get the complete output.</returns>
-		private static Thread StartPipeReader(SafeFileHandle handle, List<string> output, ConcurrentQueue<string> interleaved)
+		private static Thread StartPipeReader(SafeFileHandle handle, List<string> output, ConcurrentQueue<string> interleaved, Encoding encoding)
 		{
-			var thread = new Thread(() => ReadPipe(handle, output, interleaved, Encoding.Unicode))
+			var thread = new Thread(() => ReadPipe(handle, output, interleaved, encoding))
 			{
 				IsBackground = true
 			};
