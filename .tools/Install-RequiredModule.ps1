@@ -47,7 +47,7 @@ else {
 }
 
 # Download the required PSAppDeployToolkit version.
-if (-not $requiresDownload) {
+if ($requiresDownload) {
 	[System.IO.FileInfo]$zipFile = [System.IO.Path]::Combine($Root.FullName, 'PSAppDeployToolkit_ModuleOnly.zip')
 	Invoke-WebRequest -Uri "https://github.com/PSAppDeployToolkit/PSAppDeployToolkit/releases/download/$requiredPsadtVersion/PSAppDeployToolkit_ModuleOnly.zip" -OutFile $zipFile.FullName
 	try {
