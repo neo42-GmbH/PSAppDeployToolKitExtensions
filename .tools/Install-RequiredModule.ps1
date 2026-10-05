@@ -47,7 +47,7 @@ else {
 }
 
 # Download the required PSAppDeployToolkit version.
-if (-not $requiresDownload) {
+if ($requiresDownload) {
 	[System.IO.FileInfo]$zipFile = [System.IO.Path]::Combine($Root.FullName, 'PSAppDeployToolkit_ModuleOnly.zip')
 	Invoke-WebRequest -Uri "https://github.com/PSAppDeployToolkit/PSAppDeployToolkit/releases/download/$requiredPsadtVersion/PSAppDeployToolkit_ModuleOnly.zip" -OutFile $zipFile.FullName
 	try {
@@ -62,8 +62,8 @@ if (-not $requiresDownload) {
 
 # Ensure required modules are installed.
 @(
-	@{ ModuleName = 'PSScriptAnalyzer'; GUID = 'd6245802-193d-4068-a631-8863a4342a18'; ModuleVersion = '1.25.0'; MaximumVersion = '1.99' },
-	@{ ModuleName = 'Pester'; GUID = 'a699dea5-2c73-4616-a270-1f7abb777e71'; ModuleVersion = '5.6'; MaximumVersion = '5.99' }
+	@{ ModuleName = 'PSScriptAnalyzer'; GUID = 'd6245802-193d-4068-a631-8863a4342a18'; ModuleVersion = '1.25.0'; MaximumVersion = '1.99' }
+	@{ ModuleName = 'Pester'; GUID = 'a699dea5-2c73-4616-a270-1f7abb777e71'; ModuleVersion = '5.6'; MaximumVersion = '6.1.0'	}
 ) | ForEach-Object {
 	if (-not (Get-Module -ListAvailable -FullyQualifiedName $_)) {
 		Install-Module -Force -SkipPublisherCheck -Scope CurrentUser -Repository PSGallery `
@@ -77,4 +77,3 @@ if (-not $requiresDownload) {
 		Write-Host "The required module [$($_.ModuleName)] is already installed."
 	}
 }
-
