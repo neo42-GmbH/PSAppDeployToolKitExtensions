@@ -298,12 +298,12 @@ try {
 			}
 		}
 		[System.String[]]$incompatibleVariables = @('AppLogFolder', 'DirFiles', 'DirSupportFiles', 'App')
-		foreach ($psv in $legacyConfig.PackageSpecificVariablesRaw[0]) {
+		foreach ($psv in $legacyConfig.PackageSpecificVariablesRaw) {
 			foreach ($incompatibleVariable in $incompatibleVariables) {
 				if (([System.Int32]$varIndex = $psv.Value.IndexOf($incompatibleVariable, [System.StringComparison]::OrdinalIgnoreCase)) -gt 0 -and
 					$psv.Value[$varIndex - 1] -in @(':', '$')
 				) {
-					Write-Host -ForegroundColor Red "Found [$incompatibleVariable] in [PackageSpecificVariablesRaw]. There is no automatic translation. This will not work."
+					Write-Host -ForegroundColor Red "Found [$incompatibleVariable] in [PackageSpecificVariablesRaw]. Please use the meta variables for compatibility. No automatic migration possible."
 				}
 			}
 		}
@@ -342,7 +342,7 @@ if ($parserErrors) { throw "Parser errors in [$Package\Deploy-Application.ps1]:`
 
 # If there are custom functions that have been removed, we need to migrate them manually
 if ([System.String[]]$missingFunctions = $packageCustomFunctions.Name | Where-Object { $referenceCustomFunctions.Name -notcontains $_ }) {
-	Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for:`n$([System.String]::Join('`n', $missingFunctions))"
+	Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for:`n$([System.String]::Join("`n", $missingFunctions))"
 }
 
 # Migrate custom functions

@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Hiba történt az alkalmazás telepítése során. További információért tekintse meg a naplófájlt.'
-			Repair    = 'Hiba történt az alkalmazás javítása során. További információért tekintse meg a naplófájlt.'
-			Uninstall = 'Hiba történt az alkalmazás eltávolítása során. További információért tekintse meg a naplófájlt.'
-		}
+		ErrorMessage  = "A(z) {0} üzembe helyezése a(z) `"{1}`" szakaszban {2} hibával meghiúsult.`nHibaüzenet:`n`n{3}`n`nTovábbi információért tekintse meg a naplókat, vagy forduljon a rendszergazdához további segítségért."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Kérjük, mentse el a munkáját, és zárja be az alkalmazásokat.'

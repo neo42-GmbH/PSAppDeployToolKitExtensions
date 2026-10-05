@@ -32,7 +32,7 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName = $true)]
-		[ValidateRange(0, [System.Int32]::MaxValue)]
+		[ValidateRange(1, [System.Int32]::MaxValue)]
 		[Alias('Pid', 'ProcessId')]
 		[System.Int32]
 		$Id = $PID,

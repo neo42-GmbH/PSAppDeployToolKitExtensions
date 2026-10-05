@@ -10,17 +10,23 @@
 	param (
 		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
-		$ADTSession = (Get-ADTSession),
-		[System.Management.Automation.SwitchParameter]
-		$AsError,
-		[System.String]
-		$ErrorMessage
+		$ADTSession = (Get-ADTSession)
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
 	}
 	process {
 		try {
+			[PSADT.Module.DeploymentSession]$ADTSession = Get-ADTSession
+			if ($ADTSession -isnot [PSADTNXT.Foundation.NxtDeploymentSession] -or
+				-not $ADTSession.NXT.DeploymentType.IsMachinePart -or
+				-not $ADTSession.NXT.DeploymentType.IsInstall
+			) { return }
+
+			if (-not $ADTSession.NXT.DeploymentInvoked) {
+				Write-ADTLogEntry -Message 'Skipping package registration as the deployment has not been invoked.'
+			}
+
 			if (-not $ADTSession.NXT.Package.Register) {
 				Write-ADTLogEntry -Severity Warning -Message 'Package registration is skipped due to session configuration.'
 				return
@@ -28,6 +34,7 @@
 
 			[System.Collections.Generic.IReadOnlyDictionary[System.String, System.Object]]$adtEnvironment = Get-ADTEnvironmentTable
 			[Microsoft.Win32.RegistryKey]$rootKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine , [Microsoft.Win32.RegistryView]::Registry64)
+			[System.Boolean]$asError = $ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error
 
 			Write-ADTLogEntry -Message 'Registering current package to the package registry.'
 
@@ -39,14 +46,14 @@
 			Write-ADTLogEntry -Message "The package will be registered to the application registry path [$appRegistryKeyPath]." -DebugMessage
 
 			[System.String]$uninstallString = Resolve-NXTDeployString -PreferExecutable -Root ([System.IO.Path]::Combine($ADTSession.NXT.Package.Directory.FullName, 'neo42-Install')) -Arguments @{
-				DeploymentType   = 'Uninstall'
-				DeployMode       = 'Silent'
+				DeploymentType   = [PSADTNXT.Deployment.NxtDeploymentType]::Install
+				DeployMode       = [PSADT.Module.DeployMode]::Silent
 				DeploymentSystem = $ADTSession.NXT.DeploymentSystem
 			}
 			Write-ADTLogEntry -Message "The calculated uninstall string is [$uninstallString]." -DebugMessage
 
 			# If the session is no error, clear potential error keys, otherwise append _Error to the key path
-			if (-not $AsError) {
+			if (-not $asError) {
 				$rootKey.DeleteSubKey($regPackagesKeyPath + '_Error', $false)
 			}
 			else {
@@ -77,11 +84,12 @@
 				@{ Name = 'UserPartRevision'; Value = $ADTSession.NXT.UserPartRevision }
 				@{ Name = 'SoftMigrationOccurred'; Value = ([System.Boolean]$ADTSession.NXT.SoftMigration.Result).ToString().ToLower(); Type = [Microsoft.Win32.RegistryValueKind]::String }
 
-				if ($AsError) {
+				if ($asError) {
 					@{ Name = 'ErrorTimeStamp'; Value = [System.DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::InvariantInfo.UniversalSortableDateTimePattern) },
-					@{ Name = 'ErrorMessage'; Value = $ErrorMessage }
+					@{ Name = 'ErrorMessage'; Value = if ($ADTSession.NXT.ErrorMessage) { $ADTSession.NXT.ErrorMessage } else { 'No error message provided.' } }
+					@{ Name = 'ErrorPhase'; Value = $ADTSession.NXT.ErrorPhase }
 				}
-				else {
+				elseif ($ADTSession.NXT.IsCached) {
 					@{ Name = 'UninstallString'; Value = $uninstallString }
 				}
 			)
@@ -98,8 +106,8 @@
 			}
 			$regPackagesKey.Close()
 
-			# Do not register the ARP entry if the session is an error
-			if ($AsError) { return }
+			# Do not register the ARP entry if the session is an error or it has not been cached yet
+			if ($asError -or -not $ADTSession.NXT.IsCached) { return }
 
 			# Determine size property
 			[System.UInt32]$size = 0

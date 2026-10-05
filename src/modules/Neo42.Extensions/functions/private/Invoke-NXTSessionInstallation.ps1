@@ -50,8 +50,7 @@
 			$invokeInstallParams['Awaiter'] = $ADTSession.NXT.Install.Awaiters
 		}
 
-		[PSADT.ProcessManagement.ProcessResult]$result = Install-NXTApplication @invokeInstallParams
-		return $result
+		return (Install-NXTApplication @invokeInstallParams)
 	}
 	catch {
 		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

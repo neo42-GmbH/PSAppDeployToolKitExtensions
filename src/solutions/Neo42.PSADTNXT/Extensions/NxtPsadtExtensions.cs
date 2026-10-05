@@ -5,6 +5,8 @@ using System.Linq;
 using Microsoft.Dism.Commands;
 using Microsoft.Win32;
 using PSADT.Types;
+using PSADTNXT.Application;
+using PSADTNXT.Package;
 using PSADTNXT.Shell;
 
 namespace PSADTNXT.Extensions
@@ -156,6 +158,23 @@ namespace PSADTNXT.Extensions
 		{
 			using var key = application.PSPath.ToRegistryKeyFromPSProviderPath();
 			return key != null && key.GetValue("BundleProviderKey", null) is string providerKey && providerKey.Equals(application.PSChildName);
+		}
+
+		public static ApplicationStore GetApplicationStore(this InstalledApplication application)
+		{
+#pragma warning disable CA2249 // Use of string.IndexOf is required for net framework
+			if (application.PSParentPath.IndexOf(PROVISIONED_PACKAGE_SUBKEY, StringComparison.OrdinalIgnoreCase) >= 0)
+			{
+				return ApplicationStore.AppX;
+			}
+#pragma warning restore CA2249
+			if (NxtRegisteredPackage.IsPackageEntry(application))
+			{
+				return ApplicationStore.Package;
+			}
+
+			// Default to ARP store
+			return application.Is64BitApplication ? ApplicationStore.ARP64 : ApplicationStore.ARP32;
 		}
 
 		[Obsolete("Implemented in 4.2.0")]

@@ -40,7 +40,7 @@
 		[PSADT.Module.DeploymentStatus]
 		$Status,
 		[Parameter(ParameterSetName = 'AbortReboot', Mandatory)]
-		[ValidateScript({ [System.Boolean]$_ })]
+		[ValidateScript({ $_.ToBool() })]
 		[System.Management.Automation.SwitchParameter]
 		$AbortReboot,
 		[Parameter(Position = 0, ParameterSetName = 'ExitCode', Mandatory)]

@@ -31,11 +31,26 @@
 				[PSADTNXT.Deployment.DeploymentHookPoint]
 				$HookPoint
 			)
+			$ADTSession.NXT.LastRunHookPoint = $HookPoint
 			if (([System.Collections.Generic.List[System.Management.Automation.CommandInfo]]$callbacks = $script:DeploymentCallBacks[$HookPoint])) {
 				[System.String]$currentPhase = $ADTSession.InstallPhase
+				$ADTSession.InstallPhase = $HookPoint
 				foreach ($callback in $callbacks) {
-					Write-ADTLogEntry -Message "Invoking callback [$($callback.Name)] for hook point [$HookPoint]."
-					$ADTSession.InstallPhase = $HookPoint
+					[System.String]$source = if ($callBack.Module) {
+						$callBack.Module.Name
+					}
+					elseif ($callBack -is [System.Management.Automation.FunctionInfo] -and -not [System.String]::IsNullOrWhiteSpace($callBack.ScriptBlock.File)) {
+						[System.IO.Path]::GetFileNameWithoutExtension($callBack.ScriptBlock.File)
+					}
+					else {
+						[System.String]::Empty
+					}
+					if ([System.String]::IsNullOrWhiteSpace($source)) {
+						Write-ADTLogEntry -Message "Invoking callback [$($callback.Name)]."
+					}
+					else {
+						Write-ADTLogEntry -Message "Invoking [$source] callback [$($callback.Name)]."
+					}
 					try {
 						$ExecutionContext.InvokeCommand.InvokeScript($ADTSession.NXT.DeployAppScriptSessionState, { & $args[0] }.Ast.GetScriptBlock(), $callBack)
 					}
@@ -43,8 +58,16 @@
 						# Always announce the exception from the actual script
 						throw $_.Exception.InnerException
 					}
-					$ADTSession.InstallPhase = $currentPhase
+					if ($HookPoint.ToString() -notlike '*OnError' -and
+						$HookPoint -ne [PSADTNXT.Deployment.DeploymentHookPoint]::CustomEnd -and
+						$ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error
+					) {
+						[System.String]$errorMessage = "[$($ADTSession.InstallPhase)] changed the deployment exit code to [$($ADTSession.GetExitCode())] which indicated a failure. Aborting further processing."
+						Write-ADTLogEntry -Severity Error -Message $errorMessage
+						throw [PSADTNXT.Deployment.NxtDeploymentCancelException]::new($errorMessage)
+					}
 				}
+				$ADTSession.InstallPhase = $currentPhase
 			}
 			else {
 				Write-ADTLogEntry -Message "No callbacks registered for trigger [$HookPoint]."
@@ -57,15 +80,15 @@
 				[PSADT.ProcessManagement.ProcessResult]
 				[ValidateNotNull()]
 				$Result,
-				[System.String]
+				[PSADTNXT.Deployment.DeploymentHookPoint]
 				$FailHook
 			)
 			process {
 				$ADTSession.NXT.ProcessResults.Add($Result)
 				if ($ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error) {
-					if (-not [System.String]::IsNullOrWhiteSpace($FailHook)) { . $callHook $FailHook }
+					if ($FailHook) { . $callHook $FailHook }
 					[System.Collections.Hashtable]$errorParams = @{
-						Exception    = [System.ApplicationException]::new($ADTSession.NXT.DeploymentType.ToString() + ' failed.')
+						Exception    = [System.ApplicationException]::new('Session [' + $ADTSession.NXT.DeploymentType.ToString() + '] failed.')
 						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
 						ErrorId      = "$($ADTSession.NXT.DeploymentType)Failed"
 						TargetObject = $Result
@@ -79,21 +102,21 @@
 	process {
 		try {
 			try {
-				[System.String]$errorMessage = [System.String]::Empty
 				$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Preparation"
 				Write-ADTLogEntry -Message "Starting Neo42.Extension's [$($ADTSession.NXT.DeploymentType)] deployment logic for [$($ADTSession.InstallTitle)]."
+				$ADTSession.NXT.DeploymentInvoked = $true
 
 				# Set the initial detection status at the beginning of the deployment
 				Update-NXTDetectionStatus -ADTSession $ADTSession
 
-				. $callHook 'CustomBegin'
+				. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomBegin)
 
 				switch ($ADTSession.NXT.DeploymentType) {
 					{ $_.IsUserPart } {
 						$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Deployment"
 						try {
-							. $callHook "Custom$($ADTSession.NXT.DeploymentType)Begin"
-							. $callHook "Custom$($ADTSession.NXT.DeploymentType)End"
+							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::"Custom$($ADTSession.NXT.DeploymentType)Begin")
+							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::"Custom$($ADTSession.NXT.DeploymentType)End")
 						}
 						# Do not handle deployment cancel exceptions, as they are used to break out of the deployment flow without marking the deployment as failed.
 						catch [PSADTNXT.Deployment.NxtDeploymentCancelException] {
@@ -103,6 +126,8 @@
 							if ($ADTSession.GetDeploymentStatus() -ne [PSADT.Module.DeploymentStatus]::Error) {
 								$ADTSession.SetExitCode(60001)
 							}
+							$ADTSession.NXT.ErrorMessage = $_.Exception.Message
+							$ADTSession.NXT.ErrorPhase = $ADTSession.InstallPhase
 						}
 						finally {
 							# Update the active setup registry key to indicate the package was successfully installed
@@ -126,7 +151,7 @@
 						break
 					}
 					{ $_.IsInstall } {
-						. $callHook 'CustomInstallAndReinstallAndSoftMigrationBegin'
+						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallAndReinstallAndSoftMigrationBegin)
 
 						# Uninstall old versions if configured
 						Write-ADTLogEntry -Message 'Checking for previously registered packages.'
@@ -145,14 +170,14 @@
 							)
 						) {
 							Write-ADTLogEntry -Message 'The current state of the system indicates that Soft Migration might be applicable. Starting Soft Migration checks...'
-							. $callHook 'CustomSoftMigrationBegin'
+							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomSoftMigrationBegin)
 							if ($ADTSession.NXT.SoftMigration.Result = Test-NXTSoftMigration -ADTSession $ADTSession) {
 								Write-ADTLogEntry -Severity Success -Message 'Soft Migration is applicable. Proceeding with migration logic.'
 								if ($ADTSession.NXT.Install.Reboot -eq [PSADTNXT.Deployment.RebootAction]::Always) {
 									Write-ADTLogEntry -Severity Warning -Message 'The package was configured to always reboot, due to Soft Migration being applicable, the setting was lowered to [IfRequired] to prevent unnecessary reboots.'
 									$ADTSession.NXT.Install.Reboot = [PSADTNXT.Deployment.RebootAction]::IfRequired
 								}
-								. $callHook 'CustomInstallAndReinstallAndSoftMigrationEnd'
+								. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallAndReinstallAndSoftMigrationEnd)
 								Exit-NXTDeployment -ADTSession $ADTSession -Message 'Soft Migration checks passed successfully. Migration will be performed instead of a regular installation.'
 							}
 						}
@@ -167,7 +192,7 @@
 						Write-ADTLogEntry -Message 'Unhiding all managed applications in case the deployment fails.' -DebugMessage
 						Invoke-NXTArpKeyOperation -ADTSession $ADTSession -Purge
 
-						. $callHook 'CustomInstallAndReinstallPreInstallAndReinstall'
+						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallAndReinstallPreInstallAndReinstall)
 
 						# A package is configured if it is considered installed and the version is equal (if applicable)
 						Update-NXTDetectionStatus -ADTSession $ADTSession
@@ -185,7 +210,7 @@
 										# Only process repair supporting installation methods
 										if ($ADTSession.NXT.Install.Method -in @([PSADTNXT.Deployment.DeploymentMethod]::MSI) ) {
 											Write-ADTLogEntry -Message 'Deployment is set to perform a repair operation. Starting repair.'
-											. $callHook 'CustomReinstallPreInstall'
+											. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreInstall)
 											. $processResult -Result (Invoke-NXTSessionRepair -ADTSession $ADTSession)
 											$installerRan = $true
 											break
@@ -196,19 +221,19 @@
 									}
 									([PSADTNXT.Deployment.ReinstallMode]::Reinstall) {
 										$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Uninstallation"
-										. $callHook 'CustomReinstallPreUninstall'
+										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreUninstall)
 
 										Write-ADTLogEntry -Message 'Deployment is configured to reinstall the application. Uninstalling current application prior to reinstallation.'
-										. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook 'CustomReinstallPostUninstallOnError'
+										. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostUninstallOnError)
 
-										. $callHook 'CustomReinstallPostUninstall'
+										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostUninstall)
 									}
 									{ $true } {
 										$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Installation"
-										. $callHook 'CustomReinstallPreInstall'
+										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreInstall)
 
 										Write-ADTLogEntry -Message 'Starting reinstallation.'
-										. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook 'CustomReinstallPostInstallOnError'
+										. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostInstallOnError)
 										$installerRan = $true
 										break
 									}
@@ -219,37 +244,37 @@
 								switch ($ADTSession.NXT.Install.UpgradeMode) {
 									([PSADTNXT.Deployment.UpgradeMode]::Reinstall) {
 										$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Uninstallation"
-										. $callHook 'CustomReinstallPreUninstall'
+										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreUninstall)
 
 										Write-ADTLogEntry -Message 'Deployment is configured to perform a reinstallation on upgrade. Uninstalling current application prior to reinstallation.'
-										. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook 'CustomUpgradePostUninstallOnError'
+										. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostUninstallOnError)
 
-										. $callHook 'CustomReinstallPostUninstall'
+										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostUninstall)
 									}
 									{ $true } {
 										$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Installation"
 										Write-ADTLogEntry -Message 'Starting the installation.'
-										. $callHook 'CustomReinstallPreInstall'
+										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreInstall)
 
-										. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook 'CustomUpgradePostInstallOnError'
+										. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostInstallOnError)
 										$installerRan = $true
 										break
 									}
 								}
 							}
 							if ($installerRan) {
-								. $callHook 'CustomReinstallPostInstall'
+								. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostInstall)
 							}
 						}
 						else {
 							$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Installation"
 							Write-ADTLogEntry -Message 'Application is not considered installed. Performing fresh installation.'
-							. $callHook 'CustomInstallBegin'
+							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallBegin)
 
 							Write-ADTLogEntry -Message 'Starting installation.'
-							. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook 'CustomInstallEndOnError'
+							. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallEndOnError)
 
-							. $callHook 'CustomInstallEnd'
+							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallEnd)
 						}
 						#endregion Invoke-NXTDeployment PreInstall/Reinstall
 
@@ -257,8 +282,8 @@
 						$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Completion"
 						Write-ADTLogEntry -Message 'Starting post installation logic.'
 						Update-NXTDetectionStatus -ADTSession $ADTSession
-						. $callHook 'CustomInstallAndReinstallEnd'
-						. $callHook 'CustomInstallAndReinstallAndSoftMigrationEnd'
+						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallAndReinstallEnd)
+						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallAndReinstallAndSoftMigrationEnd)
 
 						# Only verify the state if the property if it can actually be determined
 						if ($ADTSession.NXT.Detection.Enabled) {
@@ -283,13 +308,13 @@
 						if (-not $ADTSession.NXT.Detection.Enabled -or $ADTSession.NXT.Detection.IsInstalled) {
 							$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Uninstallation"
 							Show-NXTInstallationWelcome -ADTSession $ADTSession -DeploymentDefaults
-							. $callHook 'CustomUninstallBegin'
+							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUninstallBegin)
 
 							Write-ADTLogEntry -Message 'Unhiding managed applications, if there are any.' -DebugMessage
 							Invoke-NXTArpKeyOperation -ADTSession $ADTSession -Purge
 
 							Write-ADTLogEntry -Message 'Starting uninstallation.'
-							. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook 'CustomUninstallEndOnError'
+							. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUninstallEndOnError)
 						}
 						else {
 							Write-ADTLogEntry -Message 'Application is not installed. Skipping uninstallation.'
@@ -298,7 +323,7 @@
 						$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Completion"
 						Write-ADTLogEntry -Message 'Starting post uninstallation logic.'
 						Update-NXTDetectionStatus -ADTSession $ADTSession
-						. $callHook 'CustomUninstallEnd'
+						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUninstallEnd)
 
 						if ($ADTSession.NXT.Detection.Enabled) {
 							Write-ADTLogEntry -Message 'Verifying the uninstallation result based on detection logic.'
@@ -322,16 +347,19 @@
 			}
 			catch [PSADTNXT.Deployment.NxtDeploymentCancelException] {
 				Write-ADTLogEntry -Message 'The deployment was intentionally cancelled.' -DebugMessage
+				$ADTSession.NXT.ErrorMessage = $_.Exception.Message
+				$ADTSession.NXT.ErrorPhase = $ADTSession.InstallPhase
 			}
 			catch {
 				Write-ADTLogEntry -Severity Error -Message (Resolve-ADTErrorRecord -ErrorRecord $_ -IncludeErrorInnerException)
 				if ($ADTSession.GetDeploymentStatus() -ne [PSADT.Module.DeploymentStatus]::Error) { $ADTSession.SetExitCode(69000) }
-				$errorMessage = $_.Exception.Message
+				$ADTSession.NXT.ErrorMessage = $_.Exception.Message
+				$ADTSession.NXT.ErrorPhase = $ADTSession.InstallPhase
 			}
 
-			if ($ADTSession.NXT.DeploymentType.IsMachinePart) {
+			if ($ADTSession.NXT.DeploymentType.IsMachinePart -and $ADTSession.GetDeploymentStatus() -ne [PSADT.Module.DeploymentStatus]::Error) {
 				try {
-					Complete-NXTDeployment -ADTSession $ADTSession -ErrorMessage $errorMessage
+					Complete-NXTDeployment -ADTSession $ADTSession
 				}
 				catch {
 					Write-ADTLogEntry -Severity Error -Message (Resolve-ADTErrorRecord -ErrorRecord $_ -IncludeErrorInnerException)
@@ -340,10 +368,10 @@
 			}
 
 			if ($ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error) {
-				. $callHook 'CustomEndOnError'
+				. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomEndOnError)
 			}
 			else {
-				. $callHook 'CustomEnd'
+				. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomEnd)
 			}
 		}
 		catch {

@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Der opstod en fejl under installationen af applikationen. Kontroller venligst logfilen for yderligere oplysninger.'
-			Repair    = 'Der opstod en fejl under reparationen af applikationen. Kontroller venligst logfilen for yderligere oplysninger.'
-			Uninstall = 'Der opstod en fejl under afinstallationen af applikationen. Kontroller venligst logfilen for yderligere oplysninger.'
-		}
+		ErrorMessage  = "Udrulningen af {0} mislykkedes i `"{1}`" med fejl {2}.`nFejlmeddelelse:`n`n{3}`n`nKontroller venligst logfilerne for yderligere oplysninger, eller kontakt en administrator for yderligere hjælp."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Gem venligst dit arbejde, og luk programmerne.'

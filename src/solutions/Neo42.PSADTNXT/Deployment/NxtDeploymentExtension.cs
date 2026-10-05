@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -15,7 +14,6 @@ using PSADT.ProcessManagement;
 using PSADTNXT.Application;
 using PSADTNXT.Configuration;
 using PSADTNXT.Deployment.Configuration;
-using PSADTNXT.Extensions;
 using PSADTNXT.Foundation;
 using PSADTNXT.IO;
 using PSADTNXT.ProcessManagement;
@@ -75,6 +73,21 @@ namespace PSADTNXT.Deployment
 
 		public List<ProcessResult> ProcessResults { get; } = [];
 
+		[Hidden]
+		public string? ErrorMessage { get; set; }
+
+		[Hidden]
+		public string? ErrorPhase { get; set; }
+
+		[Hidden]
+		public DeploymentHookPoint? LastRunHookPoint { get; set; }
+
+		[Hidden]
+		public bool DeploymentInvoked { get; set; }
+
+		[Hidden]
+		public bool IsCached { get; set; }
+
 		public NxtIniDocument SetupCfg { get; }
 
 		public Dictionary<string, object> Variables { get; }
@@ -96,8 +109,10 @@ namespace PSADTNXT.Deployment
 			var packageConfig = parameters["PackageConfig"] is NxtPackageConfigurationModel config ? config : throw new ArgumentException("PackageConfig parameter is required and must be of type NxtPackageConfigurationModel.");
 			var nxtConfig = ModuleDatabase.GetConfig()["NXT"] as Hashtable;
 			var nxtToolkitConfig = nxtConfig?["Toolkit"] as Hashtable;
-			var packageRootDir = InitializePackageRootDirectory(packageConfig.Package.DirectoryName, packageConfig.Package.KeyName);
 			var appendVersion = nxtToolkitConfig?["AppendVersionToPackageName"] is bool append && append;
+
+			var packageRootDir = InitializePackageRootDirectory(packageConfig.Package.DirectoryName, packageConfig.Package.KeyName);
+			_session.WriteLogEntry($"Package cache directory resides in [{packageRootDir.FullName}].");
 
 			Package = GetPackageMetadata(packageConfig, packageRootDir, appendVersion);
 			Requirements = GetPackageRequirements(packageConfig);
@@ -112,7 +127,12 @@ namespace PSADTNXT.Deployment
 			Uninstall = GetUninstallInstructions(packageConfig);
 			Variables = new(packageConfig.Variables ?? [], StringComparer.OrdinalIgnoreCase);
 
-			_session.WriteLogEntry($"Package cache directory resides in [{Package.Directory.FullName}].");
+			Install.Target = ExpandRuntimeVariable(Install.Target);
+			Install.Arguments = ExpandRuntimeVariable(Install.Arguments);
+			Uninstall.Target = ExpandRuntimeVariable(Uninstall.Target);
+			Uninstall.Arguments = ExpandRuntimeVariable(Uninstall.Arguments);
+			ExpandRuntimeVariablesInObject(Variables);
+
 		}
 
 		private NxtPackageMetadata GetPackageMetadata(NxtPackageConfigurationModel config, DirectoryInfo packageRootDir, bool appendVersion)
@@ -391,6 +411,65 @@ namespace PSADTNXT.Deployment
 		private ScriptBlock GetUnboundScriptBlock(ScriptBlock scriptBlock)
 		{
 			return ((ScriptBlockAst)scriptBlock.Ast).GetScriptBlock();
+		}
+
+		private string ExpandRuntimeVariable(string text)
+		{
+			static string Replace(string input, string variable, string value)
+			{
+				var token = $"%{variable}%";
+				var index = input.IndexOf(token, StringComparison.OrdinalIgnoreCase);
+				while (index >= 0)
+				{
+					input = input.Remove(index, token.Length).Insert(index, value);
+					index = input.IndexOf(token, index + value.Length, StringComparison.OrdinalIgnoreCase);
+				}
+				return input;
+			}
+
+			text = Replace(text, "LogFolder", _session.LogPath);
+			text = Replace(text, "DirFiles", _session.DirFiles ?? string.Empty);
+			text = Replace(text, "DirSupportFiles", _session.DirSupportFiles ?? string.Empty);
+			text = Replace(text, "PackageDirectory", Package.Directory.FullName);
+			text = Replace(text, "InstallLocation", InstallLocation?.FullName ?? string.Empty);
+
+			return text;
+		}
+
+		private void ExpandRuntimeVariablesInObject(object? input)
+		{
+#pragma warning disable IDE0078
+			if (input is IDictionary dict)
+			{
+				// Snapshot the keys, on .NET Framework assigning through the indexer invalidates the key enumerator.
+				foreach (var key in dict.Keys.Cast<object>().ToList())
+				{
+					if (dict[key] is string dictString)
+					{
+						dict[key] = ExpandRuntimeVariable(dictString);
+					}
+					else
+					{
+						ExpandRuntimeVariablesInObject(dict[key]);
+					}
+				}
+			}
+			else if (input is IList list)
+			{
+				for (var i = 0; i < list.Count; i++)
+				{
+					if (list[i] is string listString)
+					{
+						list[i] = ExpandRuntimeVariable(listString);
+					}
+					else
+					{
+						ExpandRuntimeVariablesInObject(list[i]);
+					}
+				}
+			}
+#pragma warning restore IDE0078
+			return;
 		}
 	}
 }

@@ -6,17 +6,10 @@
 	param (
 		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
-		$ADTSession = (Get-ADTSession),
-		[System.String]
-		$ErrorMessage
+		$ADTSession = (Get-ADTSession)
 	)
 	try {
 		$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Completion"
-
-		if ($ADTSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error) {
-			Register-NXTPackage -ADTSession $ADTSession -AsError -ErrorMessage $ErrorMessage
-			return
-		}
 
 		if ($ADTSession.NXT.DeploymentType.IsInstall) {
 			if ($ADTSession.NXT.Package.Register) {
@@ -29,8 +22,6 @@
 			Invoke-NXTArpKeyOperation -ADTSession $ADTSession
 
 			Invoke-NXTUserPart -ADTSession $ADTSession
-
-			Register-NXTPackage -ADTSession $ADTSession
 
 			Write-ADTLogEntry -Severity Success -Message 'Post installation logic completed successfully.'
 		}

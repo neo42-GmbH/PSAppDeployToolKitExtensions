@@ -35,7 +35,7 @@
 	[OutputType([PSADT.Types.InstalledApplication])]
 	[CmdletBinding(DefaultParameterSetName = 'Manual')]
 	param (
-		[Parameter(Position = 0, ParameterSetName = 'Criteria', Mandatory, ValueFromPipeline)]
+		[Parameter(Position = 0, ParameterSetName = 'Criteria', Mandatory)]
 		[PSADTNXT.Application.NxtApplicationCriteria]
 		$Criteria,
 		[Parameter(ParameterSetName = 'Manual')]

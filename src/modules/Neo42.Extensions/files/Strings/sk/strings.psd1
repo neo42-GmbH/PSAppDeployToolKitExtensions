@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Počas inštalácie aplikácie sa vyskytla chyba. Ďalšie informácie nájdete v súbore denníka.'
-			Repair    = 'Počas opravy aplikácie sa vyskytla chyba. Ďalšie informácie nájdete v súbore denníka.'
-			Uninstall = 'Počas odinštalovania aplikácie sa vyskytla chyba. Ďalšie informácie nájdete v súbore denníka.'
-		}
+		ErrorMessage  = "Nasadenie {0} zlyhalo vo fáze `"{1}`" s chybou {2}.`nChybové hlásenie:`n`n{3}`n`nĎalšie informácie nájdete v denníkoch, prípadne sa obráťte na správcu so žiadosťou o ďalšiu pomoc."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Uložte si svoju prácu a zatvorte aplikácie.'

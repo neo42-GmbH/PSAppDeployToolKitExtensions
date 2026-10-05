@@ -45,7 +45,7 @@
 		[System.String]
 		$RegistryKey,
 
-		[Parameter(ParameterSetName = 'Application', Mandatory)]
+		[Parameter(ParameterSetName = 'Application', Mandatory, ValueFromPipeline)]
 		[ValidateNotNull()]
 		[PSADT.Types.InstalledApplication]
 		$Application,

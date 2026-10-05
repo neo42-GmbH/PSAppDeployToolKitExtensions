@@ -255,11 +255,19 @@ namespace PSADTNXT.Shell
 		/// <summary>
 		/// Invokes the current PowerShell to obtain the current <see cref="ExecutionPolicy"/>
 		/// </summary>
-		/// <returns>The current ExecutionPolicy</returns>
-		internal static ExecutionPolicy GetExecutionPolicy()
+		/// <param name="scope">Optional scope</param>
+		/// <returns>The ExecutionPolicy (for the given scope).</returns>
+		internal static ExecutionPolicy GetExecutionPolicy(ExecutionPolicyScope? scope = null)
 		{
 			using var powerShell = PowerShell.Create();
-			return powerShell.AddCommand("Get-ExecutionPolicy").AddParameter("Scope", ExecutionPolicyScope.Process).Invoke<ExecutionPolicy>().First();
+			_ = powerShell.AddCommand("Get-ExecutionPolicy");
+
+			if (scope is not null)
+			{
+				_ = powerShell.AddParameter("Scope", scope);
+			}
+
+			return powerShell.Invoke<ExecutionPolicy>().First();
 		}
 
 		/// <summary>

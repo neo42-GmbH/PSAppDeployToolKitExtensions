@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Se produjo un error durante la instalación de la aplicación. Consulte el archivo de registro para obtener más información.'
-			Repair    = 'Se produjo un error durante la reparación de la aplicación. Consulte el archivo de registro para obtener más información.'
-			Uninstall = 'Se produjo un error durante la desinstalación de la aplicación. Consulte el archivo de registro para obtener más información.'
-		}
+		ErrorMessage  = "La implementación de {0} falló en `"{1}`" con el error {2}.`nMensaje de error:`n`n{3}`n`nConsulte los registros para obtener más información o póngase en contacto con un administrador para obtener más ayuda."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Guarde su trabajo y cierre las aplicaciones.'

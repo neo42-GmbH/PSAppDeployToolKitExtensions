@@ -32,7 +32,7 @@
 		[ValidateScript({ $_.Exists -and $_.Extension -eq '.cfg' })]
 		[PSDefaultValue(Value = 'Setup.cfg, CustomSetup.cfg')]
 		[System.IO.FileInfo[]]
-		$SetupCfg = $([System.String[]]@("$($ScriptDirectory.FullName)\Setup.cfg", "$($ScriptDirectory.FullName)\CustomSetup.cfg" | & { process { if ([System.IO.File]::Exists($_)) { $_ } } }))
+		$SetupCfg = @(Get-Item -LiteralPath "$($ScriptDirectory.FullName)\Setup.cfg", "$($ScriptDirectory.FullName)\CustomSetup.cfg" -ErrorAction Ignore)
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -76,7 +76,7 @@
 				AppScriptAuthor             = $packageConfig.Package.Author
 				AppSuccessExitCodes         = @(0)
 				AppRebootExitCodes          = @(3010)
-				AppProcessesToClose         = @($packageConfig.CloseProcesses | & { process { if ($_) { [PSADT.ProcessManagement.ProcessDefinition]::new($_.Name, $_.Description) } } })
+				AppProcessesToClose         = if ($packageConfig.CloseProcesses) { @($packageConfig.CloseProcesses | & { process { [PSADT.ProcessManagement.ProcessDefinition]::new($_.Name, $_.Description) } }) } else { $null }
 
 				# External PSADT parameters
 				DeploymentType              = $nxtDeploymentType -as [PSADT.Module.DeploymentType]
@@ -89,7 +89,15 @@
 				# PSADT behavior parameters
 				RequireAdmin                = $nxtDeploymentType.IsMachinePart
 				DirFiles                    = if ([System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\Files")) { "$($ScriptDirectory.FullName)\Files" } else { [System.String]::Empty }
-				DirSupportFiles             = if ($nxtDeploymentType.IsUserPart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles\User")) { "$($ScriptDirectory.FullName)\SupportFiles\User" } else { [System.String]::Empty }
+				DirSupportFiles             = if ($nxtDeploymentType.IsMachinePart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles")) {
+					"$($ScriptDirectory.FullName)\SupportFiles"
+				}
+				elseif ($nxtDeploymentType.IsUserPart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles\User")) {
+					"$($ScriptDirectory.FullName)\SupportFiles\User"
+				}
+				else {
+					[System.String]::Empty
+				}
 
 				# Extension-specific PSADT parameters
 				InstallTitle                = [System.String]::Join(' ', @($packageConfig.Package.Vendor, $packageConfig.Package.Name)).Replace('_', ' ').Trim()
@@ -101,7 +109,7 @@
 				SessionClass                = [PSADTNXT.Foundation.NxtDeploymentSession]
 
 				# External NXT parameters
-				DeploymentSystem            = if ($Invocation.BoundParameters.ContainsKey('DeploymentSystem')) { $Invocation.BoundParameters['DeploymentSystem'] } else { Get-NXTDeploymentSystem }
+				DeploymentSystem            = if ($Invocation.BoundParameters.ContainsKey('DeploymentSystem')) { $Invocation.BoundParameters['DeploymentSystem'] } else { 'Unknown' }
 				DeployAppScriptPath         = $Invocation.MyCommand.Definition
 				PackageConfig               = $packageConfig
 				SetupCfg                    = $setupCfgObj

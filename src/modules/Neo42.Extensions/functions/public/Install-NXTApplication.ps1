@@ -22,10 +22,10 @@
 	.PARAMETER LogFileName
 	The path to the log file ending with a .log extension.
 	This file will reside in the log directory of the ADT session.
-	The resulting full path is available as %LogFile% in the ArgumentList.
 	.PARAMETER Criteria
-	An instance of NxtApplicationCriteria to search for the application. Is used for advanced scenarios like caching the uninstaller post installation.
-	Usually not required, as the ADT session will provide a default instance.
+	The application lookup criteria used to find the application in a application store.
+	The resulting data is used for defaults, validation and backup mechanics.
+	If the application is already installed, its display name is used for the default LogFileName.
 	.PARAMETER CacheDirectory
 	The directory where the package cache is located. This is used to store the uninstaller files if the NoCache parameter is not specified.
 	.PARAMETER Awaiter
@@ -34,10 +34,10 @@
 	The exit codes that indicate a successful installation. If the exit code of the process is in this list, the installation is considered successful.
 	.PARAMETER RebootExitCodes
 	The exit codes that indicate a reboot is required after the installation. If the exit code of the process is in this list, the installation is considered successful and a reboot is requested.
-	.PARAMETER ExitOnProcessFailure
-	Determines if the function should exit with an error if the process fails. If this parameter is specified, the deployment will be aborted.
 	.PARAMETER IgnoreExitCodes
 	Specifies that any exit code from the installation process should be ignored and treated as a success.
+	.PARAMETER ExitOnProcessFailure
+	The session will be immediatly closed if the execution fails.
 	.PARAMETER NoCache
 	For specific methods a copy of the uninstaller will be created in the cache directory. Specify this parameter to skip this step.
 	.EXAMPLE
@@ -67,18 +67,14 @@
 		[PSADTNXT.Application.NxtApplicationCriteria]
 		$Criteria,
 		[ValidateScript({ $_ -like '*.log' })]
-		[PSDefaultValue(Value = 'ID.$deploymentTimestamp.log')]
 		[System.String]
 		$LogFileName,
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
-		[System.String]
+		[System.IO.DirectoryInfo]
 		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory,
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter,
 
-		[Parameter(ParameterSetName = 'ExitCodes')]
-		[System.Management.Automation.SwitchParameter]
-		$ExitOnProcessFailure,
 		[Parameter(ParameterSetName = 'ExitCodes')]
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
@@ -87,6 +83,9 @@
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
 		$RebootExitCodes,
+		[Parameter(ParameterSetName = 'ExitCodes')]
+		[System.Management.Automation.SwitchParameter]
+		$ExitOnProcessFailure,
 		[Parameter(ParameterSetName = 'IgnoreExitCodes', Mandatory)]
 		[System.Management.Automation.SwitchParameter]
 		$IgnoreExitCodes,
@@ -101,7 +100,7 @@
 	}
 	process {
 		try {
-			[PSADT.ProcessManagement.ProcessResult]$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
+			[PSADT.ProcessManagement.ProcessResult]$result = $null
 			[System.Text.StringBuilder]$finalArguments = [System.Text.StringBuilder]::new()
 			if ($PSBoundParameters.ContainsKey('ArgumentList') -and $ArgumentList) {
 				if ($ArgumentList.Length -gt 1) {
@@ -139,27 +138,15 @@
 			$LogFileName = [PSADTNXT.Extensions.NxtStringExtensions]::ToFileNameCompatible($LogFileName, $true, '_')
 			[System.IO.FileInfo]$logFile = [System.IO.Path]::Combine($adtSession.LogPath, $LogFileName)
 
-			# Replace known variables in the target and arguments
-			@{
-				'%LogFile%'          = $logFile.FullName
-				'%DirFiles%'         = if ($adtSession.DirFiles) { $adtSession.DirFiles } else { [System.String]::Empty }
-				'%DirSupportFiles%'  = if ($adtSession.DirSupportFiles) { $adtSession.DirSupportFiles } else { [System.String]::Empty }
-				'%PackageDirectory%' = $adtSession.NXT.Package.Directory.FullName
-			}.GetEnumerator() | & {
-				process {
-					$Target = $Target.Replace($_.Key, $_.Value)
-					$null = $finalArguments.Replace($_.Key, $_.Value)
-				}
-			}
-
 			[System.Collections.Hashtable]$startSplat = Remove-ADTHashtableNullOrEmptyValues @{
-				FilePath             = if ([System.IO.Path]::IsPathRooted($Target)) { $Target } else { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) }
-				PassThru             = $true
-				SuccessExitCodes     = $SuccessExitCodes
-				RebootExitCodes      = $RebootExitCodes
-				ExitOnProcessFailure = $ExitOnProcessFailure.ToBool()
-				ArgumentList         = $finalArguments.ToString().Trim()
-				ErrorAction          = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
+				FilePath        = if ([System.IO.Path]::IsPathRooted($Target)) { $Target } else { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) }
+				PassThru        = $true
+				ArgumentList    = $finalArguments.ToString().Trim()
+				IgnoreExitCodes = '*' # If not set in 4.1.8 the session exit code is set regardless of actual success of the result
+				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
+			}
+			if ($ExitOnProcessFailure) {
+				$startSplat['ExitOnProcessFailure'] = $true
 			}
 
 			[System.IO.DirectoryInfo]$uninstallFileBackupDirectory = $null
@@ -168,39 +155,24 @@
 			Write-ADTLogEntry -Message "Running installation process for target [$Target] with method [$Method]."
 			switch ($Method) {
 				([PSADTNXT.Deployment.DeploymentMethod]::Copy) {
+					$NoCache = $true
 					try {
 						Copy-ADTFile -Path ([System.IO.Path]::Combine($adtSession.DirFiles, '*')) -Destination $Target -Recurse
+						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
-						if ($ExitOnProcessFailure) {
-							Write-ADTLogEntry -Severity Warning -Message "An error occurred while trying to copy the file [$Target]."
-							Write-ADTLogEntry -Severity Warning -Message (Resolve-ADTErrorRecord -ErrorRecord $_)
-							Close-ADTSession -ExitCode 1
-						}
-						elseif ($IgnoreExitCodes) {
-							Write-ADTLogEntry -Severity Warning -Message "An error occurred while trying to copy the file [$Target], but the error is ignored."
-							$result = [PSADT.ProcessManagement.ProcessResult]::new(
-								0,
-								[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
-								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
-								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
-							)
-						}
-						else {
-							$result = [PSADT.ProcessManagement.ProcessResult]::new(
-								1,
-								[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
-								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
-								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
-							)
-						}
+						if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
+						$result = [PSADT.ProcessManagement.ProcessResult]::new(
+							$_.HResult,
+							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
+							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
+							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
+						)
 					}
-					break
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::MSI) {
+					$NoCache = $true
 					$result = Start-ADTMsiProcess @startSplat -Action Install -SkipMSIAlreadyInstalledCheck -NoDesktopRefresh -LogFileName ($LogFileName -replace '_Install\.log$', [System.String]::Empty)
-					Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
-					break
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
 					$startSplat['ArgumentList'] = "/Online /NoRestart /English /LogPath:`"$($logFile.FullName)`" /Add-ProvisionedAppxPackage /PackagePath:`"$($startSplat['FilePath'])`"" + $startSplat['ArgumentList']
@@ -216,27 +188,42 @@
 				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
 					$startSplat['ArgumentList'] = $startSplat['ArgumentList'] + " /LOG=`"$($logFile.FullName)`""
 				}
-				# The default install method for every installer. (Only one that 'Setup' uses)
-				{ $true } {
+				# The default install method for every installer that has not published a result yet
+				{ -not $result } {
 					$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
 					$result = Start-ADTProcess @startSplat
-					Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
-
-					if (-not $NoCache -and
-						-not [System.String]::IsNullOrWhiteSpace($CacheDirectory) -and
-						$Criteria -and
-						([PSADT.Types.InstalledApplication[]]$app = @(Get-NXTApplication -Criteria $Criteria)) -and
-						$app.Length -eq 1 -and
-						-not [System.String]::IsNullOrWhiteSpace($app[0].UninstallStringFilePath)
-					) {
-						$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($app[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
-						$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory, 'neo42-Source', $app[0].PSChildName)
-					}
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
 					if ($uninstallFiles) {
-						$uninstallFiles.AddRange([System.IO.FileInfo[]]@(Get-Item -Path "$($uninstallFiles[0].Directory.FullName)\unins[0-9][0-9][0-9].*" -ErrorAction 'SilentlyContinue'))
+						$uninstallFiles.AddRange([System.IO.FileInfo[]]@(Get-Item -Path "$($uninstallFiles[0].Directory.FullName)\unins[0-9][0-9][0-9].*" -ErrorAction SilentlyContinue))
 					}
+				}
+			}
+
+			if (-not $IgnoreExitCodes) {
+				Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes
+			}
+
+			Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
+
+			if ($Criteria) {
+				[PSADT.Types.InstalledApplication[]]$app = @(Get-NXTApplication -Criteria $Criteria)
+				if ($app.Length -ne 1) {
+					[System.Collections.Hashtable]$errorParams = @{
+						Exception    = [System.Management.Automation.ItemNotFoundException]::new("Application lookup criteria were provided but [$($app.Length)] applications were found after installation. Must be exactly [1].")
+						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
+						ErrorId      = if ($app.Length -gt 1) { 'MultipleApplicationsFound' } else { 'NoApplicationFound' }
+						TargetObject = $Criteria
+					}
+					throw (New-ADTErrorRecord @errorParams)
+				}
+
+				if (-not $NoCache -and
+					$CacheDirectory -and
+					-not [System.String]::IsNullOrWhiteSpace($app[0].UninstallStringFilePath)
+				) {
+					$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($app[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
+					$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $app[0].PSChildName)
 				}
 			}
 

@@ -35,6 +35,8 @@
 					[System.Text.RegularExpressions.RegexOptions]::IgnoreCase
 				)
 			}
+
+			$ADTSession.NXT.IsCached = $true
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

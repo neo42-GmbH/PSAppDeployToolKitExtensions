@@ -57,8 +57,8 @@
 			throw (New-ADTErrorRecord @errorParams)
 		}
 
-		if ($ADTSession.NXT.Detection.Application) {
-			$invokeUninstallParams['UninstallKey'] = $ADTSession.NXT.Detection.Application.PSPath
+		if ($ADTSession.NXT.Detection.Criteria) {
+			$invokeUninstallParams['Criteria'] = $ADTSession.NXT.Detection.Criteria
 		}
 
 		if ($ADTSession.NXT.Uninstall.IgnoreExitCodes) {
@@ -81,8 +81,7 @@
 		}
 
 		Write-ADTLogEntry "Invoking session based [$($invokeUninstallParams.Method)] uninstallation logic."
-		[PSADT.ProcessManagement.ProcessResult]$result = Uninstall-NXTApplication @invokeUninstallParams
-		return $result
+		return (Uninstall-NXTApplication @invokeUninstallParams)
 	}
 	catch {
 		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

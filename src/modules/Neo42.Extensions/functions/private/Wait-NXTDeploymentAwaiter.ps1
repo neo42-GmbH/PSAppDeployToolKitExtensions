@@ -15,38 +15,45 @@
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter
 	)
-
-	try {
-		[System.DateTime]$startTime = [System.DateTime]::Now
-
-		if ($Awaiter) {
-			Write-ADTLogEntry -Message "Waiting for [$($Awaiter.Count)] awaiter(s) to complete..."
-		}
-		else {
-			Write-ADTLogEntry -Message 'No awaiters specified. Skipping wait operation.' -DebugMessage
-			return
-		}
-
-		while ($Awaiter.Count -gt 0) {
-			[System.Collections.Generic.List[PSADTNXT.Deployment.INxtAwaiter]]$stillRunning = [System.Collections.Generic.List[PSADTNXT.Deployment.INxtAwaiter]]::new()
-			foreach ($item in $Awaiter) {
-				if ($startTime.Add($item.Timeout) -le [System.DateTime]::Now) {
-					Write-ADTLogEntry -Severity Warning -Message "An awaiter timeout [$($item.Timeout)] was reached for [$($item.GetType().Name)]."
-				}
-				elseif ($item.Evaluate()) {
-					Write-ADTLogEntry -Message "Awaiter [$($item.GetType().Name)] condition met." -DebugMessage
-				}
-				else {
-					$stillRunning.Add($item)
-				}
-			}
-			$Awaiter = $stillRunning
-			Start-Sleep -Milliseconds 250
-		}
-
-		Write-ADTLogEntry -Severity Success -Message 'All awaiter conditions have been met.'
+	begin {
+		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
 	}
-	catch {
-		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
+	process {
+		try {
+			[System.DateTime]$startTime = [System.DateTime]::Now
+
+			if ($Awaiter) {
+				Write-ADTLogEntry -Message "Waiting for [$($Awaiter.Count)] awaiter(s) to complete..."
+			}
+			else {
+				Write-ADTLogEntry -Message 'No awaiters specified. Skipping wait operation.' -DebugMessage
+				return
+			}
+
+			while ($Awaiter.Count -gt 0) {
+				[System.Collections.Generic.List[PSADTNXT.Deployment.INxtAwaiter]]$stillRunning = [System.Collections.Generic.List[PSADTNXT.Deployment.INxtAwaiter]]::new()
+				foreach ($item in $Awaiter) {
+					if ($startTime.Add($item.Timeout) -le [System.DateTime]::Now) {
+						Write-ADTLogEntry -Severity Warning -Message "An awaiter timeout [$($item.Timeout)] was reached for [$($item.GetType().Name)]."
+					}
+					elseif ($item.Evaluate()) {
+						Write-ADTLogEntry -Message "Awaiter [$($item.GetType().Name)] condition met." -DebugMessage
+					}
+					else {
+						$stillRunning.Add($item)
+					}
+				}
+				$Awaiter = $stillRunning
+				Start-Sleep -Milliseconds 250
+			}
+
+			Write-ADTLogEntry -Severity Success -Message 'All awaiter conditions have been met.'
+		}
+		catch {
+			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
+		}
+	}
+	end {
+		Complete-ADTFunction -Cmdlet $PSCmdlet
 	}
 }

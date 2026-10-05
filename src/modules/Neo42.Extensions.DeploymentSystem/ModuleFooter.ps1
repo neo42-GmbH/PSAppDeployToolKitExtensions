@@ -1,4 +1,4 @@
-#region Initialization
+﻿#region Initialization
 # Make sure the module is loaded via the psd1 file.
 if ([System.Environment]::StackTrace -notlike '*Microsoft.PowerShell.Commands.ModuleCmdletBase.LoadModuleManifest(*') {
 	throw [System.InvalidOperationException]::new('This module must be imported via its .psd1 file, which is recommended for all modules that supply a .psd1 file.')
@@ -44,9 +44,6 @@ $ExecutionContext.SessionState.PSVariable.Set(
 Set-StrictMode -Version 3.0
 
 # Integrate into the PSADT initialization process.
-Add-ADTModuleCallback -HookPoint 'OnStart' -Callback $script:CommandTable.'Initialize-NXTModule'
-Add-ADTModuleCallback -HookPoint 'PostOpen' -Callback $script:CommandTable.'Invoke-NXTEmpirumPreAction'
-Add-ADTModuleCallback -HookPoint 'PostClose' -Callback $script:CommandTable.'Invoke-NXTEmpirumPostAction'
-
-Add-NXTDeploymentCallback -HookPoint 'CustomInstallAndReinstallAndSoftMigrationBegin' -Callback $script:CommandTable.'Remove-NXTOldEmpirumApplication'
+Add-ADTModuleCallback -Hookpoint PostOpen -Callback $script:CommandTable.'Initialize-NXTModule'
+[System.Boolean]$script:Hooked = $false
 #endregion Initialization

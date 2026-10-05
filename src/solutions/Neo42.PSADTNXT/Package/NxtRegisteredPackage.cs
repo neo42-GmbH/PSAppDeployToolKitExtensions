@@ -204,5 +204,14 @@ namespace PSADTNXT.Package
 			}
 			return package != null;
 		}
+
+		/// <summary>
+		/// Returns if the given application refers to a package.
+		/// </summary>
+		public static bool IsPackageEntry(InstalledApplication application)
+		{
+			using var appKey = application.PSPath.ToRegistryKeyFromPSProviderPath();
+			return appKey?.GetValue("neoRegPackagesKeyRef") != null;
+		}
 	}
 }

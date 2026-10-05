@@ -15,12 +15,16 @@
 	PSADT.ProcessManagement.ProcessResult - The result of the uninstallation process.
 	.PARAMETER Target
 	The path to the uninstaller file.
+	If not specified, the target is resolved from the application found by the Criteria.
 	.PARAMETER Application
 	The installed application object to use for the uninstallation.
 	.PARAMETER Package
 	The registered package object to use for the uninstallation.
-	.PARAMETER UninstallKey
-	The full path to the uninstall key that this invocation uninstalls. Used for collection information about the uninstall process.
+	.PARAMETER Criteria
+	The application lookup criteria used to find the application in a application store.
+	The resulting data is used for defaults, validation and backup mechanics.
+	Values that are not specified (Target, Method, ArgumentList, LogFileName) default to the data of the found application.
+	After the uninstallation, the criteria must no longer match any application.
 	.PARAMETER Method
 	The method to use for the uninstallation.
 	.PARAMETER ArgumentList
@@ -37,21 +41,28 @@
 	.PARAMETER LogFileName
 	The path to the log file ending with a .log extension.
 	This file will reside in the log directory of the ADT session.
-	The resulting full path is available as %LogFile% in the ArgumentList.
 	.PARAMETER SuccessExitCodes
 	The exit codes that indicate a successful uninstallation.
 	.PARAMETER RebootExitCodes
 	The exit codes that indicate a reboot is required after the uninstallation.
 	.PARAMETER IgnoreExitCodes
 	Determines if the function should ignore exit codes and not treat them as errors.
+	.PARAMETER ExitOnProcessFailure
+	The session will be immediatly closed if the execution fails.
 	.PARAMETER NoCache
 	Determines if the function should avoid using cached uninstaller files.
-	.PARAMETER ExitOnProcessFailure
-	Determines if the function should exit with an error if the process fails. If this parameter is specified, the deployment will be aborted.
 	.EXAMPLE
-	Uninstall-NXTApplication -Target 'C:\Temp\test.msi' -ArgumentList '/quiet /norestart' -Method MSI
+	Uninstall-NXTApplication -Target '$envProgramFiles\myprogram\uninstall.exe' -ArgumentList '\q'
 
-	Uninstalls the application using the MSI method with the specified arguments.
+	Starts the uninstall.exe with the '\q' parameter but without any further logic attached to it (Method: Setup)
+	.EXAMPLE
+	Uninstall-NXTApplication -Target '{5DE0DE9D-5ABE-453E-8A84-A4BF443FC24B}' -Method MSI
+
+	Uninstalls the MSI application that is registered with above product code.
+	.EXAMPLE
+	Uninstall-NXTApplication -Criteria @{ Store = 'ARP'; Identifier = 'TestApp' }
+
+	Uninstalls the application found by the criteria using its registered uninstall information and validates its removal afterwards.
 	.EXAMPLE
 	Get-NXTApplication -Identifier '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
 
@@ -64,6 +75,10 @@
 	Get-NXTRegisteredPackage -PackageId '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
 
 	Uninstalls the application referenced by a registered package object.
+	.EXAMPLE
+	Uninstall-NXTApplication -Target 'Microsoft.WindowsScan_8wekyb3d8bbwe' -Method Appx
+
+	Deprovisions the Windows Scanner Appx app for all users.
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'ManualExitCodes')]
 	[OutputType([PSADT.ProcessManagement.ProcessResult])]
@@ -79,17 +94,16 @@
 		[PSADT.Types.InstalledApplication]
 		$Application,
 
-		[Parameter(ParameterSetName = 'ManualExitCodes', Position = 0, Mandatory)]
-		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes', Position = 0, Mandatory)]
+		[Parameter(ParameterSetName = 'ManualExitCodes', Position = 0)]
+		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes', Position = 0)]
 		[Alias('Path', 'FullName')]
-		[AllowEmptyString()]
 		[System.String]
 		$Target,
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
 		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes')]
-		[ValidateNotNullOrEmpty()]
-		[System.String]
-		$UninstallKey,
+		[ValidateNotNull()]
+		[PSADTNXT.Application.NxtApplicationCriteria]
+		$Criteria,
 
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
 		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes')]
@@ -114,7 +128,7 @@
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationIgnoreExitCodes')]
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
-		[System.String]
+		[System.IO.DirectoryInfo]
 		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory,
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter,
@@ -157,7 +171,8 @@
 	}
 	process {
 		try {
-			[PSADT.ProcessManagement.ProcessResult]$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
+			[PSADT.ProcessManagement.ProcessResult]$result = $null
+			[System.IO.DirectoryInfo]$uninstallFileBackupDirectory = $null
 			[System.Text.StringBuilder]$finalArguments = [System.Text.StringBuilder]::new()
 			if ($PSBoundParameters.ContainsKey('ArgumentList') -and $ArgumentList) {
 				if ($ArgumentList.Length -gt 1) {
@@ -178,44 +193,83 @@
 				$null = $finalArguments.Append(' ')
 			}
 
+			# Resolve the application of the lookup criteria to use its data as defaults
+			if ($PSCmdlet.ParameterSetName -like 'Manual*' -and $Criteria) {
+				[PSADT.Types.InstalledApplication[]]$criteriaApplications = @(Get-NXTApplication -Criteria $Criteria)
+				if ($criteriaApplications.Length -eq 1) {
+					$Application = $criteriaApplications[0]
+				}
+				elseif ($criteriaApplications.Length -gt 1) {
+					[System.Collections.Hashtable]$errorParams = @{
+						Exception    = [System.InvalidOperationException]::new("Application lookup criteria were provided but [$($criteriaApplications.Length)] applications were found before uninstallation. Must be at most [1].")
+						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
+						ErrorId      = 'MultipleApplicationsFound'
+						TargetObject = $Criteria
+					}
+					throw (New-ADTErrorRecord @errorParams)
+				}
+				else {
+					Write-ADTLogEntry -Severity Warning -Message 'Application lookup criteria were provided but no application was found before uninstallation. Continuing without application defaults.'
+					return [PSADT.ProcessManagement.ProcessResult]::new(0)
+				}
+			}
+
 			# Parse the different parameter sets into the 'Manual' set
 			switch ($PSCmdlet.ParameterSetName) {
 				{ $_ -like 'Package*' } {
 					$Target = $Package.UninstallStringFilePath
 					$Method = [PSADTNXT.Deployment.DeploymentMethod]::Setup
-					$CacheDirectory = $Package.PackageDirectory
-					if ($Package.Application) { $UninstallKey = $Package.Application.PSPath }
+					$Criteria = [PSADTNXT.Application.NxtApplicationCriteria]::new([PSADTNXT.Application.ApplicationStore]::Package, $Package.GUID)
+					if ($Package.PackageDirectory) {
+						$uninstallFileBackupDirectory = [System.IO.Path]::Combine($Package.PackageDirectory.FullName, 'neo42-Source', $Package.GUID)
+					}
 					if (-not $PSBoundParameters.ContainsKey('LogFileName')) { $LogFileName = "$($Package.Name).$($adtEnvironment.DeploymentTimestamp)_Uninstall.log" }
 
 					$null = $finalArguments.Insert(0, [PSADT.ProcessManagement.CommandLineUtilities]::ArgumentListToCommandLine($Package.UninstallStringArgumentList) + ' ')
 					break
 				}
-				{ $_ -like 'Application*' } {
-					if (-not $PSBoundParameters.ContainsKey('Method')) {
-						$Method = if ($Application.WindowsInstaller) { [PSADTNXT.Deployment.DeploymentMethod]::MSI } else { [PSADTNXT.Deployment.DeploymentMethod]::Setup }
+				# Also applies to the 'Manual' set, if an application was resolved from the lookup criteria
+				{ $_ -like 'Application*' -or $Application } {
+					# Only resolve the target from the application, if none was specified
+					[System.String[]]$applicationArgumentList = @()
+					if ($PSCmdlet.ParameterSetName -like 'Application*' -or [System.String]::IsNullOrWhiteSpace($Target)) {
+						if (-not $PSBoundParameters.ContainsKey('Method')) {
+							$Method = if ($Application.WindowsInstaller) {
+								[PSADTNXT.Deployment.DeploymentMethod]::MSI
+							}
+							elseif ($Application.Store -eq [PSADTNXT.Application.ApplicationStore]::AppX) {
+								[PSADTNXT.Deployment.DeploymentMethod]::AppX
+							}
+							else {
+								[PSADTNXT.Deployment.DeploymentMethod]::Setup
+							}
+						}
+
+						if ($Method -in @([PSADTNXT.Deployment.DeploymentMethod]::MSI, [PSADTNXT.Deployment.DeploymentMethod]::AppX)) {
+							$Target = $Application.PSChildName
+						}
+						elseif (-not [System.String]::IsNullOrWhiteSpace($Application.QuietUninstallStringFilePath)) {
+							$Target = [PSADTNXT.Shell.NxtCommandLine]::SearchPath($Application.QuietUninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine)
+							$applicationArgumentList = $Application.QuietUninstallStringArgumentList
+						}
+						else {
+							$Target = [PSADTNXT.Shell.NxtCommandLine]::SearchPath($Application.UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine)
+							$applicationArgumentList = $Application.UninstallStringArgumentList
+						}
 					}
-					$Target = if ($Method -eq [PSADTNXT.Deployment.DeploymentMethod]::MSI) {
-						$Application.PSChildName
+					if (-not $PSBoundParameters.ContainsKey('Criteria')) {
+						$Criteria = [PSADTNXT.Application.NxtApplicationCriteria]::new($Application.Store, $Application.PSChildName)
 					}
-					else {
-						[PSADTNXT.Shell.NxtCommandLine]::SearchPath(
-							$(if (-not [System.String]::IsNullOrWhiteSpace($Application.QuietUninstallStringFilePath)) { $Application.QuietUninstallStringFilePath } else { $Application.UninstallStringFilePath }),
-							[System.EnvironmentVariableTarget]::Machine
-						)
+					if ($CacheDirectory) {
+						$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $Application.PSChildName)
 					}
-					$UninstallKey = $Application.PSPath
 
 					if (-not $PSBoundParameters.ContainsKey('ArgumentList')) {
 						if ($adtConfig['NXT']['Deployment'][$Method.ToString()]) {
 							$null = $finalArguments.Insert(0, $adtConfig['NXT']['Deployment'][$Method.ToString()]['UninstallParams'] + ' ')
 						}
-						else {
-							[System.String]$applicationUninstallArguments = $(
-								if ($Application.QuietUninstallStringArgumentList) { [PSADT.ProcessManagement.CommandLineUtilities]::ArgumentListToCommandLine($Application.QuietUninstallStringArgumentList) }
-								elseif ($Application.UninstallStringArgumentList) { [PSADT.ProcessManagement.CommandLineUtilities]::ArgumentListToCommandLine($Application.UninstallStringArgumentList) }
-								else { [System.String]::Empty }
-							).Trim()
-							$null = $finalArguments.Insert(0, $applicationUninstallArguments + ' ')
+						elseif ($applicationArgumentList) {
+							$null = $finalArguments.Insert(0, [PSADT.ProcessManagement.CommandLineUtilities]::ArgumentListToCommandLine($applicationArgumentList) + ' ')
 						}
 					}
 
@@ -225,8 +279,16 @@
 					break
 				}
 				{ $_ -like 'Manual*' } {
+					if ([System.String]::IsNullOrWhiteSpace($Target)) {
+						[System.Collections.Hashtable]$errorParams = @{
+							Exception = [System.ArgumentException]::new('No target was specified and none could be resolved from the application lookup criteria.')
+							Category  = [System.Management.Automation.ErrorCategory]::InvalidArgument
+							ErrorId   = 'NoUninstallTarget'
+						}
+						throw (New-ADTErrorRecord @errorParams)
+					}
 					if (-not $PSBoundParameters.ContainsKey('ArgumentList') -and $adtConfig['NXT']['Deployment'][$Method.ToString()]) {
-						$null = $finalArguments.Insert(0, $adtConfig['NXT']['Deployment'][$Method.ToString()]['UninstallParams'])
+						$null = $finalArguments.Insert(0, $adtConfig['NXT']['Deployment'][$Method.ToString()]['UninstallParams'] + ' ')
 					}
 					if (-not $PSBoundParameters.ContainsKey('LogFileName')) {
 						[System.String]$logId = $Target.Split(
@@ -244,27 +306,15 @@
 			$LogFileName = [PSADTNXT.Extensions.NxtStringExtensions]::ToFileNameCompatible($LogFileName, $true, '_')
 			[System.IO.FileInfo]$logFile = [System.IO.Path]::Combine($adtSession.LogPath, $LogFileName)
 
-			# Replace known variables in the target and arguments
-			@{
-				'%LogFile%'          = $logFile.FullName
-				'%DirFiles%'         = if ($adtSession.DirFiles) { $adtSession.DirFiles } else { [System.String]::Empty }
-				'%DirSupportFiles%'  = if ($adtSession.DirSupportFiles) { $adtSession.DirSupportFiles } else { [System.String]::Empty }
-				'%PackageDirectory%' = $adtSession.NXT.Package.Directory.FullName
-			}.GetEnumerator() | & {
-				process {
-					$Target = $Target.Replace($_.Key, $_.Value)
-					$null = $finalArguments.Replace($_.Key, $_.Value)
-				}
-			}
-
 			[System.Collections.Hashtable]$startSplat = Remove-ADTHashtableNullOrEmptyValues @{
-				FilePath             = if (-not [System.IO.Path]::IsPathRooted($Target) -and $adtSession.DirFiles) { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) } else { $Target }
-				ArgumentList         = $finalArguments.ToString().Trim()
-				PassThru             = $true
-				SuccessExitCodes     = $SuccessExitCodes
-				RebootExitCodes      = $RebootExitCodes
-				ExitOnProcessFailure = $ExitOnProcessFailure.ToBool()
-				ErrorAction          = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
+				FilePath        = if (-not [System.IO.Path]::IsPathRooted($Target) -and $adtSession.DirFiles) { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) } else { $Target }
+				ArgumentList    = $finalArguments.ToString().Trim()
+				PassThru        = $true
+				IgnoreExitCodes = '*' # If not set in 4.1.8 the session exit code is set regardless of actual success of the result
+				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
+			}
+			if ($ExitOnProcessFailure) {
+				$startSplat['ExitOnProcessFailure'] = $true
 			}
 
 			[System.String]$backupFileSelector = [System.String]::Empty
@@ -276,16 +326,12 @@
 				([PSADTNXT.Deployment.DeploymentMethod]::Copy) {
 					try {
 						Remove-ADTFolder -Path $Target
-						return [PSADT.ProcessManagement.ProcessResult]::new(0)
+						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
-						if ($ExitOnProcessFailure) {
-							Write-ADTLogEntry -Severity Warning -Message "An error occurred while trying to delete the folder [$Target]."
-							Write-ADTLogEntry -Severity Warning -Message (Resolve-ADTErrorRecord -ErrorRecord $_)
-							Close-ADTSession -ExitCode 1
-						}
-						return [PSADT.ProcessManagement.ProcessResult]::new(
-							(-not $IgnoreExitCodes).ToInt32($null),
+						if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
+						$result = [PSADT.ProcessManagement.ProcessResult]::new(
+							$_.HResult,
 							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
 							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
 							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
@@ -300,7 +346,6 @@
 					}
 
 					$result = Start-ADTMsiProcess @startSplat -Action Uninstall -SkipMSIAlreadyInstalledCheck -NoDesktopRefresh -LogFileName ($LogFileName -replace '_Uninstall\.log$', [System.String]::Empty)
-					break
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
 					# Use full name directly
@@ -324,9 +369,9 @@
 
 					if ($identifiers.Length -eq 0) {
 						Write-ADTLogEntry -Severity Warning -Message "The AppX package family [$Target] does not exist or is not installed."
-						return $result
+						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
-					if ($identifiers.Length -gt 1) {
+					elseif ($identifiers.Length -gt 1) {
 						[System.Collections.Hashtable]$errorParams = @{
 							Exception      = [System.InvalidOperationException]::new("The given identifier [$Target] family contains multiple identifiers.")
 							Category       = [System.Management.Automation.ErrorCategory]::InvalidOperation
@@ -356,18 +401,18 @@
 					$backupFileSelector = 'unins*.exe'
 					$waits.Add([PSADTNXT.Deployment.NxtProcessAwaiter]::new('_Uninstall*', $false, [System.TimeSpan]::FromMinutes(10)))
 				}
-				{ $true } {
+				# The default uninstall method for every uninstaller if no result is available yet.
+				{ -not $result } {
 					# Try to retrieve the backup file path if the uninstaller file does not exist
 					if (-not [System.IO.File]::Exists($startSplat['FilePath'])) {
 						Write-ADTLogEntry -Severity Warning -Message "The original uninstaller file [$($startSplat['FilePath'])] does not exist. Trying to use the backup uninstaller file."
 
 						if (-not $NoCache -and
 							-not [System.String]::IsNullOrWhiteSpace($backupFileSelector) -and
-							-not [System.String]::IsNullOrWhiteSpace($UninstallKey) -and
-							-not [System.String]::IsNullOrWhiteSpace($CacheDirectory)
+							$uninstallFileBackupDirectory
 						) {
 							Write-ADTLogEntry -Message 'Searching for the backup uninstaller file in the cache directory.' -DebugMessage
-							[System.String]$backupFullPathSelector = [System.IO.Path]::Combine($CacheDirectory, 'neo42-Source', [System.IO.Path]::GetFileName($UninstallKey), $backupFileSelector)
+							[System.String]$backupFullPathSelector = [System.IO.Path]::Combine($uninstallFileBackupDirectory.FullName, $backupFileSelector)
 							[System.String]$targetDirectory = [System.IO.Path]::GetDirectoryName($startSplat.FilePath)
 							if (-not [System.IO.Directory]::Exists($targetDirectory)) { $null = [System.IO.Directory]::CreateDirectory($targetDirectory) }
 							Copy-Item -Path $backupFullPathSelector -Destination $targetDirectory -Force
@@ -397,22 +442,45 @@
 					$result = Start-ADTProcess @startSplat
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
-					try {
-						Write-ADTLogEntry -Message "Removing all user instances of the AppX package family [$Target]."
-						Remove-AppxPackage -AllUsers -Package $identifiers[0]
-					}
-					catch {
-						$result = [PSADT.ProcessManagement.ProcessResult]::new(
-							1,
-							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
-							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
-							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
-						)
+					# Only run, if the package family was found
+					if ($identifiers.Length -eq 1) {
+						try {
+							Write-ADTLogEntry -Message "Removing all user instances of the AppX package family [$Target]."
+							Remove-AppxPackage -AllUsers -Package $identifiers[0]
+						}
+						catch {
+							if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
+							$result = [PSADT.ProcessManagement.ProcessResult]::new(
+								$_.HResult,
+								[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
+								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
+								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
+							)
+						}
 					}
 				}
 			}
 
+			if (-not $IgnoreExitCodes) {
+				Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes
+			}
+
 			Wait-NXTDeploymentAwaiter -Awaiter $waits
+
+			# Validate that the application has been removed
+			if ($Criteria) {
+				[PSADT.Types.InstalledApplication[]]$remainingApplications = @(Get-NXTApplication -Criteria $Criteria)
+				if ($remainingApplications.Length -gt 0) {
+					[System.Collections.Hashtable]$errorParams = @{
+						Exception    = [System.InvalidOperationException]::new("Application lookup criteria were provided but [$($remainingApplications.Length)] applications were still found after uninstallation. Must be [0].")
+						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
+						ErrorId      = 'ApplicationStillInstalled'
+						TargetObject = $Criteria
+					}
+					throw (New-ADTErrorRecord @errorParams)
+				}
+			}
+
 			return $result
 		}
 		catch {

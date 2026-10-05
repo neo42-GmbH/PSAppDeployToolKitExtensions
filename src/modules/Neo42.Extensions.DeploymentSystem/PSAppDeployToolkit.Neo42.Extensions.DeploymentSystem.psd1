@@ -2,7 +2,7 @@
 
 @{
 	# Script module or binary module file associated with this manifest.
-	RootModule             = 'PSAppDeployToolkit.Neo42.Extensions.Empirum.psm1'
+	RootModule             = 'PSAppDeployToolkit.Neo42.Extensions.DeploymentSystem.psm1'
 
 	# Version number of this module.
 	ModuleVersion          = '0.0.0.0'

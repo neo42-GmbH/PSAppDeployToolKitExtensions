@@ -1,4 +1,4 @@
-﻿function Initialize-NXTModule {
+﻿function Initialize-NXTEmpirum {
 	<#
 	.SYNOPSIS
 	This function is called on the first call of the Open-ADTSession function.
@@ -7,10 +7,10 @@
 	param ()
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
-		[System.Collections.Generic.IReadOnlyDictionary[System.String, System.Object]]$adtEnvironment = Get-ADTEnvironmentTable
 	}
 	process {
 		try {
+			[System.Collections.Generic.IReadOnlyDictionary[System.String, System.Object]]$adtEnvironment = Get-ADTEnvironmentTable
 			[System.String]$netbiosName = if ($adtEnvironment.IsMachinePartOfDomain) { $adtEnvironment.envComputerADNetbiosDomain } else { $adtEnvironment.envMachineWorkgroup }
 			[System.String]$computerName = $adtEnvironment.envComputerName
 			[System.String]$systemDrive = $adtEnvironment.envSystemDrive

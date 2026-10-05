@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Lietojumprogrammas instalēšanas laikā radās kļūda. Lai iegūtu vairāk informācijas, pārbaudiet žurnāla failu.'
-			Repair    = 'Lietojumprogrammas labošanas laikā radās kļūda. Lai iegūtu vairāk informācijas, pārbaudiet žurnāla failu.'
-			Uninstall = 'Lietojumprogrammas atinstalēšanas laikā radās kļūda. Lai iegūtu vairāk informācijas, pārbaudiet žurnāla failu.'
-		}
+		ErrorMessage  = "{0} izvietošana neizdevās posmā `"{1}`" ar kļūdu {2}.`nKļūdas ziņojums:`n`n{3}`n`nLai iegūtu vairāk informācijas, pārbaudiet žurnālus vai sazinieties ar administratoru, lai saņemtu papildu palīdzību."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Lūdzu, saglabājiet savu darbu un aizveriet lietojumprogrammas.'
