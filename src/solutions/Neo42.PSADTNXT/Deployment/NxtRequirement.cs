@@ -1,7 +1,9 @@
 ﻿
 using System;
 using System.Collections;
+using System.IO;
 using PSADTNXT.Application;
+using PSADTNXT.Extensions;
 
 namespace PSADTNXT.Deployment
 {
@@ -40,6 +42,11 @@ namespace PSADTNXT.Deployment
 			if (hashtable == null)
 			{
 				throw new ArgumentNullException(nameof(hashtable));
+			}
+
+			if (!hashtable.MatchesProperties<NxtRequirement>(out var invalidKeys))
+			{
+				throw new InvalidDataException($"Cannot create [{nameof(NxtRequirement)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
 			}
 
 			var criteriaHashtable = hashtable.ContainsKey("Criteria") && hashtable["Criteria"] is Hashtable criteriaTable

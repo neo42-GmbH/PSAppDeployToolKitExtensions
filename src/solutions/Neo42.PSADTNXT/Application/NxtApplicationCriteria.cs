@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.IO;
 using System.Management.Automation;
-using System.Net;
+using PSADTNXT.Extensions;
 
 namespace PSADTNXT.Application
 {
@@ -71,8 +72,13 @@ namespace PSADTNXT.Application
 				throw new ArgumentNullException(nameof(hashtable));
 			}
 
+			if (!hashtable.MatchesProperties<NxtApplicationCriteria>(out var invalidKeys))
+			{
+				throw new InvalidDataException($"Cannot create [{nameof(NxtApplicationCriteria)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
+			}
+
 			var store = hashtable.ContainsKey("Store")
-				? Enum.TryParse<ApplicationStore>(hashtable["Store"]?.ToString(), true, out var parsedStore) ? parsedStore : throw new ArgumentException("The hashtable must contain a 'Store' key with a valid value.", nameof(hashtable))
+				? Enum.TryParse<ApplicationStore>(hashtable["Store"]?.ToString(), true, out var parsedStore) ? parsedStore : throw new ArgumentException("The hashtable must contain a [Store] key with a valid value.", nameof(hashtable))
 				: ApplicationStore.ARP;
 
 			string? identifier = null;
@@ -105,7 +111,7 @@ namespace PSADTNXT.Application
 
 			if (identifier is null && filter is null)
 			{
-				throw new ArgumentException("The hashtable must contain at least an 'Identifier' or a 'Filter' key.", nameof(hashtable));
+				throw new ArgumentException("The hashtable must contain at least an [Identifier] or a [Filter] key.", nameof(hashtable));
 			}
 
 			if (identifier is not null && filter is not null)

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.IO;
 using Microsoft.Win32;
+using PSADTNXT.Extensions;
 using PSADTNXT.Shell;
 
 namespace PSADTNXT.Deployment
@@ -39,6 +41,11 @@ namespace PSADTNXT.Deployment
 			if (hashtable == null)
 			{
 				throw new ArgumentNullException(nameof(hashtable));
+			}
+
+			if (!hashtable.MatchesProperties<NxtRegistryAwaiter>(out var invalidKeys))
+			{
+				throw new InvalidDataException($"Cannot create [{nameof(NxtRegistryAwaiter)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
 			}
 
 			var key = hashtable.ContainsKey("Key") && hashtable["Key"] is string keyValue
