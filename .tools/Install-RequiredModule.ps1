@@ -63,6 +63,7 @@ if (-not $requiresDownload) {
 # Ensure required modules are installed.
 @(
 	@{ ModuleName = 'PSScriptAnalyzer'; GUID = 'd6245802-193d-4068-a631-8863a4342a18'; ModuleVersion = '1.25.0'; MaximumVersion = '1.99' }
+	@{ ModuleName = 'Pester'; GUID = 'a699dea5-2c73-4616-a270-1f7abb777e71'; ModuleVersion = '5.6'; MaximumVersion = '6.1.0'	}
 ) | ForEach-Object {
 	if (-not (Get-Module -ListAvailable -FullyQualifiedName $_)) {
 		Install-Module -Force -SkipPublisherCheck -Scope CurrentUser -Repository PSGallery `
