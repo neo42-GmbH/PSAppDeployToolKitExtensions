@@ -385,7 +385,7 @@
 			# -- Install: Apply the installation logic.
 			# -- Reinstall: Apply the uninstallation followed by installation logic.
 			# -- [Migrated from v3.MSIUpgradable]
-			UpgradeMode     = 'Reinstall' # @schema enum: [Install, Reinstall], default: Reinstall
+			UpgradeMode     = 'Reinstall' # @schema enum: [None, Install, Reinstall], default: Reinstall
 
 			# -- Define conditions that should be awaited after the installation method was executed.
 			# -- This allows to ensure certain system states before proceeding with the deployment and the validation.

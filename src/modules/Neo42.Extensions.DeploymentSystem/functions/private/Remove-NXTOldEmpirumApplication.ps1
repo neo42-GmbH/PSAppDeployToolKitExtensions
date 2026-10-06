@@ -156,6 +156,8 @@
 				$staticEmpirumUserAppKey.Close()
 			}
 		}
+
+		Update-NXTDetectionStatus -ADTSession $adtSession
 	}
 	end {
 		Complete-ADTFunction -Cmdlet $PSCmdlet

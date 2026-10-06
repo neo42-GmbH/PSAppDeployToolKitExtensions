@@ -22,7 +22,8 @@
 					Add-ADTModuleCallback -HookPoint PostOpen -Callback $script:CommandTable.'Invoke-NXTEmpirumPreAction'
 					Add-ADTModuleCallback -HookPoint PostClose -Callback $script:CommandTable.'Invoke-NXTEmpirumPostAction'
 
-					Add-NXTDeploymentCallback -HookPoint CustomInstallAndReinstallAndSoftMigrationBegin -Callback $script:CommandTable.'Remove-NXTOldEmpirumApplication'
+					Add-NXTDeploymentCallback -HookPoint CustomInstallAndReinstallPreInstallAndReinstall -Callback $script:CommandTable.'Remove-NXTOldEmpirumApplication' -Prepend
+					Add-NXTDeploymentCallback -HookPoint CustomInstallAndReinstallAndSoftMigrationEnd -Callback $script:CommandTable.'Remove-NXTOldEmpirumApplication' -Prepend
 				}
 			}
 		}

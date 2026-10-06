@@ -24,7 +24,7 @@
 			) { return }
 
 			if (-not $ADTSession.NXT.DeploymentInvoked) {
-				Write-ADTLogEntry -Message 'Skipping package registration as the deployment has not been invoked.'
+				Write-ADTLogEntry -Message 'Skipping package registration as the deployment has not been invoked.' -DebugMessage
 			}
 
 			if (-not $ADTSession.NXT.Package.Register) {
@@ -39,7 +39,7 @@
 			Write-ADTLogEntry -Message 'Registering current package to the package registry.'
 
 			# Determine the registry destinations
-			[System.String]$regPackagesKeyPath = $ADTSession.NXT.Package.RegistryKey
+			[System.String]$regPackagesKeyPath = $ADTSession.NXT.Package.RegistryKey + $(if ($asError) { '_Error' } else { [System.String]::Empty })
 			Write-ADTLogEntry -Message "The package will be registered to neo42 registry path [$regPackagesKeyPath]." -DebugMessage
 
 			[System.String]$appRegistryKeyPath = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$($ADTSession.NXT.Package.GUID)"
@@ -51,14 +51,6 @@
 				DeploymentSystem = $ADTSession.NXT.DeploymentSystem
 			}
 			Write-ADTLogEntry -Message "The calculated uninstall string is [$uninstallString]." -DebugMessage
-
-			# If the session is no error, clear potential error keys, otherwise append _Error to the key path
-			if (-not $asError) {
-				$rootKey.DeleteSubKey($regPackagesKeyPath + '_Error', $false)
-			}
-			else {
-				$regPackagesKeyPath = $regPackagesKeyPath + '_Error'
-			}
 
 			# The splat objects to write to the neo registry
 			[System.Collections.Hashtable[]]$neoRegistryEntries = @(
@@ -93,7 +85,7 @@
 					@{ Name = 'UninstallString'; Value = $uninstallString }
 				}
 			)
-			# Write the registry entries
+			# Write the registry entries with prior cleanup to ensure that we do not have any leftover entries from previous installations.
 			$rootKey.DeleteSubKey($regPackagesKeyPath, $false)
 			[Microsoft.Win32.RegistryKey]$regPackagesKey = $rootKey.CreateSubKey($regPackagesKeyPath, $true)
 			foreach ($entry in $neoRegistryEntries) {
