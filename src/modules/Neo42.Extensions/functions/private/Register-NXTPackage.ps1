@@ -46,7 +46,7 @@
 			Write-ADTLogEntry -Message "The package will be registered to the application registry path [$appRegistryKeyPath]." -DebugMessage
 
 			[System.String]$uninstallString = Resolve-NXTDeployString -PreferExecutable -Root ([System.IO.Path]::Combine($ADTSession.NXT.Package.Directory.FullName, 'neo42-Install')) -Arguments @{
-				DeploymentType   = [PSADTNXT.Deployment.NxtDeploymentType]::Install
+				DeploymentType   = [PSADTNXT.Deployment.NxtDeploymentType]::Uninstall
 				DeployMode       = [PSADT.Module.DeployMode]::Silent
 				DeploymentSystem = $ADTSession.NXT.DeploymentSystem
 			}
