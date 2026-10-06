@@ -97,6 +97,8 @@ The new format improves the following aspects:
 
 - New custom function `CustomEndOnError` was added which make error handling easier.
 
+- New custom function `CustomSoftmigrationEnd` was added to only run in case the Soft Migration was applied.
+
 - You may place a singular **WIM file** in the `DirFiles` folder which contains the deployment content. PSADT will mount the WIM automatically and point `DirFiles` to the mounted location. This reduces package size and improves transfer times for certain deployment systems.
 
 - Debug logging has been reintroduced. Enable `LogDebugMessages` in the toolkit configuration to get detailed information about the deployment process.

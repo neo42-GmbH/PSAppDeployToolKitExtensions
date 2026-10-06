@@ -91,6 +91,15 @@ function CustomSoftMigrationBegin {
 	#endregion CustomSoftMigrationBegin content
 }
 
+function CustomSoftMigrationEnd {
+	<#
+	.DESCRIPTION
+	This function is called only after a soft migration has been successfully processed.
+	#>
+	#region CustomSoftMigrationEnd content
+	#endregion CustomSoftMigrationEnd content
+}
+
 function CustomInstallAndReinstallAndSoftMigrationEnd {
 	<#
 	.DESCRIPTION
