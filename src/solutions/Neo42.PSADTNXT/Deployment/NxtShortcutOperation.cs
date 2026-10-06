@@ -46,7 +46,7 @@ namespace PSADTNXT.Deployment
 
 			if (!hashtable.MatchesProperties<NxtShortcutOperation>(out var invalidKeys))
 			{
-				throw new InvalidDataException($"Cannot create [{nameof(NxtShortcutOperation)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
+				throw new InvalidDataException($"Cannot create [{nameof(NxtShortcutOperation)}] from object with invalid key(s) [{string.Join(", ", invalidKeys)}].");
 			}
 
 			var mode = hashtable.ContainsKey("Mode")

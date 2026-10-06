@@ -180,11 +180,9 @@
 								Exit-NXTDeployment -ADTSession $ADTSession -Message 'Soft Migration checks passed successfully. Migration will be performed instead of a regular installation.'
 							}
 						}
-						else {
-							Write-ADTLogEntry -Message 'Soft Migration is not applicable for this deployment either because it is not enabled, or no eligible version was found.'
-						}
+						$ADTSession.NXT.SoftMigration.Result = $false
 
-						# If we reach this point, we must show the welcome message if we haven't done so already
+						# If we reach this point, we must show the welcome message (if we haven't done so already) as all further actions are state changing
 						Show-NXTInstallationWelcome -ADTSession $ADTSession -DeploymentDefaults
 
 						#region Invoke-NXTDeployment PreInstall/Reinstall

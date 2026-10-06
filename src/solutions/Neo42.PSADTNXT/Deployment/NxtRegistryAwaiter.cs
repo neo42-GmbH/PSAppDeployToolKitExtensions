@@ -45,7 +45,7 @@ namespace PSADTNXT.Deployment
 
 			if (!hashtable.MatchesProperties<NxtRegistryAwaiter>(out var invalidKeys))
 			{
-				throw new InvalidDataException($"Cannot create [{nameof(NxtRegistryAwaiter)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
+				throw new InvalidDataException($"Cannot create [{nameof(NxtRegistryAwaiter)}] from object with invalid [{string.Join(", ", invalidKeys)}].");
 			}
 
 			var key = hashtable.ContainsKey("Key") && hashtable["Key"] is string keyValue

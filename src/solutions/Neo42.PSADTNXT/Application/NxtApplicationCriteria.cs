@@ -74,7 +74,7 @@ namespace PSADTNXT.Application
 
 			if (!hashtable.MatchesProperties<NxtApplicationCriteria>(out var invalidKeys))
 			{
-				throw new InvalidDataException($"Cannot create [{nameof(NxtApplicationCriteria)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
+				throw new InvalidDataException($"Cannot create [{nameof(NxtApplicationCriteria)}] from object with invalid key(s) [{string.Join(", ", invalidKeys)}].");
 			}
 
 			var store = hashtable.ContainsKey("Store")
