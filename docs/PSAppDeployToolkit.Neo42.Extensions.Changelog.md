@@ -51,8 +51,7 @@
 
 - The option to cancel a dialog was merged into the deferral logic. The user must now be able to defer the deployment if cancelling was previously allowed. The differentiation between cancel and defer was ambiguous and lead to undesired behavior in certain scenarios. Deferring and cancelling had the same effect of ending the deployment temporarily.
 
-- The UI will now run in the user's context. Which makes it compatible with screen readers.
-  - An incompatibility with Workspace ONE has been resolved, where no UI could spawn in SYSTEM context.
+- An incompatibility with Workspace ONE has been resolved, where no UI could spawn in SYSTEM context.
 
 ### Configurability & Extensability
 

@@ -31,6 +31,10 @@ namespace PSADTNXT.ProcessManagement
 		/// <param name="timeout">The time to wait for one of the processes to exit.</param>
 		/// <param name="encoding">The encoding the started processes write their output with. Defaults to the OEM code page of the system.</param>
 		/// <returns>The exit code and output of the first process which exited.</returns>
+		/// <remarks>
+		/// This method is considered unsafe, as it will start the given file in each of the given sessions with the privileges of the the winlogon.exe process of that session.
+		/// This is required to start a process in another session with privileges and UI access, but it also means that the started processes have the same privileges as winlogon.exe and can therefore do anything on the system.
+		/// </remarks>
 		public static ProcessResult StartProcessInSessions(string file, string arguments, ICollection<uint> sessionIds, TimeSpan timeout, Encoding? encoding = null)
 		{
 			if (string.IsNullOrWhiteSpace(file))
@@ -77,10 +81,9 @@ namespace PSADTNXT.ProcessManagement
 				// Iterate through each session ID and start the process
 				foreach (var sessionId in sessionIds)
 				{
-					// Search for a suitable process in the session. Prefer explorer as it
-					var sourceProcess = Process.GetProcessesByName("explorer").FirstOrDefault(p => p.SessionId == sessionId)
-						?? Process.GetProcessesByName("winlogon").FirstOrDefault(p => p.SessionId == sessionId)
-						?? throw new Exception($"Could not find suitable process in session {sessionId}");
+					// Use winlogon.exe as the source process to get a token for the target session. It is guaranteed to be running in every session and has the required privileges.
+					var sourceProcess = Process.GetProcessesByName("winlogon").FirstOrDefault(p => p.SessionId == sessionId)
+						?? throw new Exception($"Could not find suitable [winlogon] process in session [{sessionId}]");
 
 					// Create a copy of the token from the source process
 					if (!Advapi32.OpenProcessToken(sourceProcess.Handle, (uint)TOKEN_ACCESS_RIGHTS.All, out var sourceProcessTokenPtr))
@@ -190,7 +193,7 @@ namespace PSADTNXT.ProcessManagement
 
 				var selectedProcess = processes[(int)index];
 
-				Kernel32.GetExitCodeProcess(selectedProcess.ProcessHandle, out exitCode);
+				_ = Kernel32.GetExitCodeProcess(selectedProcess.ProcessHandle, out exitCode);
 
 				return new ProcessResult(
 					(int)exitCode,
