@@ -88,6 +88,8 @@ jobs:
 
           Compress-Archive -Path "./Source/samples/" -DestinationPath "${{ github.workspace }}/components/Samples.zip"
 
+          Compress-Archive -Path "./Source/admx/" -DestinationPath "${{ github.workspace }}/components/ADMX.zip"
+
           Get-Item -Path "${{ steps.download-artifact-release.outputs.download-path }}/*" -Include 'PSAppDeployToolkit.Neo42.*' | ForEach-Object {
             Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
           }
