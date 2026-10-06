@@ -92,8 +92,9 @@ jobs:
             Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
           }
 
-          Get-Item -Path "${{ steps.download-artifact-release.outputs.download-path }}/*" -Exclude "PSAppDeployToolkit.Neo42.Extensions.*" | ForEach-Object {
-            Compress-Archive -Update -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/Template.zip"
+          @(Get-Item -Path '${{ steps.download-artifact-release.outputs.download-path }}/*' -Exclude 'PSAppDeployToolkit.Neo42.Extensions.*') +
+          @(Get-Item -Path '${{ steps.download-artifact-release.outputs.download-path }}/PSAppDeployToolkit.Neo42.Extensions.DeploymentSystem') | ForEach-Object {
+            Compress-Archive -Update -Path $_.FullName -DestinationPath '${{ github.workspace }}/components/Template.zip'
           }
 
       - name: update-milestones
