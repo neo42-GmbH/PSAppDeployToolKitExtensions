@@ -105,5 +105,26 @@
       ]
     }
   ],
-  "PackageSpecificVariablesRaw": []
+  "PackageSpecificVariablesRaw": [
+    {
+      "Name": "DetectionCriteriaStore",
+      "Value": "",
+      "ExpandVariables": false
+    },
+    {
+      "Name": "DetectionCriteriaFilter",
+      "Value": "",
+      "ExpandVariables": false
+    },
+    {
+      "Name": "CloseProcessesReopen",
+      "Value": "",
+      "ExpandVariables": false
+    },
+    {
+      "Name": "DeploymentInstallationUpgradeMode",
+      "Value": "",
+      "ExpandVariables": false
+    }
+  ]
 }

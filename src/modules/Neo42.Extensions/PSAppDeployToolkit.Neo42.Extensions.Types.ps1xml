@@ -55,6 +55,12 @@ It is used to define custom types and their members for PowerShell objects.
 					[PSADTNXT.Extensions.NxtPsadtExtensions]::IsBurnInstaller($this)
 				</GetScriptBlock>
 			</ScriptProperty>
+			<ScriptProperty>
+				<Name>Store</Name>
+				<GetScriptBlock>
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::GetApplicationStore($this)
+				</GetScriptBlock>
+			</ScriptProperty>
 		</Members>
 	</Type>
 	<Type>

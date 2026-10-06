@@ -19,7 +19,7 @@
 		$UseEnumValue,
 		[AllowNull()]
 		[Microsoft.PowerShell.ExecutionPolicy]
-		$ExecutionPolicy = (Get-ExecutionPolicy -Scope Process),
+		$ExecutionPolicy = (Get-ExecutionPolicy),
 		[System.Management.Automation.SwitchParameter]
 		$Interactive,
 		[System.Management.Automation.SwitchParameter]

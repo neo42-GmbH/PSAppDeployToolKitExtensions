@@ -43,7 +43,7 @@
 
 - A minimum **defer interval** can now be specified via the Setup.cfg option `AskKillProcesses.DEFERINTERVAL`. This allows to specify a minimum time in minutes that must pass after a deferral before another attempt at the deployment is allowed. This is useful to suppress quick consecutive retries in case of fast retry exit codes by the deployment system. Make sure this is compatible with your deployment system's retry logic to avoid unexpected behavior.
 
-- The toolkit can now attempt to **reopen applications** that were closed due to the deployment. This can be enabled via the Setup.cfg option `Options.OPENCLOSEDAPPS`. Please note that this feature is implemented on a best effort basis and might not work for all applications. Using this feature will also require the new package configuration format. neo42 Packages will not be using the new format on release.
+- The toolkit can now attempt to **reopen applications** that were closed due to the deployment. This can be enabled via the Setup.cfg option `Options.OPENCLOSEDAPPS`. Please note that this feature is implemented on a best effort basis and might not work for all applications.
 
 - An option to respect **Do Not Disturb** cues has been added. A Setup.cfg option `AskKillProcesses.DONOTDISTURB` allows to suppress the deployment UI if the user has enabled Do Not Disturb on their system. Do not disturb is equivalent to deferring the deployment.
 
@@ -76,7 +76,7 @@
   - Logging options.
   - And many more. Check the toolkit configuration for all available options.
 
-- Empirum specific logic was moved to its dedicated module `PSAppDeployToolkit.Neo42.Extensions.Empirum`. This module is loaded automatically if the deployment is running within an Empirum managed environment and it is present in the package root.
+- Empirum specific logic was moved to a dedicated deployment system module named `PSAppDeployToolkit.Neo42.Extensions.DeploymentSystem`. This module is loaded automatically and applies the deployment system specific logic.
 
 - The source code of the `DeployNxtApplication.exe` is now part of the repository and build process.
 
@@ -96,7 +96,7 @@ The new format improves the following aspects:
 
 #### General improvements
 
-- New custom functions `CustomEndOnError`, `CustomUpgradePostUninstallOnError` and `CustomUpgradePostInstallOnError` were added which make error handling easier.
+- New custom function `CustomEndOnError` was added which make error handling easier.
 
 - You may place a singular **WIM file** in the `DirFiles` folder which contains the deployment content. PSADT will mount the WIM automatically and point `DirFiles` to the mounted location. This reduces package size and improves transfer times for certain deployment systems.
 

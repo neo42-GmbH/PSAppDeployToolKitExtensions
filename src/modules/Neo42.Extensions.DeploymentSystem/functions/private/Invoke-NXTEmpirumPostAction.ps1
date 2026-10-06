@@ -11,7 +11,6 @@
 	process {
 		try {
 			[PSADTNXT.Foundation.NxtDeploymentSession]$adtSession = Get-ADTSession
-			if ($adtSession.NXT.DeploymentSystem -ne 'Empirum') { return }
 
 			# Copy failed installation logs to the SetupErrorLog directory
 			if ($adtSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error -and

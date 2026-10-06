@@ -18,7 +18,7 @@
 	Non-compliant content will cause validation errors when the configuration is loaded.
 
 	Migration notes (v3 -> v4):
-	- Legacy package configuration support is available for a limited time and can be controlled via the SupportLegacyConfig option.
+	- Legacy package configuration support is available and can be controlled via the SupportLegacyConfig option.
 	- When SupportLegacyConfig is enabled, the toolkit attempts to convert legacy configurations to the v4 format at runtime.
 	- Some of the legacy properties are exposed as package specific variables with the 'Legacy_' prefix for use in deployment scripts.
 
@@ -385,7 +385,7 @@
 			# -- Install: Apply the installation logic.
 			# -- Reinstall: Apply the uninstallation followed by installation logic.
 			# -- [Migrated from v3.MSIUpgradable]
-			UpgradeMode     = 'Reinstall' # @schema enum: [Install, Reinstall], default: Reinstall
+			UpgradeMode     = 'Reinstall' # @schema enum: [None, Install, Reinstall], default: Reinstall
 
 			# -- Define conditions that should be awaited after the installation method was executed.
 			# -- This allows to ensure certain system states before proceeding with the deployment and the validation.

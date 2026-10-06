@@ -40,7 +40,7 @@
 		[PSADT.Module.DeploymentStatus]
 		$Status,
 		[Parameter(ParameterSetName = 'AbortReboot', Mandatory)]
-		[ValidateScript({ [System.Boolean]$_ })]
+		[ValidateScript({ $_.ToBool() })]
 		[System.Management.Automation.SwitchParameter]
 		$AbortReboot,
 		[Parameter(Position = 0, ParameterSetName = 'ExitCode', Mandatory)]
@@ -124,6 +124,7 @@
 		if ($ADTSession.NXT.DeploymentType.IsInstall -and
 			([PSADTNXT.Package.NxtRegisteredPackage]$package = $ADTSession.NXT.Package.GetRegisteredPackage())
 		) {
+			if ($package.Application) { Remove-Item -LiteralPath $package.Application.PSPath }
 			Remove-Item -LiteralPath $package.PSPath
 		}
 		$ADTSession.NXT.Package.Register = $false

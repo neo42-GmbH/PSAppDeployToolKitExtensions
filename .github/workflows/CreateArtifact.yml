@@ -74,6 +74,8 @@ jobs:
           Copy-Item -Recurse -Path './template' -Destination './build'
 
       - name: download-psadt
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $ProgressPreference = 'SilentlyContinue'
 
@@ -81,14 +83,14 @@ jobs:
             '${{ inputs.PSADT_URL }}'
           }
           else {
-            Invoke-RestMethod -Uri "https://api.github.com/repos/PSAppDeployToolkit/PSAppDeployToolkit/releases/tags/${{ inputs.PSADT_VERSION }}" |
+            Invoke-RestMethod -Uri "https://api.github.com/repos/PSAppDeployToolkit/PSAppDeployToolkit/releases/tags/${{ inputs.PSADT_VERSION }}" -Headers @{ Authorization = "Bearer $env:GH_TOKEN" } |
               Select-Object -ExpandProperty assets |
               Where-Object { $_.name -match '^PSAppDeployToolkit_ModuleOnly\.(zip|7z)$' } |
               Select-Object -First 1 -ExpandProperty 'browser_download_url'
           }
 
           $file = [System.IO.Path]::GetFileName($uri.AbsolutePath)
-          Invoke-WebRequest -Uri $uri -OutFile $file
+          Invoke-WebRequest -Uri $uri -OutFile $file -Headers @{ Authorization = "Bearer $env:GH_TOKEN" }
 
           & 7z.exe x $file -o"./build/" -y
           Get-ChildItem -File './build' | Unblock-File

@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using PSADTNXT.Application;
 using PSADTNXT.Package;
+using PSADTNXT.ProcessManagement;
 using PSADTNXT.Shell;
 
 namespace PSADTNXT.Deployment.Configuration.Legacy
@@ -18,10 +19,10 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		private static readonly IReadOnlyDictionary<string, string> _runtimeVariableMapping = new Dictionary<string, string>
 		{
-			{ "LogFolder", "%LogFolder%" },
+			{ "AppLogFolder", "%LogFolder%" },
 			{ "DirFiles", "%DirFiles%" },
 			{ "DirSupportFiles", "%DirSupportFiles%" },
-			{ "PackageDirectory", "%PackageDirectory%" },
+			{ "App", "%PackageDirectory%" },
 		};
 
 		internal static void Expand(this NxtLegacyPackageConfigurationModel legacyModel, IDictionary<string, object> adtEnvironment, params SessionStateVariableEntry[] extraVariables)
@@ -122,7 +123,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			};
 		}
 
-		internal static DeploymentMethod? MapLegacyDeploymentMethodToEnum(string method)
+		private static DeploymentMethod? MapLegacyDeploymentMethodToEnum(string method)
 		{
 			return method.Equals("None", StringComparison.OrdinalIgnoreCase)
 				? null
@@ -135,7 +136,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				: DeploymentMethod.Setup;
 		}
 
-		internal static NxtPackageMetadataModel TranslatePackageMetadataModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtPackageMetadataModel TranslatePackageMetadataModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			return new NxtPackageMetadataModel
 			{
@@ -162,7 +163,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			};
 		}
 
-		internal static List<NxtRequirementModel> TranslateRequirementModels(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static List<NxtRequirementModel> TranslateRequirementModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			return legacyModel.DependentPackages?
 				.Select(d => new NxtRequirementModel()
@@ -179,7 +180,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				.ToList() ?? [];
 		}
 
-		internal static NxtApplicationDetectionModel TranslateDetectionModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtApplicationDetectionModel TranslateDetectionModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var detectionModel = new NxtApplicationDetectionModel()
 			{
@@ -193,19 +194,27 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				detectionModel.Criteria = new NxtApplicationCriteriaModel
 				{
 					Store = ApplicationStore.ARP,
-					Identifier = !legacyModel.UninstallKeyIsDisplayName && !legacyModel.UninstallKeyContainsWildCards ? legacyModel.UninstallKey : null,
 				};
+
 				var detectionScript = new StringBuilder();
-				if (legacyModel.UninstallKeyIsDisplayName)
+				if (!legacyModel.UninstallKeyIsDisplayName && !legacyModel.UninstallKeyContainsWildCards)
 				{
-					_ = detectionScript.Append("$_.DisplayName");
-					_ = detectionScript.Append(legacyModel.UninstallKeyContainsWildCards ? " -like " : " -eq ");
-					_ = detectionScript.Append($"'{legacyModel.UninstallKey.Replace("'", "''")}'");
+					detectionModel.Criteria.Identifier = legacyModel.UninstallKey;
 				}
-				else if (legacyModel.UninstallKeyContainsWildCards)
+				else
 				{
-					_ = detectionScript.Append($"$_.PSChildName -like '{legacyModel.UninstallKey.Replace("'", "''")}'");
+					if (legacyModel.UninstallKeyIsDisplayName)
+					{
+						_ = detectionScript.Append("$_.DisplayName");
+						_ = detectionScript.Append(legacyModel.UninstallKeyContainsWildCards ? " -like " : " -eq ");
+						_ = detectionScript.Append($"'{legacyModel.UninstallKey.Replace("'", "''")}'");
+					}
+					else
+					{
+						_ = detectionScript.Append($"$_.PSChildName -like '{legacyModel.UninstallKey.Replace("'", "''")}'");
+					}
 				}
+
 				if (legacyModel.DisplayNamesToExcludeFromAppSearches is List<string> displayNamesToExclude && displayNamesToExclude.Count != 0)
 				{
 					if (detectionScript.Length > 0)
@@ -216,18 +225,39 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					_ = detectionScript.Append(string.Join(", ", displayNamesToExclude.Select(name => $"'{name.Replace("'", "''")}'")));
 					_ = detectionScript.Append(')');
 				}
-				detectionModel.Criteria.Filter = ScriptBlock.Create(detectionScript.ToString());
+
+				if (detectionScript.Length > 0)
+				{
+					detectionModel.Criteria.Filter = ScriptBlock.Create(detectionScript.ToString());
+				}
+			}
+
+			if (legacyModel.TryGetCompatVariable("DetectionCriteriaStore", out var detectionStoreVar))
+			{
+				detectionModel.Enabled = true;
+				detectionModel.Criteria ??= new NxtApplicationCriteriaModel();
+				detectionModel.Criteria.Store = Enum.TryParse<ApplicationStore>(detectionStoreVar, true, out var varStore)
+					? varStore
+					: throw new InvalidDataException($"The value [{detectionStoreVar}] of [DetectionCriteriaStore] cannot be parsed into an [ApplicationStore].");
+			}
+
+			if (legacyModel.TryGetCompatVariable("DetectionCriteriaFilter", out var detectionFilterVar))
+			{
+				detectionModel.Enabled = true;
+				detectionModel.Criteria ??= new NxtApplicationCriteriaModel
+				{
+					Store = ApplicationStore.ARP
+				};
+				detectionModel.Criteria.Identifier = null;
+				detectionModel.Criteria.Filter = ScriptBlock.Create(detectionFilterVar);
 			}
 
 			return detectionModel;
 		}
 
-		internal static NxtSoftMigrationModel TranslateSoftmigrationModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtSoftMigrationModel TranslateSoftmigrationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-			var softMigrationModel = new NxtSoftMigrationModel()
-			{
-				Enabled = false,
-			};
+			var softMigrationModel = new NxtSoftMigrationModel();
 			if (!string.IsNullOrWhiteSpace(legacyModel.SoftMigration?.File?.FullNameToCheck))
 			{
 				softMigrationModel.Enabled = true;
@@ -235,7 +265,9 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				softMigrationModel.Target = legacyModel.SoftMigration!.File!.FullNameToCheck;
 				softMigrationModel.Version = legacyModel.SoftMigration.File?.VersionToCheck;
 			}
-			else if (!string.IsNullOrWhiteSpace(legacyModel.DisplayVersion) && !string.IsNullOrWhiteSpace(legacyModel.UninstallKey))
+			else if (!string.IsNullOrWhiteSpace(legacyModel.DisplayVersion)
+					&& (!string.IsNullOrWhiteSpace(legacyModel.UninstallKey) || legacyModel.TryGetCompatVariable("DetectionCriteriaFilter", out _))
+			)
 			{
 				softMigrationModel.Enabled = true;
 				softMigrationModel.Mode = SoftMigrationDetectionMode.Detection;
@@ -245,10 +277,10 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			return softMigrationModel;
 		}
 
-		internal static List<NxtCloseProcessesModel> TranslateCloseProcessModels(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static List<NxtCloseProcessesModel> TranslateCloseProcessModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 #pragma warning disable CS0618
-			return legacyModel.AppKillProcesses?
+			var closeProcessesList = legacyModel.AppKillProcesses?
 				.Select(p => p.IsWQL
 					? throw new NotSupportedException("WQL process detection is not supported in the new package configuration format.")
 					: new NxtCloseProcessesModel()
@@ -259,10 +291,31 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					}
 				)
 				.ToList() ?? [];
+
+			if (legacyModel.TryGetCompatVariable("CloseProcessesReopen", out var closeProcessesVar))
+			{
+				var entries = closeProcessesVar!
+					.Split(',')
+					.Select(e => Enum.TryParse<ReopenMode>(e.Trim(), true, out var varMode)
+						? varMode
+						: throw new InvalidDataException($"The value [{e}] of [CloseProcessesReopen] cannot be parsed into a [ReopenMode]."))
+					.ToList();
+
+				if (entries.Count != closeProcessesList.Count)
+				{
+					throw new InvalidDataException("[CloseProcessesReopen] was specified, but did not match the number of entries in [AskKillProcesses]. Mapping not possible");
+				}
+				for (var i = 0; i < entries.Count; i++)
+				{
+					closeProcessesList[i].ReopenMode = entries[i];
+				}
+			}
+
+			return closeProcessesList;
 #pragma warning restore CS0618
 		}
 
-		internal static List<NxtShortcutModel> TranslateManagedShortcutModels(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static List<NxtShortcutModel> TranslateManagedShortcutModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var managedShortcuts = new List<NxtShortcutModel>();
 			managedShortcuts.AddRange(
@@ -288,7 +341,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			return managedShortcuts;
 		}
 
-		internal static List<NxtApplicationCriteriaModel> TranslateManagedApplicationModels(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static List<NxtApplicationCriteriaModel> TranslateManagedApplicationModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var managedApplications = new List<NxtApplicationCriteriaModel>();
 			if (legacyModel.UninstallKeysToHide is List<NxtLegacyKeyHideModel> uninstallKeysToHide)
@@ -319,7 +372,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			return managedApplications;
 		}
 
-		internal static NxtDeploymentContainerModel TranslateDeploymentContainerModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtDeploymentContainerModel TranslateDeploymentContainerModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			return new NxtDeploymentContainerModel
 			{
@@ -329,9 +382,9 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			};
 		}
 
-		internal static NxtInstallationModel TranslateInstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtInstallationModel TranslateInstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-			return new NxtInstallationModel
+			var installModel = new NxtInstallationModel
 			{
 				Method = MapLegacyDeploymentMethodToEnum(legacyModel.InstallMethod),
 				Target = legacyModel.InstFile,
@@ -377,9 +430,17 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				UserPart = legacyModel.UserPartOnInstallation,
 			};
 
+			if (legacyModel.TryGetCompatVariable("DeploymentInstallationUpgradeMode", out var upgradeModeVar))
+			{
+				installModel.UpgradeMode = Enum.TryParse<UpgradeMode>(upgradeModeVar, true, out var varUpgradeMode)
+					? varUpgradeMode
+					: throw new InvalidDataException($"The value [{upgradeModeVar}] of [DeploymentInstallationUpgradeMode] cannot be parsed into an [ApplicationStore].");
+			}
+
+			return installModel;
 		}
 
-		internal static NxtUninstallationModel TranslateUninstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static NxtUninstallationModel TranslateUninstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			return new NxtUninstallationModel
 			{
@@ -426,7 +487,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		}
 
-		internal static Dictionary<string, object> TranslateVariables(this NxtLegacyPackageConfigurationModel legacyModel)
+		private static Dictionary<string, object> TranslateVariables(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var variables = new Dictionary<string, object>();
 			if (legacyModel.PackageSpecificVariablesRaw is List<NxtLegacyVariableModel> packageSpecificVariables)
@@ -462,33 +523,39 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			// Arch specific variables
 			if (arch.Equals("x86", StringComparison.OrdinalIgnoreCase) || arch.Equals("arm", StringComparison.OrdinalIgnoreCase))
 			{
-				result.Add(new SessionStateVariableEntry("ProgramFilesDir", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("ProgramW6432", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonFilesDir", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonFilesDirx86", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonProgramW6432", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("RegSoftwarePath", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("RegSoftwarePathx86", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("System", adtEnvironment["envSystemX86"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramFilesDir", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramW6432", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonFilesDir", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonFilesDirx86", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonProgramW6432", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("RegSoftwarePath", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("RegSoftwarePathx86", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("System", adtEnvironment["envSystemX86"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			}
 			else
 			{
-				result.Add(new SessionStateVariableEntry("ProgramFilesDir", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("ProgramW6432", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonFilesDir", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonFilesDirx86", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("CommonProgramW6432", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("RegSoftwarePath", adtEnvironment["envRegistrySoftware"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("RegSoftwarePathx86", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-				result.Add(new SessionStateVariableEntry("System", adtEnvironment["envSystemX64"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramFilesDir", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("ProgramW6432", adtEnvironment["envProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonFilesDir", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonFilesDirx86", adtEnvironment["envCommonProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("CommonProgramW6432", adtEnvironment["envCommonProgramFiles"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("RegSoftwarePath", adtEnvironment["envRegistrySoftware"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("RegSoftwarePathx86", adtEnvironment["envRegistrySoftwareW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+				result.Add(new("System", adtEnvironment["envSystemX64"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			}
 
-			result.Add(new SessionStateVariableEntry("UserPartDir", string.Empty, string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
-			result.Add(new SessionStateVariableEntry("AppLogFolder", "%LogFolder%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new("UserPartDir", string.Empty, string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new("AppLogFolder", "%LogFolder%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 
 			return result;
+		}
+
+		private static bool TryGetCompatVariable(this NxtLegacyPackageConfigurationModel legacyModel, string name, out string? value)
+		{
+			value = legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaStore") && !string.IsNullOrWhiteSpace(psvr.Value))?.Value;
+			return value != null;
 		}
 	}
 }

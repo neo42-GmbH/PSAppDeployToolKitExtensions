@@ -11,19 +11,34 @@
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession)
 	)
+
 	try {
 		[PSADT.ProcessManagement.ProcessResult]$result = $null
 		switch ($ADTSession.NXT.Install.Method) {
 			([PSADTNXT.Deployment.DeploymentMethod]::MSI) {
-				if (-not $ADTSession.NXT.Detection.Application) {
-					[System.Collections.Hashtable]$errorParams = @{
-						Exception = [System.Management.Automation.ItemNotFoundException]::new('The target application was not found for repair operation.')
-						Category  = [System.Management.Automation.ErrorCategory]::InvalidResult
-						ErrorId   = 'ApplicationNotFoundForRepair'
+				[System.IO.FileInfo]$installer = if ([PSADTNXT.IO.NxtPath]::IsValidFilePath($ADTSession.NXT.Install.Target) -and [System.IO.Path]::GetExtension($ADTSession.NXT.Install.Target) -eq '.msi') {
+					if ([System.IO.Path]::IsPathRooted($ADTSession.NXT.Install.Target)) {
+						$ADTSession.NXT.Install.Target
 					}
-					throw (New-ADTErrorRecord @errorParams)
+					elseif (-not [System.String]::IsNullOrWhiteSpace($ADTSession.DirFiles)) {
+						[System.IO.Path]::Combine($ADTSession.DirFiles, $ADTSession.NXT.Install.Target)
+					}
 				}
-				$result = Start-ADTMsiProcess -Action Repair -RepairMode Repair -RepairFromSource -PassThru -ProductCode $ADTSession.NXT.Detection.Application.PSChildName
+
+				if ($installer -and $installer.Exists) {
+					$result = Start-ADTMsiProcess -Action Repair -RepairFromSource -RepairMode Repair -PassThru -FilePath $installer.FullName
+				}
+				else {
+					if (-not $ADTSession.NXT.Detection.Application) {
+						[System.Collections.Hashtable]$errorParams = @{
+							Exception = [System.Management.Automation.ItemNotFoundException]::new('The target application was not found for repair operation.')
+							Category  = [System.Management.Automation.ErrorCategory]::InvalidResult
+							ErrorId   = 'ApplicationNotFoundForRepair'
+						}
+						throw (New-ADTErrorRecord @errorParams)
+					}
+					$result = Start-ADTMsiProcess -Action Repair -RepairMode Repair -RepairFromSource -PassThru -ProductCode $ADTSession.NXT.Detection.Application.PSChildName
+				}
 			}
 			default {
 				[System.Collections.Hashtable]$errorParams = @{

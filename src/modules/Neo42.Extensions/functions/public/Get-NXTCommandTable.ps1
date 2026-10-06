@@ -1,7 +1,7 @@
 ﻿function Get-NXTCommandTable {
 	<#
 	.SYNOPSIS
-	Retrieves the NXT command table of this module.
+	Retrieves the complete command table of this module.
 	.DESCRIPTION
 	This command table includes the base PSADT command table and functions from the current module.
 	#>

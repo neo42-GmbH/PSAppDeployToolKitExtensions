@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.IO;
 using System.Management.Automation;
+using PSADTNXT.Extensions;
 
 namespace PSADTNXT.Application
 {
@@ -53,6 +55,16 @@ namespace PSADTNXT.Application
 			return FromHashtable(hashtable);
 		}
 
+		public static implicit operator NxtApplicationCriteria(ScriptBlock scriptBlock)
+		{
+			return FromScriptBlock(scriptBlock);
+		}
+
+		public static implicit operator NxtApplicationCriteria(string identifier)
+		{
+			return FromString(identifier);
+		}
+
 		public static NxtApplicationCriteria FromHashtable(Hashtable hashtable)
 		{
 			if (hashtable == null)
@@ -60,8 +72,13 @@ namespace PSADTNXT.Application
 				throw new ArgumentNullException(nameof(hashtable));
 			}
 
+			if (!hashtable.MatchesProperties<NxtApplicationCriteria>(out var invalidKeys))
+			{
+				throw new InvalidDataException($"Cannot create [{nameof(NxtApplicationCriteria)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
+			}
+
 			var store = hashtable.ContainsKey("Store")
-				? Enum.TryParse<ApplicationStore>(hashtable["Store"]?.ToString(), true, out var parsedStore) ? parsedStore : throw new ArgumentException("The hashtable must contain a 'Store' key with a valid value.", nameof(hashtable))
+				? Enum.TryParse<ApplicationStore>(hashtable["Store"]?.ToString(), true, out var parsedStore) ? parsedStore : throw new ArgumentException("The hashtable must contain a [Store] key with a valid value.", nameof(hashtable))
 				: ApplicationStore.ARP;
 
 			string? identifier = null;
@@ -94,7 +111,7 @@ namespace PSADTNXT.Application
 
 			if (identifier is null && filter is null)
 			{
-				throw new ArgumentException("The hashtable must contain at least an 'Identifier' or a 'Filter' key.", nameof(hashtable));
+				throw new ArgumentException("The hashtable must contain at least an [Identifier] or a [Filter] key.", nameof(hashtable));
 			}
 
 			if (identifier is not null && filter is not null)
@@ -109,6 +126,16 @@ namespace PSADTNXT.Application
 			{
 				return new NxtApplicationCriteria(store, filter!);
 			}
+		}
+
+		public static NxtApplicationCriteria FromScriptBlock(ScriptBlock scriptBlock)
+		{
+			return new NxtApplicationCriteria(ApplicationStore.ARP, scriptBlock);
+		}
+
+		public static NxtApplicationCriteria FromString(string identifier)
+		{
+			return new NxtApplicationCriteria(ApplicationStore.ARP, identifier);
 		}
 
 		public override string ToString()

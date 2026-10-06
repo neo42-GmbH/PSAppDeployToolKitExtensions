@@ -40,16 +40,14 @@ Set-StrictMode -Version '3.0'
 [System.String[]]$copyFromPackage = @(
 	'Setup.ico',
 	'Files',
-	'SupportFiles',
-	'Assets',
-	'Strings'
+	'SupportFiles'
 )
 
 [System.String[]]$copyFromReference = @(
+	'Config',
 	'PSAppDeployToolkit*',
 	'DeployNxtApplication.exe',
-	'neo42PackageMetadata.json',
-	'PSAppDeployToolkit.Neo42.Extensions\Config'
+	'neo42PackageMetadata.json'
 )
 
 [System.Management.Automation.ScriptBlock[]]$deployApplicationMigrations = @(
@@ -59,7 +57,7 @@ Set-StrictMode -Version '3.0'
 			[System.String]
 			$Content
 		)
-		if ($sourceGenerationVersion -ge 4) { return }
+		if ($sourceGenerationVersion -ge 4) { return $Content }
 		if ($script:packageConfig.Package.Architecture -match '^(x86|ARM)$') {
 			return $Content `
 				-replace '\$(global:)?ProgramFilesDir\b', '$envProgramFilesW3264' `
@@ -91,7 +89,7 @@ Set-StrictMode -Version '3.0'
 			[System.String]
 			$Content
 		)
-		if ($sourceGenerationVersion -ge 4) { return }
+		if ($sourceGenerationVersion -ge 4) { return $Content }
 		[System.IO.FileInfo]$deployApplicationFile = New-Item -ItemType File -Path "$([System.IO.Path]::GetTempPath())\$([System.IO.Path]::GetRandomFileName()).ps1"
 		Set-Content -LiteralPath $deployApplicationFile.FullName -Value $Content
 		Invoke-ScriptAnalyzer -Fix -Path $deployApplicationFile.FullName -CustomRulePath "$AnalyzerDirectory\migration\Measure-NXTCompatibility.psm1" -IncludeRule 'Measure-NXTDeprecatedType' | Write-DiagnosticMessage
@@ -299,6 +297,16 @@ try {
 				$akp.IsWQL = $false
 			}
 		}
+		[System.String[]]$incompatibleVariables = @('AppLogFolder', 'DirFiles', 'DirSupportFiles', 'App')
+		foreach ($psv in $legacyConfig.PackageSpecificVariablesRaw) {
+			foreach ($incompatibleVariable in $incompatibleVariables) {
+				if (([System.Int32]$varIndex = $psv.Value.IndexOf($incompatibleVariable, [System.StringComparison]::OrdinalIgnoreCase)) -gt 0 -and
+					$psv.Value[$varIndex - 1] -in @(':', '$')
+				) {
+					Write-Host -ForegroundColor Red "Found [$incompatibleVariable] in [PackageSpecificVariablesRaw]. Please use the meta variables for compatibility. No automatic migration possible."
+				}
+			}
+		}
 
 		[PSADTNXT.Deployment.Configuration.NxtPackageConfigurationModel]$script:packageConfig = [PSADTNXT.Deployment.Configuration.NxtPackageConfigurationFactory]::Translate($legacyConfig)
 	}
@@ -334,7 +342,7 @@ if ($parserErrors) { throw "Parser errors in [$Package\Deploy-Application.ps1]:`
 
 # If there are custom functions that have been removed, we need to migrate them manually
 if ([System.String[]]$missingFunctions = $packageCustomFunctions.Name | Where-Object { $referenceCustomFunctions.Name -notcontains $_ }) {
-	Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for:`n$([System.String]::Join('`n', $missingFunctions))"
+	Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for:`n$([System.String]::Join("`n", $missingFunctions))"
 }
 
 # Migrate custom functions

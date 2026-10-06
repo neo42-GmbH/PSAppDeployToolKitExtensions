@@ -15,26 +15,6 @@ Set-StrictMode -Version Latest
 [System.IO.DirectoryInfo]$psadt = [System.IO.Path]::Combine($ModuleDirectory, 'PSAppDeployToolkit')
 [System.IO.DirectoryInfo]$neo42Extensions = [System.IO.Path]::Combine($ModuleDirectory, 'PSAppDeployToolkit.Neo42.Extensions')
 [System.String]$modulesToFindPath = "$($ModuleDirectory)\PSAppDeployToolkit*"
-[System.Collections.Hashtable[]]$modulesToInstall = @(
-	@{
-		Name           = 'Pester'
-		MaximumVersion = '6.1.0'
-	},
-	@{
-		Name           = 'PSScriptAnalyzer'
-		MaximumVersion = '99999.99999.99999.99999'
-	}
-)
-
-# Import modules from local repository and install them from online repository if necessary
-$modulesToInstall | ForEach-Object -Process {
-	if (-not (Get-Module -Name $_.Name)) {
-		if (-not (Get-Module -ListAvailable $_.Name)) {
-			Install-Module -Scope AllUsers -SkipPublisherCheck -Force @_
-		}
-		Import-Module -Name $_.Name -Force -Global
-	}
-}
 
 # Import modules from local directories if PSADT is not loaded yet
 if (-not (Get-Module -Name $psadt.BaseName)) {

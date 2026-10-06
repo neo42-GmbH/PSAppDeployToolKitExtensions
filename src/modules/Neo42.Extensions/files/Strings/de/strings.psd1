@@ -1,10 +1,6 @@
 ﻿@{
 	NXT = @{
-		ErrorMessage  = @{
-			Install   = 'Ein Fehler ist während der Installation der Applikation aufgetreten. Bitte überprüfen Sie die Protokolldatei auf weitere Informationen.'
-			Repair    = 'Ein Fehler ist während der Reparatur der Applikation aufgetreten. Bitte überprüfen Sie die Protokolldatei auf weitere Informationen.'
-			Uninstall = 'Ein Fehler ist während der Deinstallation der Applikation aufgetreten. Bitte überprüfen Sie die Protokolldatei auf weitere Informationen.'
-		}
+		ErrorMessage  = "Die Bereitstellung von {0} ist während `"{1}`" mit Fehler {2} fehlgeschlagen.`nFehlermeldung:`n`n{3}`n`nBitte überprüfen Sie die Protokolle auf weitere Informationen oder wenden Sie sich für weitere Unterstützung an einen Administrator."
 
 		LegacyWelcome = @{
 			SaveWork                  = 'Bitte speichern Sie Ihre Arbeit und schließen Sie die Anwendungen.'

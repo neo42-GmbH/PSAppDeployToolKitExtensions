@@ -37,7 +37,7 @@
 		[System.String]
 		$Name,
 		[Parameter(ParameterSetName = 'Id', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-		[ValidateRange(0, [System.Int32]::MaxValue)]
+		[ValidateRange(1, [System.Int32]::MaxValue)]
 		[Alias('Pid', 'ProcessId')]
 		[System.Int32]
 		$Id,

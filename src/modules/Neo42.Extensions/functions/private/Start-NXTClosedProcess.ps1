@@ -10,31 +10,39 @@
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession)
 	)
-	try {
-		$ADTSession.NXT.ClosedProcesses | & {
-			process {
-				try {
-					[System.Collections.Hashtable]$startParams = @{
-						FilePath            = $_.FilePath
-						Username            = $_.Username
-						UseLinkedAdminToken = $_.AsAdmin
-					}
-					if (-not [System.String]::IsNullOrWhiteSpace($_.Arguments)) {
-						$startParams['SecureArgumentList'] = $_.Arguments
-					}
-					if ($_.WorkingDirectory) {
-						$startParams['WorkingDirectory'] = $_.WorkingDirectory.FullName
-					}
+	begin {
+		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+	}
+	process {
+		try {
+			$ADTSession.NXT.ClosedProcesses | & {
+				process {
+					try {
+						[System.Collections.Hashtable]$startParams = @{
+							FilePath            = $_.FilePath
+							Username            = $_.Username
+							UseLinkedAdminToken = $_.AsAdmin
+						}
+						if (-not [System.String]::IsNullOrWhiteSpace($_.Arguments)) {
+							$startParams['SecureArgumentList'] = $_.Arguments
+						}
+						if ($_.WorkingDirectory) {
+							$startParams['WorkingDirectory'] = $_.WorkingDirectory.FullName
+						}
 
-					Start-ADTProcessAsUser -NoWait @startParams
-				}
-				catch {
-					Write-ADTLogEntry -Severity Error -Message "Failed to reopen process [$($startParams.FilePath)] for user [$($startParams.UserName)]. Error: $($_.Exception.Message)"
+						Start-ADTProcessAsUser -NoWait @startParams
+					}
+					catch {
+						Write-ADTLogEntry -Severity Error -Message "Failed to reopen process [$($startParams.FilePath)] for user [$($startParams.UserName)]. Error: $($_.Exception.Message)"
+					}
 				}
 			}
 		}
+		catch {
+			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
+		}
 	}
-	catch {
-		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
+	end {
+		Complete-ADTFunction -Cmdlet $PSCmdlet
 	}
 }

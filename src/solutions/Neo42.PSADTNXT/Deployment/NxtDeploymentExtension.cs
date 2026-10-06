@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -15,7 +14,6 @@ using PSADT.ProcessManagement;
 using PSADTNXT.Application;
 using PSADTNXT.Configuration;
 using PSADTNXT.Deployment.Configuration;
-using PSADTNXT.Extensions;
 using PSADTNXT.Foundation;
 using PSADTNXT.IO;
 using PSADTNXT.ProcessManagement;
@@ -75,6 +73,21 @@ namespace PSADTNXT.Deployment
 
 		public List<ProcessResult> ProcessResults { get; } = [];
 
+		[Hidden]
+		public string? ErrorMessage { get; set; }
+
+		[Hidden]
+		public string? ErrorPhase { get; set; }
+
+		[Hidden]
+		public DeploymentHookPoint? LastRunHookPoint { get; set; }
+
+		[Hidden]
+		public bool DeploymentInvoked { get; set; }
+
+		[Hidden]
+		public bool IsCached { get; set; }
+
 		public NxtIniDocument SetupCfg { get; }
 
 		public Dictionary<string, object> Variables { get; }
@@ -96,8 +109,10 @@ namespace PSADTNXT.Deployment
 			var packageConfig = parameters["PackageConfig"] is NxtPackageConfigurationModel config ? config : throw new ArgumentException("PackageConfig parameter is required and must be of type NxtPackageConfigurationModel.");
 			var nxtConfig = ModuleDatabase.GetConfig()["NXT"] as Hashtable;
 			var nxtToolkitConfig = nxtConfig?["Toolkit"] as Hashtable;
-			var packageRootDir = InitializePackageRootDirectory(packageConfig.Package.DirectoryName, packageConfig.Package.KeyName, DeploymentType);
 			var appendVersion = nxtToolkitConfig?["AppendVersionToPackageName"] is bool append && append;
+
+			var packageRootDir = InitializePackageRootDirectory(packageConfig.Package.DirectoryName, packageConfig.Package.KeyName);
+			_session.WriteLogEntry($"Package cache directory resides in [{packageRootDir.FullName}].");
 
 			Package = GetPackageMetadata(packageConfig, packageRootDir, appendVersion);
 			Requirements = GetPackageRequirements(packageConfig);
@@ -112,7 +127,12 @@ namespace PSADTNXT.Deployment
 			Uninstall = GetUninstallInstructions(packageConfig);
 			Variables = new(packageConfig.Variables ?? [], StringComparer.OrdinalIgnoreCase);
 
-			_session.WriteLogEntry($"Package cache directory resides in [{Package.Directory.FullName}].");
+			Install.Target = ExpandRuntimeVariable(Install.Target);
+			Install.Arguments = ExpandRuntimeVariable(Install.Arguments);
+			Uninstall.Target = ExpandRuntimeVariable(Uninstall.Target);
+			Uninstall.Arguments = ExpandRuntimeVariable(Uninstall.Arguments);
+			ExpandRuntimeVariablesInObject(Variables);
+
 		}
 
 		private NxtPackageMetadata GetPackageMetadata(NxtPackageConfigurationModel config, DirectoryInfo packageRootDir, bool appendVersion)
@@ -334,26 +354,18 @@ namespace PSADTNXT.Deployment
 			return $"Neo42.Extensions for PSAppDeployToolkit v{GetType().Assembly.GetName().Version}";
 		}
 
-		private DirectoryInfo InitializePackageRootDirectory(string folderName, string keyName, NxtDeploymentType deploymentType)
+		private DirectoryInfo InitializePackageRootDirectory(string folderName, string keyName)
 		{
 			using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-			using var packageRootKey = deploymentType.IsMachinePart
-				? baseKey.CreateSubKey($"SOFTWARE\\{keyName}", true)
-				: baseKey.OpenSubKey($"SOFTWARE\\{keyName}")
-				?? throw new InvalidOperationException("Failed to access or create package root registry key. Administrative privileges may be required.");
+			using var packageRootKey = baseKey.OpenSubKey($"SOFTWARE\\{keyName}") ?? baseKey.CreateSubKey($"SOFTWARE\\{keyName}");
 			var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
 			var knownNames = packageRootKey.GetValue("AppRootFolderNames") as string[] ?? [];
-			var validNameRegex = new Regex($"^{Regex.Escape(folderName)}([0-9a-f]{8})?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+			var validNameRegex = new Regex($"^{Regex.Escape(folderName)}([0-9a-f]{{8}})?$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 			var existingName = knownNames.FirstOrDefault(n => validNameRegex.IsMatch(n) && Directory.Exists(Path.Combine(programData, n)));
 
 			if (!string.IsNullOrWhiteSpace(existingName))
 			{
 				return new DirectoryInfo(Path.Combine(programData, existingName));
-			}
-
-			if (!Process.GetCurrentProcess().IsElevated())
-			{
-				throw new InvalidOperationException("Package root directory does not exist and cannot be created without administrative privileges.");
 			}
 
 			var fullName = Path.Combine(programData, folderName);
@@ -390,7 +402,8 @@ namespace PSADTNXT.Deployment
 			var dir = NxtPath.CreateDirectory(fullName, acl);
 
 			// Only register the new directory, when the method did not throw an exception, to avoid registering a directory that does not exist or is not accessible.
-			packageRootKey.SetValue("AppRootFolderNames", knownNames.Concat([folderName]).Distinct().Where(n => Directory.Exists(Path.Combine(programData, n))).ToArray(), RegistryValueKind.MultiString);
+			using var packageRootKeyWriteable = baseKey.OpenSubKey($"SOFTWARE\\{keyName}", true)!;
+			packageRootKeyWriteable.SetValue("AppRootFolderNames", knownNames.Concat([folderName]).Distinct().Where(n => Directory.Exists(Path.Combine(programData, n))).ToArray(), RegistryValueKind.MultiString);
 
 			return dir;
 		}
@@ -398,6 +411,65 @@ namespace PSADTNXT.Deployment
 		private ScriptBlock GetUnboundScriptBlock(ScriptBlock scriptBlock)
 		{
 			return ((ScriptBlockAst)scriptBlock.Ast).GetScriptBlock();
+		}
+
+		private string ExpandRuntimeVariable(string text)
+		{
+			static string Replace(string input, string variable, string value)
+			{
+				var token = $"%{variable}%";
+				var index = input.IndexOf(token, StringComparison.OrdinalIgnoreCase);
+				while (index >= 0)
+				{
+					input = input.Remove(index, token.Length).Insert(index, value);
+					index = input.IndexOf(token, index + value.Length, StringComparison.OrdinalIgnoreCase);
+				}
+				return input;
+			}
+
+			text = Replace(text, "LogFolder", _session.LogPath);
+			text = Replace(text, "DirFiles", _session.DirFiles ?? string.Empty);
+			text = Replace(text, "DirSupportFiles", _session.DirSupportFiles ?? string.Empty);
+			text = Replace(text, "PackageDirectory", Package.Directory.FullName);
+			text = Replace(text, "InstallLocation", InstallLocation?.FullName ?? string.Empty);
+
+			return text;
+		}
+
+		private void ExpandRuntimeVariablesInObject(object? input)
+		{
+#pragma warning disable IDE0078
+			if (input is IDictionary dict)
+			{
+				// Snapshot the keys, on .NET Framework assigning through the indexer invalidates the key enumerator.
+				foreach (var key in dict.Keys.Cast<object>().ToList())
+				{
+					if (dict[key] is string dictString)
+					{
+						dict[key] = ExpandRuntimeVariable(dictString);
+					}
+					else
+					{
+						ExpandRuntimeVariablesInObject(dict[key]);
+					}
+				}
+			}
+			else if (input is IList list)
+			{
+				for (var i = 0; i < list.Count; i++)
+				{
+					if (list[i] is string listString)
+					{
+						list[i] = ExpandRuntimeVariable(listString);
+					}
+					else
+					{
+						ExpandRuntimeVariablesInObject(list[i]);
+					}
+				}
+			}
+#pragma warning restore IDE0078
+			return;
 		}
 	}
 }

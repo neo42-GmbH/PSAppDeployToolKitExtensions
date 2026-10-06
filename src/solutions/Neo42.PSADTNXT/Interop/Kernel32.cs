@@ -54,6 +54,10 @@ namespace PSADTNXT.Interop
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool CancelIoEx(SafeFileHandle hFile, IntPtr lpOverlapped);
 
+		/// <remarks>Returns the code page of the system locale, not the one of the current culture.</remarks>
+		[DllImport("kernel32.dll")]
+		public static extern uint GetOEMCP();
+
 		/// <remarks>The returned pseudo handle does not have to be closed.</remarks>
 		[DllImport("kernel32.dll")]
 		public static extern IntPtr GetCurrentProcess();

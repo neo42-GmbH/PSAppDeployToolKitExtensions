@@ -77,7 +77,7 @@ namespace PSADTNXT.Extensions
 			return input;
 		}
 
-		internal static bool IsMatch(this string input, string pattern, StringCompareOperator op = StringCompareOperator.Equals, bool ignoreCase = true)
+		public static bool IsMatch(this string input, string pattern, StringCompareOperator op = StringCompareOperator.Equals, bool ignoreCase = true)
 		{
 #pragma warning disable CA2249 // Use of string.IndexOf is required for net framework
 			return op switch

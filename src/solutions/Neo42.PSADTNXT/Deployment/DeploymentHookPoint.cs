@@ -13,8 +13,6 @@
 		CustomReinstallPreInstall,
 		CustomReinstallPostInstallOnError,
 		CustomReinstallPostInstall,
-		CustomUpgradePostUninstallOnError,
-		CustomUpgradePostInstallOnError,
 		CustomInstallBegin,
 		CustomInstallEndOnError,
 		CustomInstallEnd,

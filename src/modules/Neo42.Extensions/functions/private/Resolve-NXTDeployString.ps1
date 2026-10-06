@@ -20,26 +20,33 @@
 		[System.Management.Automation.SwitchParameter]
 		$PreferExecutable
 	)
+	begin {
+		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+	}
+	process {
+		try {
+			[System.Boolean]$isPowerShell = -not $PreferExecutable -or -not [System.IO.File]::Exists("$($Root.FullName)\DeployNxtApplication.exe")
+			[System.String]$binary = if ($isPowerShell) { Get-ADTPowerShellProcessPath } else { "$($Root.FullName)\DeployNxtApplication.exe" }
+			[System.String]$argumentString = if ($isPowerShell) {
+				ConvertTo-NXTPsBinaryArgument -Arguments $Arguments -File "$($Root.FullName)\Deploy-Application.ps1" -UseLastExitCode
+			}
+			elseif ($Arguments) {
+				ConvertTo-NXTPsArgumentString -InputObject $Arguments
+			}
 
-	try {
-		[System.Boolean]$isPowerShell = -not $PreferExecutable -or -not [System.IO.File]::Exists("$($Root.FullName)\DeployNxtApplication.exe")
-		[System.String]$binary = if ($isPowerShell) { Get-ADTPowerShellProcessPath } else { "$($Root.FullName)\DeployNxtApplication.exe" }
-		[System.String]$argumentString = if ($isPowerShell) {
-			ConvertTo-NXTPsBinaryArgument -Arguments $Arguments -File "$($Root.FullName)\Deploy-Application.ps1" -UseLastExitCode
+			if ($BinarySeparate) {
+				return $binary, $argumentString
+			}
+			else {
+				if ($binary -match '\s') { $binary = "`"$binary`"" }
+				return "$binary $argumentString"
+			}
 		}
-		elseif ($Arguments) {
-			ConvertTo-NXTPsArgumentString -InputObject $Arguments
-		}
-
-		if ($BinarySeparate) {
-			return $binary, $argumentString
-		}
-		else {
-			if ($binary -match '\s') { $binary = "`"$binary`"" }
-			return "$binary $argumentString"
+		catch {
+			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
 		}
 	}
-	catch {
-		Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
+	end {
+		Complete-ADTFunction -Cmdlet $PSCmdlet
 	}
 }

@@ -336,16 +336,18 @@
 			# If there are no blocking processes, we do not show the installation welcome dialog.
 			Write-ADTLogEntry -Message "Showing the legacy welcome dialog for [$([System.String]::Join(', ', ($runningProcesses.Process.ProcessName | Select-Object -Unique)))]."
 
-			# Start the legacy UI.
+			# Start the legacy UI. The script writes its output as UTF-8, so it has to be read as such.
 			[System.String]$argumentList = ConvertTo-NXTPsBinaryArgument -File "$($MyInvocation.MyCommand.Module.ModuleBase)\Scripts\CustomAppDeployToolkitUi.ps1" -Arguments $showInstallationWelcome -UseLastExitCode
+			[System.Text.Encoding]$outputEncoding = [System.Text.UTF8Encoding]::new($false)
 			if ($adtEnvironment.SessionZero -or $adtEnvironment.IsServiceAccount -or ($adtEnvironment.IsAdmin -and -not $adtEnvironment.IsProcessUserInteractive)) {
 				Write-ADTLogEntry -Message 'Process is running as system, service or non interactive user. Using session helper to spawn in all sessions.' -DebugMessage
-				if ([System.Int32[]]$sessionIds = Get-ADTLoggedOnUser | Select-Object -ExpandProperty 'SessionId') {
+				if ([System.Int32[]]$sessionIds = Get-ADTLoggedOnUser | & { process { if ($_.IsActiveUserSession) { $_.SessionId } } }) {
 					[PSADT.ProcessManagement.ProcessResult]$result = [PSADTNXT.ProcessManagement.NxtSessionHelper]::StartProcessInSessions(
 						(Get-ADTPowerShellProcessPath),
 						$argumentList,
 						$sessionIds,
-						[System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout'])
+						[System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout']),
+						$outputEncoding
 					)
 				}
 				else {
@@ -355,7 +357,7 @@
 			}
 			elseif ($adtEnvironment.IsProcessUserInteractive) {
 				Write-ADTLogEntry -Message 'Process is not running in session zero, as service or as non interative user. Assuming we run as user.' -DebugMessage
-				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -PassThru `
+				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -StreamEncoding $outputEncoding -PassThru `
 					-SuccessExitCodes ([System.Enum]::GetValues([PSADTNXT.UI.LegacyWelcomeWindowCodes])).value__ `
 					-Timeout ([System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout']))
 			}
@@ -397,7 +399,7 @@
 						Write-ADTLogEntry -Severity Warning -Message 'The installation welcome timed but the user had the option to defer the installation and ContinueType is set to [Abort].'
 						Set-ADTDeferHistory @deferHistorySplat
 						$ADTSession.NXT.ClosedProcesses.AddRange($appsToReopen)
-						Close-ADTSession -ExitCode $adtConfig['UI']['DeferExitCode']
+						Close-ADTSession -ExitCode $adtConfig['UI']['DefaultExitCode']
 					}
 					else {
 						Write-ADTLogEntry -Severity Warning -Message 'The installation welcome timed out and deployment is set to continue or the user had no option to defer the installation.'
