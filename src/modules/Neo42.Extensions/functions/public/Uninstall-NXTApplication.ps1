@@ -476,7 +476,7 @@
 				}
 				if ($remainingApplications.Length -gt 0) {
 					[System.Collections.Hashtable]$errorParams = @{
-						Exception    = [System.InvalidOperationException]::new("Application criteria was provided but [$($remainingApplications.Length)] applications were still found 10s after uninstallation. Must be [0].")
+						Exception    = [System.InvalidOperationException]::new("Application criteria was provided but [$($remainingApplications.Length)] applications were still found 5s after uninstallation. Must be [0].")
 						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
 						ErrorId      = 'ApplicationStillInstalled'
 						TargetObject = $Criteria

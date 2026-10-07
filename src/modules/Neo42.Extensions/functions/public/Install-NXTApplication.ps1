@@ -214,7 +214,7 @@
 				}
 				if ($applications.Length -ne 1) {
 					[System.Collections.Hashtable]$errorParams = @{
-						Exception    = [System.Management.Automation.ItemNotFoundException]::new("Application criteria was provided but [$($applications.Length)] applications were found 10s after installation. Must be exactly [1].")
+						Exception    = [System.Management.Automation.ItemNotFoundException]::new("Application criteria was provided but [$($applications.Length)] applications were found 5s after installation. Must be exactly [1].")
 						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
 						ErrorId      = if ($applications.Length -gt 1) { 'MultipleApplicationsFound' } else { 'NoApplicationFound' }
 						TargetObject = $Criteria
