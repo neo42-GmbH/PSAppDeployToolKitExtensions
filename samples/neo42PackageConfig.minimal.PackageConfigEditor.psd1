@@ -20,7 +20,7 @@
 	}
 	CloseProcesses   = @(
 		@{
-			Name   = 'Neo42.PackageConfigEditor'
+			Name = 'Neo42.PackageConfigEditor'
 		}
 	)
 	ManagedShortcuts = @(
@@ -36,7 +36,7 @@
 			Method        = 'MSI'
 			Target        = 'neo42_PackageConfigEditor_1.1.2.0.msi'
 			ReinstallMode = 'Repair'
-			UpgradeMode   = 'Install'
+			UpgradeMode   = 'Reinstall'
 		}
 		Uninstallation  = @{
 			Method = 'MSI'

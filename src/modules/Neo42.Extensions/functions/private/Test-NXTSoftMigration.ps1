@@ -46,7 +46,7 @@
 			}
 
 			if ($Scope -contains 'Package') {
-				if (([PSADTNXT.Package.NxtRegisteredPackage]$registeredPackage = $ADTSession.NXT.Package.GetRegisteredPackage()) -and
+				if (([PSADTNXT.Package.NxtRegisteredPackage]$registeredPackage = Get-NXTRegisteredPackage -ADTSession $ADTSession) -and
 					(Compare-NXTVersion -Version $registeredPackage.Version -Target $ADTSession.AppVersion) -ne [PSADTNXT.Application.VersionCompareResult]::Update
 				) {
 					$errors.Add("The registered package version [$($registeredPackage.Version)] is higher or equals than the current package version [$($ADTSession.AppVersion)].")
@@ -58,7 +58,9 @@
 				switch ($ADTSession.NXT.SoftMigration.Mode) {
 					{ $_ -eq [PSADTNXT.Deployment.SoftMigrationDetectionMode]::Custom -or $null -ne $ADTSession.NXT.SoftMigration.Result } {
 						Write-ADTLogEntry -Message 'Using custom Soft Migration result for detection.'
-						if (-not $ADTSession.NXT.SoftMigration.Result) { $errors.Add('The [Custom] Soft Migration result is negative.') }
+						if (-not $ADTSession.NXT.SoftMigration.Result) {
+							$errors.Add('The [Custom] Soft Migration result is negative.')
+						}
 						break
 					}
 					([PSADTNXT.Deployment.SoftMigrationDetectionMode]::File) {
@@ -123,10 +125,9 @@
 			if ($errors.Count -gt 0) {
 				Write-ADTLogEntry -Message 'The the following conditions prevent a Soft Migration:'
 				$errors | & { process { Write-ADTLogEntry -Message " * $_" } }
-				return $false
 			}
 
-			return $true
+			return $errors.Count -eq 0
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

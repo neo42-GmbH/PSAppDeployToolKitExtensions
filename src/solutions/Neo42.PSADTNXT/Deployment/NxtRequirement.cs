@@ -46,7 +46,7 @@ namespace PSADTNXT.Deployment
 
 			if (!hashtable.MatchesProperties<NxtRequirement>(out var invalidKeys))
 			{
-				throw new InvalidDataException($"Cannot create [{nameof(NxtRequirement)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
+				throw new InvalidDataException($"Cannot create [{nameof(NxtRequirement)}] from object with invalid key(s) [{string.Join(", ", invalidKeys)}].");
 			}
 
 			var criteriaHashtable = hashtable.ContainsKey("Criteria") && hashtable["Criteria"] is Hashtable criteriaTable

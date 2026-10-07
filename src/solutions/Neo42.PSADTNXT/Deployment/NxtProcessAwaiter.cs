@@ -41,7 +41,7 @@ namespace PSADTNXT.Deployment
 
 			if (!hashtable.MatchesProperties<NxtProcessAwaiter>(out var invalidKeys))
 			{
-				throw new InvalidDataException($"Cannot create [{nameof(NxtProcessAwaiter)}] from object as key(s) [{string.Join(", ", invalidKeys)}] are invalid.");
+				throw new InvalidDataException($"Cannot create [{nameof(NxtProcessAwaiter)}] from object with invalid key(s) [{string.Join(", ", invalidKeys)}].");
 			}
 
 			var name = hashtable.ContainsKey("Name") && hashtable["Name"] is string nameValue

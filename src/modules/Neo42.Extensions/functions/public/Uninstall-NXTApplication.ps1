@@ -469,10 +469,14 @@
 
 			# Validate that the application has been removed
 			if ($Criteria) {
-				[PSADT.Types.InstalledApplication[]]$remainingApplications = @(Get-NXTApplication -Criteria $Criteria)
+				[System.DateTime]$endTime = [System.DateTime]::Now.AddSeconds(5)
+				while (([PSADT.Types.InstalledApplication[]]$remainingApplications = @(Get-NXTApplication -Criteria $Criteria))) {
+					if ($endTime -lt [System.DateTime]::Now) { break }
+					Start-Sleep -Milliseconds 500
+				}
 				if ($remainingApplications.Length -gt 0) {
 					[System.Collections.Hashtable]$errorParams = @{
-						Exception    = [System.InvalidOperationException]::new("Application lookup criteria were provided but [$($remainingApplications.Length)] applications were still found after uninstallation. Must be [0].")
+						Exception    = [System.InvalidOperationException]::new("Application criteria was provided but [$($remainingApplications.Length)] applications were still found 5s after uninstallation. Must be [0].")
 						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
 						ErrorId      = 'ApplicationStillInstalled'
 						TargetObject = $Criteria

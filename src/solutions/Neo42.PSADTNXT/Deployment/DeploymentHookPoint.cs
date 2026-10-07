@@ -5,6 +5,7 @@
 		CustomBegin,
 		CustomInstallAndReinstallAndSoftMigrationBegin,
 		CustomSoftMigrationBegin,
+		CustomSoftMigrationEnd,
 		CustomInstallAndReinstallAndSoftMigrationEnd,
 		CustomInstallAndReinstallPreInstallAndReinstall,
 		CustomReinstallPreUninstall,
