@@ -1684,10 +1684,10 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 		}
 		'NewFunction'         = 'Show-NXTInstallationWelcome'
 		'TransformParameters' = @{
-			'AllowDefer'              = { if ($_ -eq '$true' -and -not $boundParameters.ContainsKey('AllowDeferCloseApps')) { '-AllowDeferCloseApps' } else { $null } }
-			'MinimizeWindows'         = { if ($_ -eq '$true') { '-MinimizeWindows' } }
-			'TopMost'                 = { if ($_ -eq '$false') { '-NotTopMost' } }
-			'AskKillProcessApps'      = { "-CloseProcesses $_" }
+			'AllowDefer'         = { if ($_ -eq '$true' -and -not $boundParameters.ContainsKey('AllowDeferCloseApps')) { '-AllowDeferCloseApps' } else { $null } }
+			'MinimizeWindows'    = { if ($_ -eq '$true') { '-MinimizeWindows' } }
+			'TopMost'            = { if ($_ -eq '$false') { '-NotTopMost' } }
+			'AskKillProcessApps' = { "-CloseProcesses $_" }
 		}
 		'RemoveParameters'    = @(
 			'Silent',
@@ -1861,13 +1861,16 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 	'Watch-NxtFile'                          = @{
 		'NewFunction'         = 'Wait-NXTFileSystem'
 		'TransformParameters' = @{
-			'FilePath' = { "-Path $_" }
+			'FileName' = { "-Path $_" }
 		}
 	}
 	'Watch-NxtFileIsRemoved'                 = @{
-		'NewFunction'         = 'Wait-NXTFileSystemIsRemoved'
+		'NewFunction'         = 'Wait-NXTFileSystem'
+		'AddParameters'       = @{
+			'IsRemoved' = '-IsRemoved'
+		}
 		'TransformParameters' = @{
-			'FilePath' = { "-Path $_" }
+			'FileName' = { "-Path $_" }
 		}
 	}
 	'Watch-NxtProcess'                       = @{
@@ -1889,8 +1892,11 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 				'#Watch-NxtProcessIsStopped => No migration path available for WQL queries. Provide the process directly to Wait-NXTProcess instead.'
 			}
 			else {
-				'Wait-NXTProcessIsStopped'
+				'Wait-NXTProcess'
 			}
+		}
+		'AddParameters'       = @{
+			'IsStopped'   = '-IsStopped'
 		}
 		'TransformParameters' = @{
 			'ProcessName' = { "-Name $_" }
@@ -1906,12 +1912,13 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 		}
 	}
 	'Watch-NxtRegistryKeyIsRemoved'          = @{
-		'NewFunction'         = 'Wait-NXTRegistryKeyIsRemoved'
+		'NewFunction'         = 'Wait-NXTRegistryKey'
 		'TransformParameters' = @{
 			'RegistryKey' = { "-Key $($_ -replace 'SOFTWARE\\\$?(?:global:)?WOW6432Node\\', 'SOFTWARE\\')" }
 		}
 		'AddParameters'       = @{
 			'Wow6432Node' = { if ($boundParameters.RegistryKey.Value.Extent -like '*Wow6432Node*') { '-Wow6432Node' } }
+			'IsRemoved'   = '-IsRemoved'
 		}
 	}
 	'Write-NxtXmlNode'                       = @{
