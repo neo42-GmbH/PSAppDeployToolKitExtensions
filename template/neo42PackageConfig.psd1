@@ -488,7 +488,7 @@
 			# -- [Migrated from v3.Reboot]
 			Reboot          = $null # @schema type: [enum, null], enum: [IfRequired, Always, Never], default: null
 
-			# -- Define conditions that should be awaited after the installation method was executed.
+			# -- Define conditions that should be awaited after the uninstallation method was executed.
 			# -- See Installation.Awaiters for details.
 			# -- [Migrated from v3.TestConditionsPreSetupSuccessCheck.Uninstall]
 			Awaiters        = $null
