@@ -13,16 +13,21 @@
 	Filters the results based on the installation state of the package.
 	.PARAMETER Exclude
 	Excludes the specified package IDs from the results.
-	.PARAMETER RegistryKey
+	.PARAMETER RegistryKeyName
 	Filters the results based on the specified registry packages key.
 	.PARAMETER Application
 	Gets the package related to the specified InstalledApplication object.
 	.PARAMETER ADTSession
 	Gets the package related to the specified NxtDeploymentSession object.
 	.EXAMPLE
-	Get-NxtRegisteredPackage -Package "{12345678-1234-1234-1234-123456789012}" -Installed $false
+	Get-NXTRegisteredPackage -PackageId "{12345678-1234-1234-1234-123456789012}" -Installed $false
 
 	This example retrieves information about a specific package that is registered but not installed.
+	.EXAMPLE
+	Get-NXTRegisteredPackage -RegistryKeyName neoPackages -PackageId "{12345678-1234-1234-1234-123456789012}"
+
+	This example retrieves information about a specific package that is registered under the "neoPackages" registry key.
+	This does not rely on the uninstall key back reference being present, so it can be used to get information about packages that are registered but not installed.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'The parameter is used in the function body.')]
 	[OutputType([PSADTNXT.Package.NxtRegisteredPackage[]])]
@@ -41,9 +46,9 @@
 		[System.Guid[]]
 		$Exclude,
 		[Parameter(ParameterSetName = 'Filter')]
-		[Alias('RegPackagesKey')]
+		[Alias('RegPackagesKey', 'RegistryKey')]
 		[System.String]
-		$RegistryKey,
+		$RegistryKeyName,
 
 		[Parameter(ParameterSetName = 'Application', Mandatory, ValueFromPipeline)]
 		[ValidateNotNull()]
@@ -63,12 +68,25 @@
 			switch ($PSCmdlet.ParameterSetName) {
 				'Filter' {
 					[System.Collections.Generic.Dictionary[System.String, System.Object]]$params = $PSBoundParameters
-					return [PSADTNXT.Package.NxtRegisteredPackage]::GetPackages() | & {
+
+					return $(
+						[PSADTNXT.Package.NxtRegisteredPackage]$package = $null
+						# If we know the registry key name and package ID, we can try to get the package directly. Otherwise, we get all packages and filter them (which requires uninstall key back reference to be present).
+						if ($params.ContainsKey('RegistryKeyName') -and
+							$params.ContainsKey('PackageId') -and
+							[PSADTNXT.Package.NxtRegisteredPackage]::TryGetPackage("$RegistryKeyName\$($PackageId.ToString('B').ToUpper())", [ref]$package)
+						) {
+							$package
+						}
+						else {
+							[PSADTNXT.Package.NxtRegisteredPackage]::GetPackages()
+						}
+					) | & {
 						begin {
 							[System.String[]]$excludes = if ($params.ContainsKey('Exclude')) { $Exclude | & { process { $_.ToString('B') } } } else { @() }
 						}
 						process {
-							if ((-not $params.ContainsKey('RegistryKey') -or $_.RegistryName -eq $RegistryKey) -and
+							if ((-not $params.ContainsKey('RegistryKeyName') -or $_.RegistryName -eq $RegistryKeyName) -and
 								(-not $params.ContainsKey('PackageId') -or $_.GUID -eq $PackageId.ToString('B')) -and
 								(-not $params.ContainsKey('Installed') -or $_.IsInstalled -eq $Installed) -and
 								(-not $params.ContainsKey('Exclude') -or $_.GUID -notin $excludes)
