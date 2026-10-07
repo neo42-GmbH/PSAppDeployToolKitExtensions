@@ -208,7 +208,7 @@
 
 			if ($Criteria) {
 				[System.DateTime]$endTime = [System.DateTime]::Now.AddSeconds(10)
-				while (-not ([PSADT.Types.InstalledApplication[]]$applications = Get-NXTApplication -Criteria $Criteria)) {
+				while (-not ([PSADT.Types.InstalledApplication[]]$applications = @(Get-NXTApplication -Criteria $Criteria))) {
 					if ($endTime -lt [System.DateTime]::Now) { break }
 					Start-Sleep -Milliseconds 500
 				}

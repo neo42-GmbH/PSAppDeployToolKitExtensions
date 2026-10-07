@@ -470,7 +470,7 @@
 			# Validate that the application has been removed
 			if ($Criteria) {
 				[System.DateTime]$endTime = [System.DateTime]::Now.AddSeconds(10)
-				while (([PSADT.Types.InstalledApplication[]]$remainingApplications = Get-NXTApplication -Criteria $Criteria)) {
+				while (([PSADT.Types.InstalledApplication[]]$remainingApplications = @(Get-NXTApplication -Criteria $Criteria))) {
 					if ($endTime -lt [System.DateTime]::Now) { break }
 					Start-Sleep -Milliseconds 500
 				}
