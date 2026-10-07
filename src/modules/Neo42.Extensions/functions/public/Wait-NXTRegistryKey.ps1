@@ -12,9 +12,9 @@
 	PSCustomObject - Returns the registry key values as custom object when -PassThru is specified.
 	.PARAMETER Key
 	The path to the registry key to monitor.
-	.Parameter Name
+	.Parameter KeyName
 	The name of the registry key to monitor.
-	.Parameter Value
+	.Parameter KeyValue
 	The value of the registry key to monitor.
 	.PARAMETER Wow6432Node
 	Specifies that the registry key is located in the Wow6432Node.
@@ -49,10 +49,10 @@
 		$Key,
 		[ValidateNotNullOrEmpty()]
 		[System.String]
-		$Keyname,
+		$KeyName,
 		[ValidateNotNullOrEmpty()]
 		[System.String]
-		$Keyvalue,
+		$KeyValue,
 		[System.Management.Automation.SwitchParameter]
 		$Wow6432Node,
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
@@ -79,12 +79,12 @@
 				WarningAction          = 'SilentlyContinue'
 				ErrorAction            = 'SilentlyContinue'
 			}
-			if ($PSBoundParameters.ContainsKey('Keyname')) { $getKeyParam.Add('Name', $Keyname) }
+			if ($PSBoundParameters.ContainsKey('KeyName')) { $getKeyParam.Add('Name', $KeyName) }
 			[System.Management.Automation.ScriptBlock]$getKey = {
 				param([System.Management.Automation.SwitchParameter]$ReturnObject)
 				$keyObj = Get-ADTRegistryKey @getKeyParam
-				if ($keyObj -and $(Get-Variable 'PSBoundParameters' -Scope 2).Value.ContainsKey('Keyvalue')) {
-					if ($keyObj -ne $Keyvalue) {
+				if ($keyObj -and $(Get-Variable 'PSBoundParameters' -Scope 2).Value.ContainsKey('KeyValue')) {
+					if ($keyObj -ne $KeyValue) {
 						$keyObj = $null
 					}
 				}
