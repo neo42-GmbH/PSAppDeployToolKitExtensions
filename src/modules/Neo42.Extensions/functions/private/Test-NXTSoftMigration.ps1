@@ -58,7 +58,9 @@
 				switch ($ADTSession.NXT.SoftMigration.Mode) {
 					{ $_ -eq [PSADTNXT.Deployment.SoftMigrationDetectionMode]::Custom -or $null -ne $ADTSession.NXT.SoftMigration.Result } {
 						Write-ADTLogEntry -Message 'Using custom Soft Migration result for detection.'
-						if (-not $ADTSession.NXT.SoftMigration.Result) { $errors.Add('The [Custom] Soft Migration result is negative.') }
+						if (-not $ADTSession.NXT.SoftMigration.Result) {
+							$errors.Add('The [Custom] Soft Migration result is negative.')
+						}
 						break
 					}
 					([PSADTNXT.Deployment.SoftMigrationDetectionMode]::File) {

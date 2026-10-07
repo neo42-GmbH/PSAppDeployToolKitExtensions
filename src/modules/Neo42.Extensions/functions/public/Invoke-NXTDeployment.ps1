@@ -158,7 +158,7 @@
 						Resolve-NXTRequirement -ADTSession $ADTSession
 
 						# Check for soft migration with a dual stage test. First, check if the config and package allow it
-						if (Test-NXTSoftMigration -ADTSession $ADTSession -Scope @('Configuration', 'Package', 'Deployment')) {
+						if (Test-NXTSoftMigration -ADTSession $ADTSession -Scope @('Package', 'Configuration', 'Deployment')) {
 							Write-ADTLogEntry -Message 'The current state of the package indicates that Soft Migration might be applicable. Starting further Soft Migration checks...'
 							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomSoftMigrationBegin)
 
@@ -316,6 +316,7 @@
 
 							Write-ADTLogEntry -Message 'Starting uninstallation.'
 							. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUninstallEndOnError)
+
 							Update-NXTDetectionStatus -ADTSession $ADTSession
 						}
 						else {
