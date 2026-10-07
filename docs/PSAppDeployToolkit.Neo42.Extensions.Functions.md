@@ -264,7 +264,7 @@ If this parameter is omitted, the name of the callback will be used to determine
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomSoftMigrationEnd, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|False|
@@ -873,7 +873,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomSoftMigrationEnd, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1075,14 +1075,14 @@ Converts a JSON string to a custom object.
 ```PowerShell
 ConvertFrom-NXTJson
     [-InputObject] <string>
-    [-AsHashTable]
+    [-AsHashtable]
     [<CommonParameters>]
 ```
 
 ### DESCRIPTION
 
 The ConvertFrom-NXTJson function converts a JSON string to a custom object.
-It enables the feature set of PowerShell Core's Cmdlet in Windows PowerShell 5.1.
+It enables the feature set of PowerShell Core's Cmdlet in Windows PowerShell 5.1 (json with comments and -AsHashtable parameter).
 
 ### EXAMPLES
 
@@ -1101,7 +1101,8 @@ System.String - The JSON string to convert.
 ### OUTPUTS
 
 System.Management.Automation.PSObject - The custom object created from the JSON string.
-System.Collections.Hashtable - The custom object created from the JSON string if the `-AsHashTable` parameter is specified.
+
+System.Collections.Hashtable - The custom object created from the JSON string if the -AsHashtable parameter is specified.
 
 ### PARAMETERS
 
@@ -1118,7 +1119,7 @@ The JSON string to convert.
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
-#### -AsHashTable
+#### -AsHashtable
 
 When specified, the function will return a hashtable instead of a custom object.
 
@@ -2715,7 +2716,7 @@ Get-NXTRegisteredPackage
     [-PackageId <guid>]
     [-Installed <bool>]
     [-Exclude <guid[]>]
-    [-RegistryKey <string>]
+    [-RegistryKeyName <string>]
     [<CommonParameters>]
 ```
 
@@ -2743,10 +2744,19 @@ The function fetches details such as PackageGUID and InstallState.
 #### Example 1
 
 ```PowerShell
-Get-NxtRegisteredPackage -Package "{12345678-1234-1234-1234-123456789012}" -Installed $false
+Get-NXTRegisteredPackage -PackageId "{12345678-1234-1234-1234-123456789012}" -Installed $false
 ```
 
 This example retrieves information about a specific package that is registered but not installed.
+
+#### Example 2
+
+```PowerShell
+Get-NXTRegisteredPackage -RegistryKeyName neoPackages -PackageId "{12345678-1234-1234-1234-123456789012}"
+```
+
+This example retrieves information about a specific package that is registered under the "neoPackages" registry key.
+This does not rely on the uninstall key back reference being present, so it can be used to get information about packages that are registered but not installed.
 
 ### INPUTS
 
@@ -2797,7 +2807,7 @@ Excludes the specified package IDs from the results.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
-#### -RegistryKey
+#### -RegistryKeyName
 
 Filters the results based on the specified registry packages key.
 
@@ -4407,7 +4417,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomSoftMigrationEnd, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|True|
@@ -7989,6 +7999,9 @@ Wait until a file is no longer in use by another process.
 Wait-NXTFileNotInUse
     [-Path] <string>
     [-Timeout <timespan>]
+    [-Interval <timespan>]
+    [-PassThru]
+    [-IsInUse]
     [<CommonParameters>]
 ```
 
@@ -7996,6 +8009,11 @@ Wait-NXTFileNotInUse
 
 Wait until a file is no longer in use by another process.
 
+> **NOTE**
+>
+> With the -IsInUse switch, the test will be inverted.
+> 
+> 
 ### EXAMPLES
 
 #### Example 1
@@ -8005,14 +8023,14 @@ Wait-NXTFileNotInUse -Path 'C:\Temp\file.txt' -Timeout '00:02:00'
 ```
 
 Wait until the file 'C:\Temp\file.txt' is no longer in use by another process or until the timeout of 120 seconds is reached.
-
 ### INPUTS
 
 System.IO.FileInfo - The file to check.
 
 ### OUTPUTS
 
-System.Boolean - Returns true if the file is no longer in use, otherwise false.
+System.Boolean - Returns $true if the file is no longer in use; otherwise, returns $false.
+System.IO.FileSystemInfo - Returns the file system object when -PassThru is specified.
 
 ### PARAMETERS
 
@@ -8042,69 +8060,15 @@ The maximum time to wait for the file to be released.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
-## Wait-NXTFileSystem
+#### -Interval
 
-Monitors the presence of a specified path within a set timeout period.
-
-### SYNTAX
-
-```PowerShell
-Wait-NXTFileSystem
-    [-Path] <string>
-    [-Timeout <timespan>]
-    [-PassThru]
-    [<CommonParameters>]
-```
-
-### DESCRIPTION
-
-This function checks for the existence of a specified file or folder within a given time frame.
-It continuously checks for the existence until the timeout is reached.
-
-### EXAMPLES
-
-#### Example 1
-
-```PowerShell
-Wait-NXTFileSystem -Path "C:\Temp\Sources\Installer.exe" -Timeout '00:02:00'
-```
-
-Monitors for 'Installer.exe' in the specified directory and waits up to 120 seconds for it to appear.
-
-### INPUTS
-
-System.IO.FileSystemInfo - The filesystem object to monitor.
-
-### OUTPUTS
-
-System.Boolean - Returns true if the path appears within the timeout period, otherwise false.
-
-System.IO.FileSystemInfo - Returns the file system object if PassThru is specified
-
-### PARAMETERS
-
-#### -Path
-
-The path to the file or directory to monitor.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
-|Position:|0|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|True (ByPropertyName)|
-|Accept wildcard characters:|False|
-
-#### -Timeout
-
-The maximum time to wait for the file to appear.
+The interval at which to check for the file's usage status.
 
 |Property|Value|
 |:---|:---|
 |Type:|TimeSpan|
 |Position:|Named|
-|Default value:|00:01:00|
+|Default value:|00:00:01.000|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -8122,42 +8086,70 @@ Instead of returning a boolean, return the object.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
-## Wait-NXTFileSystemIsRemoved
+#### -IsInUse
 
-Monitors the removal of a specified file within a set timeout period.
+Instead of checking whether the file is not in use, check whether it is in use.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+## Wait-NXTFileSystem
+
+Monitors the presence of a specified filesystem path within a set timeout period.
 
 ### SYNTAX
 
 ```PowerShell
-Wait-NXTFileSystemIsRemoved
+Wait-NXTFileSystem
     [-Path] <string>
     [-Timeout <timespan>]
+    [-Interval <timespan>]
+    [-PassThru]
+    [-IsRemoved]
     [<CommonParameters>]
 ```
 
 ### DESCRIPTION
 
-This function checks for the disappearance of a specified file within a given time frame.
-It continuously monitors the file's presence until the file is removed or the timeout is reached.
-The function also supports the resolution of CMD environment variables in the file path.
+This function checks for the existence of a specified file or folder within a given time frame.
+The function also supports the resolution of CMD environment variables in the filesystem path.
 
+> **NOTE**
+>
+> With the -IsRemoved switch, the test will be inverted.
+> 
+> 
 ### EXAMPLES
 
 #### Example 1
 
 ```PowerShell
-Wait-NXTFileSystemIsRemoved -Path "C:\Temp\Sources\Installer.exe" -Timeout '00:02:00'
+Wait-NXTFileSystem -Path "C:\Temp\Sources\Installer.exe" -Timeout '00:02:00'
+```
+
+Monitors for 'Installer.exe' in the specified directory and waits up to 120 seconds for it to appear.
+
+#### Example 2
+
+```PowerShell
+Wait-NXTFileSystem -Path "C:\Temp\Sources\Installer.exe" -Timeout '00:02:00' -IsRemoved
 ```
 
 Monitors for 'Installer.exe' in the specified directory and waits up to 120 seconds for it to disappear.
-
 ### INPUTS
 
 System.IO.FileSystemInfo - The filesystem object to monitor.
 
 ### OUTPUTS
 
-System.Boolean - Returns true if the file is removed within the timeout period, otherwise false.
+System.Boolean - Returns $true if the path appears within the timeout period; otherwise, returns $false.
+System.IO.FileSystemInfo - Returns the file system object when -PassThru is specified.
 
 ### PARAMETERS
 
@@ -8176,13 +8168,52 @@ The path to the file or directory to monitor.
 
 #### -Timeout
 
-The maximum time to wait for the file to be removed.
+The maximum time to wait for the path to appear or disappear.
 
 |Property|Value|
 |:---|:---|
 |Type:|TimeSpan|
 |Position:|Named|
 |Default value:|00:01:00|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Interval
+
+The interval at which to check for the path's presence or removal.
+
+|Property|Value|
+|:---|:---|
+|Type:|TimeSpan|
+|Position:|Named|
+|Default value:|00:00:01.000|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -PassThru
+
+Instead of returning a boolean, return the object.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -IsRemoved
+
+Instead of checking for the presence of the path, check for its removal.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -8198,7 +8229,9 @@ Monitors the startup of a specified process within a set timeout period.
 Wait-NXTProcess
     [-Name] <string>
     [-Timeout <timespan>]
+    [-Interval <timespan>]
     [-PassThru]
+    [-IsStopped]
     [<CommonParameters>]
 ```
 
@@ -8207,7 +8240,9 @@ Wait-NXTProcess
 Wait-NXTProcess
     -Id <int>
     [-Timeout <timespan>]
+    [-Interval <timespan>]
     [-PassThru]
+    [-IsStopped]
     [<CommonParameters>]
 ```
 
@@ -8216,15 +8251,22 @@ Wait-NXTProcess
 Wait-NXTProcess
     -ProcessDefinition <ProcessDefinition>
     [-Timeout <timespan>]
+    [-Interval <timespan>]
     [-PassThru]
+    [-IsStopped]
     [<CommonParameters>]
 ```
 
 ### DESCRIPTION
 
 This function checks for the startup of a process.
-The function continuously checks for the process's presence until it starts or the timeout is reached.
+The function continuously checks for the process's presence until it starts or stops or the timeout is reached.
 
+> **NOTE**
+>
+> With the -IsStopped switch, the test will be inverted.
+> 
+> 
 ### EXAMPLES
 
 #### Example 1
@@ -8235,6 +8277,13 @@ Wait-NXTProcess -Name "notepad.exe" -Timeout '00:02:00'
 
 Monitors for 'notepad.exe' to start and waits up to 120 seconds for it to appear.
 
+#### Example 2
+
+```PowerShell
+Wait-NXTProcess -Name "notepad.exe" -Timeout '00:02:00' -IsStopped
+```
+
+This example monitors for 'notepad.exe' and waits up to 120 seconds for it to stop.
 ### INPUTS
 
 System.String - The name of the process to monitor.
@@ -8251,9 +8300,8 @@ PSADTNXT.ProcessManagement.NxtCloseProcess - The process definition to stop.
 
 ### OUTPUTS
 
-System.Boolean - Returns true if the process starts within the timeout period, otherwise false.
-
-System.Diagnostics.Process - Returns the process if PassThru is specified
+System.Boolean - Returns $true if the process starts within the timeout period; otherwise, returns $false.
+System.Diagnostics.Process - Returns the process when -PassThru is specified.
 
 ### PARAMETERS
 
@@ -8298,13 +8346,26 @@ The process definition to monitor.
 
 #### -Timeout
 
-The maximum time to wait for the process to start.
+The maximum time to wait for the process to start or stop.
 
 |Property|Value|
 |:---|:---|
 |Type:|TimeSpan|
 |Position:|Named|
 |Default value:|00:01:00|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Interval
+
+The interval at which to check for the process's presence or disappearance.
+
+|Property|Value|
+|:---|:---|
+|Type:|TimeSpan|
+|Position:|Named|
+|Default value:|00:00:01.000|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -8322,145 +8383,48 @@ Instead of returning a boolean, return the object.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
-## Wait-NXTProcessIsStopped
+#### -IsStopped
 
-Monitors the termination of a specified process within a set timeout.
-
-### SYNTAX
-
-```PowerShell
-# ParameterSet Name
-Wait-NXTProcessIsStopped
-    [-Name] <string>
-    [-Timeout <timespan>]
-    [<CommonParameters>]
-```
-
-```PowerShell
-# ParameterSet Id
-Wait-NXTProcessIsStopped
-    -Id <uint32>
-    [-Timeout <timespan>]
-    [<CommonParameters>]
-```
-
-```PowerShell
-# ParameterSet ProcessDefinition
-Wait-NXTProcessIsStopped
-    -ProcessDefinition <ProcessDefinition>
-    [-Timeout <timespan>]
-    [<CommonParameters>]
-```
-
-### DESCRIPTION
-
-This function checks for the termination of a process within a specified time frame.
-The function continuously monitors the process's presence until it stops or the timeout is reached.
-
-### EXAMPLES
-
-#### Example 1
-
-```PowerShell
-Wait-NXTProcessIsStopped -Name "notepad.exe" -Timeout '00:02:00'
-```
-
-This example monitors for 'notepad.exe' and waits up to 120 seconds for it to stop.
-
-### INPUTS
-
-System.String - The name of the process to monitor.
-
-System.Int32 - The process ID to monitor.
-
-System.Diagnostics.Process - The process to monitor.
-
-Microsoft.Management.Infrastructure.CimInstance - The Win32_Process cim instance to monitor.
-
-PSADT.ProcessManagement.ProcessDefinition - The process definition to monitor.
-
-PSADT.ProcessManagement.RunningProcess - The running process to monitor.
-
-PSADTNXT.ProcessManagement.NxtCloseProcess - The process definition to stop.
-
-### OUTPUTS
-
-System.Boolean - Returns true if the process is terminated within the timeout period, otherwise false.
-
-### PARAMETERS
-
-#### -Name
-
-The name of the process to monitor.
+Instead of checking for the presence of the process, check for its disappearance.
 
 |Property|Value|
 |:---|:---|
-|Type:|String|
-|Position:|0|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|True|
-
-#### -Id
-
-The process ID to monitor. Can be a single ID or an array of IDs.
-
-|Property|Value|
-|:---|:---|
-|Type:|UInt32|
+|Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
-|Required:|True|
-|Accept pipeline input:|True (ByValue, ByPropertyName)|
-|Accept wildcard characters:|False|
-
-#### -ProcessDefinition
-
-The process definition object to monitor.
-
-|Property|Value|
-|:---|:---|
-|Type:|ProcessDefinition|
-|Position:|Named|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|True (ByValue, ByPropertyName)|
-|Accept wildcard characters:|False|
-
-#### -Timeout
-
-The maximum time to wait for the process to stop.
-
-|Property|Value|
-|:---|:---|
-|Type:|TimeSpan|
-|Position:|Named|
-|Default value:|00:01:00|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
 ## Wait-NXTRegistryKey
 
-Watches a specified registry key for a given duration.
+Watches a specified registry key for its existence for a given duration.
 
 ### SYNTAX
 
 ```PowerShell
 Wait-NXTRegistryKey
     [-Key] <string>
+    [-KeyName <string>]
+    [-KeyValue <string>]
     [-Wow6432Node]
     [-Timeout <timespan>]
+    [-Interval <timespan>]
     [-PassThru]
+    [-IsRemoved]
     [<CommonParameters>]
 ```
 
 ### DESCRIPTION
 
 This command monitors a specified registry key and checks for its existence within a defined timeout period.
-It is useful for scenarios where the presence of a registry key is required for certain processes or checks.
+It is useful for scenarios where the presence or absence of a registry key is required for certain processes or checks.
 
+> **NOTE**
+>
+> With the -IsRemoved switch, the test will be inverted.
+> 
+> 
 ### EXAMPLES
 
 #### Example 1
@@ -8471,15 +8435,21 @@ Wait-NXTRegistryKey -Key "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentV
 
 This example monitors the specified registry key and waits up to 60 seconds to check its existence.
 
+#### Example 2
+
+```PowerShell
+Wait-NXTRegistryKey -Key "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams" -IsRemoved
+```
+
+This example monitors the specified registry key and waits up to 60 seconds to check its existence has ended.
 ### INPUTS
 
 Microsoft.Win32.RegistryKey - The registry key to monitor.
 
 ### OUTPUTS
 
-System.Boolean - Returns true if the registry key exist within the timeout period, otherwise false.
-
-PSCustomObject - Returns the registry key values as custom object if PassThru was specified
+System.Boolean - Returns $true if the registry key exist within the timeout period; otherwise, returns $false.
+PSCustomObject - Returns the registry key values as custom object when -PassThru is specified.
 
 ### PARAMETERS
 
@@ -8494,6 +8464,32 @@ The path to the registry key to monitor.
 |Default value:|None|
 |Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
+|Accept wildcard characters:|False|
+
+#### -KeyName
+
+The name of the registry key to monitor.
+
+|Property|Value|
+|:---|:---|
+|Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -KeyValue
+
+The value of the registry key to monitor.
+
+|Property|Value|
+|:---|:---|
+|Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
 #### -Wow6432Node
@@ -8511,13 +8507,26 @@ Specifies that the registry key is located in the Wow6432Node.
 
 #### -Timeout
 
-The maximum time to wait for the registry key to be created.
+The maximum time to wait for the registry key to be created or removed.
 
 |Property|Value|
 |:---|:---|
 |Type:|TimeSpan|
 |Position:|Named|
 |Default value:|00:01:00|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Interval
+
+The interval at which to check for the registry key's presence or removal.
+
+|Property|Value|
+|:---|:---|
+|Type:|TimeSpan|
+|Position:|Named|
+|Default value:|00:00:01.000|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -8536,80 +8545,15 @@ If no properties exist, the key itself is returned.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
-## Wait-NXTRegistryKeyIsRemoved
+#### -IsRemoved
 
-Watches a specified registry key for a given duration.
-
-### SYNTAX
-
-```PowerShell
-Wait-NXTRegistryKeyIsRemoved
-    [-Key] <string>
-    [-Wow6432Node]
-    [-Timeout <timespan>]
-    [<CommonParameters>]
-```
-
-### DESCRIPTION
-
-This command monitors a specified registry key and checks for its existence within a defined timeout period.
-It is useful for scenarios where the presence of a registry key is required for certain processes or checks.
-
-### EXAMPLES
-
-#### Example 1
-
-```PowerShell
-Wait-NXTRegistryKeyIsRemoved -Key "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\Teams"
-```
-
-This example monitors the specified registry key and waits up to 60 seconds to check its existence has ended.
-
-### INPUTS
-
-Microsoft.Win32.RegistryKey - The registry key to monitor.
-
-### OUTPUTS
-
-System.Boolean - Returns true if the registry key(s) exist within the timeout period, otherwise false.
-
-### PARAMETERS
-
-#### -Key
-
-The path to the registry key(s) to monitor. Can be a single key or an array of keys.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
-|Position:|0|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|True (ByPropertyName)|
-|Accept wildcard characters:|False|
-
-#### -Wow6432Node
-
-Specifies that the registry key is located in the Wow6432Node.
+Instead of checking for the presence of the registry key, check for its removal.
 
 |Property|Value|
 |:---|:---|
 |Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Timeout
-
-The maximum time to wait for the registry key(s) to be created.
-
-|Property|Value|
-|:---|:---|
-|Type:|TimeSpan|
-|Position:|Named|
-|Default value:|00:01:00|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|

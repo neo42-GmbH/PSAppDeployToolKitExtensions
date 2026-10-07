@@ -1,4 +1,5 @@
-﻿#Requires -RunAsAdministrator
+﻿#Requires -Modules Pester
+#Requires -Modules PSScriptAnalyzer
 
 param(
 	[ValidateScript({ $_.Exists })]
