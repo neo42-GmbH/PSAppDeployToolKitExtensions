@@ -1,4 +1,4 @@
-﻿% Functions in PSAppDeployToolkit.Neo42.Extensions module
+% Functions in PSAppDeployToolkit.Neo42.Extensions module
 
 ## Add-NXTContent
 
@@ -264,7 +264,7 @@ If this parameter is omitted, the name of the callback will be used to determine
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|False|
@@ -873,7 +873,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1189,7 +1189,7 @@ Converts a object into a Base64-encoded and compressed json string.
 ```PowerShell
 ConvertTo-NXTEncodedObject
     [-InputObject] <Object>
-    [-Depth <uint16>]
+    [-Depth <ushort>]
     [<CommonParameters>]
 ```
 
@@ -1916,7 +1916,7 @@ This command table includes the base PSADT command table and functions from the 
 
 ### OUTPUTS
 
-`[System.Collections.ObjectModel.ReadOnlyDictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Management.Automation.CommandInfo, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]]`
+`[System.Collections.ObjectModel.ReadOnlyDictionary`2[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Management.Automation.CommandInfo, System.Management.Automation, Version=7.6.0.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]]`
 ### PARAMETERS
 
 **This function does not have any documented parameters.**
@@ -2519,7 +2519,7 @@ Retrieves the parent process of a given process ID.
 Get-NXTParentProcess
     [[-Id] <int>]
     [-Recurse]
-    [-Depth <uint16>]
+    [-Depth <ushort>]
     [<CommonParameters>]
 ```
 
@@ -2610,7 +2610,7 @@ Get-NXTProcessTree
     [[-Id] <int>]
     [-NoChildren]
     [-NoParents]
-    [-Depth <uint16>]
+    [-Depth <ushort>]
     [<CommonParameters>]
 ```
 
@@ -3764,7 +3764,7 @@ This function is supposed to be used in conjunction with Initialize-ADTSession's
 
 ### OUTPUTS
 
-`[System.Collections.ObjectModel.ReadOnlyDictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]]`
+`[System.Collections.ObjectModel.ReadOnlyDictionary`2[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]]`
 ### PARAMETERS
 
 **This function does not have any documented parameters.**
@@ -4407,7 +4407,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|True|
@@ -6151,8 +6151,8 @@ Show-NXTInstallationWelcome
     [[-ADTSession] <NxtDeploymentSession>]
     [[-Title] <string>]
     [[-CloseProcesses] <NxtCloseProcess[]>]
-    [[-DeferTimes] <uint32>]
-    [[-DeferDays] <uint32>]
+    [[-DeferTimes] <uint>]
+    [[-DeferDays] <uint>]
     [[-DeferDeadline] <datetime>]
     [[-DeferRunInterval] <timespan>]
     [[-Timeout] <timespan>]
@@ -7771,7 +7771,7 @@ Update-NXTTextInFile
     [-Include <string[]>]
     [-Regex]
     [-CaseSensitive]
-    [-Count <uint32>]
+    [-Count <uint>]
     [-Encoding <Encoding>]
     [-Force]
     [-WhatIf]
@@ -7790,7 +7790,7 @@ Update-NXTTextInFile
     [-Include <string[]>]
     [-Regex]
     [-CaseSensitive]
-    [-Count <uint32>]
+    [-Count <uint>]
     [-Encoding <Encoding>]
     [-Force]
     [-WhatIf]
@@ -8339,7 +8339,7 @@ Wait-NXTProcessIsStopped
 ```PowerShell
 # ParameterSet Id
 Wait-NXTProcessIsStopped
-    -Id <uint32>
+    -Id <uint>
     [-Timeout <timespan>]
     [<CommonParameters>]
 ```
