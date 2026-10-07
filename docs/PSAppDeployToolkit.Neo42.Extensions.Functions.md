@@ -1,4 +1,4 @@
-% Functions in PSAppDeployToolkit.Neo42.Extensions module
+﻿% Functions in PSAppDeployToolkit.Neo42.Extensions module
 
 ## Add-NXTContent
 
@@ -264,7 +264,7 @@ If this parameter is omitted, the name of the callback will be used to determine
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomSoftMigrationEnd, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|False|
@@ -873,7 +873,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomSoftMigrationEnd, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1075,14 +1075,14 @@ Converts a JSON string to a custom object.
 ```PowerShell
 ConvertFrom-NXTJson
     [-InputObject] <string>
-    [-AsHashTable]
+    [-AsHashtable]
     [<CommonParameters>]
 ```
 
 ### DESCRIPTION
 
 The ConvertFrom-NXTJson function converts a JSON string to a custom object.
-It enables the feature set of PowerShell Core's Cmdlet in Windows PowerShell 5.1.
+It enables the feature set of PowerShell Core's Cmdlet in Windows PowerShell 5.1 (json with comments and -AsHashtable parameter).
 
 ### EXAMPLES
 
@@ -1101,7 +1101,8 @@ System.String - The JSON string to convert.
 ### OUTPUTS
 
 System.Management.Automation.PSObject - The custom object created from the JSON string.
-System.Collections.Hashtable - The custom object created from the JSON string if the `-AsHashTable` parameter is specified.
+
+System.Collections.Hashtable - The custom object created from the JSON string if the -AsHashtable parameter is specified.
 
 ### PARAMETERS
 
@@ -1118,7 +1119,7 @@ The JSON string to convert.
 |Accept pipeline input:|True (ByValue)|
 |Accept wildcard characters:|False|
 
-#### -AsHashTable
+#### -AsHashtable
 
 When specified, the function will return a hashtable instead of a custom object.
 
@@ -1189,7 +1190,7 @@ Converts a object into a Base64-encoded and compressed json string.
 ```PowerShell
 ConvertTo-NXTEncodedObject
     [-InputObject] <Object>
-    [-Depth <ushort>]
+    [-Depth <uint16>]
     [<CommonParameters>]
 ```
 
@@ -1916,7 +1917,7 @@ This command table includes the base PSADT command table and functions from the 
 
 ### OUTPUTS
 
-`[System.Collections.ObjectModel.ReadOnlyDictionary`2[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Management.Automation.CommandInfo, System.Management.Automation, Version=7.6.0.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]]`
+`[System.Collections.ObjectModel.ReadOnlyDictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Management.Automation.CommandInfo, System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]]`
 ### PARAMETERS
 
 **This function does not have any documented parameters.**
@@ -2519,7 +2520,7 @@ Retrieves the parent process of a given process ID.
 Get-NXTParentProcess
     [[-Id] <int>]
     [-Recurse]
-    [-Depth <ushort>]
+    [-Depth <uint16>]
     [<CommonParameters>]
 ```
 
@@ -2610,7 +2611,7 @@ Get-NXTProcessTree
     [[-Id] <int>]
     [-NoChildren]
     [-NoParents]
-    [-Depth <ushort>]
+    [-Depth <uint16>]
     [<CommonParameters>]
 ```
 
@@ -3773,7 +3774,7 @@ This function is supposed to be used in conjunction with Initialize-ADTSession's
 
 ### OUTPUTS
 
-`[System.Collections.ObjectModel.ReadOnlyDictionary`2[[System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]]`
+`[System.Collections.ObjectModel.ReadOnlyDictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]]`
 ### PARAMETERS
 
 **This function does not have any documented parameters.**
@@ -4416,7 +4417,7 @@ The name of the deployment hook point after which the custom hook should be exec
 |Property|Value|
 |:---|:---|
 |Type:|DeploymentHookPoint[]|
-|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomUpgradePostUninstallOnError, CustomUpgradePostInstallOnError, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
+|Enum values:|CustomBegin, CustomInstallAndReinstallAndSoftMigrationBegin, CustomSoftMigrationBegin, CustomSoftMigrationEnd, CustomInstallAndReinstallAndSoftMigrationEnd, CustomInstallAndReinstallPreInstallAndReinstall, CustomReinstallPreUninstall, CustomReinstallPostUninstallOnError, CustomReinstallPostUninstall, CustomReinstallPreInstall, CustomReinstallPostInstallOnError, CustomReinstallPostInstall, CustomInstallBegin, CustomInstallEndOnError, CustomInstallEnd, CustomInstallAndReinstallEnd, CustomUninstallBegin, CustomUninstallEndOnError, CustomUninstallEnd, CustomInstallUserPartBegin, CustomInstallUserPartEnd, CustomUninstallUserPartBegin, CustomUninstallUserPartEnd, CustomEnd, CustomEndOnError|
 |Position:|1|
 |Default value:|None|
 |Required:|True|
@@ -6160,8 +6161,8 @@ Show-NXTInstallationWelcome
     [[-ADTSession] <NxtDeploymentSession>]
     [[-Title] <string>]
     [[-CloseProcesses] <NxtCloseProcess[]>]
-    [[-DeferTimes] <uint>]
-    [[-DeferDays] <uint>]
+    [[-DeferTimes] <uint32>]
+    [[-DeferDays] <uint32>]
     [[-DeferDeadline] <datetime>]
     [[-DeferRunInterval] <timespan>]
     [[-Timeout] <timespan>]
@@ -7780,7 +7781,7 @@ Update-NXTTextInFile
     [-Include <string[]>]
     [-Regex]
     [-CaseSensitive]
-    [-Count <uint>]
+    [-Count <uint32>]
     [-Encoding <Encoding>]
     [-Force]
     [-WhatIf]
@@ -7799,7 +7800,7 @@ Update-NXTTextInFile
     [-Include <string[]>]
     [-Regex]
     [-CaseSensitive]
-    [-Count <uint>]
+    [-Count <uint32>]
     [-Encoding <Encoding>]
     [-Force]
     [-WhatIf]
@@ -8384,78 +8385,7 @@ Instead of returning a boolean, return the object.
 
 #### -IsStopped
 
-<<<<<<< HEAD
-Monitors the termination of a specified process within a set timeout.
-
-### SYNTAX
-
-```PowerShell
-# ParameterSet Name
-Wait-NXTProcessIsStopped
-    [-Name] <string>
-    [-Timeout <timespan>]
-    [<CommonParameters>]
-```
-
-```PowerShell
-# ParameterSet Id
-Wait-NXTProcessIsStopped
-    -Id <uint>
-    [-Timeout <timespan>]
-    [<CommonParameters>]
-```
-
-```PowerShell
-# ParameterSet ProcessDefinition
-Wait-NXTProcessIsStopped
-    -ProcessDefinition <ProcessDefinition>
-    [-Timeout <timespan>]
-    [<CommonParameters>]
-```
-
-### DESCRIPTION
-
-This function checks for the termination of a process within a specified time frame.
-The function continuously monitors the process's presence until it stops or the timeout is reached.
-
-### EXAMPLES
-
-#### Example 1
-
-```PowerShell
-Wait-NXTProcessIsStopped -Name "notepad.exe" -Timeout '00:02:00'
-```
-
-This example monitors for 'notepad.exe' and waits up to 120 seconds for it to stop.
-
-### INPUTS
-
-System.String - The name of the process to monitor.
-
-System.Int32 - The process ID to monitor.
-
-System.Diagnostics.Process - The process to monitor.
-
-Microsoft.Management.Infrastructure.CimInstance - The Win32_Process cim instance to monitor.
-
-PSADT.ProcessManagement.ProcessDefinition - The process definition to monitor.
-
-PSADT.ProcessManagement.RunningProcess - The running process to monitor.
-
-PSADTNXT.ProcessManagement.NxtCloseProcess - The process definition to stop.
-
-### OUTPUTS
-
-System.Boolean - Returns true if the process is terminated within the timeout period, otherwise false.
-
-### PARAMETERS
-
-#### -Name
-
-The name of the process to monitor.
-=======
 Instead of checking for the presence of the process, check for its disappearance.
->>>>>>> 556b83f7ad90468a98a9762e1e989b7d4410df60
 
 |Property|Value|
 |:---|:---|
@@ -8475,8 +8405,8 @@ Watches a specified registry key for its existence for a given duration.
 ```PowerShell
 Wait-NXTRegistryKey
     [-Key] <string>
-    [-Keyname <string>]
-    [-Keyvalue <string>]
+    [-KeyName <string>]
+    [-KeyValue <string>]
     [-Wow6432Node]
     [-Timeout <timespan>]
     [-Interval <timespan>]
@@ -8534,6 +8464,32 @@ The path to the registry key to monitor.
 |Default value:|None|
 |Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
+|Accept wildcard characters:|False|
+
+#### -KeyName
+
+The name of the registry key to monitor.
+
+|Property|Value|
+|:---|:---|
+|Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -KeyValue
+
+The value of the registry key to monitor.
+
+|Property|Value|
+|:---|:---|
+|Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
 #### -Wow6432Node
