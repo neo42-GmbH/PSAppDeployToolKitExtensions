@@ -53,10 +53,6 @@
 
 	"markdown.validate.enabled": true,
 
-	"workbench.editorAssociations": {
-		"PSAppDeployToolkit.*.md": "vscode.markdown.editor"
-	},
-
 	"json.validate.enable": true,
 	"json.schemas": [
 		{
