@@ -80,10 +80,11 @@
 				ErrorAction            = 'SilentlyContinue'
 			}
 			if ($PSBoundParameters.ContainsKey('KeyName')) { $getKeyParam.Add('Name', $KeyName) }
+			[System.Collections.Generic.Dictionary[System.String, System.Object]]$params = $PSBoundParameters
 			[System.Management.Automation.ScriptBlock]$getKey = {
 				param([System.Management.Automation.SwitchParameter]$ReturnObject)
 				$keyObj = Get-ADTRegistryKey @getKeyParam
-				if ($keyObj -and $(Get-Variable 'PSBoundParameters' -Scope 2).Value.ContainsKey('KeyValue')) {
+				if ($keyObj -and $params.ContainsKey('KeyValue')) {
 					if ($keyObj -ne $KeyValue) {
 						$keyObj = $null
 					}
