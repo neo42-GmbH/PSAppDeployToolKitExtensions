@@ -44,11 +44,10 @@ jobs:
         with:
           path: artifact
 
-      - name: checkout-samples
+      - name: checkout-repo
         uses: actions/checkout@v7
         with:
           path: ./Source
-          sparse-checkout: samples
 
       - name: install-sign-tool
         run: dotnet tool install --global azuresigntool
