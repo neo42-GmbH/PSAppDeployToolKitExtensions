@@ -8,6 +8,8 @@
 	If no Identifier is provided, all applications from the specified store are returned and filtered accordingly.
 	.PARAMETER Criteria
 	The application search criteria used to find the application(s).
+	.PARAMETER ADTSession
+	Get the currently session tracked application (if there is any).
 	.PARAMETER Store
 	The application store to query for applications. This parameter is used when the Criteria parameter set is not used.
 	.PARAMETER Identifier
@@ -38,6 +40,9 @@
 		[Parameter(Position = 0, ParameterSetName = 'Criteria', Mandatory)]
 		[PSADTNXT.Application.NxtApplicationCriteria]
 		$Criteria,
+		[Parameter(Position = 0, ParameterSetName = 'Session', Mandatory)]
+		[PSADTNXT.Foundation.NxtDeploymentSession]
+		$ADTSession,
 		[Parameter(ParameterSetName = 'Manual')]
 		[PSADTNXT.Application.ApplicationStore]
 		$Store = [PSADTNXT.Application.ApplicationStore]::ARP,
@@ -60,6 +65,11 @@
 	}
 	process {
 		try {
+			if ($PSCmdlet.ParameterSetName -eq 'Session') {
+				Update-NXTDetectionStatus
+				return $ADTSession.NXT.Detection.Application
+			}
+
 			if ($PSCmdlet.ParameterSetName -eq 'Criteria') {
 				$Store = $Criteria.Store
 				$Identifier = $Criteria.Identifier
