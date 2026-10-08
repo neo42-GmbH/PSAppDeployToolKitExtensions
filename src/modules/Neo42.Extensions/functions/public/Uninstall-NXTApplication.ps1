@@ -60,6 +60,10 @@
 
 	Uninstalls the MSI application that is registered with above product code.
 	.EXAMPLE
+	Uninstall-NXTApplication -Target 'Microsoft.WindowsScan_8wekyb3d8bbwe' -Method Appx
+
+	Deprovisions the Windows Scanner Appx app for all users.
+	.EXAMPLE
 	Uninstall-NXTApplication -Criteria @{ Store = 'ARP'; Identifier = 'TestApp' }
 
 	Uninstalls the application found by the criteria using its registered uninstall information and validates its removal afterwards.
@@ -75,10 +79,6 @@
 	Get-NXTRegisteredPackage -PackageId '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
 
 	Uninstalls the application referenced by a registered package object.
-	.EXAMPLE
-	Uninstall-NXTApplication -Target 'Microsoft.WindowsScan_8wekyb3d8bbwe' -Method Appx
-
-	Deprovisions the Windows Scanner Appx app for all users.
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'ManualExitCodes')]
 	[OutputType([PSADT.ProcessManagement.ProcessResult])]
