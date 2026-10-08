@@ -875,14 +875,14 @@ Clear-NXTDeploymentCallback
 
 ### DESCRIPTION
 
-The Clear-NXTDeploymentCallback function removes a custom hook from the deployment session that was previously added with Add-NXTDeploymentCallback.
+This function removes a custom hook from the deployment session that was previously added.
 
 ### EXAMPLES
 
 #### Example 1
 
 ```PowerShell
-Add-NXTDeploymentCallback -HookPoint 'CustomInstallEnd' -Callback (Get-Command -Name 'My-CustomFunction')
+Clear-NXTDeploymentCallback -HookPoint CustomInstallEnd -Callback (Get-Command -Name 'My-CustomFunction')
 ```
 
 This example adds a custom hook that executes the 'My-CustomFunction' function after the 'CustomInstallEnd' deployment hook point.
@@ -4046,7 +4046,7 @@ Collects all required parameters for the Open-ADTSession function and returns th
 #### Example 1
 
 ```PowerShell
-Get-NXTSessionParameter -Invocation $MyInvocation
+New-NXTSessionParameter -Invocation $MyInvocation
 ```
 
 Retrieves the parameters for the Open-ADTSession function from the current invocation.
@@ -5504,7 +5504,7 @@ It is capable of applying these settings to both the target folder and its sub-f
 #### Example 1
 
 ```PowerShell
-Set-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
+Set-NXTFolderPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
 ```
 
 Sets permissions for folder 'C:\Temp\MyFolder' to full control permissions for 'DOMAIN\User1' and 'Administrators', write permissions for 'Everyone' and sets 'DOMAIN\User1' as the owner.
@@ -6495,7 +6495,7 @@ Test-NXTFolderPermission
 
 ### DESCRIPTION
 
-Test-NxtFolderPermissions evaluates a folder's security settings by comparing its actual permissions, owner, and other security attributes against predefined expectations.
+Evaluates a folder's security settings by comparing its actual permissions, owner, and other security attributes against predefined expectations.
 It's useful for ensuring folder permissions align with security policies or compliance standards.
 
 ### EXAMPLES
@@ -6503,7 +6503,7 @@ It's useful for ensuring folder permissions align with security policies or comp
 #### Example 1
 
 ```PowerShell
-Test-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
+Test-NXTFolderPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
 ```
 
 Tests if a folder 'C:\Temp\MyFolder' has these permissions: full control permissions for 'DOMAIN\User1' and 'Administrators', write permissions for 'Everyone', and 'DOMAIN\User1' as owner.
@@ -7181,12 +7181,20 @@ Uninstalls the MSI application that is registered with above product code.
 #### Example 3
 
 ```PowerShell
+Uninstall-NXTApplication -Target 'Microsoft.WindowsScan_8wekyb3d8bbwe' -Method Appx
+```
+
+Deprovisions the Windows Scanner Appx app for all users.
+
+#### Example 4
+
+```PowerShell
 Uninstall-NXTApplication -Criteria @{ Store = 'ARP'; Identifier = 'TestApp' }
 ```
 
 Uninstalls the application found by the criteria using its registered uninstall information and validates its removal afterwards.
 
-#### Example 4
+#### Example 5
 
 ```PowerShell
 Get-NXTApplication -Identifier '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
@@ -7194,7 +7202,7 @@ Get-NXTApplication -Identifier '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninst
 
 Uninstalls the application using a application object obtained from the NXT function.
 
-#### Example 5
+#### Example 6
 
 ```PowerShell
 Get-ADTApplication -Name 'Test' -NameMatch 'Exact' | Uninstall-NXTApplication
@@ -7202,21 +7210,13 @@ Get-ADTApplication -Name 'Test' -NameMatch 'Exact' | Uninstall-NXTApplication
 
 Uninstalls the application using a application object obtained from the ADT function.
 
-#### Example 6
+#### Example 7
 
 ```PowerShell
 Get-NXTRegisteredPackage -PackageId '{0420EDC6-CF5E-4C88-8D5E-B81A5E7F3D6A}' | Uninstall-NXTApplication
 ```
 
 Uninstalls the application referenced by a registered package object.
-
-#### Example 7
-
-```PowerShell
-Uninstall-NXTApplication -Target 'Microsoft.WindowsScan_8wekyb3d8bbwe' -Method Appx
-```
-
-Deprovisions the Windows Scanner Appx app for all users.
 
 ### INPUTS
 
