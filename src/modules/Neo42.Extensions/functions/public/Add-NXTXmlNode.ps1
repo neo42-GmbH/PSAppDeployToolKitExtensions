@@ -23,6 +23,8 @@
 	A filter to include items in the Path parameter.
 	.PARAMETER Encoding
 	The encoding to use when the file is created. If the file exists, the encoding will not be updated.
+	.PARAMETER Force
+	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.PARAMETER InputObject
 	The XML node(s) to add the new node to.
 	.PARAMETER XPath
@@ -41,8 +43,6 @@
 	Wether or not to add the new node at the start or end of the child node list.
 	.PARAMETER PassThru
 	Returns the XML document if specified.
-	.PARAMETER Force
-	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.EXAMPLE
 	Add-NXTXmlNode -Path 'C:\Temp\test.xml' -XPath '/root/parent' -Name 'child' -Attributes @{ attr1 = 'value1'; attr2 = 'value2' } -InnerText 'Hello World'
 
@@ -79,6 +79,10 @@
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
 		$Encoding,
+		[Parameter(ParameterSetName = 'Path')]
+		[Parameter(ParameterSetName = 'LiteralPath')]
+		[System.Management.Automation.SwitchParameter]
+		$Force,
 
 		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
 		[ValidateNotNull()]
@@ -103,9 +107,7 @@
 		$Prepend,
 
 		[System.Management.Automation.SwitchParameter]
-		$PassThru,
-		[System.Management.Automation.SwitchParameter]
-		$Force
+		$PassThru
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -114,7 +116,7 @@
 	process {
 		try {
 			if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath')) {
-				[System.String[]]$files = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf
+				if (-not ([System.String[]]$files = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) { return }
 				$InputObject = Import-NXTXmlFile -LiteralPath $files @encodingSplat
 			}
 

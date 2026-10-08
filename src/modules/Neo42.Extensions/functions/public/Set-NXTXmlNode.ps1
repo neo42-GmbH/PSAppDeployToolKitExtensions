@@ -23,6 +23,8 @@
 	A filter to include items in the Path parameter.
 	.PARAMETER Encoding
 	The encoding to use when reading the file. If not specified, the encoding will be detected from the file.
+	.PARAMETER Force
+	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.PARAMETER InputObject
 	The XML node(s) to update.
 	.PARAMETER XPath
@@ -37,8 +39,6 @@
 	The inner text to set on the node.
 	.PARAMETER PassThru
 	Returns the XML document if specified.
-	.PARAMETER Force
-	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.EXAMPLE
 	Set-NXTXmlNode -Path 'C:\Temp\test.xml' -XPath '/root/parent/child' -Attributes @{ attr1 = 'newValue1'; attr2 = 'newValue2' } -InnerText 'New Inner Text'
 
@@ -74,6 +74,10 @@
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
 		$Encoding,
+		[Parameter(ParameterSetName = 'Path')]
+		[Parameter(ParameterSetName = 'LiteralPath')]
+		[System.Management.Automation.SwitchParameter]
+		$Force,
 
 		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
 		[ValidateNotNull()]
@@ -94,9 +98,7 @@
 		[System.String]
 		$InnerText,
 		[System.Management.Automation.SwitchParameter]
-		$PassThru,
-		[System.Management.Automation.SwitchParameter]
-		$Force
+		$PassThru
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -105,7 +107,7 @@
 		try {
 			if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath')) {
 				[System.Collections.Hashtable]$encodingSplat = if ($Encoding) { @{ Encoding = $Encoding } } else { @{} }
-				[System.String[]]$files = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf
+				if (-not ([System.String[]]$files = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) { return }
 				$InputObject = Import-NXTXmlFile -LiteralPath $files @encodingSplat -Force:$Force
 			}
 
