@@ -589,12 +589,12 @@ Add-NXTXmlNode
     [-Exclude <string[]>]
     [-Include <string[]>]
     [-Encoding <Encoding>]
+    [-Force]
     [-Single]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-Prepend]
     [-PassThru]
-    [-Force]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -610,12 +610,12 @@ Add-NXTXmlNode
     [-Exclude <string[]>]
     [-Include <string[]>]
     [-Encoding <Encoding>]
+    [-Force]
     [-Single]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-Prepend]
     [-PassThru]
-    [-Force]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -632,7 +632,6 @@ Add-NXTXmlNode
     [-InnerText <string>]
     [-Prepend]
     [-PassThru]
-    [-Force]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -743,6 +742,19 @@ The encoding to use when the file is created. If the file exists, the encoding w
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+#### -Force
+
+Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 #### -InputObject
 
 The XML node(s) to add the new node to.
@@ -839,19 +851,6 @@ Wether or not to add the new node at the start or end of the child node list.
 #### -PassThru
 
 Returns the XML document if specified.
-
-|Property|Value|
-|:---|:---|
-|Type:|SwitchParameter|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Force
-
-Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 
 |Property|Value|
 |:---|:---|
@@ -4736,6 +4735,7 @@ Remove-NXTXmlNode
     [-Include <string[]>]
     [-Encoding <Encoding>]
     [-Force]
+    [-Single]
     [-PassThru]
     [-WhatIf]
     [-Confirm]
@@ -4752,6 +4752,7 @@ Remove-NXTXmlNode
     [-Include <string[]>]
     [-Encoding <Encoding>]
     [-Force]
+    [-Single]
     [-PassThru]
     [-WhatIf]
     [-Confirm]
@@ -4763,7 +4764,7 @@ Remove-NXTXmlNode
 Remove-NXTXmlNode
     -XPath <string>
     [-InputObject <XmlNode[]>]
-    [-Force]
+    [-Single]
     [-PassThru]
     [-WhatIf]
     [-Confirm]
@@ -4875,6 +4876,19 @@ The encoding to use when the file is created. If the file exists, the encoding w
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+#### -Force
+
+Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 #### -InputObject
 
 The XML node(s) to remove the node from.
@@ -4901,9 +4915,9 @@ The XPath to the node to remove.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
-#### -Force
+#### -Single
 
-Determines if all matching nodes should be removed if more than one node is found.
+Make sure the XPath selects exactly one node. If not, an error is thrown.
 
 |Property|Value|
 |:---|:---|
@@ -5691,12 +5705,12 @@ Set-NXTXmlNode
     [-Exclude <string[]>]
     [-Include <string[]>]
     [-Encoding <Encoding>]
+    [-Force]
     [-Single]
     [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
-    [-Force]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -5711,12 +5725,12 @@ Set-NXTXmlNode
     [-Exclude <string[]>]
     [-Include <string[]>]
     [-Encoding <Encoding>]
+    [-Force]
     [-Single]
     [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
-    [-Force]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -5732,7 +5746,6 @@ Set-NXTXmlNode
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
-    [-Force]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -5843,6 +5856,19 @@ The encoding to use when reading the file. If not specified, the encoding will b
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+#### -Force
+
+Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 #### -InputObject
 
 The XML node(s) to update.
@@ -5924,19 +5950,6 @@ The inner text to set on the node.
 #### -PassThru
 
 Returns the XML document if specified.
-
-|Property|Value|
-|:---|:---|
-|Type:|SwitchParameter|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Force
-
-Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 
 |Property|Value|
 |:---|:---|
