@@ -26,7 +26,9 @@
 	.PARAMETER InputObject
 	The XML node(s) to update.
 	.PARAMETER XPath
-	The XPath to the node to update.
+	The XPath to the node(s) to update.
+	.PARAMETER Single
+	Make sure the XPath selects exactly one node. If not, an error is thrown.
 	.PARAMETER Name
 	The name of the node to update.
 	.PARAMETER Attributes
@@ -82,6 +84,8 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$XPath,
+		[System.Management.Automation.SwitchParameter]
+		$Single,
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Name,
@@ -109,7 +113,7 @@
 				[System.Xml.XmlNode]$xml = $InputObject[$i]
 				[System.Xml.XmlNamespaceManager]$nsManager = Get-NXTXMLNamespaceManager -InputObject $xml
 				[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($XPath, $nsManager)
-				if ($nodes.Count -ne 1) {
+				if ($Single -and $nodes.Count -gt 1) {
 					[System.Collections.Hashtable]$errorParams = @{
 						Exception = [System.InvalidOperationException]::new("The XPath [$XPath] must point to a single node, but found [$($nodes.Count)] nodes.")
 						Category  = [System.Management.Automation.ErrorCategory]::InvalidData
@@ -117,20 +121,26 @@
 					}
 					throw (New-ADTErrorRecord @errorParams)
 				}
-				[System.Xml.XmlNode]$node = $nodes[0]
-				if ($Attributes) {
-					$node.Attributes.RemoveAll()
-					foreach ($key in $Attributes.Keys) {
-						[System.String[]]$attributeParts = $key.Split(':', 2)
-						if ($attributeParts.Length -eq 2) {
-							$node.SetAttribute($attributeParts[1], $nsManager.LookupNamespace($attributeParts[0]), $Attributes[$key])
-						}
-						else {
-							$node.SetAttribute($key, $Attributes[$key])
+				if ($nodes.Count -eq 0) {
+					Write-ADTLogEntry -Severity Warning -Message "No nodes matching XPath [$XPath] in given XmlNode."
+					continue
+				}
+				foreach ($node in $nodes) {
+					if ($Attributes) {
+						$node.Attributes.RemoveAll()
+						foreach ($key in $Attributes.Keys) {
+							[System.String[]]$attributeParts = $key.Split(':', 2)
+							if ($attributeParts.Length -eq 2) {
+								$node.SetAttribute($attributeParts[1], $nsManager.LookupNamespace($attributeParts[0]), $Attributes[$key])
+							}
+							else {
+								$node.SetAttribute($key, $Attributes[$key])
+							}
 						}
 					}
+					if ($null -ne $InnerText) { $node.InnerText = $InnerText }
 				}
-				if ($null -ne $InnerText) { $node.InnerText = $InnerText }
+
 				if ($PassThru) { $xml }
 
 				Write-ADTLogEntry -Message "Updating XML node at XPath [$XPath]."

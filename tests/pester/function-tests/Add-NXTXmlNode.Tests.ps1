@@ -10,6 +10,10 @@ Describe 'Add-NXTXmlNode' {
 	<parent>
 		<child attr="value">Text</child>
 	</parent>
+	<parent2>
+		<child/>
+		<child/>
+	</parent2>
 </root>
 '@
 		Set-Content -Path $xmlFilePath -Value $simpleXml -Encoding UTF8
@@ -51,6 +55,20 @@ Describe 'Add-NXTXmlNode' {
 			$xml = [System.Xml.XmlDocument](Get-Content -Path $xmlFilePath)
 			$xml.SelectSingleNode('/root/parent/textchild').InnerText | Should -Be 'Inner Text Value'
 		}
+
+		It 'Should add a node to every node matching the XPath' {
+			Add-NXTXmlNode -Path $xmlFilePath -XPath '/root/parent2/child' -Name 'subchild' | Should -BeNullOrEmpty
+			$xml = [System.Xml.XmlDocument](Get-Content -Path $xmlFilePath)
+			$xml.SelectNodes('/root/parent2/child/subchild').Count | Should -Be 2
+		}
+
+		It 'Should add the child to the start of a list' {
+			Add-NXTXmlNode -Path $xmlFilePath -XPath '/root/parent' -Name 'child' -Attributes @{ First = 'true' } -Prepend | Should -BeNullOrEmpty
+			$xml = [System.Xml.XmlDocument](Get-Content -Path $xmlFilePath)
+			$nodes = $xml.SelectNodes('/root/parent/child')
+			$nodes.Count | Should -Be 2
+			$nodes[0].Attributes['First'] | Should -Not -BeNullOrEmpty
+		}
 	}
 
 	Context 'When working with XML objects directly' {
@@ -69,8 +87,12 @@ Describe 'Add-NXTXmlNode' {
 	}
 
 	Context 'When handling errors' {
-		It 'Should throw when XPath does not exist' {
-			{ Add-NXTXmlNode -Path $xmlFilePath -XPath '/root/nonexistent' -Name 'errorchild' } | Should -Throw
+		It 'Should not throw when XPath does not exist' {
+			{ Add-NXTXmlNode -Path $xmlFilePath -XPath '/root/nonexistent' -Name 'errorchild' } | Should -Not -Throw
+		}
+
+		It 'Should throw when -Single is specified but multiple nodes are found' {
+			{ Add-NXTXmlNode -Path $xmlFilePath -XPath '/root/parent2' -Name 'errorchild' -Single } | Should -Not -Throw
 		}
 
 		It 'Should throw when file is read-only' {

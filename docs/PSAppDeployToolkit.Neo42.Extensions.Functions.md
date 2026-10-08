@@ -589,8 +589,10 @@ Add-NXTXmlNode
     [-Exclude <string[]>]
     [-Include <string[]>]
     [-Encoding <Encoding>]
+    [-Single]
     [-Attributes <hashtable>]
     [-InnerText <string>]
+    [-Prepend]
     [-PassThru]
     [-Force]
     [-WhatIf]
@@ -608,8 +610,10 @@ Add-NXTXmlNode
     [-Exclude <string[]>]
     [-Include <string[]>]
     [-Encoding <Encoding>]
+    [-Single]
     [-Attributes <hashtable>]
     [-InnerText <string>]
+    [-Prepend]
     [-PassThru]
     [-Force]
     [-WhatIf]
@@ -623,8 +627,10 @@ Add-NXTXmlNode
     -XPath <string>
     -Name <string>
     [-InputObject <XmlNode[]>]
+    [-Single]
     [-Attributes <hashtable>]
     [-InnerText <string>]
+    [-Prepend]
     [-PassThru]
     [-Force]
     [-WhatIf]
@@ -752,7 +758,7 @@ The XML node(s) to add the new node to.
 
 #### -XPath
 
-The XPath to the node to add the new node to.
+The XPath to the node(s) to add the new node to.
 
 |Property|Value|
 |:---|:---|
@@ -760,6 +766,19 @@ The XPath to the node to add the new node to.
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Single
+
+Make sure the XPath selects exactly one node. If not, an error is thrown.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -798,6 +817,19 @@ The inner text to set on the new node.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Prepend
+
+Wether or not to add the new node at the start or end of the child node list.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -1774,6 +1806,13 @@ Get-NXTApplication
     [<CommonParameters>]
 ```
 
+```PowerShell
+# ParameterSet Session
+Get-NXTApplication
+    [-ADTSession] <NxtDeploymentSession>
+    [<CommonParameters>]
+```
+
 ### DESCRIPTION
 
 Retrieves the application matching the application search criteria.
@@ -1822,6 +1861,19 @@ The application search criteria used to find the application(s).
 |Property|Value|
 |:---|:---|
 |Type:|NxtApplicationCriteria|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -ADTSession
+
+Get the currently session tracked application (if there is any).
+
+|Property|Value|
+|:---|:---|
+|Type:|NxtDeploymentSession|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -4089,277 +4141,6 @@ System.IO.DirectoryInfo - The created temporary folder.
 ### PARAMETERS
 
 **This function does not have any documented parameters.**
-## New-NXTXmlNode
-
-Creates a new sub node in an existing XML document.
-
-### SYNTAX
-
-```PowerShell
-# ParameterSet Path
-New-NXTXmlNode
-    [-Path] <string[]>
-    -XPath <string>
-    -Name <string>
-    [-Filter <string>]
-    [-Exclude <string[]>]
-    [-Include <string[]>]
-    [-Encoding <Encoding>]
-    [-Attributes <hashtable>]
-    [-Prefix <string>]
-    [-InnerText <string>]
-    [-Force]
-    [-PassThru]
-    [-WhatIf]
-    [-Confirm]
-    [<CommonParameters>]
-```
-
-```PowerShell
-# ParameterSet LiteralPath
-New-NXTXmlNode
-    -LiteralPath <string[]>
-    -XPath <string>
-    -Name <string>
-    [-Filter <string>]
-    [-Exclude <string[]>]
-    [-Include <string[]>]
-    [-Encoding <Encoding>]
-    [-Attributes <hashtable>]
-    [-Prefix <string>]
-    [-InnerText <string>]
-    [-Force]
-    [-PassThru]
-    [-WhatIf]
-    [-Confirm]
-    [<CommonParameters>]
-```
-
-```PowerShell
-# ParameterSet Xml
-New-NXTXmlNode
-    -XPath <string>
-    -Name <string>
-    [-InputObject <XmlNode[]>]
-    [-Attributes <hashtable>]
-    [-Prefix <string>]
-    [-InnerText <string>]
-    [-Force]
-    [-PassThru]
-    [-WhatIf]
-    [-Confirm]
-    [<CommonParameters>]
-```
-
-### DESCRIPTION
-
-Creates a new sub node in an existing XML document. The node is created at the specified XPath location.
-The XPath must point to a single node. If the node already has child nodes, the -Force switch must be used to overwrite them.
-
-### EXAMPLES
-
-#### Example 1
-
-```PowerShell
-New-NXTXmlNode -Path 'C:\Temp\test.xml' -XPath '/root/parent' -Name 'child' -Attributes @{ attr1 = 'value1'; attr2 = 'value2' } -InnerText 'Hello World'
-```
-
-Creates a new node 'child' in the XML document 'C:\Temp\test.xml' at the XPath location '/root/parent'.
-The new node will have the attributes 'attr1' and 'attr2' set to 'value1' and 'value2', respectively. The inner text of the new node will be set to 'Hello World'.
-
-### INPUTS
-
-System.Xml.XmlDocument[] - The XML document(s) to create the new node in.
-
-System.IO.FileInfo[] - The XML file(s) to create the new node in.
-
-### OUTPUTS
-
-`[System.Xml.XmlDocument[]]`
-### PARAMETERS
-
-#### -Path
-
-The path to the XML file(s) to create the node in.
-
-|Property|Value|
-|:---|:---|
-|Type:|String[]|
-|Position:|0|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|True|
-
-#### -LiteralPath
-
-The literal path to the XML file(s) to create the node in.
-
-|Property|Value|
-|:---|:---|
-|Type:|String[]|
-|Position:|Named|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|True (ByPropertyName)|
-|Accept wildcard characters:|False|
-
-#### -Filter
-
-A filter to qualify the Path parameter.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Exclude
-
-A filter to exclude items from the Path parameter.
-
-|Property|Value|
-|:---|:---|
-|Type:|String[]|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Include
-
-A filter to include items in the Path parameter.
-
-|Property|Value|
-|:---|:---|
-|Type:|String[]|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Encoding
-
-The encoding to use when writing and reading the file. If not specified, the encoding will be detected from the file.
-
-|Property|Value|
-|:---|:---|
-|Type:|Encoding|
-|Position:|Named|
-|Default value:|$OutputEncoding|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -InputObject
-
-The XML node(s) to create the new node in.
-
-|Property|Value|
-|:---|:---|
-|Type:|XmlNode[]|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|True (ByValue)|
-|Accept wildcard characters:|False|
-
-#### -XPath
-
-The XPath to the node to create the new node in.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
-|Position:|Named|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Name
-
-The name of the new node to create.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
-|Position:|Named|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Attributes
-
-A hashtable of attributes to set on the new node.
-
-|Property|Value|
-|:---|:---|
-|Type:|Hashtable|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Prefix
-
-The prefix to set on the new node.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -InnerText
-
-The inner text to set on the new node.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Force
-
-Determines if the existing child nodes should be removed before creating the new node.
-
-|Property|Value|
-|:---|:---|
-|Type:|SwitchParameter|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -PassThru
-
-Returns the XML document if specified.
-
-|Property|Value|
-|:---|:---|
-|Type:|SwitchParameter|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
 ## Remove-NXTDeploymentCallback
 
 Removes a specific hook.
@@ -5910,6 +5691,7 @@ Set-NXTXmlNode
     [-Exclude <string[]>]
     [-Include <string[]>]
     [-Encoding <Encoding>]
+    [-Single]
     [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
@@ -5929,6 +5711,7 @@ Set-NXTXmlNode
     [-Exclude <string[]>]
     [-Include <string[]>]
     [-Encoding <Encoding>]
+    [-Single]
     [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
@@ -5944,6 +5727,7 @@ Set-NXTXmlNode
 Set-NXTXmlNode
     -XPath <string>
     [-InputObject <XmlNode[]>]
+    [-Single]
     [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
@@ -6074,7 +5858,7 @@ The XML node(s) to update.
 
 #### -XPath
 
-The XPath to the node to update.
+The XPath to the node(s) to update.
 
 |Property|Value|
 |:---|:---|
@@ -6082,6 +5866,19 @@ The XPath to the node to update.
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Single
+
+Make sure the XPath selects exactly one node. If not, an error is thrown.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
