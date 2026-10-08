@@ -1,4 +1,5 @@
-﻿<#
+﻿#Requires -Modules PSScriptAnalyzer
+<#
 .SYNOPSIS
 Updates a package to the latest version of the PSAppDeployToolkit.Neo42.Extenions module.
 .PARAMETER Package
