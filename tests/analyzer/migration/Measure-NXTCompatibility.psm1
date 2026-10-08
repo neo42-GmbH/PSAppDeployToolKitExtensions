@@ -1158,7 +1158,7 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 			'AddToBeginning' = { if ($_ -eq '$true') { '-Prepend' } }
 		}
 		'AddParameters'       = @{
-			'Target' = { '-Target Process' }
+			'Target' = '-Target Process'
 		}
 	}
 	'Add-NxtSystemPathVariable'              = @{
@@ -1167,7 +1167,7 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 			'AddToBeginning' = { if ($_ -eq '$true') { '-Prepend' } }
 		}
 		'AddParameters'       = @{
-			'Target' = { "-Target 'Machine'" }
+			'Target' = '-Target Machine'
 		}
 	}
 	'Add-NxtXmlNode'                         = @{
@@ -1175,13 +1175,16 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 			$boundParameters.ContainsKey('DefaultEncoding')
 		}
 		'NewFunction'         = 'Add-NXTXmlNode'
+		'AddParameters'       = @{
+			'Single' = '-Single'
+		}
 		'TransformParameters' = @{
 			'DefaultEncoding' = { if (-not $boundParameters.ContainsKey('Encoding')) { "-Encoding $_" } }
 		}
 	}
 	'Block-NxtAppExecution'                  = @{
-		NewFunction      = 'Block-ADTAppExecution'
-		RemoveParameters = @(
+		'NewFunction'      = 'Block-ADTAppExecution'
+		'RemoveParameters' = @(
 			'BlockScriptLocation',
 			'ScriptDirectory',
 			'RegKeyAppExecution'
@@ -1332,7 +1335,7 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 	'Get-NxtInstalledApplication'            = @{
 		'NewFunction' = {
 			if ($boundParameters.Count -eq 0) {
-				'$adtSession.NXT.Detection.Application'
+				'Get-NXTApplication -ADTSession $adtSession'
 			}
 			else {
 				'# Get-NxtInstalledApplication => No migration path available. Use Get-ADTApplication (or use Get-NXTApplication) with appropriate parameters.'
@@ -1558,19 +1561,19 @@ Function based rules to detect PSADTv3 legacy code and suggest replacements.
 			'Key' = { "-Variable $_" }
 		}
 		'AddParameters'       = @{
-			'Target' = { '-Target Process' }
+			'Target' = '-Target Process'
 		}
 	}
 	'Remove-NxtProcessPathVariable'          = @{
 		'NewFunction'   = 'Remove-NXTPathVariable'
 		'AddParameters' = @{
-			'Target' = { '-Target Process' }
+			'Target' = '-Target Process'
 		}
 	}
 	'Remove-NxtSystemPathVariable'           = @{
 		'NewFunction'   = 'Remove-NXTPathVariable'
 		'AddParameters' = @{
-			'Target' = { '-Target Machine' }
+			'Target' = '-Target Machine'
 		}
 	}
 	'Remove-NxtProductMember'                = @{
