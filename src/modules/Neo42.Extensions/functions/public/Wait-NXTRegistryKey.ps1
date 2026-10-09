@@ -50,7 +50,6 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$KeyName,
-		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$KeyValue,
 		[System.Management.Automation.SwitchParameter]
@@ -84,7 +83,7 @@
 			[System.Management.Automation.ScriptBlock]$getKey = {
 				param([System.Management.Automation.SwitchParameter]$ReturnObject)
 				$keyObj = Get-ADTRegistryKey @getKeyParam
-				if ($keyObj -and $params.ContainsKey('KeyValue')) {
+				if (($null -ne $keyObj) -and $params.ContainsKey('KeyValue')) {
 					if ($keyObj -ne $KeyValue) {
 						$keyObj = $null
 					}
