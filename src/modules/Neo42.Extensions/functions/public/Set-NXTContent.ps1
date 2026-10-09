@@ -1,4 +1,4 @@
-function Set-NXTContent {
+﻿function Set-NXTContent {
 	<#
 	.SYNOPSIS
 	Replaces `Set-Content` with neo42 encoding handling for files.
@@ -62,6 +62,7 @@ function Set-NXTContent {
 		[System.String[]]
 		$Include,
 		[Parameter(Position = 1, Mandatory, ValueFromPipeline)]
+		[AllowEmptyString()]
 		[System.String[]]
 		$Value,
 		[System.Management.Automation.SwitchParameter]
