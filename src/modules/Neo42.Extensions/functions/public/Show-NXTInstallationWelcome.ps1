@@ -263,6 +263,12 @@
 				}
 			}
 
+			[System.TimeSpan]$defaultTimeout = [System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout'])
+			if ($Timeout -and $Timeout -gt $defaultTimeout) {
+				Write-ADTLogEntry -Severity Error -Message "The supplied timeout [$Timeout] is larger than the default maximum timeout of [$defaultTimeout] from the toolkit config. Will use the lower values."
+				$Timeout = $defaultTimeout
+			}
+
 			# The continue type is always continue if no deferral is allowed
 			if (-not $AllowDeferCloseProcesses) {
 				$ContinueType = [PSADTNXT.UI.ContinueType]::Continue
@@ -346,7 +352,7 @@
 						(Get-ADTPowerShellProcessPath),
 						$argumentList,
 						$sessionIds,
-						[System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout']),
+						$defaultTimeout.Add([System.TimeSpan]::FromMinutes(1)),
 						$outputEncoding
 					)
 				}
@@ -359,7 +365,7 @@
 				Write-ADTLogEntry -Message 'Process is not running in session zero, as service or as non interative user. Assuming we run as user.' -DebugMessage
 				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -StreamEncoding $outputEncoding -PassThru `
 					-SuccessExitCodes ([System.Enum]::GetValues([PSADTNXT.UI.LegacyWelcomeWindowCodes])).value__ `
-					-Timeout ([System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout']))
+					-Timeout ($defaultTimeout.Add([System.TimeSpan]::FromMinutes(1)))
 			}
 			else {
 				Write-ADTLogEntry -Severity Error -Message 'Could not find suitable user to display UI to. Assuming continue option.'
