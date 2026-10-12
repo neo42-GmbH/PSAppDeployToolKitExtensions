@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace PSADTNXT.Extensions
 {
@@ -58,6 +60,43 @@ namespace PSADTNXT.Extensions
 				}
 			}
 			return baseTable;
+		}
+
+		/// <summary>
+		/// Checks if every key of the given dictionary matches exactly one property of the given type.
+		/// </summary>
+		/// <typeparam name="T">The type whose properties the keys are matched against.</typeparam>
+		/// <param name="dict">The dictionary whose keys to check.</param>
+		/// <param name="errorKeys">The keys that are not a string, match no or multiple properties, or match a property already matched by another key. Empty if all keys match.</param>
+		/// <param name="caseSensitive">If true, keys are matched case sensitive.</param>
+		/// <param name="flags">The binding flags used to look up the properties.</param>
+		/// <returns>True if every key matches exactly one property, otherwise false.</returns>
+#pragma warning disable CA1021
+		public static bool MatchesProperties<T>(this IDictionary dict, out string[] errorKeys, bool caseSensitive = false, BindingFlags flags = BindingFlags.Public | BindingFlags.Instance)
+#pragma warning restore CA1021
+		{
+			var properties = typeof(T).GetProperties(flags).Where(p => p.GetIndexParameters().Length == 0).Select(p => p.Name).ToArray();
+			var comparer = caseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase;
+			var matchedProperties = new HashSet<string>(StringComparer.Ordinal);
+			var invalidKeys = new List<string>();
+
+			foreach (var key in dict.Keys)
+			{
+				if (key is not string name)
+				{
+					invalidKeys.Add($"[non-string key: {key?.GetType().FullName ?? "null"}]");
+					continue;
+				}
+
+				var matches = properties.Where(p => comparer.Equals(p, name)).ToArray();
+				if (matches.Length != 1 || !matchedProperties.Add(matches[0]))
+				{
+					invalidKeys.Add(name);
+				}
+			}
+
+			errorKeys = [.. invalidKeys];
+			return errorKeys.Length == 0;
 		}
 	}
 }

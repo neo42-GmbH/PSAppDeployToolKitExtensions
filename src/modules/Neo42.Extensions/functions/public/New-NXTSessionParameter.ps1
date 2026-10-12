@@ -13,7 +13,7 @@
 	.PARAMETER SetupCfg
 	A list of paths to Setup.cfg files to load and merge for the session.
 	.EXAMPLE
-	Get-NXTSessionParameter -Invocation $MyInvocation
+	New-NXTSessionParameter -Invocation $MyInvocation
 
 	Retrieves the parameters for the Open-ADTSession function from the current invocation.
 	#>

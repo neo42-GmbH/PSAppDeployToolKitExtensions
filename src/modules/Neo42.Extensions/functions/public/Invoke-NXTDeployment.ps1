@@ -153,56 +153,57 @@
 					{ $_.IsInstall } {
 						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallAndReinstallAndSoftMigrationBegin)
 
-						# Uninstall old versions if configured
-						Write-ADTLogEntry -Message 'Checking for previously registered packages.'
-						Remove-NXTOldPackage -ADTSession $ADTSession
-
-						# Resolve dependent packages
+						# Resolve requirements before starting the installation
 						Write-ADTLogEntry -Message 'Resolving package requirements.'
 						Resolve-NXTRequirement -ADTSession $ADTSession
 
-						# Check for soft migration
-						if ($ADTSession.NXT.SoftMigration.Enabled -and
-							$ADTSession.NXT.SetupCfg['Options']['SOFTMIGRATION'] -ne '0' -and
-							(
-								-not ([PSADTNXT.Package.NxtRegisteredPackage]$registeredPackage = $ADTSession.NXT.Package.GetRegisteredPackage()) -or
-								(Compare-NXTVersion -Version $registeredPackage.Version -Target $ADTSession.AppVersion) -eq [PSADTNXT.Application.VersionCompareResult]::Update
-							)
-						) {
-							Write-ADTLogEntry -Message 'The current state of the system indicates that Soft Migration might be applicable. Starting Soft Migration checks...'
+						# Check for soft migration with a dual stage test. First, check if the config and package allow it
+						if (Test-NXTSoftMigration -ADTSession $ADTSession -Scope @('Package', 'Configuration', 'Deployment')) {
+							Write-ADTLogEntry -Message 'The current state of the package indicates that Soft Migration might be applicable. Starting further Soft Migration checks...'
 							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomSoftMigrationBegin)
-							if ($ADTSession.NXT.SoftMigration.Result = Test-NXTSoftMigration -ADTSession $ADTSession) {
+
+							# Now validate if the soft migration is actually applicable based on the current system state and if the custom hook intervened.
+							if ($ADTSession.NXT.SoftMigration.Result = Test-NXTSoftMigration -ADTSession $ADTSession -Scope @('Detection', 'Configuration', 'Deployment')) {
 								Write-ADTLogEntry -Severity Success -Message 'Soft Migration is applicable. Proceeding with migration logic.'
 								if ($ADTSession.NXT.Install.Reboot -eq [PSADTNXT.Deployment.RebootAction]::Always) {
 									Write-ADTLogEntry -Severity Warning -Message 'The package was configured to always reboot, due to Soft Migration being applicable, the setting was lowered to [IfRequired] to prevent unnecessary reboots.'
 									$ADTSession.NXT.Install.Reboot = [PSADTNXT.Deployment.RebootAction]::IfRequired
 								}
+
+								# Unregister the old packages only and disable the uninstall for downstream hooks, as the migration will be performed instead of a regular installation.
+								Write-ADTLogEntry -Message 'Removing old package versions as they are no longer required.'
+								$ADTSession.NXT.Package.UninstallOld = $false
+								Remove-NXTOldPackage -ADTSession $ADTSession
+
+								# Invoke the custom hook point to allow for any additional logic before the migration is performed.
+								. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomSoftMigrationEnd)
 								. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallAndReinstallAndSoftMigrationEnd)
 								Exit-NXTDeployment -ADTSession $ADTSession -Message 'Soft Migration checks passed successfully. Migration will be performed instead of a regular installation.'
 							}
 						}
-						else {
-							Write-ADTLogEntry -Message 'Soft Migration is not applicable for this deployment either because it is not enabled, or no eligible version was found.'
-						}
+						$ADTSession.NXT.SoftMigration.Result = $false
 
-						# If we reach this point, we must show the welcome message if we haven't done so already
+						# If we reach this point, we must show the welcome message (if we haven't done so already) as all further actions are state changing
 						Show-NXTInstallationWelcome -ADTSession $ADTSession -DeploymentDefaults
 
-						#region Invoke-NXTDeployment PreInstall/Reinstall
 						Write-ADTLogEntry -Message 'Unhiding all managed applications in case the deployment fails.' -DebugMessage
 						Invoke-NXTArpKeyOperation -ADTSession $ADTSession -Purge
 
+						# Uninstall old versions if configured
+						Write-ADTLogEntry -Message 'Checking for previously registered packages and cleaning them up.'
+						Remove-NXTOldPackage -ADTSession $ADTSession
+
+						#region Invoke-NXTDeployment PreInstall/Reinstall
 						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomInstallAndReinstallPreInstallAndReinstall)
+						Update-NXTDetectionStatus -ADTSession $ADTSession
 
 						# A package is configured if it is considered installed and the version is equal (if applicable)
-						Update-NXTDetectionStatus -ADTSession $ADTSession
 						if ($ADTSession.NXT.Detection.Enabled -and $ADTSession.NXT.Detection.IsInstalled) {
-							[System.Boolean]$installerRan = $false
 							if ($ADTSession.NXT.Detection.VersionStatus -eq [PSADTNXT.Application.VersionCompareResult]::Equal) {
 								Write-ADTLogEntry -Message "Application is installed in the same version. Running reinstallation logic based on ReinstallMode [$($ADTSession.NXT.Install.ReinstallMode)]."
 								switch ($ADTSession.NXT.Install.ReinstallMode) {
 									{ $_ -eq [PSADTNXT.Deployment.ReinstallMode]::None } {
-										Write-ADTLogEntry -Message 'Reinstallation is disabled. Skipping installation logic.'
+										Write-ADTLogEntry -Message 'Reinstallation is disabled. Skipping reinstallation logic.'
 										break
 									}
 									{ $_ -eq [PSADTNXT.Deployment.ReinstallMode]::Repair } {
@@ -212,7 +213,6 @@
 											Write-ADTLogEntry -Message 'Deployment is set to perform a repair operation. Starting repair.'
 											. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreInstall)
 											. $processResult -Result (Invoke-NXTSessionRepair -ADTSession $ADTSession)
-											$installerRan = $true
 											break
 										}
 										else {
@@ -234,7 +234,6 @@
 
 										Write-ADTLogEntry -Message 'Starting reinstallation.'
 										. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostInstallOnError)
-										$installerRan = $true
 										break
 									}
 								}
@@ -242,6 +241,10 @@
 							else {
 								Write-ADTLogEntry -Message "Application is installed, but version resolved as [$($ADTSession.NXT.Detection.VersionStatus)]. Performing upgrade logic based on UpgradeMode [$($ADTSession.NXT.Install.UpgradeMode)]."
 								switch ($ADTSession.NXT.Install.UpgradeMode) {
+									([PSADTNXT.Deployment.UpgradeMode]::None) {
+										Write-ADTLogEntry -Message 'Upgrade is disabled. Skipping upgrade logic.'
+										break
+									}
 									([PSADTNXT.Deployment.UpgradeMode]::Reinstall) {
 										$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Uninstallation"
 										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreUninstall)
@@ -257,14 +260,11 @@
 										. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPreInstall)
 
 										. $processResult -Result (Invoke-NXTSessionInstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostInstallOnError)
-										$installerRan = $true
 										break
 									}
 								}
 							}
-							if ($installerRan) {
-								. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostInstall)
-							}
+							. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomReinstallPostInstall)
 						}
 						else {
 							$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Installation"
@@ -288,7 +288,8 @@
 						# Only verify the state if the property if it can actually be determined
 						if ($ADTSession.NXT.Detection.Enabled) {
 							Write-ADTLogEntry -Message 'Verifying the installation result based on detection logic.'
-							if (-not $ADTSession.NXT.Detection.IsInstalled -or $ADTSession.NXT.Detection.VersionStatus -eq [PSADTNXT.Application.VersionCompareResult]::Update) {
+							Update-NXTDetectionStatus -ADTSession $ADTSession
+							if (-not $ADTSession.NXT.Detection.IsInstalled -or $ADTSession.NXT.Detection.VersionStatus -ne [PSADTNXT.Application.VersionCompareResult]::Equal) {
 								[System.Collections.Hashtable]$errorParams = @{
 									Exception = [System.Management.Automation.ItemNotFoundException]::new('The target application was not considered installed or the version was incorrect after installation.')
 									Category  = [System.Management.Automation.ErrorCategory]::InvalidResult
@@ -315,6 +316,8 @@
 
 							Write-ADTLogEntry -Message 'Starting uninstallation.'
 							. $processResult -Result (Invoke-NXTSessionUninstallation -ADTSession $ADTSession) -FailHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUninstallEndOnError)
+
+							Update-NXTDetectionStatus -ADTSession $ADTSession
 						}
 						else {
 							Write-ADTLogEntry -Message 'Application is not installed. Skipping uninstallation.'
@@ -322,11 +325,12 @@
 
 						$ADTSession.InstallPhase = "$($ADTSession.NXT.DeploymentType):Completion"
 						Write-ADTLogEntry -Message 'Starting post uninstallation logic.'
-						Update-NXTDetectionStatus -ADTSession $ADTSession
 						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUninstallEnd)
+
 
 						if ($ADTSession.NXT.Detection.Enabled) {
 							Write-ADTLogEntry -Message 'Verifying the uninstallation result based on detection logic.'
+							Update-NXTDetectionStatus -ADTSession $ADTSession
 							if ($ADTSession.NXT.Detection.IsInstalled) {
 								[System.Collections.Hashtable]$errorParams = @{
 									Exception    = [System.Management.Automation.ItemNotFoundException]::new('The target application was still found after uninstallation.')

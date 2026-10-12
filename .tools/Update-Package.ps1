@@ -1,4 +1,5 @@
-﻿<#
+﻿#Requires -Modules PSScriptAnalyzer
+<#
 .SYNOPSIS
 Updates a package to the latest version of the PSAppDeployToolkit.Neo42.Extenions module.
 .PARAMETER Package
@@ -342,7 +343,7 @@ if ($parserErrors) { throw "Parser errors in [$Package\Deploy-Application.ps1]:`
 
 # If there are custom functions that have been removed, we need to migrate them manually
 if ([System.String[]]$missingFunctions = $packageCustomFunctions.Name | Where-Object { $referenceCustomFunctions.Name -notcontains $_ }) {
-	Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for:`n$([System.String]::Join('`n', $missingFunctions))"
+	Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for:`n$([System.String]::Join("`n", $missingFunctions))"
 }
 
 # Migrate custom functions

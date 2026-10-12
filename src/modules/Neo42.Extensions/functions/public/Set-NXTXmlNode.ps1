@@ -23,10 +23,14 @@
 	A filter to include items in the Path parameter.
 	.PARAMETER Encoding
 	The encoding to use when reading the file. If not specified, the encoding will be detected from the file.
+	.PARAMETER Force
+	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.PARAMETER InputObject
 	The XML node(s) to update.
 	.PARAMETER XPath
-	The XPath to the node to update.
+	The XPath to the node(s) to update.
+	.PARAMETER Single
+	Make sure the XPath selects exactly one node. If not, an error is thrown.
 	.PARAMETER Name
 	The name of the node to update.
 	.PARAMETER Attributes
@@ -35,8 +39,6 @@
 	The inner text to set on the node.
 	.PARAMETER PassThru
 	Returns the XML document if specified.
-	.PARAMETER Force
-	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.EXAMPLE
 	Set-NXTXmlNode -Path 'C:\Temp\test.xml' -XPath '/root/parent/child' -Attributes @{ attr1 = 'newValue1'; attr2 = 'newValue2' } -InnerText 'New Inner Text'
 
@@ -72,6 +74,10 @@
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
 		$Encoding,
+		[Parameter(ParameterSetName = 'Path')]
+		[Parameter(ParameterSetName = 'LiteralPath')]
+		[System.Management.Automation.SwitchParameter]
+		$Force,
 
 		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
 		[ValidateNotNull()]
@@ -82,6 +88,8 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$XPath,
+		[System.Management.Automation.SwitchParameter]
+		$Single,
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Name,
@@ -90,9 +98,7 @@
 		[System.String]
 		$InnerText,
 		[System.Management.Automation.SwitchParameter]
-		$PassThru,
-		[System.Management.Automation.SwitchParameter]
-		$Force
+		$PassThru
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -101,7 +107,7 @@
 		try {
 			if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath')) {
 				[System.Collections.Hashtable]$encodingSplat = if ($Encoding) { @{ Encoding = $Encoding } } else { @{} }
-				[System.String[]]$files = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf
+				if (-not ([System.String[]]$files = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) { return }
 				$InputObject = Import-NXTXmlFile -LiteralPath $files @encodingSplat -Force:$Force
 			}
 
@@ -109,7 +115,7 @@
 				[System.Xml.XmlNode]$xml = $InputObject[$i]
 				[System.Xml.XmlNamespaceManager]$nsManager = Get-NXTXMLNamespaceManager -InputObject $xml
 				[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($XPath, $nsManager)
-				if ($nodes.Count -ne 1) {
+				if ($Single -and $nodes.Count -gt 1) {
 					[System.Collections.Hashtable]$errorParams = @{
 						Exception = [System.InvalidOperationException]::new("The XPath [$XPath] must point to a single node, but found [$($nodes.Count)] nodes.")
 						Category  = [System.Management.Automation.ErrorCategory]::InvalidData
@@ -117,20 +123,26 @@
 					}
 					throw (New-ADTErrorRecord @errorParams)
 				}
-				[System.Xml.XmlNode]$node = $nodes[0]
-				if ($Attributes) {
-					$node.Attributes.RemoveAll()
-					foreach ($key in $Attributes.Keys) {
-						[System.String[]]$attributeParts = $key.Split(':', 2)
-						if ($attributeParts.Length -eq 2) {
-							$node.SetAttribute($attributeParts[1], $nsManager.LookupNamespace($attributeParts[0]), $Attributes[$key])
-						}
-						else {
-							$node.SetAttribute($key, $Attributes[$key])
+				if ($nodes.Count -eq 0) {
+					Write-ADTLogEntry -Severity Warning -Message "No nodes matching XPath [$XPath] in given XmlNode."
+					continue
+				}
+				foreach ($node in $nodes) {
+					if ($Attributes) {
+						$node.Attributes.RemoveAll()
+						foreach ($key in $Attributes.Keys) {
+							[System.String[]]$attributeParts = $key.Split(':', 2)
+							if ($attributeParts.Length -eq 2) {
+								$node.SetAttribute($attributeParts[1], $nsManager.LookupNamespace($attributeParts[0]), $Attributes[$key])
+							}
+							else {
+								$node.SetAttribute($key, $Attributes[$key])
+							}
 						}
 					}
+					if ($null -ne $InnerText) { $node.InnerText = $InnerText }
 				}
-				if ($null -ne $InnerText) { $node.InnerText = $InnerText }
+
 				if ($PassThru) { $xml }
 
 				Write-ADTLogEntry -Message "Updating XML node at XPath [$XPath]."

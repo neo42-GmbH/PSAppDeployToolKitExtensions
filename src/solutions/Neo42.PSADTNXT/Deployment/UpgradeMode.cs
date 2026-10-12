@@ -2,6 +2,7 @@
 {
 	public enum UpgradeMode
 	{
+		None,
 		Install,
 		Reinstall
 	}

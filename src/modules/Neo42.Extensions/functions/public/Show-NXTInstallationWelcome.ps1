@@ -263,6 +263,12 @@
 				}
 			}
 
+			[System.TimeSpan]$defaultTimeout = [System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout'])
+			if ($Timeout -and $Timeout -gt $defaultTimeout) {
+				Write-ADTLogEntry -Severity Error -Message "The supplied timeout [$Timeout] is larger than the default maximum timeout of [$defaultTimeout] from the toolkit config. Will use the lower values."
+				$Timeout = $defaultTimeout
+			}
+
 			# The continue type is always continue if no deferral is allowed
 			if (-not $AllowDeferCloseProcesses) {
 				$ContinueType = [PSADTNXT.UI.ContinueType]::Continue
@@ -336,8 +342,9 @@
 			# If there are no blocking processes, we do not show the installation welcome dialog.
 			Write-ADTLogEntry -Message "Showing the legacy welcome dialog for [$([System.String]::Join(', ', ($runningProcesses.Process.ProcessName | Select-Object -Unique)))]."
 
-			# Start the legacy UI.
+			# Start the legacy UI. The script writes its output as UTF-8, so it has to be read as such.
 			[System.String]$argumentList = ConvertTo-NXTPsBinaryArgument -File "$($MyInvocation.MyCommand.Module.ModuleBase)\Scripts\CustomAppDeployToolkitUi.ps1" -Arguments $showInstallationWelcome -UseLastExitCode
+			[System.Text.Encoding]$outputEncoding = [System.Text.UTF8Encoding]::new($false)
 			if ($adtEnvironment.SessionZero -or $adtEnvironment.IsServiceAccount -or ($adtEnvironment.IsAdmin -and -not $adtEnvironment.IsProcessUserInteractive)) {
 				Write-ADTLogEntry -Message 'Process is running as system, service or non interactive user. Using session helper to spawn in all sessions.' -DebugMessage
 				if ([System.Int32[]]$sessionIds = Get-ADTLoggedOnUser | & { process { if ($_.IsActiveUserSession) { $_.SessionId } } }) {
@@ -345,7 +352,8 @@
 						(Get-ADTPowerShellProcessPath),
 						$argumentList,
 						$sessionIds,
-						[System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout'])
+						$defaultTimeout.Add([System.TimeSpan]::FromMinutes(1)),
+						$outputEncoding
 					)
 				}
 				else {
@@ -355,9 +363,9 @@
 			}
 			elseif ($adtEnvironment.IsProcessUserInteractive) {
 				Write-ADTLogEntry -Message 'Process is not running in session zero, as service or as non interative user. Assuming we run as user.' -DebugMessage
-				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -PassThru `
+				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -StreamEncoding $outputEncoding -PassThru `
 					-SuccessExitCodes ([System.Enum]::GetValues([PSADTNXT.UI.LegacyWelcomeWindowCodes])).value__ `
-					-Timeout ([System.TimeSpan]::FromSeconds($adtConfig['UI']['DefaultTimeout']))
+					-Timeout ($defaultTimeout.Add([System.TimeSpan]::FromMinutes(1)))
 			}
 			else {
 				Write-ADTLogEntry -Severity Error -Message 'Could not find suitable user to display UI to. Assuming continue option.'

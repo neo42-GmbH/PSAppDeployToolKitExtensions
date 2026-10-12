@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
+using PSADTNXT.Extensions;
 using PSADTNXT.IO;
 
 namespace PSADTNXT.Deployment
@@ -41,6 +42,11 @@ namespace PSADTNXT.Deployment
 			if (hashtable == null)
 			{
 				throw new ArgumentNullException(nameof(hashtable));
+			}
+
+			if (!hashtable.MatchesProperties<NxtShortcutOperation>(out var invalidKeys))
+			{
+				throw new InvalidDataException($"Cannot create [{nameof(NxtShortcutOperation)}] from object with invalid key(s) [{string.Join(", ", invalidKeys)}].");
 			}
 
 			var mode = hashtable.ContainsKey("Mode")

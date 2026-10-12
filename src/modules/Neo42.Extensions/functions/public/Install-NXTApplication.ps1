@@ -207,12 +207,16 @@
 			Wait-NXTDeploymentAwaiter -Awaiter $Awaiter
 
 			if ($Criteria) {
-				[PSADT.Types.InstalledApplication[]]$app = @(Get-NXTApplication -Criteria $Criteria)
-				if ($app.Length -ne 1) {
+				[System.DateTime]$endTime = [System.DateTime]::Now.AddSeconds(5)
+				while (-not ([PSADT.Types.InstalledApplication[]]$applications = @(Get-NXTApplication -Criteria $Criteria))) {
+					if ($endTime -lt [System.DateTime]::Now) { break }
+					Start-Sleep -Milliseconds 500
+				}
+				if ($applications.Length -ne 1) {
 					[System.Collections.Hashtable]$errorParams = @{
-						Exception    = [System.Management.Automation.ItemNotFoundException]::new("Application lookup criteria were provided but [$($app.Length)] applications were found after installation. Must be exactly [1].")
+						Exception    = [System.Management.Automation.ItemNotFoundException]::new("Application criteria was provided but [$($applications.Length)] applications were found 5s after installation. Must be exactly [1].")
 						Category     = [System.Management.Automation.ErrorCategory]::InvalidResult
-						ErrorId      = if ($app.Length -gt 1) { 'MultipleApplicationsFound' } else { 'NoApplicationFound' }
+						ErrorId      = if ($applications.Length -gt 1) { 'MultipleApplicationsFound' } else { 'NoApplicationFound' }
 						TargetObject = $Criteria
 					}
 					throw (New-ADTErrorRecord @errorParams)
@@ -220,10 +224,10 @@
 
 				if (-not $NoCache -and
 					$CacheDirectory -and
-					-not [System.String]::IsNullOrWhiteSpace($app[0].UninstallStringFilePath)
+					-not [System.String]::IsNullOrWhiteSpace($applications[0].UninstallStringFilePath)
 				) {
-					$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($app[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
-					$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $app[0].PSChildName)
+					$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($applications[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
+					$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $applications[0].PSChildName)
 				}
 			}
 

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using PSADTNXT.Extensions;
 using PSADTNXT.IO;
 
 namespace PSADTNXT.Deployment
@@ -35,6 +37,11 @@ namespace PSADTNXT.Deployment
 			if (hashtable == null)
 			{
 				throw new ArgumentNullException(nameof(hashtable));
+			}
+
+			if (!hashtable.MatchesProperties<NxtProcessAwaiter>(out var invalidKeys))
+			{
+				throw new InvalidDataException($"Cannot create [{nameof(NxtProcessAwaiter)}] from object with invalid key(s) [{string.Join(", ", invalidKeys)}].");
 			}
 
 			var name = hashtable.ContainsKey("Name") && hashtable["Name"] is string nameValue

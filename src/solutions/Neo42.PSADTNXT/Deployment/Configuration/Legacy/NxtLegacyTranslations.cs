@@ -5,7 +5,6 @@ using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Text;
-using System.Text.RegularExpressions;
 using PSADTNXT.Application;
 using PSADTNXT.Package;
 using PSADTNXT.ProcessManagement;
@@ -17,31 +16,13 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 	{
 		internal static readonly Version MinimumLegacyConfigVersion = new(2024, 09, 19, 1);
 
-		private static readonly IReadOnlyDictionary<string, string> _runtimeVariableMapping = new Dictionary<string, string>
-		{
-			{ "AppLogFolder", "%LogFolder%" },
-			{ "DirFiles", "%DirFiles%" },
-			{ "DirSupportFiles", "%DirSupportFiles%" },
-			{ "App", "%PackageDirectory%" },
-		};
-
 		internal static void Expand(this NxtLegacyPackageConfigurationModel legacyModel, IDictionary<string, object> adtEnvironment, params SessionStateVariableEntry[] extraVariables)
 		{
-			var sessionStateVaraibles = NxtPowerShell.ToSessionStateVariables(adtEnvironment, NxtPowerShell.GLOBAL_CONSTANT_OPTION)
-				.Concat(GetLegacyVariables(adtEnvironment, legacyModel.AppArch))
-				.Concat(extraVariables)
-				.Append(new SessionStateVariableEntry("PackageConfig", legacyModel, "", NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			var sessionStateVariables = NxtPowerShell.ToSessionStateVariables(adtEnvironment, NxtPowerShell.GLOBAL_CONSTANT_OPTION)
+				.Concat(GetLegacyVariables(adtEnvironment, legacyModel))
+				.Concat(extraVariables);
 
-			using var ps = PowerShell.Create(NxtPowerShell.GetExpansionSessionState(sessionStateVaraibles));
-
-			static string ReplaceRuntimeVariables(string legacyModel)
-			{
-				foreach (var variable in _runtimeVariableMapping)
-				{
-					legacyModel = Regex.Replace(legacyModel, @"\$(?:(?:global|script|local)\:)?" + Regex.Escape(variable.Key) + @"\b", variable.Value, RegexOptions.IgnoreCase);
-				}
-				return legacyModel;
-			}
+			using var ps = PowerShell.Create(NxtPowerShell.GetExpansionSessionState(sessionStateVariables));
 
 			// Set obsolet values to placeholders so self-referencing variables do not cause issues
 #pragma warning disable CS0618
@@ -53,10 +34,10 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			legacyModel.InstallLocation = ps.ExpandString(legacyModel.InstallLocation);
 			legacyModel.InstLogFile = ps.ExpandString(legacyModel.InstLogFile);
 			legacyModel.UninstLogFile = ps.ExpandString(legacyModel.UninstLogFile);
-			legacyModel.InstFile = ps.ExpandString(ReplaceRuntimeVariables(legacyModel.InstFile));
-			legacyModel.InstPara = ps.ExpandString(ReplaceRuntimeVariables(legacyModel.InstPara));
-			legacyModel.UninstFile = ps.ExpandString(ReplaceRuntimeVariables(legacyModel.UninstFile));
-			legacyModel.UninstPara = ps.ExpandString(ReplaceRuntimeVariables(legacyModel.UninstPara));
+			legacyModel.InstFile = ps.ExpandString(legacyModel.InstFile);
+			legacyModel.InstPara = ps.ExpandString(legacyModel.InstPara);
+			legacyModel.UninstFile = ps.ExpandString(legacyModel.UninstFile);
+			legacyModel.UninstPara = ps.ExpandString(legacyModel.UninstPara);
 
 			if (legacyModel.UninstallKeyContainsExpandVariables)
 			{
@@ -75,7 +56,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					hideKey.DisplayNamesToExcludeFromHiding = hideKey.DisplayNamesToExcludeFromHiding?.Select(ps.ExpandString).ToList();
 				}
 				// Default reference to UninstallKey may result in empty, which will not pass validation. Remove it as it serves no purpose
-				hideKeys.RemoveAll(k => string.IsNullOrWhiteSpace(k.KeyName));
+				_ = hideKeys.RemoveAll(k => string.IsNullOrWhiteSpace(k.KeyName));
 			}
 
 			legacyModel.CommonDesktopShortcutsToDelete = legacyModel.CommonDesktopShortcutsToDelete?.Select(ps.ExpandString).ToList();
@@ -100,7 +81,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				{
 					if (variable.ExpandVariables)
 					{
-						variable.Value = ps.ExpandString(ReplaceRuntimeVariables(variable.Value));
+						variable.Value = ps.ExpandString(variable.Value);
 					}
 				}
 			}
@@ -516,12 +497,12 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			return variables;
 		}
 
-		private static List<SessionStateVariableEntry> GetLegacyVariables(IDictionary<string, object> adtEnvironment, string arch)
+		private static List<SessionStateVariableEntry> GetLegacyVariables(IDictionary<string, object> adtEnvironment, NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var result = new List<SessionStateVariableEntry>();
 
 			// Arch specific variables
-			if (arch.Equals("x86", StringComparison.OrdinalIgnoreCase) || arch.Equals("arm", StringComparison.OrdinalIgnoreCase))
+			if (legacyModel.AppArch.Equals("x86", StringComparison.OrdinalIgnoreCase) || legacyModel.AppArch.Equals("arm", StringComparison.OrdinalIgnoreCase))
 			{
 				result.Add(new("ProgramFilesDir", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 				result.Add(new("ProgramFilesDirx86", adtEnvironment["envProgramFilesW3264"], string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
@@ -548,13 +529,16 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 			result.Add(new("UserPartDir", string.Empty, string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			result.Add(new("AppLogFolder", "%LogFolder%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new("DirFiles", "%DirFiles%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new("DirSupportFiles", "%DirSupportFiles%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new SessionStateVariableEntry("PackageConfig", legacyModel, string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 
 			return result;
 		}
 
 		private static bool TryGetCompatVariable(this NxtLegacyPackageConfigurationModel legacyModel, string name, out string? value)
 		{
-			value = legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals("DetectionCriteriaStore") && !string.IsNullOrWhiteSpace(psvr.Value))?.Value;
+			value = legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(psvr.Value))?.Value;
 			return value != null;
 		}
 	}

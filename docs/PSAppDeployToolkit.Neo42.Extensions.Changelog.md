@@ -51,8 +51,7 @@
 
 - The option to cancel a dialog was merged into the deferral logic. The user must now be able to defer the deployment if cancelling was previously allowed. The differentiation between cancel and defer was ambiguous and lead to undesired behavior in certain scenarios. Deferring and cancelling had the same effect of ending the deployment temporarily.
 
-- The UI will now run in the user's context. Which makes it compatible with screen readers.
-  - An incompatibility with Workspace ONE has been resolved, where no UI could spawn in SYSTEM context.
+- An incompatibility with Workspace ONE has been resolved, where no UI could spawn in SYSTEM context.
 
 ### Configurability & Extensability
 
@@ -97,6 +96,8 @@ The new format improves the following aspects:
 #### General improvements
 
 - New custom function `CustomEndOnError` was added which make error handling easier.
+
+- New custom function `CustomSoftmigrationEnd` was added to only run in case the Soft Migration was applied.
 
 - You may place a singular **WIM file** in the `DirFiles` folder which contains the deployment content. PSADT will mount the WIM automatically and point `DirFiles` to the mounted location. This reduces package size and improves transfer times for certain deployment systems.
 

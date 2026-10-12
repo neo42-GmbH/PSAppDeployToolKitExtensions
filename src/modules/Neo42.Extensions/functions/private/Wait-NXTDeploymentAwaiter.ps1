@@ -47,7 +47,7 @@
 				Start-Sleep -Milliseconds 250
 			}
 
-			Write-ADTLogEntry -Severity Success -Message 'All awaiter conditions have been met.'
+			Write-ADTLogEntry -Message 'All awaiter conditions have been met.'
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

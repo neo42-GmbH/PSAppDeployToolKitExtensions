@@ -90,7 +90,7 @@
 			foreach ($file in (Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) {
 				Write-ADTLogEntry -Message "Updating text in file [$file]: Replacing [$Query] with [$Value]."
 				if ($PSCmdlet.ShouldProcess($file, "Replace [$Query] with [$Value].")) {
-					Set-NXTContent -LiteralPath $file @encodingSplat -Force:$Force -Value (
+					Set-NXTContent -LiteralPath $file @encodingSplat -Force:$Force -NoNewLine -Value (
 						[System.Text.RegularExpressions.Regex]::new($pattern, $options).Replace(
 							(Get-NXTContent -LiteralPath $file @encodingSplat -Force:$Force),
 							$(if ($Regex) { $Value } else { $Value.Replace('$', '$$') }),

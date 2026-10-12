@@ -124,6 +124,7 @@
 		if ($ADTSession.NXT.DeploymentType.IsInstall -and
 			([PSADTNXT.Package.NxtRegisteredPackage]$package = $ADTSession.NXT.Package.GetRegisteredPackage())
 		) {
+			if ($package.Application) { Remove-Item -LiteralPath $package.Application.PSPath }
 			Remove-Item -LiteralPath $package.PSPath
 		}
 		$ADTSession.NXT.Package.Register = $false

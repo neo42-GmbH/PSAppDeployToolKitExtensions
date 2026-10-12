@@ -23,12 +23,14 @@
 	A filter to include items in the Path parameter.
 	.PARAMETER Encoding
 	The encoding to use when the file is created. If the file exists, the encoding will not be updated.
+	.PARAMETER Force
+	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.PARAMETER InputObject
 	The XML node(s) to remove the node from.
 	.PARAMETER XPath
 	The XPath to the node to remove.
-	.PARAMETER Force
-	Determines if all matching nodes should be removed if more than one node is found.
+	.PARAMETER Single
+	Make sure the XPath selects exactly one node. If not, an error is thrown.
 	.PARAMETER PassThru
 	Returns the XML document if specified.
 	.EXAMPLE
@@ -68,6 +70,10 @@
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
 		$Encoding,
+		[Parameter(ParameterSetName = 'Path')]
+		[Parameter(ParameterSetName = 'LiteralPath')]
+		[System.Management.Automation.SwitchParameter]
+		$Force,
 
 		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
 		[ValidateNotNull()]
@@ -79,7 +85,7 @@
 		[System.String]
 		$XPath,
 		[System.Management.Automation.SwitchParameter]
-		$Force,
+		$Single,
 		[System.Management.Automation.SwitchParameter]
 		$PassThru
 	)
@@ -90,7 +96,7 @@
 	process {
 		try {
 			if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath')) {
-				[System.String[]]$files = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf
+				if (-not ([System.String[]]$files = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) { return }
 				$InputObject = Import-NXTXmlFile -LiteralPath $files @encodingSplat -Force:$Force
 			}
 
@@ -98,25 +104,19 @@
 				[System.Xml.XmlNode]$xml = $InputObject[$i]
 				[System.Xml.XmlNamespaceManager]$nsManager = Get-NXTXMLNamespaceManager -InputObject $xml
 				[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($XPath, $nsManager)
+				if ($Single -and $nodes.Count -gt 1) {
+					[System.Collections.Hashtable]$errorParams = @{
+						Exception = [System.InvalidOperationException]::new("The XPath [$XPath] must point to a single node, but found [$($nodes.Count)] nodes.")
+						Category  = [System.Management.Automation.ErrorCategory]::InvalidData
+						ErrorId   = 'InvalidNodeCount'
+					}
+					throw (New-ADTErrorRecord @errorParams)
+				}
 				if ($nodes.Count -eq 0) {
-					[System.Collections.Hashtable]$errorParams = @{
-						Exception    = [System.InvalidOperationException]::new("The XPath [$XPath] did not return any nodes.")
-						Category     = [System.Management.Automation.ErrorCategory]::InvalidData
-						ErrorId      = 'InvalidNodeCount'
-						TargetObject = $XPath
-					}
-					throw (New-ADTErrorRecord @errorParams)
+					Write-ADTLogEntry -Severity Warning -Message "No nodes matching XPath [$XPath] in given XmlNode."
+					continue
 				}
-				if ($nodes.Count -gt 1 -and -not $Force) {
-					[System.Collections.Hashtable]$errorParams = @{
-						Exception         = [System.InvalidOperationException]::new("The XPath [$XPath] did not return any nodes.")
-						Category          = [System.Management.Automation.ErrorCategory]::InvalidData
-						ErrorId           = 'InvalidNodeCount'
-						RecommendedAction = 'Use the -Force switch to remove all matching nodes.'
-					}
-					throw (New-ADTErrorRecord @errorParams)
-				}
-				Write-ADTLogEntry -Message "Removing XML node(s) at XPath [$XPath]."
+				Write-ADTLogEntry -Message "Removing [$($nodes.Count)] XML node(s) at XPath [$XPath]."
 				$nodes | & { process { $null = $_.ParentNode.RemoveChild($_) } }
 				if ($PassThru) { $xml }
 

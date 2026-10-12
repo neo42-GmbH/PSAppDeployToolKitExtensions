@@ -4,15 +4,16 @@
 	Converts a JSON string to a custom object.
 	.DESCRIPTION
 	The ConvertFrom-NXTJson function converts a JSON string to a custom object.
-	It enables the feature set of PowerShell Core's Cmdlet in Windows PowerShell 5.1.
+	It enables the feature set of PowerShell Core's Cmdlet in Windows PowerShell 5.1 (json with comments and -AsHashtable parameter).
 	.INPUTS
 	System.String - The JSON string to convert.
 	.OUTPUTS
 	System.Management.Automation.PSObject - The custom object created from the JSON string.
-	System.Collections.Hashtable - The custom object created from the JSON string if the `-AsHashTable` parameter is specified.
+
+	System.Collections.Hashtable - The custom object created from the JSON string if the -AsHashtable parameter is specified.
 	.PARAMETER InputObject
 	The JSON string to convert.
-	.PARAMETER AsHashTable
+	.PARAMETER AsHashtable
 	When specified, the function will return a hashtable instead of a custom object.
 	.EXAMPLE
 	'{"key": "value"}' | ConvertFrom-NXTJson
@@ -27,7 +28,7 @@
 		[System.String]
 		$InputObject,
 		[System.Management.Automation.SwitchParameter]
-		$AsHashTable
+		$AsHashtable
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -39,10 +40,10 @@
 			if ($PSVersionTable.PSVersion.Major -gt 5) { return (ConvertFrom-Json @PSBoundParameters) }
 
 			$result = ConvertFrom-Json -InputObject ($jsonCommentPattern.Replace($InputObject, '${EscapedString}'))
-			if ($AsHashTable -and $result -is [System.Array] -and $result.Count -gt 1) {
+			if ($AsHashtable -and $result -is [System.Array] -and $result.Count -gt 1) {
 				$result = $result | & { process { ConvertTo-NXTHashtable -InputObject $_ -Depth ([System.Int32]::MaxValue) } }
 			}
-			elseif ($AsHashTable -and $result -isnot [System.Array]) {
+			elseif ($AsHashtable -and $result -isnot [System.Array]) {
 				$result = ConvertTo-NXTHashtable -InputObject $result -Depth ([System.Int32]::MaxValue)
 			}
 			return $result

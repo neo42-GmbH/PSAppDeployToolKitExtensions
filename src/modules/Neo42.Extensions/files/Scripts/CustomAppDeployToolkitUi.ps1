@@ -53,6 +53,10 @@ param (
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version '3.0'
 
+# Write the redirected output as UTF-8 instead of the OEM code page of the console, so that it is
+# not limited to the characters of that code page. The caller has to decode the output accordingly.
+[System.Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
 # Convert relative paths back to full paths base on module base.
 [System.String]$moduleRoot = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\..\")
 $ScriptDirectory = $ScriptDirectory | & { process { if ([System.IO.Path]::IsPathRooted($_)) { $_ } else { [System.IO.Path]::Combine($moduleRoot, $_) } } }

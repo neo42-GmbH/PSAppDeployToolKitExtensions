@@ -3,7 +3,7 @@
 	.SYNOPSIS
 	Checks and compares the actual permissions of a specified folder against expected permissions.
 	.DESCRIPTION
-	Test-NxtFolderPermissions evaluates a folder's security settings by comparing its actual permissions, owner, and other security attributes against predefined expectations.
+	Evaluates a folder's security settings by comparing its actual permissions, owner, and other security attributes against predefined expectations.
 	It's useful for ensuring folder permissions align with security policies or compliance standards.
 	.INPUTS
 	System.IO.FileInfo - The folder to check.
@@ -24,7 +24,7 @@
 	.PARAMETER IsInherited
 	Test if permissions are inherited from the parent folder. Only access rules with a matching inheritance state are taken into account when the requested permissions are verified.
 	.EXAMPLE
-	Test-NXTFolderWithPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
+	Test-NXTFolderPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
 
 	Tests if a folder 'C:\Temp\MyFolder' has these permissions: full control permissions for 'DOMAIN\User1' and 'Administrators', write permissions for 'Everyone', and 'DOMAIN\User1' as owner.
 	#>
