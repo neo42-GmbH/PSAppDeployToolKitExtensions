@@ -62,6 +62,14 @@ Describe 'Remove-NXTXmlNode' {
 		[System.String]$xpathValid = '/root/parent_multiple/child[@property="pvalue"]'
 		[System.String]$xpathValid2 = '/root/parent_single/child[@property="pvalue"]'
 		[System.String]$xpathInvalid = '/root/parent_missing/child'
+		[System.String]$nodeXpathValid = './child'
+
+		# Nodes
+		function Init-Nodes {
+			New-FileValid
+			[System.Xml.XmlNode[]]$script:nodes = $xml.SelectNodes("/root/*[contains(local-name(), 'parent')]")
+			[System.Xml.XmlNode]$script:node = $xml.SelectSingleNode('/root/parent_single')
+		}
 	}
 
 	AfterAll {
@@ -100,7 +108,6 @@ Describe 'Remove-NXTXmlNode' {
 			New-FileValid2
 			{ Remove-NXTXmlNode LiteralPath "$filePath*", $filePath2 -XPath $xpathValid } | Should -Throw
 			New-FileValid
-			New-FileValid2
 			{ Remove-NXTXmlNode LiteralPath "$filePath*" -XPath $xpathValid } | Should -Throw
 		}
 
@@ -130,54 +137,66 @@ Describe 'Remove-NXTXmlNode' {
 		It 'Should be $null with an ineffective filter' {
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Filter 'IneffectiveFilter' -XPath $xpathValid -PassThru | Should -BeNullOrEmpty
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Filter 'IneffectiveFilter' -XPath $xpathValid -PassThru
+			$result | Should -BeNullOrEmpty
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Filter 'IneffectiveFilter' -XPath $xpathValid -PassThru | Should -BeNullOrEmpty
+			$result = Remove-NXTXmlNode -Path $filePath -Filter 'IneffectiveFilter' -XPath $xpathValid -PassThru
+			$result | Should -BeNullOrEmpty
 		}
 
-		It 'Should be [System.Xml.XmlNode[]] with multiple paths and with null or empty filter' {
+		It 'Should be [System.Xml.XmlDocument] with multiple paths and with null or empty filter' {
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Filter $null -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode[]]'
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Filter $null -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlDocument]'
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Filter '' -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode[]]'
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Filter '' -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlDocument]'
 		}
 
 		It 'Should be [System.Xml.XmlNode] with multiple paths and with null or empty filter' {
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Filter $null -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode]'
+			$result = Remove-NXTXmlNode -Path $filePath -Filter $null -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Filter '' -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode]'
+			$result = Remove-NXTXmlNode -Path $filePath -Filter '' -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
 		}
 	}
 
 	Context 'When using exclude (one or multiple definitions)' {
-		It 'Should be [System.Xml.XmlNode[]] with multiple paths and with an ineffective exclude value' {
+		It 'Should be [System.Xml.XmlDocument] with multiple paths and with an ineffective exclude value' {
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Exclude 'IneffectiveExclude' -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode[]]'
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Exclude 'IneffectiveExclude' -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlDocument]'
 		}
 
 		It 'Should be [System.Xml.XmlNode] with one path and with an ineffective exclude value' {
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Exclude 'IneffectiveExclude' -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode]'
+			$result = Remove-NXTXmlNode -Path $filePath -Exclude 'IneffectiveExclude' -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
 		}
 
-		It 'Should be [System.Xml.XmlNode[]] with multiple paths with null or empty exclude value' {
+		It 'Should be [System.Xml.XmlDocument] with multiple paths with null or empty exclude value' {
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Exclude $null -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode[]]'
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Exclude $null -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlDocument]'
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Exclude '' -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode[]]'
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Exclude '' -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlDocument]'
 		}
 
 		It 'Should be [System.Xml.XmlNode] with one path and with null or empty exclude value' {
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Exclude $null -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode]'
+			$result = Remove-NXTXmlNode -Path $filePath -Exclude $null -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Exclude '' -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode]'
+			$result = Remove-NXTXmlNode -Path $filePath -Exclude '' -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
 		}
 	}
 
@@ -185,30 +204,36 @@ Describe 'Remove-NXTXmlNode' {
 		It 'Should be null with an ineffective include value' {
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Include 'IneffectiveInclude' -XPath $xpathValid -PassThru | Should -BeNullOrEmpty
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Include 'IneffectiveInclude' -XPath $xpathValid -PassThru
+			$result | Should -BeNullOrEmpty
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Include 'IneffectiveInclude' -XPath $xpathValid -PassThru | Should -BeNullOrEmpty
+			$result = Remove-NXTXmlNode -Path $filePath -Include 'IneffectiveInclude' -XPath $xpathValid -PassThru
+			$result | Should -BeNullOrEmpty
 		}
 
-		It 'Should be [System.Xml.XmlNode[]] with multiple paths and with null or empty include value' {
+		It 'Should be [System.Xml.XmlDocument] with multiple paths and with null or empty include value' {
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Include $null -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode[]]'
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Include $null -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlDocument]'
 			New-FileValid
 			New-FileValid2
-			Remove-NXTXmlNode -Path $filePath, $filePath2 -Include '' -XPath $xpathValid -PassThru | Should -BeOfType '[System.Xml.XmlNode[]]'
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -Include '' -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlDocument]'
 		}
 
 		It 'Should be [System.Xml.XmlNode] with one path and with null or empty include value' {
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Include $null -XPath $xpathValid -PassThru | Should -Not -BeOfType '[System.Xml.XmlNode]'
+			$result = Remove-NXTXmlNode -Path $filePath -Include $null -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
 			New-FileValid
-			Remove-NXTXmlNode -Path $filePath -Include '' -XPath $xpathValid -PassThru | Should -Not -BeOfType '[System.Xml.XmlNode]'
+			$result = Remove-NXTXmlNode -Path $filePath -Include '' -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
 		}
 	}
 
 	Context 'When using an invalid encoding' {
-		It 'Should throw an error with a non-existing encoding' {
+		It 'Should throw an exception with a non-existing encoding' {
 			New-FileValid
 			New-FileValid2
 			{ Remove-NXTXmlNode -Path $filePath, $filePath2 -Encoding 'InvalidEncoding' -XPath $xpathValid } | Should -Throw
@@ -216,7 +241,7 @@ Describe 'Remove-NXTXmlNode' {
 			{ Remove-NXTXmlNode -Path $filePath -Encoding 'InvalidEncoding' -XPath $xpathValid } | Should -Throw
 		}
 
-		It 'Should throw an error with null or empty encoding' {
+		It 'Should throw an exception with null or empty encoding' {
 			New-FileValid
 			New-FileValid2
 			{ Remove-NXTXmlNode -Path $filePath, $filePath2 -Encoding $null -XPath $xpathValid } | Should -Throw
@@ -229,7 +254,7 @@ Describe 'Remove-NXTXmlNode' {
 			{ Remove-NXTXmlNode -Path $filePath -Encoding '' -XPath $xpathValid } | Should -Throw
 		}
 
-		It 'Should throw an error with a wrong data type for encoding' {
+		It 'Should throw an exception with a wrong data type for encoding' {
 			New-FileValid
 			New-FileValid2
 			{ Remove-NXTXmlNode -Path $filePath, $filePath2 -Encoding 123 -XPath $xpathValid } | Should -Throw
@@ -238,8 +263,36 @@ Describe 'Remove-NXTXmlNode' {
 		}
 	}
 
+	Context 'When using an invalid xpath' {
+		It 'Should throw an exception with a non-existing xpath' {
+			New-FileValid
+			New-FileValid2
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -XPath $xpathInvalid -PassThru
+			$result | Should -BeNullOrEmpty
+			New-FileValid
+			$result = Remove-NXTXmlNode -Path $filePath -XPath $xpathInvalid -PassThru
+			$result | Should -BeNullOrEmpty
+		}
+
+		It 'Should throw an exception with multiple paths and with null or empty xpath' {
+			New-FileValid
+			New-FileValid2
+			{ Remove-NXTXmlNode -Path $filePath, $filePath2 -XPath $null } | Should -Throw
+			New-FileValid
+			New-FileValid2
+			{ Remove-NXTXmlNode -Path $filePath, $filePath2 -XPath '' } | Should -Throw
+		}
+
+		It 'Should throw an exception with one path and with null or empty xpath' {
+			New-FileValid
+			{ Remove-NXTXmlNode -Path $filePath -XPath $null } | Should -Throw
+			New-FileValid
+			{ Remove-NXTXmlNode -Path $filePath -XPath '' } | Should -Throw
+		}
+	}
+
 	Context 'When using an input object' {
-		It 'Should throw an error with null or empty path' {
+		It 'Should throw an exception with null or empty path' {
 			{ Remove-NXTXmlNode InputObject $null -XPath $xpathValid } | Should -Throw
 			{ Remove-NXTXmlNode InputObject '' -XPath $xpathValid } | Should -Throw
 		}
@@ -249,9 +302,60 @@ Describe 'Remove-NXTXmlNode' {
 		}
 	}
 
-	Context 'When using pipeline input' {
-		It 'Should be ...' {
+	Context 'When using invalid pipeline input' {
+		It 'Should throw an exception with null or empty pipeline input' {
+			{ $null | Remove-NXTXmlNode -XPath $xpathValid } | Should -Throw
+			{ '' | Remove-NXTXmlNode -XPath $xpathValid } | Should -Throw
+		}
 
+		It 'Should throw an exception with wrong data type for pipeline input' {
+			{ 123 | Remove-NXTXmlNode -XPath $xpathValid } | Should -Throw
+		}
+	}
+
+	Context 'When using valid input' {
+		It 'Should be [System.Xml.XmlDocument] with multiple paths' {
+			New-FileValid
+			New-FileValid2
+			$result = Remove-NXTXmlNode -Path $filePath, $filePath2 -XPath $xpathValid -PassThru
+			$result | Should -BeOfType '[System.Xml.XmlDocument]'
+			$result.SelectSingleNode('.//parent_multiple/child[@property="pvalue"]') | Should -BeNullOrEmpty
+		}
+
+		It 'Should be [System.Xml.XmlNode] with multiple paths and -Single switch' {
+			New-FileValid
+			New-FileValid2
+			$result = Remove-NXTXmlNode -LiteralPath $filePath, $filePath2 -XPath $xpathValid -Single -Passthru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
+			$result.SelectSingleNode('.//parent_multiple/child[@property="pvalue"]') | Should -BeNullOrEmpty
+		}
+
+		It 'Should be [System.Xml.XmlNode] with one path to a hidden file and -Force switch' {
+			New-FileHidden
+			$result = Remove-NXTXmlNode -LiteralPath $filePathHidden -XPath $xpathValid -Force -Passthru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
+			$result.SelectSingleNode('.//parent_multiple/child[@property="pvalue"]') | Should -BeNullOrEmpty
+		}
+
+		It 'Should throw an exception with one path to a hidden file without -Force switch' {
+			New-FileHidden
+			{ Remove-NXTXmlNode -LiteralPath $filePathHidden -XPath $xpathValid -Passthru } | Should -Throw
+		}
+
+		It 'Should be [System.Xml.XmlNode] with input objects as [System.Xml.XmlNode]' {
+			Init-Nodes
+			$result = Remove-NXTXmlNode -InputObject $node -XPath $nodeXpathValid -Passthru
+			$result | Should -BeOfType '[System.Xml.XmlNode]'
+			$result.SelectSingleNode('.//child[@property="pvalue"]') | Should -BeNullOrEmpty
+		}
+
+		It 'Should be [System.Object[]] with input objects as [System.Xml.XmlNode[]]' {
+			Init-Nodes
+			$result = Remove-NXTXmlNode -InputObject $nodes -XPath $nodeXpathValid -PassThru
+			Should -BeOfType '[System.Object[]]' -ActualValue $result
+			Should -HaveCount 2 -ActualValue $result
+			$result | ForEach-Object { $_ | Should -BeOfType '[System.Xml.XmlNode]' }
+			$result | ForEach-Object { $_.SelectSingleNode('.//child[@property="pvalue"]') | Should -BeNullOrEmpty }
 		}
 	}
 }
