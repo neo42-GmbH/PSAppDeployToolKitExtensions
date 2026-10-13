@@ -1680,7 +1680,7 @@ function Measure-NXTDeprecatedFunction {
 				}
 				AddParameters       = @{
 					Single    = '-Single'
-					InnerText = { if (-not $boundParameters.ContainsKey('AttributeName')) { '-InnerText' } }
+					InnerText = { if (-not $boundParameters.ContainsKey('AttributeName') -or $boundParameters['AttributeName'].Value.Value -eq 'InnerText') { '-InnerText' } }
 				}
 			}
 			'Register-NxtPackage'                    = @{
@@ -1783,7 +1783,7 @@ function Measure-NXTDeprecatedFunction {
 					Create          = { if ($_ -eq '$true') { '-Force' } }
 				}
 				AddParameters       = @{
-					Create = { if (-not $boundParameters.ContainsKey('Create') -or $true -eq $boundParameters['Create']) { '-Force' } }
+					Create = { if (-not $boundParameters.ContainsKey('Create') -or $true -eq $boundParameters['Create'].Value.ConstantValue) { '-Force' } }
 				}
 			}
 			'Set-NxtPackageArchitecture'             = @{
