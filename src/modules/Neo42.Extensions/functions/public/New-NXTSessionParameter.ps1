@@ -26,13 +26,13 @@
 		[ValidateScript({ $_.MyCommand.CommandType -eq [System.Management.Automation.CommandTypes]::ExternalScript })]
 		[System.Management.Automation.InvocationInfo]
 		$Invocation,
-		[ValidateScript({ $_.Exists })]
-		[System.IO.DirectoryInfo]
-		$ScriptDirectory = [System.IO.Path]::GetDirectoryName($Invocation.MyCommand.Definition),
-		[ValidateScript({ $_.Exists -and $_.Extension -eq '.cfg' })]
+		[ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
+		[System.String]
+		$ScriptDirectory = [System.IO.Path]::GetDirectoryName($Invocation.MyCommand.Path),
+		[ValidateScript({ [System.IO.Path]::GetExtension($_) -eq '.cfg' -and (Test-Path -LiteralPath $_ -PathType Leaf) }) ]
 		[PSDefaultValue(Value = 'Setup.cfg, CustomSetup.cfg')]
-		[System.IO.FileInfo[]]
-		$SetupCfg = @(Get-Item -LiteralPath "$($ScriptDirectory.FullName)\Setup.cfg", "$($ScriptDirectory.FullName)\CustomSetup.cfg" -ErrorAction Ignore)
+		[System.String[]]
+		$SetupCfg = @("$ScriptDirectory\Setup.cfg", "$ScriptDirectory\CustomSetup.cfg" | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState

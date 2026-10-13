@@ -67,6 +67,7 @@ Adds the content 'Hello World' to the file 'C:\Temp\test.txt' using the UTF8 enc
 ### INPUTS
 
 System.String[] - The content to add to the file(s).
+
 System.IO.FileInfo[] - The file(s) to add content to.
 
 ### OUTPUTS
@@ -4045,8 +4046,8 @@ Retrieves the parameters for the the Open-ADTSession function.
 ```PowerShell
 New-NXTSessionParameter
     [-Invocation] <InvocationInfo>
-    [[-ScriptDirectory] <DirectoryInfo>]
-    [[-SetupCfg] <FileInfo[]>]
+    [[-ScriptDirectory] <string>]
+    [[-SetupCfg] <string[]>]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -4095,9 +4096,9 @@ The directory from which all source files are read. Defaults to the invocation s
 
 |Property|Value|
 |:---|:---|
-|Type:|DirectoryInfo|
+|Type:|String|
 |Position:|1|
-|Default value:|[System.IO.Path]::GetDirectoryName($Invocation.MyCommand.Definition)|
+|Default value:|[System.IO.Path]::GetDirectoryName($Invocation.MyCommand.Path)|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -4108,7 +4109,7 @@ A list of paths to Setup.cfg files to load and merge for the session.
 
 |Property|Value|
 |:---|:---|
-|Type:|FileInfo[]|
+|Type:|String[]|
 |Position:|2|
 |Default value:|Setup.cfg, CustomSetup.cfg|
 |Required:|False|

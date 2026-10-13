@@ -1,6 +1,4 @@
-﻿# Module manifest for module 'PSAppDeployToolkit.Neo42.Extensions'
-
-@{
+﻿@{
 	# Script module or binary module file associated with this manifest.
 	RootModule             = 'PSAppDeployToolkit.Neo42.Extensions.WinGet.psm1'
 

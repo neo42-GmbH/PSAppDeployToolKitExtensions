@@ -8,6 +8,7 @@
 	Important note: If the file exists and the encoding is specified, the encoding will not be updated. Only the new content will be written with the specified encoding.
 	.INPUTS
 	System.String[] - The content to add to the file(s).
+
 	System.IO.FileInfo[] - The file(s) to add content to.
 	.OUTPUTS
 	System.String[] - The content that was added to the file(s) if the `-PassThru` parameter is specified.
