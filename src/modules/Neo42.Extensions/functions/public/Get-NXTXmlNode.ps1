@@ -30,6 +30,7 @@
 	The XPath to the node to remove.
 	.PARAMETER Attribute
 	The name of the attribute to retrieve from the node(s) at the specified XPath location. If not specified, the entire node(s) will be returned.
+	The InnerText property of the node(s) can be retrieved by specifying 'InnerText' as the attribute name.
 	.PARAMETER Single
 	Determines if only the first node found at the specified XPath location should be returned.
 	.PARAMETER Force
