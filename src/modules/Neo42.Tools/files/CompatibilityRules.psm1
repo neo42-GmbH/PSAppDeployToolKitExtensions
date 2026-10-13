@@ -1680,7 +1680,7 @@ function Measure-NXTDeprecatedFunction {
 				}
 				AddParameters       = @{
 					Single    = '-Single'
-					Attribute = { if (-not $boundParameters.ContainsKey('AttributeName')) { '-Attribute ''InnerText''' } }
+					InnerText = { if (-not $boundParameters.ContainsKey('AttributeName')) { '-InnerText' } }
 				}
 			}
 			'Register-NxtPackage'                    = @{
