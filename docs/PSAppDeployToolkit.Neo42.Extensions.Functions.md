@@ -3187,6 +3187,7 @@ Import-NXTIniFile
     [-Include <string[]>]
     [-AsIniDocument]
     [-Encoding <Encoding>]
+    [-Force]
     [-UnboundArguments <List[Object]>]
     [<CommonParameters>]
 ```
@@ -3200,6 +3201,7 @@ Import-NXTIniFile
     [-Include <string[]>]
     [-AsIniDocument]
     [-Encoding <Encoding>]
+    [-Force]
     [-UnboundArguments <List[Object]>]
     [<CommonParameters>]
 ```
@@ -3324,6 +3326,19 @@ The encoding to use when reading the file. If not specified, the encoding will b
 |Property|Value|
 |:---|:---|
 |Type:|Encoding|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Force
+
+Determines if hidden files should be processed.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|

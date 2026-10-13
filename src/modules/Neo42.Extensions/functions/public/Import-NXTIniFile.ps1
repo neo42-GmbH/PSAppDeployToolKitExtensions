@@ -1,4 +1,4 @@
-function Import-NXTIniFile {
+﻿function Import-NXTIniFile {
 	<#
 	.SYNOPSIS
 	Imports an INI file.
@@ -25,6 +25,8 @@ function Import-NXTIniFile {
 	When specified, the function will return an IniDocument object with comments.
 	.PARAMETER Encoding
 	The encoding to use when reading the file. If not specified, the encoding will be detected from the file.
+	.PARAMETER Force
+	Determines if hidden files should be processed.
 	.PARAMETER UnboundArguments
 	Unbound arguments that are passed to the function. These will be ignored but are useful for easier invocation of the function.
 	.EXAMPLE
@@ -63,6 +65,8 @@ function Import-NXTIniFile {
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
 		$Encoding,
+		[System.Management.Automation.SwitchParameter]
+		$Force,
 		[Parameter(DontShow, ValueFromRemainingArguments)]
 		[AllowNull()][AllowEmptyCollection()]
 		[System.Collections.Generic.List[System.Object]]
@@ -77,7 +81,7 @@ function Import-NXTIniFile {
 		try {
 			foreach ($file in (Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) {
 				[PSADTNXT.Configuration.NxtIniDocument]$iniDocument = [PSADTNXT.Configuration.NxtIniDocument]::new()
-				$iniDocument.Parse((Get-NXTContent -LiteralPath $file @encodingSplat))
+				$iniDocument.Parse((Get-NXTContent -LiteralPath $file @encodingSplat -Force:$Force))
 				if (-not $AsIniDocument) {
 					[System.Collections.Hashtable]$iniDocument
 				}
