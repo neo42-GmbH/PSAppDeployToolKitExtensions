@@ -428,8 +428,8 @@ namespace PSADTNXT.Deployment
 			}
 
 			text = Replace(text, "LogFolder", _session.LogPath);
-			text = Replace(text, "InstLogFile", Path.Combine(_session.LogPath, _session.NXT.Install.LogName));
-			text = Replace(text, "UninstLogFile", Path.Combine(_session.LogPath, _session.NXT.Uninstall.LogName));
+			text = Replace(text, "InstLogFile", Path.Combine(_session.LogPath, Install.LogName));
+			text = Replace(text, "UninstLogFile", Path.Combine(_session.LogPath, Uninstall.LogName));
 			text = Replace(text, "DirFiles", _session.DirFiles ?? string.Empty);
 			text = Replace(text, "DirSupportFiles", _session.DirSupportFiles ?? string.Empty);
 			text = Replace(text, "PackageDirectory", Package.Directory.FullName);

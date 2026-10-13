@@ -13,6 +13,7 @@
 	#>
 	[CmdletBinding()]
 	param (
+		[ValidateNotNullOrEmpty()]
 		[Parameter(Mandatory)]
 		[PSADTNXT.Deployment.DeploymentHookPoint[]]
 		$HookPoint

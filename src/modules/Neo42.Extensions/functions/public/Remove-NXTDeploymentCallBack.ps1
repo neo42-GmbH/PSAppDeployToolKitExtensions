@@ -17,7 +17,7 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory)]
-		[ValidateNotNull()]
+		[ValidateNotNullOrEmpty()]
 		[System.Management.Automation.CommandInfo[]]
 		$Callback,
 		[Parameter(Mandatory)]

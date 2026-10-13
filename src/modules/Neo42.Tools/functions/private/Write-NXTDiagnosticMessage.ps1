@@ -3,6 +3,7 @@
 	.SYNOPSIS
 	Writes the diagnostric record in console readable fashion
 	#>
+	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '')]
 	param (
 		[Parameter(Mandatory, ValueFromPipeline)]
 		[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord]

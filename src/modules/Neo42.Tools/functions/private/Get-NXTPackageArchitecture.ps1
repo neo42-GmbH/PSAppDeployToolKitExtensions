@@ -1,4 +1,4 @@
-﻿function Get-PackageArchitecture {
+﻿function Get-NXTPackageArchitecture {
 	<#
 	.SYNOPSIS
 	Determines the architecture of the given package.

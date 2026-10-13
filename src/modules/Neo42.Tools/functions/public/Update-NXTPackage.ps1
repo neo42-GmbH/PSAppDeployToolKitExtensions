@@ -48,7 +48,7 @@
 				)
 				if ($PackageFramework -ge '4.0') { return }
 
-				[System.String]$arch = Get-PackageArchitecture -Package $Package
+				[System.String]$arch = Get-NXTPackageArchitecture -Package $Package
 				[System.String]$deployApplication = [System.IO.Path]::Combine($Package.FullName, 'Deploy-Application.ps1')
 				Set-Content -Encoding UTF8 -LiteralPath $deployApplication -NoNewline -Value $(
 					if ($arch -match '^(x86|ARM)$') {

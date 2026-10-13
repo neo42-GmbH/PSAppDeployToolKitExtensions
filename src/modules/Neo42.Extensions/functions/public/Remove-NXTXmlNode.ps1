@@ -52,14 +52,17 @@
 		$LiteralPath,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Filter,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Exclude,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Include,
 		[Parameter(ParameterSetName = 'Path')]
@@ -76,7 +79,7 @@
 		$Force,
 
 		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
-		[ValidateNotNull()]
+		[ValidateNotNullOrEmpty()]
 		[System.Xml.XmlNode[]]
 		$InputObject,
 

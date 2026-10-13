@@ -38,8 +38,9 @@
 			# Remove all old package keys and uninstall the packages if configured to do so.
 			foreach ($packageKey in $neo42PackageKeys) {
 				[System.String]$appPath = $packageKey.GetValue('AppPath', [System.String]::Empty)
+				[System.String]$packageVersion = $packageKey.GetValue('Version', [System.String]::Empty)
 				# If the package is configured to uninstall old packages, we will attempt to uninstall it using the uninstall string. If not, we will simply remove the package directory if it exists.
-				if ($ADTSession.NXT.Package.UninstallOld) {
+				if ($ADTSession.NXT.Package.UninstallOld -and $packageVersion -ne $ADTSession.AppVersion) {
 					Write-ADTLogEntry -Message "Uninstalling old neo42 package [$($packageKey.Name)]."
 					[System.String[]]$uninstallStringParts = ConvertFrom-NXTCommandLine -InputObject ($packageKey.GetValue('UninstallString', [System.String]::Empty))
 					if (-not $uninstallStringParts -or $uninstallStringParts.Count -lt 2) {

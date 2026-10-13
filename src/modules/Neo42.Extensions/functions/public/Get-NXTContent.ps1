@@ -44,17 +44,21 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$LiteralPath,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String]
 		$Filter,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Exclude,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Include,
 		[System.Management.Automation.SwitchParameter]
 		$Force,
+		[ValidateNotNull()]
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]

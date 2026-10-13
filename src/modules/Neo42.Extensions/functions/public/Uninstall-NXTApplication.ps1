@@ -96,6 +96,7 @@
 
 		[Parameter(ParameterSetName = 'ManualExitCodes', Position = 0)]
 		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes', Position = 0)]
+		[ValidateNotNullOrEmpty()]
 		[Alias('Path', 'FullName')]
 		[System.String]
 		$Target,
@@ -115,12 +116,14 @@
 		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationIgnoreExitCodes')]
+		[ValidateNotNull()]
 		[System.String[]]
 		$ArgumentList,
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
 		[Parameter(ParameterSetName = 'ManualIgnoreExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationIgnoreExitCodes')]
+		[ValidateNotNull()]
 		[System.String[]]
 		$AdditionalArgumentList,
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
@@ -128,8 +131,9 @@
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationIgnoreExitCodes')]
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
-		[System.IO.DirectoryInfo]
-		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory,
+		[System.String]
+		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory.FullName,
+		[ValidateNotNull()]
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter,
 
@@ -141,12 +145,14 @@
 		[Parameter(ParameterSetName = 'PackageExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
+		[ValidateNotNull()]
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
 		$SuccessExitCodes,
 		[Parameter(ParameterSetName = 'PackageExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
+		[ValidateNotNull()]
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
 		$RebootExitCodes,
@@ -261,7 +267,7 @@
 						$Criteria = [PSADTNXT.Application.NxtApplicationCriteria]::new($Application.Store, $Application.PSChildName)
 					}
 					if ($CacheDirectory) {
-						$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $Application.PSChildName)
+						$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory, 'neo42-Source', $Application.PSChildName)
 					}
 
 					if (-not $PSBoundParameters.ContainsKey('ArgumentList')) {

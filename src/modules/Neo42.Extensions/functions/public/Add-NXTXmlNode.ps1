@@ -63,18 +63,22 @@
 		$LiteralPath,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Filter,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Exclude,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Include,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNull()]
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
@@ -85,7 +89,7 @@
 		$Force,
 
 		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
-		[ValidateNotNull()]
+		[ValidateNotNullOrEmpty()]
 		[System.Xml.XmlNode[]]
 		$InputObject,
 
@@ -96,11 +100,14 @@
 		$XPath,
 		[System.Management.Automation.SwitchParameter]
 		$Single,
+		[ValidateNotNullOrEmpty()]
 		[Parameter(Mandatory)]
 		[System.String]
 		$Name,
+		[ValidateNotNull()]
 		[System.Collections.Hashtable]
 		$Attributes,
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$InnerText,
 		[System.Management.Automation.SwitchParameter]

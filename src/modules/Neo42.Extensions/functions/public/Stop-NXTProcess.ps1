@@ -42,13 +42,16 @@
 		$Name,
 		[Parameter(ParameterSetName = 'Id', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
 		[Alias('Pid', 'ProcessId')]
+		[ValidateNotNull()]
 		[ValidateRange(1, [System.Int32]::MaxValue)]
 		[System.Int32[]]
 		$Id,
 		[Parameter(ParameterSetName = 'Process', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+		[ValidateNotNull()]
 		[System.Diagnostics.Process[]]
 		$Process,
 		[Parameter(ParameterSetName = 'ProcessDefinition', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+		[ValidateNotNull()]
 		[PSADT.ProcessManagement.ProcessDefinition[]]
 		$ProcessDefinition,
 		[System.Management.Automation.SwitchParameter]

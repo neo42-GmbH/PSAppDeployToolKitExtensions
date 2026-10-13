@@ -31,7 +31,7 @@
 		[Parameter(Position = 0, Mandatory, ValueFromPipelineByPropertyName)]
 		[Alias('LiteralPath', 'PSPath')]
 		[ValidateNotNullOrEmpty()]
-		[System.String[]]
+		[System.String]
 		$Path,
 		[Parameter(Position = 1, Mandatory)]
 		[Alias('SearchString')]
@@ -42,6 +42,7 @@
 		$PatternType = 'Contains',
 		[System.Management.Automation.SwitchParameter]
 		$CaseSensitive,
+		[ValidateNotNull()]
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]

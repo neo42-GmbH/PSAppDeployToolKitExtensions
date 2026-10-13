@@ -30,6 +30,7 @@
 	The XPath to the node to remove.
 	.PARAMETER Attribute
 	The name of the attribute to retrieve from the node(s) at the specified XPath location. If not specified, the entire node(s) will be returned.
+	If the attribute name is 'InnerText' the actual node text is returned instead of an actual attribute named 'InnerText'.
 	.PARAMETER Single
 	Determines if only the first node found at the specified XPath location should be returned.
 	.PARAMETER Force
@@ -61,25 +62,29 @@
 		$LiteralPath,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Filter,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Exclude,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Include,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNull()]
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
 		$Encoding,
 
 		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
-		[ValidateNotNull()]
+		[ValidateNotNullOrEmpty()]
 		[System.Xml.XmlNode[]]
 		$InputObject,
 

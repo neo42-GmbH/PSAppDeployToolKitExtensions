@@ -46,6 +46,7 @@
 		[Parameter(Position = 0, ParameterSetName = 'ExitCode', Mandatory)]
 		[Parameter(Position = 0, ParameterSetName = 'Status')]
 		[Parameter(Position = 0, ParameterSetName = 'AbortReboot')]
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Message,
 		[Parameter(ParameterSetName = 'ExitCode')]

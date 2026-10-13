@@ -26,6 +26,7 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+		[AllowNull()]
 		[Alias('Object')]
 		[System.Object]
 		$InputObject,
@@ -37,6 +38,7 @@
 	}
 	process {
 		try {
+			if ($null -eq $InputObject) { return [System.String]::Empty }
 			[System.String]$jsonString = ConvertTo-Json -InputObject $InputObject -Depth $Depth -Compress
 			[System.Byte[]]$jsonBytes = [System.Text.Encoding]::UTF8.GetBytes($jsonString)
 			[System.IO.MemoryStream]$compressedData = [System.IO.MemoryStream]::new()

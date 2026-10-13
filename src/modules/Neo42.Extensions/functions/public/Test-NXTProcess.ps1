@@ -42,7 +42,7 @@
 		[System.Int32]
 		$Id,
 		[Parameter(ParameterSetName = 'ProcessDefinition', Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-		[ValidateNotNull()]
+		[ValidateNotNullOrEmpty()]
 		[PSADT.ProcessManagement.ProcessDefinition]
 		$ProcessDefinition
 	)

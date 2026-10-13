@@ -50,6 +50,7 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$KeyName,
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$KeyValue,
 		[System.Management.Automation.SwitchParameter]

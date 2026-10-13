@@ -29,7 +29,7 @@
 		[Parameter(Position = 0, ParameterSetName = 'Path', Mandatory, ValueFromPipelineByPropertyName)]
 		[Alias('LiteralPath', 'PSPath')]
 		[ValidateNotNullOrEmpty()]
-		[System.String[]]
+		[System.String]
 		$Path,
 		[Parameter(ParameterSetName = 'Path')]
 		[ValidateNotNull()]
