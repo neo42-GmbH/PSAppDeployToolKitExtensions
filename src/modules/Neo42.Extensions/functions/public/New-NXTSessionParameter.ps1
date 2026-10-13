@@ -88,16 +88,8 @@
 
 				# PSADT behavior parameters
 				RequireAdmin                = $nxtDeploymentType.IsMachinePart
-				DirFiles                    = if ([System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\Files")) { "$($ScriptDirectory.FullName)\Files" } else { [System.String]::Empty }
-				DirSupportFiles             = if ($nxtDeploymentType.IsMachinePart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles")) {
-					"$($ScriptDirectory.FullName)\SupportFiles"
-				}
-				elseif ($nxtDeploymentType.IsUserPart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles\User")) {
-					"$($ScriptDirectory.FullName)\SupportFiles\User"
-				}
-				else {
-					[System.String]::Empty
-				}
+				DirFiles                    = Get-Item -LiteralPath "$ScriptDirectory\Files" -ErrorAction Ignore | Select-Object -ExpandProperty 'FullName'
+				DirSupportFiles             = Get-Item -LiteralPath $(if ($nxtDeploymentType.IsUserPart) { "$ScriptDirectory\SupportFiles\User" } else { "$ScriptDirectory\SupportFiles" }) -ErrorAction Ignore | Select-Object -ExpandProperty 'FullName'
 
 				# Extension-specific PSADT parameters
 				InstallTitle                = [System.String]::Join(' ', @($packageConfig.Package.Vendor, $packageConfig.Package.Name)).Replace('_', ' ').Trim()
