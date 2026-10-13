@@ -1,7 +1,7 @@
 @{
 	IncludeDefaultRules = $true
 	CustomRulePath      = @(
-		'./tests/analyzer/guidelines/neo42PSScriptAnalyzerRules.psm1'
+		'./tests/guidelines/neo42PSScriptAnalyzerRules.psm1'
 	)
 	Rules               = @{
 		# Rules extracted from PSScriptAnalyzer 1.25.0

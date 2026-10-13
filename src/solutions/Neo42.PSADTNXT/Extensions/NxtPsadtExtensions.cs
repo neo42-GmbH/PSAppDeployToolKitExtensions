@@ -30,8 +30,7 @@ namespace PSADTNXT.Extensions
 				throw new ArgumentException("Key path is not root of uninstall keys.");
 			}
 
-			var displayName = (string)key.GetValue("DisplayName", "");
-			if (string.IsNullOrWhiteSpace(displayName))
+			if (key.GetValue("DisplayName") is not string displayName || string.IsNullOrWhiteSpace(displayName))
 			{
 				throw new ArgumentException("Key does not contain a DisplayName value.");
 			}
@@ -43,7 +42,7 @@ namespace PSADTNXT.Extensions
 			var quietUninstallString = (string?)key.GetValue("QuietUninstallString");
 			var windowsInstaller = Guid.TryParse(key.Name.Split('\\').Last(), out var productCode) &&
 				(
-					key.GetValue("WindowsInstaller", "0").ToString()!.Equals("1") ||
+					(key.GetValue("WindowsInstaller") is int windowsInstallerKeyValue && windowsInstallerKeyValue == 1) ||
 					uninstallString?.ToString().IndexOf("msiexec.exe", StringComparison.OrdinalIgnoreCase) >= 0 ||
 					quietUninstallString?.ToString().IndexOf("msiexec.exe", StringComparison.OrdinalIgnoreCase) >= 0
 				);

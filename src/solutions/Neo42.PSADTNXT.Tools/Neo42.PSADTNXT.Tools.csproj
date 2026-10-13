@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>PSADTNXT</RootNamespace>
+    <AssemblyName>PSADTNXT.Tools</AssemblyName>
+    <OutputType>Library</OutputType>
+
+    <Company>neo42 GmbH</Company>
+    <Title>Neo42.Tools Library for PSAppDeployToolkit</Title>
+    <Copyright>Copyright © 2026 neo42 GmbH. All rights reserved.</Copyright>
+    <Description>Neo42.Tools Library for PSAppDeployToolkit</Description>
+    <PackageProjectUrl>https://neo42.de/psappdeploytoolkit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions</RepositoryUrl>
+
+    <Deterministic>true</Deterministic>
+    <Platforms>AnyCPU</Platforms>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+    <RootOutputPath>..\..\..\build</RootOutputPath>
+    <PublishDir>$(RootOutputPath)\PSAppDeployToolkit.Neo42.Tools\lib\$(TargetFramework)</PublishDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Neo42.PSADTNXT\Neo42.PSADTNXT.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <WarningLevel>3</WarningLevel>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+</Project>
