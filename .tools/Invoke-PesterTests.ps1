@@ -1,55 +1,55 @@
 ﻿#Requires -Modules Pester, PSScriptAnalyzer
 <#
-    .SYNOPSIS
-    Invoke the test suite for this repo.
+	.SYNOPSIS
+	Invoke the test suite for this repo.
 
-    .PARAMETER ModuleDirectory
-    The directory to load the PSADT modules from.
+	.PARAMETER ModuleDirectory
+	The directory to load the PSADT modules from.
 
-    .PARAMETER PesterTestDirectory
-    The directory that is scanned for ps1 files to test.
+	.PARAMETER PesterTestDirectory
+	The directory that is scanned for ps1 files to test.
 
-    .PARAMETER CompatibilityTestDirectory
-    The directory that is scanned for ps1 files to test compatibility factors.
+	.PARAMETER CompatibilityTestDirectory
+	The directory that is scanned for ps1 files to test compatibility factors.
 
-    .PARAMETER ExcludeTestFilesLike
-    A set of strings with test file names to exclude from the test run. Wildcards allowed.
+	.PARAMETER ExcludeTestFilesLike
+	A set of strings with test file names to exclude from the test run. Wildcards allowed.
 
-    .PARAMETER IncludeTestFilesLike
-    A set of strings with test file names to include to the test run ignoring other test files. Wildcards allowed.
+	.PARAMETER IncludeTestFilesLike
+	A set of strings with test file names to include to the test run ignoring other test files. Wildcards allowed.
 
-    .PARAMETER Verbosity
-    A string value of a selection list to define the pester verbosity level.
+	.PARAMETER Verbosity
+	A string value of a selection list to define the pester verbosity level.
 
-    .PARAMETER StackTraceVerbosity
-    A string value of a selection list to define the pester stack trace verbosity level.
+	.PARAMETER StackTraceVerbosity
+	A string value of a selection list to define the pester stack trace verbosity level.
 
-    .PARAMETER ResultXmlOutput
-    Full file path for pester result xml with a detailed result overview (like .\pester_result.xml).
+	.PARAMETER ResultXmlOutput
+	Full file path for pester result xml with a detailed result overview (like .\pester_result.xml).
 
-    .PARAMETER PassThru
-    If enabled, the pester result object will be returned. Otherwise, the script will return nothing.
+	.PARAMETER PassThru
+	If enabled, the pester result object will be returned. Otherwise, the script will return nothing.
 
-    .PARAMETER Exit
-    If enabled, the pester test will exit with non-zero exit code and no result object when the test run fails.
+	.PARAMETER Exit
+	If enabled, the pester test will exit with non-zero exit code and no result object when the test run fails.
 
-    .PARAMETER SkipRun
-    If enabled, the pester test will be skipped. Useful for test scenarios.
+	.PARAMETER SkipRun
+	If enabled, the pester test will be skipped. Useful for test scenarios.
 
-    .PARAMETER WriteDebugMessages
-    If enabled, debug messages will be written to the console.
+	.PARAMETER WriteDebugMessages
+	If enabled, debug messages will be written to the console.
 
-    .PARAMETER ShowNavigationMarkers
-    If enabled, navigation markers will be written to the console (Write paths after every block and test, for easy navigation in VSCode).
+	.PARAMETER ShowNavigationMarkers
+	If enabled, navigation markers will be written to the console (Write paths after every block and test, for easy navigation in VSCode).
 
-    .PARAMETER ShowStartMarkers
-    If enabled, navigation markers will be written to the console (Write an indication when each test starts).
+	.PARAMETER ShowStartMarkers
+	If enabled, navigation markers will be written to the console (Write an indication when each test starts).
 
-    .INPUTS
-    None. You cannot pipe objects to this script.
+	.INPUTS
+	None. You cannot pipe objects to this script.
 
-    .OUTPUTS
-    None
+	.OUTPUTS
+	None
 	PassThru: [Pester.Run] result object
 #>
 
@@ -61,8 +61,8 @@ param(
 	[System.IO.DirectoryInfo]
 	$PesterTestDirectory = "$($PWD.Path)\tests\pester",
 	[ValidateScript({ $_.Exists })]
-	[System.IO.DirectoryInfo]
-	$CompatibilityTestDirectory = "$($PWD.Path)\src\modules",
+	[System.IO.DirectoryInfo[]]
+	$CompatibilityTestDirectory = (Get-Item "$($PWD.Path)\src\modules\Neo42.Extensions*"),
 	[System.String[]]
 	$ExcludeTestFilesLike,
 	[System.String[]]
@@ -111,7 +111,7 @@ Add-Type -AssemblyName 'PresentationFramework'  # to remove false positives in U
 [System.Collections.Generic.List[Pester.ContainerInfo]]$pContainers = [System.Collections.Generic.List[Pester.ContainerInfo]]::new()
 
 # Build test container for testing compatibility factors of existing script files, such as function files
-[System.IO.FileInfo[]]$sourceFiles = Get-ChildItem -Recurse -File -Path $CompatibilityTestDirectory.FullName | Where-Object -FilterScript { $_.Extension -eq '.ps1' }
+[System.IO.FileInfo[]]$sourceFiles = Get-ChildItem -Recurse -File -LiteralPath $CompatibilityTestDirectory.FullName | Where-Object -FilterScript { $_.Extension -eq '.ps1' }
 $pContainers.Add((New-PesterContainer -Path $compScript -Data @{ FilePath = $sourceFiles }))
 
 # Build test container for testing functions via defined test files

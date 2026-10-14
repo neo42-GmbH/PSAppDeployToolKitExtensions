@@ -38,15 +38,18 @@
 	[CmdletBinding(DefaultParameterSetName = 'Manual')]
 	param (
 		[Parameter(Position = 0, ParameterSetName = 'Criteria', Mandatory)]
+		[ValidateNotNull()]
 		[PSADTNXT.Application.NxtApplicationCriteria]
 		$Criteria,
 		[Parameter(Position = 0, ParameterSetName = 'Session', Mandatory)]
+		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession,
 		[Parameter(ParameterSetName = 'Manual')]
 		[PSADTNXT.Application.ApplicationStore]
 		$Store = [PSADTNXT.Application.ApplicationStore]::ARP,
 		[Parameter(ParameterSetName = 'Manual')]
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Identifier,
 		[Parameter(ParameterSetName = 'Manual')]
@@ -57,6 +60,7 @@
 		[PSADTNXT.Text.StringCompareOperator]
 		$NamePattern = 'Equals',
 		[Parameter(ParameterSetName = 'Manual')]
+		[ValidateNotNull()]
 		[System.Management.Automation.ScriptBlock]
 		$Filter
 	)

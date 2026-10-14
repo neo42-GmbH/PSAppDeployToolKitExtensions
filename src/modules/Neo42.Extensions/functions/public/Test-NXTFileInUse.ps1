@@ -11,6 +11,8 @@
 	System.Boolean - Returns true if the file is locked, otherwise false.
 	.PARAMETER Path
 	The path to the file to test.
+	.PARAMETER Force
+	Determines if hidden files should be processed.
 	.EXAMPLE
 	Test-NXTFileInUse -Path 'C:\Temp\file.txt'
 
@@ -22,17 +24,20 @@
 		[Parameter(Mandatory, ValueFromPipelineByPropertyName)]
 		[Alias('LiteralPath', 'PSPath')]
 		[ValidateNotNullOrEmpty()]
-		[System.String[]]
-		$Path
+		[System.String]
+		$Path,
+		[System.Management.Automation.SwitchParameter]
+		$Force
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
 	}
 	process {
 		try {
-			if (-not [System.IO.File]::Exists($Path)) { return $false }
+			[System.String]$providerPath = Resolve-NXTPath -LiteralPath $Path -AsProviderPath -ProviderName 'FileSystem' -PathType Leaf -Force:$Force
+			if (-not [System.IO.File]::Exists($providerPath)) { return $false }
 			try {
-				[System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read).Dispose()
+				[System.IO.File]::Open($providerPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read).Dispose()
 			}
 			catch [System.IO.IOException] {
 				return $true

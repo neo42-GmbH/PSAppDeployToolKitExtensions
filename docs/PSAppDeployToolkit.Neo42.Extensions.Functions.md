@@ -67,6 +67,7 @@ Adds the content 'Hello World' to the file 'C:\Temp\test.txt' using the UTF8 enc
 ### INPUTS
 
 System.String[] - The content to add to the file(s).
+
 System.IO.FileInfo[] - The file(s) to add content to.
 
 ### OUTPUTS
@@ -2945,7 +2946,7 @@ Retrieve nodes from an existing XML document.
 ### SYNTAX
 
 ```PowerShell
-# ParameterSet Path
+# ParameterSet PathAttribute
 Get-NXTXmlNode
     [-Path] <string[]>
     -XPath <string>
@@ -2960,7 +2961,37 @@ Get-NXTXmlNode
 ```
 
 ```PowerShell
-# ParameterSet LiteralPath
+# ParameterSet PathInnerText
+Get-NXTXmlNode
+    [-Path] <string[]>
+    -XPath <string>
+    -InnerText
+    [-Filter <string>]
+    [-Exclude <string[]>]
+    [-Include <string[]>]
+    [-Encoding <Encoding>]
+    [-Single]
+    [-Force]
+    [<CommonParameters>]
+```
+
+```PowerShell
+# ParameterSet LiteralPathInnerText
+Get-NXTXmlNode
+    -LiteralPath <string[]>
+    -XPath <string>
+    -InnerText
+    [-Filter <string>]
+    [-Exclude <string[]>]
+    [-Include <string[]>]
+    [-Encoding <Encoding>]
+    [-Single]
+    [-Force]
+    [<CommonParameters>]
+```
+
+```PowerShell
+# ParameterSet LiteralPathAttribute
 Get-NXTXmlNode
     -LiteralPath <string[]>
     -XPath <string>
@@ -2975,7 +3006,18 @@ Get-NXTXmlNode
 ```
 
 ```PowerShell
-# ParameterSet Xml
+# ParameterSet XmlInnerText
+Get-NXTXmlNode
+    -XPath <string>
+    -InnerText
+    [-InputObject <XmlNode[]>]
+    [-Single]
+    [-Force]
+    [<CommonParameters>]
+```
+
+```PowerShell
+# ParameterSet XmlAttribute
 Get-NXTXmlNode
     -XPath <string>
     [-InputObject <XmlNode[]>]
@@ -3135,7 +3177,7 @@ The XPath to the node to remove.
 
 #### -Attribute
 
-The name of the attribute to retrieve from the node(s) at the specified XPath location. If not specified, the entire node(s) will be returned.
+The name of the attribute to retrieve from the node(s) instead of the node itself.
 
 |Property|Value|
 |:---|:---|
@@ -3143,6 +3185,19 @@ The name of the attribute to retrieve from the node(s) at the specified XPath lo
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -InnerText
+
+Will output the inner text of a xml node(s) instead of the node itself.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -3187,6 +3242,7 @@ Import-NXTIniFile
     [-Include <string[]>]
     [-AsIniDocument]
     [-Encoding <Encoding>]
+    [-Force]
     [-UnboundArguments <List[Object]>]
     [<CommonParameters>]
 ```
@@ -3200,6 +3256,7 @@ Import-NXTIniFile
     [-Include <string[]>]
     [-AsIniDocument]
     [-Encoding <Encoding>]
+    [-Force]
     [-UnboundArguments <List[Object]>]
     [<CommonParameters>]
 ```
@@ -3324,6 +3381,19 @@ The encoding to use when reading the file. If not specified, the encoding will b
 |Property|Value|
 |:---|:---|
 |Type:|Encoding|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Force
+
+Determines if hidden files should be processed.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -3518,7 +3588,7 @@ Install-NXTApplication
     [-Method <DeploymentMethod>]
     [-Criteria <NxtApplicationCriteria>]
     [-LogFileName <string>]
-    [-CacheDirectory <DirectoryInfo>]
+    [-CacheDirectory <string>]
     [-Awaiter <INxtAwaiter[]>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
@@ -3537,7 +3607,7 @@ Install-NXTApplication
     [-Method <DeploymentMethod>]
     [-Criteria <NxtApplicationCriteria>]
     [-LogFileName <string>]
-    [-CacheDirectory <DirectoryInfo>]
+    [-CacheDirectory <string>]
     [-Awaiter <INxtAwaiter[]>]
     [-NoCache]
     [<CommonParameters>]
@@ -3666,9 +3736,9 @@ The directory where the package cache is located. This is used to store the unin
 
 |Property|Value|
 |:---|:---|
-|Type:|DirectoryInfo|
+|Type:|String|
 |Position:|Named|
-|Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory|
+|Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory.FullName|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -4030,8 +4100,8 @@ Retrieves the parameters for the the Open-ADTSession function.
 ```PowerShell
 New-NXTSessionParameter
     [-Invocation] <InvocationInfo>
-    [[-ScriptDirectory] <DirectoryInfo>]
-    [[-SetupCfg] <FileInfo[]>]
+    [[-ScriptDirectory] <string>]
+    [[-SetupCfg] <string[]>]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -4080,9 +4150,9 @@ The directory from which all source files are read. Defaults to the invocation s
 
 |Property|Value|
 |:---|:---|
-|Type:|DirectoryInfo|
+|Type:|String|
 |Position:|1|
-|Default value:|[System.IO.Path]::GetDirectoryName($Invocation.MyCommand.Definition)|
+|Default value:|[System.IO.Path]::GetDirectoryName($Invocation.MyCommand.Path)|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -4093,7 +4163,7 @@ A list of paths to Setup.cfg files to load and merge for the session.
 
 |Property|Value|
 |:---|:---|
-|Type:|FileInfo[]|
+|Type:|String[]|
 |Position:|2|
 |Default value:|Setup.cfg, CustomSetup.cfg|
 |Required:|False|
@@ -5707,7 +5777,6 @@ Set-NXTXmlNode
     [-Encoding <Encoding>]
     [-Force]
     [-Single]
-    [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
@@ -5727,7 +5796,6 @@ Set-NXTXmlNode
     [-Encoding <Encoding>]
     [-Force]
     [-Single]
-    [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
@@ -5742,7 +5810,6 @@ Set-NXTXmlNode
     -XPath <string>
     [-InputObject <XmlNode[]>]
     [-Single]
-    [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
@@ -5902,19 +5969,6 @@ Make sure the XPath selects exactly one node. If not, an error is thrown.
 |Property|Value|
 |:---|:---|
 |Type:|SwitchParameter|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Name
-
-The name of the node to update.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -6432,7 +6486,8 @@ Test if a file is in locked by another process.
 
 ```PowerShell
 Test-NXTFileInUse
-    [-Path] <string[]>
+    [-Path] <string>
+    [-Force]
     [<CommonParameters>]
 ```
 
@@ -6467,11 +6522,24 @@ The path to the file to test.
 
 |Property|Value|
 |:---|:---|
-|Type:|String[]|
+|Type:|String|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
 |Accept pipeline input:|True (ByPropertyName)|
+|Accept wildcard characters:|False|
+
+#### -Force
+
+Determines if hidden files should be processed.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
 ## Test-NXTFolderPermission
@@ -6782,7 +6850,7 @@ Searches for a specified string or regex pattern within a file.
 
 ```PowerShell
 Test-NXTStringInFile
-    [-Path] <string[]>
+    [-Path] <string>
     [-Query] <string>
     [-PatternType <StringCompareOperator>]
     [-CaseSensitive]
@@ -6822,7 +6890,7 @@ The path to the file to search in.
 
 |Property|Value|
 |:---|:---|
-|Type:|String[]|
+|Type:|String|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -6953,7 +7021,7 @@ Tests for the existence of a node in an XML document.
 ```PowerShell
 # ParameterSet Path
 Test-NXTXmlNode
-    [-Path] <string[]>
+    [-Path] <string>
     -XPath <string>
     [-Encoding <Encoding>]
     [-Force]
@@ -7000,7 +7068,7 @@ The path to the XML file(s) to test the node in.
 
 |Property|Value|
 |:---|:---|
-|Type:|String[]|
+|Type:|String|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -7073,7 +7141,7 @@ Uninstall-NXTApplication
     [-Method <DeploymentMethod>]
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
-    [-CacheDirectory <DirectoryInfo>]
+    [-CacheDirectory <string>]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
@@ -7115,7 +7183,7 @@ Uninstall-NXTApplication
     [-Method <DeploymentMethod>]
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
-    [-CacheDirectory <DirectoryInfo>]
+    [-CacheDirectory <string>]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-NoCache]
@@ -7129,7 +7197,7 @@ Uninstall-NXTApplication
     [-Method <DeploymentMethod>]
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
-    [-CacheDirectory <DirectoryInfo>]
+    [-CacheDirectory <string>]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
@@ -7148,7 +7216,7 @@ Uninstall-NXTApplication
     [-Method <DeploymentMethod>]
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
-    [-CacheDirectory <DirectoryInfo>]
+    [-CacheDirectory <string>]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-NoCache]
@@ -7337,9 +7405,9 @@ The package directory to use for the uninstallation.
 
 |Property|Value|
 |:---|:---|
-|Type:|DirectoryInfo|
+|Type:|String|
 |Position:|Named|
-|Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory|
+|Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory.FullName|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -7918,6 +7986,7 @@ Monitors the presence of a specified filesystem path within a set timeout period
 ```PowerShell
 Wait-NXTFileSystem
     [-Path] <string>
+    [-PathType <TestPathType>]
     [-Timeout <timespan>]
     [-Interval <timespan>]
     [-PassThru]

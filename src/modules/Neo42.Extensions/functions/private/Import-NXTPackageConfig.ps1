@@ -7,8 +7,8 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory)]
-		[ValidateNotNull()]
-		[System.IO.DirectoryInfo]
+		[ValidateNotNullOrEmpty()]
+		[System.String]
 		$ScriptDirectory,
 		[Parameter(Mandatory)]
 		[ValidateNotNull()]
@@ -22,11 +22,11 @@
 	}
 	process {
 		try {
-			[System.IO.FileInfo]$packageConfigJson = [System.IO.Path]::Combine($ScriptDirectory.FullName, 'neo42PackageConfig.json')
-			[System.IO.FileInfo]$packageConfigPsd1 = [System.IO.Path]::Combine($ScriptDirectory.FullName, 'neo42PackageConfig.psd1')
 			[System.Management.Automation.Runspaces.SessionStateVariableEntry]$setupCfgVariable = [System.Management.Automation.Runspaces.SessionStateVariableEntry]::new('SetupCfg', $SetupCfg.AsReadOnly(), [System.String]::Empty)
 
-			if ($adtConfig['NXT']['Toolkit']['SupportLegacyConfig'] -and $packageConfigJson.Exists) {
+			if ($adtConfig['NXT']['Toolkit']['SupportLegacyConfig'] -and
+				([System.IO.FileInfo]$packageConfigJson = Get-Item -LiteralPath ([System.IO.Path]::Combine($ScriptDirectory, 'neo42PackageConfig.json')) -ErrorAction Ignore)
+			) {
 				return [PSADTNXT.Deployment.Configuration.NxtPackageConfigurationFactory]::Translate(
 					[PSADTNXT.Deployment.Configuration.NxtPackageConfigurationFactory]::CreateLegacyFrom(
 						$packageConfigJson.FullName,
@@ -35,7 +35,7 @@
 					)
 				)
 			}
-			elseif ($packageConfigPsd1.Exists) {
+			elseif (([System.IO.FileInfo]$packageConfigPsd1 = Get-Item -LiteralPath ([System.IO.Path]::Combine($ScriptDirectory, 'neo42PackageConfig.psd1')) -ErrorAction Ignore)) {
 				return [PSADTNXT.Deployment.Configuration.NxtPackageConfigurationFactory]::CreateFrom(
 					$packageConfigPsd1.FullName,
 					$adtEnvironment,
@@ -47,7 +47,7 @@
 					Exception    = [System.Exception]::new("No valid package configuration file found. Please ensure that either 'neo42PackageConfig.json' (legacy) or 'neo42PackageConfig.psd1' (recommended) exists in the script directory.")
 					Category     = [System.Management.Automation.ErrorCategory]::InvalidData
 					ErrorId      = 'PackageConfigNotFound'
-					TargetObject = $ScriptDirectory.FullName
+					TargetObject = $ScriptDirectory
 				}
 				throw (New-ADTErrorRecord @errorParams)
 			}

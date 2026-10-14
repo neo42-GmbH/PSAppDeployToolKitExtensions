@@ -63,18 +63,22 @@
 		$LiteralPath,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Filter,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Exclude,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Include,
 		[Parameter(ParameterSetName = 'Path')]
 		[Parameter(ParameterSetName = 'LiteralPath')]
+		[ValidateNotNull()]
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
@@ -85,7 +89,7 @@
 		$Force,
 
 		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
-		[ValidateNotNull()]
+		[ValidateNotNullOrEmpty()]
 		[System.Xml.XmlNode[]]
 		$InputObject,
 
@@ -96,11 +100,14 @@
 		$XPath,
 		[System.Management.Automation.SwitchParameter]
 		$Single,
+		[ValidateNotNullOrEmpty()]
 		[Parameter(Mandatory)]
 		[System.String]
 		$Name,
+		[ValidateNotNull()]
 		[System.Collections.Hashtable]
 		$Attributes,
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$InnerText,
 		[System.Management.Automation.SwitchParameter]
@@ -135,42 +142,42 @@
 				}
 				if ($nodes.Count -eq 0) {
 					Write-ADTLogEntry -Severity Warning -Message "No nodes matching XPath [$XPath] in given XmlNode."
-					continue
 				}
-				Write-ADTLogEntry -Message "Adding XML node [$Name] to [$($nodes.Count)] nodes matching XPath [$XPath]."
-				[System.String[]]$nameParts = $Name.Split(':', 2)
-				[System.String]$localName = $nameParts[-1]
-				foreach ($node in $nodes) {
-					[System.Xml.XmlElement]$newNode = if ($nameParts.Length -eq 2) {
-						$xmlDoc.CreateElement($localName, $nsManager.LookupNamespace($nameParts[0]))
-					}
-					else {
-						$xmlDoc.CreateElement($localName)
-					}
-					if ($null -ne $Attributes) {
-						foreach ($key in $Attributes.Keys) {
-							[System.String[]]$attributeParts = $key.Split(':', 2)
-							if ($attributeParts.Length -eq 2) {
-								$newNode.SetAttribute($attributeParts[1], $nsManager.LookupNamespace($attributeParts[0]), $Attributes[$key])
-							}
-							else {
-								$newNode.SetAttribute($key, $Attributes[$key])
+				else {
+					Write-ADTLogEntry -Message "Adding XML node [$Name] to [$($nodes.Count)] nodes matching XPath [$XPath]."
+					[System.String[]]$nameParts = $Name.Split(':', 2)
+					[System.String]$localName = $nameParts[-1]
+					foreach ($node in $nodes) {
+						[System.Xml.XmlElement]$newNode = if ($nameParts.Length -eq 2) {
+							$xmlDoc.CreateElement($localName, $nsManager.LookupNamespace($nameParts[0]))
+						}
+						else {
+							$xmlDoc.CreateElement($localName)
+						}
+						if ($null -ne $Attributes) {
+							foreach ($key in $Attributes.Keys) {
+								[System.String[]]$attributeParts = $key.Split(':', 2)
+								if ($attributeParts.Length -eq 2) {
+									$newNode.SetAttribute($attributeParts[1], $nsManager.LookupNamespace($attributeParts[0]), $Attributes[$key])
+								}
+								else {
+									$newNode.SetAttribute($key, $Attributes[$key])
+								}
 							}
 						}
+						if ($null -ne $InnerText) { $newNode.InnerText = $InnerText }
+						if ($Prepend) {
+							$null = $node.PrependChild($newNode)
+						}
+						else {
+							$null = $node.AppendChild($newNode)
+						}
 					}
-					if ($null -ne $InnerText) { $newNode.InnerText = $InnerText }
-					if ($Prepend) {
-						$null = $node.PrependChild($newNode)
-					}
-					else {
-						$null = $node.AppendChild($newNode)
+					if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath') -and $PSCmdlet.ShouldProcess($files[$i], 'Update XML file')) {
+						Set-NXTContent -LiteralPath $files[$i] -Value $xml.OuterXml @encodingSplat -Force:$Force
 					}
 				}
 				if ($PassThru) { $xml }
-
-				if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath') -and $PSCmdlet.ShouldProcess($files[$i], 'Update XML file')) {
-					Set-NXTContent -LiteralPath $files[$i] -Value $xml.OuterXml @encodingSplat -Force:$Force
-				}
 			}
 		}
 		catch {

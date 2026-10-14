@@ -31,6 +31,7 @@
 	.NOTES
 	With the -IsRemoved switch, the test will be inverted.
 	#>
+	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'PathType', Justification = 'Parameter is used in script block.')]
 	[OutputType([System.Boolean], [System.IO.FileSystemInfo])]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipelineByPropertyName)]
@@ -38,6 +39,8 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Path,
+		[Microsoft.PowerShell.Commands.TestPathType]
+		$PathType = [Microsoft.PowerShell.Commands.TestPathType]::Any,
 		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
 		$Timeout = '00:01:00',
@@ -55,12 +58,12 @@
 	process {
 		try {
 			if ($IsRemoved) {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { Get-Item -LiteralPath $Path -Force -ErrorAction Ignore }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { Test-Path -LiteralPath $Path -PathType $PathType -ErrorAction Ignore }
 				[System.String]$successMessage = "Path [$Path] disappeared within the specified timeout period of [$Timeout]."
 				[System.String]$failureMessage = "Path [$Path] did not disappear within the specified timeout period of [$Timeout]."
 			}
 			else {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Get-Item -LiteralPath $Path -Force -ErrorAction Ignore) }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Test-Path -LiteralPath $Path -PathType $PathType -ErrorAction Ignore) }
 				[System.String]$successMessage = "Path [$Path] appeared within the specified timeout period of [$Timeout]."
 				[System.String]$failureMessage = "Path [$Path] did not appear within the specified timeout period of [$Timeout]."
 			}
@@ -80,10 +83,10 @@
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {
 				if ($IsRemoved) {
-					return $(if ($result) { $null } else { Get-Item -LiteralPath $Path })
+					return $(if ($result) { $null } else { Get-Item -LiteralPath $Path -Force })
 				}
 				else {
-					return $(if ($result) { Get-Item -LiteralPath $Path } else { $null })
+					return $(if ($result) { Get-Item -LiteralPath $Path -Force } else { $null })
 				}
 			}
 			else {

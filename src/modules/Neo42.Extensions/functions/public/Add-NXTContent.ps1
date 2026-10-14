@@ -8,6 +8,7 @@
 	Important note: If the file exists and the encoding is specified, the encoding will not be updated. Only the new content will be written with the specified encoding.
 	.INPUTS
 	System.String[] - The content to add to the file(s).
+
 	System.IO.FileInfo[] - The file(s) to add content to.
 	.OUTPUTS
 	System.String[] - The content that was added to the file(s) if the `-PassThru` parameter is specified.
@@ -52,12 +53,15 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$LiteralPath,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String]
 		$Filter,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Exclude,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Include,
@@ -72,6 +76,7 @@
 		$NoNewLine,
 		[System.Management.Automation.SwitchParameter]
 		$Force,
+		[ValidateNotNull()]
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]

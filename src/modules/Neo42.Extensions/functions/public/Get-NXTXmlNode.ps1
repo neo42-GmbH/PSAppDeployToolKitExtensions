@@ -29,7 +29,9 @@
 	.PARAMETER XPath
 	The XPath to the node to remove.
 	.PARAMETER Attribute
-	The name of the attribute to retrieve from the node(s) at the specified XPath location. If not specified, the entire node(s) will be returned.
+	The name of the attribute to retrieve from the node(s) instead of the node itself.
+	.PARAMETER InnerText
+	Will output the inner text of a xml node(s) instead of the node itself.
 	.PARAMETER Single
 	Determines if only the first node found at the specified XPath location should be returned.
 	.PARAMETER Force
@@ -48,38 +50,53 @@
 	Retrieves the 'id' attribute from the child node of an existing xml object.
 	#>
 	[OutputType([System.Xml.XmlNode[]], [System.String[]])]
-	[CmdletBinding(DefaultParameterSetName = 'Path')]
+	[CmdletBinding(DefaultParameterSetName = 'PathAttribute')]
 	param (
-		[Parameter(Position = 0, ParameterSetName = 'Path', Mandatory)]
+		[Parameter(Position = 0, ParameterSetName = 'PathAttribute', Mandatory)]
+		[Parameter(Position = 0, ParameterSetName = 'PathInnerText', Mandatory)]
 		[SupportsWildcards()][ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Path,
-		[Parameter(ParameterSetName = 'LiteralPath', Mandatory, ValueFromPipelineByPropertyName)]
+		[Parameter(ParameterSetName = 'LiteralPathAttribute', Mandatory, ValueFromPipelineByPropertyName)]
+		[Parameter(ParameterSetName = 'LiteralPathInnerText', Mandatory, ValueFromPipelineByPropertyName)]
 		[Alias('PSPath')]
 		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$LiteralPath,
-		[Parameter(ParameterSetName = 'Path')]
-		[Parameter(ParameterSetName = 'LiteralPath')]
+		[Parameter(ParameterSetName = 'PathAttribute')]
+		[Parameter(ParameterSetName = 'LiteralPathAttribute')]
+		[Parameter(ParameterSetName = 'PathInnerText')]
+		[Parameter(ParameterSetName = 'LiteralPathInnerText')]
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Filter,
-		[Parameter(ParameterSetName = 'Path')]
-		[Parameter(ParameterSetName = 'LiteralPath')]
+		[Parameter(ParameterSetName = 'PathAttribute')]
+		[Parameter(ParameterSetName = 'LiteralPathAttribute')]
+		[Parameter(ParameterSetName = 'PathInnerText')]
+		[Parameter(ParameterSetName = 'LiteralPathInnerText')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Exclude,
-		[Parameter(ParameterSetName = 'Path')]
-		[Parameter(ParameterSetName = 'LiteralPath')]
+		[Parameter(ParameterSetName = 'PathAttribute')]
+		[Parameter(ParameterSetName = 'LiteralPathAttribute')]
+		[Parameter(ParameterSetName = 'PathInnerText')]
+		[Parameter(ParameterSetName = 'LiteralPathInnerText')]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Include,
-		[Parameter(ParameterSetName = 'Path')]
-		[Parameter(ParameterSetName = 'LiteralPath')]
+		[Parameter(ParameterSetName = 'PathAttribute')]
+		[Parameter(ParameterSetName = 'LiteralPathAttribute')]
+		[Parameter(ParameterSetName = 'PathInnerText')]
+		[Parameter(ParameterSetName = 'LiteralPathInnerText')]
+		[ValidateNotNull()]
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
 		$Encoding,
 
-		[Parameter(ParameterSetName = 'Xml', ValueFromPipeline)]
-		[ValidateNotNull()]
+		[Parameter(ParameterSetName = 'XmlAttribute', ValueFromPipeline)]
+		[Parameter(ParameterSetName = 'XmlInnerText', ValueFromPipeline)]
+		[ValidateNotNullOrEmpty()]
 		[System.Xml.XmlNode[]]
 		$InputObject,
 
@@ -87,10 +104,21 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$XPath,
+
+		[Parameter(ParameterSetName = 'PathAttribute')]
+		[Parameter(ParameterSetName = 'LiteralPathAttribute')]
+		[Parameter(ParameterSetName = 'XmlAttribute')]
 		[ValidateNotNullOrEmpty()]
 		[Alias('AttributeName')]
 		[System.String]
 		$Attribute,
+		[Parameter(ParameterSetName = 'PathInnerText', Mandatory)]
+		[Parameter(ParameterSetName = 'LiteralPathInnerText', Mandatory)]
+		[Parameter(ParameterSetName = 'XmlInnerText', Mandatory)]
+		[ValidateScript({ $_.ToBool() })]
+		[System.Management.Automation.SwitchParameter]
+		$InnerText,
+
 		[System.Management.Automation.SwitchParameter]
 		$Single,
 		[System.Management.Automation.SwitchParameter]
@@ -101,7 +129,7 @@
 	}
 	process {
 		try {
-			if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath')) {
+			if ($PSCmdlet.ParameterSetName -like '*Path*') {
 				$InputObject = Import-NXTXmlFile @PSBoundParameters
 			}
 
@@ -119,20 +147,16 @@
 					throw (New-ADTErrorRecord @errorParams)
 				}
 				if ($PSBoundParameters.ContainsKey('Attribute')) {
-					if ($Attribute -eq 'InnerText') {
-						$PSCmdlet.WriteObject($node.InnerText)
+					[System.String[]]$attributeParts = $Attribute.Split(':', 2)
+					if ($attributeParts.Length -eq 2) {
+						$node.GetAttribute($attributeParts[1], $nsManager.LookupNamespace($attributeParts[0]))
 					}
 					else {
-						[System.String[]]$attributeParts = $Attribute.Split(':', 2)
-						$(
-							if ($attributeParts.Length -eq 2) {
-								$PSCmdlet.WriteObject($node.GetAttribute($attributeParts[1], $nsManager.LookupNamespace($attributeParts[0])))
-							}
-							else {
-								$PSCmdlet.WriteObject($node.GetAttribute($Attribute))
-							}
-						)
+						$node.GetAttribute($Attribute)
 					}
+				}
+				elseif ($InnerText) {
+					$node.InnerText
 				}
 				else {
 					$node

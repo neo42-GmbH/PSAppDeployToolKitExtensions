@@ -25,6 +25,7 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+		[AllowEmptyString()]
 		[System.String]
 		$InputObject,
 		[System.Management.Automation.SwitchParameter]

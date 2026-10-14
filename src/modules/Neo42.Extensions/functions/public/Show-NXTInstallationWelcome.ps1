@@ -58,8 +58,10 @@
 		[ValidateNotNull()]
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession),
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$Title = $ADTSession.InstallTitle,
+		[ValidateNotNull()]
 		[PSADTNXT.ProcessManagement.NxtCloseProcess[]]
 		$CloseProcesses,
 		[System.Management.Automation.SwitchParameter]
@@ -74,6 +76,7 @@
 		$DeferDays,
 		[System.Nullable[System.DateTime]]
 		$DeferDeadline,
+		[PSADTNXT.Attributes.NxtTimeSpanTransformation()]
 		[System.TimeSpan]
 		$DeferRunInterval,
 		[System.Management.Automation.SwitchParameter]
@@ -296,7 +299,6 @@
 					else {
 						@{
 							CloseProcesses = $CloseProcesses.ProcessDefinition
-							PromptToSave   = $true
 						}
 					}
 				)

@@ -21,6 +21,7 @@
 	[OutputType([System.Management.Automation.PSCustomObject])]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+		[AllowEmptyString()]
 		[Alias('EncodedObject')]
 		[System.String]
 		$InputObject,

@@ -41,15 +41,19 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$LiteralPath,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String]
 		$Filter,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Exclude,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Include,
+		[ValidateNotNull()]
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
@@ -71,7 +75,7 @@
 			foreach ($file in (Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) {
 				[System.Xml.XmlDocument]$xml = [System.Xml.XmlDocument]::new()
 				$xml.XmlResolver = $null
-				$xml.LoadXml((Get-NXTContent -LiteralPath $file @encodingSplat))
+				$xml.LoadXml((Get-NXTContent -LiteralPath $file @encodingSplat -Force:$Force))
 				$PSCmdlet.WriteObject($xml)
 			}
 		}

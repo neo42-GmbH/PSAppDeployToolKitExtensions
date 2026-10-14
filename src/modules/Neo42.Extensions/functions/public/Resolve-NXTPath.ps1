@@ -53,6 +53,7 @@
 		$IncludeNonExistent,
 		[System.Management.Automation.SwitchParameter]
 		$AsProviderPath,
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$ProviderName,
 
@@ -66,12 +67,15 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$LiteralPath,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String]
 		$Filter,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Exclude,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Include,

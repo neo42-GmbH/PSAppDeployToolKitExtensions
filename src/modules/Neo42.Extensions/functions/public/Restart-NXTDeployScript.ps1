@@ -24,6 +24,7 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory)]
+		[ValidateNotNull()]
 		[System.Management.Automation.InvocationInfo]
 		$Invocation,
 		[System.Management.Automation.SwitchParameter]

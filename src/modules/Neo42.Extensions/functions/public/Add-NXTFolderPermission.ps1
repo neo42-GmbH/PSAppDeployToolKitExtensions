@@ -48,27 +48,34 @@
 		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$LiteralPath,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String]
 		$Filter,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Exclude,
+		[ValidateNotNullOrEmpty()]
 		[SupportsWildcards()]
 		[System.String[]]
 		$Include,
+		[ValidateNotNullOrEmpty()]
 		[Alias('FullControlPermissions')]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$FullControl,
+		[ValidateNotNullOrEmpty()]
 		[Alias('WritePermissions')]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$Write,
+		[ValidateNotNullOrEmpty()]
 		[Alias('ModifyPermissions')]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]
 		$Modify,
+		[ValidateNotNullOrEmpty()]
 		[Alias('ReadAndExecutePermissions')]
 		[PSADTNXT.Attributes.IdentityReferenceTransformation()]
 		[System.Security.Principal.IdentityReference[]]

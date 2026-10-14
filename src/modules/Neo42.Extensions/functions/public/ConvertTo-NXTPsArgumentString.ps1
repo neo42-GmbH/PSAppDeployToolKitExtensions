@@ -37,6 +37,7 @@
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipeline)]
 		[Alias('BoundParameters', 'PSBoundParameters', 'ArgumentList')]
+		[ValidateNotNull()]
 		[System.Collections.Hashtable]
 		$InputObject,
 		[ValidateSet('"', '''')]

@@ -26,13 +26,13 @@
 		[ValidateScript({ $_.MyCommand.CommandType -eq [System.Management.Automation.CommandTypes]::ExternalScript })]
 		[System.Management.Automation.InvocationInfo]
 		$Invocation,
-		[ValidateScript({ $_.Exists })]
-		[System.IO.DirectoryInfo]
-		$ScriptDirectory = [System.IO.Path]::GetDirectoryName($Invocation.MyCommand.Definition),
-		[ValidateScript({ $_.Exists -and $_.Extension -eq '.cfg' })]
+		[ValidateScript({ Test-Path -LiteralPath $_ -PathType Container })]
+		[System.String]
+		$ScriptDirectory = [System.IO.Path]::GetDirectoryName($Invocation.MyCommand.Path),
+		[ValidateScript({ [System.IO.Path]::GetExtension($_) -eq '.cfg' -and (Test-Path -LiteralPath $_ -PathType Leaf) }) ]
 		[PSDefaultValue(Value = 'Setup.cfg, CustomSetup.cfg')]
-		[System.IO.FileInfo[]]
-		$SetupCfg = @(Get-Item -LiteralPath "$($ScriptDirectory.FullName)\Setup.cfg", "$($ScriptDirectory.FullName)\CustomSetup.cfg" -ErrorAction Ignore)
+		[System.String[]]
+		$SetupCfg = @("$ScriptDirectory\Setup.cfg", "$ScriptDirectory\CustomSetup.cfg" | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -88,16 +88,8 @@
 
 				# PSADT behavior parameters
 				RequireAdmin                = $nxtDeploymentType.IsMachinePart
-				DirFiles                    = if ([System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\Files")) { "$($ScriptDirectory.FullName)\Files" } else { [System.String]::Empty }
-				DirSupportFiles             = if ($nxtDeploymentType.IsMachinePart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles")) {
-					"$($ScriptDirectory.FullName)\SupportFiles"
-				}
-				elseif ($nxtDeploymentType.IsUserPart -and [System.IO.Directory]::Exists("$($ScriptDirectory.FullName)\SupportFiles\User")) {
-					"$($ScriptDirectory.FullName)\SupportFiles\User"
-				}
-				else {
-					[System.String]::Empty
-				}
+				DirFiles                    = Get-Item -LiteralPath "$ScriptDirectory\Files" -ErrorAction Ignore | Select-Object -ExpandProperty 'FullName'
+				DirSupportFiles             = Get-Item -LiteralPath $(if ($nxtDeploymentType.IsUserPart) { "$ScriptDirectory\SupportFiles\User" } else { "$ScriptDirectory\SupportFiles" }) -ErrorAction Ignore | Select-Object -ExpandProperty 'FullName'
 
 				# Extension-specific PSADT parameters
 				InstallTitle                = [System.String]::Join(' ', @($packageConfig.Package.Vendor, $packageConfig.Package.Name)).Replace('_', ' ').Trim()

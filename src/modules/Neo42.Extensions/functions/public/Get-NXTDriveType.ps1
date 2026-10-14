@@ -33,6 +33,7 @@
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipelineByPropertyName)]
 		[Alias('DriveLetter', 'DriveName')]
+		[ValidateScript({ $_ -match '[a-z]\:?' })]
 		[System.String]
 		$Name
 	)

@@ -11,8 +11,8 @@
 		[PSADTNXT.Foundation.NxtDeploymentSession]
 		$ADTSession = (Get-ADTSession),
 		[ValidateNotNull()]
-		[System.IO.DirectoryInfo]
-		$Root = $ADTSession.NXT.Package.Directory,
+		[System.String]
+		$Root = $ADTSession.NXT.Package.Directory.FullName,
 		[System.Collections.Hashtable]
 		$Arguments,
 		[System.Management.Automation.SwitchParameter]
@@ -25,10 +25,13 @@
 	}
 	process {
 		try {
-			[System.Boolean]$isPowerShell = -not $PreferExecutable -or -not [System.IO.File]::Exists("$($Root.FullName)\DeployNxtApplication.exe")
-			[System.String]$binary = if ($isPowerShell) { Get-ADTPowerShellProcessPath } else { "$($Root.FullName)\DeployNxtApplication.exe" }
+			[System.IO.FileInfo]$deployExe = Resolve-NXTPath -LiteralPath "$Root\DeployNxtApplication.exe" -IncludeNonExistent -AsProviderPath -ProviderName 'FileSystem' -PathType Leaf
+			[System.IO.FileInfo]$deployPs1 = Resolve-NXTPath -LiteralPath "$Root\Deploy-Application.ps1" -IncludeNonExistent -AsProviderPath -ProviderName 'FileSystem' -PathType Leaf
+
+			[System.Boolean]$isPowerShell = -not $PreferExecutable -or -not $deployExe.Exists
+			[System.String]$binary = if ($isPowerShell) { Get-ADTPowerShellProcessPath } else { $deployExe.FullName }
 			[System.String]$argumentString = if ($isPowerShell) {
-				ConvertTo-NXTPsBinaryArgument -Arguments $Arguments -File "$($Root.FullName)\Deploy-Application.ps1" -UseLastExitCode
+				ConvertTo-NXTPsBinaryArgument -Arguments $Arguments -File $deployPs1.FullName -UseLastExitCode
 			}
 			elseif ($Arguments) {
 				ConvertTo-NXTPsArgumentString -InputObject $Arguments

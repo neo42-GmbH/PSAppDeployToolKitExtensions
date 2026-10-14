@@ -92,8 +92,8 @@ Describe 'PSADT Compatibility' {
 
 		It 'Should match coding guidelines' {
 			Invoke-ScriptAnalyzer -Path $currentFile.FullName `
-				-Settings "$PSScriptRoot\..\analyzer\guidelines\PSScriptAnalyzerSettings.psd1" `
-				-CustomRulePath "$PSScriptRoot\..\analyzer\guidelines\neo42PSScriptAnalyzerRules.psm1" |
+				-Settings "$PSScriptRoot\..\guidelines\PSScriptAnalyzerSettings.psd1" `
+				-CustomRulePath "$PSScriptRoot\..\guidelines\neo42PSScriptAnalyzerRules.psm1" |
 				Should -BeNullOrEmpty
 		}
 	}

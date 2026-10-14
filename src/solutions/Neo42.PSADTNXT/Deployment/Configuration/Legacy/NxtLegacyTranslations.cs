@@ -529,6 +529,8 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 			result.Add(new("UserPartDir", string.Empty, string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			result.Add(new("AppLogFolder", "%LogFolder%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new("InstLogFile", "%InstLogFile%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
+			result.Add(new("UninstLogFile", "%UninstLogFile%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			result.Add(new("DirFiles", "%DirFiles%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			result.Add(new("DirSupportFiles", "%DirSupportFiles%", string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));
 			result.Add(new SessionStateVariableEntry("PackageConfig", legacyModel, string.Empty, NxtPowerShell.GLOBAL_CONSTANT_OPTION));

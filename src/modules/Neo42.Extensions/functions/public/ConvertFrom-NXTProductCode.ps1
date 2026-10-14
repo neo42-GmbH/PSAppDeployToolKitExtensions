@@ -19,7 +19,6 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipeline)]
-		[ValidateNotNull()]
 		[System.String]
 		$ProductCode
 	)

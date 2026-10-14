@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neo42.DeployNxtApplication"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neo42.PSADTNXT.WinGet", "Neo42.PSADTNXT.WinGet\Neo42.PSADTNXT.WinGet.csproj", "{6CC5345B-8720-42DF-AA12-B5F4E77BA6EF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neo42.PSADTNXT.Tools", "Neo42.PSADTNXT.Tools\Neo42.PSADTNXT.Tools.csproj", "{B8A234F0-C173-4227-AF2B-3C33C5C99A70}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{6CC5345B-8720-42DF-AA12-B5F4E77BA6EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CC5345B-8720-42DF-AA12-B5F4E77BA6EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6CC5345B-8720-42DF-AA12-B5F4E77BA6EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8A234F0-C173-4227-AF2B-3C33C5C99A70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8A234F0-C173-4227-AF2B-3C33C5C99A70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8A234F0-C173-4227-AF2B-3C33C5C99A70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8A234F0-C173-4227-AF2B-3C33C5C99A70}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

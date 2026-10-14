@@ -28,6 +28,7 @@
 	[CmdletBinding(SupportsShouldProcess)]
 	param (
 		[Parameter(Mandatory)]
+		[ValidateNotNullOrEmpty()]
 		[System.String[]]
 		$Name,
 		[System.Management.Automation.SwitchParameter]

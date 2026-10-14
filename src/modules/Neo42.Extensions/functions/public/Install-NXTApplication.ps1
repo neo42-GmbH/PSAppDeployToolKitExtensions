@@ -57,8 +57,10 @@
 		[Alias('Path', 'FilePath', 'FullName')]
 		[System.String]
 		$Target,
+		[ValidateNotNull()]
 		[System.String[]]
 		$ArgumentList,
+		[ValidateNotNull()]
 		[System.String[]]
 		$AdditionalArgumentList,
 		[PSADTNXT.Deployment.DeploymentMethod]
@@ -70,16 +72,19 @@
 		[System.String]
 		$LogFileName,
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
-		[System.IO.DirectoryInfo]
-		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory,
+		[System.String]
+		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory.FullName,
+		[ValidateNotNull()]
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter,
 
 		[Parameter(ParameterSetName = 'ExitCodes')]
+		[ValidateNotNull()]
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
 		$SuccessExitCodes,
 		[Parameter(ParameterSetName = 'ExitCodes')]
+		[ValidateNotNull()]
 		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
 		[System.Int32[]]
 		$RebootExitCodes,
@@ -227,7 +232,7 @@
 					-not [System.String]::IsNullOrWhiteSpace($applications[0].UninstallStringFilePath)
 				) {
 					$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($applications[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
-					$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory.FullName, 'neo42-Source', $applications[0].PSChildName)
+					$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory, 'neo42-Source', $applications[0].PSChildName)
 				}
 			}
 

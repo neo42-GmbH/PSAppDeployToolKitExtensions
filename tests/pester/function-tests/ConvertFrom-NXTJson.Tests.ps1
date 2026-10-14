@@ -78,9 +78,9 @@ Describe 'ConvertFrom-NXTJson' {
 			{ ConvertFrom-NXTJson -InputObject '{invalid json}' } | Should -Throw
 		}
 
-		It 'Should throw on empty or null input' {
-			{ ConvertFrom-NXTJson -InputObject $null } | Should -Throw
-			{ ConvertFrom-NXTJson -InputObject '' } | Should -Throw
+		It 'Should return empty when no data is provided' {
+			ConvertFrom-NXTJson -InputObject $null | Should -BeNullOrEmpty
+			ConvertFrom-NXTJson -InputObject '' | Should -BeNullOrEmpty
 		}
 	}
 

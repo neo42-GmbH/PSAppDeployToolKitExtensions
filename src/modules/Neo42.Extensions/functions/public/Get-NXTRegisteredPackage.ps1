@@ -42,11 +42,12 @@
 		[System.Boolean]
 		$Installed,
 		[Parameter(ParameterSetName = 'Filter')]
-		[ValidateNotNullOrEmpty()]
+		[ValidateNotNull()]
 		[System.Guid[]]
 		$Exclude,
 		[Parameter(ParameterSetName = 'Filter')]
 		[Alias('RegPackagesKey', 'RegistryKey')]
+		[ValidateNotNullOrEmpty()]
 		[System.String]
 		$RegistryKeyName,
 
