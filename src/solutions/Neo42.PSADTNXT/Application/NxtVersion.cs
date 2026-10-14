@@ -266,7 +266,10 @@ namespace PSADTNXT.Application
 		/// <summary>
 		/// Returns the original string representation of the version that was used to create this instance.
 		/// </summary>
-		public override string ToString() => _versionString;
+		public override string ToString()
+		{
+			return _versionString;
+		}
 
 		public NxtVersion(SerializationInfo info, StreamingContext context)
 		{
@@ -276,7 +279,7 @@ namespace PSADTNXT.Application
 			Revision = info.GetInt32(nameof(Revision));
 			PreRelease = info.GetString(nameof(PreRelease)) ?? string.Empty;
 			Build = info.GetString(nameof(Build)) ?? string.Empty;
-			_versionString = info.GetString(nameof(_versionString)) ?? string.Empty;
+			_versionString = info.GetString(nameof(_versionString));
 		}
 
 		public void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -287,6 +290,7 @@ namespace PSADTNXT.Application
 			info.AddValue(nameof(Revision), Revision);
 			info.AddValue(nameof(PreRelease), PreRelease);
 			info.AddValue(nameof(Build), Build);
+			info.AddValue(nameof(_versionString), _versionString);
 		}
 
 		/// <summary>
