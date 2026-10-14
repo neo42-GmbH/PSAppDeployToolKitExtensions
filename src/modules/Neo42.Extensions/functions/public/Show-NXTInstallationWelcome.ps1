@@ -299,7 +299,6 @@
 					else {
 						@{
 							CloseProcesses = $CloseProcesses.ProcessDefinition
-							PromptToSave   = $true
 						}
 					}
 				)
