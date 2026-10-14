@@ -92,7 +92,7 @@
 					Write-ADTLogEntry -Message "Setting content to file [$file] using encoding [$($finalEncoding.EncodingName)]."
 					if ($Force) {
 						[System.IO.FileAttributes]$attributes = [System.IO.File]::GetAttributes($file)
-						[System.IO.File]::SetAttributes($file, $attributes -band -bnot [System.IO.FileAttributes]::ReadOnly)
+						[System.IO.File]::SetAttributes($file, $attributes -band -bnot [System.IO.FileAttributes]::ReadOnly -band -bnot [System.IO.FileAttributes]::Hidden)
 					}
 					try {
 						[System.IO.File]::WriteAllText($file, [System.String]::Join([System.Environment]::NewLine, @($Value)), $finalEncoding)
@@ -100,7 +100,6 @@
 					finally {
 						if ($Force) { [System.IO.File]::SetAttributes($file, $attributes) }
 					}
-					if ($Force) { [System.IO.File]::SetAttributes($file, $attributes) }
 				}
 			}
 			if ($PassThru) { $Value }
