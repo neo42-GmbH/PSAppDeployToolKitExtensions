@@ -10,7 +10,7 @@ Tests can be run by
 
 ## Function tests list
 - Test all input options
-  - Parameters (named is enough)
+  - Parameters (named parameter definitions are enough)
     - Consider parameters with collection values
   - Pipeline passthru
   - For each input option
