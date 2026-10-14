@@ -24,7 +24,8 @@
 							UseLinkedAdminToken = $_.AsAdmin
 						}
 						if (-not [System.String]::IsNullOrWhiteSpace($_.Arguments)) {
-							$startParams['SecureArgumentList'] = $_.Arguments
+							$startParams['SecureArgumentList'] = $true
+							$startParams['ArgumentList'] = $_.Arguments
 						}
 						if ($_.WorkingDirectory) {
 							$startParams['WorkingDirectory'] = $_.WorkingDirectory.FullName
