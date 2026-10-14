@@ -5,8 +5,8 @@ Use `<project root>\.tools\Compare-PesterTestAndFunction.ps1` to compare and cre
 
 ## Running tests
 Tests can be run by
-- using the editor inline command 'Run tests'
-- invoking the script file `<project root>\.tools\Invoke-PesterTest.ps1`.
+- Using the editor inline command 'Run tests'.
+- Invoking the script file `<project root>\.tools\Invoke-PesterTest.ps1`.
 
 ## Function tests list
 - Test all input options
