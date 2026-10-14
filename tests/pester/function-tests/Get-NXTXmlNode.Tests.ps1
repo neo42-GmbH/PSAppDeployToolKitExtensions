@@ -41,8 +41,8 @@ Describe 'Get-NXTXmlNode' {
 			$attribute | Should -Be 'pvalue'
 		}
 
-		It 'Should return innertext as attribute value' {
-			$attribute = Get-NXTXmlNode -InputObject $xml -XPath '/root/single/child' -Attribute 'InnerText'
+		It 'Should return innertext when InnerText switch is used' {
+			$attribute = Get-NXTXmlNode -InputObject $xml -XPath '/root/single/child' -InnerText
 			$attribute | Should -BeOfType [System.String]
 			$attribute | Should -Be 'Value'
 		}
