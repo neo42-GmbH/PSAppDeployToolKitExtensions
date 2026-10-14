@@ -117,15 +117,17 @@
 				}
 				if ($nodes.Count -eq 0) {
 					Write-ADTLogEntry -Severity Warning -Message "No nodes matching XPath [$XPath] in given XmlNode."
-					continue
 				}
-				Write-ADTLogEntry -Message "Removing [$($nodes.Count)] XML node(s) at XPath [$XPath]."
-				$nodes | & { process { $null = $_.ParentNode.RemoveChild($_) } }
-				if ($PassThru) { $xml }
+				else {
+					Write-ADTLogEntry -Message "Removing [$($nodes.Count)] XML node(s) at XPath [$XPath]."
+					$nodes | & { process { $null = $_.ParentNode.RemoveChild($_) } }
 
-				if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath') -and $PSCmdlet.ShouldProcess($files[$i], 'Update XML file')) {
-					Set-NXTContent -Path $files[$i] -Value $xml.OuterXml @encodingSplat -Force:$Force
+					if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath') -and $PSCmdlet.ShouldProcess($files[$i], 'Update XML file')) {
+						Set-NXTContent -Path $files[$i] -Value $xml.OuterXml @encodingSplat -Force:$Force
+					}
 				}
+
+				if ($PassThru) { $xml }
 			}
 		}
 		catch {
