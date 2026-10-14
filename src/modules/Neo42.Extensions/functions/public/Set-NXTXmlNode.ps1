@@ -31,8 +31,6 @@
 	The XPath to the node(s) to update.
 	.PARAMETER Single
 	Make sure the XPath selects exactly one node. If not, an error is thrown.
-	.PARAMETER Name
-	The name of the node to update.
 	.PARAMETER Attributes
 	A hashtable of attributes to set on the node.
 	.PARAMETER InnerText
@@ -94,9 +92,6 @@
 		$XPath,
 		[System.Management.Automation.SwitchParameter]
 		$Single,
-		[ValidateNotNullOrEmpty()]
-		[System.String]
-		$Name,
 		[ValidateNotNull()]
 		[System.Collections.Hashtable]
 		$Attributes,

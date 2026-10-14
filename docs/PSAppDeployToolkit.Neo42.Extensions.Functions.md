@@ -5777,7 +5777,6 @@ Set-NXTXmlNode
     [-Encoding <Encoding>]
     [-Force]
     [-Single]
-    [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
@@ -5797,7 +5796,6 @@ Set-NXTXmlNode
     [-Encoding <Encoding>]
     [-Force]
     [-Single]
-    [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
@@ -5812,7 +5810,6 @@ Set-NXTXmlNode
     -XPath <string>
     [-InputObject <XmlNode[]>]
     [-Single]
-    [-Name <string>]
     [-Attributes <hashtable>]
     [-InnerText <string>]
     [-PassThru]
@@ -5972,19 +5969,6 @@ Make sure the XPath selects exactly one node. If not, an error is thrown.
 |Property|Value|
 |:---|:---|
 |Type:|SwitchParameter|
-|Position:|Named|
-|Default value:|None|
-|Required:|False|
-|Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-#### -Name
-
-The name of the node to update.
-
-|Property|Value|
-|:---|:---|
-|Type:|String|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
