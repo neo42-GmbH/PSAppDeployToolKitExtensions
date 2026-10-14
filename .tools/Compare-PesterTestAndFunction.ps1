@@ -1,10 +1,10 @@
 ﻿param(
 	[ValidateScript({ $_.Exists })]
 	[System.IO.DirectoryInfo]
-	$FunctionsDirectory = "$PSScriptRoot\..\..\..\src\modules\Neo42.Extensions\functions\public",
+	$FunctionsDirectory = "$PSScriptRoot\..\src\modules\Neo42.Extensions\functions\public",
 	[ValidateScript({ $_.Exists })]
 	[System.IO.DirectoryInfo]
-	$TestsDirectory = "$PSScriptRoot\..\function-tests",
+	$TestsDirectory = "$PSScriptRoot\..\tests\pester\function-tests",
 	[System.Management.Automation.SwitchParameter]
 	$CreateTests,
 	[System.Management.Automation.SwitchParameter]
