@@ -75,19 +75,19 @@
 			[System.Collections.Hashtable]$getKeyParam = @{
 				Path                   = $convertedKey
 				ReturnEmptyKeyIfExists = $true
-				InformationAction      = 'SilentlyContinue'
-				WarningAction          = 'SilentlyContinue'
-				ErrorAction            = 'SilentlyContinue'
+				InformationAction      = [System.Management.Automation.ActionPreference]::SilentlyContinue
+				WarningAction          = [System.Management.Automation.ActionPreference]::SilentlyContinue
 			}
 			if ($PSBoundParameters.ContainsKey('KeyName')) { $getKeyParam.Add('Name', $KeyName) }
 			[System.Collections.Generic.Dictionary[System.String, System.Object]]$params = $PSBoundParameters
 			[System.Management.Automation.ScriptBlock]$getKey = {
-				param([System.Management.Automation.SwitchParameter]$ReturnObject)
-				$keyObj = Get-ADTRegistryKey @getKeyParam
-				if (($null -ne $keyObj) -and $params.ContainsKey('KeyValue')) {
-					if ($keyObj -ne $KeyValue) {
-						$keyObj = $null
-					}
+				param(
+					[System.Management.Automation.SwitchParameter]
+					$ReturnObject
+				)
+				$keyObj = Get-ADTRegistryKey @getKeyParam # Cannot be typed. Is either PSCustomObject, RegistryKey or registry value type
+				if ($params.ContainsKey('KeyValue') -and $keyObj -ne $KeyValue) {
+					$keyObj = $null
 				}
 				if ($ReturnObject) { return $keyObj }
 				return $null -ne $keyObj

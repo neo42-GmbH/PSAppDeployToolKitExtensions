@@ -50,12 +50,12 @@
 	process {
 		try {
 			if ($IsInUse) {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Test-NXTFileInUse -Path $Path) }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Test-NXTFileInUse -Path $Path -Force) }
 				[System.String]$successMessage = "The file [$Path] was in use within the specified timeout period of [$Timeout]."
 				[System.String]$failureMessage = "The file [$Path] was still not in use after the specified timeout period of [$Timeout]."
 			}
 			else {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { Test-NXTFileInUse -Path $Path }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { Test-NXTFileInUse -Path $Path -Force }
 				[System.String]$successMessage = "The file [$Path] was not in use within the specified timeout period of [$Timeout]."
 				[System.String]$failureMessage = "The file [$Path] was still in use after the specified timeout period of [$Timeout]."
 			}
@@ -75,10 +75,10 @@
 			Write-ADTLogEntry -Message $message -Severity $severity -DebugMessage
 			if ($PassThru) {
 				if ($IsInUse) {
-					return $(if ($result) { $null } else { Get-Item -LiteralPath $Path })
+					return $(if ($result) { $null } else { Get-Item -LiteralPath $Path -Force })
 				}
 				else {
-					return $(if ($result) { Get-Item -LiteralPath $Path } else { $null })
+					return $(if ($result) { Get-Item -LiteralPath $Path -Force } else { $null })
 				}
 			}
 			else {

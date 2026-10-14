@@ -8002,6 +8002,7 @@ Monitors the presence of a specified filesystem path within a set timeout period
 ```PowerShell
 Wait-NXTFileSystem
     [-Path] <string>
+    [-PathType <TestPathType>]
     [-Timeout <timespan>]
     [-Interval <timespan>]
     [-PassThru]
