@@ -158,7 +158,7 @@ Describe 'Test-NXTXMLNode' {
 			$result | Should -BeTrue
 		}
 
-		It 'Should be false for a non-existing node using multiple paths' {
+		It 'Should be false for a non-existing node in one of multiple paths' {
 			$result = Test-NXTXmlNode -Path $filePath, $filePath2 -XPath $xpathValid
 			$result | Should -BeFalse
 		}
