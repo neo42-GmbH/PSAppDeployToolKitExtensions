@@ -114,7 +114,7 @@
 
 			for ([System.Int32]$i = 0; $i -lt $InputObject.Count; $i++) {
 				[System.Xml.XmlNode]$xml = $InputObject[$i]
-				[System.Xml.XmlNamespaceManager]$nsManager = Get-NXTXMLNamespaceManager -InputObject $xml
+				[System.Xml.XmlNamespaceManager]$nsManager = [PSADTNXT.Extensions.NxtXmlExtensions]::GetNsManager($xml)
 				[System.Xml.XmlNodeList]$nodes = $xml.SelectNodes($XPath, $nsManager)
 				if ($Single -and $nodes.Count -gt 1) {
 					[System.Collections.Hashtable]$errorParams = @{
