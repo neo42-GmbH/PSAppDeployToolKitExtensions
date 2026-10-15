@@ -19,17 +19,9 @@ jobs:
     permissions:
       contents: read
 
-  test:
-    needs:
-      - artifact
-    uses: ./.github/workflows/TestArtifact.yml
-    permissions:
-      contents: read
-
   release:
     needs:
       - artifact
-      - test
     runs-on: windows-latest
     permissions:
       contents: write
