@@ -36,14 +36,14 @@ param (
 	[Parameter(HelpMessage = 'If set, will deny the session to pass through codes indicating a reboot is required. Codes like 3010 will be converted to 0.')]
 	[System.Management.Automation.SwitchParameter]
 	$SuppressRebootPassThru,
-	[Parameter(HelpMessage = 'Changes to user install mode and back to user execute mode for installing/uninstalling applications on Remote Desktop Session Host/Citrix servers')]
+	[Parameter(HelpMessage = 'Changes to user install mode and back to user execute mode for installing/uninstalling applications on Remote Desktop Session Host/Citrix servers.')]
 	[System.Management.Automation.SwitchParameter]
 	$TerminalServerMode,
 	[Parameter(HelpMessage = 'If set, will disable logging to file. ALl logs will still be written to console.')]
 	[System.Management.Automation.SwitchParameter]
 	$DisableLogging,
 	# Neo42.Extensions parameters #
-	[Parameter(HelpMessage = 'Parameter representing the deployment system. May be used by downstream extensions or hooks. If not set, the Extension will try to determine the deployment system automatically.')]
+	[Parameter(HelpMessage = 'Parameter representing the deployment system. May be used by downstream extensions or hooks.')]
 	[System.String]
 	$DeploymentSystem,
 	[Parameter(HelpMessage = 'If set, the script will stop before the deployment and will not close the active session. Useful for debugging purposes.')]
