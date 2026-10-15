@@ -62,7 +62,7 @@
 				$InputObject = Import-NXTXmlFile -LiteralPath $Path @encodingSplat -Force:$Force
 			}
 
-			return $null -ne ($InputObject.SelectSingleNode($XPath, (Get-NXTXMLNamespaceManager -InputObject $InputObject)))
+			return $null -ne ($InputObject.SelectSingleNode($XPath, ([PSADTNXT.Extensions.NxtXmlExtensions]::GetNsManager($InputObject))))
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_
