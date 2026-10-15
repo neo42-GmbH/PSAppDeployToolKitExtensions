@@ -94,7 +94,7 @@
 					Write-ADTLogEntry -Message "Adding content to file [$file] using encoding [$($finalEncoding.EncodingName)]."
 					if ($Force) {
 						[System.IO.FileAttributes]$attributes = [System.IO.File]::GetAttributes($file)
-						[System.IO.File]::SetAttributes($file, $attributes -bxor [System.IO.FileAttributes]::ReadOnly)
+						[System.IO.File]::SetAttributes($file, $attributes -band -bnot [System.IO.FileAttributes]::ReadOnly)
 					}
 					try {
 						[System.IO.File]::AppendAllText($file, [System.String]::Join([System.Environment]::NewLine, @($Value)), $finalEncoding)
