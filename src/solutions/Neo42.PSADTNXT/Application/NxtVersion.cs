@@ -271,25 +271,17 @@ namespace PSADTNXT.Application
 			return _versionString;
 		}
 
-		public NxtVersion(SerializationInfo info, StreamingContext context)
+		/// <summary>
+		/// Deserialization constructor. Only the original version string is persisted,
+		/// all other parts are derived from it by the string constructor and its validation.
+		/// </summary>
+		private NxtVersion(SerializationInfo info, StreamingContext context)
+			: this(info.GetString(nameof(_versionString))!)
 		{
-			Major = info.GetInt32(nameof(Major));
-			Minor = info.GetInt32(nameof(Minor));
-			Patch = info.GetInt32(nameof(Patch));
-			Revision = info.GetInt32(nameof(Revision));
-			PreRelease = info.GetString(nameof(PreRelease)) ?? string.Empty;
-			Build = info.GetString(nameof(Build)) ?? string.Empty;
-			_versionString = info.GetString(nameof(_versionString));
 		}
 
 		public void GetObjectData(SerializationInfo info, StreamingContext context)
 		{
-			info.AddValue(nameof(Major), Major);
-			info.AddValue(nameof(Minor), Minor);
-			info.AddValue(nameof(Patch), Patch);
-			info.AddValue(nameof(Revision), Revision);
-			info.AddValue(nameof(PreRelease), PreRelease);
-			info.AddValue(nameof(Build), Build);
 			info.AddValue(nameof(_versionString), _versionString);
 		}
 
