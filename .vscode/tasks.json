@@ -121,7 +121,7 @@
 		{
 			"label": "Pester Test Project (Desktop)",
 			"type": "shell",
-			"command": "${workspaceFolder}${/}.tools${/}Invoke-PesterTests.ps1",
+			"command": "${workspaceFolder}${/}.tools${/}Invoke-PesterTest.ps1",
 			"group": "test",
 			"promptOnClose": false,
 			"hide": true,
@@ -149,7 +149,7 @@
 		{
 			"label": "Pester Test Project (Core)",
 			"type": "shell",
-			"command": "${workspaceFolder}${/}.tools${/}Invoke-PesterTests.ps1",
+			"command": "${workspaceFolder}${/}.tools${/}Invoke-PesterTest.ps1",
 			"group": "test",
 			"promptOnClose": false,
 			"hide": true,
@@ -171,7 +171,11 @@
 			"options": {
 				"shell": {
 					"executable": "pwsh.exe",
-					"args": ["-NoLogo", "-NoProfile", "-Command"]
+					"args": [
+						"-NoLogo",
+						"-NoProfile",
+						"-Command"
+					]
 				}
 			}
 		},

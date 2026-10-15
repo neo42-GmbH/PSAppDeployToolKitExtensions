@@ -1,10 +1,10 @@
 ﻿param(
 	[ValidateScript({ $_.Exists })]
 	[System.IO.DirectoryInfo]
-	$FunctionsDirectory = "$PSScriptRoot\..\..\..\src\modules\Neo42.Extensions\functions\public",
+	$FunctionsDirectory = "$PSScriptRoot\..\src\modules\Neo42.Extensions\functions\public",
 	[ValidateScript({ $_.Exists })]
 	[System.IO.DirectoryInfo]
-	$TestsDirectory = "$PSScriptRoot\..\function-tests",
+	$TestsDirectory = "$PSScriptRoot\..\tests\pester\function-tests",
 	[System.Management.Automation.SwitchParameter]
 	$CreateTests,
 	[System.Management.Automation.SwitchParameter]
@@ -91,7 +91,7 @@ try {
 		Write-Output 'Test file creation:'
 		foreach ($file in $missingTestFiles) {
 			[System.String]$newTestFilePath = [System.IO.Path]::Combine($TestsDirectory, $file)
-			$defaultTestContent.Replace('FUNCTIONNAME', $file.Replace('.Tests.ps1', '')) | Out-File -FilePath $newTestFilePath -Encoding utf8
+			$defaultTestContent.Replace('FUNCTIONNAME', $file.Name.Replace('.Tests.ps1', '')) | Out-File -FilePath $newTestFilePath -Encoding utf8
 			Write-Output "$(Convert-TitleString -TitleString $file) : File created."
 		}
 	}
