@@ -42,9 +42,9 @@ Describe 'Set-NXTXmlNode' {
 			<root>
 				<invalidNoClosingTag>
 			</root>'
+		[System.IO.FileInfo]$script:fileInvalid = $filePathInvalid
 		function New-FileInvalid {
 			Set-Content -Path $filePathInvalid -Value $xmlContentInvalid -Encoding UTF8
-			[System.IO.FileInfo]$script:fileInvalid = Get-Item $filePathInvalid
 		}
 
 		# Valid file 1 as hidden file
@@ -144,24 +144,20 @@ Describe 'Set-NXTXmlNode' {
 			$result | Should -BeNullOrEmpty
 		}
 
-		It 'Should be [System.Xml.XmlNode] with multiple paths and with null or empty filter' {
+		It 'Should throw an error with multiple paths and with null or empty filter' {
 			New-FileValid
 			New-FileValid2
-			$result = Set-NXTXmlNode -Path $filePath, $filePath2 -Filter $null -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath, $filePath2 -Filter $null -XPath $xpathValid -PassThru } | Should -Throw
 			New-FileValid
 			New-FileValid2
-			$result = Set-NXTXmlNode -Path $filePath, $filePath2 -Filter '' -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath, $filePath2 -Filter '' -XPath $xpathValid -PassThru } | Should -Throw
 		}
 
-		It 'Should be [System.Xml.XmlNode] with multiple paths and with null or empty filter' {
+		It 'Should throw an error with one path and with null or empty filter' {
 			New-FileValid
-			$result = Set-NXTXmlNode -Path $filePath -Filter $null -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath -Filter $null -XPath $xpathValid -PassThru } | Should -Throw
 			New-FileValid
-			$result = Set-NXTXmlNode -Path $filePath -Filter '' -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath -Filter '' -XPath $xpathValid -PassThru } | Should -Throw
 		}
 	}
 
@@ -179,24 +175,20 @@ Describe 'Set-NXTXmlNode' {
 			$result | Should -BeOfType [System.Xml.XmlNode]
 		}
 
-		It 'Should be [System.Xml.XmlNode] with multiple paths with null or empty exclude value' {
+		It 'Should throw an error with multiple paths with null or empty exclude value' {
 			New-FileValid
 			New-FileValid2
-			$result = Set-NXTXmlNode -Path $filePath, $filePath2 -Exclude $null -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath, $filePath2 -Exclude $null -XPath $xpathValid -PassThru } | Should -Throw
 			New-FileValid
 			New-FileValid2
-			$result = Set-NXTXmlNode -Path $filePath, $filePath2 -Exclude '' -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath, $filePath2 -Exclude '' -XPath $xpathValid -PassThru } | Should -Throw
 		}
 
-		It 'Should be [System.Xml.XmlNode] with one path and with null or empty exclude value' {
+		It 'Should throw an error with one path and with null or empty exclude value' {
 			New-FileValid
-			$result = Set-NXTXmlNode -Path $filePath -Exclude $null -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath -Exclude $null -XPath $xpathValid -PassThru } | Should -Throw
 			New-FileValid
-			$result = Set-NXTXmlNode -Path $filePath -Exclude '' -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath -Exclude '' -XPath $xpathValid -PassThru } | Should -Throw
 		}
 	}
 
@@ -211,24 +203,20 @@ Describe 'Set-NXTXmlNode' {
 			$result | Should -BeNullOrEmpty
 		}
 
-		It 'Should be [System.Xml.XmlNode] with multiple paths and with null or empty include value' {
+		It 'Should throw an error with multiple paths and with null or empty include value' {
 			New-FileValid
 			New-FileValid2
-			$result = Set-NXTXmlNode -Path $filePath, $filePath2 -Include $null -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath, $filePath2 -Include $null -XPath $xpathValid -PassThru } | Should -Throw
 			New-FileValid
 			New-FileValid2
-			$result = Set-NXTXmlNode -Path $filePath, $filePath2 -Include '' -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath, $filePath2 -Include '' -XPath $xpathValid -PassThru } | Should -Throw
 		}
 
-		It 'Should be [System.Xml.XmlNode] with one path and with null or empty include value' {
+		It 'Should throw an error with one path and with null or empty include value' {
 			New-FileValid
-			$result = Set-NXTXmlNode -Path $filePath -Include $null -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath -Include $null -XPath $xpathValid -PassThru } | Should -Throw
 			New-FileValid
-			$result = Set-NXTXmlNode -Path $filePath -Include '' -XPath $xpathValid -PassThru
-			$result | Should -BeOfType [System.Xml.XmlNode]
+			{ Set-NXTXmlNode -Path $filePath -Include '' -XPath $xpathValid -PassThru } | Should -Throw
 		}
 	}
 
@@ -264,14 +252,18 @@ Describe 'Set-NXTXmlNode' {
 	}
 
 	Context 'When using an invalid xpath' {
-		It 'Should throw an exception with a non-existing xpath' {
+		It 'Should be System.Object[] with a non-existing xpath with multiple paths' {
 			New-FileValid
 			New-FileValid2
 			$result = Set-NXTXmlNode -Path $filePath, $filePath2 -XPath $xpathInvalid -PassThru
-			$result | Should -BeNullOrEmpty
+			Should -BeOfType [System.Object[]] -ActualValue $result
+			$result | ForEach-Object { $_ | Should -BeOfType [System.Xml.XmlNode] }
+		}
+
+		It 'Should be System.Xml.XmlNode with a non-existing xpath with multiple paths' {
 			New-FileValid
 			$result = Set-NXTXmlNode -Path $filePath -XPath $xpathInvalid -PassThru
-			$result | Should -BeNullOrEmpty
+			Should -BeOfType [System.Xml.XmlNode] -ActualValue $result
 		}
 
 		It 'Should throw an exception with multiple paths and with null or empty xpath' {
@@ -319,7 +311,11 @@ Describe 'Set-NXTXmlNode' {
 			New-FileValid2
 			$result = Set-NXTXmlNode -Path $filePath, $filePath2 -XPath $xpathValid -InnerText 'Test Value' -PassThru
 			$result | Should -BeOfType [System.Xml.XmlNode]
-			$result.SelectSingleNode('.//parent_multiple/child').InnerText | Should -Be 'Test Value'
+			$result.Count | Should -Be 2
+			$nodeResult = $result.SelectSingleNode('.//parent_multiple/child')
+			$nodeResult[0] | Should -Not -BeNullOrEmpty
+			$nodeResult[0].InnerText | Should -Be 'Test Value'
+			$nodeResult[1] | Should -BeNullOrEmpty
 		}
 
 		It 'Should be [System.Xml.XmlNode] with multiple paths and -Single switch' {
@@ -334,7 +330,9 @@ Describe 'Set-NXTXmlNode' {
 			New-FileHidden
 			$result = Set-NXTXmlNode -LiteralPath $filePathHidden -XPath $xpathValid -InnerText 'Test Value' -Force -Passthru
 			$result | Should -BeOfType [System.Xml.XmlNode]
-			$result.SelectSingleNode('.//parent_multiple/child[@property="pvalue"]').InnerText | Should -Be 'Test Value'
+			$nodeResult = $result.SelectSingleNode('.//parent_multiple/child[@property="pvalue"]')
+			$nodeResult | Should -Not -BeNullOrEmpty
+			$nodeResult.InnerText | Should -Be 'Test Value'
 		}
 
 		It 'Should throw an exception with one path to a hidden file without -Force switch' {
@@ -346,16 +344,19 @@ Describe 'Set-NXTXmlNode' {
 			Init-Nodes
 			$result = Set-NXTXmlNode -InputObject $node -XPath $nodeXpathValid -InnerText 'Test Value' -Passthru
 			$result | Should -BeOfType [System.Xml.XmlNode]
-			$result.SelectSingleNode('.//child[@property="pvalue"]').InnerText | Should -Be 'Test Value'
+			$nodeResult = $result.SelectSingleNode('.//child[@property="pvalue"]')
+			$nodeResult | Should -Not -BeNullOrEmpty
+			$nodeResult.InnerText | Should -Be 'Test Value'
 		}
 
 		It 'Should be [System.Object[]] with input objects as [System.Xml.XmlNode[]]' {
 			Init-Nodes
 			$result = Set-NXTXmlNode -InputObject $nodes -XPath $nodeXpathValid -InnerText 'Test Value' -Attributes @{'property' = 'testvalue' } -PassThru
 			Should -BeOfType [System.Object[]] -ActualValue $result
-			Should -HaveCount 2 -ActualValue $result
-			$result | ForEach-Object { $_ | Should -BeOfType [System.Xml.XmlNode]
-				$result | ForEach-Object { $_.SelectSingleNode('.//child[@property="testvalue"][text() = "Test Value"]') | Should -Not -BeNullOrEmpty }
+			$result.Count | Should -Be 2
+			foreach ($item in $result) {
+				$item | ForEach-Object { $_ | Should -BeOfType [System.Xml.XmlNode] }
+				$item | ForEach-Object { $_.SelectSingleNode('.//child[@property="testvalue"][text() = "Test Value"]') | Should -Not -BeNullOrEmpty }
 			}
 		}
 	}
