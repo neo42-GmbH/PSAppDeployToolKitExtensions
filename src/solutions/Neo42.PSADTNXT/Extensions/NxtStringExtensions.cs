@@ -61,14 +61,9 @@ namespace PSADTNXT.Extensions
 		/// <returns>The input string with matching parentheses removed from the start and end.</returns>
 		internal static string RemoveParentheses(this string input)
 		{
-			if (input.Length < 2)
-			{
-				return input;
-			}
-
 			foreach (var pair in _parenthesesPairs)
 			{
-				if (input[0] == pair.Key && input[-1] == pair.Value)
+				if (input.Length >= 2 && input[0] == pair.Key && input[input.Length - 1] == pair.Value)
 				{
 					input = input.Substring(1, input.Length - 2).Trim();
 				}
@@ -79,7 +74,7 @@ namespace PSADTNXT.Extensions
 
 		public static bool IsMatch(this string input, string pattern, StringCompareOperator op = StringCompareOperator.Equals, bool ignoreCase = true)
 		{
-#pragma warning disable CA2249 // Use of string.IndexOf is required for net framework
+#pragma warning disable CA2249
 			return op switch
 			{
 				StringCompareOperator.Equals => string.Equals(input, pattern, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal),
@@ -90,7 +85,7 @@ namespace PSADTNXT.Extensions
 				StringCompareOperator.Regex => Regex.IsMatch(input, pattern, ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None),
 				_ => throw new InvalidOperationException($"Unsupported string compare operator: {op}")
 			};
-#pragma warning restore CA2249 // Use of string.IndexOf is required for net framework
+#pragma warning restore CA2249
 		}
 	}
 }
