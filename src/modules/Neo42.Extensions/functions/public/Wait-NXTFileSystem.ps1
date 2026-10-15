@@ -16,6 +16,8 @@
 	The maximum time to wait for the path to appear or disappear.
 	.PARAMETER Interval
 	The interval at which to check for the path's presence or removal.
+	.PARAMETER PathType
+	Optionally limit what kind of file system item to way for.
 	.PARAMETER PassThru
 	Instead of returning a boolean, return the object.
 	.PARAMETER IsRemoved
