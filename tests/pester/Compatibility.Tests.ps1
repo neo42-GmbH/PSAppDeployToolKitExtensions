@@ -91,10 +91,19 @@ Describe 'PSADT Compatibility' {
 		}
 
 		It 'Should match coding guidelines' {
-			Invoke-ScriptAnalyzer -Path $currentFile.FullName `
-				-Settings "$PSScriptRoot\..\guidelines\PSScriptAnalyzerSettings.psd1" `
-				-CustomRulePath "$PSScriptRoot\..\guidelines\neo42PSScriptAnalyzerRules.psm1" |
-				Should -BeNullOrEmpty
+			[System.Collections.Hashtable]$psaParams = @{
+				Path           = $currentFile.FullName
+				Settings       = "$PSScriptRoot\..\guidelines\PSScriptAnalyzerSettings.psd1"
+				CustomRulePath = "$PSScriptRoot\..\guidelines\neo42PSScriptAnalyzerRules.psm1"
+			}
+			try {
+				Invoke-ScriptAnalyzer @psaParams | Should -BeNullOrEmpty
+			}
+			catch [System.NullReferenceException] {
+				# https://github.com/PowerShell/PSScriptAnalyzer/issues/1867
+				Write-Warning 'Transient null ref exception in PSScriptAnalyzer. Attempting single retry...'
+				Invoke-ScriptAnalyzer @psaParams | Should -BeNullOrEmpty
+			}
 		}
 	}
 }

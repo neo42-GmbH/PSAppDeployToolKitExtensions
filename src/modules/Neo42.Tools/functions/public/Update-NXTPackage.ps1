@@ -17,7 +17,6 @@
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '')]
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '')]
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Migration scriptblocks might not need the parameters')]
-
 	[CmdletBinding()]
 	param (
 		[Parameter(ValueFromPipeline)]

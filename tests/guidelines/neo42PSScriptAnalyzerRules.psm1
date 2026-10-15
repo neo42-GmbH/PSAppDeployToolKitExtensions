@@ -18,25 +18,43 @@ function Resolve-TypeFullName {
 		[System.Type]
 		$Type
 	)
-	[System.Text.StringBuilder]$name = [System.Text.StringBuilder]::new()
-	if ($Type.IsNested) {
-		$null = $name.Append((Resolve-TypeFullName -Type $Type.DeclaringType))
-		$null = $name.Append('+')
+	if ($Type.IsArray) {
+		return (Resolve-TypeFullName -Type $Type.GetElementType()) + '[' + [System.String]::new([System.Char]',', $Type.GetArrayRank() - 1) + ']'
 	}
-	elseif (-not [System.String]::IsNullOrWhiteSpace($Type.Namespace)) {
-		$null = $name.Append($Type.Namespace)
-		$null = $name.Append('.')
+	if ($Type.IsGenericParameter) {
+		return $Type.Name
 	}
-	$null = $name.Append($Type.Name.Split('`')[0])
-	if ($Type.IsGenericType) {
-		$null = $name.Append('[')
-		foreach ($arg in $Type.GetGenericArguments()) {
-			if ($name[-1] -ne '[') { $null = $name.Append(', ') }
-			$null = $name.Append((Resolve-TypeFullName -Type $arg))
-		}
-		$null = $name.Append(']')
+	if (-not $Type.IsGenericType -or $Type.IsGenericTypeDefinition) {
+		return $Type.FullName
 	}
-	return $name.ToString()
+	[System.Type[]]$genericArguments = $Type.GetGenericArguments()
+	[System.String]$definitionName = $Type.GetGenericTypeDefinition().FullName
+	# PowerShell infers the arity suffix from the argument count, nested types of generic types need to keep it as their arguments include the ones of the declaring type
+	if ($definitionName.EndsWith('`' + $genericArguments.Length)) {
+		$definitionName = $definitionName.Substring(0, $definitionName.LastIndexOf('`'))
+	}
+	[System.String[]]$argumentNames = foreach ($genericArgument in $genericArguments) {
+		Resolve-TypeFullName -Type $genericArgument
+	}
+	return $definitionName + '[' + [System.String]::Join(', ', $argumentNames) + ']'
+}
+
+function Get-CasedVariableText {
+	<#
+	.SYNOPSIS
+	Helper function to change the case of the first letter of a variable name while keeping its sigil, braces and scope.
+	#>
+	param (
+		[Parameter(Mandatory)]
+		[System.Management.Automation.Language.VariableExpressionAst]
+		$VariableAst,
+		[System.Management.Automation.SwitchParameter]
+		$ToUpper
+	)
+	[System.String]$text = $VariableAst.Extent.Text
+	[System.Int32]$nameStart = if ($text.StartsWith('${')) { 2 } else { 1 }
+	[System.Char]$firstLetter = if ($ToUpper) { [System.Char]::ToUpperInvariant($text[$nameStart]) } else { [System.Char]::ToLowerInvariant($text[$nameStart]) }
+	return $text.Substring(0, $nameStart) + $firstLetter + $text.Substring($nameStart + 1)
 }
 
 function PSNxtVariablesInParamBlockMustBeCapitalized {
@@ -52,6 +70,7 @@ function PSNxtVariablesInParamBlockMustBeCapitalized {
 	#>
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	param (
+		[Parameter(Mandatory)]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
@@ -63,7 +82,7 @@ function PSNxtVariablesInParamBlockMustBeCapitalized {
 				{
 					$args[0] -is [System.Management.Automation.Language.VariableExpressionAst] -and
 					$args[0].VariablePath.UserPath -eq $parameter.Name.VariablePath.UserPath -and
-					-not [System.Char]::IsUpper($args[0].VariablePath.UserPath[0])
+					[System.Char]::IsLower($args[0].VariablePath.UserPath[0])
 				},
 				$true
 			) | & {
@@ -72,7 +91,7 @@ function PSNxtVariablesInParamBlockMustBeCapitalized {
 					$suggestedCorrections.Add(
 						[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 							$_.Extent,
-							('$' + $_.VariablePath.UserPath.SubString(0, 1).ToUpper() + $_.VariablePath.UserPath.SubString(1, $_.VariablePath.UserPath.Length - 1)),
+							(Get-CasedVariableText -VariableAst $_ -ToUpper),
 							$MyInvocation.MyCommand.Definition,
 							'Capitalize the first letter of the parameter variable.'
 						)
@@ -107,6 +126,7 @@ function PSNxtAvoidCapitalizedVarsOutsideParamBlock {
 	#>
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	param (
+		[Parameter(Mandatory)]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
@@ -136,12 +156,10 @@ function PSNxtAvoidCapitalizedVarsOutsideParamBlock {
 				[System.Management.Automation.Language.VariableExpressionAst]$variableAst = $_
 				if ($variableAst.VariablePath.UserPath -notin $parameters.Name.VariablePath.UserPath) {
 					$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
-					[System.String]$varName = $variableAst.VariablePath.UserPath
-					[System.String]$prefix = $variableAst.Extent.Text.SubString(0, 1)
 					$null = $suggestedCorrections.Add(
 						[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 							$variableAst.Extent,
-							($prefix + $varName.SubString(0, 1).ToLower() + $varName.SubString(1, $varName.Length - 1)),
+							(Get-CasedVariableText -VariableAst $variableAst),
 							$MyInvocation.MyCommand.Definition,
 							'Use lowercase variable names outside of the param block.'
 						)
@@ -174,6 +192,7 @@ function PSNxtParamBlockVariablesShouldBeTyped {
 	#>
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	param (
+		[Parameter(Mandatory)]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
@@ -181,7 +200,7 @@ function PSNxtParamBlockVariablesShouldBeTyped {
 		if ($null -eq $TestAst.ParamBlock) { return }
 		[System.Collections.Generic.List[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		foreach ($parameterAst in $TestAst.ParamBlock.Parameters) {
-			if ($null -eq $parameterAst.Attributes.TypeName) {
+			if (-not $parameterAst.Attributes.Where({ $_ -is [System.Management.Automation.Language.TypeConstraintAst] })) {
 				$null = $results.Add([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
 						'Message'           = 'A parameter block variable needs to be typed'
 						'Extent'            = $parameterAst.Extent
@@ -208,24 +227,35 @@ function PSNxtEnforceConsistantConditionalStatement {
 	#>
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	param (
+		[Parameter(Mandatory)]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
+	begin {
+		# Only equality comparisons can be mirrored without changing the operator
+		[System.Management.Automation.Language.TokenKind[]]$equalityOperators = @('Ieq', 'Ine', 'Ceq', 'Cne')
+	}
 	process {
 		[System.Collections.Generic.List[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord]]$results = @()
 		$TestAst.FindAll({
 				$args[0] -is [System.Management.Automation.Language.BinaryExpressionAst] -and
+				$args[0].Operator -in $equalityOperators -and
 				$args[0].Right.Extent.Text -in @('$true', '$false', '$null')
 			},
 			$false
 		) | & {
 			process {
 				[System.Management.Automation.Language.BinaryExpressionAst]$wrongSideOperator = $_
+				[System.String]$leftText = $wrongSideOperator.Left.Extent.Text
+				# Comparisons are left associative, so a chained comparison has to stay grouped once it moves to the right side
+				if ($wrongSideOperator.Left -is [System.Management.Automation.Language.BinaryExpressionAst]) {
+					$leftText = "($leftText)"
+				}
 				$suggestedCorrections = [System.Collections.ObjectModel.Collection[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]]::new()
 				$null = $suggestedCorrections.Add(
 					[Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent]::new(
 						$wrongSideOperator.Extent,
-						$wrongSideOperator.Right.Extent.Text + ' -' + $wrongSideOperator.Operator.ToString().ToLower() + ' ' + $wrongSideOperator.Left.Extent.Text,
+						$wrongSideOperator.Right.Extent.Text + ' ' + $wrongSideOperator.ErrorPosition.Text + ' ' + $leftText,
 						$MyInvocation.MyCommand.Definition,
 						'Switch the boolean literal to the left side of the comparison.'
 					)
@@ -258,6 +288,7 @@ function PSNxtAvoidTypeAccelerator {
 	#>
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	param (
+		[Parameter(Mandatory)]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
@@ -318,6 +349,7 @@ function PSNxtAvoidBaseTypes {
 	#>
 	[OutputType([Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
 	param (
+		[Parameter(Mandatory)]
 		[System.Management.Automation.Language.ScriptBlockAst]
 		$TestAst
 	)
