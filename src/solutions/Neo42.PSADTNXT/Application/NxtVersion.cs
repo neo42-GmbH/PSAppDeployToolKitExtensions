@@ -57,7 +57,12 @@ namespace PSADTNXT.Application
 			RegexOptions.Compiled
 		));
 
-		private static readonly char[] _trimChars = [' ', '-', '_', ',', '.', ':', ';', '/', '\\'];
+		private static readonly char[] _trimChars = [' ', '-', '_', ',', '.', ':', ';', '/', '\\', '\n'];
+
+		/// <summary>
+		/// The version construct regexes accept at most nine digits per part.
+		/// </summary>
+		private const int MAX_VERSION_PART = 999_999_999;
 
 		private readonly string _versionString;
 
@@ -116,17 +121,17 @@ namespace PSADTNXT.Application
 				IsPreRelease = suffixMatch.Groups["PreRelease"].Success;
 				if (IsPreRelease)
 				{
-					PreRelease = suffixMatch.Groups["PreRelease"].Value.RemoveParentheses().Trim(_trimChars);
+					PreRelease = CleanVersionLabel(suffixMatch.Groups["PreRelease"].Value);
 				}
 
 				if (suffixMatch.Groups["Build"].Success)
 				{
-					Build = suffixMatch.Groups["Build"].Value.RemoveParentheses().Trim(_trimChars);
+					Build = CleanVersionLabel(suffixMatch.Groups["Build"].Value);
 				}
 			}
 			else
 			{
-				Build = versionInfo.RemoveParentheses().Trim(_trimChars);
+				Build = CleanVersionLabel(versionInfo);
 			}
 		}
 
@@ -147,25 +152,36 @@ namespace PSADTNXT.Application
 
 		public NxtVersion(int major, int minor = -1, int patch = -1, int revision = -1, string preRelease = "", string build = "")
 		{
-			if (major < 0)
+			if (major is < 0 or > MAX_VERSION_PART)
 			{
 				throw new ArgumentOutOfRangeException(nameof(major), "Major version must be a non-negative integer.");
 			}
 
-			if (minor < -1)
+			if (minor is < -1 or > MAX_VERSION_PART)
 			{
 				throw new ArgumentOutOfRangeException(nameof(minor));
 			}
 
-			if (patch < -1)
+			if (patch < -1 || patch > MAX_VERSION_PART || (patch != -1 && minor == -1))
 			{
 				throw new ArgumentOutOfRangeException(nameof(patch));
 			}
 
-			if (revision < -1)
+			if (revision < -1 || revision > MAX_VERSION_PART || (revision != -1 && patch == -1))
 			{
 				throw new ArgumentOutOfRangeException(nameof(revision));
 			}
+
+			preRelease = string.IsNullOrWhiteSpace(preRelease) ? string.Empty : preRelease;
+			build = string.IsNullOrWhiteSpace(build) ? string.Empty : build;
+
+			if (preRelease.Contains("+"))
+			{
+				throw new ArgumentException("Pre-release must not contain '+' as it separates the build.", nameof(preRelease));
+			}
+
+			ThrowIfAlteredByParser(preRelease, nameof(preRelease));
+			ThrowIfAlteredByParser(build, nameof(build));
 
 			var versionSb = new StringBuilder($"{major}");
 			if (minor != -1)
@@ -195,11 +211,20 @@ namespace PSADTNXT.Application
 
 			_versionString = versionSb.ToString();
 
+			// Without a minor version only the number sequence regex must match, otherwise digits
+			// in the pre-release or build would be picked up as version parts (e.g. 5-1 => 5.1).
+			if (minor == -1
+				&& (_strictVersionConstructRegex.Value.IsMatch(_versionString) || _looseVersionConstructRegex.Value.IsMatch(_versionString)))
+			{
+				throw new ArgumentException($"Without a minor version, pre-release and build must not look like a version number: '{_versionString}'.");
+			}
+
 			Major = major;
 			Minor = minor;
 			Patch = patch;
 			Revision = revision;
 			PreRelease = preRelease;
+			IsPreRelease = !string.IsNullOrWhiteSpace(PreRelease);
 			Build = build;
 		}
 
@@ -291,7 +316,7 @@ namespace PSADTNXT.Application
 		/// <returns>A new instance of <see cref="NxtVersion"/> with the same values as the current instance.</returns>
 		public object Clone()
 		{
-			return new NxtVersion(Major, Minor, Patch, Revision, PreRelease, Build);
+			return new NxtVersion(_versionString);
 		}
 
 		/// <summary>
@@ -410,6 +435,14 @@ namespace PSADTNXT.Application
 
 		private int CompareTo(NxtVersion other)
 		{
+			int CompareVersionPart(int left, int right)
+			{
+				// Treat -1 as 0 for comparison purposes
+				var leftValue = left == -1 ? 0 : left;
+				var rightValue = right == -1 ? 0 : right;
+				return leftValue.CompareTo(rightValue);
+			}
+
 			var result = CompareVersionPart(Major, other.Major);
 			if (result != 0)
 			{
@@ -472,12 +505,24 @@ namespace PSADTNXT.Application
 			return 0;
 		}
 
-		private int CompareVersionPart(int left, int right)
+		/// <summary>
+		/// Removes enclosing parentheses and separator characters from a pre-release or build value.
+		/// </summary>
+		private static string CleanVersionLabel(string value)
 		{
-			// Treat -1 as 0 for comparison purposes
-			var leftValue = left == -1 ? 0 : left;
-			var rightValue = right == -1 ? 0 : right;
-			return leftValue.CompareTo(rightValue);
+			return value.RemoveParentheses().Trim(_trimChars);
+		}
+
+		/// <summary>
+		/// Ensures a pre-release or build value is returned unchanged when the version string is parsed again.
+		/// </summary>
+		private static void ThrowIfAlteredByParser(string value, string paramName)
+		{
+			// The parser trims the whitespace of the whole suffix before cleaning the labels
+			if (value != CleanVersionLabel(value.Trim()))
+			{
+				throw new ArgumentException($"'{value}' must not contain line breaks or start or end with whitespace, enclosing parentheses or any of '{string.Join(string.Empty, _trimChars)}'.", paramName);
+			}
 		}
 	}
 }

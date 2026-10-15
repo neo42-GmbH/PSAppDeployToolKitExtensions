@@ -371,7 +371,7 @@ namespace PSADTNXT.Deployment
 			var fullName = Path.Combine(programData, folderName);
 			if (Directory.Exists(fullName))
 			{
-				_session.WriteLogEntry($"Package root directory name [{folderName}] exists, but is not managed by this package, generating a new unique name.", LogSeverity.Error);
+				_session.WriteLogEntry($"Package root directory name [{folderName}] exists, but was not found in [{packageRootKey.Name}] store. Generating new one.", LogSeverity.Error);
 				folderName = $"{folderName}{Guid.NewGuid().ToString("N").Substring(0, 8)}";
 				if (Directory.Exists(Path.Combine(programData, folderName)))
 				{
