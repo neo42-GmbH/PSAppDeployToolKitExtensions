@@ -106,10 +106,10 @@
 				Write-ADTLogEntry -Message "Starting Neo42.Extension's [$($ADTSession.NXT.DeploymentType)] deployment logic for [$($ADTSession.InstallTitle)]."
 				$ADTSession.NXT.DeploymentInvoked = $true
 
-				# Set the initial detection status at the beginning of the deployment
-				Update-NXTDetectionStatus -ADTSession $ADTSession
-
 				. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomBegin)
+
+				# Update the detection status before acting on it
+				Update-NXTDetectionStatus -ADTSession $ADTSession
 
 				switch ($ADTSession.NXT.DeploymentType) {
 					{ $_.IsUserPart } {
