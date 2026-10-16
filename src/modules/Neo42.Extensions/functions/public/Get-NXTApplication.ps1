@@ -76,8 +76,12 @@
 
 			if ($PSCmdlet.ParameterSetName -eq 'Criteria') {
 				$Store = $Criteria.Store
-				$Identifier = $Criteria.Identifier
-				$Filter = $Criteria.Filter
+				if (-not [System.String]::IsNullOrWhiteSpace($Criteria.Identifier)) {
+					$Identifier = $Criteria.Identifier
+				}
+				if ($Criteria.Filter) {
+					$Filter = $Criteria.Filter
+				}
 			}
 
 			if ($PSBoundParameters.ContainsKey('Name')) {
