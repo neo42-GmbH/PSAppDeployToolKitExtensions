@@ -9,7 +9,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		[ValidPath(Root = ValidPathRoot.NotRooted)]
 		public string Source { get; set; } = string.Empty;
 
-		[ValidFileName]
+		[ValidFileName(AllowEmpty = true)]
 		public string TargetName { get; set; } = string.Empty;
 	}
 }

@@ -14,6 +14,8 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 	{
 		public ValidPathRoot Root { get; set; } = ValidPathRoot.Any;
 
+		public bool AllowEmpty { get; set; }
+
 		public string[] FileExtension { get; set; } = [];
 
 		/// <summary>
@@ -29,7 +31,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 		/// </summary>
 		protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
 		{
-			if (string.IsNullOrEmpty(value as string)
+			if (value is null
 				|| (value is string path && IsValidPath(path))
 				|| (value is IEnumerable<string> paths && paths.All(IsValidPath)))
 			{
@@ -41,6 +43,11 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 
 		private bool IsValidPath(string path)
 		{
+			if (AllowEmpty && string.IsNullOrWhiteSpace(path))
+			{
+				return true;
+			}
+
 			return !string.IsNullOrWhiteSpace(path)
 				&& IsValidPathString(path)
 				&& (
