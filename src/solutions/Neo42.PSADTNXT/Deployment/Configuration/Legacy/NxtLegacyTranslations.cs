@@ -304,7 +304,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				{
 					Mode = ShortcutOperation.Copy,
 					Location = ShortcutLocation.Desktop,
-					Target = s.TargetName,
+					Target = string.IsNullOrWhiteSpace(s.TargetName) ? Path.GetFileName(s.Source) : s.TargetName,
 					Source = s.Source
 				}) ?? []
 			);
@@ -325,31 +325,40 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		private static List<NxtApplicationCriteriaModel> TranslateManagedApplicationModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var managedApplications = new List<NxtApplicationCriteriaModel>();
-			if (legacyModel.UninstallKeysToHide is List<NxtLegacyKeyHideModel> uninstallKeysToHide)
-			{
-				foreach (var keyToHide in uninstallKeysToHide)
-				{
-					var isDisplayName = bool.TryParse(keyToHide.KeyNameIsDisplayName, out var keyIsDisplayName) && keyIsDisplayName;
-					var containsWildCards = bool.TryParse(keyToHide.KeyNameContainsWildCards, out var keyContainsWildCards) && keyContainsWildCards;
+			if (legacyModel.UninstallKeysToHide is not List<NxtLegacyKeyHideModel> uninstallKeysToHide) { return managedApplications; }
 
-					var criteria = new NxtApplicationCriteriaModel()
-					{
-						Store = ApplicationStore.ARP,
-					};
-					if (!isDisplayName && !containsWildCards)
-					{
-						criteria.Identifier = keyToHide.KeyName;
-					}
-					else
-					{
-						criteria.Filter = ScriptBlock.Create(
-							(isDisplayName ? "$_.DisplayName" : "$_.ProductCode") +
-							(containsWildCards ? " -like " : " -eq ") +
-							$"'{keyToHide.KeyName}'"
-						);
-					}
+			foreach (var keyToHide in uninstallKeysToHide)
+			{
+				var isDisplayName = bool.TryParse(keyToHide.KeyNameIsDisplayName, out var keyIsDisplayName) && keyIsDisplayName;
+				var containsWildCards = bool.TryParse(keyToHide.KeyNameContainsWildCards, out var keyContainsWildCards) && keyContainsWildCards;
+				var excludeList = keyToHide.DisplayNamesToExcludeFromHiding ?? [];
+
+				// We used to create self references. These are not required anymore
+				if (!isDisplayName && !containsWildCards && keyToHide.KeyName.Equals(legacyModel.UninstallKey, StringComparison.OrdinalIgnoreCase))
+				{
+					continue;
 				}
+
+				var criteria = new NxtApplicationCriteriaModel()
+				{
+					Store = keyToHide.Is64Bit ? ApplicationStore.ARP64 : ApplicationStore.ARP32,
+				};
+				if (!isDisplayName && !containsWildCards && excludeList.Count == 0)
+				{
+					criteria.Identifier = keyToHide.KeyName;
+				}
+				else
+				{
+					criteria.Filter = ScriptBlock.Create(
+						(isDisplayName ? "$_.DisplayName" : "$_.PSChildName") +
+						(containsWildCards ? " -like " : " -eq ") +
+						$"'{keyToHide.KeyName.Replace("'", "''")}'" +
+						(excludeList.Count > 0 ? $" -and $_.DisplayName -notin @('{string.Join("', '", excludeList.Select(d => d.Replace("'", "''")))}')" : string.Empty)
+					);
+				}
+				managedApplications.Add(criteria);
 			}
+
 			return managedApplications;
 		}
 
@@ -357,7 +366,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		{
 			return new NxtDeploymentContainerModel
 			{
-				InstallLocation = legacyModel.InstallLocation,
+				InstallLocation = string.IsNullOrWhiteSpace(legacyModel.InstallLocation) ? null : legacyModel.InstallLocation,
 				Installation = legacyModel.TranslateInstallationModel(),
 				Uninstallation = legacyModel.TranslateUninstallationModel()
 			};

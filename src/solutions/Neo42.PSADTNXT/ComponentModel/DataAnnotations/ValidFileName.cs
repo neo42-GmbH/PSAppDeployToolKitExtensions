@@ -14,6 +14,8 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 	{
 		public string[] FileExtension { get; set; } = [];
 
+		public bool AllowEmpty { get; set; }
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ValidPathAttribute"/> class.
 		/// </summary>
@@ -27,7 +29,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 		/// </summary>
 		protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
 		{
-			if (value == null
+			if (value is null
 				|| (value is string path && IsValidFileName(path))
 				|| (value is IEnumerable<string> paths && paths.All(IsValidFileName)))
 			{
@@ -38,6 +40,11 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 
 		private bool IsValidFileName(string path)
 		{
+			if (AllowEmpty && string.IsNullOrWhiteSpace(path))
+			{
+				return true;
+			}
+
 			return !string.IsNullOrWhiteSpace(path)
 				&& path.IndexOfAny(Path.GetInvalidFileNameChars()) == -1
 				&& (

@@ -90,6 +90,9 @@
 			else {
 				Write-ADTLogEntry -Message 'No additional package requirements configuration found.' -DebugMessage
 			}
+
+			# Update the deployment status one can evaluate for debugging purposes.
+			Update-NXTDetectionStatus -ADTSession $adtSession
 		}
 		catch {
 			Write-ADTLogEntry -Severity Error -Message (Resolve-ADTErrorRecord -ErrorRecord $_)
