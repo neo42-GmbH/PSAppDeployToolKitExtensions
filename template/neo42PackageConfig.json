@@ -103,6 +103,16 @@
 			"Name": "DeploymentInstallationUpgradeMode",
 			"Value": "",
 			"ExpandVariables": false
+		},
+		{
+			"Name": "DeploymentInstallationAwaitChildren",
+			"Value": "",
+			"ExpandVariables": false
+		},
+		{
+			"Name": "DeploymentUninstallationAwaitChildren",
+			"Value": "",
+			"ExpandVariables": false
 		}
 	]
 }

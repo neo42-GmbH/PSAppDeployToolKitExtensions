@@ -29,6 +29,8 @@ namespace PSADTNXT.Deployment.Configuration
 
 		public UpgradeMode UpgradeMode { get; set; } = UpgradeMode.Reinstall;
 
+		public bool AwaitChildren { get; set; }
+
 		public NxtAwaiterModel? Awaiters { get; set; }
 
 		public bool UserPart { get; set; }

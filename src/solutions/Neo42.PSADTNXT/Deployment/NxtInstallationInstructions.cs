@@ -26,6 +26,8 @@ namespace PSADTNXT.Deployment
 
 		public UpgradeMode UpgradeMode { get; set; }
 
+		public bool AwaitChildren { get; set; }
+
 		public List<INxtAwaiter> Awaiters { get; } = [];
 
 		public bool UserPart { get; set; }

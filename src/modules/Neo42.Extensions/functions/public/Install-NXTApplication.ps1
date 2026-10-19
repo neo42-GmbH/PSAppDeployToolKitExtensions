@@ -28,6 +28,8 @@
 	If the application is already installed, its display name is used for the default LogFileName.
 	.PARAMETER CacheDirectory
 	The directory where the package cache is located. This is used to store the uninstaller files if the NoCache parameter is not specified.
+	.PARAMETER WaitForChildProcesses
+	Instead of only waiting for the main application, include any child process as well.
 	.PARAMETER Awaiter
 	Optional awaiter objects that should be evaluated post installation.
 	.PARAMETER SuccessExitCodes
@@ -74,6 +76,8 @@
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
 		[System.String]
 		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory.FullName,
+		[System.Management.Automation.SwitchParameter]
+		$WaitForChildProcesses,
 		[ValidateNotNull()]
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter,
@@ -144,14 +148,10 @@
 			[System.IO.FileInfo]$logFile = [System.IO.Path]::Combine($adtSession.LogPath, $LogFileName)
 
 			[System.Collections.Hashtable]$startSplat = Remove-ADTHashtableNullOrEmptyValues @{
-				FilePath        = if ([System.IO.Path]::IsPathRooted($Target)) { $Target } else { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) }
-				PassThru        = $true
-				ArgumentList    = $finalArguments.ToString().Trim()
-				IgnoreExitCodes = '*' # If not set in 4.1.8 the session exit code is set regardless of actual success of the result
-				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
-			}
-			if ($ExitOnProcessFailure) {
-				$startSplat['ExitOnProcessFailure'] = $true
+				FilePath     = if ([System.IO.Path]::IsPathRooted($Target)) { $Target } else { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) }
+				PassThru     = $true
+				ArgumentList = $finalArguments.ToString().Trim()
+				ErrorAction  = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
 			}
 
 			[System.IO.DirectoryInfo]$uninstallFileBackupDirectory = $null
@@ -166,9 +166,8 @@
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
-						if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(
-							$_.HResult,
+							$_.Exception.HResult,
 							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
 							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
 							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
@@ -177,7 +176,7 @@
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::MSI) {
 					$NoCache = $true
-					$result = Start-ADTMsiProcess @startSplat -Action Install -SkipMSIAlreadyInstalledCheck -NoDesktopRefresh -LogFileName ($LogFileName -replace '_Install\.log$', [System.String]::Empty)
+					$result = Start-ADTMsiProcess @startSplat -IgnoreExitCodes '*' -Action Install -SkipMSIAlreadyInstalledCheck -NoDesktopRefresh -LogFileName ($LogFileName -replace '_Install\.log$', [System.String]::Empty)
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
 					$startSplat['ArgumentList'] = "/Online /NoRestart /English /LogPath:`"$($logFile.FullName)`" /Add-ProvisionedAppxPackage /PackagePath:`"$($startSplat['FilePath'])`"" + $startSplat['ArgumentList']
@@ -195,8 +194,7 @@
 				}
 				# The default install method for every installer that has not published a result yet
 				{ -not $result } {
-					$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
-					$result = Start-ADTProcess @startSplat
+					$result = Start-ADTProcess @startSplat -WindowStyle Hidden -WaitForChildProcesses:$WaitForChildProcesses
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
 					if ($uninstallFiles) {
@@ -206,7 +204,11 @@
 			}
 
 			if (-not $IgnoreExitCodes) {
-				Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes
+				[PSADT.Module.DeploymentStatus]$status = Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -PassThru
+				if ($ExitOnProcessFailure -and $status -ge [PSADT.Module.DeploymentStatus]::FastRetry) {
+					Write-ADTLogEntry -Severity Error -Message "The installation failed with exit code [$($result.ExitCode)]. Closing the session as requested by -ExitOnProcessFailure."
+					Close-ADTSession
+				}
 			}
 
 			Wait-NXTDeploymentAwaiter -Awaiter $Awaiter

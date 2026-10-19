@@ -26,6 +26,8 @@ namespace PSADTNXT.Deployment.Configuration
 
 		public RebootAction Reboot { get; set; } = RebootAction.IfRequired;
 
+		public bool AwaitChildren { get; set; }
+
 		public NxtAwaiterModel? Awaiters { get; set; }
 
 		public bool UserPart { get; set; }

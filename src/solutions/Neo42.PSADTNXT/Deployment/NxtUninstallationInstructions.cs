@@ -22,6 +22,8 @@ namespace PSADTNXT.Deployment
 
 		public RebootAction Reboot { get; set; }
 
+		public bool AwaitChildren { get; set; }
+
 		public List<INxtAwaiter> Awaiters { get; } = [];
 
 		public bool UserPart { get; set; }

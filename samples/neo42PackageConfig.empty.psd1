@@ -39,8 +39,6 @@
 	- App: This property should not have been configurable, as this folder must reside within the package root.
 #>
 
-
-
 @{
 	# -- Version of the configuration schema
 	ConfigVersion       = '2025.12.01.0' # @schema type: [version], required
@@ -387,6 +385,10 @@
 			# -- [Migrated from v3.MSIUpgradable]
 			UpgradeMode     = 'Reinstall' # @schema enum: [None, Install, Reinstall], default: Reinstall
 
+			# -- If set, will wait for all child processes of the given target.
+			# -- Only valid when running a processed based uninstall method.
+			AwaitChildren   = $false # @schema type: [boolean], default: false
+
 			# -- Define conditions that should be awaited after the installation method was executed.
 			# -- This allows to ensure certain system states before proceeding with the deployment and the validation.
 			# -- [Migrated from TestConditionsPreSetupSuccessCheck.Install]
@@ -487,6 +489,10 @@
 			# -- If set to $null, the reboot behavior will be inherited from the installation instructions.
 			# -- [Migrated from v3.Reboot]
 			Reboot          = $null # @schema type: [enum, null], enum: [IfRequired, Always, Never], default: null
+
+			# -- If set, will wait for all child processes of the given target.
+			# -- Only valid when running a processed based uninstall method.
+			AwaitChildren   = $false # @schema type: [boolean], default: false
 
 			# -- Define conditions that should be awaited after the uninstallation method was executed.
 			# -- See Installation.Awaiters for details.
