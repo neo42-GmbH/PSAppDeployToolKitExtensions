@@ -128,17 +128,17 @@
 		#region Initialize
 		if (-not $Package) {
 			Write-Host -NoNewline 'No package directory provided, opening selection dialog...'
-			$Package = Get-FolderLocation -Message '(Package) Select the package that you want to update:'
+			$Package = Get-NXTFolderWindow -Message '(Package) Select the package that you want to update:'
 			Write-Host -ForegroundColor Green 'OK.'
 		}
 		if (-not $Reference) {
 			Write-Host -NoNewline 'No reference package directory provided, opening selection dialog...'
-			$Reference = Get-FolderLocation -Message '(Reference) Select the reference package directory:'
+			$Reference = Get-NXTFolderWindow -Message '(Reference) Select the reference package directory:'
 			Write-Host -ForegroundColor Green 'OK.'
 		}
 		if (-not $Output) {
 			Write-Host -NoNewline 'No output directory provided, opening selection dialog...'
-			$Output = Get-FolderLocation -Message '(Output) Select the output directory for the updated package:'
+			$Output = Get-NXTFolderWindow -Message '(Output) Select the output directory for the updated package:'
 			Write-Host -ForegroundColor Green 'OK.'
 		}
 
