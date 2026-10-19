@@ -2106,10 +2106,11 @@ function Measure-NXTDeprecatedFunction {
 				[System.String]$functionName = $commandAst.GetCommandName()
 				[System.Collections.Hashtable]$migration = $functionMapping[$functionName]
 
-				if ($migration.PreTest -and -not $migration.PreTest.InvokeReturnAsIs()) { return }
-
 				[System.Text.StringBuilder]$outputMessage = [System.Text.StringBuilder]::new()
 				[System.Collections.Generic.Dictionary[System.String, System.Management.Automation.Language.ParameterBindingResult]]$boundParameters = ([System.Management.Automation.Language.StaticParameterBinder]::BindCommand($commandAst, $true)).BoundParameters
+
+				if ($migration.PreTest -is [System.Management.Automation.ScriptBlock] -and -not $migration.PreTest.InvokeReturnAsIs()) { return }
+
 				[System.Collections.Generic.List[System.String]]$newParams = [System.Collections.Generic.List[System.String]]::new()
 				[System.String]$newFunction = if ($migration.NewFunction -is [System.Management.Automation.ScriptBlock]) { $migration.NewFunction.InvokeReturnAsIs() } else { $migration.NewFunction }
 

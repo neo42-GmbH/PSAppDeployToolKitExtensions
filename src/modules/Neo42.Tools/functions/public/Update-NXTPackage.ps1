@@ -227,11 +227,12 @@
 
 		# Migrate custom functions
 		[System.Text.StringBuilder]$deployApplicationSb = [System.Text.StringBuilder]::new($referenceAst.Extent.Text)
+		if (([System.String[]]$missingFunctions = $packageCustomFunctions | Where-Object { $_.Name -notin $referenceCustomFunctions.Name })) {
+			Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for [$missingFunctions]."
+			continue
+		}
 		foreach ($referenceCustomFunction in $referenceCustomFunctions) {
-			if ($packageCustomFunctions.Name -notcontains $referenceCustomFunction.Name) {
-				Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for [$($packageCustomFunctions.Name)]."
-				continue
-			}
+			if ($referenceCustomFunction.Name -notin $packageCustomFunctions.Name) { continue }
 			# Retrieve content markers
 			[System.Management.Automation.Language.Token]$referenceStartToken = $referenceTokens | Where-Object {
 				$_.Kind -eq [System.Management.Automation.Language.TokenKind]::Comment -and
