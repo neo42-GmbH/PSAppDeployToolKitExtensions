@@ -85,7 +85,7 @@
 			}
 
 			if ($PSBoundParameters.ContainsKey('Name')) {
-				[System.String]$nameFilterText = "[PSADTNXT.Extensions.NxtStringExtensions]::IsMatch(`$_.DisplayName, '$($Name.Replace('''', ''''''))', '$($NamePattern.Replace('''', ''''''))', `$true)"
+				[System.String]$nameFilterText = "[PSADTNXT.Extensions.NxtStringExtensions]::IsMatch(`$_.DisplayName, '$($Name.Replace('''', ''''''))', '$NamePattern', `$true)"
 				$Filter = if ($null -ne $Filter) {
 					[System.Management.Automation.ScriptBlock]::Create($nameFilterText + ' -and ' + $Filter.ToString())
 				}
