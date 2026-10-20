@@ -29,8 +29,12 @@
 				}
 
 				switch ($requirement.OnConflict) {
+					([PSADTNXT.Deployment.RequirementConflictAction]::Continue) {
+						Write-ADTLogEntry -Message "Defined requirement was not met: $($requirement.ErrorMessage)"
+						break
+					}
 					([PSADTNXT.Deployment.RequirementConflictAction]::Warn) {
-						Write-ADTLogEntry -Severity Warning -Message $requirement.ErrorMessage
+						Write-ADTLogEntry -Severity Warning -Message "Defined requirement was not met: $($requirement.ErrorMessage)"
 						break
 					}
 					([PSADTNXT.Deployment.RequirementConflictAction]::Fail) {
@@ -59,7 +63,7 @@
 						}
 						Show-NXTInstallationWelcome -ADTSession $ADTSession -DeploymentDefaults -NoBalloonTip
 						foreach ($application in $applications) {
-							Write-ADTLogEntry -Message "Uninstalling [$($application.DisplayName)] as per requirement."
+							Write-ADTLogEntry -Message "Uninstalling [$($application.DisplayName)] as per requirement: $($requirement.ErrorMessage)"
 							$ADTSession.NXT.ProcessResults.Add((Uninstall-NXTApplication -Application $application -ExitOnProcessFailure))
 						}
 					}
