@@ -19,6 +19,7 @@
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipeline)]
+		[ValidatePattern('^[0-9A-Fa-f]{32}$')]
 		[System.String]
 		$ProductCode
 	)
