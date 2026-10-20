@@ -429,7 +429,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 			if (legacyModel.TryGetCompatVariable("DeploymentInstallationAwaitChildren", out var awaitChildren))
 			{
-				installModel.AwaitChildren = bool.Parse(awaitChildren);
+				installModel.AwaitChildren = bool.Parse(awaitChildren!);
 			}
 
 			return installModel;
@@ -481,7 +481,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 			if (legacyModel.TryGetCompatVariable("DeploymentUninstallationAwaitChildren", out var awaitChildren))
 			{
-				uninstallModel.AwaitChildren = bool.Parse(awaitChildren);
+				uninstallModel.AwaitChildren = bool.Parse(awaitChildren!);
 			}
 
 			return uninstallModel;
