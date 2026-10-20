@@ -100,7 +100,7 @@ foreach($sourceItem in $Source) {
 		}
 
 	# Export module
-	Set-Content -Path $module.FullName -Value $moduleContent.ToString() -NoNewline
+	Set-Content -Path $module.FullName -Value $moduleContent.ToString() -NoNewline -Encoding UTF8
 
 	#Test the module
 	$parserErrors = @()
@@ -116,12 +116,14 @@ foreach($sourceItem in $Source) {
 	$manifestAst = [System.Management.Automation.Language.Parser]::ParseFile($manifestSource.FullName, [ref]$null, [ref]$null)
 	[System.String]$manifestContent = $manifestAst.Extent.Text
 
-	if ($publicFunctions) {
+	if ($publicFunctionAliases) {
 		$aliasArrayText = "@($([System.Environment]::NewLine)`t`t'" + ($publicFunctionAliases -join "',$([System.Environment]::NewLine)`t`t'") + "'$([System.Environment]::NewLine)`t)"
 		$aliasesToExportAst = $manifestAst.EndBlock.Statements.PipelineElements.Expression.KeyValuePairs | Where-Object { $_.Item1.Value -eq 'AliasesToExport' }
 		$manifestContent = $manifestContent.Remove($aliasesToExportAst.Item2.Extent.StartOffset, $aliasesToExportAst.Item2.Extent.EndOffset - $aliasesToExportAst.Item2.Extent.StartOffset)
 		$manifestContent = $manifestContent.Insert($aliasesToExportAst.Item2.Extent.StartOffset, $aliasArrayText)
+	}
 
+	if ($publicFunctions) {
 		$functionArrayText = "@($([System.Environment]::NewLine)`t`t'" + ($publicFunctionAsts.Name -join "',$([System.Environment]::NewLine)`t`t'") + "'$([System.Environment]::NewLine)`t)"
 		$functionsToExportAst = $manifestAst.EndBlock.Statements.PipelineElements.Expression.KeyValuePairs | Where-Object { $_.Item1.Value -eq 'FunctionsToExport' }
 		$manifestContent = $manifestContent.Remove($functionsToExportAst.Item2.Extent.StartOffset, $functionsToExportAst.Item2.Extent.EndOffset - $functionsToExportAst.Item2.Extent.StartOffset)
@@ -129,7 +131,7 @@ foreach($sourceItem in $Source) {
 	}
 
 	# Export module
-	Set-Content -Path $manifest.FullName -Value $manifestContent -NoNewline
+	Set-Content -Path $manifest.FullName -Value $manifestContent -NoNewline -Encoding UTF8
 
 	#Test the module
 	$null = [System.Management.Automation.Language.Parser]::ParseFile($manifest.FullName, [ref]$null, [ref]$parserErrors)
