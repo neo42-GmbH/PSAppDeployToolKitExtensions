@@ -28,6 +28,7 @@
 	Custom objects cannot hold properties that only differ in casing, so the -AsHashtable parameter is required for such JSON strings.
 	Arrays nested in a hashtable are returned as System.Collections.ArrayList.
 	#>
+	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseLiteralInitializerForHashtable', '', Justification = 'We need a case sensitive hashtable.')]
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseCompatibleCommands', '', Justification = 'There is a code gate before it.')]
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSNxtAvoidBaseTypes', '', Justification = 'There is a code gate before it.')]
 	[Alias('ConvertFrom-NXTJsonC')]
