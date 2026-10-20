@@ -45,8 +45,10 @@
 	This file will reside in the log directory of the ADT session.
 	.PARAMETER SuccessExitCodes
 	The exit codes that indicate a successful uninstallation.
+	Defaults to the success exit codes of the active session.
 	.PARAMETER RebootExitCodes
 	The exit codes that indicate a reboot is required after the uninstallation.
+	Defaults to the reboot exit codes of the active session.
 	.PARAMETER IgnoreExitCodes
 	Determines if the function should ignore exit codes and not treat them as errors.
 	.PARAMETER ExitOnProcessFailure
@@ -133,6 +135,7 @@
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationIgnoreExitCodes')]
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
+		[PSDefaultValue(Help = 'The package directory.')]
 		[System.String]
 		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory.FullName,
 		[System.Management.Automation.SwitchParameter]
@@ -150,16 +153,16 @@
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
 		[ValidateNotNull()]
-		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
+		[PSDefaultValue(Help = 'The success exit codes of the active session.')]
 		[System.Int32[]]
-		$SuccessExitCodes,
+		$SuccessExitCodes = (Get-ADTSession).AppSuccessExitCodes,
 		[Parameter(ParameterSetName = 'PackageExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
 		[ValidateNotNull()]
-		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
+		[PSDefaultValue(Help = 'The reboot exit codes of the active session.')]
 		[System.Int32[]]
-		$RebootExitCodes,
+		$RebootExitCodes = (Get-ADTSession).AppRebootExitCodes,
 		[Parameter(ParameterSetName = 'PackageExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
@@ -443,7 +446,7 @@
 					}
 
 					# Start the uninstallation process.
-					$result = Start-ADTProcess @startSplat -WindowStyle Hidden -WaitForChildProcesses:$WaitForChildProcesses
+					$result = Start-ADTProcess @startSplat -WindowStyle Hidden -WaitForChildProcesses:$WaitForChildProcesses -IgnoreExitCodes '*'
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
 					# Only run, if the package family was found

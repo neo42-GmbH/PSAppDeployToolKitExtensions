@@ -34,8 +34,10 @@
 	Optional awaiter objects that should be evaluated post installation.
 	.PARAMETER SuccessExitCodes
 	The exit codes that indicate a successful installation. If the exit code of the process is in this list, the installation is considered successful.
+	Defaults to the success exit codes of the active session.
 	.PARAMETER RebootExitCodes
 	The exit codes that indicate a reboot is required after the installation. If the exit code of the process is in this list, the installation is considered successful and a reboot is requested.
+	Defaults to the reboot exit codes of the active session.
 	.PARAMETER IgnoreExitCodes
 	Specifies that any exit code from the installation process should be ignored and treated as a success.
 	.PARAMETER ExitOnProcessFailure
@@ -74,6 +76,7 @@
 		[System.String]
 		$LogFileName,
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
+		[PSDefaultValue(Help = 'The package directory.')]
 		[System.String]
 		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory.FullName,
 		[System.Management.Automation.SwitchParameter]
@@ -84,14 +87,14 @@
 
 		[Parameter(ParameterSetName = 'ExitCodes')]
 		[ValidateNotNull()]
-		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
+		[PSDefaultValue(Help = 'The success exit codes of the active session.')]
 		[System.Int32[]]
-		$SuccessExitCodes,
+		$SuccessExitCodes = (Get-ADTSession).AppSuccessExitCodes,
 		[Parameter(ParameterSetName = 'ExitCodes')]
 		[ValidateNotNull()]
-		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
+		[PSDefaultValue(Help = 'The reboot exit codes of the active session.')]
 		[System.Int32[]]
-		$RebootExitCodes,
+		$RebootExitCodes = (Get-ADTSession).AppRebootExitCodes,
 		[Parameter(ParameterSetName = 'ExitCodes')]
 		[System.Management.Automation.SwitchParameter]
 		$ExitOnProcessFailure,
@@ -194,7 +197,7 @@
 				}
 				# The default install method for every installer that has not published a result yet
 				{ -not $result } {
-					$result = Start-ADTProcess @startSplat -WindowStyle Hidden -WaitForChildProcesses:$WaitForChildProcesses
+					$result = Start-ADTProcess @startSplat -WindowStyle Hidden -WaitForChildProcesses:$WaitForChildProcesses -IgnoreExitCodes '*'
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
 					if ($uninstallFiles) {
