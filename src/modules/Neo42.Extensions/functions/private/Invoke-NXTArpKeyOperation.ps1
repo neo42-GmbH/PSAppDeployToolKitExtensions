@@ -24,16 +24,8 @@
 	process {
 		try {
 			[System.Collections.Generic.List[PSADTNXT.Application.NxtApplicationCriteria]]$criteria = [System.Collections.Generic.List[PSADTNXT.Application.NxtApplicationCriteria]]::new()
-			$ADTSession.NXT.ManagedApplications | & {
-				process {
-					if (& $isArp -Store $_.Store) {
-						$criteria.Add($_)
-					}
-				}
-			}
-			if ($ADTSession.NXT.Detection.Criteria -and (& $isArp -Store $ADTSession.NXT.Detection.Criteria.Store)) {
-				$criteria.Add($ADTSession.NXT.Detection.Criteria)
-			}
+			$ADTSession.NXT.ManagedApplications | & { process { if (& $isArp -Store $_.Store) { $criteria.Add($_) } } }
+			if ($ADTSession.NXT.Detection.Criteria -and (& $isArp -Store $ADTSession.NXT.Detection.Criteria.Store)) { $criteria.Add($ADTSession.NXT.Detection.Criteria) }
 			$criteria | & {
 				process {
 					Get-NXTApplication -Criteria $_ | & {
