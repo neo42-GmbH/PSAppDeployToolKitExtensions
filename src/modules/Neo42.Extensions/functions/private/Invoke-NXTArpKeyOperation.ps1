@@ -13,15 +13,27 @@
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+		[System.Management.Automation.ScriptBlock]$isArp = {
+			param (
+				[PSADTNXT.Application.ApplicationStore]
+				$Store
+			)
+			return ($Store -in @([PSADTNXT.Application.ApplicationStore]::ARP, [PSADTNXT.Application.ApplicationStore]::ARP32, [PSADTNXT.Application.ApplicationStore]::ARP64))
+		}
 	}
 	process {
 		try {
 			[System.Collections.Generic.List[PSADTNXT.Application.NxtApplicationCriteria]]$criteria = [System.Collections.Generic.List[PSADTNXT.Application.NxtApplicationCriteria]]::new()
-			$ADTSession.NXT.ManagedApplications | & { process { if ($_.Store -eq [PSADTNXT.Application.ApplicationStore]::ARP) { $criteria.Add($_) } } }
-			if ($ADTSession.NXT.Detection.Criteria -and $ADTSession.NXT.Detection.Criteria.Store -eq [PSADTNXT.Application.ApplicationStore]::ARP) {
+			$ADTSession.NXT.ManagedApplications | & {
+				process {
+					if (& $isArp -Store $_.Store) {
+						$criteria.Add($_)
+					}
+				}
+			}
+			if ($ADTSession.NXT.Detection.Criteria -and (& $isArp -Store $ADTSession.NXT.Detection.Criteria.Store)) {
 				$criteria.Add($ADTSession.NXT.Detection.Criteria)
 			}
-
 			$criteria | & {
 				process {
 					Get-NXTApplication -Criteria $_ | & {
