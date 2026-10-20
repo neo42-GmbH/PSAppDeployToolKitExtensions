@@ -85,6 +85,9 @@ Get-AuthenticodeSignature -LiteralPath $MyInvocation.MyCommand.Path | & {
 		}
 	}
 }
+Add-Type -AssemblyName @(
+	'System.Web.Extensions'
+)
 
 # Mount PSDrives for path resolution.
 $ExecutionContext.SessionState.Provider.GetOne('Microsoft.PowerShell.Core\Registry') | & {
