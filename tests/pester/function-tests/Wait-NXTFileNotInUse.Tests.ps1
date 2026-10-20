@@ -29,47 +29,58 @@ Describe 'Wait-NXTFileNotInUse' {
 	}
 
 	Context 'When using invalid path' {
-		It 'Should throw an error with a non-existing path' {
+		It 'Should throw an error with a non-existing value' {
 			{ Wait-NXTFileNotInUse -Path $filePathNotExisting } | Should -Throw
 		}
 
-		It 'Should throw an error with null or empty path' {
+		It 'Should throw an error with null or empty value' {
 			{ Wait-NXTFileNotInUse -Path $null } | Should -Throw
 			{ Wait-NXTFileNotInUse -Path '' } | Should -Throw
 		}
 	}
 
 	Context 'When using invalid timeout' {
-		It 'Should throw an error with an invalid timeout value' {
+		It 'Should throw an error with an invalid value' {
 			{ Wait-NXTFileNotInUse -Path $filePath -Timeout 'abc' } | Should -Throw
 		}
 
-		It 'Should throw an error with null or empty timeout value' {
+		It 'Should throw an error with null or empty value' {
 			{ Wait-NXTFileNotInUse -Path $filePath -Timeout $null } | Should -Throw
 			{ Wait-NXTFileNotInUse -Path $filePath -Timeout '' } | Should -Throw
 		}
 
-		It 'Should throw an error with an invalid timeout value datatype' {
+		It 'Should throw an error with an invalid value datatype' {
 			{ Wait-NXTFileNotInUse -Path $filePath -Timeout ([System.Guid]::NewGuid()) } | Should -Throw
 		}
 	}
 
 	Context 'When using invalid interval' {
-		It 'Should throw an error with an invalid interval value' {
+		It 'Should throw an error with an invalid value' {
 			{ Wait-NXTFileNotInUse -Path $filePath -Interval 'abc' } | Should -Throw
 		}
 
-		It 'Should throw an error with null or empty interval value' {
+		It 'Should throw an error with null or empty value' {
 			{ Wait-NXTFileNotInUse -Path $filePath -Interval $null } | Should -Throw
 			{ Wait-NXTFileNotInUse -Path $filePath -Interval '' } | Should -Throw
 		}
 
-		It 'Should throw an error with an invalid interval value datatype' {
+		It 'Should throw an error with an invalid value datatype' {
 			{ Wait-NXTFileNotInUse -Path $filePath -Interval ([System.Guid]::NewGuid()) } | Should -Throw
 		}
 	}
 
-	Context 'When using a valid path' {
+	Context 'When using a invalid pipeline input' {
+		It 'Should throw an error with null or empty value' {
+			{ $null | Wait-NXTFileNotInUse } | Should -Throw
+			{ '' | Wait-NXTFileNotInUse } | Should -Throw
+		}
+
+		It 'Should throw an error with an invalid value datatype' {
+			{ [System.Guid]::NewGuid() | Wait-NXTFileNotInUse } | Should -Throw
+		}
+	}
+
+	Context 'When using a valid input' {
 		It 'Should be $true when the file is not in use' {
 			Wait-NXTFileNotInUse -Path $filePath | Should -BeTrue
 		}
@@ -107,6 +118,16 @@ Describe 'Wait-NXTFileNotInUse' {
 			$result = Wait-NXTFileNotInUse -Path $filePath -Timeout '00:00:03' -Interval '00:00:00.500' -PassThru
 			$duration = [System.DateTime]::Now - $start
 			$result | Should -BeOfType [System.IO.FileSystemInfo]
+			$duration.TotalSeconds | Should -BeLessThan 1
+		}
+
+		It 'Should be $null instantly waiting for the file to be in use' {
+			Invoke-FileLock
+			$start = [System.DateTime]::Now
+			$result = Wait-NXTFileNotInUse -Path $filePath -Timeout '00:00:03' -Interval '00:00:00.500' -IsInUse -PassThru
+			$duration = [System.DateTime]::Now - $start
+			Invoke-FileLock -Unlock
+			$result | Should -BeNullOrEmpty
 			$duration.TotalSeconds | Should -BeLessThan 1
 		}
 	}
