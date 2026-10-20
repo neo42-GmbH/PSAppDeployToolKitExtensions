@@ -45,7 +45,7 @@
 						Remove-ADTRegistryKey @PSBoundParameters -Key $_.Name
 					}
 					else {
-						Write-ADTLogEntry -Message "The registry key [$($_.Name)] is not empty. Skipping removal." -DebugMessage
+						Write-ADTLogEntry -Message "The registry key [$Key] is not empty. Skipping removal." -DebugMessage
 					}
 				}
 			}

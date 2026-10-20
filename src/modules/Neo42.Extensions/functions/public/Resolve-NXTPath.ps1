@@ -165,10 +165,11 @@
 					) | & {
 						# Filter the items based on the path type, filter, exclude, and include parameters.
 						process {
-							# Filter out items that do not match the specified path type.
+							# Filter out items that do not match the specified path type. We need escaping to not run into nested wildcards.
+							[System.String]$escapedPath = [System.Management.Automation.WildcardPattern]::Escape($_)
 							if ($PathType -ne [Microsoft.PowerShell.Commands.TestPathType]::Any -and
-								$ExecutionContext.SessionState.InvokeProvider.Item.Exists($_) -and
-								$ExecutionContext.SessionState.InvokeProvider.Item.IsContainer($_) -ne ($PathType -eq [Microsoft.PowerShell.Commands.TestPathType]::Container)
+								$ExecutionContext.SessionState.InvokeProvider.Item.Exists($escapedPath) -and
+								$ExecutionContext.SessionState.InvokeProvider.Item.IsContainer($escapedPath) -ne ($PathType -eq [Microsoft.PowerShell.Commands.TestPathType]::Container)
 							) { return }
 
 							# Filter out items that do not match the specified filter, exclude, or include parameters.
