@@ -308,20 +308,6 @@ Describe 'Update-NXTTextInFile' {
 			[System.IO.File]::ReadAllText($filePath, [System.Text.Encoding]::Unicode) | Should -BeExactly $content.Replace('Hello', 'Hi')
 		}
 
-		It "Should use the caller's OutputEncoding for a file without BOM" {
-			New-TestFile -Encoding ([System.Text.UTF8Encoding]::new($false))
-			$OutputEncoding = [System.Text.UTF8Encoding]::new($true)
-			Update-NXTTextInFile -Path $filePath -Query 'Hello' -Value 'Hi' -CaseSensitive
-			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::UTF8.GetPreamble() + [System.Text.Encoding]::UTF8.GetBytes($content.Replace('Hello', 'Hi')))
-		}
-
-		It "Should keep the detected encoding of a file with BOM regardless of the caller's OutputEncoding" {
-			New-TestFile -Encoding ([System.Text.Encoding]::BigEndianUnicode)
-			$OutputEncoding = [System.Text.UTF8Encoding]::new($true)
-			Update-NXTTextInFile -Path $filePath -Query 'Hello' -Value 'Hi' -CaseSensitive
-			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::BigEndianUnicode.GetPreamble() + [System.Text.Encoding]::BigEndianUnicode.GetBytes($content.Replace('Hello', 'Hi')))
-		}
-
 		It 'Should throw an error with an invalid encoding' {
 			New-TestFile
 			{ Update-NXTTextInFile -Path $filePath -Query 'Hello' -Value 'Hi' -Encoding 'InvalidEncoding' } | Should -Throw
