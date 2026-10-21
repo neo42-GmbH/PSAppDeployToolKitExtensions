@@ -80,7 +80,13 @@
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
-		$Encoding
+		$Encoding,
+		[Parameter(DontShow)]
+		[PSDefaultValue(Help = 'Will use the caller''s OutputEncoding.', Value = '$OutputEncoding')]
+		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
+		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
+		[System.Text.Encoding]
+		$DefaultEncoding = $PSCmdlet.SessionState.PSVariable.GetValue('OutputEncoding')
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -89,7 +95,7 @@
 		try {
 			if (-not $NoNewLine) { $Value += [System.String]::Empty }
 			foreach ($file in (Resolve-NXTPath @PSBoundParameters -IncludeNonExistent -ProviderName 'FileSystem' -AsProviderPath -PathType Leaf)) {
-				[System.Text.Encoding]$finalEncoding = if ($Encoding) { $Encoding } else { Get-NXTFileEncoding -Path $file -DefaultEncoding $PSCmdlet.SessionState.PSVariable.GetValue('OutputEncoding') -Force:$Force }
+				[System.Text.Encoding]$finalEncoding = if ($Encoding) { $Encoding } else { Get-NXTFileEncoding -Path $file -DefaultEncoding $DefaultEncoding -Force:$Force }
 				if ($PSCmdlet.ShouldProcess($file, 'Add content')) {
 					Write-ADTLogEntry -Message "Adding content to file [$file] using encoding [$($finalEncoding.EncodingName)]."
 					[System.Boolean]$fileExisted = [System.IO.File]::Exists($file)
