@@ -32,7 +32,9 @@
 		[System.Management.Automation.SwitchParameter]
 		$Move,
 		[System.IO.DirectoryInfo]
-		$Output = "$($Package.Parent.FullName)\$($Package.BaseName)_SetupInf"
+		$Output = "$($Package.Parent.FullName)\$($Package.BaseName)_SetupInf",
+		[System.Version]
+		$FrameworkVersion = '4.0'
 	)
 
 	Set-StrictMode -Version 3.0
@@ -41,10 +43,12 @@
 
 	## Define basic variables
 	[System.String]$adtSubFolder = "$($Output.FullName)\PSADT"
-	[System.Uri]$wrapperUrl = 'https://portal.neo42.de/api/app/SetupInfWrapper/Latest'
-	[System.String]$wrapperPath = "$($Output.FullName)\SetupInfWrapper_{VERSION}.zip"
+	[System.Uri]$wrapperUrl = 'https://portal.neo42.de/api/v2/app/SetupInfWrapper/Latest'
+	[System.String]$wrapperPath = "$($Output.FullName)\SetupInfWrapper.zip"
 	[System.String]$jsonPath = "$adtSubFolder\neo42PackageConfig.json"
 	[System.String]$infPath = "$($Output.FullName)\neoInstall\Setup.inf"
+	[System.String]$expandDirectory = [System.IO.Path]::Combine($Output.FullName, 'tmp')
+	[System.String]$versionDirectory = [System.IO.Path]::Combine($expandDirectory, $FrameworkVersion.ToString())
 
 	## Test for some basic requirements
 	'Deploy-Application.ps1', 'neo42PackageConfig.json', 'Setup.ico' | ForEach-Object {
@@ -73,7 +77,6 @@
 		Write-Host "Download latest wrapper from [$wrapperUrl]"
 		[System.Management.Automation.PSObject]$latestWrapper = Invoke-RestMethod -Uri $wrapperUrl -Method Get
 
-		$wrapperPath = $wrapperPath -replace '{VERSION}', $latestWrapper.Version
 		## Write wrapper to disk as zip file
 		Write-Host "Write wrapper to disk as zip file '$wrapperPath'"
 		[System.IO.File]::WriteAllBytes($wrapperPath, [System.Convert]::FromBase64String($latestWrapper.Wrapper))
@@ -92,8 +95,9 @@
 
 	## Extract the archive to the working directory
 	Write-Host 'Extract the wrapper to the working directory'
-	Expand-Archive -Path $wrapperPath -DestinationPath $Output.FullName -Force
-	Remove-Item -Path $wrapperPath
+	Expand-Archive -Path $wrapperPath -DestinationPath $expandDirectory -Force
+	Move-Item -Path $versionDirectory -Destination $Output.FullName
+	Remove-Item -Path $wrapperPath, $expandDirectory -Recurse
 
 	## Parse the json content
 	Write-Host "Load the input data from [$jsonPath]"
