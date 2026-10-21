@@ -1,17 +1,13 @@
 ﻿function Set-NXTContent {
 	<#
 	.SYNOPSIS
-	Replaces `Set-Content` with neo42 encoding handling for files.
+	Set content of a file.
 	.DESCRIPTION
-	It's use is limited to only files and it will determine the encoding of the file and use that if no encoding is specified.
-	Should the detection fail, or if the file doesn't exist, it will use the encoding defined in the DefaultEncoding parameter.
-	Important note: If the file exists and the encoding is specified, the encoding will not be updated. Only the new content will be written with the specified encoding.
+	Replaces Set-Content with neo42 encoding handling for files.
 	.INPUTS
-	System.String[] - The content to set to the file(s).
-
 	System.IO.FileInfo[] - The file(s) to set content to.
 	.OUTPUTS
-	`System.String[]` - The content that was set to the file(s) if the `-PassThru` parameter is specified.
+	System.String[] - The content that was set to the file(s) if the -PassThru parameter is specified.
 	.PARAMETER Path
 	The path to the file(s) to set content to.
 	.PARAMETER LiteralPath
@@ -31,13 +27,14 @@
 	.PARAMETER Force
 	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.PARAMETER Encoding
-	The encoding to use when the file is created. If the file exists, the encoding will not be updated.
+	The encoding to use when the file is created.
 	.EXAMPLE
 	Set-NXTContent -Path 'C:\Temp\test.txt' -Value 'Hello World'
 
 	Sets the content 'Hello World' to the file 'C:\Temp\test.txt'.
 	.EXAMPLE
 	Set-NXTContent -Path 'C:\Temp\test.txt' -Value 'Hello World' -Encoding UTF8
+
 	Sets the content 'Hello World' to the file 'C:\Temp\test.txt' using the UTF8 encoding.
 	#>
 	[CmdletBinding(DefaultParameterSetName = 'Path', SupportsShouldProcess)]
@@ -64,7 +61,7 @@
 		[SupportsWildcards()]
 		[System.String[]]
 		$Include,
-		[Parameter(Position = 1, Mandatory, ValueFromPipeline)]
+		[Parameter(Position = 1, Mandatory)]
 		[AllowEmptyString()]
 		[System.String[]]
 		$Value,
@@ -78,7 +75,13 @@
 		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
 		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
 		[System.Text.Encoding]
-		$Encoding
+		$Encoding,
+		[Parameter(DontShow)]
+		[PSDefaultValue(Help = 'Will use the caller''s OutputEncoding.', Value = '$OutputEncoding')]
+		[ArgumentCompleter([PSADTNXT.Text.NxtEncodingArgumentCompleter])]
+		[PSADTNXT.Attributes.NxtEncodingTransformationAttribute()]
+		[System.Text.Encoding]
+		$DefaultEncoding = $PSCmdlet.SessionState.PSVariable.GetValue('OutputEncoding')
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -87,10 +90,11 @@
 		try {
 			if (-not $NoNewLine) { $Value += [System.String]::Empty }
 			foreach ($file in (Resolve-NXTPath @PSBoundParameters -IncludeNonExistent -ProviderName 'FileSystem' -AsProviderPath -PathType Leaf)) {
-				[System.Text.Encoding]$finalEncoding = if ($Encoding) { $Encoding } else { Get-NXTFileEncoding -Path $file -DefaultEncoding $PSCmdlet.SessionState.PSVariable.GetValue('OutputEncoding') -Force:$Force }
+				[System.Text.Encoding]$finalEncoding = if ($Encoding) { $Encoding } else { Get-NXTFileEncoding -Path $file -DefaultEncoding $DefaultEncoding -Force:$Force }
 				if ($PSCmdlet.ShouldProcess($file)) {
 					Write-ADTLogEntry -Message "Setting content to file [$file] using encoding [$($finalEncoding.EncodingName)]."
-					if ($Force) {
+					[System.Boolean]$fileExisted = [System.IO.File]::Exists($file)
+					if ($Force -and $fileExisted) {
 						[System.IO.FileAttributes]$attributes = [System.IO.File]::GetAttributes($file)
 						[System.IO.File]::SetAttributes($file, $attributes -band -bnot [System.IO.FileAttributes]::ReadOnly -band -bnot [System.IO.FileAttributes]::Hidden)
 					}
@@ -98,7 +102,7 @@
 						[System.IO.File]::WriteAllText($file, [System.String]::Join([System.Environment]::NewLine, @($Value)), $finalEncoding)
 					}
 					finally {
-						if ($Force) { [System.IO.File]::SetAttributes($file, $attributes) }
+						if ($Force -and $fileExisted) { [System.IO.File]::SetAttributes($file, $attributes) }
 					}
 				}
 			}

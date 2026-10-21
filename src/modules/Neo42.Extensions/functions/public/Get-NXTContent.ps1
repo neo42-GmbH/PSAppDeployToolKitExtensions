@@ -1,10 +1,9 @@
 ﻿function Get-NXTContent {
 	<#
 	.SYNOPSIS
-	Replaces `Get-Content` with neo42 encoding handling for files.
+	Get content of a file.
 	.DESCRIPTION
-	It's use is limited to only files and it will determine the encoding of the file and use that if no encoding is specified.
-	Should the detection fail, or if the file doesn't exist, it will use the encoding defined in the DefaultEncoding parameter.
+	Replaces Get-Content with neo42 encoding handling for files.
 	.INPUTS
 	System.IO.FileInfo[] - The file(s) to get content from.
 	.OUTPUTS

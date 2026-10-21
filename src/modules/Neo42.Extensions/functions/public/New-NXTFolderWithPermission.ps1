@@ -25,7 +25,7 @@
 	.PARAMETER Hide
 	Specifies that the folder should be hidden.
 	.PARAMETER Force
-	Specifies that if the folder already exists, it should be deleted and recreated.
+	Specifies that if the folder already exists, the defined permissions are applied to the existing folder instead of throwing an error. The content of the folder is kept.
 	.PARAMETER Inherit
 	Specifies that the folder should inherit permissions from the parent folder. Otherwise, the permissions are protected.
 	.PARAMETER PassThru
@@ -118,10 +118,16 @@
 							}
 							throw (New-ADTErrorRecord @errorParams)
 						}
-						Write-ADTLogEntry -Severity Warning -Message "The directory [$directory] was supposed to be created, but already existed. The [-Force] parameter was specified so the error will be ignored."
+						Write-ADTLogEntry -Severity Warning -Message "The directory [$directory] was supposed to be created, but already existed. The [-Force] parameter was specified so the defined permissions will be applied to the existing directory."
 					}
+					[System.Boolean]$applyAcl = $directory.Exists -or $Inherit
 					$directory = [PSADTNXT.IO.NxtPath]::CreateDirectory($directory.FullName, $security)
-					if ($Hide) { $directory.Attributes = $directory.Attributes -band [System.IO.FileAttributes]::Hidden }
+					## The security is ignored for existing directories and inherited permissions are not merged on creation, so it has to be applied afterwards.
+					if ($applyAcl) {
+						Set-Acl -LiteralPath $directory.FullName -AclObject $security
+					}
+					if ($Hide) { $directory.Attributes = $directory.Attributes -bor [System.IO.FileAttributes]::Hidden }
+					$directory.Refresh()
 					if ($PassThru) { $directory }
 				}
 			}

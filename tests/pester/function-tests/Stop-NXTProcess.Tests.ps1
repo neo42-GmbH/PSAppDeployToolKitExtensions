@@ -200,12 +200,20 @@ Describe 'Stop-NXTProcess' {
 
 	Context 'When using with KillProcessTree' {
 		It 'Should be false with existing process' {
-			[System.String]$cmdChildProcName = 'notepad'
-			Stop-Process -Name $cmdChildProcName -Force -ErrorAction SilentlyContinue
-			$cmdWithChildProc = Start-Process -FilePath 'cmd.exe' -ArgumentList "/k start /min /low $($cmdChildProcName).exe" -PassThru -WindowStyle Hidden
-			Start-Sleep -Milliseconds $procStartWait
+			# The child process must run directly below cmd.exe and with the same privileges as the test, so it can be stopped:
+			# ping.exe is available on every system, does not elevate (unlike regedit.exe) and is no packaged app (unlike notepad.exe on current systems).
+			$cmdWithChildProc = Start-Process -FilePath 'cmd.exe' -ArgumentList '/c ping.exe -n 60 127.0.0.1 >nul' -PassThru -WindowStyle Hidden
+			[System.UInt32[]]$childProcIds = @()
+			for ($i = 0; $i -lt 50 -and $childProcIds.Count -eq 0; $i++) {
+				Start-Sleep -Milliseconds $procStartWait
+				$childProcIds = @(Get-CimInstance -ClassName Win32_Process -Filter "ParentProcessId = $($cmdWithChildProc.Id) AND Name = 'PING.EXE'" | ForEach-Object -Process { $_.ProcessId })
+			}
+			$childProcIds | Should -Not -BeNullOrEmpty -Because 'the child process must be running before the process tree is stopped'
 			Stop-NXTProcess -Id $cmdWithChildProc.Id -KillProcessTree
-			((Test-NXTProcess -Id $cmdWithChildProc.Id) -or (Test-NXTProcess -Name $cmdChildProcName)) | Should -BeFalse
+			Test-NXTProcess -Id $cmdWithChildProc.Id | Should -BeFalse
+			foreach ($childProcId in $childProcIds) {
+				Test-NXTProcess -Id $childProcId | Should -BeFalse
+			}
 		}
 	}
 }
