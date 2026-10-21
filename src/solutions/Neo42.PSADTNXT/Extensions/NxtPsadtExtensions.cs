@@ -148,20 +148,39 @@ namespace PSADTNXT.Extensions
 			);
 		}
 
-		public static bool IsNullSoftInstaller(this InstalledApplication application)
+		public static bool IsInnoSetupInstaller(this InstalledApplication application)
 		{
-			return application.PSChildName.EndsWith(@"\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", StringComparison.OrdinalIgnoreCase) && application.PSChildName.EndsWith("_is1");
+			return application.IsArp() && application.PSChildName.EndsWith("_is1");
 		}
 
 		public static bool IsBurnInstaller(this InstalledApplication application)
 		{
-			if (!application.PSChildName.EndsWith(@"\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", StringComparison.OrdinalIgnoreCase))
+			if (!application.IsArp())
 			{
 				return false;
 			}
-
 			using var key = application.PSPath.ToRegistryKeyFromPSProviderPath();
 			return key != null && key.GetValue("BundleProviderKey") is string providerKey && providerKey.Equals(application.PSChildName, StringComparison.OrdinalIgnoreCase);
+		}
+
+		public static void Hide(this InstalledApplication application)
+		{
+			if (!application.IsArp())
+			{
+				return;
+			}
+			using var key = NxtPowerShell.ToRegistryKeyFromPSProviderPath(application.PSPath, true);
+			key?.SetValue("SystemComponent", 1, RegistryValueKind.DWord);
+		}
+
+		public static void Unhide(this InstalledApplication application)
+		{
+			if (!application.IsArp())
+			{
+				return;
+			}
+			using var key = NxtPowerShell.ToRegistryKeyFromPSProviderPath(application.PSPath, true);
+			key?.DeleteValue("SystemComponent", false);
 		}
 
 		public static ApplicationStore GetApplicationStore(this InstalledApplication application)
@@ -264,6 +283,11 @@ namespace PSADTNXT.Extensions
 
 			unpacked = new Guid(bytes);
 			return true;
+		}
+
+		private static bool IsArp(this InstalledApplication application)
+		{
+			return application.PSParentPath.EndsWith(@"\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }

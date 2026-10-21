@@ -40,13 +40,15 @@ It is used to define custom types and their members for PowerShell objects.
 			<ScriptProperty>
 				<Name>UpgradeCode</Name>
 				<GetScriptBlock>
-					if ($this.WindowsInstaller -and $this.ProductCode) { [PSADTNXT.Extensions.NxtPsadtExtensions]::GetUpgradeCode($this.ProductCode).ToString("B") }
+					if ($this.WindowsInstaller -and $this.ProductCode -and ([System.Nullable[System.Guid]]$guid = [PSADTNXT.Extensions.NxtPsadtExtensions]::GetUpgradeCode($this.ProductCode))) {
+						$guid.ToString('B').ToUpper()
+					}
 				</GetScriptBlock>
 			</ScriptProperty>
 			<ScriptProperty>
 				<Name>InnoSetupInstaller</Name>
 				<GetScriptBlock>
-					[PSADTNXT.Extensions.NxtPsadtExtensions]::IsNullSoftInstaller($this)
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::IsInnoSetupInstaller($this)
 				</GetScriptBlock>
 			</ScriptProperty>
 			<ScriptProperty>
@@ -62,25 +64,15 @@ It is used to define custom types and their members for PowerShell objects.
 				</GetScriptBlock>
 			</ScriptProperty>
 			<ScriptMethod>
-				<Name>Unhide</Name>
+				<Name>Hide</Name>
 				<Script>
-					if ($this.PSParentPath -like '*\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -and ([Microsoft.Win32.RegistryKey]$key = [PSADTNXT.Shell.NxtPowerShell]::ToRegistryKeyFromPSProviderPath($this.PSPath, $true))) {
-						$key.DeleteValue('SystemComponent', $false)
-					}
-					else {
-						Write-ADTLogEntry -Severity Warning -Message "Cannot hide application [$this]. It either does not exist or is not an ARP application."
-					}
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::Hide($this)
 				</Script>
 			</ScriptMethod>
 			<ScriptMethod>
-				<Name>Hide</Name>
+				<Name>Unhide</Name>
 				<Script>
-					if ($this.PSParentPath -like '*\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -and ([Microsoft.Win32.RegistryKey]$key = [PSADTNXT.Shell.NxtPowerShell]::ToRegistryKeyFromPSProviderPath($this.PSPath, $true))) {
-						$key.SetValue('SystemComponent', 1, [Microsoft.Win32.RegistryValueKind]::DWord)
-					}
-					else {
-						Write-ADTLogEntry -Severity Warning -Message "Cannot hide application [$this]. It either does not exist or is not an ARP application."
-					}
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::Unhide($this)
 				</Script>
 			</ScriptMethod>
 		</Members>
