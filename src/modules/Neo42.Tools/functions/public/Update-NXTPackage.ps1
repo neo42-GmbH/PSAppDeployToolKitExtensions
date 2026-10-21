@@ -35,7 +35,7 @@
 		[System.Version]$supportedMaximumFramework = '4.0'
 		[System.String]$moduleBase = $ExecutionContext.SessionState.Module.ModuleBase
 		[System.String[]]$copyFromPackage = @('Setup.ico', 'Files', 'SupportFiles', 'neo42PackageConfig.json', 'neo42PackageConfig.psd1')
-		[System.String[]]$copyFromReference = @('PSAppDeployToolkit*', 'DeployNxtApplication.exe', 'PSAppDeployToolkit.Neo42.Extensions\Config')
+		[System.String[]]$copyFromReference = @('PSAppDeployToolkit*', 'DeployNxtApplication.exe', 'PSAppDeployToolkit.Neo42.Extensions\Config', 'neo42PackageMetadata.json')
 
 		[System.Management.Automation.ScriptBlock[]]$migrations = @(
 			{ # v4.0 Deploy-Application
