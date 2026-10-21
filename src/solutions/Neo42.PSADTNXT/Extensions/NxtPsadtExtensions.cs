@@ -150,13 +150,18 @@ namespace PSADTNXT.Extensions
 
 		public static bool IsNullSoftInstaller(this InstalledApplication application)
 		{
-			return application.PSChildName.EndsWith("_is1");
+			return application.PSChildName.EndsWith(@"\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", StringComparison.OrdinalIgnoreCase) && application.PSChildName.EndsWith("_is1");
 		}
 
 		public static bool IsBurnInstaller(this InstalledApplication application)
 		{
+			if (!application.PSChildName.EndsWith(@"\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", StringComparison.OrdinalIgnoreCase))
+			{
+				return false;
+			}
+
 			using var key = application.PSPath.ToRegistryKeyFromPSProviderPath();
-			return key != null && key.GetValue("BundleProviderKey", null) is string providerKey && providerKey.Equals(application.PSChildName);
+			return key != null && key.GetValue("BundleProviderKey") is string providerKey && providerKey.Equals(application.PSChildName, StringComparison.OrdinalIgnoreCase);
 		}
 
 		public static ApplicationStore GetApplicationStore(this InstalledApplication application)
