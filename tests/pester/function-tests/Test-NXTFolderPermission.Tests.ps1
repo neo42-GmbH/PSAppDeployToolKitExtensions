@@ -17,6 +17,28 @@ Describe 'Test-NXTFolderPermission' {
 		[System.String]$subFolderPath = [System.IO.Path]::Combine($folderPath, 'sub')
 		[System.String]$folderPathNotExisting = [System.IO.Path]::Combine($rootPath, 'notExisting')
 
+		# Creates the test root with defined, inheritable permissions, so the permissions of the test folders do not depend on the temp folder of the system.
+		# Without inheritable permissions in the temp folder (e.g. on build agents), new folders get the default DACL of the process token as explicit permissions.
+		# The permissions are written with Set-Acl after creating the folder: A folder created with a security descriptor is not marked as auto-inherited (AI),
+		# and changing the permissions of a folder below it would convert the inherited permissions of its sub-folders into explicit ones.
+		function New-TestRootFolder {
+			[System.Security.AccessControl.DirectorySecurity]$rootSecurity = [System.Security.AccessControl.DirectorySecurity]::new()
+			$rootSecurity.SetAccessRuleProtection($true, $false)
+			foreach ($sid in @($sidCurrentUser, 'S-1-5-18', $sidAdministrators)) {
+				$rootSecurity.AddAccessRule(
+					[System.Security.AccessControl.FileSystemAccessRule]::new(
+						[System.Security.Principal.SecurityIdentifier]::new($sid),
+						[System.Security.AccessControl.FileSystemRights]::FullControl,
+						[System.Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit',
+						[System.Security.AccessControl.PropagationFlags]::None,
+						[System.Security.AccessControl.AccessControlType]::Allow
+					)
+				)
+			}
+			$null = [System.IO.Directory]::CreateDirectory($rootPath)
+			Set-Acl -LiteralPath $rootPath -AclObject $rootSecurity
+		}
+
 		# Creates a folder with protected permissions (independent of the tested function):
 		# - Owner: current user
 		# - Allow: FullControl for current user and administrators, Modify and ChangePermissions for users, ReadAndExecute for everyone
@@ -24,6 +46,7 @@ Describe 'Test-NXTFolderPermission' {
 		# The sub-folder only contains the inherited permissions.
 		function New-TestFolder {
 			Remove-TestFolder
+			New-TestRootFolder
 			$null = [System.IO.Directory]::CreateDirectory($subFolderPath)
 			[System.Security.AccessControl.DirectorySecurity]$security = [System.Security.AccessControl.DirectorySecurity]::new()
 			$security.SetOwner($currentUser)
@@ -50,7 +73,8 @@ Describe 'Test-NXTFolderPermission' {
 		}
 		function Remove-TestFolder {
 			if ([System.IO.Directory]::Exists($rootPath)) {
-				$null = & icacls.exe $rootPath /reset /T /C /Q 2>&1
+				# Only the permissions below the test root are reset, as they are then inherited from its defined permissions. Resetting the test root itself would make it depend on the temp folder of the system again.
+				$null = & icacls.exe "$rootPath\*" /reset /T /C /Q
 				Remove-Item -LiteralPath $rootPath -Recurse -Force -ErrorAction SilentlyContinue
 			}
 		}
