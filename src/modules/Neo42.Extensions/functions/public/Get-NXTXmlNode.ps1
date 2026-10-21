@@ -134,7 +134,7 @@
 			}
 
 			foreach ($xml in $InputObject) {
-				[System.Xml.XmlNamespaceManager]$nsManager = Get-NXTXMLNamespaceManager -InputObject $xml
+				[System.Xml.XmlNamespaceManager]$nsManager = [PSADTNXT.Extensions.NxtXmlExtensions]::GetNsManager($xml)
 				[System.Xml.XmlNode[]]$node = if ($Single) { $xml.SelectSingleNode($XPath, $nsManager) } else { $xml.SelectNodes($XPath, $nsManager) }
 				if (-not $node -or $node.Count -eq 0) {
 					[System.Collections.Hashtable]$errorParams = @{

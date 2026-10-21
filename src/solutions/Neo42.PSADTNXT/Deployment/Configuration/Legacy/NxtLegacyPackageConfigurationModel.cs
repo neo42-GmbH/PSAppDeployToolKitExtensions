@@ -116,7 +116,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		public List<string>? DisplayNamesToExcludeFromAppSearches { get; set; }
 
-		[ValidPath(Root = ValidPathRoot.Rooted)]
+		[ValidPath(Root = ValidPathRoot.Rooted, AllowEmpty = true)]
 		public string InstallLocation { get; set; } = string.Empty;
 
 		public string InstLogFile { get; set; } = string.Empty;
@@ -145,7 +145,6 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		public List<NxtLegacyAppKillProcessModel>? AppKillProcesses { get; set; }
 
-		[Obsolete("Value has been moved to toolkit settings.")]
 		public bool BlockExecution { get; set; }
 
 		public NxtLegacyConditionCheckContainerModel? TestConditionsPreSetupSuccessCheck { get; set; }

@@ -8071,6 +8071,20 @@ The interval at which to check for the path's presence or removal.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
+#### -PathType
+
+Optionally limit what kind of file system item to way for.
+
+|Property|Value|
+|:---|:---|
+|Type:|TestPathType|
+|Enum values:|Any, Container, Leaf|
+|Position:|Named|
+|Default value:|[Microsoft.PowerShell.Commands.TestPathType]::Any|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 #### -PassThru
 
 Instead of returning a boolean, return the object.

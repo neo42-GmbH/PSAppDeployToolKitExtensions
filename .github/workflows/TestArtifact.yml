@@ -21,4 +21,4 @@ jobs:
 
       - name: run-pester
         shell: powershell
-        run: ./.tools/Invoke-PesterTests.ps1 -ModuleDirectory '${{ steps.download-artifact-test.outputs.download-path }}' -PesterTestDirectory './tests/pester' -CompatibilityTestDirectory './src/modules'
+        run: ./.tools/Invoke-PesterTest.ps1 -ModuleDirectory '${{ steps.download-artifact-test.outputs.download-path }}' -PesterTestDirectory './tests/pester' -CompatibilityTestDirectory (Get-Item -Path "./src/modules/Neo42.Extensions*")

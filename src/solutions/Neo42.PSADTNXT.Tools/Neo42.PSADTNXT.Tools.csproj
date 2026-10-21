@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>PSADTNXT</RootNamespace>
+    <RootNamespace>PSADTNXT.Tools</RootNamespace>
     <AssemblyName>PSADTNXT.Tools</AssemblyName>
     <OutputType>Library</OutputType>
 
@@ -25,6 +25,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Neo42.PSADTNXT\Neo42.PSADTNXT.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PSADT" HintPath="$(RootOutputPath)\PSAppDeployToolkit\lib\PSADT.dll" Private="true" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">

@@ -37,6 +37,7 @@
 	"powershell.helpCompletion": "BlockComment",
 	"powershell.debugging.createTemporaryIntegratedConsole": true,
 	"powershell.pester.codeLens": true,
+	"powershell.pester.useLegacyCodeLens": false,
 	"powershell.pester.outputVerbosity": "Detailed",
 	"powershell.scriptAnalysis.enable": true,
 	"powershell.scriptAnalysis.settingsPath": "./.vscode/PSScriptAnalyzerSettings.psd1",

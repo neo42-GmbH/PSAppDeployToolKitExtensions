@@ -19,17 +19,9 @@ jobs:
     permissions:
       contents: read
 
-  test:
-    needs:
-      - artifact
-    uses: ./.github/workflows/TestArtifact.yml
-    permissions:
-      contents: read
-
   release:
     needs:
       - artifact
-      - test
     runs-on: windows-latest
     permissions:
       contents: write
@@ -53,14 +45,14 @@ jobs:
         run: dotnet tool install --global azuresigntool
 
       - name: azure-login
-        uses: azure/login@v3
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 #v3.1
         with:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
 
       - name: sign-files
-        uses: azure/powershell@v3
+        uses: azure/powershell@f5b8adcfff1904872c7b98d4012d4914d74b1a82 #v3
         with:
           azPSVersion: latest
           inlineScript: |
@@ -93,8 +85,13 @@ jobs:
             Compress-Archive -Path $_.FullName -DestinationPath "${{ github.workspace }}/components/$($_.Name).zip"
           }
 
-          @(Get-Item -Path '${{ steps.download-artifact-release.outputs.download-path }}/*' -Exclude 'PSAppDeployToolkit.Neo42.Extensions.*') +
-          @(Get-Item -Path '${{ steps.download-artifact-release.outputs.download-path }}/PSAppDeployToolkit.Neo42.Extensions.DeploymentSystem') | ForEach-Object {
+          @(Get-Item -Path '${{ steps.download-artifact-release.outputs.download-path }}/*' -Exclude 'PSAppDeployToolkit.Neo42.*') +
+          @(
+            Get-Item -Path @(
+              '${{ steps.download-artifact-release.outputs.download-path }}/PSAppDeployToolkit.Neo42.Extensions.DeploymentSystem',
+              '${{ steps.download-artifact-release.outputs.download-path }}/PSAppDeployToolkit.Neo42.Extensions'
+            )
+          ) | ForEach-Object {
             Compress-Archive -Update -Path $_.FullName -DestinationPath '${{ github.workspace }}/components/Template.zip'
           }
 
