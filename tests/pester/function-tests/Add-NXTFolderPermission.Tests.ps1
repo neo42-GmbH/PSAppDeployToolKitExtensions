@@ -258,10 +258,31 @@ Describe 'Add-NXTFolderPermission' {
 			Test-ExplicitRight -Path $subFolderPath -Sid $sidUsers -Rights ReadAndExecute | Should -BeTrue
 		}
 
-		It 'Should not change anything without permission parameters' {
-			[System.String]$sddlBefore = (Get-Acl -LiteralPath $folderPath).Sddl
-			Add-NXTFolderPermission -Path $folderPath | Should -BeNullOrEmpty
-			(Get-Acl -LiteralPath $folderPath).Sddl | Should -Be $sddlBefore
+		It 'Should throw an error without permission parameters' {
+			# Writing an unchanged ACL sets the auto-inherited flag (AI), but only if it is not set yet. A folder created with an explicit security descriptor has no such flag, so any write of the ACL is detected.
+			[System.String]$explicitFolderPath = [System.IO.Path]::Combine($rootPath, 'explicit')
+			[System.Security.AccessControl.DirectorySecurity]$security = [System.Security.AccessControl.DirectorySecurity]::new()
+			$security.SetAccessRuleProtection($true, $false)
+			$security.AddAccessRule(
+				[System.Security.AccessControl.FileSystemAccessRule]::new(
+					[System.Security.Principal.WindowsIdentity]::GetCurrent().User,
+					[System.Security.AccessControl.FileSystemRights]::FullControl,
+					[System.Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit',
+					[System.Security.AccessControl.PropagationFlags]::None,
+					[System.Security.AccessControl.AccessControlType]::Allow
+				)
+			)
+			$null = [PSADTNXT.IO.NxtPath]::CreateDirectory($explicitFolderPath, $security)
+			[System.String]$sddlBefore = (Get-Acl -LiteralPath $explicitFolderPath).Sddl
+			$sddlBefore | Should -Match 'D:P\(' -Because 'the folder must not be marked as auto-inherited before the test'
+			{ Add-NXTFolderPermission -Path $explicitFolderPath } | Should -Throw
+			{ Add-NXTFolderPermission -LiteralPath $explicitFolderPath -Recurse } | Should -Throw
+			{ Get-Item -LiteralPath $explicitFolderPath | Add-NXTFolderPermission } | Should -Throw
+			(Get-Acl -LiteralPath $explicitFolderPath).Sddl | Should -Be $sddlBefore
+		}
+
+		It 'Should check the permission parameters before the path' {
+			{ Add-NXTFolderPermission -Path $folderPathNotExisting } | Should -Throw
 		}
 	}
 

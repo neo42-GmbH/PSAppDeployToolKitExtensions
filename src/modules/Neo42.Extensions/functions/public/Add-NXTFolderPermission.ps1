@@ -88,6 +88,16 @@
 	}
 	process {
 		try {
+			[System.String[]]$permissionLevels = @(foreach ($permissionLevel in @('FullControl', 'Modify', 'Write', 'ReadAndExecute')) { if ($PSBoundParameters.ContainsKey($permissionLevel)) { $permissionLevel } })
+			if ($permissionLevels.Count -eq 0) {
+				[System.Collections.Hashtable]$errorParams = @{
+					Exception = [System.ArgumentException]::new('At least one permission parameter is required.')
+					Category  = [System.Management.Automation.ErrorCategory]::InvalidArgument
+					ErrorId   = 'MissingParameter'
+				}
+				throw (New-ADTErrorRecord @errorParams)
+			}
+
 			[System.String[]]$directories = Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Container -AsProviderPath | & {
 				process {
 					$_
@@ -105,7 +115,7 @@
 			foreach ($directory in $directories) {
 				Write-ADTLogEntry -Message "Setting permissions on folder [$directory]."
 				[System.Security.AccessControl.DirectorySecurity]$security = Get-Acl -LiteralPath $directory
-				foreach ($permissionLevel in @('FullControl', 'Modify', 'Write', 'ReadAndExecute')) {
+				foreach ($permissionLevel in $permissionLevels) {
 					foreach ($id in $PSBoundParameters[$permissionLevel]) {
 						$security.AddAccessRule(
 							[System.Security.AccessControl.FileSystemAccessRule]::new(
