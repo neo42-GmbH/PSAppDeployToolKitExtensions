@@ -200,7 +200,7 @@ Describe 'Stop-NXTProcess' {
 
 	Context 'When using with KillProcessTree' {
 		It 'Should be false with existing process' {
-			[System.String]$cmdChildProcName = 'notepad'
+			[System.String]$cmdChildProcName = 'regedit'
 			Stop-Process -Name $cmdChildProcName -Force -ErrorAction SilentlyContinue
 			$cmdWithChildProc = Start-Process -FilePath 'cmd.exe' -ArgumentList "/k start /min /low $($cmdChildProcName).exe" -PassThru -WindowStyle Hidden
 			Start-Sleep -Milliseconds $procStartWait
