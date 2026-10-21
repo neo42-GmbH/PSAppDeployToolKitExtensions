@@ -97,7 +97,7 @@
 					$null = $akp.Remove('FORCECONTINUEAFTERDEFERRALS')
 					$null = $akp.Remove('APPLYCONTINUETYPEONERROR')
 				}
-				Set-Content -Encoding UTF8 -LiteralPath $setupCfg -Value ($doc.Export($setupCfg))
+				[System.IO.File]::WriteAllText($setupCfg, $doc.Export($setupCfg), [System.Text.UTF8Encoding]::new($false))
 			}
 			{ # v4.0 PackageConfig warnings
 				param(
@@ -205,7 +205,7 @@
 			$sectionIdx++
 		}
 
-		Set-Content -Encoding UTF8 -LiteralPath "$($Output.FullName)\Setup.cfg" -Value ($setupCfg.Export())
+		[System.IO.File]::WriteAllText("$($Output.FullName)\Setup.cfg", $setupCfg.Export(), [System.Text.UTF8Encoding]::new($false))
 		#endregion SetupCfg
 
 		#region Deploy-Application migration
