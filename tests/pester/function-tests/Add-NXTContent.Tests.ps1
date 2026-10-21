@@ -35,6 +35,52 @@ Describe 'Add-NxtContent' {
 			@($content, $content) | Add-NXTContent -Path $filePath -Encoding BigEndianUnicode -NoNewLine | Should -BeNullOrEmpty
 			[System.IO.File]::ReadAllText($filePath, [System.Text.Encoding]::BigEndianUnicode) | Should -Be "$content$content"
 		}
+
+		It 'Should create a new file with Force' {
+			Remove-Item -LiteralPath $filePath -ErrorAction SilentlyContinue
+			Add-NXTContent -Path $filePath -Value $content -Encoding UTF8 -NoNewLine -Force | Should -BeNullOrEmpty
+			[System.IO.File]::ReadAllText($filePath) | Should -Be $content
+		}
+	}
+
+	Context 'When using a default encoding' {
+		BeforeEach {
+			Remove-Item -LiteralPath $filePath -ErrorAction SilentlyContinue
+		}
+
+		AfterEach {
+			Remove-Item -LiteralPath $filePath -ErrorAction SilentlyContinue
+		}
+
+		It 'Should create a new file with the default encoding' {
+			Add-NXTContent -Path $filePath -Value $content -DefaultEncoding UnicodeWithBOM -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::Unicode.GetPreamble() + [System.Text.Encoding]::Unicode.GetBytes($content))
+		}
+
+		It 'Should keep the detected encoding of an existing file with BOM' {
+			[System.IO.File]::WriteAllText($filePath, $content, [System.Text.Encoding]::BigEndianUnicode)
+			Add-NXTContent -Path $filePath -Value $content -DefaultEncoding UnicodeWithBOM -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::BigEndianUnicode.GetPreamble() + [System.Text.Encoding]::BigEndianUnicode.GetBytes("$content$content"))
+		}
+
+		It 'Should prefer the specified encoding' {
+			Add-NXTContent -Path $filePath -Value $content -Encoding UTF8WithBOM -DefaultEncoding UnicodeWithBOM -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::UTF8.GetPreamble() + [System.Text.Encoding]::UTF8.GetBytes($content))
+		}
+
+		It "Should use the caller's OutputEncoding by default" {
+			$OutputEncoding = [System.Text.UnicodeEncoding]::new($false, $true)
+			Add-NXTContent -Path $filePath -Value $content -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::Unicode.GetPreamble() + [System.Text.Encoding]::Unicode.GetBytes($content))
+		}
+
+		It 'Should throw an error with an invalid default encoding' {
+			{ Add-NXTContent -Path $filePath -Value $content -DefaultEncoding $null } | Should -Throw
+			{ Add-NXTContent -Path $filePath -Value $content -DefaultEncoding '' } | Should -Throw
+			{ Add-NXTContent -Path $filePath -Value $content -DefaultEncoding 'InvalidEncoding' } | Should -Throw
+			{ Add-NXTContent -Path $filePath -Value $content -DefaultEncoding ([System.Object]::new()) } | Should -Throw
+			[System.IO.File]::Exists($filePath) | Should -BeFalse
+		}
 	}
 
 	Context 'When appending to an existing file' {

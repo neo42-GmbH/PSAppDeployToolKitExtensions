@@ -85,13 +85,18 @@ Describe 'Set-NXTContent' {
 		It 'Should create a new file with the specified encoding' {
 			Set-NXTContent -Path $filePath -Value $content -Encoding BigEndianUnicodeWithBOM -NoNewLine | Should -BeNullOrEmpty
 			[System.IO.File]::Exists($filePath) | Should -BeTrue
-			[System.IO.File]::ReadAllText($filePath, [System.Text.Encoding]::BigEndianUnicode) | Should -Be $content
-			Get-NXTFileEncoding -Path $filePath | Should -Be ([System.Text.Encoding]::BigEndianUnicode)
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::BigEndianUnicode.GetPreamble() + [System.Text.Encoding]::BigEndianUnicode.GetBytes($content))
+			(Get-NXTFileEncoding -Path $filePath).CodePage | Should -Be ([System.Text.Encoding]::BigEndianUnicode.CodePage)
+		}
+
+		It 'Should create a new file with the specified encoding without BOM' {
+			Set-NXTContent -Path $filePath -Value $content -Encoding UTF8 -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.UTF8Encoding]::new($false).GetBytes($content))
 		}
 
 		It 'Should create a new file with the default encoding' {
 			Set-NXTContent -Path $filePath -Value $content -NoNewLine
-			[System.IO.File]::ReadAllText($filePath, $OutputEncoding) | Should -Be $content
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ($OutputEncoding.GetPreamble() + $OutputEncoding.GetBytes($content))
 		}
 
 		It 'Should add a new line when -NoNewLine is not specified' {
@@ -113,6 +118,11 @@ Describe 'Set-NXTContent' {
 			Set-NXTContent $filePath $content -Encoding UTF8 -NoNewLine
 			[System.IO.File]::ReadAllText($filePath) | Should -Be $content
 		}
+
+		It 'Should create a new file with Force' {
+			Set-NXTContent -Path $filePath -Value $content -Encoding UTF8 -NoNewLine -Force
+			[System.IO.File]::ReadAllText($filePath) | Should -Be $content
+		}
 	}
 
 	Context 'When overwriting an existing file' {
@@ -128,13 +138,29 @@ Describe 'Set-NXTContent' {
 
 		It 'Should keep the detected encoding when no encoding is specified' {
 			Set-NXTContent -Path $filePath -Value $content -NoNewLine
-			Get-NXTFileEncoding -Path $filePath | Should -Be ([System.Text.Encoding]::BigEndianUnicode)
-			[System.IO.File]::ReadAllText($filePath, [System.Text.Encoding]::BigEndianUnicode) | Should -Be $content
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::BigEndianUnicode.GetPreamble() + [System.Text.Encoding]::BigEndianUnicode.GetBytes($content))
+			(Get-NXTFileEncoding -Path $filePath).CodePage | Should -Be ([System.Text.Encoding]::BigEndianUnicode.CodePage)
 		}
 
-		It 'Should write the content with the specified encoding' {
+		It 'Should update the encoding to the specified encoding' {
+			Set-NXTContent -Path $filePath -Value $content -Encoding UTF8WithBOM -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::UTF8.GetPreamble() + [System.Text.Encoding]::UTF8.GetBytes($content))
+			(Get-NXTFileEncoding -Path $filePath).CodePage | Should -Be ([System.Text.Encoding]::UTF8.CodePage)
+		}
+
+		It 'Should update the encoding to the specified encoding without BOM' {
 			Set-NXTContent -Path $filePath -Value $content -Encoding UTF8 -NoNewLine
-			[System.IO.File]::ReadAllText($filePath, [System.Text.Encoding]::UTF8) | Should -Be $content
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.UTF8Encoding]::new($false).GetBytes($content))
+		}
+
+		It 'Should accept an encoding object' {
+			Set-NXTContent -Path $filePath -Value $content -Encoding ([System.Text.UnicodeEncoding]::new($false, $true)) -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::Unicode.GetPreamble() + [System.Text.Encoding]::Unicode.GetBytes($content))
+		}
+
+		It 'Should accept a native encoding name' {
+			Set-NXTContent -Path $filePath -Value $content -Encoding 'utf-16' -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::Unicode.GetPreamble() + [System.Text.Encoding]::Unicode.GetBytes($content))
 		}
 
 		It 'Should set an empty string' {
@@ -178,14 +204,15 @@ Describe 'Set-NXTContent' {
 			[System.IO.File]::ReadAllText($filterFilePath3) | Should -Be $oldContent
 		}
 
-		It 'Should set content with pipeline input of values' {
-			$content | Set-NXTContent -Path $filePath -NoNewLine
-			[System.IO.File]::ReadAllText($filePath) | Should -Be $content
+		It 'Should throw an error with pipeline input of values' {
+			{ $content | Set-NXTContent -Path $filePath -Value $content -NoNewLine } | Should -Throw
+			[System.IO.File]::Exists($filePath) | Should -BeFalse
 		}
 
-		It 'Should set content with pipeline input of multiple values' {
-			@($content, $content) | Set-NXTContent -Path $filePath -NoNewLine
-			[System.IO.File]::ReadAllText($filePath) | Should -Be "$content$newLine$content"
+		It 'Should set content with overlapping paths' {
+			Set-NXTContent -Path $filterFilePath1, "$rootPath\filter_a*" -Value $content -NoNewLine
+			[System.IO.File]::ReadAllText($filterFilePath1) | Should -Be $content
+			[System.IO.File]::ReadAllText($filterFilePath2) | Should -Be $content
 		}
 	}
 
@@ -255,6 +282,48 @@ Describe 'Set-NXTContent' {
 		It 'Should throw an error with an invalid encoding' {
 			{ Set-NXTContent -Path $filePath -Value $content -Encoding 'InvalidEncoding' } | Should -Throw
 			{ Set-NXTContent -Path $filePath -Value $content -Encoding ([System.Object]::new()) } | Should -Throw
+			[System.IO.File]::Exists($filePath) | Should -BeFalse
+		}
+	}
+
+	Context 'When using a default encoding' {
+		BeforeEach {
+			New-TestFile
+		}
+
+		It 'Should create a new file with the default encoding' {
+			Set-NXTContent -Path $filePath -Value $content -DefaultEncoding UnicodeWithBOM -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::Unicode.GetPreamble() + [System.Text.Encoding]::Unicode.GetBytes($content))
+		}
+
+		It 'Should use the default encoding for an existing file without BOM' {
+			[System.IO.File]::WriteAllText($filePath, $oldContent, [System.Text.UTF8Encoding]::new($false))
+			Set-NXTContent -Path $filePath -Value $content -DefaultEncoding Unicode -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.UnicodeEncoding]::new($false, $false).GetBytes($content))
+		}
+
+		It 'Should keep the detected encoding of an existing file with BOM' {
+			[System.IO.File]::WriteAllText($filePath, $oldContent, [System.Text.Encoding]::BigEndianUnicode)
+			Set-NXTContent -Path $filePath -Value $content -DefaultEncoding UnicodeWithBOM -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::BigEndianUnicode.GetPreamble() + [System.Text.Encoding]::BigEndianUnicode.GetBytes($content))
+		}
+
+		It 'Should prefer the specified encoding' {
+			Set-NXTContent -Path $filePath -Value $content -Encoding UTF8WithBOM -DefaultEncoding UnicodeWithBOM -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::UTF8.GetPreamble() + [System.Text.Encoding]::UTF8.GetBytes($content))
+		}
+
+		It "Should use the caller's OutputEncoding by default" {
+			$OutputEncoding = [System.Text.UnicodeEncoding]::new($false, $true)
+			Set-NXTContent -Path $filePath -Value $content -NoNewLine
+			[System.IO.File]::ReadAllBytes($filePath) | Should -Be ([System.Text.Encoding]::Unicode.GetPreamble() + [System.Text.Encoding]::Unicode.GetBytes($content))
+		}
+
+		It 'Should throw an error with an invalid default encoding' {
+			{ Set-NXTContent -Path $filePath -Value $content -DefaultEncoding $null } | Should -Throw
+			{ Set-NXTContent -Path $filePath -Value $content -DefaultEncoding '' } | Should -Throw
+			{ Set-NXTContent -Path $filePath -Value $content -DefaultEncoding 'InvalidEncoding' } | Should -Throw
+			{ Set-NXTContent -Path $filePath -Value $content -DefaultEncoding ([System.Object]::new()) } | Should -Throw
 			[System.IO.File]::Exists($filePath) | Should -BeFalse
 		}
 	}
