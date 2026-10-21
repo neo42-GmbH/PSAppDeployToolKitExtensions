@@ -26,7 +26,7 @@
 	This will return a case-sensitive hashtable with the keys 'key' and 'Key'.
 	.NOTES
 	Custom objects cannot hold properties that only differ in casing, so the -AsHashtable parameter is required for such JSON strings.
-	Arrays nested in a hashtable are returned as System.Collections.ArrayList.
+	Arrays nested in a hashtable are returned as System.Object[].
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseLiteralInitializerForHashtable', '', Justification = 'We need a case sensitive hashtable.')]
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseCompatibleCommands', '', Justification = 'There is a code gate before it.')]
@@ -64,11 +64,11 @@
 					return $hashtable
 				}
 				if ($JsonNode -is [System.Object[]]) {
-					[System.Collections.IList]$list = [System.Collections.ArrayList]::new($JsonNode.Count)
-					foreach ($item in $JsonNode) {
-						$null = $list.Add((& $convertToCaseSensitiveHashtable -JsonNode $item))
+					[System.Object[]]$array = [System.Object[]]::new($JsonNode.Count)
+					for ([System.Int32]$i = 0; $i -lt $JsonNode.Count; $i++) {
+						$array[$i] = & $convertToCaseSensitiveHashtable -JsonNode $JsonNode[$i]
 					}
-					return , $list
+					return , $array
 				}
 				return $JsonNode
 			}

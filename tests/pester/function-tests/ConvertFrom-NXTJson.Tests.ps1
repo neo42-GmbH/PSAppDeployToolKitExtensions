@@ -63,16 +63,17 @@ Describe 'ConvertFrom-NXTJson' {
 		It 'Should convert nested arrays and keep their values' {
 			$json = '{"list": [1, "two", null, [3], {"four": 4}], "empty": []}'
 			$result = ConvertFrom-NXTJson -InputObject $json -AsHashTable
-			Should -ActualValue $result['list'] -BeOfType [System.Collections.ArrayList]
+			Should -ActualValue $result['list'] -BeOfType [System.Object[]]
 			$result['list'].Count | Should -Be 5
 			$result['list'][0] | Should -Be 1
 			$result['list'][1] | Should -Be 'two'
 			$result['list'][2] | Should -BeNullOrEmpty
-			Should -ActualValue $result['list'][3] -BeOfType [System.Collections.ArrayList]
+			Should -ActualValue $result['list'][3] -BeOfType [System.Object[]]
+			$result['list'][3].Count | Should -Be 1
 			$result['list'][3][0] | Should -Be 3
 			$result['list'][4] | Should -BeOfType [Hashtable]
 			$result['list'][4]['four'] | Should -Be 4
-			Should -ActualValue $result['empty'] -BeOfType [System.Collections.ArrayList]
+			Should -ActualValue $result['empty'] -BeOfType [System.Object[]]
 			$result['empty'].Count | Should -Be 0
 		}
 
