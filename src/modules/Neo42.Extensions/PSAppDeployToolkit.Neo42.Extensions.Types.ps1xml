@@ -61,6 +61,28 @@ It is used to define custom types and their members for PowerShell objects.
 					[PSADTNXT.Extensions.NxtPsadtExtensions]::GetApplicationStore($this)
 				</GetScriptBlock>
 			</ScriptProperty>
+			<ScriptMethod>
+				<Name>Unhide</Name>
+				<Script>
+					if ($this.PSParentPath -like '*\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -and ([Microsoft.Win32.RegistryKey]$key = [PSADTNXT.Shell.NxtPowerShell]::ToRegistryKeyFromPSProviderPath($this.PSPath, $true))) {
+						$key.DeleteValue('SystemComponent', $false)
+					}
+					else {
+						Write-ADTLogEntry -Severity Warning -Message "Cannot hide application [$this]. It either does not exist or is not an ARP application."
+					}
+				</Script>
+			</ScriptMethod>
+			<ScriptMethod>
+				<Name>Hide</Name>
+				<Script>
+					if ($this.PSParentPath -like '*\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -and ([Microsoft.Win32.RegistryKey]$key = [PSADTNXT.Shell.NxtPowerShell]::ToRegistryKeyFromPSProviderPath($this.PSPath, $true))) {
+						$key.SetValue('SystemComponent', 1, [Microsoft.Win32.RegistryValueKind]::DWord)
+					}
+					else {
+						Write-ADTLogEntry -Severity Warning -Message "Cannot hide application [$this]. It either does not exist or is not an ARP application."
+					}
+				</Script>
+			</ScriptMethod>
 		</Members>
 	</Type>
 	<Type>
