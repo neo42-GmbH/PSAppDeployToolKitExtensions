@@ -2,16 +2,22 @@
 
 Describe 'Wait-NXTRegistryKey' {
 	BeforeAll {
-		[System.String]$regPathNotExisting = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\PesterTestNonExistingKey'
-		[System.String]$regPath = 'Registry::HKEY_LOCAL_MACHINE\SOFTWARE\PesterTestExistingKey'
+		[System.String]$regPathNotExisting = 'HKEY_LOCAL_MACHINE\SOFTWARE\PesterTestNonExistingKey'
 		[System.String]$regName = 'Test'
 		[System.String]$regVal = '1234'
-		[Microsoft.Win32.RegistryKey]$regKey = New-Item -Path $regPath -ErrorAction Ignore
-		[PSCustomObject]$regProp = New-ItemProperty -Path $regPath -Name $regName -Value $regVal -ErrorAction Ignore
+
+		[System.String]$regPath = 'HKEY_LOCAL_MACHINE\SOFTWARE\PesterTestExistingKey'
+		[Microsoft.Win32.RegistryKey]$regKey = New-Item -Path "Registry::$regPath" -ErrorAction Ignore
+		[PSCustomObject]$regProp = New-ItemProperty -Path "Registry::$regPath" -Name $regName -Value $regVal -ErrorAction Ignore
+
+		[System.String]$regPathx86 = 'HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\PesterTestExistingKey'
+		[Microsoft.Win32.RegistryKey]$regKeyx86 = New-Item -Path "Registry::$regPathx86" -ErrorAction Ignore
+		[PSCustomObject]$regPropx86 = New-ItemProperty -Path "Registry::$regPathx86" -Name $regName -Value $regVal -ErrorAction Ignore
 	}
 
 	AfterAll {
-		Remove-Item -Path $regPath -Force -ErrorAction SilentlyContinue
+		Remove-Item -Path "Registry::$regPath" -Force -ErrorAction SilentlyContinue
+		Remove-Item -Path "Registry::$regPathx86" -Force -ErrorAction SilentlyContinue
 	}
 
 	Context 'When using invalid key' {
@@ -76,51 +82,85 @@ Describe 'Wait-NXTRegistryKey' {
 		}
 	}
 
-	Context 'When using a valid input' -Skip {
-		It 'Should be $true when the file exists' {
-			Wait-NXTRegistryKey -Path $filePath | Should -BeTrue
+	Context 'When using a valid input' {
+		It 'Should be $true instantly waiting for the registry key to exist' {
+			Wait-NXTRegistryKey -Key $regPath -Timeout '00:00:03' -Interval '00:00:00.500' | Should -BeTrue
 		}
 
-		It 'Should be $false after 3 seconds waiting for the file to exist' {
+		It 'Should be $true instantly waiting for the registry key and name to exist' {
+			Wait-NXTRegistryKey -Key $regPath -KeyName $regName -Timeout '00:00:03' -Interval '00:00:00.500' | Should -BeTrue
+		}
+
+		It 'Should be $true instantly waiting for the registry key and name and value to exist' {
+			Wait-NXTRegistryKey -Key $regPath -KeyName $regName -KeyValue $regVal -Timeout '00:00:03' -Interval '00:00:00.500' | Should -BeTrue
+		}
+
+		It 'Should be $true instantly waiting for the registry key and name and value to exist for x86' {
+			Wait-NXTRegistryKey -Key $regPath -KeyName $regName -KeyValue $regVal -Timeout '00:00:03' -Interval '00:00:00.500' -Wow6432Node | Should -BeTrue
+		}
+
+		It 'Should be $true instantly waiting for the registry key to exist using pipeline input' {
+			$regKey | Wait-NXTRegistryKey -Timeout '00:00:03' -Interval '00:00:00.500' | Should -BeTrue
+		}
+
+		It 'Should be [PSCustomObject] instantly waiting for the registry key to exist using pipeline input for x86' {
 			$start = [System.DateTime]::Now
-			$result = Wait-NXTRegistryKey -Path $filePathNotExisting -Timeout '00:00:03' -Interval '00:00:00.500'
+			$result = $regKeyx86 | Wait-NXTRegistryKey -Timeout '00:00:03' -Interval '00:00:00.500' -PassThru
+			$duration = [System.DateTime]::Now - $start
+			$result | Should -BeOfType [PSCustomObject]
+			$duration.TotalSeconds | Should -BeLessThan 1
+		}
+
+		It 'Should be $false after 3 seconds waiting for the registry key to exist' {
+			$start = [System.DateTime]::Now
+			$result = Wait-NXTRegistryKey -Key $regPathNotExisting -Timeout '00:00:03' -Interval '00:00:00.500'
 			$duration = [System.DateTime]::Now - $start
 			$result | Should -BeFalse
 			$duration.TotalSeconds | Should -BeGreaterOrEqual 3
 			$duration.TotalSeconds | Should -BeLessThan 4
 		}
 
-		It 'Should be $false after 3 seconds waiting for the file to not exist anymore' {
+		It 'Should be $false after 3 seconds waiting for the registry key to not exist anymore' {
 			$start = [System.DateTime]::Now
-			$result = Wait-NXTRegistryKey -Path $filePath -Timeout '00:00:03' -Interval '00:00:02' -IsRemoved
+			$result = Wait-NXTRegistryKey -Key $regPath -Timeout '00:00:03' -Interval '00:00:02' -IsRemoved
 			$duration = [System.DateTime]::Now - $start
 			$result | Should -BeFalse
 			$duration.TotalSeconds | Should -BeGreaterOrEqual 4
 			$duration.TotalSeconds | Should -BeLessThan 5
 		}
 
-		It 'Should be $true instantly waiting for the file to exist' {
+		It 'Should be $true instantly waiting for the registry key to exist' {
 			$start = [System.DateTime]::Now
-			$result = Wait-NXTRegistryKey -Path $filePath -Timeout '00:00:03' -Interval '00:00:00.500'
+			$result = Wait-NXTRegistryKey -Key $regPath -Timeout '00:00:03' -Interval '00:00:00.500'
 			$duration = [System.DateTime]::Now - $start
 			$result | Should -BeTrue
 			$duration.TotalSeconds | Should -BeLessThan 1
 		}
 
-		It 'Should be [System.IO.FileSystemInfo] instantly waiting for the file to exist' {
+		It 'Should be [PSCustomObject] instantly waiting for the registry key to exist' {
 			$start = [System.DateTime]::Now
-			$result = Wait-NXTRegistryKey -Path $filePath -Timeout '00:00:03' -Interval '00:00:00.500' -PassThru
+			$result = Wait-NXTRegistryKey -Key $regPath -Timeout '00:00:03' -Interval '00:00:00.500' -PassThru
 			$duration = [System.DateTime]::Now - $start
-			$result | Should -BeOfType [System.IO.FileSystemInfo]
+			$result | Should -BeOfType [PSCustomObject]
 			$duration.TotalSeconds | Should -BeLessThan 1
 		}
 
-		It 'Should be $null instantly waiting for the file to be in use' {
+		It 'Should be $null instantly waiting for the registry key to be removed' {
 			$start = [System.DateTime]::Now
-			$result = Wait-NXTRegistryKey -Path $filePathNotExisting -Timeout '00:00:03' -Interval '00:00:00.500' -IsRemoved -PassThru
+			$result = Wait-NXTRegistryKey -Key $regPathNotExisting -Timeout '00:00:03' -Interval '00:00:00.500' -IsRemoved -PassThru
 			$duration = [System.DateTime]::Now - $start
 			$result | Should -BeNullOrEmpty
 			$duration.TotalSeconds | Should -BeLessThan 1
+		}
+
+		It 'Should be $true after 3 seconds waiting for the registry key for x86 to exist' {
+			Remove-Item -Path "Registry::$regPathx86" -Force -ErrorAction SilentlyContinue
+			$start = [System.DateTime]::Now
+			$result = Wait-NXTRegistryKey -Key $regPath -Timeout '00:00:03' -Interval '00:00:01' -Wow6432Node
+			$duration = [System.DateTime]::Now - $start
+			$result | Should -BeFalse
+			$duration.TotalSeconds | Should -BeGreaterOrEqual 3
+			$duration.TotalSeconds | Should -BeLessThan 4
 		}
 	}
 }

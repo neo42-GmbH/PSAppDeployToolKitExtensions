@@ -114,7 +114,7 @@ Describe 'Wait-NXTFileSystem' {
 			$duration.TotalSeconds | Should -BeLessThan 1
 		}
 
-		It 'Should be $null instantly waiting for the file to be in use' {
+		It 'Should be $null instantly waiting for the file to be removed' {
 			$start = [System.DateTime]::Now
 			$result = Wait-NXTFileSystem -Path $filePathNotExisting -Timeout '00:00:03' -Interval '00:00:00.500' -IsRemoved -PassThru
 			$duration = [System.DateTime]::Now - $start
