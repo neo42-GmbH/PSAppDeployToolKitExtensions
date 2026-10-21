@@ -1,4 +1,4 @@
-﻿BeforeDiscovery { . 'C:\Workdir_local\PSAppDeployToolKitExtensions\tests\pester\Initialize-PesterPsadtEnvironment.ps1' }
+﻿BeforeDiscovery { . "$PSScriptRoot\..\Initialize-PesterPsadtEnvironment.ps1" }
 
 Describe 'Wait-NXTProcess' {
 	BeforeAll {
