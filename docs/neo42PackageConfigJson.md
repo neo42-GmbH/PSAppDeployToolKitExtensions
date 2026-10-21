@@ -52,7 +52,7 @@ This document describes every value of the legacy `neo42PackageConfig.json` and 
    Anything that cannot be translated is either kept as a `Legacy_*` variable or causes an error (see [Migration overview](#migration-overview)).
 
 > [!NOTE]
-> Keep **all** values from the template, even if they are optional. The loader does not guarantee that omitted values fall back to the defaults documented below. The sample [neo42LegacyPackageConfig.empty.json](neo42LegacyPackageConfig.empty.json) can be used as a starting point.
+> Keep **all** values from the template, even if they are optional. The loader does not guarantee that omitted values fall back to the defaults documented below. The sample [neo42PackageConfig.empty.legacy.json](../samples/neo42PackageConfig.empty.legacy.json) can be used as a starting point, [neo42PackageConfig.PackageConfigEditor.legacy.json](../samples/neo42PackageConfig.PackageConfigEditor.legacy.json) shows a filled example.
 
 ## Good to know
 
@@ -182,7 +182,7 @@ Parent: `/`
 | Value | Type | Req. | Expand | Description |
 |:------|:-----|:----:|:------:|:------------|
 | `ConfigVersion` | string | **R** | | Version of the legacy configuration format. Must be `2024.09.19.1` or newer. Kept as `Legacy_ConfigVersion`. |
-| `ScriptAuthor` | string | | | Author of the script. Template default: `neo42 GmbH`. |
+| `ScriptAuthor` | string | | | Author of the script. |
 | `ScriptDate` | string | **R** | | Date of script creation in format `DD/MM/YYYY`. Translated to `yyyy-MM-dd`. |
 | `InventoryID` | string | | | Internal unique identifier with 11 digits: 3 digits employee abbreviation + 8 digit random hexadecimal number, or – if automatically generated – an `n` followed by 13 decimal numbers. |
 | `Description` | string | | | Free text description of the package. |
@@ -226,13 +226,13 @@ Parent: `/`
 | `InstFile` | string | | 🔤 | Setup installer file name including extension. Expected in `Files`, otherwise add a relative path. Ignored if `InstallMethod` is `none`. |
 | `InstPara` | string | | 🔤 | Setup installer parameters as one string. Do **not** include a log file parameter for well-known setup types. Mind the [masking rules](#good-to-know). |
 | `AppendInstParaToDefaultParameters` | bool | | | `true` appends `InstPara` to the default parameters of the method; `false` replaces them. 🔁 `Defaults` is also `true` if `InstPara` is empty. A log file parameter is always appended if supported by the setup type. |
-| `InstLogFile` | string | | 🔤 | Log file of the installation. Template default: `$($global:PackageConfig.AppRootFolder)\\Install.$global:DeploymentTimestamp.log`. 🔁 **Only the file name is used**; the folder part is ignored. |
+| `InstLogFile` | string | | 🔤 | Log file of the installation. Template default: `$($global:AppLogFolder)\\Install.$global:DeploymentTimestamp.log`. 🔁 **Only the file name is used**; the folder part is ignored. |
 | `AcceptedInstallExitCodes` | string | | | Comma separated exit codes that signal success. `*` accepts all exit codes. 🔁 Defaults to `0` if empty. Entries must be plain integers. |
 | `AcceptedInstallRebootCodes` | string | | | Comma separated exit codes that signal a requested reboot. 🔁 Defaults to `1641,3010` if empty. |
 | `UninstFile` | string | | 🔤 | Alternative uninstaller file including extension and full path. Used only if the registered uninstall entry (see [detection](#application-detection)) does not exist. Ignored if `UninstallMethod` is `none`. |
 | `UninstPara` | string | | 🔤 | Setup uninstaller parameters as one string. Same rules as `InstPara`. |
 | `AppendUninstParaToDefaultParameters` | bool | | | Same as `AppendInstParaToDefaultParameters`, for the uninstallation. |
-| `UninstLogFile` | string | | 🔤 | Log file of the uninstallation. Template default: `$($global:PackageConfig.AppRootFolder)\\Uninstall.$global:DeploymentTimestamp.log`. 🔁 Only the file name is used. |
+| `UninstLogFile` | string | | 🔤 | Log file of the uninstallation. Template default: `$($global:AppLogFolder)\\Uninstall.$global:DeploymentTimestamp.log`. 🔁 Only the file name is used. |
 | `AcceptedUninstallExitCodes` | string | | | Same as `AcceptedInstallExitCodes`, for the uninstallation. |
 | `AcceptedUninstallRebootCodes` | string | | | Same as `AcceptedInstallRebootCodes`, for the uninstallation. |
 
@@ -261,6 +261,8 @@ Default parameters are no longer defined in `AppDeployToolkitConfig.xml`. They a
 
 > [!NOTE]
 > A log file parameter is always appended if the setup type supports it, even if the parameters are replaced. The accepted exit codes are always passed to the default process execution.
+
+To wait for all child processes of the setup as well (e.g. for bootstrappers that start the actual setup and exit early), use the compatibility variables [`DeploymentInstallationAwaitChildren` and `DeploymentUninstallationAwaitChildren`](#compatibility-variables).
 
 #### Reinstall mode
 
@@ -419,18 +421,18 @@ Public desktop shortcuts are translated to `ManagedShortcuts` with `Location = D
 
 ### Hiding uninstall entries
 
-Parent: `/UninstallKeysToHide/` – optional list (copy the item as often as needed). The recommended default entry is always a reference to the currently installed application.
+Parent: `/UninstallKeysToHide/` – optional list (copy the item as often as needed) of **additional** uninstall entries to hide.
 
 > [!NOTE]
-> Each entry is translated to a managed application criteria. Entries that are an exact reference to the package's own `UninstallKey` (no display name, no wildcards) are skipped, because the self reference is no longer required.
+> In V3 the default entry was a reference to the currently installed application. In V4 hiding the main application is part of the core, so this list is only required for other entries (e.g. components installed alongside the application). Each entry is translated to a managed application criteria. Entries that are an exact reference to the package's own `UninstallKey` (no display name, no wildcards) are skipped.
 
 | Value | Type | Req. | Expand | Description |
 |:------|:-----|:----:|:------:|:------------|
-| `KeyName` | string | ✔ | 🔤 | Name of the uninstall registry key to hide. Template default: `$($global:PackageConfig.UninstallKey)`. Entries that are empty after expansion are removed. |
+| `KeyName` | string | ✔ | 🔤 | Name of the uninstall registry key to hide. Entries that are empty after expansion are removed. |
 | `Is64Bit` | bool | ✔ | | Which registry view is searched: `true` = 64-bit (`ARP64`), `false` = 32-bit (`ARP32`). |
-| `KeyNameIsDisplayName` | bool | ✔ | 🔤 | `KeyName` is a `DisplayName`. Template default: `$($global:PackageConfig.UninstallKeyIsDisplayName)`. Must be `true` or `false` after expansion. |
-| `KeyNameContainsWildCards` | bool | ✔ | 🔤 | `*` in `KeyName` is a wildcard. Template default: `$($global:PackageConfig.UninstallKeyContainsWildCards)`. Must be `true` or `false` after expansion. |
-| `DisplayNamesToExcludeFromHiding` | string list | | 🔤 | Display names to exclude from hiding; `*` is always taken literally. At least the package's own display name is recommended. Template default: `$($global:PackageConfig.UninstallDisplayName)`. 🔁 Entries with exclusions are translated to a filter instead of an exact identifier. |
+| `KeyNameIsDisplayName` | bool | ✔ | 🔤 | `KeyName` is a `DisplayName`. Must be `true` or `false` after expansion. |
+| `KeyNameContainsWildCards` | bool | ✔ | 🔤 | `*` in `KeyName` is a wildcard. Must be `true` or `false` after expansion. |
+| `DisplayNamesToExcludeFromHiding` | string list | | 🔤 | Display names to exclude from hiding; `*` is always taken literally. 🔁 Entries with exclusions are translated to a filter instead of an exact identifier. |
 
 ### Package specific variables
 
@@ -460,7 +462,9 @@ The legacy format cannot express some features of the new model. They can be ena
 	{ "Name": "DetectionCriteriaStore", "Value": "ARP64" },
 	{ "Name": "DetectionCriteriaFilter", "Value": "$_.DisplayName -like 'My App*' -and $_.DisplayName -ne 'My App Updater'" },
 	{ "Name": "CloseProcessesReopen", "Value": "Binary, None" },
-	{ "Name": "DeploymentInstallationUpgradeMode", "Value": "Install" }
+	{ "Name": "DeploymentInstallationUpgradeMode", "Value": "Install" },
+	{ "Name": "DeploymentInstallationAwaitChildren", "Value": "true" },
+	{ "Name": "DeploymentUninstallationAwaitChildren", "Value": "true" }
 ]
 ```
 
@@ -470,8 +474,13 @@ The legacy format cannot express some features of the new model. They can be ena
 | `DetectionCriteriaFilter` | PowerShell filter expression using `$_` | Enables detection and **replaces** the identifier and filter derived from `UninstallKey`. The store defaults to `ARP` unless `DetectionCriteriaStore` is set. Also allows soft migration by detection. |
 | `CloseProcessesReopen` | Comma separated list of `None`, `Binary`, `Commandline` | Reopen mode per entry of `AppKillProcesses`. The **number of entries must match** `AppKillProcesses`, otherwise loading fails. |
 | `DeploymentInstallationUpgradeMode` | `None`, `Install`, `Reinstall` | Overrides the upgrade mode derived from `ReinstallMode`. |
+| `DeploymentInstallationAwaitChildren` | `true`, `false` | Sets `Installation.AwaitChildren`. `true` waits for all child processes of the installer to exit, not only the installer process itself. Default: `false`. |
+| `DeploymentUninstallationAwaitChildren` | `true`, `false` | Sets `Uninstallation.AwaitChildren`. Same as `DeploymentInstallationAwaitChildren`, for the uninstallation. With `ReinstallMode` `Reinstall` both are relevant, as an uninstallation runs before the installation. |
 
-Invalid values make loading fail.
+Invalid values make loading fail. For `true`/`false` only these two words are accepted (not case-sensitive); `1`, `0` or an unexpanded `$true` are invalid.
+
+> [!NOTE]
+> The `*AwaitChildren` variables only affect process based methods (`Setup`, `InnoSetup`, `Nullsoft`, `BitRockInstaller`). They have no effect for `MSI` (including the `MSIRepair` reinstall mode) and `none`.
 
 ---
 

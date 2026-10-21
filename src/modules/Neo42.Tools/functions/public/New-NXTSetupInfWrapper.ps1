@@ -6,6 +6,9 @@
 	.PARAMETER LocalWrapperPath
 	Provide a local path to a custom wrapper file.
 	If this parameter is not provided, the script will download the latest wrapper from neo42.
+	.PARAMETER Move
+	Instead of creating a copy of the package, move it instead.
+	This will remove the old package format.
 	.NOTES
 	# LICENSE #
 	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
@@ -17,6 +20,7 @@
 	.LINK
 	https://neo42.de/psappdeploytoolkit
 	#>
+	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '')]
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Not implemented')]
 	[CmdletBinding()]
 	param (
@@ -24,7 +28,13 @@
 		$Package = $PWD.Path,
 		[ValidateScript({ $_.Exists })]
 		[System.IO.DirectoryInfo]
-		$LocalWrapperPath
+		$LocalWrapperPath,
+		[System.Management.Automation.SwitchParameter]
+		$Move,
+		[System.IO.DirectoryInfo]
+		$Output = "$($Package.Parent.FullName)\$($Package.BaseName)_SetupInf",
+		[System.Version]
+		$FrameworkVersion = '4.0'
 	)
 
 	Set-StrictMode -Version 3.0
@@ -32,11 +42,13 @@
 	$ProgressPreference = [System.Management.Automation.ActionPreference]::SilentlyContinue
 
 	## Define basic variables
-	[System.String]$adtSubFolder = "$($Package.FullName)\PSADT"
-	[System.Uri]$wrapperUrl = 'https://portal.neo42.de/api/app/SetupInfWrapper/Latest'
-	[System.String]$wrapperPath = "$($Package.FullName)\SetupInfWrapper_{VERSION}.zip"
+	[System.String]$adtSubFolder = "$($Output.FullName)\PSADT"
+	[System.Uri]$wrapperUrl = 'https://portal.neo42.de/api/v2/app/SetupInfWrapper/Latest'
+	[System.String]$wrapperPath = "$($Output.FullName)\SetupInfWrapper.zip"
 	[System.String]$jsonPath = "$adtSubFolder\neo42PackageConfig.json"
-	[System.String]$infPath = "$($Package.FullName)\neoInstall\Setup.inf"
+	[System.String]$infPath = "$($Output.FullName)\neoInstall\Setup.inf"
+	[System.String]$expandDirectory = [System.IO.Path]::Combine($Output.FullName, 'tmp')
+	[System.String]$versionDirectory = [System.IO.Path]::Combine($expandDirectory, $FrameworkVersion.ToString())
 
 	## Test for some basic requirements
 	'Deploy-Application.ps1', 'neo42PackageConfig.json', 'Setup.ico' | ForEach-Object {
@@ -49,48 +61,50 @@
 	$null = New-Item -ItemType Directory -Path $adtSubFolder -Force
 
 	## Iterate through each item (file or folder) in the current directory and move it to the PSADT folder
-	Write-Output "Moving all package files to [$adtSubFolder]"
+	Write-Host "Moving all package files to [$adtSubFolder]"
 	Get-ChildItem -LiteralPath $($Package.FullName) -Exclude $adtSubFolder | ForEach-Object {
-		Move-Item -Path $_.FullName -Destination $adtSubFolder -Force
+		if ($Move) {
+			Move-Item -Path $_.FullName -Destination $adtSubFolder -Force
+		}
+		else {
+			Copy-Item -Path $_.FullName -Destination $adtSubFolder -Force -Recurse
+		}
 	}
 
-	if (-not $PSBoundParameters.Contains('Wrapper')) {
-		Write-Output 'No local wrapper path provided. Downloading the latest wrapper from neo42.'
+	if (-not $PSBoundParameters.ContainsKey('LocalWrapperPath')) {
+		Write-Host 'No local wrapper path provided. Downloading the latest wrapper from neo42.'
 		## Download the latest wrapper from neo42
-		Write-Output "Download latest wrapper from [$wrapperUrl]"
+		Write-Host "Download latest wrapper from [$wrapperUrl]"
 		[System.Management.Automation.PSObject]$latestWrapper = Invoke-RestMethod -Uri $wrapperUrl -Method Get
 
-		$wrapperPath = $wrapperPath -replace '{VERSION}', $latestWrapper.Version
 		## Write wrapper to disk as zip file
-		Write-Output "Write wrapper to disk as zip file '$wrapperPath'"
+		Write-Host "Write wrapper to disk as zip file '$wrapperPath'"
 		[System.IO.File]::WriteAllBytes($wrapperPath, [System.Convert]::FromBase64String($latestWrapper.Wrapper))
 
 		## Validate the computed hash against the WrapperHash
-		Write-Output 'Validate wrapper SHA512 hash'
+		Write-Host 'Validate wrapper SHA512 hash'
 		if ((Get-FileHash -LiteralPath $wrapperPath -Algorithm SHA512).Hash -ne $latestWrapper.WrapperHash) {
-			Write-Error 'Wrapper hash validation failed. Download was not successful. Abort!'
+			throw 'Wrapper hash validation failed. Download was not successful. Abort!'
 		}
 	}
 	else {
-		Write-Output "Using local wrapper from [$LocalWrapperPath]"
-		Copy-Item -Path $LocalWrapperPath.FullName -Destination $Package.FullName
-		$wrapperPath = [System.IO.Path]::Combine($Package.FullName, $LocalWrapperPath.BaseName)
+		Write-Host "Using local wrapper from [$LocalWrapperPath]"
+		Copy-Item -Path $LocalWrapperPath.FullName -Destination $Output.FullName
+		$wrapperPath = [System.IO.Path]::Combine($Output.FullName, $LocalWrapperPath.BaseName)
 	}
 
 	## Extract the archive to the working directory
-	Write-Output 'Extract the wrapper to the working directory'
-	Expand-Archive -Path $wrapperPath -DestinationPath $Package.FullName -Force
-
-	## Remove the archive
-	Write-Output 'Remove the wrapper archive'
-	Remove-Item -Path $wrapperPath
+	Write-Host 'Extract the wrapper to the working directory'
+	Expand-Archive -Path $wrapperPath -DestinationPath $expandDirectory -Force
+	Move-Item -Path $versionDirectory -Destination $Output.FullName
+	Remove-Item -Path $wrapperPath, $expandDirectory -Recurse
 
 	## Parse the json content
-	Write-Output "Load the input data from '$jsonPath'"
-	[System.Management.Automation.PSObject]$jsonContent = ConvertFrom-Json -InputObject (Get-Content -Path $jsonPath -Raw)
+	Write-Host "Load the input data from [$jsonPath]"
+	[System.Management.Automation.PSObject]$jsonContent = ConvertFrom-Json -InputObject (Get-Content -LiteralPath $jsonPath -Raw)
 
 	## Load the inf content and replace placeholders with values from the json
-	Write-Output "Apply the input data to '$infPath'"
+	Write-Host "Apply the input data to [$infPath]"
 	[System.String]$textContent = Get-Content -Path $infPath -Raw
 	foreach ($property in $jsonContent.PSObject.Properties) {
 		[System.String]$placeholderPattern = [System.Text.RegularExpressions.Regex]::Escape("!$($property.Name)!")
@@ -100,19 +114,19 @@
 	}
 
 	## Validate that all placeholders have been replaced
-	Write-Output 'Test if all placeholders have been replaced'
+	Write-Host 'Test if all placeholders have been replaced'
 	if ($textContent -match '![\w]+!') {
-		Write-Error "Not all placeholders have been replaced. Remaining placeholders are: $Matches"
+		throw "Not all placeholders have been replaced. Remaining placeholders are: $Matches"
 	}
 
 	# Write the new inf content to disk
-	Write-Output 'Write the new inf content to disk'
+	Write-Host 'Write the new inf content to disk'
 	Set-Content -Path $infPath -Value $textContent -Encoding UTF8
 
 	## Copy ico File to neoInstall Folder
-	Write-Output 'Copy ico file to neoInstall folder'
-	Copy-Item -Path "$adtSubFolder\Setup.ico" -Destination "$workingDir\neoInstall\Setup.ico" -Force
+	Write-Host 'Copy ico file to neoInstall folder'
+	Copy-Item -Path "$adtSubFolder\Setup.ico" -Destination "$($Output.FullName)\neoInstall\Setup.ico" -Force
 
 	## Self destruct the current script
-	Write-Output 'Wrapper successfully created!'
+	Write-Host 'Wrapper successfully created!'
 }

@@ -16,6 +16,7 @@
 	Converts the product GUID into an installer product code.
 	#>
 	[OutputType([System.String])]
+	[Alias('ConvertTo-NXTInstallerProductCode')]
 	[CmdletBinding()]
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]

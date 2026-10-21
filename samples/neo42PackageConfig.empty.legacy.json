@@ -15,7 +15,7 @@
 			"VersionToCheck": ""
 		}
 	},
-	"TestedOn": "Win10 x86, Win10 x64, Win11 x64",
+	"TestedOn": "Win11 x64",
 	"Dependencies": "",
 	"LastChange": "",
 	"Build": "0",
@@ -101,6 +101,16 @@
 		},
 		{
 			"Name": "DeploymentInstallationUpgradeMode",
+			"Value": "",
+			"ExpandVariables": false
+		},
+		{
+			"Name": "DeploymentInstallationAwaitChildren",
+			"Value": "",
+			"ExpandVariables": false
+		},
+		{
+			"Name": "DeploymentUninstallationAwaitChildren",
 			"Value": "",
 			"ExpandVariables": false
 		}

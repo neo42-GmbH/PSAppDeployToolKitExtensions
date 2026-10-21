@@ -46,6 +46,10 @@
 			$invokeInstallParams['Criteria'] = $ADTSession.NXT.Detection.Criteria
 		}
 
+		if ($ADTSession.NXT.Install.AwaitChildren) {
+			$invokeInstallParams['WaitForChildProcesses'] = $true
+		}
+
 		if ($ADTSession.NXT.Install.Awaiters) {
 			$invokeInstallParams['Awaiter'] = $ADTSession.NXT.Install.Awaiters
 		}

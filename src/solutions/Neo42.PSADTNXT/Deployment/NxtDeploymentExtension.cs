@@ -255,6 +255,7 @@ namespace PSADTNXT.Deployment
 				Reboot = installModel.Reboot,
 				ReinstallMode = installModel.ReinstallMode,
 				UpgradeMode = installModel.UpgradeMode,
+				AwaitChildren = installModel.AwaitChildren,
 				UserPart = installModel.UserPart
 			};
 
@@ -308,6 +309,7 @@ namespace PSADTNXT.Deployment
 				LogName = uninstallModel.LogName ?? string.Empty,
 				IgnoreExitCodes = uninstallModel.IgnoreExitCodes,
 				Reboot = uninstallModel.Reboot,
+				AwaitChildren = uninstallModel.AwaitChildren,
 				UserPart = uninstallModel.UserPart
 			};
 

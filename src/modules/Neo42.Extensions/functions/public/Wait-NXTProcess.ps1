@@ -87,7 +87,7 @@
 				[System.String]$failureMessage = "The specified process is still running after the specified timeout of [$Timeout]."
 			}
 			else {
-				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Resolve-NXTProcess @PSBoundParameters) }
+				[System.Management.Automation.ScriptBlock]$waitWhile = { -not (Test-NXTProcess @PSBoundParameters) }
 				[System.String]$successMessage = "The specified process became available within the specified timeout of [$Timeout]."
 				[System.String]$failureMessage = "The specified process is still not available after the specified timeout of [$Timeout]."
 			}

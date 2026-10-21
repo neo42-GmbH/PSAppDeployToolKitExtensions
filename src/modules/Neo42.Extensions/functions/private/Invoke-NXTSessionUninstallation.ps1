@@ -76,6 +76,10 @@
 			$invokeUninstallParams['ArgumentList'] = $ADTSession.NXT.Uninstall.Arguments
 		}
 
+		if ($ADTSession.NXT.Uninstall.AwaitChildren) {
+			$invokeUninstallParams['WaitForChildProcesses'] = $true
+		}
+
 		if ($ADTSession.NXT.Uninstall.Awaiters) {
 			$invokeUninstallParams['Awaiter'] = $ADTSession.NXT.Uninstall.Awaiters
 		}

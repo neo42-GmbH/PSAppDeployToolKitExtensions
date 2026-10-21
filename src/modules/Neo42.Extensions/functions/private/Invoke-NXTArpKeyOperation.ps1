@@ -13,14 +13,13 @@
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
+		[System.Management.Automation.ScriptBlock]$isArp = { $args[0] -in @([PSADTNXT.Application.ApplicationStore]::ARP, [PSADTNXT.Application.ApplicationStore]::ARP32, [PSADTNXT.Application.ApplicationStore]::ARP64) }
 	}
 	process {
 		try {
 			[System.Collections.Generic.List[PSADTNXT.Application.NxtApplicationCriteria]]$criteria = [System.Collections.Generic.List[PSADTNXT.Application.NxtApplicationCriteria]]::new()
-			$ADTSession.NXT.ManagedApplications | & { process { if ($_.Store -eq [PSADTNXT.Application.ApplicationStore]::ARP) { $criteria.Add($_) } } }
-			if ($ADTSession.NXT.Detection.Criteria -and $ADTSession.NXT.Detection.Criteria.Store -eq [PSADTNXT.Application.ApplicationStore]::ARP) {
-				$criteria.Add($ADTSession.NXT.Detection.Criteria)
-			}
+			$ADTSession.NXT.ManagedApplications | & { process { if ($isArp.Invoke($_.Store)) { $criteria.Add($_) } } }
+			if ($ADTSession.NXT.Detection.Criteria -and ($isArp.Invoke($ADTSession.NXT.Detection.Criteria.Store) )) { $criteria.Add($ADTSession.NXT.Detection.Criteria) }
 
 			$criteria | & {
 				process {
@@ -28,14 +27,13 @@
 						process {
 							if ([Microsoft.Win32.RegistryKey]$key = [PSADTNXT.Shell.NxtPowerShell]::ToRegistryKeyFromPSProviderPath($_.PSPath, $true)) {
 								if ($Purge) {
-									Write-ADTLogEntry -Message "Unhiding ARP application [$($_.DisplayName)] with key [$($_.PSChildName)]."
+									Write-ADTLogEntry -Message "Unhiding [$_]."
 									$key.DeleteValue('SystemComponent', $false)
 								}
 								else {
-									Write-ADTLogEntry -Message "Hiding ARP application [$($_.DisplayName)] with key [$($_.PSChildName)]"
+									Write-ADTLogEntry -Message "Hiding [$_]."
 									$key.SetValue('SystemComponent', 1, [Microsoft.Win32.RegistryValueKind]::DWord)
 								}
-
 								$key.Close()
 							}
 						}

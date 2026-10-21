@@ -1,4 +1,4 @@
-name: Post Release
+﻿name: Post Release
 
 on:
   release:
@@ -18,27 +18,6 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
           path: ./Source
-
-      - name: generate-function-documentation
-        shell: pwsh
-        run: |
-          . "./Source/Export-ModuleHelp.ps1" `
-            -Module "./Source/PSAppDeployToolkit.Neo42.Extensions" `
-            -OutputFile "./Source/docs/PSAppDeployToolkit.Neo42.Extensions.Functions.md"
-
-      - name: upload-documentation
-        shell: pwsh
-        run: |
-          @{
-            '685951ce0c79506d8454936f' = 'PSAppDeployToolkit.Neo42.Extensions.Functions.md'
-            '6859533d0c79506d84549370' = 'PSAppDeployToolkit.Neo42.Extensions.Variables.md'
-            '685953ae0c79506d84549371' = 'PSAppDeployToolkit.Neo42.Extensions.V4Migration.md'
-          }.GetEnumerator() | ForEach-Object -Begin {
-            $header = @{ 'Accept' = 'application/json' }
-            $header['Authorization'] = 'Bearer ' + (Invoke-RestMethod -Uri "${{ secrets.SERVICE_PORTAL_URI }}/api/identity/jwt" -Method Post -Headers $header -Body (ConvertTo-Json -InputObject @{ User = '${{ secrets.SERVICE_PORTAL_USERNAME }}'; Password = '${{ secrets.SERVICE_PORTAL_PASSWORD }}' }) -ContentType 'application/json' -ErrorAction Stop).token
-          } -Process {
-            Invoke-RestMethod -Uri "${{ secrets.SERVICE_PORTAL_URI }}/api/sp/AdminMarkdownDocument/$($_.Name)/en" -Method Post -ContentType 'text/markdown' -Headers $header -Body (Get-Content -Raw -Path "./Source/docs/$($_.Value)")
-          }
 
       - name: reply-to-and-close-issues
         uses: actions/github-script@v9

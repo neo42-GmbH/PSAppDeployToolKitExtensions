@@ -55,11 +55,11 @@ Get-AuthenticodeSignature -LiteralPath $MyInvocation.MyCommand.Path | & {
 			return
 		}
 		elseif ($_.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
-			throw [System.Security.SecurityException]::new("The module [$($MyInvocation.MyCommand.Path)] is signed with an untrusted or invalid signature. Module integrity cannot be guaranteed.")
+			throw [System.Security.SecurityException]::new("The module [$($_.Path)] signature is invalid. $($_.StatusMessage)")
 		}
 		else {
 			[System.String]$thumbprint = $_.SignerCertificate.Thumbprint
-			Get-ChildItem -Recurse -File -Path $PSScriptRoot -Include '*.dll', '*.ps1', '*.psd1' | & {
+			Get-ChildItem -Recurse -File -Path $PSScriptRoot -Include '*.dll', '*.ps1', '*.psd1', '.ps1xml' | & {
 				process {
 					[System.Management.Automation.Signature]$signature = Get-AuthenticodeSignature -LiteralPath $_.FullName
 					if (-not $signature.SignerCertificate -or $thumbprint -ne $signature.SignerCertificate.Thumbprint -or $signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
@@ -85,6 +85,9 @@ Get-AuthenticodeSignature -LiteralPath $MyInvocation.MyCommand.Path | & {
 		}
 	}
 }
+Add-Type -AssemblyName @(
+	'System.Web.Extensions'
+)
 
 # Mount PSDrives for path resolution.
 $ExecutionContext.SessionState.Provider.GetOne('Microsoft.PowerShell.Core\Registry') | & {

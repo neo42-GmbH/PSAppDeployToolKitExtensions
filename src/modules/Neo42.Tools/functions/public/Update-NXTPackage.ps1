@@ -35,7 +35,7 @@
 		[System.Version]$supportedMaximumFramework = '4.0'
 		[System.String]$moduleBase = $ExecutionContext.SessionState.Module.ModuleBase
 		[System.String[]]$copyFromPackage = @('Setup.ico', 'Files', 'SupportFiles', 'neo42PackageConfig.json', 'neo42PackageConfig.psd1')
-		[System.String[]]$copyFromReference = @('PSAppDeployToolkit*', 'DeployNxtApplication.exe', 'PSAppDeployToolkit.Neo42.Extensions\Config')
+		[System.String[]]$copyFromReference = @('PSAppDeployToolkit*', 'DeployNxtApplication.exe', 'PSAppDeployToolkit.Neo42.Extensions\Config', 'neo42PackageMetadata.json')
 
 		[System.Management.Automation.ScriptBlock[]]$migrations = @(
 			{ # v4.0 Deploy-Application
@@ -97,7 +97,7 @@
 					$null = $akp.Remove('FORCECONTINUEAFTERDEFERRALS')
 					$null = $akp.Remove('APPLYCONTINUETYPEONERROR')
 				}
-				Set-Content -Encoding UTF8 -LiteralPath $setupCfg -Value ($doc.Export($setupCfg))
+				[System.IO.File]::WriteAllText($setupCfg, $doc.Export($setupCfg), [System.Text.UTF8Encoding]::new($false))
 			}
 			{ # v4.0 PackageConfig warnings
 				param(
@@ -128,17 +128,17 @@
 		#region Initialize
 		if (-not $Package) {
 			Write-Host -NoNewline 'No package directory provided, opening selection dialog...'
-			$Package = Get-FolderLocation -Message '(Package) Select the package that you want to update:'
+			$Package = Get-NXTFolderWindow -Message '(Package) Select the package that you want to update:'
 			Write-Host -ForegroundColor Green 'OK.'
 		}
 		if (-not $Reference) {
 			Write-Host -NoNewline 'No reference package directory provided, opening selection dialog...'
-			$Reference = Get-FolderLocation -Message '(Reference) Select the reference package directory:'
+			$Reference = Get-NXTFolderWindow -Message '(Reference) Select the reference package directory:'
 			Write-Host -ForegroundColor Green 'OK.'
 		}
 		if (-not $Output) {
 			Write-Host -NoNewline 'No output directory provided, opening selection dialog...'
-			$Output = Get-FolderLocation -Message '(Output) Select the output directory for the updated package:'
+			$Output = Get-NXTFolderWindow -Message '(Output) Select the output directory for the updated package:'
 			Write-Host -ForegroundColor Green 'OK.'
 		}
 
@@ -205,7 +205,7 @@
 			$sectionIdx++
 		}
 
-		Set-Content -Encoding UTF8 -LiteralPath "$($Output.FullName)\Setup.cfg" -Value ($setupCfg.Export())
+		[System.IO.File]::WriteAllText("$($Output.FullName)\Setup.cfg", $setupCfg.Export(), [System.Text.UTF8Encoding]::new($false))
 		#endregion SetupCfg
 
 		#region Deploy-Application migration
@@ -227,11 +227,12 @@
 
 		# Migrate custom functions
 		[System.Text.StringBuilder]$deployApplicationSb = [System.Text.StringBuilder]::new($referenceAst.Extent.Text)
+		if (([System.String[]]$missingFunctions = $packageCustomFunctions | Where-Object { $_.Name -notin $referenceCustomFunctions.Name })) {
+			Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for [$missingFunctions]."
+			continue
+		}
 		foreach ($referenceCustomFunction in $referenceCustomFunctions) {
-			if ($packageCustomFunctions.Name -notcontains $referenceCustomFunction.Name) {
-				Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for [$($packageCustomFunctions.Name)]."
-				continue
-			}
+			if ($referenceCustomFunction.Name -notin $packageCustomFunctions.Name) { continue }
 			# Retrieve content markers
 			[System.Management.Automation.Language.Token]$referenceStartToken = $referenceTokens | Where-Object {
 				$_.Kind -eq [System.Management.Automation.Language.TokenKind]::Comment -and

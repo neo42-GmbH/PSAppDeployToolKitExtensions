@@ -36,6 +36,8 @@
 	The additional arguments to pass to the uninstaller.
 	.PARAMETER CacheDirectory
 	The package directory to use for the uninstallation.
+	.PARAMETER WaitForChildProcesses
+	Instead of only waiting for the main application, include any child process as well.
 	.PARAMETER Awaiter
 	Optional awaiter objects that should be evaluated post uninstallation.
 	.PARAMETER LogFileName
@@ -43,8 +45,10 @@
 	This file will reside in the log directory of the ADT session.
 	.PARAMETER SuccessExitCodes
 	The exit codes that indicate a successful uninstallation.
+	Defaults to the success exit codes of the active session.
 	.PARAMETER RebootExitCodes
 	The exit codes that indicate a reboot is required after the uninstallation.
+	Defaults to the reboot exit codes of the active session.
 	.PARAMETER IgnoreExitCodes
 	Determines if the function should ignore exit codes and not treat them as errors.
 	.PARAMETER ExitOnProcessFailure
@@ -131,8 +135,11 @@
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationIgnoreExitCodes')]
 		[ValidateScript({ [System.IO.Path]::IsPathRooted($_) })]
+		[PSDefaultValue(Help = 'The package directory.')]
 		[System.String]
 		$CacheDirectory = (Get-ADTSession).NXT.Package.Directory.FullName,
+		[System.Management.Automation.SwitchParameter]
+		$WaitForChildProcesses,
 		[ValidateNotNull()]
 		[PSADTNXT.Deployment.INxtAwaiter[]]
 		$Awaiter,
@@ -146,16 +153,16 @@
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
 		[ValidateNotNull()]
-		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
+		[PSDefaultValue(Help = 'The success exit codes of the active session.')]
 		[System.Int32[]]
-		$SuccessExitCodes,
+		$SuccessExitCodes = (Get-ADTSession).AppSuccessExitCodes,
 		[Parameter(ParameterSetName = 'PackageExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
 		[ValidateNotNull()]
-		[PSDefaultValue(Help = 'Defaults depend on the method and session configuration.')]
+		[PSDefaultValue(Help = 'The reboot exit codes of the active session.')]
 		[System.Int32[]]
-		$RebootExitCodes,
+		$RebootExitCodes = (Get-ADTSession).AppRebootExitCodes,
 		[Parameter(ParameterSetName = 'PackageExitCodes')]
 		[Parameter(ParameterSetName = 'ApplicationExitCodes')]
 		[Parameter(ParameterSetName = 'ManualExitCodes')]
@@ -313,14 +320,10 @@
 			[System.IO.FileInfo]$logFile = [System.IO.Path]::Combine($adtSession.LogPath, $LogFileName)
 
 			[System.Collections.Hashtable]$startSplat = Remove-ADTHashtableNullOrEmptyValues @{
-				FilePath        = if (-not [System.IO.Path]::IsPathRooted($Target) -and $adtSession.DirFiles) { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) } else { $Target }
-				ArgumentList    = $finalArguments.ToString().Trim()
-				PassThru        = $true
-				IgnoreExitCodes = '*' # If not set in 4.1.8 the session exit code is set regardless of actual success of the result
-				ErrorAction     = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
-			}
-			if ($ExitOnProcessFailure) {
-				$startSplat['ExitOnProcessFailure'] = $true
+				FilePath     = if (-not [System.IO.Path]::IsPathRooted($Target) -and $adtSession.DirFiles) { [System.IO.Path]::Combine($adtSession.DirFiles, $Target) } else { $Target }
+				ArgumentList = $finalArguments.ToString().Trim()
+				PassThru     = $true
+				ErrorAction  = if ($IgnoreExitCodes) { [System.Management.Automation.ActionPreference]::Ignore } else { [System.Management.Automation.ActionPreference]::Stop }
 			}
 
 			[System.String]$backupFileSelector = [System.String]::Empty
@@ -335,9 +338,8 @@
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(0)
 					}
 					catch {
-						if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
 						$result = [PSADT.ProcessManagement.ProcessResult]::new(
-							$_.HResult,
+							$_.Exception.HResult,
 							[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
 							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
 							[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
@@ -351,7 +353,7 @@
 						$startSplat['ProductCode'] = $Target
 					}
 
-					$result = Start-ADTMsiProcess @startSplat -Action Uninstall -SkipMSIAlreadyInstalledCheck -NoDesktopRefresh -LogFileName ($LogFileName -replace '_Uninstall\.log$', [System.String]::Empty)
+					$result = Start-ADTMsiProcess @startSplat -IgnoreExitCodes '*' -Action Uninstall -SkipMSIAlreadyInstalledCheck -NoDesktopRefresh -LogFileName ($LogFileName -replace '_Uninstall\.log$', [System.String]::Empty)
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
 					# Use full name directly
@@ -443,9 +445,8 @@
 						}
 					}
 
-					# Start the uninstallation process
-					$startSplat['WindowStyle'] = [System.Diagnostics.ProcessWindowStyle]::Hidden
-					$result = Start-ADTProcess @startSplat
+					# Start the uninstallation process.
+					$result = Start-ADTProcess @startSplat -WindowStyle Hidden -WaitForChildProcesses:$WaitForChildProcesses -IgnoreExitCodes '*'
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
 					# Only run, if the package family was found
@@ -455,9 +456,8 @@
 							Remove-AppxPackage -AllUsers -Package $identifiers[0]
 						}
 						catch {
-							if ($ExitOnProcessFailure) { Close-ADTSession -ExitCode $_.HResult }
 							$result = [PSADT.ProcessManagement.ProcessResult]::new(
-								$_.HResult,
+								$_.Exception.HResult,
 								[System.Collections.Generic.List[System.String]]::new().AsReadOnly(),
 								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly(),
 								[System.Collections.Generic.List[System.String]]::new([System.String[]]@($_.Exception.Message)).AsReadOnly()
@@ -468,7 +468,11 @@
 			}
 
 			if (-not $IgnoreExitCodes) {
-				Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes
+				[PSADT.Module.DeploymentStatus]$status = Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -PassThru
+				if ($ExitOnProcessFailure -and $status -ge [PSADT.Module.DeploymentStatus]::FastRetry) {
+					Write-ADTLogEntry -Severity Error -Message "The uninstallation failed with exit code [$($result.ExitCode)]. Closing the session as requested by -ExitOnProcessFailure."
+					Close-ADTSession
+				}
 			}
 
 			Wait-NXTDeploymentAwaiter -Awaiter $waits
@@ -478,7 +482,7 @@
 				[System.DateTime]$endTime = [System.DateTime]::Now.AddSeconds(5)
 				while (([PSADT.Types.InstalledApplication[]]$remainingApplications = @(Get-NXTApplication -Criteria $Criteria))) {
 					if ($endTime -lt [System.DateTime]::Now) { break }
-					Start-Sleep -Milliseconds 500
+					Start-Sleep -Milliseconds 250
 				}
 				if ($remainingApplications.Length -gt 0) {
 					[System.Collections.Hashtable]$errorParams = @{

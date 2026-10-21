@@ -427,12 +427,17 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					: throw new InvalidDataException($"The value [{upgradeModeVar}] of [DeploymentInstallationUpgradeMode] cannot be parsed into an [ApplicationStore].");
 			}
 
+			if (legacyModel.TryGetCompatVariable("DeploymentInstallationAwaitChildren", out var awaitChildren))
+			{
+				installModel.AwaitChildren = bool.Parse(awaitChildren!);
+			}
+
 			return installModel;
 		}
 
 		private static NxtUninstallationModel TranslateUninstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-			return new NxtUninstallationModel
+			var uninstallModel =  new NxtUninstallationModel
 			{
 				Method = MapLegacyDeploymentMethodToEnum(legacyModel.UninstallMethod),
 				Target = legacyModel.UninstFile,
@@ -472,9 +477,14 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 							: []
 				},
 				UserPart = legacyModel.UserPartOnUninstallation,
-
 			};
 
+			if (legacyModel.TryGetCompatVariable("DeploymentUninstallationAwaitChildren", out var awaitChildren))
+			{
+				uninstallModel.AwaitChildren = bool.Parse(awaitChildren!);
+			}
+
+			return uninstallModel;
 		}
 
 		private static Dictionary<string, object> TranslateVariables(this NxtLegacyPackageConfigurationModel legacyModel)

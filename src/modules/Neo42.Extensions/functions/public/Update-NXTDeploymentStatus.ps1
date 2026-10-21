@@ -15,11 +15,16 @@
 	Codes that would indicate a reboot is required.
 	.PARAMETER ADTSession
 	The current deployment session to update the status for.
+	.PARAMETER PassThru
+	Returns the deployment status resolved for the provided exit code, regardless of whether it was applied to the session.
+	.OUTPUTS
+	PSADT.Module.DeploymentStatus - The resolved deployment status when -PassThru is specified.
 	.NOTES
 	This function is born to the missing implementation of PSADT 4.1.8.
 	The behaviour of this function is baked into PSADT 4.2+ functions by default.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'The update is non-distructive.')]
+	[OutputType([PSADT.Module.DeploymentStatus])]
 	[CmdletBinding()]
 	param (
 		[ValidateNotNull()]
@@ -33,7 +38,9 @@
 		$SuccessExitCodes,
 		[AllowNull()]
 		[System.Int32[]]
-		$RebootExitCodes
+		$RebootExitCodes,
+		[System.Management.Automation.SwitchParameter]
+		$PassThru
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -97,6 +104,10 @@
 			}
 			else {
 				Write-ADTLogEntry -Message "The exit code was not applied to the session as it would have upgraded the current status [$($ADTSession.GetDeploymentStatus())] to [$resolvedStatus]."
+			}
+
+			if ($PassThru) {
+				return $resolvedStatus
 			}
 		}
 		catch {

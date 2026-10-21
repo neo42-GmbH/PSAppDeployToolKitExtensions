@@ -40,13 +40,15 @@ It is used to define custom types and their members for PowerShell objects.
 			<ScriptProperty>
 				<Name>UpgradeCode</Name>
 				<GetScriptBlock>
-					if ($this.WindowsInstaller -and $this.ProductCode) { [PSADTNXT.Extensions.NxtPsadtExtensions]::GetUpgradeCode($this.ProductCode).ToString("B") }
+					if ($this.WindowsInstaller -and $this.ProductCode -and ([System.Nullable[System.Guid]]$guid = [PSADTNXT.Extensions.NxtPsadtExtensions]::GetUpgradeCode($this.ProductCode))) {
+						$guid.ToString('B').ToUpper()
+					}
 				</GetScriptBlock>
 			</ScriptProperty>
 			<ScriptProperty>
 				<Name>InnoSetupInstaller</Name>
 				<GetScriptBlock>
-					[PSADTNXT.Extensions.NxtPsadtExtensions]::IsNullSoftInstaller($this)
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::IsInnoSetupInstaller($this)
 				</GetScriptBlock>
 			</ScriptProperty>
 			<ScriptProperty>
@@ -61,6 +63,18 @@ It is used to define custom types and their members for PowerShell objects.
 					[PSADTNXT.Extensions.NxtPsadtExtensions]::GetApplicationStore($this)
 				</GetScriptBlock>
 			</ScriptProperty>
+			<ScriptMethod>
+				<Name>Hide</Name>
+				<Script>
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::Hide($this)
+				</Script>
+			</ScriptMethod>
+			<ScriptMethod>
+				<Name>Unhide</Name>
+				<Script>
+					[PSADTNXT.Extensions.NxtPsadtExtensions]::Unhide($this)
+				</Script>
+			</ScriptMethod>
 		</Members>
 	</Type>
 	<Type>

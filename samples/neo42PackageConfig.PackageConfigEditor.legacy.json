@@ -94,17 +94,7 @@
       "TargetName": "PackageConfigEditor.lnk"
     }
   ],
-  "UninstallKeysToHide": [
-    {
-      "KeyName": "$($global:PackageConfig.UninstallKey)",
-      "Is64Bit": true,
-      "KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)",
-      "KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)",
-      "DisplayNamesToExcludeFromHiding": [
-        "$($global:PackageConfig.UninstallDisplayName)"
-      ]
-    }
-  ],
+  "UninstallKeysToHide": [],
   "PackageSpecificVariablesRaw": [
     {
       "Name": "DetectionCriteriaStore",
@@ -125,6 +115,16 @@
       "Name": "DeploymentInstallationUpgradeMode",
       "Value": "",
       "ExpandVariables": false
-    }
+    },
+	{
+		"Name": "DeploymentInstallationAwaitChildren",
+		"Value": "",
+		"ExpandVariables": false
+	},
+	{
+		"Name": "DeploymentUninstallationAwaitChildren",
+		"Value": "",
+		"ExpandVariables": false
+	}
   ]
 }
