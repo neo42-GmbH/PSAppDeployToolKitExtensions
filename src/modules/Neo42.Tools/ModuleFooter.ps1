@@ -21,6 +21,7 @@ $ExecutionContext.SessionState.PSVariable.Set(
 				& $importModule -Global -Force -PassThru -ErrorAction 'Stop' -FullyQualifiedName @(
 					@{ ModuleName = 'Microsoft.PowerShell.Management'; Guid = 'eefcb906-b326-4e99-9f54-8b4bb6ef3c6d'; ModuleVersion = '1.0' },
 					@{ ModuleName = 'Microsoft.PowerShell.Utility'; Guid = '1da87e53-152b-403e-98dc-74d7b4d63d59'; ModuleVersion = '1.0' },
+					@{ ModuleName = 'Microsoft.PowerShell.Archive'; Guid = 'eb74e8da-9ae2-482a-a648-e96550fb8733'; ModuleVersion = '1.0' },
 					@{ ModuleName = 'PSScriptAnalyzer'; GUID = 'd6245802-193d-4068-a631-8863a4342a18'; ModuleVersion = '1.0' }
 				) | & { process { $_.ExportedCommands.Values | & { process { $commandTable.Add($_.Name, $_) } } } }
 				# Add new functions to the command table from the current script.
