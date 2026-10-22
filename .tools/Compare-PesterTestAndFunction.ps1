@@ -89,10 +89,10 @@ try {
 	if ($CreateTests) {
 		Write-Output ''
 		Write-Output 'Test file creation:'
-		foreach ($file in $missingTestFiles) {
-			[System.String]$newTestFilePath = [System.IO.Path]::Combine($TestsDirectory, $file)
-			$defaultTestContent.Replace('FUNCTIONNAME', $file.Name.Replace('.Tests.ps1', '')) | Out-File -FilePath $newTestFilePath -Encoding utf8
-			Write-Output "$(Convert-TitleString -TitleString $file) : File created."
+		foreach ($filepath in $missingTestFiles) {
+			[System.String]$newTestFilePath = [System.IO.Path]::Combine($TestsDirectory, $filepath)
+			$defaultTestContent.Replace('FUNCTIONNAME', $filepath.Replace('.Tests.ps1', '')) | Out-File -FilePath $newTestFilePath -Encoding utf8
+			Write-Output "$(Convert-TitleString -TitleString $filepath) : File created."
 		}
 	}
 	if ($ListEmptyTests) {
