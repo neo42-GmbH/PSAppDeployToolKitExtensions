@@ -330,15 +330,15 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 			foreach (var keyToHide in uninstallKeysToHide)
 			{
-				var isDisplayName = bool.TryParse(keyToHide.KeyNameIsDisplayName, out var keyIsDisplayName) && keyIsDisplayName;
-				var containsWildCards = bool.TryParse(keyToHide.KeyNameContainsWildCards, out var keyContainsWildCards) && keyContainsWildCards;
-				var excludeList = keyToHide.DisplayNamesToExcludeFromHiding ?? [];
-
 				// We used to create self references. These are not required anymore
-				if (!isDisplayName && !containsWildCards && keyToHide.KeyName.Equals(legacyModel.UninstallKey, StringComparison.OrdinalIgnoreCase))
+				if (keyToHide.HideKeyIsAppReference(legacyModel))
 				{
 					continue;
 				}
+
+				var isDisplayName = bool.TryParse(keyToHide.KeyNameIsDisplayName, out var keyIsDisplayName) && keyIsDisplayName;
+				var containsWildCards = bool.TryParse(keyToHide.KeyNameContainsWildCards, out var keyContainsWildCards) && keyContainsWildCards;
+				var excludeList = keyToHide.DisplayNamesToExcludeFromHiding ?? [];
 
 				var criteria = new NxtApplicationCriteriaModel()
 				{
@@ -566,13 +566,17 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		private static bool HideKeysContainMainApp(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-			return legacyModel.UninstallKeysToHide is not null && legacyModel.UninstallKeysToHide.Exists(
-				s => bool.TryParse(s.KeyNameIsDisplayName, out var keyIsDisplayName)
-					&& !keyIsDisplayName
-					&& bool.TryParse(s.KeyNameContainsWildCards, out var keyContainsWildCards)
-					&& !keyContainsWildCards
-					&& s.KeyName.Equals(legacyModel.UninstallKey, StringComparison.OrdinalIgnoreCase)
-			);
+			return legacyModel.UninstallKeysToHide is not null && legacyModel.UninstallKeysToHide.Exists(k => k.HideKeyIsAppReference(legacyModel));
+		}
+
+		private static bool HideKeyIsAppReference(this NxtLegacyKeyHideModel keyModel, NxtLegacyPackageConfigurationModel legacyModel)
+		{
+			var isDisplayName = bool.TryParse(keyModel.KeyNameIsDisplayName, out var keyIsDisplayName) && keyIsDisplayName;
+			var containsWildCards = bool.TryParse(keyModel.KeyNameContainsWildCards, out var keyContainsWildCards) && keyContainsWildCards;
+
+			return isDisplayName.Equals(legacyModel.UninstallKeyIsDisplayName)
+				&& containsWildCards.Equals(legacyModel.UninstallKeyContainsWildCards)
+				&& keyModel.KeyName.Equals(legacyModel.UninstallKey, StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }
