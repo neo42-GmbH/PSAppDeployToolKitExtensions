@@ -16,6 +16,7 @@
 	This file must comply with PowerShell Restricted Language Mode with the exception of using simple PSADT environment variables
 	Metadata (Package section) must contain static package/application information only.
 	Non-compliant content will cause validation errors when the configuration is loaded.
+	Default and nullable values may be omitted if so desired.
 
 	Migration notes (v3 -> v4):
 	- Legacy package configuration support is available and can be controlled via the SupportLegacyConfig option.
@@ -71,7 +72,7 @@
 
 		# -- The language of the application. neo42 recommends using "ThreeLetterWindowsLanguageName" values for this property with 'MUI' for multi-language packages.
 		# -- See https://learn.microsoft.com/dotnet/api/system.globalization.cultureinfo.threeletterwindowslanguagename
-		# -- Explore via PowerShell: Get-Culture -ListAvailable | ? { $_.ThreeLetterWindowsLanguageName -ne 'ZZZ' } | select DisplayName, ThreeLetterWindowsLanguageName
+		# -- Explore via PowerShell: Get-Culture -ListAvailable | select DisplayName, ThreeLetterWindowsLanguageName
 		# -- [Migrated from v3.AppLang]
 		Language         = $null # @schema type: [string], default: MUI
 
@@ -98,11 +99,11 @@
 
 		# -- Short description of the package. Only used for inventory purposes.
 		# -- [Migrated from v3.Description]
-		Description      = $null # @schema type: [string]
+		Description      = $null # @schema type: [string, null]
 
 		# -- The author of this package.
 		# -- [Migrated from v3.AppAuthor]
-		Author           = $null # @schema type: [string]
+		Author           = $null # @schema type: [string, null]
 
 		# -- Package revision number for a given version of the package.
 		# -- Deployment systems may use this value to trigger reinstallations. Only used for inventory purposes.
@@ -123,15 +124,15 @@
 
 		# -- Information about environments the package has been tested on.
 		# -- [Migrated from v3.TestedOn]
-		TestedOn         = $null # @schema type: [string]
+		TestedOn         = $null # @schema type: [string, null]
 
 		# -- Alternate inventory identifier for software management systems.
 		# -- [Migrated from v3.InventoryId]
-		InventoryId      = $null # @schema type: [string]
+		InventoryId      = $null # @schema type: [string, null]
 
 		# -- Dependency information for this package.
 		# -- [Migrated from v3.Dependencies]
-		Dependencies     = $null # @schema type: [string]
+		Dependencies     = $null # @schema type: [string, null]
 
 		# -- Wether or not old instances of this package should be uninstalled prior to installation.
 		# -- This method relies solely on the presence of an existing package, not the detection method.
@@ -158,8 +159,9 @@
 			# -- The action to take if the requirement is not met.
 			# -- Fail: The installation will fail with an error.
 			# -- Warn: The installation will continue, but a warning is logged.
+			# -- Continue: The installation will continue and a debug message is logged.
 			# -- Uninstall: The conflicting application will be uninstalled prior to installation. Only valid if DesiredState is Present.
-			OnConflict   = 'Fail' # @schema enum: [Fail, Warn, Uninstall], default: Fail
+			OnConflict   = 'Fail' # @schema enum: [Fail, Warn, Continue, Uninstall], default: Fail
 
 			# -- Custom error message to log, if the desired state is not met.
 			ErrorMessage = $null # @schema type: [string, null], default: null
@@ -174,6 +176,7 @@
 		# -- Determines whether application detection is enabled for this package or not.
 		# -- If $true, the detection result will be evaluated during the deployment.
 		# -- If set to false, the default install and uninstall logic will always be applied regardless of the actual presence of the application.
+		# -- [Migrated from v3.UninstallKey]
 		Enabled           = $true # @schema type: [boolean], default: false
 
 		# -- Marketed version of the application.
@@ -189,6 +192,7 @@
 
 		# -- Define wether the main application should be hidden post deployment or not.
 		# -- The store must support hiding applications in order to apply.
+		# -- [Migrated from v3.UninstallKeysToHide]
 		Hide              = $true # @schema type: [boolean], default: true
 
 		# -- Use the defined criteria to detect the presence of the main application this package manages.
@@ -207,10 +211,12 @@
 			# -- ARP*: The ARP key name
 			# -- AppX: The PackageFamilyName of the AppX package
 			# -- Package: The package guid in "B" format (e.g., {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX})
+			# -- [Migrated from v3.UninstallKey]
 			Identifier = $null # @schema type: [string, null]
 
 			# -- Custom filter script to identify the application. This script return $true if the application matches the criteria or $false if it does not.
 			# -- The script is provided with the current InstalledApplication object from the selected store for evaluation.
+			# -- [Migrated from v3.UninstallKey*]
 			Filter     = $null # @schema type: [scriptblock, null]
 		}
 	}
@@ -239,6 +245,7 @@
 		# -- Some detection modes may contain inherent version information, but this property allows overriding that value.
 		# -- See the Mode property for details on compatible version usage.
 		# -- This version does not have to conform to strict versioning rules. An extended attempt is made to parse and compare the version.
+		# -- [Migrated from v3.DisplayVersion]
 		Version           = $null # @schema type: [string, null]
 
 		# -- Use the version defined in the Package section for (alternate) version detection.
