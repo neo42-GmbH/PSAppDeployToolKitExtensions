@@ -231,8 +231,8 @@ function Measure-NXTDeprecatedVariable {
 			DeploymentType                                                         = '$adtSession.DeploymentType'
 			deploymentTypeName                                                     = '$adtSession.DeploymentTypeName'
 			DeployMode                                                             = '$adtSession.DeployMode'
-			dirFiles                                                               = '$adtSession.DirFiles.FullName'
-			dirSupportFiles                                                        = '$adtSession.DirSupportFiles.FullName'
+			dirFiles                                                               = '$adtSession.DirFiles'
+			dirSupportFiles                                                        = '$adtSession.DirSupportFiles'
 			DisableScriptLogging                                                   = '$adtSession.DisableLogging'
 			installName                                                            = '$adtSession.InstallName'
 			installPhase                                                           = '$adtSession.InstallPhase'
@@ -307,7 +307,7 @@ function Measure-NXTDeprecatedVariable {
 			configInstallationWelcomePromptDynamicRunningProcessEvaluation         = '(Get-ADTConfig).UI.DynamicProcessEvaluation'
 			configInstallationWelcomePromptDynamicRunningProcessEvaluationInterval = '(Get-ADTConfig).UI.DynamicProcessEvaluationInterval'
 			configMSIInstallParams                                                 = '(Get-ADTConfig).MSI.InstallParams'
-			configMSILogDir                                                        = 'if ($isAdmin) { (Get-ADTConfig).MSI.LogPath.FullName } else { (Get-ADTConfig).MSI.LogPathNoAdminRights.FullName }'
+			configMSILogDir                                                        = 'if ($isAdmin) { (Get-ADTConfig).MSI.LogPath } else { (Get-ADTConfig).MSI.LogPathNoAdminRights }'
 			configMSILoggingOptions                                                = '(Get-ADTConfig).MSI.LoggingOptions'
 			configMSIMutexWaitTime                                                 = '(Get-ADTConfig).MSI.MutexWaitTime'
 			configMSISilentParams                                                  = '(Get-ADTConfig).MSI.SilentParams'
@@ -435,7 +435,7 @@ function Measure-NXTDeprecatedVariable {
 			AppInstallDetectionCustomResult                                        = '$adtSession.NXT.Detection.IsInstalled'
 			RegisterPackage                                                        = '$adtSession.NXT.Package.Register'
 			AppRootFolder                                                          = '$adtSession.NXT.Package.Directory.FullName'
-			AppLogFolder                                                           = '$adtSession.LogPath.FullName'
+			AppLogFolder                                                           = '$adtSession.LogPath'
 			SetupCfg                                                               = '$adtSession.NXT.SetupCfg'
 			CustomSetupCfg                                                         = $null
 			UserPartDir                                                            = $null
