@@ -167,6 +167,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			{
 				Enabled = false,
 				Version = !string.IsNullOrWhiteSpace(legacyModel.DisplayVersion) ? legacyModel.DisplayVersion : null,
+				Hide = legacyModel.HideKeysContainMainApp(),
 			};
 
 			if (!string.IsNullOrWhiteSpace(legacyModel.UninstallKey))
@@ -437,7 +438,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		private static NxtUninstallationModel TranslateUninstallationModel(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-			var uninstallModel =  new NxtUninstallationModel
+			var uninstallModel = new NxtUninstallationModel
 			{
 				Method = MapLegacyDeploymentMethodToEnum(legacyModel.UninstallMethod),
 				Target = legacyModel.UninstFile,
@@ -561,6 +562,17 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		{
 			value = legacyModel.PackageSpecificVariablesRaw?.Find(psvr => psvr.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(psvr.Value))?.Value;
 			return value != null;
+		}
+
+		private static bool HideKeysContainMainApp(this NxtLegacyPackageConfigurationModel legacyModel)
+		{
+			return legacyModel.UninstallKeysToHide is not null && legacyModel.UninstallKeysToHide.Exists(
+				s => bool.TryParse(s.KeyNameIsDisplayName, out var keyIsDisplayName)
+					&& !keyIsDisplayName
+					&& bool.TryParse(s.KeyNameContainsWildCards, out var keyContainsWildCards)
+					&& !keyContainsWildCards
+					&& s.KeyName.Equals(legacyModel.UninstallKey, StringComparison.OrdinalIgnoreCase)
+			);
 		}
 	}
 }

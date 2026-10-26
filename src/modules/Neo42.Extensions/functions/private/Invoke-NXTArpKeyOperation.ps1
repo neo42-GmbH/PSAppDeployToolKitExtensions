@@ -19,7 +19,13 @@
 		try {
 			[System.Collections.Generic.List[PSADTNXT.Application.NxtApplicationCriteria]]$criteria = [System.Collections.Generic.List[PSADTNXT.Application.NxtApplicationCriteria]]::new()
 			$ADTSession.NXT.ManagedApplications | & { process { if ($isArp.Invoke($_.Store)) { $criteria.Add($_) } } }
-			if ($ADTSession.NXT.Detection.Criteria -and ($isArp.Invoke($ADTSession.NXT.Detection.Criteria.Store) )) { $criteria.Add($ADTSession.NXT.Detection.Criteria) }
+			if ($ADTSession.NXT.Detection.Enabled -and
+				$ADTSession.NXT.Detection.Hide -and
+				$ADTSession.NXT.Detection.Criteria -and
+				($isArp.Invoke($ADTSession.NXT.Detection.Criteria.Store) )
+			) {
+				$criteria.Add($ADTSession.NXT.Detection.Criteria)
+			}
 
 			$criteria | & {
 				process {

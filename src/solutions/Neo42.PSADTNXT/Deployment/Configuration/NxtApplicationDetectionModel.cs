@@ -11,6 +11,8 @@ namespace PSADTNXT.Deployment.Configuration
 
 		public bool UsePackageVersion { get; set; }
 
+		public bool Hide { get; set; } = true;
+
 		public NxtApplicationCriteriaModel? Criteria { get; set; }
 
 		public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

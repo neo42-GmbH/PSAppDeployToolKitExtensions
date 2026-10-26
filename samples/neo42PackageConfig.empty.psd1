@@ -187,6 +187,10 @@
 		# -- If both Version and UsePackageVersion are defined, UsePackageVersion takes precedence.
 		UsePackageVersion = $false # @schema type: [boolean], default: false
 
+		# -- Define wether the main application should be hidden post deployment or not.
+		# -- The store must support hiding applications in order to apply.
+		Hide              = $true # @schema type: [boolean], default: true
+
 		# -- Use the defined criteria to detect the presence of the main application this package manages.
 		# -- If no criteria is defined and Detection is enabled, you must implement the detection logic in the deployment script.
 		Criteria          = @{
