@@ -24,30 +24,42 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const tag = '${{ github.event.release.tag_name }}'
-            const isoDate = new Date().toISOString();
+            const tag = '${{ github.event.release.tag_name }}';
 
-            if (milestone) {
-              await github.rest.issues.updateMilestone({
+            const milestones = await github.paginate(github.rest.issues.listMilestones, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all'
+            });
+
+            // Rename and close the milestone for the current release. Skipped if this run is repeated.
+            let milestone = milestones.find(m => m.title === tag);
+            if (!milestone) {
+              milestone = milestones.find(m => m.title === 'Next' && m.state === 'open');
+              if (!milestone) {
+                throw new Error('Milestone not found');
+              }
+
+              ({ data: milestone } = await github.rest.issues.updateMilestone({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 milestone_number: milestone.number,
                 title: tag,
-                due_on: isoDate,
+                description: `Release ${tag} built from commit [${context.sha}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/commit/${context.sha})`,
+                due_on: new Date().toISOString(),
                 state: 'closed'
-              });
-            }
-            else {
-              throw new Error('Milestone not found');
+              }));
             }
 
             // Create a new milestone for the next release
-            await github.rest.issues.createMilestone({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Next',
-              description: 'The next release',
-            });
+            if (!milestones.some(m => m.title === 'Next' && m.number !== milestone.number)) {
+              await github.rest.issues.createMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Next',
+                description: 'The next release'
+              });
+            }
 
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -60,7 +72,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                body: `:tada: This issue will be addressed in version ${tag} :tada:
+                body: `:tada: This issue will be addressed in ${tag} :tada:
             Once the release is published, it will be available on:
               * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag})
 

@@ -25,7 +25,7 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
-      issues: write
+      issues: read
       pull-requests: read
       id-token: write
 
@@ -95,47 +95,6 @@ jobs:
             Compress-Archive -Update -Path $_.FullName -DestinationPath '${{ github.workspace }}/components/Template.zip'
           }
 
-      - name: update-milestones
-        if: ${{ needs.artifact.outputs.ARTIFACT_SUFFIX == '' }}
-        uses: actions/github-script@v9
-        id: milestone
-        with:
-          result-encoding: string
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { data: milestones } = await github.rest.issues.listMilestones({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open'
-            });
-
-            // Update the milestone for the current release. Note: The description will be part of the release notes.
-            const milestone = milestones.find(m => m.title === 'Next');
-            if (milestone) {
-              await github.rest.issues.updateMilestone({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                milestone_number: milestone.number,
-                title: '${{ needs.artifact.outputs.ARTIFACT_VERSION }}',
-                description: 'Release version ${{ needs.artifact.outputs.ARTIFACT_VERSION }} built from commit [${{ github.sha }}](${{ github.server_url}}/${{ github.repository }}/commit/${{ github.sha }})',
-                due_on: new Date().toISOString(),
-                state: 'closed'
-              });
-            }
-            else {
-              throw new Error('Milestone not found');
-            }
-
-            // Create a new milestone for the next release
-            await github.rest.issues.createMilestone({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Next',
-              description: 'The next release',
-            });
-
-            return milestone.number;
-
       - name: create-release-draft
         uses: actions/github-script@v9
         with:
@@ -148,16 +107,28 @@ jobs:
             const componentPath = path.join(process.env.GITHUB_WORKSPACE, 'components');
 
             if (!isPreRelease) {
+              const { data: milestones } = await github.rest.issues.listMilestones({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open'
+              });
+
+              // The milestone is renamed and closed once the release is published (see PostRelease.yml)
+              const milestone = milestones.find(m => m.title === 'Next');
+              if (!milestone) {
+                throw new Error('Milestone not found');
+              }
+
               const issueCount = (
                 await github.rest.issues.listForRepo({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  milestone: '${{ steps.milestone.outputs.result }}',
+                  milestone: milestone.number,
                   state: 'all'
                 })
               ).data.length
               const issueText = issueCount === 1 ? `${ issueCount } issue` : `${ issueCount } issues`;
-              releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url }}/${{ github.repository }}/milestone/${{ steps.milestone.outputs.result }}?closed=1) closed.\n\nBuilt for __PSAppDeployToolkit v${{ inputs.PSADT_VERSION }}__.`;
+              releaseNoteHeader = `As part of this release we had [${issueText}](${{ github.server_url }}/${{ github.repository }}/milestone/${milestone.number}?closed=1) closed.\n\nBuilt for __PSAppDeployToolkit v${{ inputs.PSADT_VERSION }}__.`;
             }
 
             const generateReleaseNotesParameters = {
