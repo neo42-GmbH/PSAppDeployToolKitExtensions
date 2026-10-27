@@ -73,7 +73,7 @@
 			}
 			elseif ($DeploymentMethod -eq [PSADTNXT.Deployment.DeploymentMethod]::MSI -and
 				$Installer.Exists -and
-				([System.Collections.ObjectModel.ReadOnlyDictionary[System.String, System.String]]$msiProperties = Get-ADTMsiTableProperty -LiteralPath $Installer.FullName -Table 'Property' -InformationAction SilentlyContinue) -and
+				([System.Collections.ObjectModel.ReadOnlyDictionary[System.String, System.Object]]$msiProperties = Get-ADTMsiTableProperty -LiteralPath $Installer.FullName -Table 'Property' -InformationAction SilentlyContinue) -and
 				-not [System.String]::IsNullOrWhiteSpace($msiProperties['UpgradeCode'])
 			) {
 				$filters.Add("`$_.UpgradeCode -eq '$($msiProperties['UpgradeCode'])' -or `$_.ProductCode -eq '$($msiProperties['ProductCode'])'")

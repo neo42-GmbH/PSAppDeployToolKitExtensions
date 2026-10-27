@@ -32,21 +32,21 @@ The desired directory should be determinable without these helpers. You can find
 In the same sense as PSADTv4 deployment variables have been moved to the deployment session,
 all extension variables have been moved into the `NXT` session extension property.
 
-| Variable                         | Migration                                                                                                               |
-| :------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
-| CustomSetupCfg                   | This variable has been dropped.                                                                                         |
-| DeploymentTimestamp              | This variable behaves the same as in V3.                                                                                |
-| RegisterPackage                  | The variable now resides in `$adtSession.NXT.Package.Register`                                                          |
-| SetupCfg                         | This variable now resides in `$adtSession.NXT.SetupCfg`. It is now its own `NxtIniDocument` type.                       |
-| PackageConfig                    | Dropped due to the package config no longer being exposed directly, but rather APIs are exposed in the session object.  |
-| Neo42PackageConfigValidationPath | Validation is now handled within the C# model. For legacy validation use the included `neo42PackageConfig.schema.json`. |
-| SetupCfgPath                     | The path is now set as parameter in `New-NXTSessionParameter`. The variable is no longer exposed.                       |
-| CustomSetupCfgPath               | The path is now set as parameter in `New-NXTSessionParameter`. The variable is no longer exposed.                       |
-| DeployApplicationPath            | This variable was superfluous. Use `$PSCommandPath` instead.                                                            |
-| AppDeployToolkitExtensionsPath   | Due to the drop of V3 files, this is no longer needed.                                                                  |
-| AppDeployToolkitConfigPath       | Due to the drop of V3 files, this is no longer needed.                                                                  |
-| DeploymentSystem                 | This variable now resides in `$adtSession.NXT.DeploymentSystem`.                                                        |
-| UserPartDir                      | UserPartDir is now reflected in the value of `$adtSession.DirSupportFiles` automatically.                               |
+| Variable                         | Migration                                                                                                              |
+| :------------------------------- | :--------------------------------------------------------------------------------------------------------------------- |
+| CustomSetupCfg                   | This variable has been dropped.                                                                                        |
+| DeploymentTimestamp              | This variable behaves the same as in V3.                                                                               |
+| RegisterPackage                  | The variable now resides in `$adtSession.NXT.Package.Register`                                                         |
+| SetupCfg                         | This variable now resides in `$adtSession.NXT.SetupCfg`. It is now its own `NxtIniDocument` type.                      |
+| PackageConfig                    | Dropped due to the package config no longer being exposed directly, but rather APIs are exposed in the session object. |
+| Neo42PackageConfigValidationPath | Validation is now handled within the C# model. For legacy validation use the `neo42PackageConfig.schema.json`.         |
+| SetupCfgPath                     | The path is now set as parameter in `New-NXTSessionParameter`. The variable is no longer exposed.                      |
+| CustomSetupCfgPath               | The path is now set as parameter in `New-NXTSessionParameter`. The variable is no longer exposed.                      |
+| DeployApplicationPath            | This variable was superfluous. Use `$PSCommandPath` instead.                                                           |
+| AppDeployToolkitExtensionsPath   | Due to the drop of V3 files, this is no longer needed.                                                                 |
+| AppDeployToolkitConfigPath       | Due to the drop of V3 files, this is no longer needed.                                                                 |
+| DeploymentSystem                 | This variable now resides in `$adtSession.NXT.DeploymentSystem`.                                                       |
+| UserPartDir                      | UserPartDir is now reflected in the value of `$adtSession.DirSupportFiles` automatically.                              |
 
 ## Functions
 
@@ -131,7 +131,7 @@ all extension variables have been moved into the `NXT` session extension propert
 | Remove-NXTSystemPathVariable         | Merged     | Merged into `Remove-NXTPathVariable -Target Machine`.                                                                                                                                                                                     |
 | Remove-NXTProductMember              | Dropped    | All ProductGuid functions have been dropped.                                                                                                                                                                                              |
 | Remove-NXTSystemEnvironmentVariable  | Dropped    | Duplicate of `Remove-ADTEnvironmentVariable`.                                                                                                                                                                                             |
-| Repair-NXTApplication                | Dropped    | Dropped in favor of use of `Start-MSIProcess -Action Repair`.                                                                                                                                                                             |
+| Repair-NXTApplication                | Dropped    | Dropped in favor of use of `Start-ADTMSIProcess -Action Repair`.                                                                                                                                                                          |
 | Resolve-NXTDependentPackage          | Restricted | Function in now only available internally.                                                                                                                                                                                                |
 | Save-NXTXmlFile                      | Dropped    | Unnecessary because of the easy use of `Set-NXTContent -Value $xml.OuterXml`.                                                                                                                                                             |
 | Set-NXTCustomSetupCfg                | Dropped    | Is handled by `New-NXTSessionParameter`.                                                                                                                                                                                                  |

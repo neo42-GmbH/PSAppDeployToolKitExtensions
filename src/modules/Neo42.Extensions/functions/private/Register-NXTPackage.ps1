@@ -25,6 +25,7 @@
 
 			if (-not $ADTSession.NXT.DeploymentInvoked) {
 				Write-ADTLogEntry -Message 'Skipping package registration as the deployment has not been invoked.' -DebugMessage
+				return
 			}
 
 			if (-not $ADTSession.NXT.Package.Register) {

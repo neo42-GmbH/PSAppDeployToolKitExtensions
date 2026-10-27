@@ -8,7 +8,7 @@
     <Title>Neo42.Extension Library for PSAppDeployToolkit</Title>
     <Copyright>Copyright © 2026 neo42 GmbH. All rights reserved.</Copyright>
     <Description>Neo42.Extension Library for PSAppDeployToolkit</Description>
-    <PackageProjectUrl>https://neo42.de/psappdeploytoolkit</PackageProjectUrl>
+    <PackageProjectUrl>https://neo42.de</PackageProjectUrl>
     <RepositoryUrl>https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions</RepositoryUrl>
 
     <Deterministic>true</Deterministic>

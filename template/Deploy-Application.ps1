@@ -22,7 +22,7 @@ Version: 0.0.0.0
 #>
 #region PARAMETERS - DO NOT EDIT
 [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Variables are read by New-NXTSessionParameter')]
-[CmdletBinding(HelpUri = 'https://neo42.de/psappdeploytoolkit')]
+[CmdletBinding(HelpUri = 'https://neo42.de')]
 param (
 	# PSADT parameters #
 	[Parameter(Position = 0, HelpMessage = 'The type of deployment to perform.')]

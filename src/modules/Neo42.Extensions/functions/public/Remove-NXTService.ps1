@@ -67,7 +67,12 @@
 						if ($service.Status -ne [System.ServiceProcess.ServiceControllerStatus]::Stopped) {
 							Write-ADTLogEntry -Message "Stopping service [$_]."
 							$service.Stop()
-							$service.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Stopped, $Timeout)
+							try {
+								$service.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Stopped, $Timeout)
+							}
+							catch {
+								Write-ADTLogEntry -DebugMessage -Message 'Service was not stopped within the defined timeout.'
+							}
 
 							if (-not $Force -and $service.Status -ne [System.ServiceProcess.ServiceControllerStatus]::Stopped) {
 								[System.Collections.Hashtable]$errorParams = @{

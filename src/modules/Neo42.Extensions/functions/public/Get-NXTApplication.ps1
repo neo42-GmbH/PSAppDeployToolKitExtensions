@@ -70,7 +70,7 @@
 	process {
 		try {
 			if ($PSCmdlet.ParameterSetName -eq 'Session') {
-				Update-NXTDetectionStatus
+				Update-NXTDetectionStatus -ADTSession $ADTSession
 				return $ADTSession.NXT.Detection.Application
 			}
 

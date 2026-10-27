@@ -43,7 +43,7 @@
 
 - A minimum **defer interval** can now be specified via the Setup.cfg option `AskKillProcesses.DEFERINTERVAL`. This allows to specify a minimum time in minutes that must pass after a deferral before another attempt at the deployment is allowed. This is useful to suppress quick consecutive retries in case of fast retry exit codes by the deployment system. Make sure this is compatible with your deployment system's retry logic to avoid unexpected behavior.
 
-- The toolkit can now attempt to **reopen applications** that were closed due to the deployment. This can be enabled via the Setup.cfg option `Options.OPENCLOSEDAPPS`. Please note that this feature is implemented on a best effort basis and might not work for all applications.
+- The toolkit can now attempt to **reopen applications** that were closed due to the deployment. This can be enabled via the Setup.cfg option `AskKillProcesses.OPENCLOSEDAPPS`. Please note that this feature is implemented on a best effort basis and might not work for all applications.
 
 - An option to respect **Do Not Disturb** cues has been added. A Setup.cfg option `AskKillProcesses.DONOTDISTURB` allows to suppress the deployment UI if the user has enabled Do Not Disturb on their system. Do not disturb is equivalent to deferring the deployment.
 
@@ -101,7 +101,7 @@ The new format improves the following aspects:
 
 - You may place a singular **WIM file** in the `DirFiles` folder which contains the deployment content. PSADT will mount the WIM automatically and point `DirFiles` to the mounted location. This reduces package size and improves transfer times for certain deployment systems.
 
-- Debug logging has been reintroduced. Enable `LogDebugMessages` in the toolkit configuration to get detailed information about the deployment process.
+- Debug logging has been reintroduced. Enable `LogDebugMessage` in the toolkit configuration to get detailed information about the deployment process.
 
 - All session data is now available via the session object, removing the need for parameter blocks in custom functions.
 

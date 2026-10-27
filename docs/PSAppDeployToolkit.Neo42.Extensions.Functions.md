@@ -339,7 +339,7 @@ It is capable of applying these settings to both the target folder and its sub-f
 #### Example 1
 
 ```PowerShell
-Add-NXTFolderPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
+Add-NXTFolderPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0'
 ```
 
 Add permissions to folder 'C:\Temp\MyFolder' granting full control permissions for 'DOMAIN\User1' and 'Administrators', write permissions for 'Everyone'.
@@ -885,10 +885,10 @@ This function removes a custom hook from the deployment session that was previou
 #### Example 1
 
 ```PowerShell
-Clear-NXTDeploymentCallback -HookPoint CustomInstallEnd -Callback (Get-Command -Name 'My-CustomFunction')
+Clear-NXTDeploymentCallback -HookPoint CustomInstallEnd
 ```
 
-This example adds a custom hook that executes the 'My-CustomFunction' function after the 'CustomInstallEnd' deployment hook point.
+Clears all callbacks attached to CustomInstallEnd
 
 ### INPUTS
 
@@ -1643,10 +1643,10 @@ The file does not need to be a PowerShell script, but the function will only exp
 #### Example 1
 
 ```PowerShell
-Expand-NXTVariablesInFile -Path 'C:\Temp\test.txt' -Variables @(Get-Variable 'MyVar1', 'MyVar2')
+Expand-NXTVariablesInFile -Path 'C:\Temp\test.txt'
 ```
 
-Expands the variables in the file 'C:\Temp\test.txt' using the values of the PowerShell variables 'MyVar1' and 'MyVar2'.
+Expands the variables in the file 'C:\Temp\test.txt' with all variables available to your current session.
 
 ### INPUTS
 
@@ -2527,6 +2527,20 @@ A filter to include items in the Path parameter.
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|True|
+
+#### -Unit
+
+The size unit the result should be returned in.
+
+|Property|Value|
+|:---|:---|
+|Type:|DataSizeUnit|
+|Enum values:|B, KB, MB, GB, TB, PB|
+|Position:|Named|
+|Default value:|[PSADTNXT.IO.DataSizeUnit]::B|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
 
 ## Get-NXTParentProcess
 

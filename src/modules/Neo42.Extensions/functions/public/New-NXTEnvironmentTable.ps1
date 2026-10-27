@@ -50,7 +50,7 @@
 					$newEnvironment['envCommonProgramFilesW3264'] = [System.Environment]::GetFolderPath('CommonProgramFilesX86')
 					$newEnvironment['envSystemX64'] = [System.Environment]::GetFolderPath('System')
 					$newEnvironment['envSystemX86'] = [System.Environment]::GetFolderPath('SystemX86')
-					$newEnvironment['Wow6432Node'] = 'WOW6432Node'
+					$newEnvironment['envWow6432Node'] = 'WOW6432Node'
 				}
 				else {
 					$newEnvironment['envRegistrySoftwareW3264'] = 'Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE'

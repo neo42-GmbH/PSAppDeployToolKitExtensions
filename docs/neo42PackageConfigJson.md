@@ -161,7 +161,7 @@ Only the following values are expanded (each list entry of a collection is expan
 | `AppendInstParaToDefaultParameters` / `AppendUninstParaToDefaultParameters` | `Defaults` | 🔁 |
 | `Accepted*ExitCodes` / `Accepted*RebootCodes` | `SuccessCodes` / `IgnoreExitCodes` / `RebootCodes` | 🔁 |
 | `AppKillProcesses` | `CloseProcesses` | 🔁 |
-| `AppKillProcesses.IsWql` | – | 🛑 if `true` |
+| `AppKillProcesses.IsWQL` | – | 🛑 if `true` |
 | `BlockExecution` | `CloseProcesses.AllowBlocking` (per process) | ✅ |
 | `TestConditionsPreSetupSuccessCheck` | `Awaiters` | 🔁 |
 | `CommonDesktopShortcutsToDelete` | `ManagedShortcuts` (`Delete`) | ✅ |
@@ -203,7 +203,7 @@ Parent: `/`
 | `UninstallOld` | bool | | | Remove packages of former framework versions (especially Empirum `setup.inf` packages) and/or with the same package family GUID (especially VBS style packages). |
 | `HidePackageUninstallButton` | bool | | | Hide the uninstall button of the package in the system settings. 🔁 Translates to `ApplicationEntry = DisplayOnly`. |
 | `HidePackageUninstallEntry` | bool | | | Hide the package's uninstall registry entry completely. 🔁 Translates to `ApplicationEntry = Hidden` and takes precedence over `HidePackageUninstallButton`. Neither set: `Uninstallable`. |
-| `Reboot` | integer | | | Reboot behavior: `0` = `IfRequired` (no reboot forced, exit code untouched), `1` = `Always` (exit code becomes `3010`), `2` = `Never` (`1641`/`3010` become `0`). An explicit `-AllowRebootPassThru $false` ignores this on script exit. |
+| `Reboot` | integer | | | Reboot behavior: `0` = `IfRequired` (no reboot forced, exit code untouched), `1` = `Always` (exit code becomes `3010`), `2` = `Never` (`1641`/`3010` become `0`). An explicit `-SuppressRebootPassThru` ignores this on script exit. |
 | `UserPartOnInstallation` | bool | | | Install the user part during the main installation. Should be `true` if the package contains a user part. Can also be called explicitly with `-InstallUserPart` / `-TriggerInstallUserPart`. |
 | `UserPartOnUninstallation` | bool | | | Uninstall the user part during the main uninstallation. Should normally stay `false`. Can also be called explicitly with `-UninstallUserPart` / `-TriggerUninstallUserPart`. |
 | `DisplayVersion` | string | | | Expected `DisplayVersion` of the installed application as set by a regular test installation. Used for [detection](#application-detection) and [soft migration](#soft-migration). |
@@ -396,7 +396,7 @@ Parent: `/AppKillProcesses/` – optional list, translated to `CloseProcesses`. 
 |:------|:-----|:----:|:------------|
 | `Name` | string | ✔ | Process file name (with or without `.exe`) or a full path to the executable. Must be a valid path. |
 | `Description` | string | | Text shown in the process close list of the dialog instead of the file description. |
-| `IsWql` | bool | | 🛑 WQL queries are **not supported**. If set to `true` the configuration is rejected with a `NotSupportedException`. Use the PSD1 format, which supports full paths in process names. |
+| `IsWQL` | bool | | 🛑 WQL queries are **not supported**. If set to `true` the configuration is rejected with a `NotSupportedException`. Use the PSD1 format, which supports full paths in process names. |
 
 **`BlockExecution`** (parent `/`, bool) controls whether the defined processes are blocked from starting during the (un)installation. It is applied to every entry and translated to `AllowBlocking`. Blocking can additionally be controlled in the toolkit configuration.
 
@@ -505,5 +505,5 @@ The following values are still accepted for compatibility, but are not used by a
 | `UserPartRevision` | Calculated from `AppVersion`. |
 | `InstallerVersion` | Was never tied to logic. Use [package specific variables](#package-specific-variables) instead. Available as `Legacy_InstallerVersion`. |
 | `MSIDowngradeable` | Not translated. |
-| `IsWql` (in `AppKillProcesses`) | WQL is not supported (see [Processes to close](#processes-to-close)). |
+| `IsWQL` (in `AppKillProcesses`) | WQL is not supported (see [Processes to close](#processes-to-close)). |
 | `ProcessOperator` / `RegKeyOperator` | Not translated. |

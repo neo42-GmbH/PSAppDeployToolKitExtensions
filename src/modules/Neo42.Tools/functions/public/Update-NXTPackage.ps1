@@ -6,10 +6,8 @@
 	The package to upgrade to a newer release.
 	.PARAMETER Reference
 	The template data to use as reference for the upgrade.
-	.PARAMETER Out
+	.PARAMETER Output
 	The directory where to place the newly build package.
-	.PARAMETER AnalyzerDirectory
-	The folder containing the analyzer data required for this migration.
 	.NOTES
 	Migrations are not 100% reliable. This script is not a replacement for manual testing.
 	This only compatible with neo42 template and APD packages.
@@ -215,21 +213,20 @@
 		# Parse both files to retrieve custom function names and content markers
 		[System.Management.Automation.Language.Token[]]$referenceTokens = $null
 		[System.Management.Automation.Language.ScriptBlockAst]$referenceAst = [System.Management.Automation.Language.Parser]::ParseFile("$($Reference.FullName)\Deploy-Application.ps1", [ref]$referenceTokens, [ref]$parserErrors)
-		if ($parserErrors) { throw "Parser errors in [$($Reference.FullName)\Deploy-Application.ps1]:`n$([System.String]::Join('`n', $parserErrors.Message))" }
+		if ($parserErrors) { throw "Parser errors in [$($Reference.FullName)\Deploy-Application.ps1]:`n$([System.String]::Join("`n", $parserErrors.Message))" }
 		[System.Management.Automation.Language.FunctionDefinitionAst[]]$referenceCustomFunctions = $referenceAst.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -like 'Custom*' }, $false)
 		[System.Array]::Reverse($referenceCustomFunctions) # Reverse functions order to go from buttoms up to prevent insertion issues
 
 		[System.Management.Automation.Language.Token[]]$packageTokens = $null
 		[System.Management.Automation.Language.ScriptBlockAst]$packageAst = [System.Management.Automation.Language.Parser]::ParseFile("$($Package.FullName)\Deploy-Application.ps1", [ref]$packageTokens, [ref]$parserErrors)
-		if ($parserErrors) { throw "Parser errors in [$($Package.FullName)\Deploy-Application.ps1]:`n$([System.String]::Join('`n', $parserErrors.Message))" }
+		if ($parserErrors) { throw "Parser errors in [$($Package.FullName)\Deploy-Application.ps1]:`n$([System.String]::Join("`n", $parserErrors.Message))" }
 		[System.Management.Automation.Language.FunctionDefinitionAst[]]$packageCustomFunctions = $packageAst.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $args[0].Name -like 'Custom*' }, $false)
 
 
 		# Migrate custom functions
 		[System.Text.StringBuilder]$deployApplicationSb = [System.Text.StringBuilder]::new($referenceAst.Extent.Text)
-		if (([System.String[]]$missingFunctions = $packageCustomFunctions | Where-Object { $_.Name -notin $referenceCustomFunctions.Name })) {
-			Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for [$missingFunctions]."
-			continue
+		if (([System.String[]]$missingFunctions = $packageCustomFunctions | Select-Object -ExpandProperty Name | Where-Object { $_ -notin $referenceCustomFunctions.Name })) {
+			Write-Host -ForegroundColor Red "Custom functions have been removed. Manual migration is required for [$($missingFunctions)]."
 		}
 		foreach ($referenceCustomFunction in $referenceCustomFunctions) {
 			if ($referenceCustomFunction.Name -notin $packageCustomFunctions.Name) { continue }

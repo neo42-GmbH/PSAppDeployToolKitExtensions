@@ -37,7 +37,7 @@
 				($adtSession.AppArch -like 'ARM*' -and $osInfo.Architecture -notin @([System.Runtime.InteropServices.Architecture]::Arm, [System.Runtime.InteropServices.Architecture]::Arm64))
 			) {
 				[System.Collections.Hashtable]$errorParams = @{
-					Exception = [System.InvalidOperationException]::("A [$($adtSession.AppArch)] package is not compatible with a [$($osInfo.Architecture)] operating system.")
+					Exception = [System.InvalidOperationException]::new("A [$($adtSession.AppArch)] package is not compatible with a [$($osInfo.Architecture)] operating system.")
 					Category  = [System.Management.Automation.ErrorCategory]::DeviceError
 					ErrorId   = 'IncompatibleHost'
 				}

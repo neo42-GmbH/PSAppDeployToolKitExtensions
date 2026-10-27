@@ -59,7 +59,7 @@ Get-AuthenticodeSignature -LiteralPath $MyInvocation.MyCommand.Path | & {
 		}
 		else {
 			[System.String]$thumbprint = $_.SignerCertificate.Thumbprint
-			Get-ChildItem -Recurse -File -Path $PSScriptRoot -Include '*.dll', '*.ps1', '*.psd1', '.ps1xml' | & {
+			Get-ChildItem -Recurse -File -Path $PSScriptRoot -Include '*.dll', '*.ps1', '*.psd1', '*.ps1xml' | & {
 				process {
 					[System.Management.Automation.Signature]$signature = Get-AuthenticodeSignature -LiteralPath $_.FullName
 					if (-not $signature.SignerCertificate -or $thumbprint -ne $signature.SignerCertificate.Thumbprint -or $signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {

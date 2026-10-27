@@ -36,7 +36,7 @@ namespace PSADTNXT.Attributes
 			}
 			if (baseObj is string valueAsString)
 			{
-				if (TimeSpan.TryParse(valueAsString, FormatProvider, out TimeSpan parsedTimeSpan))
+				if (TimeSpan.TryParse(valueAsString, FormatProvider, out var parsedTimeSpan))
 				{
 					return parsedTimeSpan;
 				}
@@ -49,7 +49,7 @@ namespace PSADTNXT.Attributes
 					return TimeSpan.FromSeconds(parsedNumericalSeconds);
 				}
 			}
-			return !TryGetNumericalSeconds(baseObj, out double seconds)
+			return !TryGetNumericalSeconds(baseObj, out var seconds)
 				? throw new ArgumentException($"Cannot transform value of type '{baseObj.GetType().FullName}' to TimeSpan.")
 				: TimeSpan.FromSeconds(seconds);
 		}

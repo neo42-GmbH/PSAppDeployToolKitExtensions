@@ -19,7 +19,7 @@
 			Write-ADTLogEntry -Message "Copying files from [$($ADTSession.NXT.DeployAppScript.Directory.FullName)] to [$deploymentFilesContainer]" -DebugMessage
 
 			# Clear the old package files
-			if ($deploymentFilesContainer.Parent.Exists) { $deploymentFilesContainer.Parent.Delete($true) }
+			if ($deploymentFilesContainer.Exists) { $deploymentFilesContainer.Delete($true) }
 			$deploymentFilesContainer.Create()
 
 			# Copy the files to the cache directory, excluding DirFiles for a hollow copy

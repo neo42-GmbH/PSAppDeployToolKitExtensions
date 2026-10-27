@@ -182,7 +182,7 @@
 					$result = Start-ADTMsiProcess @startSplat -IgnoreExitCodes '*' -Action Install -SkipMSIAlreadyInstalledCheck -NoDesktopRefresh -LogFileName ($LogFileName -replace '_Install\.log$', [System.String]::Empty)
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::AppX) {
-					$startSplat['ArgumentList'] = "/Online /NoRestart /English /LogPath:`"$($logFile.FullName)`" /Add-ProvisionedAppxPackage /PackagePath:`"$($startSplat['FilePath'])`"" + $startSplat['ArgumentList']
+					$startSplat['ArgumentList'] = "/Online /NoRestart /English /LogPath:`"$($logFile.FullName)`" /Add-ProvisionedAppxPackage /PackagePath:`"$($startSplat['FilePath'])`" " + $startSplat['ArgumentList']
 					$startSplat['FilePath'] = [System.IO.Path]::Combine([System.Environment]::GetFolderPath('System'), 'Dism.exe')
 				}
 				([PSADTNXT.Deployment.DeploymentMethod]::Burn) {
@@ -198,11 +198,6 @@
 				# The default install method for every installer that has not published a result yet
 				{ -not $result } {
 					$result = Start-ADTProcess @startSplat -WindowStyle Hidden -WaitForChildProcesses:$WaitForChildProcesses -IgnoreExitCodes '*'
-				}
-				([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
-					if ($uninstallFiles) {
-						$uninstallFiles.AddRange([System.IO.FileInfo[]]@(Get-Item -Path "$($uninstallFiles[0].Directory.FullName)\unins[0-9][0-9][0-9].*" -ErrorAction SilentlyContinue))
-					}
 				}
 			}
 
@@ -238,6 +233,14 @@
 				) {
 					$uninstallFiles.Add([PSADTNXT.Shell.NxtCommandLine]::SearchPath($applications[0].UninstallStringFilePath, [System.EnvironmentVariableTarget]::Machine))
 					$uninstallFileBackupDirectory = [System.IO.Path]::Combine($CacheDirectory, 'neo42-Source', $applications[0].PSChildName)
+
+					switch ($Method) {
+						([PSADTNXT.Deployment.DeploymentMethod]::InnoSetup) {
+							if ($uninstallFiles) {
+								$uninstallFiles.AddRange([System.IO.FileInfo[]]@(Get-Item -Path "$($uninstallFiles[0].Directory.FullName)\unins[0-9][0-9][0-9].*" -ErrorAction SilentlyContinue))
+							}
+						}
+					}
 				}
 			}
 

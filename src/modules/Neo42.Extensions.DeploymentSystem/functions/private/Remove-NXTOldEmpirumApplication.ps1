@@ -116,7 +116,11 @@
 			[PSADTNXT.Extensions.NxtRegistryExtensions]::GetAllViews() | & {
 				process {
 					[Microsoft.Win32.RegistryKey]$baseKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::Users, $_)
-					[Microsoft.Win32.RegistryKey]$uninstallRoot = $baseKey.OpenSubKey("$sidValue\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
+					if (-not ([Microsoft.Win32.RegistryKey]$uninstallRoot = $baseKey.OpenSubKey("$sidValue\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))) {
+						$baseKey.Close()
+						return
+					}
+
 					$uninstallRoot.GetSubKeyNames() | & {
 						process {
 							[Microsoft.Win32.RegistryKey]$uninstallKey = $uninstallRoot.OpenSubKey($_)
@@ -127,10 +131,10 @@
 							) {
 								if (([Microsoft.Win32.RegistryKey]$empirumUserVersionKey = $baseKey.OpenSubKey('SOFTWARE\' + $machineKeyName))) {
 									[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($empirumUserVersionKey)
-									[Microsoft.Win32.RegistryKey]$empriumUserAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumUserAppKey)
+									[Microsoft.Win32.RegistryKey]$empriumUserAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empirumUserVersionKey)
 									Remove-NXTEmptyRegistryKey -Key $empriumUserAppKey.Name
-									$empriumUserAppKey.Close()
 									[Microsoft.Win32.RegistryKey]$empirumUserVendorKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumUserAppKey)
+									$empriumUserAppKey.Close()
 									Remove-NXTEmptyRegistryKey -Key $empirumUserVendorKey.Name
 									$empirumUserVendorKey.Close()
 								}

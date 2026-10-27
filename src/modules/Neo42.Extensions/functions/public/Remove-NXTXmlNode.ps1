@@ -123,7 +123,7 @@
 					$nodes | & { process { $null = $_.ParentNode.RemoveChild($_) } }
 
 					if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath') -and $PSCmdlet.ShouldProcess($files[$i], 'Update XML file')) {
-						Set-NXTContent -Path $files[$i] -Value $xml.OuterXml @encodingSplat -Force:$Force
+						Set-NXTContent -LiteralPath $files[$i] -Value $xml.OuterXml @encodingSplat -Force:$Force
 					}
 				}
 

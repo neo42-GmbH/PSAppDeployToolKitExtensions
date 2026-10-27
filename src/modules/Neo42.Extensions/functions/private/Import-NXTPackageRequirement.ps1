@@ -15,7 +15,7 @@
 	}
 	process {
 		try {
-			[System.Collections.Hashtable]$packageRequirements = ConvertFrom-Json -InputObject ([System.IO.File]::ReadAllText($Path.FullName))
+			[System.Collections.Hashtable]$packageRequirements = ConvertFrom-NXTJson -InputObject ([System.IO.File]::ReadAllText($Path.FullName)) -AsHashtable
 			foreach ($dependencyGuidString in $packageRequirements.Keys) {
 				[System.Guid]$dependencyGuid = [System.Guid]::Empty
 				[PSADTNXT.Deployment.RequirementState]$dependencyState = [PSADTNXT.Deployment.RequirementState]::Absent

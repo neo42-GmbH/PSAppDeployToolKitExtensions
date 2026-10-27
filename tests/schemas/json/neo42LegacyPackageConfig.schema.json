@@ -1,5 +1,5 @@
 ﻿{
-	"$schema": "https://json-schema.org/draft-07/schema#",
+	"$schema": "http://json-schema.org/draft-07/schema#",
 	"type": "object",
 	"properties": {
 		"ConfigVersion": {
@@ -615,32 +615,6 @@
 						]
 					}
 				}
-			}
-		},
-		{
-			"if": {
-				"anyOf": [
-					{
-						"properties": {
-							"UserPartOnInstallation": {
-								"const": true
-							}
-						}
-					},
-					{
-						"properties": {
-							"UserPartOnUninstallation": {
-								"const": true
-							}
-						}
-					}
-				]
-
-			},
-			"then": {
-				"required": [
-					"UserPartRevision"
-				]
 			}
 		}
 	],

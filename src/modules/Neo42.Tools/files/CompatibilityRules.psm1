@@ -2,8 +2,6 @@
 .SYNOPSIS
 Function based rules to detect PSADTv3 legacy code and suggest replacements.
 #>
-[System.Collections.Hastable]$script:Mappings = & "$PSScriptRoot\Import-MigrationRules.ps1"
-
 function Measure-NXTDeprecatedType {
 	<#
 	.SYNOPSIS
@@ -1302,7 +1300,7 @@ function Measure-NXTDeprecatedFunction {
 				)
 			}
 			'Add-NxtLocalGroupMember'                = @{
-				NewFunction         = 'New-LocalGroup'
+				NewFunction         = 'Add-LocalGroupMember'
 				TransformParameters = @{
 					GroupName  = { "-Name $_" }
 					MemberName = { "-Member `$(Get-LocalUser -Name $_)" }
@@ -1773,6 +1771,7 @@ function Measure-NXTDeprecatedFunction {
 				NewFunction = '#Set-NxtCustomSetupCfg => This was a private function and is not needed anymore.'
 			}
 			'Set-NxtFolderPermissions'               = @{
+				NewFunction                    = 'Set-NXTFolderPermission'
 				BreakInheritance               = { if ($_ -eq '$false') { '-Inherit' } }
 				EnforceInheritanceOnSubFolders = { if ($_ -eq '$true') { '-Recurse' } }
 			}
@@ -2036,9 +2035,12 @@ function Measure-NXTDeprecatedFunction {
 				}
 			}
 			'Watch-NxtFileIsRemoved'                 = @{
-				NewFunction         = 'Wait-NXTFileSystemIsRemoved'
+				NewFunction         = 'Wait-NXTFileSystem'
 				TransformParameters = @{
 					FilePath = { "-Path $_" }
+				}
+				AddParameters       = @{
+					IsRemoved = '-IsRemoved'
 				}
 			}
 			'Watch-NxtProcess'                       = @{
@@ -2060,11 +2062,14 @@ function Measure-NXTDeprecatedFunction {
 						'#Watch-NxtProcessIsStopped => No migration path available for WQL queries. Provide the process directly to Wait-NXTProcess instead.'
 					}
 					else {
-						'Wait-NXTProcessIsStopped'
+						'Wait-NXTProcess'
 					}
 				}
 				TransformParameters = @{
 					ProcessName = { "-Name $_" }
+				}
+				AddParameters       = @{
+					IsRemoved = '-IsStopped'
 				}
 			}
 			'Watch-NxtRegistryKey'                   = @{
@@ -2077,12 +2082,13 @@ function Measure-NXTDeprecatedFunction {
 				}
 			}
 			'Watch-NxtRegistryKeyIsRemoved'          = @{
-				NewFunction         = 'Wait-NXTRegistryKeyIsRemoved'
+				NewFunction         = 'Wait-NXTRegistryKey'
 				TransformParameters = @{
 					RegistryKey = { "-Key $($_ -replace 'SOFTWARE\\\$?(?:global:)?WOW6432Node\\', 'SOFTWARE\\')" }
 				}
 				AddParameters       = @{
 					Wow6432Node = { if ($boundParameters.RegistryKey.Value.Extent -like '*Wow6432Node*') { '-Wow6432Node' } }
+					IsRemoved   = '-IsRemoved'
 				}
 			}
 			'Write-NxtXmlNode'                       = @{
@@ -2167,7 +2173,7 @@ function Measure-NXTDeprecatedFunction {
 							}
 							elseif ($boundParameter.Key -eq $boundParameter.Value.Value.Parent.ParameterName) {
 								# This is a switch bound with a value, e.g. -Switch:$true
-								$newParam = $boundParameters.Value.Value.Parent.Extent.Text
+								$newParam = $boundParameter.Value.Value.Parent.Extent.Text
 							}
 							elseif ($boundParameter.Value.Value.Splatted) {
 								# This is a splatted parameter, e.g. @params, retain the original value

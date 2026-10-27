@@ -141,12 +141,12 @@
 								}
 							}
 						}
-						if ($null -ne $InnerText) { $node.InnerText = $InnerText }
+						if ($PSBoundParameters.ContainsKey('InnerText')) { $node.InnerText = $InnerText }
 					}
 
 					Write-ADTLogEntry -Message "Updating XML node at XPath [$XPath]."
 					if ($PSCmdlet.ParameterSetName -in @('Path', 'LiteralPath') -and $PSCmdlet.ShouldProcess($files[$i], 'Update XML file')) {
-						Set-NXTContent -Path $files[$i] -Value $xml.OuterXml @encodingSplat -Force:$Force
+						Set-NXTContent -LiteralPath $files[$i] -Value $xml.OuterXml @encodingSplat -Force:$Force
 					}
 				}
 
