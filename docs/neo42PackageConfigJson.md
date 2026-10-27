@@ -166,7 +166,7 @@ Only the following values are expanded (each list entry of a collection is expan
 | `TestConditionsPreSetupSuccessCheck` | `Awaiters` | 🔁 |
 | `CommonDesktopShortcutsToDelete` | `ManagedShortcuts` (`Delete`) | ✅ |
 | `CommonStartMenuShortcutsToCopyToCommonDesktop` | `ManagedShortcuts` (`Copy`) | ✅ |
-| `UninstallKeysToHide` | `ManagedApplications` | 🔁 see [Hiding uninstall entries](#hiding-uninstall-entries) |
+| `UninstallKeysToHide` | `ManagedApplications` / `Detection.Hide` | 🔁 see [Hiding uninstall entries](#hiding-uninstall-entries) |
 | `PackageSpecificVariablesRaw` | `Variables` | ✅ |
 
 ---
@@ -338,6 +338,8 @@ There is no dedicated detection structure in the legacy format. Detection is der
 | Wildcards, no display name | Filter `$_.PSChildName -like '<key>'` |
 | `DisplayNamesToExcludeFromAppSearches` set | Added to the filter: `$_.DisplayName -notin @('<name>', ...)` |
 
+`Detection.Hide` is `true` only if `UninstallKeysToHide` contains a reference to the application itself (see [Hiding uninstall entries](#hiding-uninstall-entries)), otherwise the detected application stays visible.
+
 Everything can be overridden with the [compatibility variables](#compatibility-variables) `DetectionCriteriaStore` and `DetectionCriteriaFilter`. The original values stay available as `Legacy_UninstallKey`, `Legacy_UninstallKeyIsDisplayName`, `Legacy_UninstallKeyContainsWildCards`, `Legacy_UninstallKeyContainsExpandVariables` and `Legacy_DisplayNamesToExcludeFromAppSearches`.
 
 > [!NOTE]
@@ -421,10 +423,17 @@ Public desktop shortcuts are translated to `ManagedShortcuts` with `Location = D
 
 ### Hiding uninstall entries
 
-Parent: `/UninstallKeysToHide/` – optional list (copy the item as often as needed) of **additional** uninstall entries to hide.
+Parent: `/UninstallKeysToHide/` – optional list (copy the item as often as needed) of uninstall entries to hide.
+
+The entries are translated as follows:
+
+| Entry | Translated to |
+|:------|:--------------|
+| Reference to the application itself: `KeyName` equals `UninstallKey` (not case-sensitive), `KeyNameIsDisplayName` equals `UninstallKeyIsDisplayName` and `KeyNameContainsWildCards` equals `UninstallKeyContainsWildCards` | `Detection.Hide = true`. No managed application is created; the [detection](#application-detection) criteria is hidden instead, so `Is64Bit` and `DisplayNamesToExcludeFromHiding` of this entry have no effect. |
+| Any other entry (e.g. components installed alongside the application) | A managed application criteria in `ManagedApplications`. |
 
 > [!NOTE]
-> In V3 the default entry was a reference to the currently installed application. In V4 hiding the main application is part of the core, so this list is only required for other entries (e.g. components installed alongside the application). Each entry is translated to a managed application criteria. Entries that are an exact reference to the package's own `UninstallKey` (no display name, no wildcards) are skipped.
+> In V3 the default entry was a reference to the currently installed application. Keep this entry if the application should stay hidden; without it `Detection.Hide` is `false` and the application stays visible. Hiding the application requires an enabled detection with an `ARP` store (`ARP`, `ARP32`, `ARP64`), which also applies if the detection is overridden by the [compatibility variables](#compatibility-variables).
 
 | Value | Type | Req. | Expand | Description |
 |:------|:-----|:----:|:------:|:------------|

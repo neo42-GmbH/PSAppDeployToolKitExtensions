@@ -100,7 +100,7 @@
 			)
 
 			# A URL to the license for this module.
-			LicenseUri   = 'https://raw.githubusercontent.com/neo42-GmbH/PSAppDeployToolKitExtensions/refs/heads/production/COPYING.Lesser'
+			LicenseUri   = 'https://raw.githubusercontent.com/neo42-GmbH/PSAppDeployToolKitExtensions/refs/heads/production/LICENSE'
 
 			# A URL to the main website for this project.
 			ProjectUri   = 'https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions'
@@ -109,7 +109,7 @@
 			IconUri      = 'https://raw.githubusercontent.com/neo42-GmbH/PSAppDeployToolKitExtensions/refs/heads/production/src/modules/Neo42.Extensions/files/Assets/Logo.png'
 
 			# ReleaseNotes of this module
-			ReleaseNotes = 'https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/latest'
+			ReleaseNotes = 'https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/'
 
 			# Prerelease tag for PSGallery.
 			# Prerelease = ''
