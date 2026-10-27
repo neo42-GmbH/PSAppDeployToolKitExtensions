@@ -10,5 +10,5 @@ You should have received a copy of the GNU Lesser General Public License along w
 # COPYRIGHT #
 Copyright (c) 2026 neo42 GmbH, Germany.
 .LINK
-https://neo42.de
+https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions
 #>

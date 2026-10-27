@@ -28,7 +28,7 @@
 	.EXAMPLE
 	Get-NXTProcessTree -Id 1234 -NoParents -Depth 2
 
-	Retrieves the child processes of the process with ID 1234 and itself, without retrieving parent processes.
+	Retrieves the process with id 1234 and the first layer of child processes, without retrieving parent processes.
 	#>
 	[OutputType([System.Diagnostics.Process[]])]
 	[CmdletBinding()]
