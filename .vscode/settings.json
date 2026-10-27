@@ -60,7 +60,7 @@
 			"fileMatch": [
 				"neo42PackageConfig*.json"
 			],
-			"url": "./tests/schemas/json/neo42LegacyPackageConfig.schema.json"
+			"url": "./tests/schemas/json/neo42PackageConfig.legacy.schema.json"
 		}
 	],
 

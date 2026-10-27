@@ -39,7 +39,7 @@ all extension variables have been moved into the `NXT` session extension propert
 | RegisterPackage                  | The variable now resides in `$adtSession.NXT.Package.Register`                                                         |
 | SetupCfg                         | This variable now resides in `$adtSession.NXT.SetupCfg`. It is now its own `NxtIniDocument` type.                      |
 | PackageConfig                    | Dropped due to the package config no longer being exposed directly, but rather APIs are exposed in the session object. |
-| Neo42PackageConfigValidationPath | Validation is now handled within the C# model. For legacy validation use the `neo42PackageConfig.schema.json`.         |
+| Neo42PackageConfigValidationPath | Validation is now handled within the C# model. For legacy validation use the `neo42PackageConfig.legacy.schema.json`.  |
 | SetupCfgPath                     | The path is now set as parameter in `New-NXTSessionParameter`. The variable is no longer exposed.                      |
 | CustomSetupCfgPath               | The path is now set as parameter in `New-NXTSessionParameter`. The variable is no longer exposed.                      |
 | DeployApplicationPath            | This variable was superfluous. Use `$PSCommandPath` instead.                                                           |
