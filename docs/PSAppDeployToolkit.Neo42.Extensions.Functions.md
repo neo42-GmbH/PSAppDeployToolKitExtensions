@@ -5089,6 +5089,7 @@ Returns the `HKEY_LOCAL_MACHINE\Software` provider path for the given item.
 #### -IncludeNonExistent
 
 Includes non-existent paths in the output.
+Non-existent paths must still be valid for their provider, otherwise an error is thrown.
 
 |Property|Value|
 |:---|:---|

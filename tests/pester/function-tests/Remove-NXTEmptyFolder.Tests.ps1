@@ -68,9 +68,7 @@ Describe 'Remove-NXTEmptyFolder' {
 		}
 
 		It 'Should not resolve wildcards' {
-			Remove-NXTEmptyFolder -LiteralPath "$rootPath\empty*"
-			[System.IO.Directory]::Exists($emptyFolderPath) | Should -BeTrue
-			[System.IO.Directory]::Exists($emptyFolderPath2) | Should -BeTrue
+			{ Remove-NXTEmptyFolder -LiteralPath "$rootPath\empty*" } | Should -Throw
 		}
 	}
 
