@@ -222,7 +222,7 @@
 					throw (New-ADTErrorRecord @errorParams)
 				}
 				else {
-					Write-ADTLogEntry -Severity Warning -Message 'Application lookup criteria were provided but no application was found before uninstallation. Continuing without application defaults.'
+					Write-ADTLogEntry -Severity Warning -Message 'Application lookup criteria were provided but no application was found. Considering the application already uninstalled.'
 					return [PSADT.ProcessManagement.ProcessResult]::new(0)
 				}
 			}

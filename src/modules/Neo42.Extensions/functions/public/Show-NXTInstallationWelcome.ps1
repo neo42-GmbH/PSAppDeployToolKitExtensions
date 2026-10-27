@@ -427,8 +427,10 @@
 		}
 	}
 	end {
-		if ($BlockExecution -and $CloseProcesses) {
-			Block-ADTAppExecution -Processes $CloseProcesses.ProcessDefinition
+		if ($BlockExecution -and
+			([PSADT.ProcessManagement.ProcessDefinition[]]$blockableApps = $CloseProcesses | Where-Object { $_.AllowBlocking } | Select-Object -ExpandProperty ProcessDefinition)
+		) {
+			Block-ADTAppExecution -Processes $blockableApps
 		}
 
 		# Show the progress bar if enabled for the duration of the deployment

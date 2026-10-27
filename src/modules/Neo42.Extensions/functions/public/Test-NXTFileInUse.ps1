@@ -34,7 +34,7 @@
 	}
 	process {
 		try {
-			[System.String]$providerPath = Resolve-NXTPath -LiteralPath $Path -AsProviderPath -ProviderName 'FileSystem' -PathType Leaf -Force:$Force
+			[System.String]$providerPath = Resolve-NXTPath -LiteralPath $Path -AsProviderPath -ProviderName 'FileSystem' -PathType Leaf -Force:$Force -IncludeNonExistent
 			if (-not [System.IO.File]::Exists($providerPath)) { return $false }
 			try {
 				[System.IO.File]::Open($providerPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read).Dispose()

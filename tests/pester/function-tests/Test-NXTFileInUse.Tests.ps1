@@ -27,8 +27,8 @@ Describe 'Test-NXTFileInUse' {
 	}
 
 	Context 'When using an invalid path' {
-		It 'Should throw an error with a non-existing path' {
-			{ Test-NXTFileInUse -Path $filePathNotExisting } | Should -Throw
+		It 'Should return false for a non existent path' {
+			Test-NXTFileInUse -Path $filePathNotExisting  | Should -BeFalse
 		}
 
 		It 'Should throw an error with null or empty path' {
@@ -37,7 +37,6 @@ Describe 'Test-NXTFileInUse' {
 		}
 
 		It 'Should throw an error with a wrong data type for path' {
-			{ Test-NXTFileInUse -Path 123 } | Should -Throw
 			{ Test-NXTFileInUse -Path $filePath, $filePath } | Should -Throw
 		}
 

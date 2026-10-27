@@ -18,6 +18,7 @@ Add-NXTContent
     [-NoNewLine]
     [-Force]
     [-Encoding <Encoding>]
+    [-DefaultEncoding <Encoding>]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -35,6 +36,7 @@ Add-NXTContent
     [-NoNewLine]
     [-Force]
     [-Encoding <Encoding>]
+    [-DefaultEncoding <Encoding>]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -337,7 +339,7 @@ It is capable of applying these settings to both the target folder and its sub-f
 #### Example 1
 
 ```PowerShell
-Add-NXTFolderPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0' -Owner 'DOMAIN\User1'
+Add-NXTFolderPermission -Path 'C:\Temp\MyFolder' -FullControl 'DOMAIN\User1', 'BuiltinAdministratorsSid' -Write 'S-1-1-0'
 ```
 
 Add permissions to folder 'C:\Temp\MyFolder' granting full control permissions for 'DOMAIN\User1' and 'Administrators', write permissions for 'Everyone'.
@@ -883,10 +885,10 @@ This function removes a custom hook from the deployment session that was previou
 #### Example 1
 
 ```PowerShell
-Clear-NXTDeploymentCallback -HookPoint CustomInstallEnd -Callback (Get-Command -Name 'My-CustomFunction')
+Clear-NXTDeploymentCallback -HookPoint CustomInstallEnd
 ```
 
-This example adds a custom hook that executes the 'My-CustomFunction' function after the 'CustomInstallEnd' deployment hook point.
+Clears all callbacks attached to CustomInstallEnd
 
 ### INPUTS
 
@@ -1116,6 +1118,12 @@ ConvertFrom-NXTJson
 The ConvertFrom-NXTJson function converts a JSON string to a custom object.
 It enables the feature set of PowerShell Core's Cmdlet in Windows PowerShell 5.1 (json with comments and -AsHashtable parameter).
 
+> **NOTE**
+>
+> Custom objects cannot hold properties that only differ in casing, so the -AsHashtable parameter is required for such JSON strings.
+> Arrays nested in a hashtable are returned as System.Object[].
+> 
+> 
 ### EXAMPLES
 
 #### Example 1
@@ -1126,6 +1134,13 @@ It enables the feature set of PowerShell Core's Cmdlet in Windows PowerShell 5.1
 
 This will return a custom object with the key 'key' and the value 'value'.
 
+#### Example 2
+
+```PowerShell
+'{"key": "lower", "Key": "upper"}' | ConvertFrom-NXTJson -AsHashtable
+```
+
+This will return a case-sensitive hashtable with the keys 'key' and 'Key'.
 ### INPUTS
 
 System.String - The JSON string to convert.
@@ -1154,6 +1169,7 @@ The JSON string to convert.
 #### -AsHashtable
 
 When specified, the function will return a hashtable instead of a custom object.
+The keys of the hashtable are case-sensitive, so JSON objects containing keys that only differ in casing (e.g. 'key' and 'Key') can be converted.
 
 |Property|Value|
 |:---|:---|
@@ -1278,55 +1294,6 @@ The maximum depth of the object to serialize.
 |Default value:|2|
 |Required:|False|
 |Accept pipeline input:|False|
-|Accept wildcard characters:|False|
-
-## ConvertTo-NXTInstallerProductCode
-
-Converts a product GUID into an installer product code.
-
-### SYNTAX
-
-```PowerShell
-ConvertTo-NXTInstallerProductCode
-    [-Guid] <guid>
-    [<CommonParameters>]
-```
-
-### DESCRIPTION
-
-Converts a product GUID into an installer product code.
-
-### EXAMPLES
-
-#### Example 1
-
-```PowerShell
-"{12345678-1234-1234-1234-123456789012}" | ConvertTo-NxtInstallerProductCode
-```
-
-Converts the product GUID into an installer product code.
-
-### INPUTS
-
-System.Guid - The product GUID to convert.
-
-### OUTPUTS
-
-System.String - The installer product code.
-
-### PARAMETERS
-
-#### -Guid
-
-The product GUID that you want to convert into an installer product code.
-
-|Property|Value|
-|:---|:---|
-|Type:|Guid|
-|Position:|0|
-|Default value:|None|
-|Required:|True|
-|Accept pipeline input:|True (ByValue, ByPropertyName)|
 |Accept wildcard characters:|False|
 
 ## ConvertTo-NXTProductCode
@@ -1676,10 +1643,10 @@ The file does not need to be a PowerShell script, but the function will only exp
 #### Example 1
 
 ```PowerShell
-Expand-NXTVariablesInFile -Path 'C:\Temp\test.txt' -Variables @(Get-Variable 'MyVar1', 'MyVar2')
+Expand-NXTVariablesInFile -Path 'C:\Temp\test.txt'
 ```
 
-Expands the variables in the file 'C:\Temp\test.txt' using the values of the PowerShell variables 'MyVar1' and 'MyVar2'.
+Expands the variables in the file 'C:\Temp\test.txt' with all variables available to your current session.
 
 ### INPUTS
 
@@ -1975,7 +1942,7 @@ This command table includes the base PSADT command table and functions from the 
 **This function does not have any documented parameters.**
 ## Get-NXTContent
 
-Replaces `Get-Content` with neo42 encoding handling for files.
+Get content of a file.
 
 ### SYNTAX
 
@@ -2005,8 +1972,7 @@ Get-NXTContent
 
 ### DESCRIPTION
 
-It's use is limited to only files and it will determine the encoding of the file and use that if no encoding is specified.
-Should the detection fail, or if the file doesn't exist, it will use the encoding defined in the DefaultEncoding parameter.
+Replaces Get-Content with neo42 encoding handling for files.
 
 ### EXAMPLES
 
@@ -2562,6 +2528,20 @@ A filter to include items in the Path parameter.
 |Accept pipeline input:|False|
 |Accept wildcard characters:|True|
 
+#### -Unit
+
+The size unit the result should be returned in.
+
+|Property|Value|
+|:---|:---|
+|Type:|DataSizeUnit|
+|Enum values:|B, KB, MB, GB, TB, PB|
+|Position:|Named|
+|Default value:|[PSADTNXT.IO.DataSizeUnit]::B|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 ## Get-NXTParentProcess
 
 Retrieves the parent process of a given process ID.
@@ -2676,7 +2656,7 @@ It retrieves the parent process(es) and child process(es) of the specified proce
 #### Example 1
 
 ```PowerShell
-`Get-NXTProcessTree -Id 1234`
+Get-NXTProcessTree -Id 1234
 ```
 
 Retrieves the process tree for the process with ID 1234.
@@ -2684,10 +2664,10 @@ Retrieves the process tree for the process with ID 1234.
 #### Example 2
 
 ```PowerShell
-Get-NXTProcessTree -Id 1234 -NoParents -Depth 1
+Get-NXTProcessTree -Id 1234 -NoParents -Depth 2
 ```
 
-Retrieves the child processes of the process with ID 1234, without retrieving parent processes.
+Retrieves the process with id 1234 and the first layer of child processes, without retrieving parent processes.
 
 ### INPUTS
 
@@ -3589,6 +3569,7 @@ Install-NXTApplication
     [-Criteria <NxtApplicationCriteria>]
     [-LogFileName <string>]
     [-CacheDirectory <string>]
+    [-WaitForChildProcesses]
     [-Awaiter <INxtAwaiter[]>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
@@ -3608,6 +3589,7 @@ Install-NXTApplication
     [-Criteria <NxtApplicationCriteria>]
     [-LogFileName <string>]
     [-CacheDirectory <string>]
+    [-WaitForChildProcesses]
     [-Awaiter <INxtAwaiter[]>]
     [-NoCache]
     [<CommonParameters>]
@@ -3738,7 +3720,20 @@ The directory where the package cache is located. This is used to store the unin
 |:---|:---|
 |Type:|String|
 |Position:|Named|
-|Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory.FullName|
+|Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory.FullName - The package directory.|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -WaitForChildProcesses
+
+Instead of only waiting for the main application, include any child process as well.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -3759,12 +3754,13 @@ Optional awaiter objects that should be evaluated post installation.
 #### -SuccessExitCodes
 
 The exit codes that indicate a successful installation. If the exit code of the process is in this list, the installation is considered successful.
+Defaults to the success exit codes of the active session.
 
 |Property|Value|
 |:---|:---|
 |Type:|Int32[]|
 |Position:|Named|
-|Default value:| - Defaults depend on the method and session configuration.|
+|Default value:|(& $script:CommandTable.'Get-ADTSession').AppSuccessExitCodes - The success exit codes of the active session.|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -3772,12 +3768,13 @@ The exit codes that indicate a successful installation. If the exit code of the 
 #### -RebootExitCodes
 
 The exit codes that indicate a reboot is required after the installation. If the exit code of the process is in this list, the installation is considered successful and a reboot is requested.
+Defaults to the reboot exit codes of the active session.
 
 |Property|Value|
 |:---|:---|
 |Type:|Int32[]|
 |Position:|Named|
-|Default value:| - Defaults depend on the method and session configuration.|
+|Default value:|(& $script:CommandTable.'Get-ADTSession').AppRebootExitCodes - The reboot exit codes of the active session.|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -4054,7 +4051,7 @@ Specifies that the folder should be hidden.
 
 #### -Force
 
-Specifies that if the folder already exists, it should be deleted and recreated.
+Specifies that if the folder already exists, the defined permissions are applied to the existing folder instead of throwing an error. The content of the folder is kept.
 
 |Property|Value|
 |:---|:---|
@@ -5092,6 +5089,7 @@ Returns the `HKEY_LOCAL_MACHINE\Software` provider path for the given item.
 #### -IncludeNonExistent
 
 Includes non-existent paths in the output.
+Non-existent paths must still be valid for their provider, otherwise an error is thrown.
 
 |Property|Value|
 |:---|:---|
@@ -5313,7 +5311,7 @@ Restart the script if the DeploymentType parameter is a trigger.
 
 ## Set-NXTContent
 
-Replaces `Set-Content` with neo42 encoding handling for files.
+Set content of a file.
 
 ### SYNTAX
 
@@ -5329,6 +5327,7 @@ Set-NXTContent
     [-NoNewLine]
     [-Force]
     [-Encoding <Encoding>]
+    [-DefaultEncoding <Encoding>]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -5346,6 +5345,7 @@ Set-NXTContent
     [-NoNewLine]
     [-Force]
     [-Encoding <Encoding>]
+    [-DefaultEncoding <Encoding>]
     [-WhatIf]
     [-Confirm]
     [<CommonParameters>]
@@ -5353,9 +5353,7 @@ Set-NXTContent
 
 ### DESCRIPTION
 
-It's use is limited to only files and it will determine the encoding of the file and use that if no encoding is specified.
-Should the detection fail, or if the file doesn't exist, it will use the encoding defined in the DefaultEncoding parameter.
-Important note: If the file exists and the encoding is specified, the encoding will not be updated. Only the new content will be written with the specified encoding.
+Replaces Set-Content with neo42 encoding handling for files.
 
 ### EXAMPLES
 
@@ -5372,17 +5370,16 @@ Sets the content 'Hello World' to the file 'C:\Temp\test.txt'.
 ```PowerShell
 Set-NXTContent -Path 'C:\Temp\test.txt' -Value 'Hello World' -Encoding UTF8
 ```
+
 Sets the content 'Hello World' to the file 'C:\Temp\test.txt' using the UTF8 encoding.
 
 ### INPUTS
-
-System.String[] - The content to set to the file(s).
 
 System.IO.FileInfo[] - The file(s) to set content to.
 
 ### OUTPUTS
 
-`System.String[]` - The content that was set to the file(s) if the `-PassThru` parameter is specified.
+System.String[] - The content that was set to the file(s) if the -PassThru parameter is specified.
 
 ### PARAMETERS
 
@@ -5461,7 +5458,7 @@ The content to set to the file(s).
 |Position:|1|
 |Default value:|None|
 |Required:|True|
-|Accept pipeline input:|True (ByValue)|
+|Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
 #### -PassThru
@@ -5505,7 +5502,7 @@ Determines if the Read-Only attribute should be ignored when setting the content
 
 #### -Encoding
 
-The encoding to use when the file is created. If the file exists, the encoding will not be updated.
+The encoding to use when the file is created.
 
 |Property|Value|
 |:---|:---|
@@ -7142,6 +7139,7 @@ Uninstall-NXTApplication
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
     [-CacheDirectory <string>]
+    [-WaitForChildProcesses]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
@@ -7156,6 +7154,7 @@ Uninstall-NXTApplication
 Uninstall-NXTApplication
     [-Package] <NxtRegisteredPackage>
     -IgnoreExitCodes
+    [-WaitForChildProcesses]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-NoCache]
@@ -7166,6 +7165,7 @@ Uninstall-NXTApplication
 # ParameterSet PackageExitCodes
 Uninstall-NXTApplication
     [-Package] <NxtRegisteredPackage>
+    [-WaitForChildProcesses]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
@@ -7184,6 +7184,7 @@ Uninstall-NXTApplication
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
     [-CacheDirectory <string>]
+    [-WaitForChildProcesses]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-NoCache]
@@ -7198,6 +7199,7 @@ Uninstall-NXTApplication
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
     [-CacheDirectory <string>]
+    [-WaitForChildProcesses]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-SuccessExitCodes <int[]>]
@@ -7217,6 +7219,7 @@ Uninstall-NXTApplication
     [-ArgumentList <string[]>]
     [-AdditionalArgumentList <string[]>]
     [-CacheDirectory <string>]
+    [-WaitForChildProcesses]
     [-Awaiter <INxtAwaiter[]>]
     [-LogFileName <string>]
     [-NoCache]
@@ -7407,7 +7410,20 @@ The package directory to use for the uninstallation.
 |:---|:---|
 |Type:|String|
 |Position:|Named|
-|Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory.FullName|
+|Default value:|(& $script:CommandTable.'Get-ADTSession').NXT.Package.Directory.FullName - The package directory.|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -WaitForChildProcesses
+
+Instead of only waiting for the main application, include any child process as well.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -7442,12 +7458,13 @@ This file will reside in the log directory of the ADT session.
 #### -SuccessExitCodes
 
 The exit codes that indicate a successful uninstallation.
+Defaults to the success exit codes of the active session.
 
 |Property|Value|
 |:---|:---|
 |Type:|Int32[]|
 |Position:|Named|
-|Default value:| - Defaults depend on the method and session configuration.|
+|Default value:|(& $script:CommandTable.'Get-ADTSession').AppSuccessExitCodes - The success exit codes of the active session.|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -7455,12 +7472,13 @@ The exit codes that indicate a successful uninstallation.
 #### -RebootExitCodes
 
 The exit codes that indicate a reboot is required after the uninstallation.
+Defaults to the reboot exit codes of the active session.
 
 |Property|Value|
 |:---|:---|
 |Type:|Int32[]|
 |Position:|Named|
-|Default value:| - Defaults depend on the method and session configuration.|
+|Default value:|(& $script:CommandTable.'Get-ADTSession').AppRebootExitCodes - The reboot exit codes of the active session.|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
@@ -7516,6 +7534,7 @@ Update-NXTDeploymentStatus
     [-ADTSession <NxtDeploymentSession>]
     [-SuccessExitCodes <int[]>]
     [-RebootExitCodes <int[]>]
+    [-PassThru]
     [<CommonParameters>]
 ```
 
@@ -7538,7 +7557,7 @@ If required, the input code will be translated into a maching session exit code.
 
 ### OUTPUTS
 
-**This function does not return any output.**
+PSADT.Module.DeploymentStatus - The resolved deployment status when -PassThru is specified.
 
 ### PARAMETERS
 
@@ -7590,6 +7609,19 @@ The current deployment session to update the status for.
 |Type:|NxtDeploymentSession|
 |Position:|Named|
 |Default value:|(& $script:CommandTable.'Get-ADTSession')|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -PassThru
+
+Returns the deployment status resolved for the provided exit code, regardless of whether it was applied to the session.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
 |Required:|False|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|

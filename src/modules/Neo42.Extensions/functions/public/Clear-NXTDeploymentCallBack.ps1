@@ -7,9 +7,9 @@
 	.PARAMETER HookPoint
 	The name of the deployment hook point after which the custom hook should be executed.
 	.EXAMPLE
-	Clear-NXTDeploymentCallback -HookPoint CustomInstallEnd -Callback (Get-Command -Name 'My-CustomFunction')
+	Clear-NXTDeploymentCallback -HookPoint CustomInstallEnd
 
-	This example adds a custom hook that executes the 'My-CustomFunction' function after the 'CustomInstallEnd' deployment hook point.
+	Clears all callbacks attached to CustomInstallEnd
 	#>
 	[CmdletBinding()]
 	param (

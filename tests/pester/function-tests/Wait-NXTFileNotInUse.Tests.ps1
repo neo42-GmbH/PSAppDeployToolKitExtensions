@@ -29,8 +29,8 @@ Describe 'Wait-NXTFileNotInUse' {
 	}
 
 	Context 'When using invalid path' {
-		It 'Should throw an error with a non-existing value' {
-			{ Wait-NXTFileNotInUse -Path $filePathNotExisting } | Should -Throw
+		It 'Should be true with a non-existing value' {
+			Wait-NXTFileNotInUse -Path $filePathNotExisting | Should -BeTrue
 		}
 
 		It 'Should throw an error with null or empty value' {

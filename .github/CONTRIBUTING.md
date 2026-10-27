@@ -1,4 +1,4 @@
-# Contributing
+﻿# Contributing
 
 Thanks for your interest in contributing to the neo42 PSADT Extensions
 
@@ -10,7 +10,7 @@ Please note there is a code of conduct, please follow it in all your interaction
 
 ## Reporting Bugs / Submitting Feature Requests
 
-When filing an issue, please check [existing open](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/issues), or [recently closed](https://github.com//neo42-GmbH/PSAppDeployToolKitExtensions/issues?q=is%3Aissue+is%3Aclosed), issues to make sure somebody else hasn't already reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
+When filing an issue, please check [existing open](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/issues), or [recently closed](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/issues?q=is%3Aissue+is%3Aclosed), issues to make sure somebody else hasn't already reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
 
 * A reproducible test case or series of steps
 * The version of PSADT that is being used

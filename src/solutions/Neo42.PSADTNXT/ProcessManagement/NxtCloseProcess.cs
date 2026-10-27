@@ -51,7 +51,13 @@ namespace PSADTNXT.ProcessManagement
 
 			ProcessDefinition = new ProcessDefinition(name, description);
 			AllowBlocking = parameters["AllowBlocking"] is not bool ab || ab;
-			ReopenMode = parameters["ReopenMode"] is ReopenMode rm ? rm : ReopenMode.None;
+			ReopenMode = parameters["ReopenMode"] switch
+			{
+				null => ReopenMode.None,
+				ReopenMode rm => rm,
+				string rmName when Enum.TryParse<ReopenMode>(rmName, true, out var parsedRm) => parsedRm,
+				var invalidRm => throw new ArgumentException($"Parameter 'ReopenMode' has the invalid value '{invalidRm}'.", nameof(parameters)),
+			};
 		}
 
 		public static implicit operator NxtCloseProcess(Hashtable parameters)

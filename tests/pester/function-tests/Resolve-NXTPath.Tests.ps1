@@ -81,6 +81,19 @@ Describe 'Resolve-NXTPath' {
 			Resolve-NXTPath -Path "$testDir\Missing.txt" -IncludeNonExistent -AsProviderPath | Should -Be "$testDir\Missing.txt"
 		}
 
+		It 'Should return the literal path with IncludeNonExistent' {
+			Resolve-NXTPath -LiteralPath "$testDir\Missing[1].txt" -IncludeNonExistent -AsProviderPath | Should -Be "$testDir\Missing[1].txt"
+		}
+
+		It 'Should throw an exception for an invalid path with IncludeNonExistent' {
+			{ Resolve-NXTPath -Path "$testDir\Missing|.txt" -IncludeNonExistent } | Should -Throw -ErrorId 'InvalidPath,Resolve-NXTPath'
+		}
+
+		It 'Should throw an exception for an invalid literal path with IncludeNonExistent' {
+			{ Resolve-NXTPath -LiteralPath "$testDir\Missing|.txt" -IncludeNonExistent } | Should -Throw -ErrorId 'InvalidPath,Resolve-NXTPath'
+			{ Resolve-NXTPath -LiteralPath "$testDir\Missing*.txt" -IncludeNonExistent } | Should -Throw -ErrorId 'InvalidPath,Resolve-NXTPath'
+		}
+
 		It 'Should not return a wildcard path with IncludeNonExistent' {
 			Resolve-NXTPath -Path "$testDir\*.missing" -IncludeNonExistent | Should -BeNullOrEmpty
 		}

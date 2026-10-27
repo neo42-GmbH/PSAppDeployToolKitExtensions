@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Globalization;
 using System.IO;
 using Microsoft.Win32;
 using PSADTNXT.Extensions;
@@ -67,7 +68,7 @@ namespace PSADTNXT.Deployment
 #pragma warning restore IDE0075
 
 			var timeout = hashtable.ContainsKey("Timeout")
-				? TimeSpan.TryParse(hashtable["Timeout"]?.ToString(), out var timeoutValue) ? timeoutValue : throw new ArgumentException($"Invalid value for Timeout: {hashtable["Timeout"]}")
+				? (Convert.ToString(hashtable["Timeout"], CultureInfo.InvariantCulture) ?? string.Empty).TryParseTimeSpan(out var timeoutValue) ? timeoutValue : throw new ArgumentException($"Invalid value for Timeout: {hashtable["Timeout"]}")
 				: TimeSpan.FromSeconds(30);
 
 			return new NxtRegistryAwaiter(key, name, value, exists, timeout);
@@ -75,7 +76,8 @@ namespace PSADTNXT.Deployment
 
 		public bool Evaluate()
 		{
-			if (Key.ToRegistryKeyFromPSProviderPath() is not RegistryKey key)
+			using var key = Key.ToRegistryKeyFromPSProviderPath();
+			if (key is null)
 			{
 				return !Exists;
 			}

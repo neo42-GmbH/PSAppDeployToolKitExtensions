@@ -72,7 +72,14 @@ namespace PSADTNXT.Configuration
 
 		public NxtIniDocument AsReadOnly()
 		{
-			return new NxtIniDocument(_sections.AsReadOnly());
+			// The sections have to be read-only as well, otherwise their settings could still be changed
+			var sections = new OrderedDictionary(StringComparer.OrdinalIgnoreCase);
+			foreach (DictionaryEntry entry in _sections)
+			{
+				var container = (SectionContainer)entry.Value!;
+				sections[entry.Key] = container with { Section = container.Section.AsReadOnly() };
+			}
+			return new NxtIniDocument(sections.AsReadOnly());
 		}
 
 		public void SetComment(string name, string comment)
@@ -575,13 +582,9 @@ namespace PSADTNXT.Configuration
 			foreach (var sectionName in _sections.Keys)
 			{
 				var container = (SectionContainer)_sections[sectionName]!;
-				clone[sectionName] = new SectionContainer
-				{
-					Comment = container.Comment,
-					Section = (NxtIniSection)container.Section.Clone()
-				};
+				clone[sectionName] = container with { Section = (NxtIniSection)container.Section.Clone() };
 			}
-			return clone;
+			return new NxtIniDocument(clone);
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()

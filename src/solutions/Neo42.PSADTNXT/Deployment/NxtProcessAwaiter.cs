@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -55,7 +56,7 @@ namespace PSADTNXT.Deployment
 #pragma warning restore IDE0075
 
 			var timeout = hashtable.ContainsKey("Timeout")
-				? TimeSpan.TryParse(hashtable["Timeout"]?.ToString(), out var timeoutValue) ? timeoutValue : throw new ArgumentException($"Invalid value for Timeout: {hashtable["Timeout"]}")
+				? (Convert.ToString(hashtable["Timeout"], CultureInfo.InvariantCulture) ?? string.Empty).TryParseTimeSpan(out var timeoutValue) ? timeoutValue : throw new ArgumentException($"Invalid value for Timeout: {hashtable["Timeout"]}")
 				: TimeSpan.FromSeconds(30);
 
 			return new NxtProcessAwaiter(name, exists, timeout);

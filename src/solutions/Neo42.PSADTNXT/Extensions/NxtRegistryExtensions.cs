@@ -150,9 +150,13 @@ namespace PSADTNXT.Extensions
 		/// </summary>
 		/// <param name="c"> The character to check.</param>
 		/// <returns>True if the character is a valid character for a registry path; otherwise, false.</returns>
+		/// <remarks>
+		/// Registry names are stored as UTF-16, so any printable character is valid, including non-ASCII characters like umlauts.
+		/// Only control characters (e.g. null, tab, line breaks, DEL) are rejected.
+		/// </remarks>
 		public static bool IsValidPathChar(char c)
 		{
-			return c is >= '\x20' and <= '\x7e';
+			return !char.IsControl(c);
 		}
 	}
 }

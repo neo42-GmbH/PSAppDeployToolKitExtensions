@@ -15,6 +15,16 @@ namespace PSADTNXT.Attributes
 	public sealed class NxtTimeSpanTransformationAttribute() : ArgumentTransformationAttribute
 	{
 		/// <summary>
+		/// Initializes a new instance of the TimeSpanTransformationAttribute class using the specified culture
+		/// information.
+		/// </summary>
+		/// <param name="formatProvider">The IFormatProvider to use for parsing and formatting time span values. Cannot be null.</param>
+		public NxtTimeSpanTransformationAttribute(IFormatProvider formatProvider) : this()
+		{
+			FormatProvider = formatProvider;
+		}
+
+		/// <summary>
 		/// Transforms the input value into a <see cref="TimeSpan"/>.
 		/// </summary>
 		/// <param name="engineIntrinsics">The PowerShell engine intrinsics.</param>
@@ -24,32 +34,27 @@ namespace PSADTNXT.Attributes
 		/// <exception cref="ArgumentException">Thrown when the input value cannot be transformed into a TimeSpan.</exception>
 		public override object Transform(EngineIntrinsics engineIntrinsics, object? inputData)
 		{
-			var baseObj = inputData is PSObject psObj ? psObj.BaseObject : inputData;
+			var baseObj = (inputData is PSObject psObj ? psObj.BaseObject : inputData) ?? throw new ArgumentNullException(nameof(inputData), "Cannot transform null to TimeSpan.");
 
-			if (baseObj is null)
-			{
-				throw new ArgumentNullException(paramName: nameof(inputData), "Cannot transform null to TimeSpan.");
-			}
 			if (baseObj is TimeSpan timeSpan)
 			{
 				return timeSpan;
 			}
 			if (baseObj is string valueAsString)
 			{
-				if (TimeSpan.TryParse(valueAsString, FormatProvider, out TimeSpan parsedTimeSpan))
-				{
-					return parsedTimeSpan;
-				}
-				if (long.TryParse(valueAsString, NumberStyles.Integer, CultureInfo.InvariantCulture, out long parsedIntegerSeconds))
-				{
-					return TimeSpan.FromSeconds(parsedIntegerSeconds);
-				}
-				if (double.TryParse(valueAsString, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double parsedNumericalSeconds))
+				// A plain number means seconds, and is read before TimeSpan.TryParse because that reads a bare
+				// integer as whole days: "90" meant ninety days while 90 meant ninety seconds. Invariant, so the
+				// same string means the same thing on every machine.
+				if (double.TryParse(valueAsString, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedNumericalSeconds))
 				{
 					return TimeSpan.FromSeconds(parsedNumericalSeconds);
 				}
+				if (TimeSpan.TryParse(valueAsString, FormatProvider, out var parsedTimeSpan))
+				{
+					return parsedTimeSpan;
+				}
 			}
-			return !TryGetNumericalSeconds(baseObj, out double seconds)
+			return !TryGetNumericalSeconds(baseObj, out var seconds)
 				? throw new ArgumentException($"Cannot transform value of type '{baseObj.GetType().FullName}' to TimeSpan.")
 				: TimeSpan.FromSeconds(seconds);
 		}

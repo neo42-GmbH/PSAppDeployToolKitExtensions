@@ -12,7 +12,7 @@ namespace PSADTNXT.Attributes
 	{
 		public override object Transform(EngineIntrinsics engineIntrinsics, object inputData)
 		{
-			var baseObj = (inputData is PSObject psObj ? psObj.BaseObject : inputData) ?? throw new ArgumentNullException(paramName: nameof(inputData), "Cannot transform null to IdentityReference.");
+			var baseObj = (inputData is PSObject psObj ? psObj.BaseObject : inputData) ?? throw new ArgumentNullException(paramName: nameof(inputData), "Cannot transform null to Encoding.");
 
 			if (baseObj is Encoding enc)
 			{

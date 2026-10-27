@@ -327,7 +327,6 @@
 						Write-ADTLogEntry -Message 'Starting post uninstallation logic.'
 						. $callHook ([PSADTNXT.Deployment.DeploymentHookPoint]::CustomUninstallEnd)
 
-
 						if ($ADTSession.NXT.Detection.Enabled) {
 							Write-ADTLogEntry -Message 'Verifying the uninstallation result based on detection logic.'
 							Update-NXTDetectionStatus -ADTSession $ADTSession

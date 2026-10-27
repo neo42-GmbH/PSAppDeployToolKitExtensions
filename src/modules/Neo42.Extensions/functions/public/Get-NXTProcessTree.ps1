@@ -22,13 +22,13 @@
 	The maximum number of child processes and parent processes to retrieve.
 	The value applies to both child and parent processes separately.
 	.EXAMPLE
-	`Get-NXTProcessTree -Id 1234`
+	Get-NXTProcessTree -Id 1234
 
 	Retrieves the process tree for the process with ID 1234.
 	.EXAMPLE
-	Get-NXTProcessTree -Id 1234 -NoParents -Depth 1
+	Get-NXTProcessTree -Id 1234 -NoParents -Depth 2
 
-	Retrieves the child processes of the process with ID 1234, without retrieving parent processes.
+	Retrieves the process with id 1234 and the first layer of child processes, without retrieving parent processes.
 	#>
 	[OutputType([System.Diagnostics.Process[]])]
 	[CmdletBinding()]

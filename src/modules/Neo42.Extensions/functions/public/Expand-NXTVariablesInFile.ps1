@@ -24,9 +24,9 @@
 	.PARAMETER Force
 	Determines if the Read-Only attribute should be ignored when setting the content of the file or hidden files should be processed.
 	.EXAMPLE
-	Expand-NXTVariablesInFile -Path 'C:\Temp\test.txt' -Variables @(Get-Variable 'MyVar1', 'MyVar2')
+	Expand-NXTVariablesInFile -Path 'C:\Temp\test.txt'
 
-	Expands the variables in the file 'C:\Temp\test.txt' using the values of the PowerShell variables 'MyVar1' and 'MyVar2'.
+	Expands the variables in the file 'C:\Temp\test.txt' with all variables available to your current session.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSShouldProcess', '', Justification = 'Sub-calls handle ShouldProcess internally.')]
 	[CmdletBinding(DefaultParameterSetName = 'Path', SupportsShouldProcess)]
@@ -69,7 +69,7 @@
 		try {
 			foreach ($file in (Resolve-NXTPath @PSBoundParameters -ProviderName 'FileSystem' -PathType Leaf)) {
 				Write-ADTLogEntry -Message "Expanding PowerShell and environment variables in file [$file]."
-				[System.String]$content = Get-NXTContent -LiteralPath $file @encodingSplat
+				[System.String]$content = Get-NXTContent -LiteralPath $file @encodingSplat -Force:$Force
 				$content = [System.Environment]::ExpandEnvironmentVariables($content)
 
 				[System.Management.Automation.ScriptBlock]$sb = [System.Management.Automation.ScriptBlock]::Create("`"$($content.Replace('`', '``').Replace('"', '`"'))`"")

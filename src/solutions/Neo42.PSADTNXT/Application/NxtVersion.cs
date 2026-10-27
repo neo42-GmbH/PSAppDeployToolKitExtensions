@@ -352,13 +352,15 @@ namespace PSADTNXT.Application
 		{
 			unchecked
 			{
+				// Missing parts (-1) compare equal to 0, so they have to hash like 0 as well
 				var hash = 17;
 				hash = (hash * 23) + Major.GetHashCode();
-				hash = (hash * 23) + Minor.GetHashCode();
-				hash = (hash * 23) + Patch.GetHashCode();
-				hash = (hash * 23) + Revision.GetHashCode();
-				hash = (hash * 23) + (PreRelease?.ToLower().GetHashCode() ?? 0);
-				hash = (hash * 23) + (Build?.ToLower().GetHashCode() ?? 0);
+				hash = (hash * 23) + Math.Max(Minor, 0).GetHashCode();
+				hash = (hash * 23) + Math.Max(Patch, 0).GetHashCode();
+				hash = (hash * 23) + Math.Max(Revision, 0).GetHashCode();
+				hash = (hash * 23) + IsPreRelease.GetHashCode();
+				hash = (hash * 23) + StringComparer.OrdinalIgnoreCase.GetHashCode(PreRelease);
+				hash = (hash * 23) + StringComparer.OrdinalIgnoreCase.GetHashCode(Build);
 				return hash;
 			}
 		}
@@ -366,11 +368,17 @@ namespace PSADTNXT.Application
 		/// <summary>
 		/// Determines whether the specified object is equal to the current version.
 		/// </summary>
-		/// <param name="obj">The object to compare with the current version.</param>
-		/// <returns>true if the specified object is equal to the current version; otherwise, false.</returns>
+		/// <param name="obj">The object to compare with the current version. Strings are parsed, <see cref="Version"/> objects are converted.</param>
+		/// <returns>true if the specified object is equal to the current version; otherwise, false. Never throws for unsupported or unparsable objects.</returns>
 		public override bool Equals(object? obj)
 		{
-			return CompareTo(obj) == 0;
+			return obj switch
+			{
+				NxtVersion version => CompareTo(version) == 0,
+				Version version => CompareTo(new NxtVersion(version)) == 0,
+				string version => TryParse(version, out var parsedVersion) && CompareTo(parsedVersion) == 0,
+				_ => false,
+			};
 		}
 
 		public static bool operator ==(NxtVersion left, NxtVersion right)
@@ -469,40 +477,87 @@ namespace PSADTNXT.Application
 
 			if (!IsPreRelease && other.IsPreRelease)
 			{
-				return -1;
+				return 1;
 			}
 
 			if (IsPreRelease && !other.IsPreRelease)
 			{
-				return 1;
+				return -1;
 			}
 
 			if (IsPreRelease && other.IsPreRelease)
 			{
 				// Allow fallback to build if prerelease is equal
-				var releaseResult = PreRelease.CompareTo(other.PreRelease);
+				var releaseResult = CompareLabel(PreRelease, other.PreRelease);
 				if (releaseResult != 0)
 				{
 					return releaseResult;
 				}
 			}
 
-			if (Build is null && other.Build is not null)
+			return CompareLabel(Build, other.Build);
+		}
+
+		/// <summary>
+		/// Compares two pre-release or build labels. Digit runs are compared numerically and all other characters
+		/// ordinal and case-insensitive, so 'rc2' is lower than 'rc10'.
+		/// </summary>
+		/// <returns>0 only if both labels are equal ignoring case, which keeps the comparison consistent with <see cref="GetHashCode"/>.</returns>
+		private static int CompareLabel(string left, string right)
+		{
+			static bool IsDigit(char c)
 			{
-				return -1;
+				return c is >= '0' and <= '9';
 			}
 
-			if (Build is not null && other.Build is null)
+			int i = 0, j = 0;
+			while (i < left.Length && j < right.Length)
 			{
-				return 1;
+				if (IsDigit(left[i]) && IsDigit(right[j]))
+				{
+					var leftStart = i;
+					var rightStart = j;
+					while (i < left.Length && IsDigit(left[i]))
+					{
+						i++;
+					}
+
+					while (j < right.Length && IsDigit(right[j]))
+					{
+						j++;
+					}
+
+					// Compare the digit runs without leading zeros by length first, so arbitrarily long numbers cannot overflow
+					var leftNumber = left.Substring(leftStart, i - leftStart).TrimStart('0');
+					var rightNumber = right.Substring(rightStart, j - rightStart).TrimStart('0');
+					var numberResult = leftNumber.Length != rightNumber.Length
+						? leftNumber.Length.CompareTo(rightNumber.Length)
+						: string.CompareOrdinal(leftNumber, rightNumber);
+					if (numberResult != 0)
+					{
+						return numberResult;
+					}
+				}
+				else
+				{
+					var charResult = char.ToUpperInvariant(left[i]).CompareTo(char.ToUpperInvariant(right[j]));
+					if (charResult != 0)
+					{
+						return charResult;
+					}
+
+					i++;
+					j++;
+				}
 			}
 
-			if (Build is not null && other.Build is not null)
+			if (i < left.Length || j < right.Length)
 			{
-				return Build.CompareTo(other.Build);
+				return (i < left.Length).CompareTo(j < right.Length);
 			}
 
-			return 0;
+			// Labels like 'rc01' and 'rc1' are numerically equal, but must not be equal as their hash codes differ
+			return string.Compare(left, right, StringComparison.OrdinalIgnoreCase);
 		}
 
 		/// <summary>

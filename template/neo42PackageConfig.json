@@ -82,7 +82,17 @@
 	},
 	"CommonDesktopShortcutsToDelete": [],
 	"CommonStartMenuShortcutsToCopyToCommonDesktop": [],
-	"UninstallKeysToHide": [],
+	"UninstallKeysToHide": [
+		{
+			"KeyName": "$($global:PackageConfig.UninstallKey)",
+			"Is64Bit": true,
+			"KeyNameIsDisplayName": "$($global:PackageConfig.UninstallKeyIsDisplayName)",
+			"KeyNameContainsWildCards": "$($global:PackageConfig.UninstallKeyContainsWildCards)",
+			"DisplayNamesToExcludeFromHiding": [
+				"$($global:PackageConfig.UninstallDisplayName)"
+			]
+		}
+	],
 	"PackageSpecificVariablesRaw": [
 		{
 			"Name": "DetectionCriteriaStore",

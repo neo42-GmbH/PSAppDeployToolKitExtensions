@@ -616,32 +616,6 @@
 					}
 				}
 			}
-		},
-		{
-			"if": {
-				"anyOf": [
-					{
-						"properties": {
-							"UserPartOnInstallation": {
-								"const": true
-							}
-						}
-					},
-					{
-						"properties": {
-							"UserPartOnUninstallation": {
-								"const": true
-							}
-						}
-					}
-				]
-
-			},
-			"then": {
-				"required": [
-					"UserPartRevision"
-				]
-			}
 		}
 	],
 	"$defs": {

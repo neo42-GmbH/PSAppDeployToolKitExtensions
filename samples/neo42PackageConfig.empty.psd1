@@ -32,7 +32,7 @@
 	- BlockExecution: This feature gate is now a global setting. Each app can opt-out of this feature by setting AllowBlocking to $false in the CloseProcesses configuration.
 
 	Properties added to toolkit configuration that emulate v3 behavior:
-	- AddVersionToPackageName
+	- AppendVersionToPackageName
 
 	Properties removed (v4):
 	- UserPartRevision: Versioning is managed automatically (constructed from Package.Version). Reinstalls are detected and applied regardless of revision.
@@ -74,7 +74,7 @@
 		# -- See https://learn.microsoft.com/dotnet/api/system.globalization.cultureinfo.threeletterwindowslanguagename
 		# -- Explore via PowerShell: Get-Culture -ListAvailable | select DisplayName, ThreeLetterWindowsLanguageName
 		# -- [Migrated from v3.AppLang]
-		Language         = $null # @schema type: [string], default: MUI
+		Language         = 'MUI' # @schema type: [string], default: MUI
 
 		# -- The sub key name where the package information is stored.
 		# -- This value must not contain invalid file name characters.
@@ -87,11 +87,11 @@
 		DirectoryName    = 'neo42Pkgs' # @schema type: [string], default: neo42Pkgs
 
 		# -- The display name of the package as shown in application lists.
-		# -- [Migrated from v3.UninstallKeyDisplayName]
+		# -- [Migrated from v3.UninstallKeyIsDisplayName]
 		DisplayName      = $null # @schema type: [string, null], default: Name + Vendor
 
 		# -- Control if the package should be listed in the Add/Remove Programs (ARP) list and the behavior of the uninstall button if listed.
-		# -- None: The package will not be listed in ARP at all.
+		# -- Hidden: The package will not be listed in ARP at all.
 		# -- DisplayOnly: The package will be listed in ARP but the uninstall button will be hidden.
 		# -- Uninstallable: The package will be listed in ARP and the uninstall button will be available.
 		# -- [Migrated from v3.HidePackageUninstallButton and v3.HidePackageUninstallEntry]
@@ -102,7 +102,7 @@
 		Description      = $null # @schema type: [string, null]
 
 		# -- The author of this package.
-		# -- [Migrated from v3.AppAuthor]
+		# -- [Migrated from v3.ScriptAuthor]
 		Author           = $null # @schema type: [string, null]
 
 		# -- Package revision number for a given version of the package.
@@ -257,7 +257,7 @@
 	# -- List of processes that block the deployment from proceeding.
 	# -- Depending on administrator configuration in the SetupCfg, these applications may be closed automatically or prompt the user to close them.
 	# -- The deployment will not proceed until these applications are closed or a timeout occurs.
-	# -- [Migrated from v3.AppCloseProcesses]
+	# -- [Migrated from v3.AppKillProcesses]
 	CloseProcesses      = @(
 		@{
 			# -- The process name/path to monitor and close if required.
@@ -277,7 +277,7 @@
 			# -- None: Do not attempt to reopen the process, even if it was running. May be incompatible.
 			# -- Binary: Attempt to reopen the process using the original binary path only.
 			# -- Commandline: Attempt to reopen the process using the original command line arguments.
-			Reopen        = 'None' # @schema enum: [None, Binary, Commandline], default: None
+			ReopenMode    = 'None' # @schema enum: [None, Binary, Commandline], default: None
 		}
 	)
 
@@ -393,7 +393,7 @@
 			# -- Determine the behavior to apply when the main application is already detected but in a different version.
 			# -- Install: Apply the installation logic.
 			# -- Reinstall: Apply the uninstallation followed by installation logic.
-			# -- [Migrated from v3.MSIUpgradable]
+			# -- [Migrated from v3.MSIInplaceUpgradeable]
 			UpgradeMode     = 'Reinstall' # @schema enum: [None, Install, Reinstall], default: Reinstall
 
 			# -- If set, will wait for all child processes of the given target.
@@ -497,9 +497,8 @@
 			# -- IfRequired: Will return a reboot exit code. The deployment system may choose to reboot based on its own logic.
 			# -- Always: Will always return a reboot exit code independent of the actual deployment result.
 			# -- Never: Will ignore the deployment result and never return a reboot exit code.
-			# -- If set to $null, the reboot behavior will be inherited from the installation instructions.
 			# -- [Migrated from v3.Reboot]
-			Reboot          = $null # @schema type: [enum, null], enum: [IfRequired, Always, Never], default: null
+			Reboot          = 'IfRequired' # @schema enum: [IfRequired, Always, Never], default: IfRequired
 
 			# -- If set, will wait for all child processes of the given target.
 			# -- Only valid when running a processed based uninstall method.

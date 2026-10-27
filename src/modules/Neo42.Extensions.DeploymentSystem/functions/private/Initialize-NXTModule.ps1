@@ -10,22 +10,22 @@
 	}
 	process {
 		try {
-			if ($script:Hooked) { return }
-			$script:Hooked = $true
-
 			[PSADTNXT.Foundation.NxtDeploymentSession]$adtSession = Get-ADTSession
 			switch ($adtSession.NXT.DeploymentSystem) {
 				'Empirum' {
-					Write-ADTLogEntry -Message 'Activating [Empirum] based deployment logic for this session.'
 					Initialize-NXTEmpirum
+					Invoke-NXTEmpirumPreAction
 
-					Add-ADTModuleCallback -HookPoint PostOpen -Callback $script:CommandTable.'Invoke-NXTEmpirumPreAction'
+					if ($script:Hooked) { return }
+					Write-ADTLogEntry -Message 'Adding [Empirum] based deployment logic into module hooks.'
 					Add-ADTModuleCallback -HookPoint PostClose -Callback $script:CommandTable.'Invoke-NXTEmpirumPostAction'
-
 					Add-NXTDeploymentCallback -HookPoint CustomInstallAndReinstallPreInstallAndReinstall -Callback $script:CommandTable.'Remove-NXTOldEmpirumApplication' -Prepend
 					Add-NXTDeploymentCallback -HookPoint CustomSoftMigrationEnd -Callback $script:CommandTable.'Remove-NXTOldEmpirumApplication' -Prepend
+					Add-NXTDeploymentCallback -HookPoint CustomUninstallEnd -Callback $script:CommandTable.'Remove-NXTCurrentEmpirumEntry' -Prepend
 				}
 			}
+
+			$script:Hooked = $true
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

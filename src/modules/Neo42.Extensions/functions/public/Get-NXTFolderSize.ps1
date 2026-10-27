@@ -25,6 +25,8 @@
 	A filter to exclude items from the Path parameter.
 	.PARAMETER Include
 	A filter to include items in the Path parameter.
+	.PARAMETER Unit
+	The size unit the result should be returned in.
 	.EXAMPLE
 	Get-NxtFolderSize "D:\setup\"
 

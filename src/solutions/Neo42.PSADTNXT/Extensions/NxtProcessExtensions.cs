@@ -63,37 +63,58 @@ namespace PSADTNXT.Extensions
 		/// <exception cref="Win32Exception">Thrown if there is an error retrieving the child processes.</exception>
 		/// <remarks>
 		/// Only obtains direct children, not grandchildren or deeper descendants.
+		/// Windows does not clear the parent id when a parent exits, so processes that started before the given process
+		/// are not returned, as they belong to a previous process with the same (reused) id.
 		/// </remarks>
 		public static Process[] GetChildProcesses(this Process process)
 		{
 			var children = new List<Process>();
+			var parentStartTime = TryGetStartTime(process);
 			var snapshot = Kernel32.CreateToolhelp32Snapshot(0x00000002, (uint)process.Id); // TH32CS_SNAPPROCESS
+			if (snapshot == IntPtr.Zero || snapshot == INVALID_HANDLE_VALUE)
+			{
+				throw new Win32Exception(Marshal.GetLastWin32Error());
+			}
+
 			try
 			{
-				if (snapshot == IntPtr.Zero)
-				{
-					throw new Win32Exception(Marshal.GetLastWin32Error());
-				}
-
 				var processEntry = new PROCESSENTRY32();
 				processEntry.dwSize = (uint)Marshal.SizeOf(processEntry);
 				if (Kernel32.Process32First(snapshot, ref processEntry))
 				{
 					do
 					{
-						if (processEntry.th32ParentProcessID == process.Id)
+						// A process cannot be its own child, e.g. the idle process (0) reports itself as its parent
+						if (processEntry.th32ParentProcessID != process.Id || processEntry.th32ProcessID == process.Id)
 						{
-							children.Add(Process.GetProcessById((int)processEntry.th32ProcessID));
+							continue;
 						}
+
+						Process child;
+						try
+						{
+							child = Process.GetProcessById((int)processEntry.th32ProcessID);
+						}
+						catch (ArgumentException)
+						{
+							// The process exited after the snapshot was taken
+							continue;
+						}
+
+						// A real child cannot have started before its parent. If the parent start time is unknown, the child is accepted.
+						if (parentStartTime is DateTime parentStart && !(TryGetStartTime(child) is DateTime childStart && childStart >= parentStart))
+						{
+							child.Dispose();
+							continue;
+						}
+
+						children.Add(child);
 					} while (Kernel32.Process32Next(snapshot, ref processEntry));
 				}
 			}
 			finally
 			{
-				if (snapshot != IntPtr.Zero)
-				{
-					Kernel32.CloseHandle(snapshot);
-				}
+				Kernel32.CloseHandle(snapshot);
 			}
 			return [.. children];
 		}
@@ -107,15 +128,41 @@ namespace PSADTNXT.Extensions
 		/// </remarks>
 		public static void KillTree(this Process process)
 		{
+			KillTree(process, new HashSet<int>());
+		}
+
+		private static void KillTree(Process process, HashSet<int> visited)
+		{
+			// Guard against cycles in the reported parent ids
+			if (!visited.Add(process.Id))
+			{
+				return;
+			}
+
 			foreach (var child in process.GetChildProcesses())
 			{
-				child.KillTree();
+				KillTree(child, visited);
 			}
 
 			process.Refresh();
 			if (!process.HasExited)
 			{
 				process.Kill();
+			}
+		}
+
+		private static readonly IntPtr INVALID_HANDLE_VALUE = new(-1);
+
+		private static DateTime? TryGetStartTime(Process process)
+		{
+			try
+			{
+				return process.StartTime;
+			}
+			catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or NotSupportedException)
+			{
+				// Access denied or the process has already exited
+				return null;
 			}
 		}
 

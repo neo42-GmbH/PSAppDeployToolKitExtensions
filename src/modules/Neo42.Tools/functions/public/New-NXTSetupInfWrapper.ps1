@@ -9,16 +9,10 @@
 	.PARAMETER Move
 	Instead of creating a copy of the package, move it instead.
 	This will remove the old package format.
-	.NOTES
-	# LICENSE #
-	This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
-	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-	You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-	# COPYRIGHT #
-	Copyright (c) 2026 neo42 GmbH, Germany.
-	.LINK
-	https://neo42.de/psappdeploytoolkit
+	.PARAMETER Output
+	The folder in which to create the wrapped package.
+	.PARAMETER FrameworkVersion
+	The setup inf wrapper version to apply to the package.
 	#>
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '')]
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Not implemented')]
@@ -26,8 +20,8 @@
 	param (
 		[System.IO.DirectoryInfo]
 		$Package = $PWD.Path,
-		[ValidateScript({ $_.Exists })]
-		[System.IO.DirectoryInfo]
+		[ValidateScript({ $_.Exists -and $_.Extension -eq '.zip'})]
+		[System.IO.FileInfo]
 		$LocalWrapperPath,
 		[System.Management.Automation.SwitchParameter]
 		$Move,
@@ -90,13 +84,13 @@
 	else {
 		Write-Host "Using local wrapper from [$LocalWrapperPath]"
 		Copy-Item -Path $LocalWrapperPath.FullName -Destination $Output.FullName
-		$wrapperPath = [System.IO.Path]::Combine($Output.FullName, $LocalWrapperPath.BaseName)
+		$wrapperPath = [System.IO.Path]::Combine($Output.FullName, $LocalWrapperPath.Name)
 	}
 
 	## Extract the archive to the working directory
 	Write-Host 'Extract the wrapper to the working directory'
 	Expand-Archive -Path $wrapperPath -DestinationPath $expandDirectory -Force
-	Move-Item -Path $versionDirectory -Destination $Output.FullName
+	Move-Item -Path "$versionDirectory\*" -Destination $Output.FullName
 	Remove-Item -Path $wrapperPath, $expandDirectory -Recurse
 
 	## Parse the json content

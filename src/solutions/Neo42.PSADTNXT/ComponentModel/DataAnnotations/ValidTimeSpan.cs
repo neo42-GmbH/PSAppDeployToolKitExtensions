@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using PSADTNXT.Extensions;
 
 namespace PSADTNXT.ComponentModel.DataAnnotations
 {
@@ -21,7 +22,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 			TimeSpan testTimespan;
 			if (value is string valueStr)
 			{
-				if (!TimeSpan.TryParse(valueStr, out testTimespan))
+				if (!valueStr.TryParseTimeSpan(out testTimespan))
 				{
 					return new ValidationResult($"The string '{valueStr}' for '{validationContext.MemberName}' in '{validationContext.ObjectInstance.GetType().Name}' could not be parsed to a TimeSpan.");
 				}

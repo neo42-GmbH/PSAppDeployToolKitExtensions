@@ -14,6 +14,7 @@ using PSADT.ProcessManagement;
 using PSADTNXT.Application;
 using PSADTNXT.Configuration;
 using PSADTNXT.Deployment.Configuration;
+using PSADTNXT.Extensions;
 using PSADTNXT.Foundation;
 using PSADTNXT.IO;
 using PSADTNXT.ProcessManagement;
@@ -271,7 +272,7 @@ namespace PSADTNXT.Deployment
 				.ForEach(installObj.RebootCodes.Add);
 
 			var defaultTimeout = !string.IsNullOrWhiteSpace(installModel.Awaiters?.DefaultTimeout)
-				? TimeSpan.Parse(installModel.Awaiters!.DefaultTimeout)
+				? installModel.Awaiters!.DefaultTimeout.ParseTimeSpan()
 				: TimeSpan.FromSeconds(30);
 
 			installModel.Awaiters?.RegistryKeys?.ForEach(key =>
@@ -281,7 +282,7 @@ namespace PSADTNXT.Deployment
 						key.Name,
 						key.Value,
 						key.Exists,
-						key.Timeout != null ? TimeSpan.Parse(key.Timeout) : defaultTimeout
+						key.Timeout != null ? key.Timeout.ParseTimeSpan() : defaultTimeout
 					)
 				)
 			);
@@ -290,7 +291,7 @@ namespace PSADTNXT.Deployment
 					new NxtProcessAwaiter(
 						proc.Name,
 						proc.Exists,
-						proc.Timeout != null ? TimeSpan.Parse(proc.Timeout) : defaultTimeout
+						proc.Timeout != null ? proc.Timeout.ParseTimeSpan() : defaultTimeout
 					)
 				)
 			);
@@ -325,7 +326,7 @@ namespace PSADTNXT.Deployment
 				.ForEach(uninstallObj.RebootCodes.Add);
 
 			var defaultTimeout = !string.IsNullOrWhiteSpace(uninstallModel.Awaiters?.DefaultTimeout)
-				? TimeSpan.Parse(uninstallModel.Awaiters!.DefaultTimeout)
+				? uninstallModel.Awaiters!.DefaultTimeout.ParseTimeSpan()
 				: TimeSpan.FromSeconds(30);
 
 			uninstallModel.Awaiters?.RegistryKeys?.ForEach(key =>
@@ -335,7 +336,7 @@ namespace PSADTNXT.Deployment
 						key.Name,
 						key.Value,
 						key.Exists,
-						key.Timeout != null ? TimeSpan.Parse(key.Timeout) : defaultTimeout
+						key.Timeout != null ? key.Timeout.ParseTimeSpan() : defaultTimeout
 					)
 				)
 			);
@@ -344,7 +345,7 @@ namespace PSADTNXT.Deployment
 					new NxtProcessAwaiter(
 						proc.Name,
 						proc.Exists,
-						proc.Timeout != null ? TimeSpan.Parse(proc.Timeout) : defaultTimeout
+						proc.Timeout != null ? proc.Timeout.ParseTimeSpan() : defaultTimeout
 					)
 				)
 			);

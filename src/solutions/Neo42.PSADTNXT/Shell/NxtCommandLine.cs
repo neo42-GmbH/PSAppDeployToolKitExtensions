@@ -36,8 +36,17 @@ namespace PSADTNXT.Shell
 				binary += ".exe";
 			}
 
+			var searchPath = Environment.GetEnvironmentVariable("PATH", target);
 			var pathBuilder = new StringBuilder(260); // MAX_PATH
-			return Kernel32.SearchPath(Environment.GetEnvironmentVariable("PATH", target), binary, null, (uint)pathBuilder.Capacity, pathBuilder, out _) > 0
+			var length = Kernel32.SearchPath(searchPath, binary, null, (uint)pathBuilder.Capacity, pathBuilder, out _);
+			if (length > pathBuilder.Capacity)
+			{
+				// The buffer was too small and the required size (including the terminating null) was returned
+				pathBuilder = new StringBuilder((int)length);
+				length = Kernel32.SearchPath(searchPath, binary, null, (uint)pathBuilder.Capacity, pathBuilder, out _);
+			}
+
+			return length > 0 && length < pathBuilder.Capacity
 				? pathBuilder.ToString()
 				: null;
 		}

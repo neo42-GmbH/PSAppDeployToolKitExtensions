@@ -65,7 +65,8 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 		{
 			try
 			{
-				Path.GetFullPath(path);
+				// Wildcards are allowed (e.g. process names), but .NET Framework rejects them in GetFullPath while .NET does not
+				_ = Path.GetFullPath(path.Replace('*', '_').Replace('?', '_'));
 				return true;
 			}
 			catch

@@ -8,6 +8,7 @@
 	This function imitates the behavior of the PowerShell internal LocationGlobber.
 	.PARAMETER IncludeNonExistent
 	Includes non-existent paths in the output.
+	Non-existent paths must still be valid for their provider, otherwise an error is thrown.
 	.PARAMETER AsProviderPath
 	Returns the provider path instead of the fully qualified PSPath.
 	This is useful when when you work with .NET objects that do not support provider paths.
@@ -138,28 +139,29 @@
 						}
 						catch [System.Management.Automation.ItemNotFoundException] {
 							# Ignore issues with non-existent paths if the parameter is set and the path is not a wildcard or literal path.
-							if ($IncludeNonExistent -and
-								(
-									$isLiteralPath -or
-									-not [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($qualifiedPath)
-								)
-							) {
-								$qualifiedPath
-							}
-							# If the path contains wildcard resolution it should not throw an error.
-							elseif (-not $IncludeNonExistent -and
-								(
-									$isLiteralPath -or
-									-not [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($qualifiedPath)
-								)
-							) {
-								[System.Collections.Hashtable]$errorParams = @{
-									Exception    = $_.Exception
-									Category     = [System.Management.Automation.ErrorCategory]::ResourceUnavailable
-									ErrorId      = 'ItemNotFound'
-									TargetObject = $qualifiedPath
+							if ($isLiteralPath -or -not [System.Management.Automation.WildcardPattern]::ContainsWildcardCharacters($qualifiedPath)) {
+								if ($IncludeNonExistent) {
+									if (-not $ExecutionContext.SessionState.Path.IsValid($qualifiedPath)) {
+										[System.Collections.Hashtable]$errorParams = @{
+											Exception         = [System.ArgumentException]::new("The given path [$qualifiedPath] is not a valid path for the provider [$($providerInfo.Name)].")
+											Category          = [System.Management.Automation.ErrorCategory]::InvalidArgument
+											ErrorId           = 'InvalidPath'
+											RecommendedAction = 'Ensure that the path does not contain invalid characters.'
+											TargetObject      = $qualifiedPath
+										}
+										throw (New-ADTErrorRecord @errorParams)
+									}
+									$qualifiedPath
 								}
-								throw (New-ADTErrorRecord @errorParams)
+								else {
+									[System.Collections.Hashtable]$errorParams = @{
+										Exception    = $_.Exception
+										Category     = [System.Management.Automation.ErrorCategory]::ResourceUnavailable
+										ErrorId      = 'ItemNotFound'
+										TargetObject = $qualifiedPath
+									}
+									throw (New-ADTErrorRecord @errorParams)
+								}
 							}
 						}
 					) | & {

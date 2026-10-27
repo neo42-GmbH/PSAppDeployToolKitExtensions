@@ -216,7 +216,7 @@
 		{
 			"label": "Update Package",
 			"type": "shell",
-			"command": ". '${workspaceFolder}${/}.tools${/}Update-Package.ps1' -Output '${input:PackageUpdateOutputPath}' -Reference '${workspaceFolder}${/}build'",
+			"command": "Import-Module '${workspaceFolder}${/}build${/}PSAppDeployToolkit.Neo42.Tools'; Update-NXTPackage -Output '${input:PackageUpdateOutputPath}' -Reference '${workspaceFolder}${/}build'",
 			"group": "build",
 			"presentation": {
 				"reveal": "always",
