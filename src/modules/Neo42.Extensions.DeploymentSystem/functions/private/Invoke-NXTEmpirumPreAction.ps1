@@ -23,7 +23,7 @@
 							$metadata['CompVar'] -eq '1' -and
 							-not [System.String]::IsNullOrWhiteSpace($metadata['VarTmpl'])
 						) {
-							if ($metadata['VarTmpl'] -notmatch '^\w+\.\w+$') {
+							if ($metadata['VarTmpl'] -notlike '*.*') {
 								Write-ADTLogEntry -Severity Warning -Message "The variable [$settingName] in section [$($setupSection.Key)] does not have a valid VarTmpl value [$($metadata['VarTmpl'])] and will not be set."
 								continue
 							}
