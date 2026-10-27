@@ -592,7 +592,8 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			var isDisplayName = bool.TryParse(keyModel.KeyNameIsDisplayName, out var keyIsDisplayName) && keyIsDisplayName;
 			var containsWildCards = bool.TryParse(keyModel.KeyNameContainsWildCards, out var keyContainsWildCards) && keyContainsWildCards;
 
-			return isDisplayName.Equals(legacyModel.UninstallKeyIsDisplayName)
+			return keyModel.Is64Bit
+				&& isDisplayName.Equals(legacyModel.UninstallKeyIsDisplayName)
 				&& containsWildCards.Equals(legacyModel.UninstallKeyContainsWildCards)
 				&& keyModel.KeyName.Equals(legacyModel.UninstallKey, StringComparison.OrdinalIgnoreCase);
 		}
