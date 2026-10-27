@@ -27,7 +27,7 @@
 								Write-ADTLogEntry -Severity Warning -Message "The variable [$settingName] in section [$($setupSection.Key)] does not have a valid VarTmpl value [$($metadata['VarTmpl'])] and will not be set."
 								continue
 							}
-							[System.String]$compSectionName, [System.String]$compSettingName = $metadata['VarTmpl'].Split('.', 2)
+							[System.String]$compSectionName, [System.String]$compSettingName = [System.Environment]::ExpandEnvironmentVariables($metadata['VarTmpl']).Split('.', 2)
 							if (([PSADTNXT.Configuration.NxtIniSection]$compSection = $computerDocument[$compSectionName]) -and
 								$compSection.ContainsKey($compSettingName)
 							) {
