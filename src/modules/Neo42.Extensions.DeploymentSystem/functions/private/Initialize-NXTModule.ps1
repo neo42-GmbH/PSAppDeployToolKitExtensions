@@ -18,10 +18,10 @@
 				'Empirum' {
 					Write-ADTLogEntry -Message 'Activating [Empirum] based deployment logic for this session.'
 					Initialize-NXTEmpirum
+					Invoke-NXTEmpirumPreAction
 
 					Add-ADTModuleCallback -HookPoint PostClose -Callback $script:CommandTable.'Invoke-NXTEmpirumPostAction'
 
-					Add-NXTDeploymentCallback -HookPoint CustomBegin -Callback $script:CommandTable.'Invoke-NXTEmpirumPreAction'
 					Add-NXTDeploymentCallback -HookPoint CustomInstallAndReinstallPreInstallAndReinstall -Callback $script:CommandTable.'Remove-NXTOldEmpirumApplication' -Prepend
 					Add-NXTDeploymentCallback -HookPoint CustomSoftMigrationEnd -Callback $script:CommandTable.'Remove-NXTOldEmpirumApplication' -Prepend
 					Add-NXTDeploymentCallback -HookPoint CustomUninstallEnd -Callback $script:CommandTable.'Remove-NXTCurrentEmpirumEntry' -Prepend
