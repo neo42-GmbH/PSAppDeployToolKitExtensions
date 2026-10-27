@@ -141,7 +141,7 @@ namespace PSADTNXT.Extensions
 				null,
 				package.PublisherId,
 				null,
-				(uint)rootDir.GetSize(),
+				GetEstimatedSize(rootDir),
 				false,
 				false,
 				package.Architecture is 9 or 11 or 12
@@ -285,9 +285,24 @@ namespace PSADTNXT.Extensions
 			return true;
 		}
 
+		/// <summary>
+		/// Gets the size of a directory in KB like the EstimatedSize of an uninstall entry. Returns 0 if the size cannot be determined.
+		/// </summary>
+		private static uint GetEstimatedSize(DirectoryInfo directory)
+		{
+			try
+			{
+				return (uint)Math.Min(directory.GetSize() / 1024, uint.MaxValue);
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+			{
+				return 0;
+			}
+		}
+
 		private static bool IsArp(this InstalledApplication application)
 		{
-			return application.PSParentPath.EndsWith(@"\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", StringComparison.OrdinalIgnoreCase);
+			return application.PSParentPath.EndsWith(@"\Microsoft\Windows\CurrentVersion\Uninstall", StringComparison.OrdinalIgnoreCase);
 		}
 	}
 }

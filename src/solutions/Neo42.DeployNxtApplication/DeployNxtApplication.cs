@@ -105,9 +105,20 @@ namespace Neo42.DeployNxtApplication
 
 		private static string GetPowerShellArgumentString(string file, IEnumerable<string> args, ExecutionPolicy execPolicy)
 		{
-			return $"-NoP -NoL -NonI -EP {execPolicy} -C \"&{{&'{file}' "
-				+ string.Join(" ", args.Select(s => s.Any(char.IsWhiteSpace) ? $"'{s}'" : s))
+			return $"-NoP -NoL -NonI -EP {execPolicy} -C \"&{{&'{file.Replace("'", "''")}' "
+				+ string.Join(" ", args.Select(QuotePowerShellArgument))
 				+ ";exit(@(!$?;gv LASTEXITCODE -va -ea 0)[-1])\"}";
+		}
+
+		/// <summary>
+		/// Empty arguments and arguments with whitespace or quotes are passed as single-quoted literals.
+		/// All other arguments are passed as typed, so parameter names and values like -Switch:$true keep working.
+		/// </summary>
+		private static string QuotePowerShellArgument(string arg)
+		{
+			return arg.Length > 0 && !arg.Any(c => char.IsWhiteSpace(c) || c is '\'' or '"')
+				? arg
+				: $"'{arg.Replace("'", "''").Replace("\"", "\\\"")}'";
 		}
 
 		private static int ExecutePowerShell(string file, IEnumerable<string> args, ExecutionPolicy execPolicy, string workingDir, bool asAdmin, bool detached)

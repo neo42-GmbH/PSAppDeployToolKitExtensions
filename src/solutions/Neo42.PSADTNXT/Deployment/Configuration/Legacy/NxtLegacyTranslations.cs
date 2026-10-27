@@ -130,10 +130,10 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				DisplayName = !legacyModel.UninstallDisplayName.EndsWith(legacyModel.AppVersion) ? legacyModel.UninstallDisplayName : legacyModel.UninstallDisplayName.Substring(0, legacyModel.UninstallDisplayName.Length - legacyModel.AppVersion.Length).TrimEnd(),
 				Description = legacyModel.Description,
 				Author = legacyModel.ScriptAuthor,
-				Revision = uint.Parse(legacyModel.AppRevision),
-				Build = uint.Parse(legacyModel.Build),
-				UpdateDate = DateTime.ParseExact(legacyModel.LastChange, "dd/MM/yyyy", null).ToString("yyyy-MM-dd"),
-				CreationDate = DateTime.ParseExact(legacyModel.ScriptDate, "dd/MM/yyyy", null).ToString("yyyy-MM-dd"),
+				Revision = ParseLegacyNumber(legacyModel.AppRevision, nameof(legacyModel.AppRevision)),
+				Build = ParseLegacyNumber(legacyModel.Build, nameof(legacyModel.Build)),
+				UpdateDate = ParseLegacyDate(legacyModel.LastChange, nameof(legacyModel.LastChange)),
+				CreationDate = ParseLegacyDate(legacyModel.ScriptDate, nameof(legacyModel.ScriptDate)),
 				TestedOn = legacyModel.TestedOn,
 				InventoryId = legacyModel.InventoryID,
 				Dependencies = legacyModel.Dependencies,
@@ -259,6 +259,20 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			return softMigrationModel;
 		}
 
+		private static uint ParseLegacyNumber(string? value, string name)
+		{
+			return uint.TryParse(value, out var number)
+				? number
+				: throw new InvalidDataException($"The value [{value}] of [{name}] is not a valid positive number.");
+		}
+
+		private static string ParseLegacyDate(string? value, string name)
+		{
+			return DateTime.TryParseExact(value, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var date)
+				? date.ToString("yyyy-MM-dd")
+				: throw new InvalidDataException($"The value [{value}] of [{name}] is not a valid date in the format dd/MM/yyyy.");
+		}
+
 		private static List<NxtCloseProcessesModel> TranslateCloseProcessModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 #pragma warning disable CS0618
@@ -269,7 +283,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 					{
 						Name = p.Name,
 						Description = p.Description,
-						AllowBlocking = !legacyModel.BlockExecution
+						AllowBlocking = legacyModel.BlockExecution
 					}
 				)
 				.ToList() ?? [];
@@ -285,7 +299,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 				if (entries.Count != closeProcessesList.Count)
 				{
-					throw new InvalidDataException("[CloseProcessesReopen] was specified, but did not match the number of entries in [AskKillProcesses]. Mapping not possible.");
+					throw new InvalidDataException("[CloseProcessesReopen] was specified, but did not match the number of entries in [AppKillProcesses]. Mapping not possible.");
 				}
 				for (var i = 0; i < entries.Count; i++)
 				{
@@ -443,7 +457,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 			{
 				installModel.UpgradeMode = Enum.TryParse<UpgradeMode>(upgradeModeVar, true, out var varUpgradeMode)
 					? varUpgradeMode
-					: throw new InvalidDataException($"The value [{upgradeModeVar}] of [DeploymentInstallationUpgradeMode] cannot be parsed into an [ApplicationStore].");
+					: throw new InvalidDataException($"The value [{upgradeModeVar}] of [DeploymentInstallationUpgradeMode] cannot be parsed into an [UpgradeMode].");
 			}
 
 			if (legacyModel.TryGetCompatVariable("DeploymentInstallationAwaitChildren", out var awaitChildren))

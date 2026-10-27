@@ -6,6 +6,7 @@ using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Language;
 using System.Management.Automation.Runspaces;
+using System.Text;
 using Microsoft.PowerShell;
 using Microsoft.PowerShell.Commands;
 using Microsoft.Win32;
@@ -301,9 +302,28 @@ namespace PSADTNXT.Shell
 		/// <exception cref="InvalidOperationException">Thrown if the expansion was unsuccessful.</exception>
 		internal static string ExpandString(this PowerShell powershell, string input)
 		{
+			// Like ExpandString in v3: backtick escapes of the input (e.g. `$ or `") are kept, bare double quotes are literal
+			var escaped = new StringBuilder(input.Length + 2);
+			for (var i = 0; i < input.Length; i++)
+			{
+				if (input[i] == '`')
+				{
+					// A trailing backtick would escape the closing quote, so it is kept as a literal backtick
+					_ = i + 1 < input.Length ? escaped.Append('`').Append(input[++i]) : escaped.Append("``");
+				}
+				else if (input[i] == '"')
+				{
+					_ = escaped.Append("`\"");
+				}
+				else
+				{
+					_ = escaped.Append(input[i]);
+				}
+			}
+
 			powershell.Commands.Clear();
 			var result = powershell
-				.AddScript($"\"{input.Replace("`", "``").Replace("\"", "`\"")}\"")
+				.AddScript($"\"{escaped}\"")
 				.Invoke<string>()
 				.FirstOrDefault()
 				?? string.Empty;

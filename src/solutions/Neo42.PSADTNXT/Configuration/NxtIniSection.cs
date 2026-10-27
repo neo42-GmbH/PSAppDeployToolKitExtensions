@@ -319,11 +319,11 @@ namespace PSADTNXT.Configuration
 		public object Clone()
 		{
 			var clone = new OrderedDictionary(StringComparer.OrdinalIgnoreCase);
-			foreach (KeyValuePair<string, SettingContainer> kvp in _settings)
+			foreach (DictionaryEntry entry in _settings)
 			{
-				clone[kvp.Key] = kvp.Value;
+				clone[entry.Key] = (SettingContainer)entry.Value! with { };
 			}
-			return clone;
+			return new NxtIniSection(clone);
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
@@ -333,7 +333,7 @@ namespace PSADTNXT.Configuration
 
 		public ICollection<string> Keys => [.. _settings.Keys.Cast<string>()];
 
-		public ICollection<string> Values => [.. _settings.Values.Cast<string>()];
+		public ICollection<string> Values => [.. _settings.Values.Cast<SettingContainer>().Select(s => s.Value)];
 
 		public int Count => _settings.Count;
 		#endregion IOrderedDictionary<string, NxtIniSetting> Members

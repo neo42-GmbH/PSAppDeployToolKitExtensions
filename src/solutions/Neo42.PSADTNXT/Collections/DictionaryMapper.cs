@@ -69,6 +69,12 @@ namespace PSADTNXT.Collections
 					continue;
 				}
 
+				// Treat a single value as a one-element collection, e.g. 'SuccessCodes = 3010' or 'Processes = @{ ... }' without @()
+				if (property.PropertyType.Implements(typeof(IList)) && !value.GetType().Implements(typeof(IList)))
+				{
+					value = new object[] { value };
+				}
+
 				// Nested object population
 				if (!property.PropertyType.IsPrimitive && property.PropertyType != typeof(string) && value is IDictionary dictionary)
 				{

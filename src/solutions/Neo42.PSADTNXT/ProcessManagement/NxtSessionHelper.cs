@@ -150,7 +150,7 @@ namespace PSADTNXT.ProcessManagement
 					using (var attributeList = ProcThreadAttributeList.Create([hWriteOut.DangerousGetHandle(), hWriteErr.DangerousGetHandle()], forceBreakaway))
 					{
 						startupInfo.lpAttributeList = attributeList.Handle;
-						result = Advapi32.CreateProcessAsUser(sessionProcessTokenPtr, file, arguments, IntPtr.Zero, IntPtr.Zero, true, creationAttributes, IntPtr.Zero, null, ref startupInfo, out pi);
+						result = Advapi32.CreateProcessAsUser(sessionProcessTokenPtr, file, $"\"{file}\" {arguments}", IntPtr.Zero, IntPtr.Zero, true, creationAttributes, IntPtr.Zero, null, ref startupInfo, out pi);
 						lastError = Marshal.GetLastWin32Error();
 					}
 
@@ -173,6 +173,7 @@ namespace PSADTNXT.ProcessManagement
 				var processHandles = processes.Select(p => p.ProcessHandle).ToArray();
 
 				var index = Kernel32.WaitForMultipleObjects(processHandles.Length, processHandles, false, (uint)timeout.TotalMilliseconds);
+				var waitError = Marshal.GetLastWin32Error();
 
 				// Terminate all processes except the one that returned
 				processHandles.Where((_, i) => i != index).ToList().ForEach(pHandle => Kernel32.TerminateProcess(pHandle, exitCode));
@@ -189,6 +190,12 @@ namespace PSADTNXT.ProcessManagement
 				if (index == WAIT_TIMEOUT)
 				{
 					throw new TimeoutException($"Process timed out after {timeout}");
+				}
+
+				if (index >= processes.Count)
+				{
+					// WAIT_FAILED, e.g. if there were no or more than 64 sessions to wait for
+					throw new Win32Exception(waitError);
 				}
 
 				var selectedProcess = processes[(int)index];

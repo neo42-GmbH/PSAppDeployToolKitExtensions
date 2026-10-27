@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace PSADTNXT.Interop
 {
-	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 	internal struct PROCESSENTRY32
 	{
 		public uint dwSize;

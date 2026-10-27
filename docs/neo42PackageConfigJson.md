@@ -429,7 +429,7 @@ The entries are translated as follows:
 
 | Entry | Translated to |
 |:------|:--------------|
-| Reference to the application itself: `KeyName` equals `UninstallKey` (not case-sensitive), `KeyNameIsDisplayName` equals `UninstallKeyIsDisplayName` and `KeyNameContainsWildCards` equals `UninstallKeyContainsWildCards` | `Detection.Hide = true`. No managed application is created; the [detection](#application-detection) criteria is hidden instead, so `Is64Bit` and `DisplayNamesToExcludeFromHiding` of this entry have no effect. |
+| Reference to the application itself: `KeyName` equals `UninstallKey` (not case-sensitive), `KeyNameIsDisplayName` equals `UninstallKeyIsDisplayName` and `KeyNameContainsWildCards` equals `UninstallKeyContainsWildCards` and `Is64Bit` is `true` | `Detection.Hide = true`. No managed application is created; the [detection](#application-detection) criteria is hidden instead, so `DisplayNamesToExcludeFromHiding` of this entry has no effect. |
 | Any other entry (e.g. components installed alongside the application) | A managed application criteria in `ManagedApplications`. |
 
 > [!NOTE]

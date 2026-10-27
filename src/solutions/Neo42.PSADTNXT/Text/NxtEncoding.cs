@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Globalization;
 using System.Text;
+using PSADTNXT.Interop;
 
 namespace PSADTNXT.Text
 {
@@ -18,11 +18,11 @@ namespace PSADTNXT.Text
 			return encoding switch
 			{
 				FileEncoding.Default => Encoding.Default,
-				FileEncoding.OEM => Encoding.GetEncoding(CultureInfo.InvariantCulture.TextInfo.OEMCodePage),
+				FileEncoding.OEM => Encoding.GetEncoding((int)Kernel32.GetOEMCP()),
 				FileEncoding.ASCII => new ASCIIEncoding(),
-				FileEncoding.ANSI => Encoding.GetEncoding(CultureInfo.InvariantCulture.TextInfo.ANSICodePage),
+				FileEncoding.ANSI => Encoding.GetEncoding((int)Kernel32.GetACP()),
 				FileEncoding.UTF7 => new UTF7Encoding(false),
-				FileEncoding.UTF7WithBOM => new UTF7Encoding(true),
+				FileEncoding.UTF7WithBOM => new UTF7EncodingWithBOM(),
 				FileEncoding.UTF8 => new UTF8Encoding(false),
 				FileEncoding.UTF8WithBOM => new UTF8Encoding(true),
 				FileEncoding.Unicode => new UnicodeEncoding(false, false),
@@ -47,6 +47,16 @@ namespace PSADTNXT.Text
 		public static FileEncoding GetEncodingName(Encoding encoding)
 		{
 			var hasBOM = encoding.GetPreamble().Length > 0;
+			if (encoding.CodePage == Kernel32.GetOEMCP())
+			{
+				return FileEncoding.OEM;
+			}
+
+			if (encoding.CodePage == Kernel32.GetACP())
+			{
+				return FileEncoding.ANSI;
+			}
+
 			return encoding.CodePage switch
 			{
 				437 => FileEncoding.OEM,
@@ -63,5 +73,20 @@ namespace PSADTNXT.Text
 					: throw new ArgumentOutOfRangeException(nameof(encoding), encoding, "Unsupported encoding type.")
 			};
 		}
+
+#pragma warning disable SYSLIB0001 // Accept old encodings
+		/// <summary>
+		/// UTF-7 with a byte order mark. <see cref="UTF7Encoding"/> itself never writes one.
+		/// </summary>
+		private sealed class UTF7EncodingWithBOM : UTF7Encoding
+		{
+			private static readonly byte[] _preamble = [0x2B, 0x2F, 0x76, 0x38, 0x2D]; // "+/v8-"
+
+			public override byte[] GetPreamble()
+			{
+				return (byte[])_preamble.Clone();
+			}
+		}
+#pragma warning restore SYSLIB0001 // Accept old encodings
 	}
 }

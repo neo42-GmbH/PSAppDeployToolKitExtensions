@@ -10,14 +10,14 @@ namespace PSADTNXT.Interop
 		[DllImport("kernel32.dll")]
 		public static extern bool CloseHandle(IntPtr hSnapshot);
 
-		[DllImport("kernel32.dll")]
+		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
 
-		[DllImport("kernel32.dll", SetLastError = true)]
+		[DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public static extern bool Process32First(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
 
-		[DllImport("kernel32.dll", SetLastError = true)]
+		[DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		public static extern bool Process32Next(IntPtr hSnapshot, ref PROCESSENTRY32 lppe);
 
@@ -42,7 +42,7 @@ namespace PSADTNXT.Interop
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
 
-		[DllImport("kernel32.dll")]
+		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern uint WaitForMultipleObjects(int nCount, IntPtr[] lpHandles, bool bWaitAll, uint dwMilliseconds);
 
 		[DllImport("kernel32.dll", SetLastError = true)]
@@ -57,6 +57,10 @@ namespace PSADTNXT.Interop
 		/// <remarks>Returns the code page of the system locale, not the one of the current culture.</remarks>
 		[DllImport("kernel32.dll")]
 		public static extern uint GetOEMCP();
+
+		/// <remarks>Returns the code page of the system locale, not the one of the current culture.</remarks>
+		[DllImport("kernel32.dll")]
+		public static extern uint GetACP();
 
 		/// <remarks>The returned pseudo handle does not have to be closed.</remarks>
 		[DllImport("kernel32.dll")]

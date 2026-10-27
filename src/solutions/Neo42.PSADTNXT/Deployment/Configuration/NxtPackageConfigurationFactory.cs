@@ -82,7 +82,11 @@ namespace PSADTNXT.Deployment.Configuration
 
 		public static NxtPackageConfigurationModel Translate(this NxtLegacyPackageConfigurationModel input)
 		{
-			return NxtLegacyTranslations.Translate(input);
+			var result = NxtLegacyTranslations.Translate(input);
+
+			Validate(result);
+
+			return result;
 		}
 
 		private static void Validate(object model)

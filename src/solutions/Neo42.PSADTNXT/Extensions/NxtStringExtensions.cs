@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -86,6 +87,40 @@ namespace PSADTNXT.Extensions
 				_ => throw new InvalidOperationException($"Unsupported string compare operator: {op}")
 			};
 #pragma warning restore CA2249
+		}
+
+		/// <summary>
+		/// Parses a time span from a configuration string. A plain number is read as seconds, anything else as a <see cref="TimeSpan"/> (e.g. '00:01:30').
+		/// </summary>
+		/// <remarks>
+		/// <see cref="TimeSpan.TryParse(string, out TimeSpan)"/> alone would read a plain number like '60' as days.
+		/// </remarks>
+		internal static bool TryParseTimeSpan(this string input, out TimeSpan result)
+		{
+			if (double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds) && !double.IsNaN(seconds) && !double.IsInfinity(seconds))
+			{
+				try
+				{
+					result = TimeSpan.FromSeconds(seconds);
+					return true;
+				}
+				catch (OverflowException)
+				{
+					result = default;
+					return false;
+				}
+			}
+
+			return TimeSpan.TryParse(input, out result);
+		}
+
+		/// <inheritdoc cref="TryParseTimeSpan(string, out TimeSpan)"/>
+		/// <exception cref="FormatException">Thrown if the string is neither a number nor a valid time span.</exception>
+		internal static TimeSpan ParseTimeSpan(this string input)
+		{
+			return input.TryParseTimeSpan(out var result)
+				? result
+				: throw new FormatException($"'{input}' is neither a number of seconds nor a valid time span.");
 		}
 	}
 }

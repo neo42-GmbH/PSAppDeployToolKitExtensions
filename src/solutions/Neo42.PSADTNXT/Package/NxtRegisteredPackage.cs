@@ -119,7 +119,7 @@ namespace PSADTNXT.Package
 			PackageDirectory = packageKey.GetValue("AppPath") is string packageDirectory ? new DirectoryInfo(packageDirectory) : null;
 			RegistrationDate = packageKey.GetValue("Date") is string registrationDateString && DateTime.TryParse(registrationDateString, out var registrationDate) ? registrationDate : null;
 			SoftMigrated = packageKey.GetValue("SoftMigrationOccured")?.ToString() == "1";
-			Version = packageKey.GetValue("Version") is string version ? new Version(version) : null;
+			Version = Version.TryParse(packageKey.GetValue("Version")?.ToString(), out var pkgVer) ? pkgVer : null;
 			Revision = uint.TryParse(packageKey.GetValue("Revision")?.ToString(), out var rev) ? rev : null;
 			UninstallString = packageKey.GetValue("UninstallString")?.ToString();
 
@@ -196,7 +196,8 @@ namespace PSADTNXT.Package
 		public static bool TryGetPackage(InstalledApplication application, out NxtRegisteredPackage? package)
 		{
 			package = null;
-			if (application.PSPath.ToRegistryKeyFromPSProviderPath() is RegistryKey appKey
+			using var appKey = application.PSPath.ToRegistryKeyFromPSProviderPath();
+			if (appKey is not null
 				&& appKey.GetValue("neoRegPackagesKeyRef") is string keyRef
 				&& TryGetPackage(keyRef, out var packageObj))
 			{
