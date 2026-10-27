@@ -106,14 +106,14 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		private static DeploymentMethod? MapLegacyDeploymentMethodToEnum(string method)
 		{
-			return method.Equals("None", StringComparison.OrdinalIgnoreCase)
-				? null
+			return Enum.TryParse<DeploymentMethod>(method, true, out var deploymentMethod)
+				? deploymentMethod
 				: method.StartsWith("BitRock", StringComparison.OrdinalIgnoreCase)
 				? DeploymentMethod.BitRockInstaller
 				: method.StartsWith("Inno", StringComparison.OrdinalIgnoreCase)
 				? DeploymentMethod.InnoSetup
-				: Enum.TryParse<DeploymentMethod>(method, true, out var deploymentMethod)
-				? deploymentMethod
+				: method.Equals("None", StringComparison.OrdinalIgnoreCase)
+				? null
 				: DeploymentMethod.Setup;
 		}
 
@@ -285,7 +285,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 				if (entries.Count != closeProcessesList.Count)
 				{
-					throw new InvalidDataException("[CloseProcessesReopen] was specified, but did not match the number of entries in [AskKillProcesses]. Mapping not possible");
+					throw new InvalidDataException("[CloseProcessesReopen] was specified, but did not match the number of entries in [AskKillProcesses]. Mapping not possible.");
 				}
 				for (var i = 0; i < entries.Count; i++)
 				{
@@ -326,12 +326,15 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		private static List<NxtApplicationCriteriaModel> TranslateManagedApplicationModels(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var managedApplications = new List<NxtApplicationCriteriaModel>();
-			if (legacyModel.UninstallKeysToHide is not List<NxtLegacyKeyHideModel> uninstallKeysToHide) { return managedApplications; }
+			if (legacyModel.UninstallKeysToHide is not List<NxtLegacyKeyHideModel> uninstallKeysToHide)
+			{
+				return managedApplications;
+			}
 
 			foreach (var keyToHide in uninstallKeysToHide)
 			{
 				// We used to create self references. These are not required anymore
-				if (keyToHide.HideKeyIsAppReference(legacyModel))
+				if (keyToHide.IsAppReference(legacyModel))
 				{
 					continue;
 				}
@@ -344,19 +347,34 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				{
 					Store = keyToHide.Is64Bit ? ApplicationStore.ARP64 : ApplicationStore.ARP32,
 				};
-				if (!isDisplayName && !containsWildCards && excludeList.Count == 0)
+
+				if (!isDisplayName && !containsWildCards)
 				{
 					criteria.Identifier = keyToHide.KeyName;
 				}
-				else
+
+				var filterScript = new StringBuilder();
+				if (isDisplayName || containsWildCards)
 				{
-					criteria.Filter = ScriptBlock.Create(
-						(isDisplayName ? "$_.DisplayName" : "$_.PSChildName") +
-						(containsWildCards ? " -like " : " -eq ") +
-						$"'{keyToHide.KeyName.Replace("'", "''")}'" +
-						(excludeList.Count > 0 ? $" -and $_.DisplayName -notin @('{string.Join("', '", excludeList.Select(d => d.Replace("'", "''")))}')" : string.Empty)
-					);
+					_ = filterScript.Append(isDisplayName ? "$_.DisplayName" : "$_.PSChildName");
+					_ = filterScript.Append(containsWildCards ? " -like " : " -eq ");
+					_ = filterScript.Append($"'{keyToHide.KeyName.Replace("'", "''")}'");
 				}
+
+				if (excludeList.Count > 0)
+				{
+					if (filterScript.Length > 0)
+					{
+						_ = filterScript.Append(" -and ");
+					}
+					_ = filterScript.Append($"$_.DisplayName -notin @('{string.Join("', '", excludeList.Select(d => d.Replace("'", "''")))}')");
+				}
+
+				if (filterScript.Length > 0)
+				{
+					criteria.Filter = ScriptBlock.Create(filterScript.ToString());
+				}
+
 				managedApplications.Add(criteria);
 			}
 
@@ -566,10 +584,10 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		private static bool HideKeysContainMainApp(this NxtLegacyPackageConfigurationModel legacyModel)
 		{
-			return legacyModel.UninstallKeysToHide is not null && legacyModel.UninstallKeysToHide.Exists(k => k.HideKeyIsAppReference(legacyModel));
+			return legacyModel.UninstallKeysToHide is not null && legacyModel.UninstallKeysToHide.Exists(k => k.IsAppReference(legacyModel));
 		}
 
-		private static bool HideKeyIsAppReference(this NxtLegacyKeyHideModel keyModel, NxtLegacyPackageConfigurationModel legacyModel)
+		private static bool IsAppReference(this NxtLegacyKeyHideModel keyModel, NxtLegacyPackageConfigurationModel legacyModel)
 		{
 			var isDisplayName = bool.TryParse(keyModel.KeyNameIsDisplayName, out var keyIsDisplayName) && keyIsDisplayName;
 			var containsWildCards = bool.TryParse(keyModel.KeyNameContainsWildCards, out var keyContainsWildCards) && keyContainsWildCards;
