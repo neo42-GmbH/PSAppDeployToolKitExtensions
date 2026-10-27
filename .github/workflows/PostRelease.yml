@@ -24,15 +24,30 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: milestones } = await github.rest.issues.listMilestones({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'closed'
-            });
-            const milestone = milestones.find(m => m.title === '${{ github.event.release.tag_name }}');
-            if (!milestone) {
+            const tag = '${{ github.event.release.tag_name }}'
+            const isoDate = new Date().toISOString();
+
+            if (milestone) {
+              await github.rest.issues.updateMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                milestone_number: milestone.number,
+                title: tag,
+                due_on: isoDate,
+                state: 'closed'
+              });
+            }
+            else {
               throw new Error('Milestone not found');
             }
+
+            // Create a new milestone for the next release
+            await github.rest.issues.createMilestone({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Next',
+              description: 'The next release',
+            });
 
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -45,9 +60,9 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                body: `:tada: This issue will be addressed in version ${milestone.title} :tada:
+                body: `:tada: This issue will be addressed in version ${tag} :tada:
             Once the release is published, it will be available on:
-              * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${milestone.title})
+              * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag})
 
             <sub>This is an auto-generated message from your friendly release assistant :package::rocket:</sub>`
               });
