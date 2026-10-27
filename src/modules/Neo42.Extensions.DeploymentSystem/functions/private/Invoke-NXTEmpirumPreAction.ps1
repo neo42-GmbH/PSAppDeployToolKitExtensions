@@ -23,11 +23,13 @@
 							$metadata['CompVar'] -eq '1' -and
 							-not [System.String]::IsNullOrWhiteSpace($metadata['VarTmpl'])
 						) {
-							if ($metadata['VarTmpl'] -notlike '*.*') {
+							if ($metadata['VarTmpl'] -notmatch '^[^\.]+.[^\.]+$') {
 								Write-ADTLogEntry -Severity Warning -Message "The variable [$settingName] in section [$($setupSection.Key)] does not have a valid VarTmpl value [$($metadata['VarTmpl'])] and will not be set."
 								continue
 							}
-							[System.String]$compSectionName, [System.String]$compSettingName = [System.Environment]::ExpandEnvironmentVariables($metadata['VarTmpl']).Split('.', 2)
+							[System.String]$compSectionName, [System.String]$compSettingName = $metadata['VarTmpl'].Split('.', 2)
+							$compSectionName = [System.Environment]::ExpandEnvironmentVariables($compSectionName)
+							$compSettingName = [System.Environment]::ExpandEnvironmentVariables($compSettingName)
 							if (([PSADTNXT.Configuration.NxtIniSection]$compSection = $computerDocument[$compSectionName]) -and
 								$compSection.ContainsKey($compSettingName)
 							) {
