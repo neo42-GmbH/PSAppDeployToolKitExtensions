@@ -15,6 +15,8 @@ namespace PSADTNXT.Deployment
 
 		public VersionCompareResult VersionStatus { get; set; } = VersionCompareResult.Equal;
 
+		public bool Hide { get; set; }
+
 		public InstalledApplication? Application { get; set; }
 
 		internal NxtInstallationDetection()

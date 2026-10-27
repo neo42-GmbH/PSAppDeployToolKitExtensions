@@ -188,6 +188,7 @@ namespace PSADTNXT.Deployment
 			return new NxtInstallationDetection()
 			{
 				Enabled = config.Detection?.Enabled ?? false,
+				Hide = config.Detection?.Hide ?? true,
 				TargetVersion = config.Detection?.UsePackageVersion == true
 					? new(config.Package.Version)
 					: !string.IsNullOrWhiteSpace(config.Detection?.Version)

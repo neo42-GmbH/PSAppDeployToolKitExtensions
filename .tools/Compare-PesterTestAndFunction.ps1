@@ -51,8 +51,8 @@ function Convert-TitleString {
 }
 
 # Preparation
-$ErrorActionPreference = 'Stop'
-Set-StrictMode -Version Latest
+$ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+Set-StrictMode -Version 3.0
 
 try {
 	[System.IO.FileInfo[]]$functionFiles = Get-ChildItem -Path $FunctionsDirectory -Recurse -File -Include '*.ps1' | Where-Object -FilterScript { $_.Name -like $FileNameFilter }
