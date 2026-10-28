@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -106,20 +107,24 @@ namespace PSADTNXT.Deployment
 				throw new InvalidDataException("AppVendor and AppName are required parameters for neo42 session construction.");
 			}
 
-			SetupCfg = parameters["SetupCfg"] is NxtIniDocument setupCfg ? setupCfg : throw new ArgumentException("SetupCfg parameter is required and must be of type NxtIniDocument.");
-			DeploymentType = parameters["NxtDeploymentType"] is NxtDeploymentType nxtDeploymentType ? nxtDeploymentType : _session.DeploymentType;
-			DeploymentSystem = parameters["DeploymentSystem"] as string ?? "Unknown";
-			DeployAppScript = parameters["DeployAppScriptPath"] is string scriptPath ? new(scriptPath) : throw new ArgumentException("DeployAppScriptPath parameter is required.");
+			SetupCfg = TryGetParameterValue<NxtIniDocument>(parameters, "SetupCfg", out var setupCfg) ? setupCfg! : throw new ArgumentException("SetupCfg parameter is required and must be of type NxtIniDocument.");
+			DeploymentType = TryGetParameterValue<NxtDeploymentType>(parameters, "NxtDeploymentType", out var nxtDeploymentType) ? nxtDeploymentType! : _session.DeploymentType;
+			DeploymentSystem = TryGetParameterValue<string>(parameters, "DeploymentSystem", out var deploymentSystem) ? deploymentSystem! : "Unknown";
+			DeployAppScript = TryGetParameterValue<string>(parameters, "DeployAppScriptPath", out var scriptPath) ? new(scriptPath!) : throw new ArgumentException("DeployAppScriptPath parameter is required.");
 #pragma warning disable CS0618
-			ExitWithMsiCodes = parameters["ExitWithMsiCodes"] is SwitchParameter exitWithMsiCodesSwitch && exitWithMsiCodesSwitch.ToBool();
+			ExitWithMsiCodes = TryGetParameterValue<SwitchParameter>(parameters, "ExitWithMsiCodes", out var exitWithMsiCodesSwitch) && exitWithMsiCodesSwitch!.ToBool();
 #pragma warning restore CS0618
 
-			var packageConfig = parameters["PackageConfig"] is NxtPackageConfigurationModel config ? config : throw new ArgumentException("PackageConfig parameter is required and must be of type NxtPackageConfigurationModel.");
+			if (!TryGetParameterValue<NxtPackageConfigurationModel>(parameters, "PackageConfig", out var packageConfig))
+			{
+				throw new ArgumentException("PackageConfig parameter is required and must be of type NxtPackageConfigurationModel.");
+			}
+
 			var nxtConfig = ModuleDatabase.GetConfig()["NXT"] as Hashtable;
 			var nxtToolkitConfig = nxtConfig?["Toolkit"] as Hashtable;
 			var appendVersion = nxtToolkitConfig?["AppendVersionToPackageName"] is bool append && append;
 
-			var packageRootDir = InitializePackageRootDirectory(packageConfig.Package.DirectoryName, packageConfig.Package.KeyName);
+			var packageRootDir = InitializePackageRootDirectory(packageConfig!.Package.DirectoryName, packageConfig.Package.KeyName);
 			_session.WriteLogEntry($"Package cache directory resides in [{packageRootDir.FullName}].");
 
 			Package = GetPackageMetadata(packageConfig, packageRootDir, appendVersion);
@@ -128,7 +133,7 @@ namespace PSADTNXT.Deployment
 			SoftMigration = GetSoftMigration(packageConfig);
 			CloseProcesses = GetCloseProcesses(packageConfig);
 			ManagedShortcuts = GetManagedShortcuts(packageConfig);
-			ManagedApplications = config.ManagedApplications?.Select(ConvertToCriteria).ToList() ?? [];
+			ManagedApplications = packageConfig.ManagedApplications?.Select(ConvertToCriteria).ToList() ?? [];
 			UserPartRevision = packageConfig.Package.Version.Replace(".", ",") + string.Concat(Enumerable.Repeat(",0", 3 - packageConfig.Package.Version.Count(c => c == '.')));
 			InstallLocation = !string.IsNullOrWhiteSpace(packageConfig.Deployment?.InstallLocation) ? new(packageConfig.Deployment!.InstallLocation) : null;
 			Install = GetInstallInstructions(packageConfig);
@@ -140,7 +145,18 @@ namespace PSADTNXT.Deployment
 			Uninstall.Target = ExpandRuntimeVariable(Uninstall.Target);
 			Uninstall.Arguments = ExpandRuntimeVariable(Uninstall.Arguments);
 			ExpandRuntimeVariablesInObject(Variables);
+		}
 
+		private static bool TryGetParameterValue<T>(IReadOnlyDictionary<string, object> parameters, string parameterName, out T? parameterValue)
+		{
+			if (parameters.TryGetValue(parameterName, out var objValue) && objValue is T typedValue)
+			{
+				parameterValue = typedValue;
+				return true;
+
+			}
+			parameterValue = default;
+			return false;
 		}
 
 		private NxtPackageMetadata GetPackageMetadata(NxtPackageConfigurationModel config, DirectoryInfo packageRootDir, bool appendVersion)
