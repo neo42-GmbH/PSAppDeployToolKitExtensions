@@ -22,9 +22,6 @@
 				return
 			}
 
-			# Hijack the session state. Only available on 4.2
-			$adtSession.NXT.DeployAppScriptSessionState = $PSCmdlet.SessionState.PSVariable.GetValue('SessionState')
-
 			# Make sure to inform about unsigned scripts
 			if ($adtSession.NXT.DeploymentType.IsMachinePart -and
 				(Get-AuthenticodeSignature -FilePath $adtSession.NXT.DeployAppScript.FullName).Status -ne [System.Management.Automation.SignatureStatus]::Valid
