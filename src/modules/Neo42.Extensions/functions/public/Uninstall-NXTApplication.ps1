@@ -467,12 +467,19 @@
 				}
 			}
 
+			[PSADT.Module.DeploymentStatus]$resultStatus = [PSADT.Module.DeploymentStatus]::Complete
 			if (-not $IgnoreExitCodes) {
-				[PSADT.Module.DeploymentStatus]$status = Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -PassThru
-				if ($ExitOnProcessFailure -and $status -ge [PSADT.Module.DeploymentStatus]::FastRetry) {
+				[PSADT.Module.DeploymentStatus]$resultStatus = Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -PassThru
+				if ($ExitOnProcessFailure -and $resultStatus -eq [PSADT.Module.DeploymentStatus]::Error) {
 					Write-ADTLogEntry -Severity Error -Message "The uninstallation failed with exit code [$($result.ExitCode)]. Closing the session as requested by -ExitOnProcessFailure."
 					Close-ADTSession
 				}
+			}
+
+			# At this point it does not make sense to wait. Return the result early.
+			if ($resultStatus -eq [PSADT.Module.DeploymentStatus]::Error) {
+				Write-ADTLogEntry -DebugMessage -Severity Warning -Message 'The uninstallation failed. Skipping awaiters and validation.'
+				return $result
 			}
 
 			Wait-NXTDeploymentAwaiter -Awaiter $waits
