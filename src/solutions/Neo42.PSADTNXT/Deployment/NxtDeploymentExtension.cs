@@ -30,7 +30,7 @@ namespace PSADTNXT.Deployment
 
 		[Hidden]
 		[Obsolete("Exposed in PSADT 4.2 by default.")]
-		public SessionState? DeployAppScriptSessionState { get; set; }
+		public SessionState? DeployAppScriptSessionState { get; }
 
 		[Hidden]
 		public FileInfo DeployAppScript { get; }
