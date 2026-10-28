@@ -98,7 +98,13 @@
 
 			if ($ADTSession.GetDeploymentStatus() -le $resolvedStatus) {
 				if ($ADTSession.GetDeploymentStatus() -ne $resolvedStatus) {
-					Write-ADTLogEntry -Message "Deployment status updated from [$($ADTSession.GetDeploymentStatus())] to [$resolvedStatus]."
+					[PSADT.Module.LogSeverity]$severity = switch ($resolvedStatus) {
+						([PSADT.Module.DeploymentStatus]::Error) { [PSADT.Module.LogSeverity]::Error }
+						([PSADT.Module.DeploymentStatus]::RestartRequired) { [PSADT.Module.LogSeverity]::Warning }
+						([PSADT.Module.DeploymentStatus]::FastRetry) { [PSADT.Module.LogSeverity]::Warning }
+						default { [PSADT.Module.LogSeverity]::Info }
+					}
+					Write-ADTLogEntry -Severity $severity -Message "Deployment status updated from [$($ADTSession.GetDeploymentStatus())] to [$resolvedStatus] due to exit code [$ExitCode]."
 				}
 				$ADTSession.SetExitCode($resolvedExitCode)
 			}
