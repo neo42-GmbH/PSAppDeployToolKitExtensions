@@ -467,11 +467,16 @@
 				}
 			}
 
-			if (-not $IgnoreExitCodes) {
-				[PSADT.Module.DeploymentStatus]$status = Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -PassThru
-				if ($ExitOnProcessFailure -and $status -ge [PSADT.Module.DeploymentStatus]::FastRetry) {
+			if (-not $IgnoreExitCodes -and
+				(Update-NXTDeploymentStatus -ExitCode $result.ExitCode -SuccessExitCodes $SuccessExitCodes -RebootExitCodes $RebootExitCodes -PassThru) -eq [PSADT.Module.DeploymentStatus]::Error
+			) {
+				if ($ExitOnProcessFailure) {
 					Write-ADTLogEntry -Severity Error -Message "The uninstallation failed with exit code [$($result.ExitCode)]. Closing the session as requested by -ExitOnProcessFailure."
 					Close-ADTSession
+				}
+				else {
+					Write-ADTLogEntry -DebugMessage -Severity Warning -Message 'The uninstallation failed. Skipping awaiters and validation.'
+					return $result
 				}
 			}
 
