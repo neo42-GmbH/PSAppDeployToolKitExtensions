@@ -25,6 +25,24 @@
 			}
 		},
 		{
+			"label": "Copy Template",
+			"type": "shell",
+			"hide": true,
+			"command": "Copy-Item -Recurse -Path '${workspaceFolder}${/}template${/}*' -Destination '${workspaceFolder}${/}build' -ErrorAction Ignore; exit 0",
+			"group": "build",
+			"promptOnClose": false,
+			"presentation": {
+				"panel": "dedicated",
+				"focus": false,
+				"reveal": "silent",
+				"showReuseMessage": false,
+				"clear": true
+			},
+			"runOptions": {
+				"instanceLimit": 1
+			},
+		},
+		{
 			"label": "Generate Documentation",
 			"type": "shell",
 			"hide": true,
@@ -206,6 +224,7 @@
 				"clear": true
 			},
 			"dependsOn": [
+				"Copy Template",
 				"Export Module",
 				"Compile Library"
 			],
