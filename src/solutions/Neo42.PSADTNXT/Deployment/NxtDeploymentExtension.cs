@@ -87,6 +87,10 @@ namespace PSADTNXT.Deployment
 		public bool DeploymentInvoked { get; set; }
 
 		[Hidden]
+		[Obsolete("Feature is implemented in 4.2.0")]
+		public bool ExitWithMsiCodes { get; set; }
+
+		[Hidden]
 		public bool IsCached { get; set; }
 
 		public NxtIniDocument SetupCfg { get; }
@@ -106,6 +110,9 @@ namespace PSADTNXT.Deployment
 			DeploymentType = parameters["NxtDeploymentType"] is NxtDeploymentType nxtDeploymentType ? nxtDeploymentType : _session.DeploymentType;
 			DeploymentSystem = parameters["DeploymentSystem"] as string ?? "Unknown";
 			DeployAppScript = parameters["DeployAppScriptPath"] is string scriptPath ? new(scriptPath) : throw new ArgumentException("DeployAppScriptPath parameter is required.");
+#pragma warning disable CS0618
+			ExitWithMsiCodes = parameters["ExitWithMsiCodes"] is SwitchParameter exitWithMsiCodesSwitch && exitWithMsiCodesSwitch.ToBool();
+#pragma warning restore CS0618
 
 			var packageConfig = parameters["PackageConfig"] is NxtPackageConfigurationModel config ? config : throw new ArgumentException("PackageConfig parameter is required and must be of type NxtPackageConfigurationModel.");
 			var nxtConfig = ModuleDatabase.GetConfig()["NXT"] as Hashtable;
