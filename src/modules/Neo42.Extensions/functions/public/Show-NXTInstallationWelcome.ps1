@@ -347,6 +347,7 @@
 			# Start the legacy UI. The script writes its output as UTF-8, so it has to be read as such.
 			[System.String]$argumentList = ConvertTo-NXTPsBinaryArgument -File "$($MyInvocation.MyCommand.Module.ModuleBase)\Scripts\CustomAppDeployToolkitUi.ps1" -Arguments $showInstallationWelcome -UseLastExitCode
 			[System.Text.Encoding]$outputEncoding = [System.Text.UTF8Encoding]::new($false)
+			[System.TimeSpan]$legacyProcessTimeout = $defaultTimeout.Add([System.TimeSpan]::FromMinutes(1))
 			if ($adtEnvironment.SessionZero -or $adtEnvironment.IsServiceAccount -or ($adtEnvironment.IsAdmin -and -not $adtEnvironment.IsProcessUserInteractive)) {
 				Write-ADTLogEntry -Message 'Process is running as system, service or non interactive user. Using session helper to spawn in all sessions.' -DebugMessage
 				if ([System.Int32[]]$sessionIds = Get-ADTLoggedOnUser | & { process { if ($_.IsActiveUserSession) { $_.SessionId } } }) {
@@ -354,7 +355,7 @@
 						(Get-ADTPowerShellProcessPath),
 						$argumentList,
 						$sessionIds,
-						$defaultTimeout.Add([System.TimeSpan]::FromMinutes(1)),
+						$legacyProcessTimeout,
 						$outputEncoding
 					)
 				}
@@ -365,9 +366,7 @@
 			}
 			elseif ($adtEnvironment.IsProcessUserInteractive) {
 				Write-ADTLogEntry -Message 'Process is not running in session zero, as service or as non interative user. Assuming we run as user.' -DebugMessage
-				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -StreamEncoding $outputEncoding -PassThru `
-					-SuccessExitCodes ([System.Enum]::GetValues([PSADTNXT.UI.LegacyWelcomeWindowCodes])).value__ `
-					-Timeout ($defaultTimeout.Add([System.TimeSpan]::FromMinutes(1)))
+				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -StreamEncoding $outputEncoding -PassThru -IgnoreExitCodes '*' -Timeout $legacyProcessTimeout
 			}
 			else {
 				Write-ADTLogEntry -Severity Error -Message 'Could not find suitable user to display UI to. Assuming continue option.'
