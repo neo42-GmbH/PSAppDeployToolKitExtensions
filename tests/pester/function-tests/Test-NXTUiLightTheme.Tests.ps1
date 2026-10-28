@@ -28,7 +28,8 @@ Describe 'Test-NXTUiLightTheme' {
 		}
 	}
 
-	Context 'When using current user identity (default value)' {
+	# Current user could have an already personalized dark mode enabled so the test would fail in this case
+	Context 'When using current user identity (default value)' -Skip {
 		It 'Should be true using no parameter' {
 			Test-NXTUiLightTheme | Should -BeTrue
 		}
