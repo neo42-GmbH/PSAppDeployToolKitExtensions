@@ -29,7 +29,7 @@ namespace PSADTNXT.Deployment
 
 		[Hidden]
 		[Obsolete("Exposed in PSADT 4.2 by default.")]
-		public SessionState? DeployAppScriptSessionState { get; set; }
+		public SessionState DeployAppScriptSessionState { get; }
 
 		[Hidden]
 		public FileInfo DeployAppScript { get; }
@@ -111,6 +111,7 @@ namespace PSADTNXT.Deployment
 			DeploymentSystem = TryGetParameterValue<string>(parameters, "DeploymentSystem", out var deploymentSystem) ? deploymentSystem! : "Unknown";
 			DeployAppScript = TryGetParameterValue<string>(parameters, "DeployAppScriptPath", out var scriptPath) ? new(scriptPath!) : throw new ArgumentException("DeployAppScriptPath parameter is required.");
 #pragma warning disable CS0618
+			DeployAppScriptSessionState = TryGetParameterValue<SessionState>(parameters, "DeployAppScriptSessionState", out var sessionState) ? sessionState! : throw new ArgumentException("DeployAppScriptSessionState parameter is required.");
 			ExitWithMsiCodes = TryGetParameterValue<SwitchParameter>(parameters, "ExitWithMsiCodes", out var exitWithMsiCodesSwitch) && exitWithMsiCodesSwitch!.ToBool();
 #pragma warning restore CS0618
 
