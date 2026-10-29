@@ -52,6 +52,15 @@
 				}
 			}
 
+			# Apply ExitWithMsiCodes. TODO: Drop on 4.2.0
+			if ($adtSession.NXT.ExitWithMsiCodes) {
+				Write-ADTLogEntry -Message 'Updating session exit codes in order to match MSI codes.'
+				switch ($adtSession.GetDeploymentStatus()) {
+					([PSADT.Module.DeploymentStatus]::RestartRequired) { $adtSession.SetExitCode(3010) }
+					([PSADT.Module.DeploymentStatus]::Complete) { $adtSession.SetExitCode(0) }
+				}
+			}
+
 			# Register the package state here in order to cache normal exits
 			if ($adtSession.NXT.DeploymentType.IsMachinePart) { Register-NXTPackage -ADTSession $adtSession }
 

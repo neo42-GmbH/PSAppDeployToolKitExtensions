@@ -23,15 +23,12 @@
 					[System.Enum]::TryParse($packageRequirements[$dependencyGuidString].ToString(), $true, [ref]$dependencyState)
 				) {
 					$PSCmdlet.WriteObject(
-						[PSADTNXT.Deployment.NxtRequirement]@{
-							Criteria     = [PSADTNXT.Application.NxtApplicationCriteria]@{
-								Store      = [PSADTNXT.Application.ApplicationStore]::Package
-								Identifier = $dependencyGuid.ToString('B').ToUpper()
-							}
-							DesiredState = $dependencyState
-							OnConflict   = [PSADTNXT.Deployment.RequirementConflictAction]::Fail
-							ErrorMessage = "Incompatible package '$($dependencyGuid.ToString('B').ToUpper())' is already installed. Please uninstall it before proceeding with this deployment."
-						}
+						[PSADTNXT.Deployment.NxtRequirement]::new(
+							[PSADTNXT.Application.NxtApplicationCriteria]::new([PSADTNXT.Application.ApplicationStore]::Package, $dependencyGuid.ToString('B').ToUpper()),
+							$dependencyState,
+							[PSADTNXT.Deployment.RequirementConflictAction]::Fail,
+							"Incompatible package '$($dependencyGuid.ToString('B').ToUpper())' is already installed. Please uninstall it before proceeding with this deployment."
+						)
 					)
 				}
 			}
