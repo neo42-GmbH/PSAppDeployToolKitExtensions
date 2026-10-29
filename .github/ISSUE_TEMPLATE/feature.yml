@@ -8,9 +8,9 @@ body:
     attributes:
       label: Confirmation
       options:
-        - label: I believe my feature request to be for the benefit of a larger audience and not serve a niche case for me.
+        - label: The feature serves a broader use case and does not focus on edge cases.
           required: true
-        - label: I checked that my feature is new and that it has not been implemented in a newer release.
+        - label: I checked that my feature has not already been requested and has not been implemented in a newer release.
           required: true
         - label: My feature is not related to the behaviour of a specific package or product provided by neo42.
           required: true

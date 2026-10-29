@@ -8,9 +8,9 @@ body:
     attributes:
       label: Confirmation
       options:
-        - label: I made sure that my issue is not caused by policies, permissions or any third party software such as AV scanners.
+        - label: I made sure that my issue is not caused by policies, permissions or any security software.
           required: true
-        - label: I checked that my issue is new and that it has not been resolved in a newer release.
+        - label: I checked that my issue has not been reported or that it has not been resolved in a newer release.
           required: true
         - label: My issue is not related to the behaviour of a specific package or product provided by neo42.
           required: true
