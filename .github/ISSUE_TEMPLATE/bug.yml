@@ -1,0 +1,57 @@
+﻿name: Bug Report
+description: Having issues with functions from the Extensions? Write a bug report!
+type: Bug
+labels: [Triage]
+body:
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmation
+      options:
+        - label: I made sure that my issue is not caused by policies, permissions or any third party software such as AV scanners.
+          required: true
+        - label: I checked that my issue is new and that it has not been resolved in a newer release.
+          required: true
+        - label: My issue is not related to the behaviour of a specific package or product provided by neo42.
+          required: true
+        - label: I understand that issues created in this repository are not subject to any support agreements made with neo42.
+          required: true
+  - type: markdown
+    attributes:
+      value: |
+        <sub>You need help with neo42 products? Please consider contacting us at [neosupport@neo42.de](mailto:neosupport@neo42.de).</sub>
+        <sub>Unsure if you are actually facing an issue? Try checking out [our docs](tree/production/docs/).</sub>
+  - type: input
+    id: version
+    attributes:
+      label: Release
+      placeholder: 1970.1.1.0 - What version of the toolkit did you encounter your issue with?
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: Description
+      placeholder: Please describe your issue in detail. Especially helpful are reproductive steps, the desired behaviour or any insights you might have already aquired.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      placeholder: Please copy and paste any relevant log output here.
+      render: shell
+  - type: textarea
+    id: environment-data
+    attributes:
+      label: Environment data
+      description: |
+        The following script will gather environment details that will help with triage and investigation of the issue.<br/>Please run the script in the PowerShell session where you ran into the issue, and paste the verbatim output below.
+        ```powershell
+        Get-ComputerInfo OSDisplayVersion,OSArchitecture,WindowsVersion,WindowsProductName,WindowsBuildLabEx,OsLanguage,OsMuiLanguages,KeyboardLayout,TimeZone,HyperVisorPresent,CsPartOfDomain,CsPCSystemType
+        ```
+      render: shell
+      placeholder: |
+        OsName               : XXX
+        OSDisplayVersion     : XXX
+        [...]
+    validations:
+      required: true
