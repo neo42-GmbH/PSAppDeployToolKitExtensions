@@ -138,6 +138,7 @@ namespace PSADTNXT.ProcessManagement
 						StartupInfo = new STARTUPINFO
 						{
 							cb = Marshal.SizeOf<STARTUPINFOEX>(),
+							lpDesktop = @"winsta0\default",
 							dwFlags = STARTUPINFO.Flags.STARTF_USESTDHANDLES,
 							hStdInput = IntPtr.Zero,
 							hStdOutput = hWriteOut.DangerousGetHandle(),
