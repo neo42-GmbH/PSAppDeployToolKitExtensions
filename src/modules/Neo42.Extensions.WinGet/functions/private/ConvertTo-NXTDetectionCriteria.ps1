@@ -28,7 +28,7 @@
 	}
 	process {
 		try {
-			[PSADTNXT.Application.NxtApplicationCriteria]$criteria = [PSADTNXT.Application.NxtApplicationCriteria]@{
+			[System.Collections.Hashtable]$criteria = @{
 				Store = ConvertTo-NXTApplicationStore -DeploymentMethod $adtSession.NXT.Install.Method -Architecture $adtSession.AppArch
 			}
 
@@ -43,9 +43,10 @@
 					elseif (-not [System.String]::IsNullOrWhiteSpace($entry.ProductCode)) { $entryFilters.Add("`$_.ProductCode -eq '$($entry.ProductCode)'") }
 
 					if (-not [System.String]::IsNullOrWhiteSpace($entry.DisplayName)) { $entryFilters.Add("`$_.DisplayName -eq '$($entry.DisplayName)'") }
+					if (-not [System.String]::IsNullOrWhiteSpace($entry.DisplayVersion)) { $entryFilters.Add("`$_.DisplayVersion -eq '$($entry.DisplayVersion)'") }
 					if (-not [System.String]::IsNullOrWhiteSpace($entry.Publisher)) { $entryFilters.Add("`$_.Publisher -eq '$($entry.Publisher)'") }
-					if (-not [System.String]::IsNullOrWhiteSpace($entry.DeploymentMethod) -and
-						-not [System.String]::IsNullOrWhiteSpace(([System.String]$methodFilter = Get-NXTMethodFilter -DeploymentMethod $entry.DeploymentMethod -PackageFamilyName $entry.PackageFamilyName))
+					if (-not [System.String]::IsNullOrWhiteSpace($entry.InstallerType) -and
+						-not [System.String]::IsNullOrWhiteSpace(([System.String]$methodFilter = Get-NXTMethodFilter -DeploymentMethod $entry.InstallertType -PackageFamilyName $Model.PackageFamilyName))
 					) {
 						$entryFilters.Add($methodFilter)
 					}
@@ -54,7 +55,7 @@
 				}
 			}
 			elseif ($DeploymentMethod -eq [PSADTNXT.Deployment.DeploymentMethod]::AppX) {
-				$criteria.Identifier = if (-not [System.String]::IsNullOrWhiteSpace($Model.PackageFamilyName)) {
+				$criteria['Identifier'] = if (-not [System.String]::IsNullOrWhiteSpace($Model.PackageFamilyName)) {
 					$Model.PackageFamilyName
 				}
 				else {
@@ -69,7 +70,7 @@
 				}
 			}
 			elseif (-not [System.String]::IsNullOrWhiteSpace($Model.ProductCode)) {
-				$criteria.Identifier = $Model.ProductCode
+				$criteria['Identifier'] = $Model.ProductCode
 			}
 			elseif ($DeploymentMethod -eq [PSADTNXT.Deployment.DeploymentMethod]::MSI -and
 				$Installer.Exists -and
@@ -92,10 +93,10 @@
 			}
 
 			if ($filters) {
-				$criteria.Filter = [System.Management.Automation.ScriptBlock]::Create([System.String]::Join(' -or ', $filters))
+				$criteria['Filter'] = [System.Management.Automation.ScriptBlock]::Create([System.String]::Join(' -or ', $filters))
 			}
 
-			return $criteria
+			return [PSADTNXT.Application.NxtApplicationCriteria]::FromHashtable($criteria)
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

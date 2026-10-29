@@ -4,12 +4,14 @@
 	{
 		public string? DisplayName { get; set; }
 
+		public string? DisplayVersion { get; set; }
+
 		public string? Publisher { get; set; }
 
 		public string? ProductCode { get; set; }
 
 		public string? UpgradeCode { get; set; }
 
-		public string? DeploymentMethod { get; set; }
+		public string? InstallerType { get; set; }
 	}
 }
