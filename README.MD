@@ -1,4 +1,4 @@
-﻿![PSAppDeployToolkit](./assets/neo42PSADTExt_GitHub_Banner.png)
+﻿![PSAppDeployToolkit](./.assets/neo42PSADTExt_GitHub_Banner.svg)
 
 ## 👋 Introduction
 
@@ -7,7 +7,7 @@ The neo42 PSAppDeployToolkit Extensions integrate with and extend a globally res
 🧩 neo42 GmbH makes use of the extensions in this repository to provide multiple services:
 - [Application Package Depot](https://neo42.de/application-package-depot) - Select and automate from a large amount of packaged software
 - [Package Recorder PRO](https://neo42.de/produkte/package-recorder) - Advanced and easy-to-use packaging tool
-- [Provisioning of custom software packages](https://neo42.de/dienstleistungen/softwarepaketierung) - Software packages tailored to your needs
+- [Providing of custom software packages](https://neo42.de/dienstleistungen/softwarepaketierung) - Software packages tailored to your needs
 
 🔓 By providing public access, we hope that others will benefit from it and help to improve this solution.
 
