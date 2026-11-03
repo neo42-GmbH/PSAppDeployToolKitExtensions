@@ -7,7 +7,7 @@ The neo42 PSAppDeployToolkit Extensions integrate with and extend a globally res
 🧩 neo42 GmbH makes use of the extensions in this repository to provide multiple services:
 - [Application Package Depot](https://neo42.de/application-package-depot) - Select and automate from a large amount of packaged software
 - [Package Recorder PRO](https://neo42.de/produkte/package-recorder) - Advanced and easy-to-use packaging tool
-- [Providing of custom software packages](https://neo42.de/dienstleistungen/softwarepaketierung) - Software packages tailored to your needs
+- [Software Packaging](https://neo42.de/dienstleistungen/softwarepaketierung) - Software packages tailored to your needs
 
 🔓 By providing public access, we hope that others will benefit from it and help to improve this solution.
 
@@ -57,21 +57,21 @@ _Apart from these installer types, any other installer can be handled via the pr
 
 ## 🛠️ Build instructions
 
-_Note: We always recommend obtaining the latest production release from the [releases page](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/latest)._
+> [!NOTE]
+> _We always recommend obtaining the latest production release from the [releases page](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/latest)._
 
 ### 🔎 Requirements
 
 * PSAppDeployToolkit 4.1.8 module
 * PowerShell 5.1 and PowerShell 7.6 or later
-* .NET Framework 4.7.2 SDK
-* .NET 8 SDK
+* .NET 8 SDK or later
 
 ### 🌤️ Recommended Build Environment
 
 * [Requirements](#-requirements) installed
 * [Visual Studio Code](#-links) - For predefined development environment
 * [PowerShell Core](#-links) - For cross edition tests
-* PowerShell modules installed (for both PowerShell editions):
+* PowerShell modules (for both PowerShell editions):
   * [PSScriptAnalyzer](#-links) `>= 1.25` - For code analysis and the migration tool
   * [Pester](#-links) `>= 5.6` - For testing the project
 
@@ -98,6 +98,6 @@ This code is distributed WITHOUT ANY WARRANTY; without even the implied warranty
 
 * [PSAppDeployToolkit Project](https://github.com/PSAppDeployToolkit/PSAppDeployToolkit)
 * [Visual Studio Code](https://code.visualstudio.com/)
-* [PowerShell Core](https://learn.microsoft.com/de-de/powershell/module/microsoft.powershell.core)
-* [PSScriptAnalyzer Module](https://learn.microsoft.com/de-de/powershell/module/psscriptanalyzer)
+* [PowerShell Core](https://learn.microsoft.com/powershell/module/microsoft.powershell.core)
+* [PSScriptAnalyzer Module](https://learn.microsoft.com/powershell/module/psscriptanalyzer)
 * [Pester Module](https://pester.dev/)
