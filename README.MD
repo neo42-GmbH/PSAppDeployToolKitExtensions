@@ -1,4 +1,4 @@
-﻿![PSAppDeployToolkit](./.assets/neo42PSADTExt_GitHub_Banner.svg)
+﻿![PSAppDeployToolkit](./.assets/neo42PSADTExt_GitHub_Banner.png)
 
 ## 👋 Introduction
 
