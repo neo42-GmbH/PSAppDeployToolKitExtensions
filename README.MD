@@ -101,14 +101,14 @@ All neo42 modules and `DeployNxtApplication.exe` are code-signed.
 The latest release can be downloaded from the [releases page](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/latest).
 
 ## 📚 Documentation
-For detailed documentation of the neo42 PSADT Extensions, please check our docs files:
+For detailed documentation of the neo42 PSADT Extensions, please check these files:
 * [Changelog](./docs/PSAppDeployToolkit.Neo42.Extensions.Changelog.md)
 * [V4 Migration guide](./docs/PSAppDeployToolkit.Neo42.Extensions.V4Migration.md)
 * [Function reference](./docs/PSAppDeployToolkit.Neo42.Extensions.Functions.md)
 * [Variable reference](./docs/PSAppDeployToolkit.Neo42.Extensions.Variables.md)
 * [Legacy package config (JSON) reference](./docs/neo42PackageConfigJson.md)
 
-For information about the PSADT, on which these extensions are based, please visit the [PSADT website or project page](#-links).
+For information about the PSADT, the base of these extensions, please visit the [PSADT website or project page](#-links).
 
 ## 📜 License
 
@@ -126,4 +126,5 @@ You can find a [copy of the license](./LICENSE) at the root of this repository.
 * [PSScriptAnalyzer Module](https://learn.microsoft.com/powershell/module/psscriptanalyzer)
 * [Pester Module](https://pester.dev)
 * [PowerShell Core](https://learn.microsoft.com/powershell/)
+* [.NET SDK](https://dotnet.microsoft.com/download)
 * [Visual Studio Code](https://code.visualstudio.com)
