@@ -539,7 +539,7 @@ function Measure-NXTDeprecatedFunction {
 				)
 			}
 			'Exit-Script'                            = @{
-				NewFunction = 'Exit-ADTScript'
+				NewFunction = 'Close-ADTSession'
 			}
 			'Invoke-HKCURegistrySettingsForAllUsers' = @{
 				NewFunction         = 'Invoke-ADTAllUsersRegistryAction'
