@@ -67,7 +67,7 @@ if ($RequiredModules) {
 [System.Management.Automation.FunctionInfo[]]$publicFunctions = $moduleInfo.ExportedFunctions.Values | Sort-Object -Property Name
 
 # Generate the function documentation
-[System.Text.StringBuilder]$functionMd = [System.Text.StringBuilder]::new("% Functions in $($moduleInfo.Name) module")
+[System.Text.StringBuilder]$functionMd = [System.Text.StringBuilder]::new("# Functions in $($moduleInfo.Name) module")
 $null = $functionMd.AppendLine()
 $null = $functionMd.AppendLine()
 foreach ($functionInfo in $publicFunctions) {
