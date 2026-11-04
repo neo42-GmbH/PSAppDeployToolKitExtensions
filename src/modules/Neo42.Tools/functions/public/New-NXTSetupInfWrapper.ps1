@@ -18,17 +18,19 @@
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Not implemented')]
 	[CmdletBinding()]
 	param (
+		[ValidateScript({ $_.Exists -and $_.GetFiles('Deploy-Application.ps1') })]
 		[System.IO.DirectoryInfo]
 		$Package = $PWD.Path,
-		[ValidateScript({ $_.Exists -and $_.Extension -eq '.zip'})]
+		[ValidateScript({ $_.Exists -and $_.Extension -eq '.zip' })]
 		[System.IO.FileInfo]
 		$LocalWrapperPath,
 		[System.Management.Automation.SwitchParameter]
 		$Move,
 		[System.IO.DirectoryInfo]
 		$Output = "$($Package.Parent.FullName)\$($Package.BaseName)_SetupInf",
+		[ValidateScript({ $_ -ge [System.Version]'3.0' })]
 		[System.Version]
-		$FrameworkVersion = '4.0'
+		$FrameworkVersion = $(if ($ver = Get-Content -Raw -LiteralPath $Package.Fullname -ErrorAction Ignore | ConvertFrom-Json | Select-Object -ExpandProperty PackageFramework) { $ver } else { '3.0' })
 	)
 
 	Set-StrictMode -Version 3.0
@@ -43,13 +45,6 @@
 	[System.String]$infPath = "$($Output.FullName)\neoInstall\Setup.inf"
 	[System.String]$expandDirectory = [System.IO.Path]::Combine($Output.FullName, 'tmp')
 	[System.String]$versionDirectory = [System.IO.Path]::Combine($expandDirectory, $FrameworkVersion.ToString())
-
-	## Test for some basic requirements
-	'Deploy-Application.ps1', 'neo42PackageConfig.json', 'Setup.ico' | ForEach-Object {
-		if (-not (Test-Path (Join-Path $($Package.FullName) $_))) {
-			Write-Error "[$_] does not exist. This script is designed to work with proper neo42 APD packages. Abort!"
-		}
-	}
 
 	## Create the PSADT folder
 	$null = New-Item -ItemType Directory -Path $adtSubFolder -Force
