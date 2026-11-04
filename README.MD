@@ -33,12 +33,12 @@ In addition to the neo42PackageConfig.json file, which is very easy to change pr
 
 __🪄 The neo42 Extensions offer dozens of new functions__
 
-* They simplify interacting with complex data types such as XML
+* They simplify interacting with complex data types such as XML.
 * Allow you to access data that is not supported by default in PowerShell 5.1 like INI, JsonC and others.
-* Quickly access device information like process trees or drive information
+* Quickly access device information like process trees or drive information.
 * Make interacting with system security-related functions easy. For example, setting ACLs in simple but powerful functions.
-* They extend PSADT functions with more functionality or altered defaults that are compatible with neo42 packages
-* Make use of observer functions that handle waiting for processes, files, registry keys and others easy
+* They extend PSADT functions with more functionality or altered defaults that are compatible with neo42 packages.
+* Make use of observer functions that handle waiting for processes, files, registry keys and others easy.
 
 _All functions are tested to work in different deployment system contexts such as Empirum, SCCM, Intune or Workspace One._
 
