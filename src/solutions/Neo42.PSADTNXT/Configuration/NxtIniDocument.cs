@@ -242,27 +242,31 @@ namespace PSADTNXT.Configuration
 		{
 			foreach (var section in other)
 			{
+				var sectionComment = other.GetComment(section.Key);
 				if (_sections[section.Key] is SectionContainer sectionContainer)
 				{
+					if (overwrite)
+					{
+						sectionContainer.Comment = sectionComment;
+					}
+
 					foreach (var setting in section.Value)
 					{
+						var settingComment = section.Value.GetComment(setting.Key);
 						if (sectionContainer.Section.ContainsKey(setting.Key) && overwrite)
 						{
 							sectionContainer.Section[setting.Key] = setting.Value;
+							sectionContainer.Section.SetComment(setting.Key, settingComment);
 						}
 						else if (!sectionContainer.Section.ContainsKey(setting.Key))
 						{
-							sectionContainer.Section.Add(setting.Key, setting.Value);
+							sectionContainer.Section.Add(setting.Key, setting.Value, settingComment);
 						}
 					}
 				}
 				else
 				{
-					_sections.Add(section.Key, new SectionContainer
-					{
-						Section = section.Value,
-						Comment = string.Empty
-					});
+					Add(section.Key, (NxtIniSection)section.Value.Clone(), sectionComment);
 				}
 			}
 		}
