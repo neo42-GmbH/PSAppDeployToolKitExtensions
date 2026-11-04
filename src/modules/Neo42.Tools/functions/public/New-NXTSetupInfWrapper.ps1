@@ -39,12 +39,12 @@
 
 	## Define basic variables
 	[System.String]$adtSubFolder = "$($Output.FullName)\PSADT"
-	[System.Uri]$wrapperUrl = 'https://portal.neo42.de/api/v2/app/SetupInfWrapper/Latest'
+	[System.Uri]$wrapperUrl = 'https://portal.neo42.de/api/v2/sp/SetupInfWrapper/Latest'
 	[System.String]$wrapperPath = "$($Output.FullName)\SetupInfWrapper.zip"
 	[System.String]$jsonPath = "$adtSubFolder\neo42PackageConfig.json"
 	[System.String]$infPath = "$($Output.FullName)\neoInstall\Setup.inf"
-	[System.String]$expandDirectory = [System.IO.Path]::Combine($Output.FullName, 'tmp')
-	[System.String]$versionDirectory = [System.IO.Path]::Combine($expandDirectory, $FrameworkVersion.ToString())
+	[System.String]$expandDirectory = "$($Output.FullName)\tmp"
+	[System.String]$versionDirectory = "$expandDirectory\$FrameworkVersion"
 
 	## Create the PSADT folder
 	$null = New-Item -ItemType Directory -Path $adtSubFolder -Force
