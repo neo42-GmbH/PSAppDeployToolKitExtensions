@@ -63,17 +63,17 @@ _Apart from these installer types, any other installer can be handled via the pr
 ### 🔎 Requirements
 
 * PSAppDeployToolkit 4.1.8 module
-* PowerShell 5.1 and PowerShell 7.6 or later
+* Windows PowerShell (PowerShell 5.1)
 * .NET 8 SDK or later
 
 ### 🌤️ Recommended Build Environment
 
 * [Requirements](#-requirements) installed
 * [Visual Studio Code](#-links) - For predefined development environment
-* [PowerShell Core](#-links) - For cross edition tests
+* [PowerShell Core](#-links) (PowerShell 7.6 or later) - For cross edition tests
 * PowerShell modules (for both PowerShell editions):
-  * [PSScriptAnalyzer](#-links) `>= 1.25` - For code analysis and the migration tool
-  * [Pester](#-links) `>= 5.6` - For testing the project
+  * [PSScriptAnalyzer](#-links) 1.25 or later - For code analysis and the migration tool
+  * [Pester](#-links) 5.6 or later - For testing the project
 
 ### 📋 Steps
 
@@ -85,19 +85,45 @@ _Apart from these installer types, any other installer can be handled via the pr
     2. Run `.tools\Export-Module.ps1`.
     3. Run `.tools\Invoke-Compile.ps1` or use the `dotnet publish` command for `src\solutions`.
 
+## 🧰 Release components
+
+| Asset                                                      | Content                                                                                                                                                                                                            |
+|:-----------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ADMX.zip`                                                 | ADMX/ADML templates for central configuration via GPO.                                                                                                                                                             |
+| `PSAppDeployToolkit.Neo42.Extensions.DeploymentSystem.zip` | Deployment-system-specific logic, such as Empirum. It loads automatically when it is placed in the package root.                                                                                                   |
+| `PSAppDeployToolkit.Neo42.Extensions.zip`                  | The core module on its own, for updating existing V4 packages.                                                                                                                                                     |
+| `PSAppDeployToolkit.Neo42.Tools.zip`                       | Packaging tools, including `Update-NXTPackage` to migrate V3 packages. It is not part of the package.                                                                                                              |
+| `Samples.zip`                                              | Sample package configs and an example extension module.                                                                                                                                                            |
+| `Template.zip`                                             | **Start here.** A ready-to-use package containing PSADT 4.1.8, the neo42 Extensions, the DeploymentSystem module, `Deploy-Application.ps1`, `DeployNxtApplication.exe`, `Setup.cfg` and a template package config. |
+
+All neo42 modules and `DeployNxtApplication.exe` are code-signed.
+
+The latest release can be downloaded from the [releases page](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/latest).
+
 ## 📚 Documentation
-For detailed documentation of the neo42 PSADT Extensions, visit our [neo42 PSADT Extensions Wiki](https://portal.neo42.de/Documentation/66d825612756cd61dea8ba8c).
+For detailed documentation of the neo42 PSADT Extensions, please check our docs files:
+* [Changelog](./docs/PSAppDeployToolkit.Neo42.Extensions.Changelog.md)
+* [V4 Migration guide](./docs/PSAppDeployToolkit.Neo42.Extensions.V4Migration.md)
+* [Function reference](./docs/PSAppDeployToolkit.Neo42.Extensions.Functions.md)
+* [Variable reference](./docs/PSAppDeployToolkit.Neo42.Extensions.Variables.md)
+* [Legacy package config (JSON) reference](./docs/neo42PackageConfigJson.md)
+
+For information about the PSADT, on which these extensions are based, please visit the [PSADT website or project page](#-links).
 
 ## 📜 License
 
-The content of this repository is licensed under the [GNU Lesser General Public License](https://www.gnu.org/licenses/licenses.html) version 3, or any later version. You can find a copy of the license at the root of this repository. You are free to use, alter and share the contents as you wish as long as it complies with the aforementioned license.
+The content of this repository is licensed under the [GNU Lesser General Public License](https://www.gnu.org/licenses/licenses.html) version 3, or any later version.
+You are free to use, alter and share the contents as you wish as long as it complies with the aforementioned license.
 
 This code is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
 
+You can find a [copy of the license](./LICENSE) at the root of this repository.
+
 ## 🔗 Links
 
+* [PSAppDeployToolkit Website](https://psappdeploytoolkit.com)
 * [PSAppDeployToolkit Project](https://github.com/PSAppDeployToolkit/PSAppDeployToolkit)
-* [Visual Studio Code](https://code.visualstudio.com/)
-* [PowerShell Core](https://learn.microsoft.com/powershell/module/microsoft.powershell.core)
 * [PSScriptAnalyzer Module](https://learn.microsoft.com/powershell/module/psscriptanalyzer)
-* [Pester Module](https://pester.dev/)
+* [Pester Module](https://pester.dev)
+* [PowerShell Core](https://learn.microsoft.com/powershell/module/microsoft.powershell.core)
+* [Visual Studio Code](https://code.visualstudio.com)
