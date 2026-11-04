@@ -18,17 +18,19 @@
 	[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Not implemented')]
 	[CmdletBinding()]
 	param (
+		[ValidateScript({ $_.Exists -and $_.GetFiles('Deploy-Application.ps1') })]
 		[System.IO.DirectoryInfo]
 		$Package = $PWD.Path,
-		[ValidateScript({ $_.Exists -and $_.Extension -eq '.zip'})]
+		[ValidateScript({ $_.Exists -and $_.Extension -eq '.zip' })]
 		[System.IO.FileInfo]
 		$LocalWrapperPath,
 		[System.Management.Automation.SwitchParameter]
 		$Move,
 		[System.IO.DirectoryInfo]
 		$Output = "$($Package.Parent.FullName)\$($Package.BaseName)_SetupInf",
+		[ValidateScript({ $_ -ge [System.Version]'3.0' })]
 		[System.Version]
-		$FrameworkVersion = '4.0'
+		$FrameworkVersion = $(if ($ver = Get-Content -Raw -LiteralPath "$($Package.FullName)\neo42PackageMetadata.json" -ErrorAction Ignore | ConvertFrom-Json | Select-Object -ExpandProperty PackageFramework) { $ver } else { '3.0' })
 	)
 
 	Set-StrictMode -Version 3.0
@@ -37,19 +39,12 @@
 
 	## Define basic variables
 	[System.String]$adtSubFolder = "$($Output.FullName)\PSADT"
-	[System.Uri]$wrapperUrl = 'https://portal.neo42.de/api/v2/app/SetupInfWrapper/Latest'
+	[System.Uri]$wrapperUrl = 'https://portal.neo42.de/api/v2/sp/SetupInfWrapper/Latest'
 	[System.String]$wrapperPath = "$($Output.FullName)\SetupInfWrapper.zip"
 	[System.String]$jsonPath = "$adtSubFolder\neo42PackageConfig.json"
 	[System.String]$infPath = "$($Output.FullName)\neoInstall\Setup.inf"
-	[System.String]$expandDirectory = [System.IO.Path]::Combine($Output.FullName, 'tmp')
-	[System.String]$versionDirectory = [System.IO.Path]::Combine($expandDirectory, $FrameworkVersion.ToString())
-
-	## Test for some basic requirements
-	'Deploy-Application.ps1', 'neo42PackageConfig.json', 'Setup.ico' | ForEach-Object {
-		if (-not (Test-Path (Join-Path $($Package.FullName) $_))) {
-			Write-Error "[$_] does not exist. This script is designed to work with proper neo42 APD packages. Abort!"
-		}
-	}
+	[System.String]$expandDirectory = "$($Output.FullName)\tmp"
+	[System.String]$versionDirectory = "$expandDirectory\$FrameworkVersion"
 
 	## Create the PSADT folder
 	$null = New-Item -ItemType Directory -Path $adtSubFolder -Force
@@ -90,7 +85,7 @@
 	## Extract the archive to the working directory
 	Write-Host 'Extract the wrapper to the working directory'
 	Expand-Archive -Path $wrapperPath -DestinationPath $expandDirectory -Force
-	Move-Item -Path "$versionDirectory\*" -Destination $Output.FullName
+	Copy-Item -Path "$versionDirectory\*" -Destination $Output.FullName -Recurse -Force
 	Remove-Item -Path $wrapperPath, $expandDirectory -Recurse
 
 	## Parse the json content
@@ -102,15 +97,21 @@
 	[System.String]$textContent = Get-Content -Path $infPath -Raw
 	foreach ($property in $jsonContent.PSObject.Properties) {
 		[System.String]$placeholderPattern = [System.Text.RegularExpressions.Regex]::Escape("!$($property.Name)!")
-		[System.String]$value = if ($property.TypeNameOfValue -eq 'System.Boolean') { $property.Value.ToInt32($null).ToString() } else { $property.Value.ToString() }
-		if ($property.Name -ieq 'AppArch' -and $value -ine 'x64') { $value = '*' }
+		[System.String]$value = if ($property.TypeNameOfValue -eq 'System.Boolean') { $property.Value.ToInt32($null).ToString() } else { "$($property.Value)" }
+		if ($property.Name -ieq 'AppArch' -and $value -ine 'x64') {
+			$value = '*'
+		}
+		if ($property.Name -ieq 'UserPartOnInstallation') {
+			$textContent = $textContent -replace $([System.Text.RegularExpressions.Regex]::Escape('!UserpartPara!')), $(if ($value -eq '1') { '/AW' } else { '' })
+		}
 		$textContent = $textContent -replace $placeholderPattern, $value
 	}
 
 	## Validate that all placeholders have been replaced
 	Write-Host 'Test if all placeholders have been replaced'
-	if ($textContent -match '![\w]+!') {
-		throw "Not all placeholders have been replaced. Remaining placeholders are: $Matches"
+	[System.String[]]$remainingPlaceholders = [System.Text.RegularExpressions.Regex]::Matches($textContent, '![\w]+!') | Select-Object -ExpandProperty 'Value' -Unique
+	if ($remainingPlaceholders) {
+		throw "Not all placeholders have been replaced. Remaining placeholders are: $($remainingPlaceholders -join ', ')"
 	}
 
 	# Write the new inf content to disk

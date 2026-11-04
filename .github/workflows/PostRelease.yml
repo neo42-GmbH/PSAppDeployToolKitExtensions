@@ -32,14 +32,28 @@ jobs:
               state: 'all'
             });
 
-            // Rename and close the milestone for the current release. Skipped if this run is repeated.
+            // Find the milestone for the current release. It is already renamed if this run is repeated.
             let milestone = milestones.find(m => m.title === tag);
             if (!milestone) {
               milestone = milestones.find(m => m.title === 'Next' && m.state === 'open');
               if (!milestone) {
                 throw new Error('Milestone not found');
               }
+            }
 
+            // Collect the issues before modifying the milestone, as the milestone filter may lag behind a rename/close.
+            // The issues endpoint also returns pull requests, which are skipped.
+            const issues = (
+              await github.paginate(github.rest.issues.listForRepo, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                milestone: milestone.number,
+                state: 'open'
+              })
+            ).filter(issue => !issue.pull_request);
+
+            // Rename and close the milestone for the current release
+            if (milestone.title !== tag) {
               ({ data: milestone } = await github.rest.issues.updateMilestone({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -60,12 +74,6 @@ jobs:
                 description: 'The next release'
               });
             }
-
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              milestone: milestone.number
-            });
 
             for (const issue of issues) {
               await github.rest.issues.createComment({
