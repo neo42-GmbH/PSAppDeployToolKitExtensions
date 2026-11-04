@@ -125,5 +125,5 @@ You can find a [copy of the license](./LICENSE) at the root of this repository.
 * [PSAppDeployToolkit Project](https://github.com/PSAppDeployToolkit/PSAppDeployToolkit)
 * [PSScriptAnalyzer Module](https://learn.microsoft.com/powershell/module/psscriptanalyzer)
 * [Pester Module](https://pester.dev)
-* [PowerShell Core](https://learn.microsoft.com/powershell/module/microsoft.powershell.core)
+* [PowerShell Core](https://learn.microsoft.com/powershell/)
 * [Visual Studio Code](https://code.visualstudio.com)
