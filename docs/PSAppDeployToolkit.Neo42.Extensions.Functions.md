@@ -1,4 +1,4 @@
-﻿% Functions in PSAppDeployToolkit.Neo42.Extensions module
+﻿# Functions in PSAppDeployToolkit.Neo42.Extensions module
 
 ## Add-NXTContent
 
