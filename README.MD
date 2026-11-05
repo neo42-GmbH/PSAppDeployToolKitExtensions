@@ -19,7 +19,7 @@ __🎚️ No code approach to writing new packages__
 
 Don't want to write new code for every simple package? Make use of our `Deploy-Application.ps1` and a well structured configuration file. The standardized installation sequence remains unchanged for each package!
 
-* `neo42PackageConfig.psd1` is the recommended format. It supports comments, signing and PowerShell expressions, follows the PSADT v4 configuration style and is validated when the package is loaded. New features, such as the `AppX`, `Copy` and `Burn` deployment methods or managed shortcuts, are only available in this format.
+* `neo42PackageConfig.psd1` is the recommended format. It supports comments, signing, PowerShell expressions, follows the PSADT v4 configuration style and is validated when the package is loaded. New features, such as the `AppX`, `Copy` and `Burn` deployment methods or managed shortcuts, are only available in this format.
 * `neo42PackageConfig.json` is the legacy format used by PSADT v3 packages. It is still supported and is translated into the new model at runtime, but it will be deprecated in a future release.
 
 _The [samples](./samples) for both formats, the [package config reference](./docs/neo42PackageConfigPsd1.md) and the [legacy package config reference](./docs/neo42PackageConfigJson.md) will help you write your first package in no time._
