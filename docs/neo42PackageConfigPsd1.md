@@ -332,7 +332,7 @@ The values are the same as for [Installation](#installation), except that `Reins
 
 | Value | Description |
 |:------|:------------|
-| `Target` 🔤 | If empty, the target is taken from the detected application: the product code for `MSI`, the package family for `AppX` and the path of the (quiet) uninstall string for all other methods. |
+| `Target` 🔤 | If empty, the target is taken from the detected application: the product code for `MSI`, the package family for `AppX` and the path of the (quiet) uninstall string for all other methods. For methods without [default arguments](#default-arguments), such as `Setup`, the arguments of the uninstall string are used as default arguments. |
 | `LogName` | Default: `<Target file name>.<timestamp>_Uninstall.log` |
 | `UserPart` | Run the user part after the uninstallation (hooks `CustomUninstallUserPartBegin` / `CustomUninstallUserPartEnd`). neo42 recommends not to use this unless necessary, as it leaves remnants on the system. |
 
@@ -367,7 +367,8 @@ If `Defaults` is `$true`, the default arguments of the method are used in front 
 | `BitRockInstaller` | `NXT.Deployment.BitRockInstaller.*` | `--mode unattended` | `--mode unattended` |
 | `Burn` | `NXT.Deployment.Burn.*` | `/quiet MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1` | `/quiet MSIRESTARTMANAGERCONTROL=Disable REBOOT=ReallySuppress ALLUSERS=1` |
 | `AppX` | `NXT.Deployment.AppX.*` | `/Region:all /SkipLicense` | – |
-| `Setup`, `Copy` | – | – | – |
+| `Setup` | – | – | Arguments of the (quiet) uninstall string of the detected application, if `Uninstallation.Target` is empty. |
+| `Copy` | – | – | – |
 
 > [!NOTE]
 > Arguments that a method requires to work (e.g. the log parameter of `InnoSetup` and `Burn` or the DISM arguments of `AppX`) are always added, even if `Defaults` is `$false`.
