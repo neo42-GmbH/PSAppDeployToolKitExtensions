@@ -17,16 +17,16 @@ The neo42 PSAppDeployToolkit Extensions integrate with and extend a globally res
 
 __🎚️ No code approach to writing new packages__
 
-Don't want to write new code for every simple package? Make use of our `Deploy-Application.ps1`, which is controlled entirely by its package configuration. The standardized installation sequence remains unchanged for each package!
+Don't want to write new code for every simple package? Make use of our `Deploy-Application.ps1` and a well structured configuration file. The standardized installation sequence remains unchanged for each package!
 
 * `neo42PackageConfig.psd1` is the recommended format. It supports comments, signing and PowerShell expressions, follows the PSADT v4 configuration style and is validated when the package is loaded. New features, such as the `AppX`, `Copy` and `Burn` deployment methods or managed shortcuts, are only available in this format.
-* `neo42PackageConfig.json` is the legacy format used by V3 packages. It is still supported and is translated into the new model at runtime, but it will be deprecated in a future release.
+* `neo42PackageConfig.json` is the legacy format used by PSADT v3 packages. It is still supported and is translated into the new model at runtime, but it will be deprecated in a future release.
 
 _The [samples](./samples) for both formats, the [package config reference](./docs/neo42PackageConfigPsd1.md) and the [legacy package config reference](./docs/neo42PackageConfigJson.md) will help you write your first package in no time._
 
 __🪝 Deployment hooks__
 
-You are not limited to the values contained within the configuration file. The deployment process offers many hook points, such as `CustomBegin`, `CustomInstallEnd` or `CustomEndOnError`, where you can run your own code without losing the framework we provide.
+You are not limited to the values contained within the configuration file. The deployment process offers many hook points, such as `CustomBegin`, `CustomInstallEnd` or `CustomEndOnError`, where you can run your own code without breaking or leaving the framework environment we provide.
 
 The recommended way to use them is your own extension module. Any module named `PSAppDeployToolkit.*` that is placed in the package root is loaded automatically, and its functions can be attached to any hook point with `Add-NXTDeploymentCallback`:
 
@@ -34,19 +34,19 @@ The recommended way to use them is your own extension module. Any module named `
 Add-NXTDeploymentCallback -HookPoint 'CustomInstallEnd' -Callback (Get-Command -Name 'Invoke-MyCompanyAction')
 ```
 
-This keeps your code out of the deployment script. The [example extension module](./samples/PSAppDeployToolkit.Neo42.Extensions.CompanyExtension) shows a minimal setup.
+With this modular approach, you can make your code available without touching the deployment script. The [example extension module](./samples/PSAppDeployToolkit.Neo42.Extensions.CompanyExtension) shows a minimal setup.
 
-For package-specific changes, the `Custom*` functions in `Deploy-Application.ps1` are still available. They use the same hook points and are compatible with the ones you know from V3.
+For package-specific changes, the `Custom*` functions in `Deploy-Application.ps1` are still available. They use the same hook points and are compatible with the ones you know from PSADT v3.
 
 __⛓️ Automation first__
 
-The package configuration is very easy to generate and change programmatically, and we made sure that automatic updates are possible in many other aspects as well:
+The package configuration can be created or modified very easily using common programming methods. Additionally we have ensured that automatic updates are also possible in many other areas:
 
 * Company- or product-specific code lives in your extension module. Add it to any package and it hooks itself into the deployment. Updating it means replacing the module, not editing every deployment script.
-* Toolkit settings, translations and assets can be overridden through PSADT's layered configuration by placing `Config`, `Strings` or `Assets` folders (or `Overrides.*` folders) in the package root.
-* `Update-NXTPackage` from `PSAppDeployToolkit.Neo42.Tools` migrates existing V3 packages to V4.
+* Toolkit settings, translations and assets can be overridden through PSADT's layered configuration by placing `Config`, `Strings` or `Assets` folders in the package root.
+* `Update-NXTPackage` from the `PSAppDeployToolkit.Neo42.Tools` module migrates existing PSADT v3 packages to a v4 version.
 
-_V3 packages cannot load extension modules. For them, this [script](https://github.com/neo42-GmbH/ManagementService-PowerShell/blob/master/Pipelines/Add-ContentToCustomFunction.ps1) demonstrates how to inject code into the `Custom*` functions instead._
+_PSADT v3 packages cannot load extension modules. For them, this [script](https://github.com/neo42-GmbH/ManagementService-PowerShell/blob/master/Pipelines/Add-ContentToCustomFunction.ps1) demonstrates how to inject code into the `Custom*` functions instead._
 
 ### ✨ New functionalities
 
