@@ -10,6 +10,9 @@
 	}
 	process {
 		try {
+			# The Empirum data is not available if the initialization failed
+			if (-not $script:EmpirumInitialized) { return }
+
 			[PSADTNXT.Foundation.NxtDeploymentSession]$adtSession = Get-ADTSession
 
 			# Copy failed installation logs to the SetupErrorLog directory

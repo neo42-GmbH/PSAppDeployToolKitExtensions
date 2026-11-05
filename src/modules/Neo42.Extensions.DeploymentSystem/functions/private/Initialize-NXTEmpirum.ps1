@@ -10,6 +10,9 @@
 	}
 	process {
 		try {
+			# The Empirum data is stored in a constant variable and can only be initialized once per module import
+			if ($script:EmpirumInitialized) { return }
+
 			[System.Collections.Generic.IReadOnlyDictionary[System.String, System.Object]]$adtEnvironment = Get-ADTEnvironmentTable
 			[System.String]$netbiosName = if ($adtEnvironment.IsMachinePartOfDomain) { $adtEnvironment.envComputerADNetbiosDomain } else { $adtEnvironment.envMachineWorkgroup }
 			[System.String]$computerName = $adtEnvironment.envComputerName
@@ -32,6 +35,7 @@
 			$empirumData['SetupErrorLog'] = [System.IO.FileInfo]::new("$($empirumData['AgentCache'])\Log\SetupErrorLog\$netbiosName.$computerName.log")
 
 			New-Variable -Name 'EMP' -Option Constant -Scope Script -Force -Value ([System.Collections.ObjectModel.ReadOnlyDictionary[System.String, System.Object]]::new($empirumData))
+			$script:EmpirumInitialized = $true
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

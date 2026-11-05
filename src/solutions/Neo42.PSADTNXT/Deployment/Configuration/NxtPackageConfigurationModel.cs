@@ -52,5 +52,32 @@ namespace PSADTNXT.Deployment.Configuration
 			}
 			return results;
 		}
+
+		/// <summary>
+		/// Validates the configuration including all nested models.
+		/// </summary>
+		/// <param name="errors">All validation results that failed.</param>
+		/// <returns><see langword="true"/> if the configuration is valid; otherwise <see langword="false"/>.</returns>
+#pragma warning disable CA1021
+		public bool Validate(out ValidationResult[] errors)
+#pragma warning restore CA1021
+		{
+			var results = new List<ValidationResult>();
+			var isValid = Validator.TryValidateObject(this, new ValidationContext(this), results, true);
+			errors = [.. results];
+			return isValid;
+		}
+
+		/// <summary>
+		/// Validates the configuration including all nested models and throws if any errors are found.
+		/// </summary>
+		/// <exception cref="NxtPackageConfigurationValidationException">Thrown when the configuration is invalid. Contains all validation results.</exception>
+		public void ThrowIfInvalid()
+		{
+			if (!Validate(out var errors))
+			{
+				throw new NxtPackageConfigurationValidationException(errors);
+			}
+		}
 	}
 }
