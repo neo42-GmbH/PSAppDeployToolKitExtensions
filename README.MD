@@ -22,7 +22,7 @@ Don't want to write new code for every simple package? Make use of our `Deploy-A
 * `neo42PackageConfig.psd1` is the recommended format. It supports comments, signing and PowerShell expressions, follows the PSADT v4 configuration style and is validated when the package is loaded. New features, such as the `AppX`, `Copy` and `Burn` deployment methods or managed shortcuts, are only available in this format.
 * `neo42PackageConfig.json` is the legacy format used by V3 packages. It is still supported and is translated into the new model at runtime, but it will be deprecated in a future release.
 
-_The [samples](./samples) for both formats and the [legacy package config reference](./docs/neo42PackageConfigJson.md) will help you write your first package in no time._
+_The [samples](./samples) for both formats, the [package config reference](./docs/neo42PackageConfigPsd1.md) and the [legacy package config reference](./docs/neo42PackageConfigJson.md) will help you write your first package in no time._
 
 __🪝 Deployment hooks__
 
@@ -125,6 +125,7 @@ For detailed documentation of the neo42 PSADT Extensions, please check these fil
 * [V4 Migration guide](./docs/PSAppDeployToolkit.Neo42.Extensions.V4Migration.md)
 * [Function reference](./docs/PSAppDeployToolkit.Neo42.Extensions.Functions.md)
 * [Variable reference](./docs/PSAppDeployToolkit.Neo42.Extensions.Variables.md)
+* [Package config (PSD1) reference](./docs/neo42PackageConfigPsd1.md)
 * [Legacy package config (JSON) reference](./docs/neo42PackageConfigJson.md)
 
 For information about the PSADT, the base of these extensions, please visit the [PSADT website or project page](#-links).
