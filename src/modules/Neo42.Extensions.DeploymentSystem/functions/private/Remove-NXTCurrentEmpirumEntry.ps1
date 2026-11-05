@@ -35,19 +35,21 @@
 			}
 			$baseKey.Close()
 
-			Invoke-ADTAllUsersRegistryAction -UserProfiles (Get-ADTUserProfiles -ExcludeDefaultUser -InformationAction SilentlyContinue) -InformationAction SilentlyContinue -ScriptBlock {
-				[System.String]$sidValue = $_.SID.Value
-				[Microsoft.Win32.RegistryKey]$baseKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::Users, [Microsoft.Win32.RegistryView]::Registry64)
-				if ([Microsoft.Win32.RegistryKey]$empKey = $baseKey.OpenSubKey("$sidValue\$keyRef")) {
-					[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($empKey)
-					[Microsoft.Win32.RegistryKey]$empAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empKey)
-					Remove-NXTEmptyRegistryKey -Key $empAppKey.Name
-					[Microsoft.Win32.RegistryKey]$empVendorKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empAppKey)
-					$empAppKey.Close()
-					Remove-NXTEmptyRegistryKey -Key $empVendorKey.Name
-					$empVendorKey.Close()
+			if ([PSADT.Types.UserProfile[]]$userProfiles = Get-ADTUserProfiles -ExcludeDefaultUser -InformationAction SilentlyContinue) {
+				Invoke-ADTAllUsersRegistryAction -UserProfiles $userProfiles -InformationAction SilentlyContinue -ScriptBlock {
+					[System.String]$sidValue = $_.SID.Value
+					[Microsoft.Win32.RegistryKey]$baseKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::Users, [Microsoft.Win32.RegistryView]::Registry64)
+					if ([Microsoft.Win32.RegistryKey]$empKey = $baseKey.OpenSubKey("$sidValue\$keyRef")) {
+						[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($empKey)
+						[Microsoft.Win32.RegistryKey]$empAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empKey)
+						Remove-NXTEmptyRegistryKey -Key $empAppKey.Name
+						[Microsoft.Win32.RegistryKey]$empVendorKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empAppKey)
+						$empAppKey.Close()
+						Remove-NXTEmptyRegistryKey -Key $empVendorKey.Name
+						$empVendorKey.Close()
+					}
+					$baseKey.Close()
 				}
-				$baseKey.Close()
 			}
 		}
 		catch {

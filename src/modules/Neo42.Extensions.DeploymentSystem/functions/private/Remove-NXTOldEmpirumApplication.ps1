@@ -111,53 +111,55 @@
 			}
 		}
 
-		Invoke-ADTAllUsersRegistryAction -UserProfiles (Get-ADTUserProfiles -ExcludeDefaultUser -InformationAction SilentlyContinue) -InformationAction SilentlyContinue -ScriptBlock {
-			[System.String]$sidValue = $_.SID.Value
-			[PSADTNXT.Extensions.NxtRegistryExtensions]::GetAllViews() | & {
-				process {
-					[Microsoft.Win32.RegistryKey]$baseKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::Users, $_)
-					if (-not ([Microsoft.Win32.RegistryKey]$uninstallRoot = $baseKey.OpenSubKey("$sidValue\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))) {
-						$baseKey.Close()
-						return
-					}
+		if ([PSADT.Types.UserProfile[]]$userProfiles = Get-ADTUserProfiles -ExcludeDefaultUser -InformationAction SilentlyContinue) {
+			Invoke-ADTAllUsersRegistryAction -UserProfiles $userProfiles -InformationAction SilentlyContinue -ScriptBlock {
+				[System.String]$sidValue = $_.SID.Value
+				[PSADTNXT.Extensions.NxtRegistryExtensions]::GetAllViews() | & {
+					process {
+						[Microsoft.Win32.RegistryKey]$baseKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::Users, $_)
+						if (-not ([Microsoft.Win32.RegistryKey]$uninstallRoot = $baseKey.OpenSubKey("$sidValue\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))) {
+							$baseKey.Close()
+							return
+						}
 
-					$uninstallRoot.GetSubKeyNames() | & {
-						process {
-							[Microsoft.Win32.RegistryKey]$uninstallKey = $uninstallRoot.OpenSubKey($_)
-							[System.String]$machineKeyName = $uninstallKey.GetValue('MachineKeyName')
-							if ($machineKeyName -like $keyRef -and
-								$machineKeyName -notlike "*\$($adtSession.AppVersion)" -and
-								$uninstallKey.GetValue('UninstallString') -like '*\setup.exe*\setup.inf*'
-							) {
-								if (([Microsoft.Win32.RegistryKey]$empirumUserVersionKey = $baseKey.OpenSubKey('SOFTWARE\' + $machineKeyName))) {
-									[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($empirumUserVersionKey)
-									[Microsoft.Win32.RegistryKey]$empriumUserAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empirumUserVersionKey)
-									Remove-NXTEmptyRegistryKey -Key $empriumUserAppKey.Name
-									[Microsoft.Win32.RegistryKey]$empirumUserVendorKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumUserAppKey)
-									$empriumUserAppKey.Close()
-									Remove-NXTEmptyRegistryKey -Key $empirumUserVendorKey.Name
-									$empirumUserVendorKey.Close()
+						$uninstallRoot.GetSubKeyNames() | & {
+							process {
+								[Microsoft.Win32.RegistryKey]$uninstallKey = $uninstallRoot.OpenSubKey($_)
+								[System.String]$machineKeyName = $uninstallKey.GetValue('MachineKeyName')
+								if ($machineKeyName -like $keyRef -and
+									$machineKeyName -notlike "*\$($adtSession.AppVersion)" -and
+									$uninstallKey.GetValue('UninstallString') -like '*\setup.exe*\setup.inf*'
+								) {
+									if (([Microsoft.Win32.RegistryKey]$empirumUserVersionKey = $baseKey.OpenSubKey('SOFTWARE\' + $machineKeyName))) {
+										[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($empirumUserVersionKey)
+										[Microsoft.Win32.RegistryKey]$empriumUserAppKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empirumUserVersionKey)
+										Remove-NXTEmptyRegistryKey -Key $empriumUserAppKey.Name
+										[Microsoft.Win32.RegistryKey]$empirumUserVendorKey = [PSADTNXT.Extensions.NxtRegistryExtensions]::GetParent($empriumUserAppKey)
+										$empriumUserAppKey.Close()
+										Remove-NXTEmptyRegistryKey -Key $empirumUserVendorKey.Name
+										$empirumUserVendorKey.Close()
+									}
+									[PSADTNXT.Extensions.NxtRegistryExtensions]::Delete($uninstallKey)
 								}
-								[PSADTNXT.Extensions.NxtRegistryExtensions]::Delete($uninstallKey)
 							}
 						}
-					}
-					$uninstallRoot.Close()
-					$baseKey.Close()
-				}
-			}
-			if (([Microsoft.Win32.RegistryKey]$staticEmpirumUserAppKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
-						[Microsoft.Win32.RegistryHive]::Users,
-						[Microsoft.Win32.RegistryView]::Registry64 # Is always the highest registry available.
-					).OpenSubKey("$sidValue\SOFTWARE\$regPackageKey\$($adtSession.AppVendor)\$($adtSession.AppName)"))
-			) {
-				$staticEmpirumUserAppKey.GetSubKeyNames() | & {
-					process {
-						if ($_ -eq $adtSession.AppVersion) { return }
-						[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($staticEmpirumUserAppKey.OpenSubKey($_))
+						$uninstallRoot.Close()
+						$baseKey.Close()
 					}
 				}
-				$staticEmpirumUserAppKey.Close()
+				if (([Microsoft.Win32.RegistryKey]$staticEmpirumUserAppKey = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+							[Microsoft.Win32.RegistryHive]::Users,
+							[Microsoft.Win32.RegistryView]::Registry64 # Is always the highest registry available.
+						).OpenSubKey("$sidValue\SOFTWARE\$regPackageKey\$($adtSession.AppVendor)\$($adtSession.AppName)"))
+				) {
+					$staticEmpirumUserAppKey.GetSubKeyNames() | & {
+						process {
+							if ($_ -eq $adtSession.AppVersion) { return }
+							[PSADTNXT.Extensions.NxtRegistryExtensions]::DeleteTree($staticEmpirumUserAppKey.OpenSubKey($_))
+						}
+					}
+					$staticEmpirumUserAppKey.Close()
+				}
 			}
 		}
 
