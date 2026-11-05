@@ -27,26 +27,15 @@
 			$invokeUninstallParams['LogFileName'] = $ADTSession.NXT.Uninstall.LogName
 		}
 
-		$invokeUninstallParams['Target'] = if (-not [System.String]::IsNullOrWhiteSpace($ADTSession.NXT.Uninstall.Target)) {
-			$ADTSession.NXT.Uninstall.Target
+		if (-not [System.String]::IsNullOrWhiteSpace($ADTSession.NXT.Uninstall.Target)) {
+			$invokeUninstallParams['Target'] = $ADTSession.NXT.Uninstall.Target
+			if ($ADTSession.NXT.Detection.Criteria) {
+				$invokeUninstallParams['Criteria'] = $ADTSession.NXT.Detection.Criteria
+			}
 		}
 		elseif ($ADTSession.NXT.Detection.Application) {
-			if ($ADTSession.NXT.Uninstall.Method -in @([PSADTNXT.Deployment.DeploymentMethod]::MSI, [PSADTNXT.Deployment.DeploymentMethod]::AppX)) {
-				$ADTSession.NXT.Detection.Application.PSChildName
-			}
-			else {
-				[PSADTNXT.Shell.NxtCommandLine]::SearchPath(
-					$(
-						if (-not [System.String]::IsNullOrWhiteSpace($ADTSession.NXT.Detection.Application.QuietUninstallStringFilePath)) {
-							$ADTSession.NXT.Detection.Application.QuietUninstallStringFilePath
-						}
-						else {
-							$ADTSession.NXT.Detection.Application.UninstallStringFilePath
-						}
-					),
-					[System.EnvironmentVariableTarget]::Machine
-				)
-			}
+			# Pass the application object to resolve the target and the uninstall string arguments from it.
+			$invokeUninstallParams['Application'] = $ADTSession.NXT.Detection.Application
 		}
 		else {
 			[System.Collections.Hashtable]$errorParams = @{
@@ -55,10 +44,6 @@
 				ErrorId   = 'NoUninstallTarget'
 			}
 			throw (New-ADTErrorRecord @errorParams)
-		}
-
-		if ($ADTSession.NXT.Detection.Criteria) {
-			$invokeUninstallParams['Criteria'] = $ADTSession.NXT.Detection.Criteria
 		}
 
 		if ($ADTSession.NXT.Uninstall.IgnoreExitCodes) {
