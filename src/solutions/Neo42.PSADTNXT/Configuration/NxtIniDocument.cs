@@ -334,6 +334,18 @@ namespace PSADTNXT.Configuration
 			return errorList.Count == 0;
 		}
 
+		/// <summary>
+		/// Validates the document against its metadata and throws if any errors are found.
+		/// </summary>
+		/// <exception cref="NxtIniValidationException">Thrown when the document is invalid. Contains all validation errors.</exception>
+		public void ThrowIfInvalid()
+		{
+			if (!Validate(out var errors))
+			{
+				throw new NxtIniValidationException(errors);
+			}
+		}
+
 		public string Export()
 		{
 			var sb = new StringBuilder();
