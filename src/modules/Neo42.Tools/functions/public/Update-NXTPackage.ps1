@@ -33,7 +33,8 @@
 		[System.Version]$supportedMaximumFramework = '4.0'
 		[System.String]$moduleBase = $ExecutionContext.SessionState.Module.ModuleBase
 		[System.String[]]$copyFromPackage = @('Setup.ico', 'Files', 'SupportFiles', 'neo42PackageConfig.json', 'neo42PackageConfig.psd1')
-		[System.String[]]$copyFromReference = @('PSAppDeployToolkit*', 'DeployNxtApplication.exe', 'PSAppDeployToolkit.Neo42.Extensions\Config', 'neo42PackageMetadata.json')
+		[System.String[]]$copyFromReference = @('PSAppDeployToolkit*', 'DeployNxtApplication.exe', 'Config', 'neo42PackageMetadata.json')
+		[System.String[]]$setupCfgReferenceMigrationExclusions = @('Options.DESKTOPSHORTCUT')
 
 		[System.Management.Automation.ScriptBlock[]]$migrations = @(
 			{ # v4.0 Deploy-Application
@@ -188,13 +189,14 @@
 		# Merge new reference settings and update comments
 		[System.Int32]$sectionIdx = 0
 		foreach ($packageCfgSection in $packageCfg.GetEnumerator()) {
+			[System.String[]]$sectionReferenceExclusions = $setupCfgReferenceMigrationExclusions | Where-Object { $_ -like "$($packageCfgSection.Key).*" } | ForEach-Object { $_.Split('.', 2)[-1] }
 			if (-not $setupCfg.ContainsKey($packageCfgSection.Key)) {
 				$setupCfg.Insert($sectionIdx, $packageCfgSection.Key, $packageCfgSection.Value, $packageCfg.GetComment($packageCfgSection.Key))
 			}
 			else {
 				[System.Int32]$settingIdx = 0
 				foreach ($packageCfgSetting in $packageCfgSection.Value.GetEnumerator()) {
-					if (-not $setupCfg[$packageCfgSection.Key].ContainsKey($packageCfgSetting.Key)) {
+					if (-not $setupCfg[$packageCfgSection.Key].ContainsKey($packageCfgSetting.Key) -and $packageCfgSection.Key -notin $sectionReferenceExclusions) {
 						$setupCfg[$packageCfgSection.Key].Insert($settingIdx, $packageCfgSetting.Key, $packageCfgSetting.Value, $packageCfgSection.Value.GetComment($packageCfgSetting.Key))
 					}
 					$settingIdx++

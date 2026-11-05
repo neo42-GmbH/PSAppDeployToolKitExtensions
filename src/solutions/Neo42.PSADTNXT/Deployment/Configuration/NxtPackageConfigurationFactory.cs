@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -49,13 +48,9 @@ namespace PSADTNXT.Deployment.Configuration
 				throw new InvalidDataException("The specified configuration file does not contain a valid PowerShell Data File hashtable.");
 			}
 
-			// Invoke the hashtable ast as a script and map the resulting hashtable to the configuration model
-			var result = DictionaryMapper.Create<NxtPackageConfigurationModel>(NxtPowerShell.PsInvokeSafe<Hashtable>(dataAst.Extent.Text, sessionVariables));
-
-			// Validate the resulting configuration model
-			Validate(result);
-
-			return result;
+			// Invoke the hashtable ast as a script and map the resulting hashtable to the configuration model.
+			// Validation is left to the caller, see NxtPackageConfigurationModel.ThrowIfInvalid().
+			return DictionaryMapper.Create<NxtPackageConfigurationModel>(NxtPowerShell.PsInvokeSafe<Hashtable>(dataAst.Extent.Text, sessionVariables));
 		}
 
 		public static NxtLegacyPackageConfigurationModel CreateLegacyFrom(string filePath, IDictionary<string, object> adtEnvironment, params SessionStateVariableEntry[] extraVariables)
@@ -73,29 +68,16 @@ namespace PSADTNXT.Deployment.Configuration
 				throw new NotSupportedException($"The legacy configuration version '{result.ConfigVersion}' is not supported. The minimum supported version is {NxtLegacyTranslations.MinimumLegacyConfigVersion}.");
 			}
 
+			// Validation is left to the caller, see NxtLegacyPackageConfigurationModel.ThrowIfInvalid().
 			result.Expand(adtEnvironment, extraVariables);
-
-			Validate(result);
 
 			return result;
 		}
 
 		public static NxtPackageConfigurationModel Translate(this NxtLegacyPackageConfigurationModel input)
 		{
-			var result = NxtLegacyTranslations.Translate(input);
-
-			Validate(result);
-
-			return result;
-		}
-
-		private static void Validate(object model)
-		{
-			var validationResults = new List<ValidationResult>();
-			if (!Validator.TryValidateObject(model, new ValidationContext(model), validationResults, true))
-			{
-				throw new ValidationException($"Validation failed with:\n * {string.Join("\n * ", validationResults.Select(r => r.ErrorMessage))}", new AggregateException(validationResults.Select(r => new ValidationException(r, null, null))));
-			}
+			// Validation is left to the caller, see NxtPackageConfigurationModel.ThrowIfInvalid().
+			return NxtLegacyTranslations.Translate(input);
 		}
 	}
 }

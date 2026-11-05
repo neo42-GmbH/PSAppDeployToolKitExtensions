@@ -42,10 +42,22 @@
 						}
 					}
 				}
+
+				# Validate the setup cfg again, as the Empirum variables might have introduced invalid values
+				$adtSession.NXT.SetupCfg.ThrowIfInvalid()
 			}
 			else {
 				Write-ADTLogEntry -Severity Warning -Message 'Cannot import Empirum variables, because the computer specific ini file does not exist.'
 			}
+		}
+		catch [PSADTNXT.Configuration.NxtIniValidationException] {
+			[System.Collections.Hashtable]$errorParams = @{
+				Exception    = $_.Exception
+				Category     = [System.Management.Automation.ErrorCategory]::InvalidData
+				ErrorId      = 'SetupConfigInvalid'
+				TargetObject = $adtSession.NXT.SetupCfg
+			}
+			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord (New-ADTErrorRecord @errorParams)
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

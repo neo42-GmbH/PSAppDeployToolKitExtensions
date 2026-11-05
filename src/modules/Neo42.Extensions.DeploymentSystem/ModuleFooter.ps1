@@ -46,4 +46,5 @@ Set-StrictMode -Version 3.0
 # Integrate into the PSADT initialization process.
 Add-ADTModuleCallback -Hookpoint PostOpen -Callback $script:CommandTable.'Initialize-NXTModule'
 [System.Boolean]$script:Hooked = $false
+[System.Boolean]$script:EmpirumInitialized = $false
 #endregion Initialization

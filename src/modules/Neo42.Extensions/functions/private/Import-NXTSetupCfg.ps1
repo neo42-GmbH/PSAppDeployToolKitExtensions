@@ -32,18 +32,18 @@
 			}
 
 			# Validate the final setup cfg with the metadata it contains
-			[System.String[]]$errors = @()
-			if (-not $setupCfgObj.Validate([ref]$errors)) {
-				[System.Collections.Hashtable]$errorParams = @{
-					Exception    = [System.Exception]::new("The provided setup configuration is invalid. Errors:`n- $($errors -join "`n- ")")
-					Category     = [System.Management.Automation.ErrorCategory]::InvalidData
-					ErrorId      = 'SetupConfigInvalid'
-					TargetObject = $setupCfgObj
-				}
-				throw (New-ADTErrorRecord @errorParams)
-			}
+			$setupCfgObj.ThrowIfInvalid()
 
 			$PSCmdlet.WriteObject($setupCfgObj, $false)
+		}
+		catch [PSADTNXT.Configuration.NxtIniValidationException] {
+			[System.Collections.Hashtable]$errorParams = @{
+				Exception    = $_.Exception
+				Category     = [System.Management.Automation.ErrorCategory]::InvalidData
+				ErrorId      = 'SetupConfigInvalid'
+				TargetObject = $setupCfgObj
+			}
+			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord (New-ADTErrorRecord @errorParams)
 		}
 		catch {
 			Invoke-ADTFunctionErrorHandler -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState -ErrorRecord $_

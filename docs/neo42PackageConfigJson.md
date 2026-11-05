@@ -3,7 +3,7 @@
 This document describes every value of the legacy `neo42PackageConfig.json` and what happens to it in V4.
 
 > [!WARNING]
-> The JSON format is **legacy**. It is still loaded, but it is translated into the new `neo42PackageConfig.psd1` model at runtime and will be deprecated in a future release. New features (e.g. the `Appx`, `Copy` and `Burn` deployment methods, start menu shortcut management, awaiter timeouts per item) are only available in the PSD1 format. See the [changelog](../docs/PSAppDeployToolkit.Neo42.Extensions.Changelog.md) for details.
+> The JSON format is **legacy**. It is still loaded, but it is translated into the new `neo42PackageConfig.psd1` model at runtime and will be deprecated in a future release. New features (e.g. the `Appx`, `Copy` and `Burn` deployment methods, start menu shortcut management, awaiter timeouts per item) are only available in the PSD1 format, which is described in the [PSD1 reference](./neo42PackageConfigPsd1.md). See the [changelog](../docs/PSAppDeployToolkit.Neo42.Extensions.Changelog.md) for details.
 
 **Legend**
 

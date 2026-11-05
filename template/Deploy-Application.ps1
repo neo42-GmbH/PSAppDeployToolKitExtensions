@@ -328,19 +328,24 @@ try {
 }
 catch {
 	$Host.UI.WriteErrorLine((Out-String -InputObject $_ -Width ([System.Int32]::MaxValue)))
-	exit 60008
+	exit $(switch ($_.Exception.GetType().Name) {
+			'NxtIniValidationException' { 60016 }
+			'NxtPackageConfigurationValidationException' { 60017 }
+			default { 60008 }
+		})
 }
 
 if (-not $SkipDeployment) {
+	[System.Collections.Hashtable]$closeParams = @{}
 	try {
 		Invoke-NXTDeployment -ADTSession $adtSession
 	}
 	catch {
 		$Host.UI.WriteErrorLine((Out-String -InputObject $_ -Width ([System.Int32]::MaxValue)))
-		if (Test-ADTSessionActive) { Close-ADTSession -ExitCode 60001 }
+		$closeParams['ExitCode'] = 60001
 	}
 	finally {
-		if (Test-ADTSessionActive) { Close-ADTSession } else { exit 60001 }
+		if (Test-ADTSessionActive) { Close-ADTSession @closeParams } else { exit 60001 }
 	}
 }
 #endregion INTERNALS - DO NOT EDIT

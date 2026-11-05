@@ -80,9 +80,8 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                body: `:tada: This issue will be addressed in ${tag} :tada:
-            Once the release is published, it will be available on:
-              * [GitHub release](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag})
+                body: `:tada: This issue was addressed in the new ${tag} release :tada:
+            You can obtain the new build from the [GitHub release page](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/${tag}).
 
             <sub>This is an auto-generated message from your friendly release assistant :package::rocket:</sub>`
               });
