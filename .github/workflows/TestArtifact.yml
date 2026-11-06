@@ -5,9 +5,17 @@ on:
 
 jobs:
   test:
+    name: test (${{ matrix.shell }})
     runs-on: windows-latest
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
 
     steps:
       - name: checkout-tests
@@ -19,6 +27,8 @@ jobs:
         with:
           path: build
 
+      - name: install-required-modules
+        run: ./.tools/Install-RequiredModule.ps1 -ModulesOnly
+
       - name: run-pester
-        shell: powershell
         run: ./.tools/Invoke-PesterTest.ps1 -ModuleDirectory '${{ steps.download-artifact-test.outputs.download-path }}' -PesterTestDirectory './tests/pester' -CompatibilityTestDirectory (Get-Item -Path "./src/modules/Neo42.Extensions*")
