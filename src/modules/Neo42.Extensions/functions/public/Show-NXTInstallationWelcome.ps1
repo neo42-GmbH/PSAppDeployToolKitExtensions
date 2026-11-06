@@ -316,9 +316,15 @@
 					Write-ADTLogEntry -Message "The user can defer the deployment until [$DeferDeadline]."
 					$showInstallationWelcome['DeferDeadline'] = $deferHistorySplat['DeferDeadline']
 				}
+				# The modern UI writes the defer history itself, so pass the interval to have the last run time recorded.
+				if (-not $legacyUi -and $DeferRunInterval -ne [System.TimeSpan]::Zero) {
+					$showInstallationWelcome['DeferRunInterval'] = $DeferRunInterval
+				}
 			}
 
 			# Apply the ContinueType to V4 UI by setting the appropriate countdown
+			[System.Int32]$oldDefaultTimeout = 0
+			[System.Int32]$oldDefaultCode = $adtConfig['UI']['DefaultExitCode']
 			if ($Timeout -and $Timeout -ne [System.TimeSpan]::Zero) {
 				if ($legacyUi) {
 					$showInstallationWelcome['Timeout'] = $Timeout
@@ -328,14 +334,27 @@
 						$showInstallationWelcome['ForceCloseProcessesCountdown'] = $Timeout.TotalSeconds
 					}
 					else {
-						$showInstallationWelcome['ForceCountdown'] = $Timeout.TotalSeconds
+						$showInstallationWelcome['ForceCountdown'] = $Timeout.TotalSeconds + 1
+						# TODO: Drop this workaround once 4.2.0 is used. Workaround is related to https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/issues/1288
+						[System.Int32]$oldDefaultTimeout = $adtConfig['UI']['DefaultTimeout']
+						$adtConfig['UI']['DefaultTimeout'] = [System.Int32]$Timeout.TotalSeconds
+						$adtConfig['UI']['DefaultExitCode'] = $adtConfig['UI']['DeferExitCode']
 					}
 				}
 			}
 
 			# Invoke modern UI path if enabled.
 			if (-not $legacyUi) {
-				Show-ADTInstallationWelcome @showInstallationWelcome
+				try {
+					Show-ADTInstallationWelcome @showInstallationWelcome
+				}
+				finally {
+					# Reset workaround parameters
+					if ($oldDefaultTimeout) {
+						$adtConfig['UI']['DefaultTimeout'] = $oldDefaultTimeout
+						$adtConfig['UI']['DefaultExitCode'] = $oldDefaultCode
+					}
+				}
 				# If we continue, the apps have been closed. Add them to the reopen list.
 				$ADTSession.NXT.ClosedProcesses.AddRange($appsToReopen)
 				return
@@ -347,30 +366,40 @@
 			# Start the legacy UI. The script writes its output as UTF-8, so it has to be read as such.
 			[System.String]$argumentList = ConvertTo-NXTPsBinaryArgument -File "$($MyInvocation.MyCommand.Module.ModuleBase)\Scripts\CustomAppDeployToolkitUi.ps1" -Arguments $showInstallationWelcome -UseLastExitCode
 			[System.Text.Encoding]$outputEncoding = [System.Text.UTF8Encoding]::new($false)
-			[System.TimeSpan]$legacyProcessTimeout = $defaultTimeout.Add([System.TimeSpan]::FromMinutes(1))
-			if ($adtEnvironment.SessionZero -or $adtEnvironment.IsServiceAccount -or ($adtEnvironment.IsAdmin -and -not $adtEnvironment.IsProcessUserInteractive)) {
-				Write-ADTLogEntry -Message 'Process is running as system, service or non interactive user. Using session helper to spawn in all sessions.' -DebugMessage
-				if ([System.Int32[]]$sessionIds = Get-ADTLoggedOnUser | & { process { if ($_.IsActiveUserSession) { $_.SessionId } } }) {
-					[PSADT.ProcessManagement.ProcessResult]$result = [PSADTNXT.ProcessManagement.NxtSessionHelper]::StartProcessInSessions(
-						(Get-ADTPowerShellProcessPath),
-						$argumentList,
-						$sessionIds,
-						$legacyProcessTimeout,
-						$outputEncoding
-					)
+			[System.TimeSpan]$legacyProcessTimeout = $defaultTimeout.Add([System.TimeSpan]::FromSeconds(30))
+			try {
+				if ($adtEnvironment.SessionZero -or $adtEnvironment.IsServiceAccount -or ($adtEnvironment.IsAdmin -and -not $adtEnvironment.IsProcessUserInteractive)) {
+					Write-ADTLogEntry -Message 'Process is running as system, service or non interactive user. Using session helper to spawn in all sessions.' -DebugMessage
+					if ([System.Int32[]]$sessionIds = Get-ADTLoggedOnUser | & { process { if ($_.IsActiveUserSession) { $_.SessionId } } }) {
+						[PSADT.ProcessManagement.ProcessResult]$result = [PSADTNXT.ProcessManagement.NxtSessionHelper]::StartProcessInSessions(
+							(Get-ADTPowerShellProcessPath),
+							$argumentList,
+							$sessionIds,
+							$legacyProcessTimeout,
+							$outputEncoding
+						)
+					}
+					else {
+						Write-ADTLogEntry -Severity Warning -Message 'No user is logged in. Assuming continue option.'
+						[PSADT.ProcessManagement.ProcessResult]$result = [PSADT.ProcessManagement.ProcessResult]::new([PSADTNXT.UI.LegacyWelcomeWindowCodes]::Continue.value__)
+					}
+				}
+				elseif ($adtEnvironment.IsProcessUserInteractive) {
+					Write-ADTLogEntry -Message 'Process is not running in session zero, as service or as non interative user. Assuming we run as user.' -DebugMessage
+					[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList `
+						-CreateNoWindow -StreamEncoding $outputEncoding -PassThru -IgnoreExitCodes '*' -Timeout $legacyProcessTimeout -TimeoutAction Ignore
+					if (-not $result -or $null -eq $result.ExitCode -or $result.ExitCode -eq [PSADT.ProcessManagement.ProcessManager]::TimeoutExitCode) { throw [System.TimeoutException]::new() }
 				}
 				else {
-					Write-ADTLogEntry -Severity Warning -Message 'No user is logged in. Assuming continue option.'
+					Write-ADTLogEntry -Severity Error -Message 'Could not find suitable user to display UI to. Assuming continue option.'
 					[PSADT.ProcessManagement.ProcessResult]$result = [PSADT.ProcessManagement.ProcessResult]::new([PSADTNXT.UI.LegacyWelcomeWindowCodes]::Continue.value__)
 				}
 			}
-			elseif ($adtEnvironment.IsProcessUserInteractive) {
-				Write-ADTLogEntry -Message 'Process is not running in session zero, as service or as non interative user. Assuming we run as user.' -DebugMessage
-				[PSADT.ProcessManagement.ProcessResult]$result = Start-ADTProcess -FilePath (Get-ADTPowerShellProcessPath) -ArgumentList $argumentList -CreateNoWindow -StreamEncoding $outputEncoding -PassThru -IgnoreExitCodes '*' -Timeout $legacyProcessTimeout
-			}
-			else {
-				Write-ADTLogEntry -Severity Error -Message 'Could not find suitable user to display UI to. Assuming continue option.'
-				[PSADT.ProcessManagement.ProcessResult]$result = [PSADT.ProcessManagement.ProcessResult]::new([PSADTNXT.UI.LegacyWelcomeWindowCodes]::Continue.value__)
+			catch [System.TimeoutException] {
+				Write-ADTLogEntry -Severity Warning -Message 'UI did not react within the defined DefaultTimeout, closing session with DefaultExitCode.'
+				Set-ADTDeferHistory @deferHistorySplat
+				$ADTSession.NXT.ClosedProcesses.AddRange($appsToReopen)
+				Close-ADTSession -ExitCode $adtConfig['UI']['DefaultExitCode']
 			}
 
 			# Check if the process returned an unknown error and try to log as much as possible
@@ -406,7 +435,7 @@
 						Write-ADTLogEntry -Severity Warning -Message 'The installation welcome timed but the user had the option to defer the installation and ContinueType is set to [Abort].'
 						Set-ADTDeferHistory @deferHistorySplat
 						$ADTSession.NXT.ClosedProcesses.AddRange($appsToReopen)
-						Close-ADTSession -ExitCode $adtConfig['UI']['DefaultExitCode']
+						Close-ADTSession -ExitCode $adtConfig['UI']['DeferExitCode']
 					}
 					else {
 						Write-ADTLogEntry -Severity Warning -Message 'The installation welcome timed out and deployment is set to continue or the user had no option to defer the installation.'
