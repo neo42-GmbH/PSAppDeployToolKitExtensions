@@ -319,6 +319,7 @@
 			}
 
 			# Apply the ContinueType to V4 UI by setting the appropriate countdown
+			[System.Int32]$oldDefaultTimeout = 0
 			if ($Timeout -and $Timeout -ne [System.TimeSpan]::Zero) {
 				if ($legacyUi) {
 					$showInstallationWelcome['Timeout'] = $Timeout
@@ -330,6 +331,7 @@
 					else {
 						$showInstallationWelcome['ForceCountdown'] = $Timeout.TotalSeconds + 1
 						# TODO: Drop this workaround once 4.2.0 is used. Workaround is related to https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/issues/1288
+						[System.Int32]$oldDefaultTimeout = $adtConfig['UI']['DefaultTimeout']
 						$adtConfig['UI']['DefaultTimeout'] = [System.Math]::Min($Timeout.TotalSeconds, $adtConfig['UI']['DefaultTimeout'])
 					}
 				}
@@ -339,6 +341,7 @@
 			if (-not $legacyUi) {
 				Show-ADTInstallationWelcome @showInstallationWelcome
 				# If we continue, the apps have been closed. Add them to the reopen list.
+				if ($oldDefaultTimeout) { $adtConfig['UI']['DefaultTimeout'] = $oldDefaultTimeout }
 				$ADTSession.NXT.ClosedProcesses.AddRange($appsToReopen)
 				return
 			}
