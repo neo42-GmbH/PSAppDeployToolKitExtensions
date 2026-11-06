@@ -52,9 +52,9 @@ namespace PSADTNXT.ProcessManagement
 			var description = parameters["Description"] as string ?? string.Empty;
 
 			ProcessDefinition = new ProcessDefinition(name, description);
-			AllowBlocking = parameters["AllowBlocking"] switch
+			AllowBlocking = !parameters.ContainsKey("AllowBlocking") || parameters["AllowBlocking"] switch
 			{
-				null => true,
+				null => false,
 				var ab when ab.TryConvertToBool(out var parsedAb) => parsedAb,
 				var invalidAb => throw new ArgumentException($"Parameter 'AllowBlocking' has the invalid value '{invalidAb}'.", nameof(parameters)),
 			};
