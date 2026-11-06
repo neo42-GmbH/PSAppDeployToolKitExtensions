@@ -55,11 +55,11 @@ namespace PSADTNXT.Deployment
 			var criteria = NxtApplicationCriteria.FromHashtable(criteriaHashtable);
 
 			var desiredState = hashtable.ContainsKey("DesiredState")
-				? Enum.TryParse<RequirementState>(hashtable["DesiredState"]?.ToString(), true, out var state) ? state : throw new ArgumentException($"Invalid value for DesiredState: {hashtable["DesiredState"]}")
+				? (hashtable["DesiredState"]?.ToString()).TryParseDefinedEnum<RequirementState>(true, out var state) ? state : throw new ArgumentException($"Invalid value for DesiredState: {hashtable["DesiredState"]}")
 				: RequirementState.Present;
 
 			var conflictAction = hashtable.ContainsKey("OnConflict")
-				? Enum.TryParse<RequirementConflictAction>(hashtable["OnConflict"]?.ToString(), true, out var action) ? action : throw new ArgumentException($"Invalid value for OnConflict: {hashtable["OnConflict"]}")
+				? (hashtable["OnConflict"]?.ToString()).TryParseDefinedEnum<RequirementConflictAction>(true, out var action) ? action : throw new ArgumentException($"Invalid value for OnConflict: {hashtable["OnConflict"]}")
 				: RequirementConflictAction.Fail;
 
 			var errorMessage = hashtable.ContainsKey("ErrorMessage")

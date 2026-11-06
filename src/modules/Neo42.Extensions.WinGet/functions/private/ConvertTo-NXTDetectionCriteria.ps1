@@ -46,7 +46,7 @@
 					if (-not [System.String]::IsNullOrWhiteSpace($entry.DisplayVersion)) { $entryFilters.Add("`$_.DisplayVersion -eq '$($entry.DisplayVersion)'") }
 					if (-not [System.String]::IsNullOrWhiteSpace($entry.Publisher)) { $entryFilters.Add("`$_.Publisher -eq '$($entry.Publisher)'") }
 					if (-not [System.String]::IsNullOrWhiteSpace($entry.InstallerType) -and
-						-not [System.String]::IsNullOrWhiteSpace(([System.String]$methodFilter = Get-NXTMethodFilter -DeploymentMethod $entry.InstallertType -PackageFamilyName $Model.PackageFamilyName))
+						-not [System.String]::IsNullOrWhiteSpace(([System.String]$methodFilter = Get-NXTMethodFilter -DeploymentMethod $entry.InstallerType -PackageFamilyName $Model.PackageFamilyName))
 					) {
 						$entryFilters.Add($methodFilter)
 					}

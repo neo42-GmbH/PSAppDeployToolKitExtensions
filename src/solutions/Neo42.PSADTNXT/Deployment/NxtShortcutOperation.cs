@@ -50,7 +50,7 @@ namespace PSADTNXT.Deployment
 			}
 
 			var mode = hashtable.ContainsKey("Mode")
-				? Enum.TryParse<ShortcutOperation>(hashtable["Mode"]?.ToString(), true, out var parsedMode) ? parsedMode : throw new ArgumentException($"Invalid value for Mode: {hashtable["Mode"]}")
+				? (hashtable["Mode"]?.ToString()).TryParseDefinedEnum<ShortcutOperation>(true, out var parsedMode) ? parsedMode : throw new ArgumentException($"Invalid value for Mode: {hashtable["Mode"]}")
 				: throw new ArgumentException("Missing 'Mode' value in the provided hashtable.");
 
 			var target = hashtable.ContainsKey("Target") && hashtable["Target"] is string targetValue
@@ -58,7 +58,7 @@ namespace PSADTNXT.Deployment
 				: throw new ArgumentException("Missing or invalid 'Target' value in the provided hashtable.");
 
 			var location = hashtable.ContainsKey("Location")
-				? Enum.TryParse<ShortcutLocation>(hashtable["Location"]?.ToString(), true, out var parsedLocation) ? parsedLocation : throw new ArgumentException($"Invalid value for Location: {hashtable["Location"]}")
+				? (hashtable["Location"]?.ToString()).TryParseDefinedEnum<ShortcutLocation>(true, out var parsedLocation) ? parsedLocation : throw new ArgumentException($"Invalid value for Location: {hashtable["Location"]}")
 				: ShortcutLocation.Desktop;
 
 			var source = hashtable.ContainsKey("Source")

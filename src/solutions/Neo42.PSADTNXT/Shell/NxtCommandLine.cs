@@ -66,6 +66,10 @@ namespace PSADTNXT.Shell
 		/// </remarks>
 		public static string? BinaryFromCommandLine(string commandLine, EnvironmentVariableTarget target = EnvironmentVariableTarget.Process)
 		{
+			if (string.IsNullOrWhiteSpace(commandLine))
+			{
+				return null;
+			}
 			var components = CommandLineUtilities.CommandLineToArgumentList(commandLine);
 			return components.Count > 0
 				? SearchPath(components[0], target)

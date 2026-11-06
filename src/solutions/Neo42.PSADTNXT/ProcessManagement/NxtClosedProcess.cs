@@ -25,6 +25,10 @@ namespace PSADTNXT.ProcessManagement
 			bool asAdmin = false
 		)
 		{
+			if (user is null)
+			{
+				throw new ArgumentNullException(nameof(user));
+			}
 			Username = user.Translate(typeof(NTAccount)) as NTAccount ?? throw new ArgumentNullException(nameof(user));
 			Arguments = arguments ?? string.Empty;
 			WorkingDirectory = workingDirectory ?? new DirectoryInfo(Path.GetDirectoryName(filePath) ?? throw new ArgumentException("Process path is invalid.", nameof(filePath)));

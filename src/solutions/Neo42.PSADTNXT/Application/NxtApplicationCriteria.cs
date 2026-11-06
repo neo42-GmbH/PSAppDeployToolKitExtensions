@@ -78,7 +78,7 @@ namespace PSADTNXT.Application
 			}
 
 			var store = hashtable.ContainsKey("Store")
-				? Enum.TryParse<ApplicationStore>(hashtable["Store"]?.ToString(), true, out var parsedStore) ? parsedStore : throw new ArgumentException("The hashtable must contain a [Store] key with a valid value.", nameof(hashtable))
+				? (hashtable["Store"]?.ToString()).TryParseDefinedEnum<ApplicationStore>(true, out var parsedStore) ? parsedStore : throw new ArgumentException("The hashtable must contain a [Store] key with a valid value.", nameof(hashtable))
 				: ApplicationStore.ARP;
 
 			string? identifier = null;

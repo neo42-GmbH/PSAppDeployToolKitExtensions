@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using PSADT.ProcessManagement;
+using PSADTNXT.Extensions;
 using PSADTNXT.IO;
+using PSADTNXT.Shell;
 
 namespace PSADTNXT.ProcessManagement
 {
@@ -50,12 +52,17 @@ namespace PSADTNXT.ProcessManagement
 			var description = parameters["Description"] as string ?? string.Empty;
 
 			ProcessDefinition = new ProcessDefinition(name, description);
-			AllowBlocking = parameters["AllowBlocking"] is not bool ab || ab;
+			AllowBlocking = !parameters.ContainsKey("AllowBlocking") || parameters["AllowBlocking"] switch
+			{
+				null => false,
+				var ab when ab.TryConvertToBool(out var parsedAb) => parsedAb,
+				var invalidAb => throw new ArgumentException($"Parameter 'AllowBlocking' has the invalid value '{invalidAb}'.", nameof(parameters)),
+			};
 			ReopenMode = parameters["ReopenMode"] switch
 			{
 				null => ReopenMode.None,
 				ReopenMode rm => rm,
-				string rmName when Enum.TryParse<ReopenMode>(rmName, true, out var parsedRm) => parsedRm,
+				string rmName when rmName.TryParseDefinedEnum<ReopenMode>(true, out var parsedRm) => parsedRm,
 				var invalidRm => throw new ArgumentException($"Parameter 'ReopenMode' has the invalid value '{invalidRm}'.", nameof(parameters)),
 			};
 		}

@@ -1,7 +1,7 @@
 ﻿namespace PSADTNXT.Interop
 {
 #pragma warning disable CA1008
-	public enum TOKEN_ACCESS_RIGHTS : int
+	internal enum TOKEN_ACCESS_RIGHTS : int
 #pragma warning restore CA1008
 	{
 		TokenAssignPrimary = 0x0001,

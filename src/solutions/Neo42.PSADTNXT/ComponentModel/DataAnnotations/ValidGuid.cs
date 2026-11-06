@@ -37,7 +37,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 			}
 
 			return (!AllowEmpty && guid == Guid.Empty)
-				? new ValidationResult("The Guid is empty.")
+				? new ValidationResult($"The Guid for '{validationContext.MemberName}' in '{validationContext.ObjectInstance.GetType().Name}' is empty.")
 				: ValidationResult.Success!;
 		}
 	}
