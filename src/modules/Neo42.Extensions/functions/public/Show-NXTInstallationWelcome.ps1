@@ -328,7 +328,9 @@
 						$showInstallationWelcome['ForceCloseProcessesCountdown'] = $Timeout.TotalSeconds
 					}
 					else {
-						$showInstallationWelcome['ForceCountdown'] = $Timeout.TotalSeconds
+						$showInstallationWelcome['ForceCountdown'] = $Timeout.TotalSeconds + 1
+						# TODO: Drop this workaround once 4.2.0 is used. Workaround is related to https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/issues/1288
+						$adtConfig['UI']['DefaultTimeout'] = [System.Math]::Min($Timeout.TotalSeconds, $adtConfig['UI']['DefaultTimeout'])
 					}
 				}
 			}
