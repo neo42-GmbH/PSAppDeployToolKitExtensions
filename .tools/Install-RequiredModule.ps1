@@ -7,6 +7,9 @@ Requirements that need to be installed is the appropriate PSADT release and Powe
 The directory where to place the build artifacts.
 .PARAMETER ModuleManifest
 The manifest to read the required PSADT version from.
+.PARAMETER ModulesOnly
+Only install the required PowerShell modules (Pester, PSScriptAnalyzer) and skip the PSAppDeployToolkit download.
+Used by test runs that work on a prebuilt artifact.
 #>
 param (
 	[ValidateScript({ $_.Exists } )]
@@ -16,12 +19,34 @@ param (
 	[ValidateScript({ $_.Exists })]
 	[ValidateNotNullOrEmpty()]
 	[System.IO.FileInfo]
-	$ModuleManifest = "$($PWD.Path)\src\modules\Neo42.Extensions\PSAppDeployToolkit.Neo42.Extensions.psd1"
+	$ModuleManifest = "$($PWD.Path)\src\modules\Neo42.Extensions\PSAppDeployToolkit.Neo42.Extensions.psd1",
+	[System.Management.Automation.SwitchParameter]
+	$ModulesOnly
 )
 
-$ErrorActionPreference = 'Stop'
-$ProgressPreference = 'SilentlyContinue'
+$ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+$ProgressPreference = [System.Management.Automation.ActionPreference]::SilentlyContinue
 Set-StrictMode -Version 3.0
+
+# Ensure required modules are installed.
+@(
+	@{ ModuleName = 'PSScriptAnalyzer'; GUID = 'd6245802-193d-4068-a631-8863a4342a18'; ModuleVersion = '1.25.0'; MaximumVersion = '1.99' }
+	@{ ModuleName = 'Pester'; GUID = 'a699dea5-2c73-4616-a270-1f7abb777e71'; ModuleVersion = '5.6'; MaximumVersion = '6.1.0'	}
+) | ForEach-Object {
+	if (-not (Get-Module -ListAvailable -FullyQualifiedName $_)) {
+		Install-Module -Force -SkipPublisherCheck -Scope CurrentUser -Repository PSGallery `
+			-Name $_.ModuleName `
+			-MinimumVersion $_.ModuleVersion `
+			-MaximumVersion $_.MaximumVersion
+
+		Write-Host "The required module [$($_.ModuleName)] has been installed."
+	}
+	else {
+		Write-Host "The required module [$($_.ModuleName)] is already installed."
+	}
+}
+
+if ($ModulesOnly) { return }
 
 # Obtain the desired PSAppDeployToolkit version from the module manifest.
 [System.Collections.Hashtable]$moduleData = Import-PowerShellDataFile -Path $ModuleManifest
@@ -58,22 +83,4 @@ if ($requiresDownload) {
 	}
 	Get-ChildItem -Path $moduleFolder -File -Recurse | Unblock-File
 	Write-Host "The required PSAppDeployToolkit version [$requiredPsadtVersion] has been downloaded to [$($moduleFolder.FullName)]."
-}
-
-# Ensure required modules are installed.
-@(
-	@{ ModuleName = 'PSScriptAnalyzer'; GUID = 'd6245802-193d-4068-a631-8863a4342a18'; ModuleVersion = '1.25.0'; MaximumVersion = '1.99' }
-	@{ ModuleName = 'Pester'; GUID = 'a699dea5-2c73-4616-a270-1f7abb777e71'; ModuleVersion = '5.6'; MaximumVersion = '6.1.0'	}
-) | ForEach-Object {
-	if (-not (Get-Module -ListAvailable -FullyQualifiedName $_)) {
-		Install-Module -Force -SkipPublisherCheck -Scope CurrentUser -Repository PSGallery `
-			-Name $_.ModuleName `
-			-MinimumVersion $_.ModuleVersion `
-			-MaximumVersion $_.MaximumVersion
-
-		Write-Host "The required module [$($_.ModuleName)] has been installed."
-	}
-	else {
-		Write-Host "The required module [$($_.ModuleName)] is already installed."
-	}
 }
