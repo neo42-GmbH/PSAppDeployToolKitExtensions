@@ -11,6 +11,9 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 end_of_line = crlf
 
+[Setup.cfg]
+charset = utf-8
+
 [*.{ps1,psd1,psm1}]
 max_line_length = 256
 
