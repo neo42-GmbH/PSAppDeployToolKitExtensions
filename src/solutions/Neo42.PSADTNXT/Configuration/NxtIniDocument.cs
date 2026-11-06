@@ -272,7 +272,7 @@ namespace PSADTNXT.Configuration
 		}
 
 #pragma warning disable CA1021
-		public bool Validate(out string[] errors)
+		public bool TryValidate(out string[] errors)
 #pragma warning restore CA1021
 		{
 			var errorList = new List<string>();
@@ -323,9 +323,7 @@ namespace PSADTNXT.Configuration
 						}
 						else
 						{
-#pragma warning disable CA2263
 							errorList.Add($"Type metadata [{metaData["Type"]}] in setting [{setting.Key}] of section [{sectionName}] is not valid. Valid types are: {string.Join(", ", Enum.GetNames(typeof(IniTypeMetadata)))}.");
-#pragma warning restore CA2263
 						}
 					}
 				}
@@ -340,7 +338,7 @@ namespace PSADTNXT.Configuration
 		/// <exception cref="NxtIniValidationException">Thrown when the document is invalid. Contains all validation errors.</exception>
 		public void ThrowIfInvalid()
 		{
-			if (!Validate(out var errors))
+			if (!TryValidate(out var errors))
 			{
 				throw new NxtIniValidationException(errors);
 			}
@@ -444,13 +442,19 @@ namespace PSADTNXT.Configuration
 
 			public override DynamicMetaObject BindSetMember(SetMemberBinder binder, DynamicMetaObject value)
 			{
+				// Use the PowerShell conversion, so PSObject wrapped sections (e.g. function output) are unwrapped
+				var convertExpression = Expression.Call(
+					typeof(LanguagePrimitives).GetMethod("ConvertTo", [typeof(object)])!.MakeGenericMethod(typeof(NxtIniSection)),
+					Expression.Convert(value.Expression, typeof(object))
+				);
+
 				var expression = Expression.Assign(
 					Expression.Property(
 						Expression.Convert(Expression, typeof(NxtIniDocument)),
 						typeof(NxtIniDocument).GetProperty("Item", [typeof(string)])!,
 						Expression.Constant(binder.Name)
 					),
-					Expression.Convert(value.Expression, typeof(NxtIniSection))
+					convertExpression
 				);
 				var restrictions = BindingRestrictions.GetTypeRestriction(Expression, typeof(NxtIniDocument));
 				return new DynamicMetaObject(expression, restrictions);

@@ -34,7 +34,7 @@
 				ConvertTo-NXTPsBinaryArgument -Arguments $Arguments -File $deployPs1.FullName -UseLastExitCode
 			}
 			elseif ($Arguments) {
-				ConvertTo-NXTPsArgumentString -InputObject $Arguments
+				ConvertTo-NXTPsArgumentString -InputObject $Arguments -StringDelimiter ''''
 			}
 
 			if ($BinarySeparate) {

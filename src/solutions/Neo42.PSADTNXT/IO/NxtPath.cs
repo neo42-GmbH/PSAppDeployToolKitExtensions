@@ -10,6 +10,11 @@ namespace PSADTNXT.IO
 		private static readonly char[] _invalidFileNameChars = [.. Path.GetInvalidFileNameChars(), Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar];
 
 		/// <summary>
+		/// The invalid Windows path characters. Path.GetInvalidPathChars() no longer contains '"', '&lt;', '&gt;' and '|' on .NET (Core).
+		/// </summary>
+		private static readonly char[] _invalidPathChars = ['"', '<', '>', '|', .. Enumerable.Range(0, 32).Select(i => (char)i)];
+
+		/// <summary>
 		/// Gets the executable name from a given file name by removing its extension.
 		/// </summary>
 		/// <param name="fileName">The path or name of the file.</param>
@@ -53,8 +58,15 @@ namespace PSADTNXT.IO
 			{
 				return false;
 			}
-			var invalidChars = Path.GetInvalidPathChars();
-			return !path.Any(c => invalidChars.Contains(c));
+			return !ContainsInvalidPathChars(path);
+		}
+
+		/// <summary>
+		/// Determines whether the given path contains characters that are invalid in Windows paths, independent of the runtime.
+		/// </summary>
+		internal static bool ContainsInvalidPathChars(string path)
+		{
+			return path.IndexOfAny(_invalidPathChars) >= 0;
 		}
 
 		/// <summary>
@@ -64,6 +76,11 @@ namespace PSADTNXT.IO
 		/// <param name="access"></param>
 		public static DirectoryInfo CreateDirectory(string path, DirectorySecurity access)
 		{
+			if (access is null)
+			{
+				throw new ArgumentNullException(nameof(access));
+			}
+
 #if NET8_0_OR_GREATER
 			return FileSystemAclExtensions.CreateDirectory(access, path);
 #else

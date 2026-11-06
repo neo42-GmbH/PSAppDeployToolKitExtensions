@@ -336,16 +336,13 @@ catch {
 }
 
 if (-not $SkipDeployment) {
-	[System.Collections.Hashtable]$closeParams = @{}
 	try {
 		Invoke-NXTDeployment -ADTSession $adtSession
 	}
 	catch {
 		$Host.UI.WriteErrorLine((Out-String -InputObject $_ -Width ([System.Int32]::MaxValue)))
-		$closeParams['ExitCode'] = 60001
+		if (Test-ADTSessionActive) { $adtSession.SetExitCode(60001) }
 	}
-	finally {
-		if (Test-ADTSessionActive) { Close-ADTSession @closeParams } else { exit 60001 }
-	}
+	if (Test-ADTSessionActive) { Close-ADTSession } else { exit 60001 }
 }
 #endregion INTERNALS - DO NOT EDIT

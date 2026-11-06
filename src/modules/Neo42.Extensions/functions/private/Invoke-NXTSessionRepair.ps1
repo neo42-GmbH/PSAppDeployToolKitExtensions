@@ -13,6 +13,8 @@
 	)
 
 	try {
+		Write-ADTLogEntry -Message "Invoking session based [$($ADTSession.NXT.Install.Method)] repair logic."
+
 		[PSADT.ProcessManagement.ProcessResult]$result = $null
 		switch ($ADTSession.NXT.Install.Method) {
 			([PSADTNXT.Deployment.DeploymentMethod]::MSI) {
@@ -42,7 +44,7 @@
 			}
 			default {
 				[System.Collections.Hashtable]$errorParams = @{
-					Exception = [System.NotSupportedException]::new("The installation method [$($ADTSession.NXT.Install.Method)] is not supported for repair operations.")
+					Exception = [System.NotSupportedException]::new("The installation method [$($ADTSession.NXT.Install.Method)] does not support repair operations.")
 					Category  = [System.Management.Automation.ErrorCategory]::NotImplemented
 					ErrorId   = 'RepairMethodNotSupported'
 				}

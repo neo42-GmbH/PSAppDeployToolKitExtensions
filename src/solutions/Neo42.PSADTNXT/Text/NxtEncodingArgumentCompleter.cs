@@ -14,11 +14,9 @@ namespace PSADTNXT.Text
 	{
 		public IEnumerable<CompletionResult> CompleteArgument(string commandName, string parameterName, string wordToComplete, CommandAst commandAst, IDictionary fakeBoundParameters)
 		{
-#pragma warning disable CA2263
 			return Enum.GetNames(typeof(FileEncoding))
 				.Where(n => n.StartsWith(wordToComplete, StringComparison.OrdinalIgnoreCase))
 				.Select(n => new CompletionResult(n));
-#pragma warning restore CA2263
 		}
 	}
 }

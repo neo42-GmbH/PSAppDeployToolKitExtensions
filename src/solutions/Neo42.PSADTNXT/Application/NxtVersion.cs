@@ -59,6 +59,8 @@ namespace PSADTNXT.Application
 
 		private static readonly char[] _trimChars = [' ', '-', '_', ',', '.', ':', ';', '/', '\\', '\n'];
 
+		private static readonly Regex[] _dropPrefixes = [new(@"^(?i)v[\.\-_]?$")];
+
 		/// <summary>
 		/// The version construct regexes accept at most nine digits per part.
 		/// </summary>
@@ -109,7 +111,7 @@ namespace PSADTNXT.Application
 				isSuffix = false;
 			}
 
-			if (string.IsNullOrWhiteSpace(versionInfo) || (!isSuffix && versionInfo == "v"))
+			if (string.IsNullOrWhiteSpace(versionInfo) || (!isSuffix && _dropPrefixes.Any(p => p.IsMatch(versionInfo))))
 			{
 				return;
 			}

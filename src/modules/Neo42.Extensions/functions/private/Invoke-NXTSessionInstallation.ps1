@@ -17,6 +17,9 @@
 			Write-ADTLogEntry -Message 'An installation method was not set. Skipping a default process execution.'
 			return [PSADT.ProcessManagement.ProcessResult]::new(0)
 		}
+
+		Write-ADTLogEntry -Message "Invoking session based [$($ADTSession.NXT.Install.Method)] installation logic."
+
 		[System.Collections.Hashtable]$invokeInstallParams = @{
 			Method         = $ADTSession.NXT.Install.Method
 			Target         = $ADTSession.NXT.Install.Target

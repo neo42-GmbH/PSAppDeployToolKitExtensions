@@ -13,3 +13,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Maintainability", "CA1416", Justification = "Platform is Windows")]
 [assembly: SuppressMessage("Maintainability", "CA1060", Justification = "Alignment with PSADT")]
 [assembly: SuppressMessage("Performance", "CA1870", Justification = "Type not available in .NET Framework")]
+[assembly: SuppressMessage("Usage", "CA2263", Justification = "Generic overloads like Enum.IsDefined<TEnum> not available in .NET Framework")]

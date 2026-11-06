@@ -18,6 +18,8 @@
 			return [PSADT.ProcessManagement.ProcessResult]::new(0)
 		}
 
+		Write-ADTLogEntry -Message "Invoking session based [$($ADTSession.NXT.Uninstall.Method)] uninstallation logic."
+
 		[System.Collections.Hashtable]$invokeUninstallParams = @{
 			Method         = $ADTSession.NXT.Uninstall.Method
 			CacheDirectory = $ADTSession.NXT.Package.Directory
@@ -35,6 +37,7 @@
 		}
 		elseif ($ADTSession.NXT.Detection.Application) {
 			# Pass the application object to resolve the target and the uninstall string arguments from it.
+			Write-ADTLogEntry -Message 'No target was specified, but detection resolved an application. Using its data for uninstallation.'
 			$invokeUninstallParams['Application'] = $ADTSession.NXT.Detection.Application
 		}
 		else {
@@ -69,7 +72,6 @@
 			$invokeUninstallParams['Awaiter'] = $ADTSession.NXT.Uninstall.Awaiters
 		}
 
-		Write-ADTLogEntry "Invoking session based [$($invokeUninstallParams.Method)] uninstallation logic."
 		return (Uninstall-NXTApplication @invokeUninstallParams)
 	}
 	catch {

@@ -15,7 +15,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 		public StringComparison StringComparison { get; set; } = StringComparison.Ordinal;
 
 		public ValidSet()
-			: base("The string is is not valid for set.")
+			: base("The string is not valid for the set.")
 		{
 		}
 
@@ -40,7 +40,7 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 
 			return Values.Any(v => string.Equals(v, valueStr, StringComparison))
 				? ValidationResult.Success!
-				: new ValidationResult(ErrorMessage);
+				: new ValidationResult($"The value '{valueStr}' for '{validationContext.MemberName}' in '{validationContext.ObjectInstance.GetType().Name}' is not one of the valid values [{string.Join(", ", Values)}].");
 		}
 	}
 }
