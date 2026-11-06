@@ -122,5 +122,28 @@ namespace PSADTNXT.Extensions
 				? result
 				: throw new FormatException($"'{input}' is neither a number of seconds nor a valid time span.");
 		}
+
+		/// <summary>
+		/// Parses an enum name (case-sensitive) or numeric value and only accepts values that are defined in <typeparamref name="TEnum"/>.
+		/// </summary>
+		/// <remarks>
+		/// <see cref="Enum.TryParse{TEnum}(string, bool, out TEnum)"/> alone accepts any numeric string, even if the value is not defined.
+		/// </remarks>
+		internal static bool TryParseDefinedEnum<TEnum>(this string? input, out TEnum result) where TEnum : struct, Enum
+		{
+			return input.TryParseDefinedEnum(false, out result);
+		}
+
+		/// <summary>
+		/// Parses an enum name or numeric value and only accepts values that are defined in <typeparamref name="TEnum"/>.
+		/// </summary>
+		/// <param name="input">The enum name or numeric value.</param>
+		/// <param name="ignoreCase">Whether the name is matched case-insensitively.</param>
+		/// <param name="result">The parsed enum value if successful; otherwise, the default value.</param>
+		/// <inheritdoc cref="TryParseDefinedEnum{TEnum}(string?, out TEnum)" path="/remarks"/>
+		internal static bool TryParseDefinedEnum<TEnum>(this string? input, bool ignoreCase, out TEnum result) where TEnum : struct, Enum
+		{
+			return Enum.TryParse(input, ignoreCase, out result) && Enum.IsDefined(typeof(TEnum), result);
+		}
 	}
 }

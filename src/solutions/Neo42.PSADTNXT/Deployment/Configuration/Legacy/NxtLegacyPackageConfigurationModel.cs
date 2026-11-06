@@ -39,6 +39,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 
 		public string Dependencies { get; set; } = string.Empty;
 
+		[ValidDateTime(Format = "dd/MM/yyyy")]
 		public string LastChange { get; set; } = string.Empty;
 
 		[RegularExpression(@"^\d+$")]
@@ -182,7 +183,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		/// <param name="errors">All validation results that failed.</param>
 		/// <returns><see langword="true"/> if the configuration is valid; otherwise <see langword="false"/>.</returns>
 #pragma warning disable CA1021
-		public bool Validate(out ValidationResult[] errors)
+		public bool TryValidate(out ValidationResult[] errors)
 #pragma warning restore CA1021
 		{
 			var results = new List<ValidationResult>();
@@ -197,7 +198,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 		/// <exception cref="NxtPackageConfigurationValidationException">Thrown when the configuration is invalid. Contains all validation results.</exception>
 		public void ThrowIfInvalid()
 		{
-			if (!Validate(out var errors))
+			if (!TryValidate(out var errors))
 			{
 				throw new NxtPackageConfigurationValidationException(errors);
 			}

@@ -41,7 +41,7 @@ namespace PSADTNXT.Shell
 		/// <summary>
 		/// Characters that require escaping in PowerShell inline strings (e.g. when used in a command argument).
 		/// </summary>
-		private static readonly char[] _escapableCharacters = [' ', '\t', '\n', ';', ':', '$', '{', '}', '"', '\'', '|', '&', ',', '(', ')'];
+		private static readonly char[] _escapableCharacters = [' ', '\t', '\r', '\n', ';', ':', '$', '{', '}', '"', '\'', '|', '&', ',', '(', ')', '`'];
 
 		/// <summary>
 		/// Checks if the input string contains any characters that need to be escaped in PowerShell inline strings.
@@ -100,6 +100,31 @@ namespace PSADTNXT.Shell
 				}
 			}
 			return dict;
+		}
+
+		/// <summary>
+		/// Converts a value from a PowerShell hashtable or data file to a <see cref="bool"/>.
+		/// </summary>
+		/// <remarks>
+		/// Accepts <see cref="bool"/>, <see cref="SwitchParameter"/> and the strings 'true'/'false' (case-insensitive). Unlike a PowerShell cast,
+		/// the string 'false' converts to <see langword="false"/> and any other value is rejected instead of being evaluated for truthiness.
+		/// </remarks>
+		internal static bool TryConvertToBool(this object? value, out bool result)
+		{
+			switch (value is PSObject psObject ? psObject.BaseObject : value)
+			{
+				case bool boolValue:
+					result = boolValue;
+					return true;
+				case SwitchParameter switchValue:
+					result = switchValue.IsPresent;
+					return true;
+				case string stringValue:
+					return bool.TryParse(stringValue, out result);
+				default:
+					result = default;
+					return false;
+			}
 		}
 
 		/// <summary>

@@ -138,7 +138,7 @@ namespace PSADTNXT.Package
 
 		public override string ToString()
 		{
-			return $"Registered Package: {Developer} {Name} (Version: {Version}, Publisher: {Developer}, Guid: {PSChildName})";
+			return $"Registered Package: {Name} (Version: {Version}, Publisher: {Developer}, Guid: {PSChildName})";
 		}
 
 		/// <summary>

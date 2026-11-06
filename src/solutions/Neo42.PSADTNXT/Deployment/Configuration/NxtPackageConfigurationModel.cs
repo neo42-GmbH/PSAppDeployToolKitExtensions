@@ -59,7 +59,7 @@ namespace PSADTNXT.Deployment.Configuration
 		/// <param name="errors">All validation results that failed.</param>
 		/// <returns><see langword="true"/> if the configuration is valid; otherwise <see langword="false"/>.</returns>
 #pragma warning disable CA1021
-		public bool Validate(out ValidationResult[] errors)
+		public bool TryValidate(out ValidationResult[] errors)
 #pragma warning restore CA1021
 		{
 			var results = new List<ValidationResult>();
@@ -74,7 +74,7 @@ namespace PSADTNXT.Deployment.Configuration
 		/// <exception cref="NxtPackageConfigurationValidationException">Thrown when the configuration is invalid. Contains all validation results.</exception>
 		public void ThrowIfInvalid()
 		{
-			if (!Validate(out var errors))
+			if (!TryValidate(out var errors))
 			{
 				throw new NxtPackageConfigurationValidationException(errors);
 			}

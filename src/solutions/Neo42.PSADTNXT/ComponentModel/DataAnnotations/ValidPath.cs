@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
+using PSADTNXT.IO;
 
 namespace PSADTNXT.ComponentModel.DataAnnotations
 {
@@ -63,6 +64,11 @@ namespace PSADTNXT.ComponentModel.DataAnnotations
 
 		private bool IsValidPathString(string path)
 		{
+			if (NxtPath.ContainsInvalidPathChars(path))
+			{
+				return false;
+			}
+
 			try
 			{
 				// Wildcards are allowed (e.g. process names), but .NET Framework rejects them in GetFullPath while .NET does not

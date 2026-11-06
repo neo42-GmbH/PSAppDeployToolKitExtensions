@@ -128,8 +128,8 @@ namespace PSADTNXT.Extensions
 			);
 
 			return new InstalledApplication(
-				$"Microsoft.PowerShell.Core\\Registry::{keyPath}",
-				$"Microsoft.PowerShell.Core\\Registry::{keyParent}",
+				keyPath,
+				keyParent,
 				package.PackageName,
 				null,
 				package.DisplayName,
