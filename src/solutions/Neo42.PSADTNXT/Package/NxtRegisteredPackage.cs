@@ -179,6 +179,12 @@ namespace PSADTNXT.Package
 		/// <returns>The registered package for the given package base key and package GUID, or null if not found.</returns>
 		public static bool TryGetPackage(string packagePath, out NxtRegisteredPackage? package)
 		{
+			if (string.IsNullOrWhiteSpace(packagePath))
+			{
+				package = null;
+				return false;
+			}
+
 			if (!packagePath.StartsWith(@"SOFTWARE\", StringComparison.OrdinalIgnoreCase)) // Older iterations did not have the leading SOFTWARE node in their ref
 			{
 				packagePath = @"SOFTWARE\" + packagePath;
