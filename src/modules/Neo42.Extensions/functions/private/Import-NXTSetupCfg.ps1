@@ -2,13 +2,30 @@
 	<#
 	.SYNOPSIS
 	Imports the setup configuration.
+	.DESCRIPTION
+	Loads the module default Setup.cfg and merges the provided files on top of it.
+	Afterwards the [SetupCfg] configuration callbacks are invoked, the toolkit overrides are applied and the result is validated.
 	#>
 	[OutputType([PSADTNXT.Configuration.NxtIniDocument])]
 	[CmdletBinding()]
 	param (
 		[AllowEmptyCollection()]
 		[System.IO.FileInfo[]]
-		$Path
+		$Path,
+		[Parameter(Mandatory)]
+		[ValidateNotNullOrEmpty()]
+		[System.String]
+		$ScriptDirectory,
+		[Parameter(Mandatory)]
+		[ValidateNotNull()]
+		[PSADTNXT.Deployment.NxtDeploymentType]
+		$DeploymentType,
+		[AllowEmptyString()]
+		[System.String]
+		$DeploymentSystem,
+		[AllowNull()]
+		[System.Collections.Generic.IDictionary[System.String, System.Object]]
+		$BoundParameters
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -19,6 +36,12 @@
 			[PSADTNXT.Configuration.NxtIniDocument]$setupCfgObj = Import-NXTIniFile -LiteralPath ([System.IO.Path]::Combine($MyInvocation.MyCommand.Module.ModuleBase, 'Setup.cfg')) -AsIniDocument
 			if ($Path) {
 				$Path | & { process { $setupCfgObj.Merge((Import-NXTIniFile -LiteralPath $_.FullName -AsIniDocument), $true) } }
+			}
+
+			# Allow extensions to alter the setup cfg before the toolkit overrides are applied and the package config is constructed
+			[PSADTNXT.Configuration.NxtConfigurationContext]$context = [PSADTNXT.Configuration.NxtConfigurationContext]::new($setupCfgObj, $ScriptDirectory, $DeploymentType, $DeploymentSystem, $BoundParameters)
+			foreach ($callback in $script:ConfigurationCallbacks[[PSADTNXT.Configuration.ConfigurationHookPoint]::SetupCfg]) {
+				$null = & $callback -Context $context
 			}
 
 			# Check if overrides exists for setup cfg overrides (GPO or other)
