@@ -26,11 +26,11 @@ _The [samples](./samples) for both formats, the [package config reference](./doc
 
 __🪝 Hook-based deployment customizing__
 
-You are not limited to the values contained within the configuration file. By integrating own extension modules and hook-based invocations you can customize the deployment process from the beginning to the end:
+You are not limited to the values contained within the configuration file. By integrating your own extension modules and hook-based invocations you can customize the deployment process:
 
 - The deployment process offers many hook points, such as `CustomBegin`, `CustomInstallEnd` or `CustomEndOnError`, to run your own code in various deployment phases without breaking or leaving the framework environment we provide.
 
-- Any module named `PSAppDeployToolkit.*` that is placed in the package root is loaded automatically at the beginning of the deployment process. Using additional modules is a recommended way to attached own functions at any hook point with `Add-NXTDeploymentCallback`.
+- Any module named `PSAppDeployToolkit.*` that is placed in the package root is loaded automatically at the beginning of the deployment process. Using additional modules is the recommended way to attach your own functions at any hook point with `Add-NXTDeploymentCallback`.
 
 With this modular approach, you can make your code available without touching the deployment script. The [example extension module](./samples/PSAppDeployToolkit.Neo42.Extensions.CompanyExtension) shows a minimal setup.
 
