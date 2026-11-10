@@ -68,4 +68,4 @@ This code is distributed WITHOUT ANY WARRANTY; without even the implied warranty
 * https://github.com/PSAppDeployToolkit/PSAppDeployToolkit
 * https://www.gnu.org/licenses/licenses.html
 * [neo42 Extensions Help Index](https://portal.neo42.de/Help/674885cc4c0539ebc80bf566)
-* [Example packages + neo42 Package Config Editor](https://portal.neo42.de/Help/6748996f4c0539ebc80bf5d8)
+* [Example packages + neo42 Package Config Editor](https://portal.neo42.de/Help/6af336719530b74c7c00125c?language=en)
