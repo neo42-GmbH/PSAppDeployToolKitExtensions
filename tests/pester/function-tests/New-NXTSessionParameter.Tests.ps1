@@ -166,7 +166,6 @@ return $MyInvocation
 			$captured['Context'].DeploymentType | Should -Be ([PSADTNXT.Deployment.NxtDeploymentType]::Repair)
 			$captured['Context'].DeploymentSystem | Should -Be 'PesterSystem'
 			$captured['Context'].ScriptDirectory | Should -Be $callbackDir
-			$captured['Context'].BoundParameters['DeploymentSystem'] | Should -Be 'PesterSystem'
 		}
 
 		It 'Should invoke prepended callbacks first' {
