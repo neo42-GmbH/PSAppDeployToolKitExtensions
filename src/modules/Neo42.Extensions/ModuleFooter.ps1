@@ -113,6 +113,21 @@ New-Variable -Name 'DeploymentCallbacks' -Option Constant -Force -Scope Script -
 	}
 )
 
+# Define the configuration callback store. These callbacks are invoked before a session is opened.
+New-Variable -Name 'ConfigurationCallbacks' -Option Constant -Force -Scope Script -Value (
+	[System.Enum]::GetValues([PSADTNXT.Configuration.ConfigurationHookPoint]) | & {
+		begin {
+			$dict = [System.Collections.Generic.Dictionary[PSADTNXT.Configuration.ConfigurationHookPoint, System.Collections.Generic.List[System.Management.Automation.CommandInfo]]]::new()
+		}
+		process {
+			$dict.Add($_, [System.Collections.Generic.List[System.Management.Automation.CommandInfo]]::new())
+		}
+		end {
+			[System.Collections.ObjectModel.ReadOnlyDictionary[PSADTNXT.Configuration.ConfigurationHookPoint, System.Collections.Generic.List[System.Management.Automation.CommandInfo]]]::new($dict)
+		}
+	}
+)
+
 # Add our initialization hooks to the PSADT command table.
 Add-ADTModuleCallback -HookPoint PostOpen -Callback $script:CommandTable.'Open-NXTSession'
 Add-ADTModuleCallback -HookPoint PreClose -Callback $script:CommandTable.'Close-NXTSession'

@@ -33,6 +33,7 @@ namespace PSADTNXT.Shell
 		private static readonly IReadOnlyCollection<string> _strictModeExclusions = new HashSet<string>
 		{
 			"PropertyReferenceNotSupportedInDataSection",
+			"ArrayReferenceNotSupportedInDataSection",
 			"MethodCallNotSupportedInDataSection",
 			"OperatorNotSupportedInDataSection",
 			"ScriptBlockNotSupportedInDataSection"
