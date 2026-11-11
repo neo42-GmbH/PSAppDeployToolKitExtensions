@@ -44,7 +44,7 @@ The package configuration can be created or modified very easily using common pr
 * Toolkit settings, translations and assets can be overridden through PSADT's layered configuration by placing `Config`, `Strings` or `Assets` folders in the package root.
 * `Update-NXTPackage` from the `PSAppDeployToolkit.Neo42.Tools` module migrates existing PSADT v3 packages to a v4 version.
 
-_PSADT v3 packages cannot load extension modules. For them, this [script](https://github.com/neo42-GmbH/ManagementService-PowerShell/blob/master/Pipelines/Add-ContentToCustomFunction.ps1) demonstrates how to inject code into the `Custom*` functions instead._
+_PSADT v3 packages cannot load extension modules. For them, this [script](https://github.com/neo42-GmbH/ManagementService-PowerShell/blob/master/Pipelines/Add-ContentToCustomFunctionV4.ps1) demonstrates how to inject code into the `Custom*` functions instead._
 
 ### ✨ New functionalities
 
@@ -118,13 +118,14 @@ All neo42 modules and `DeployNxtApplication.exe` are code-signed.
 The latest release can be downloaded from the [releases page](https://github.com/neo42-GmbH/PSAppDeployToolKitExtensions/releases/latest).
 
 ## 📚 Documentation
-For detailed documentation of the neo42 PSADT Extensions, please check these files:
+For detailed documentation of the neo42 PSADT Extensions, please check these references:
 * [Changelog](./docs/PSAppDeployToolkit.Neo42.Extensions.Changelog.md)
-* [V4 Migration guide](./docs/PSAppDeployToolkit.Neo42.Extensions.V4Migration.md)
+* [V4 migration guide](./docs/PSAppDeployToolkit.Neo42.Extensions.V4Migration.md)
 * [Function reference](./docs/PSAppDeployToolkit.Neo42.Extensions.Functions.md)
 * [Variable reference](./docs/PSAppDeployToolkit.Neo42.Extensions.Variables.md)
 * [Package config (PSD1) reference](./docs/neo42PackageConfigPsd1.md)
 * [Legacy package config (JSON) reference](./docs/neo42PackageConfigJson.md)
+* [neo42 packaging guide](https://portal.neo42.de/Documentation/6ab3c427b6103d7b2e30873f?language=en)
 
 For information about the PSADT, the base of these extensions, please visit the [PSADT website or project page](#-links).
 
