@@ -128,6 +128,9 @@ For detailed documentation of the neo42 PSADT Extensions, please check these fil
 
 For information about the PSADT, the base of these extensions, please visit the [PSADT website or project page](#-links).
 
+Example packages and the neo42 Package Config Editor can be downloaded
+[here](https://portal.neo42.de/Help/6748996f4c0539ebc80bf5d8?language=en).
+
 ## 📜 License
 
 The content of this repository is licensed under the [GNU Lesser General Public License](https://www.gnu.org/licenses/licenses.html) version 3, or any later version.
