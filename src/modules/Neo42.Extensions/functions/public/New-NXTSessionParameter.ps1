@@ -45,14 +45,7 @@
 			[System.String]$deploymentSystem = if ($Invocation.BoundParameters.ContainsKey('DeploymentSystem')) { $Invocation.BoundParameters['DeploymentSystem'] } else { 'Unknown' }
 
 			# Create the root setup cfg from the module default and merge any provided setup cfg files on top of it. Registered configuration callbacks may alter it.
-			[System.Collections.Hashtable]$setupCfgParams = @{
-				Path             = $SetupCfg
-				ScriptDirectory  = $ScriptDirectory
-				DeploymentType   = $nxtDeploymentType
-				DeploymentSystem = $deploymentSystem
-				BoundParameters  = $Invocation.BoundParameters
-			}
-			[PSADTNXT.Configuration.NxtIniDocument]$setupCfgObj = Import-NXTSetupCfg @setupCfgParams
+			[PSADTNXT.Configuration.NxtIniDocument]$setupCfgObj = Import-NXTSetupCfg -Path $SetupCfg -ScriptDirectory $ScriptDirectory -DeploymentType $nxtDeploymentType -DeploymentSystem $deploymentSystem
 
 			# Load the package configuration
 			[PSADTNXT.Deployment.Configuration.NxtPackageConfigurationModel]$packageConfig = Import-NXTPackageConfig -ScriptDirectory $ScriptDirectory -SetupCfg $setupCfgObj

@@ -31,17 +31,11 @@ namespace PSADTNXT.Configuration
 		/// </summary>
 		public string DeploymentSystem { get; }
 
-		/// <summary>
-		/// Gets the parameters bound to the deployment script.
-		/// </summary>
-		public IReadOnlyDictionary<string, object> BoundParameters { get; }
-
 		public NxtConfigurationContext(
 			NxtIniDocument setupCfg,
 			string scriptDirectory,
 			NxtDeploymentType deploymentType,
-			string deploymentSystem,
-			IDictionary<string, object>? boundParameters)
+			string deploymentSystem)
 		{
 			if (string.IsNullOrWhiteSpace(scriptDirectory))
 			{
@@ -52,10 +46,6 @@ namespace PSADTNXT.Configuration
 			ScriptDirectory = scriptDirectory;
 			DeploymentType = deploymentType ?? throw new ArgumentNullException(nameof(deploymentType));
 			DeploymentSystem = deploymentSystem ?? string.Empty;
-			BoundParameters = new ReadOnlyDictionary<string, object>(
-				boundParameters is null
-					? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
-					: new Dictionary<string, object>(boundParameters, StringComparer.OrdinalIgnoreCase));
 		}
 	}
 }

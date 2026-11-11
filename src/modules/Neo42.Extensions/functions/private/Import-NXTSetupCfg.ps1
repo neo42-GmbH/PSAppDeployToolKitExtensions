@@ -22,10 +22,7 @@
 		$DeploymentType,
 		[AllowEmptyString()]
 		[System.String]
-		$DeploymentSystem,
-		[AllowNull()]
-		[System.Collections.Generic.IDictionary[System.String, System.Object]]
-		$BoundParameters
+		$DeploymentSystem
 	)
 	begin {
 		Initialize-ADTFunction -Cmdlet $PSCmdlet -SessionState $ExecutionContext.SessionState
@@ -39,7 +36,7 @@
 			}
 
 			# Allow extensions to alter the setup cfg before the toolkit overrides are applied and the package config is constructed
-			[PSADTNXT.Configuration.NxtConfigurationContext]$context = [PSADTNXT.Configuration.NxtConfigurationContext]::new($setupCfgObj, $ScriptDirectory, $DeploymentType, $DeploymentSystem, $BoundParameters)
+			[PSADTNXT.Configuration.NxtConfigurationContext]$context = [PSADTNXT.Configuration.NxtConfigurationContext]::new($setupCfgObj, $ScriptDirectory, $DeploymentType, $DeploymentSystem)
 			foreach ($callback in $script:ConfigurationCallbacks[[PSADTNXT.Configuration.ConfigurationHookPoint]::SetupCfg]) {
 				$null = & $callback -Context $context
 			}
