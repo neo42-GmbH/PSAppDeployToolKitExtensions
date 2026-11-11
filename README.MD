@@ -24,15 +24,13 @@ Don't want to write new code for every simple package? Make use of our `Deploy-A
 
 _The [samples](./samples) for both formats, the [package config reference](./docs/neo42PackageConfigPsd1.md) and the [legacy package config reference](./docs/neo42PackageConfigJson.md) will help you write your first package in no time._
 
-__🪝 Deployment hooks__
+__🪝 Hook-based deployment customizing__
 
-You are not limited to the values contained within the configuration file. The deployment process offers many hook points, such as `CustomBegin`, `CustomInstallEnd` or `CustomEndOnError`, where you can run your own code without breaking or leaving the framework environment we provide.
+You are not limited to the values contained within the configuration file. By integrating your own extension modules and hook-based invocations you can customize the deployment process:
 
-The recommended way to use them is your own extension module. Any module named `PSAppDeployToolkit.*` that is placed in the package root is loaded automatically, and its functions can be attached to any hook point with `Add-NXTDeploymentCallback`:
+- The deployment process offers many hook points, such as `CustomBegin`, `CustomInstallEnd` or `CustomEndOnError`, to run your own code in various deployment phases without breaking or leaving the framework environment we provide.
 
-```PowerShell
-Add-NXTDeploymentCallback -HookPoint 'CustomInstallEnd' -Callback (Get-Command -Name 'Invoke-MyCompanyAction')
-```
+- Any module named `PSAppDeployToolkit.*` that is placed in the package root is loaded automatically at the beginning of the deployment process. Using additional modules is the recommended way to attach your own functions at any hook point with `Add-NXTDeploymentCallback`.
 
 With this modular approach, you can make your code available without touching the deployment script. The [example extension module](./samples/PSAppDeployToolkit.Neo42.Extensions.CompanyExtension) shows a minimal setup.
 
@@ -129,6 +127,9 @@ For detailed documentation of the neo42 PSADT Extensions, please check these fil
 * [Legacy package config (JSON) reference](./docs/neo42PackageConfigJson.md)
 
 For information about the PSADT, the base of these extensions, please visit the [PSADT website or project page](#-links).
+
+Example packages and the neo42 Package Config Editor can be downloaded
+[here](https://portal.neo42.de/Help/6748996f4c0539ebc80bf5d8?language=en).
 
 ## 📜 License
 
