@@ -33,6 +33,7 @@ namespace PSADTNXT.Shell
 		private static readonly IReadOnlyCollection<string> _strictModeExclusions = new HashSet<string>
 		{
 			"PropertyReferenceNotSupportedInDataSection",
+			"ArrayReferenceNotSupportedInDataSection",
 			"MethodCallNotSupportedInDataSection",
 			"OperatorNotSupportedInDataSection",
 			"ScriptBlockNotSupportedInDataSection"
@@ -306,10 +307,9 @@ namespace PSADTNXT.Shell
 		/// <exception cref="InvalidOperationException">Thrown if the output is not the expected or the PowerShell session logged issues.</exception>
 		internal static T PsInvokeSafe<T>(string script, IEnumerable<SessionStateVariableEntry> sessionVariables)
 		{
-			using var powerShell = PowerShell.Create(GetExpansionSessionState(sessionVariables));
+			using var powerShell = GetExpansionShell(sessionVariables);
 
-			var result = powerShell.AddScript("Set-StrictMode -Version 3.0")
-				.AddScript(script)
+			var result = powerShell.AddScript(script)
 				.Invoke<T>()
 				.FirstOrDefault();
 
@@ -396,7 +396,7 @@ namespace PSADTNXT.Shell
 		/// </summary>
 		/// <param name="variables">The variables to expose.</param>
 		/// <returns>The initial session state.</returns>
-		internal static InitialSessionState GetExpansionSessionState(IEnumerable<SessionStateVariableEntry> variables)
+		private static InitialSessionState GetExpansionSessionState(IEnumerable<SessionStateVariableEntry> variables)
 		{
 			var allVariables = new List<SessionStateVariableEntry>(StrictPreferenceVariables);
 			allVariables.AddRange(variables.Where(v => !StrictPreferenceVariables.Any(spv => string.Equals(spv.Name, v.Name, StringComparison.OrdinalIgnoreCase))));
@@ -408,6 +408,20 @@ namespace PSADTNXT.Shell
 			iss.Commands.Add(new SessionStateCmdletEntry("Set-StrictMode", typeof(SetStrictModeCommand), string.Empty));
 			iss.Variables.Add(allVariables);
 			return iss;
+		}
+
+		/// <summary>
+		/// Returns a strict expansion session powershell with strict mode enabled that only exposes given variables.
+		/// </summary>
+		/// <param name="variables">The variables to expose.</param>
+		/// <returns>The PowerShell object.</returns>
+		internal static PowerShell GetExpansionShell(IEnumerable<SessionStateVariableEntry> variables)
+		{
+			var iss = GetExpansionSessionState(variables);
+			var ps = PowerShell.Create(iss);
+			_ = ps.AddScript("Set-StrictMode -Version 3.0").Invoke();
+			ps.Commands.Clear();
+			return ps;
 		}
 	}
 }

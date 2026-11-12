@@ -21,8 +21,8 @@
 						Add-NXTDeploymentCallback -HookPoint CustomUninstallEnd -Callback $script:CommandTable.'Remove-NXTCurrentEmpirumEntry' -Prepend
 					}
 
+					# Usually initialized by the configuration callback already, but ensures the data is available for the deployment hooks
 					Initialize-NXTEmpirum
-					Invoke-NXTEmpirumPreAction
 				}
 			}
 
@@ -33,7 +33,7 @@
 			Write-ADTLogEntry -Severity Error -Message (Resolve-ADTErrorRecord -ErrorRecord $_)
 			$adtSession.NXT.ErrorMessage = $_.Exception.Message
 			$adtSession.NXT.ErrorPhase = $adtSession.InstallPhase
-			Close-ADTSession -ExitCode $(if ($_.Exception -is [PSADTNXT.Configuration.NxtIniValidationException]) { 60016 } else { 60008 })
+			Close-ADTSession -ExitCode 60008
 		}
 	}
 	end {

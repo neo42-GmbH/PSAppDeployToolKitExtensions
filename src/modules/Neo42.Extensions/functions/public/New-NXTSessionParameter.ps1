@@ -4,6 +4,7 @@
 	Retrieves the parameters for the the Open-ADTSession function.
 	.DESCRIPTION
 	Collects all required parameters for the Open-ADTSession function and returns them as a dictionary for use with Open-ADTSession.
+	Configuration callbacks registered with Add-NXTConfigurationCallback are invoked while the configuration is constructed.
 	.OUTPUTS
 	System.Collections.Generic.Dictionary[System.String, System.Object] - The parameters for the Open-ADTSession function.
 	.PARAMETER Invocation
@@ -39,14 +40,16 @@
 	}
 	process {
 		try {
-			# Create the root setup cfg from the module default and merge any provided setup cfg files on top of it
-			[PSADTNXT.Configuration.NxtIniDocument]$setupCfgObj = Import-NXTSetupCfg -Path $SetupCfg
+			# Determine multiple use parameters before constructing the configuration
+			[PSADTNXT.Deployment.NxtDeploymentType]$nxtDeploymentType = if ($Invocation.BoundParameters.ContainsKey('DeploymentType')) { $Invocation.BoundParameters['DeploymentType'] } else { [PSADTNXT.Deployment.NxtDeploymentType]::Install }
+			[System.String]$deploymentSystem = if ($Invocation.BoundParameters.ContainsKey('DeploymentSystem')) { $Invocation.BoundParameters['DeploymentSystem'] } else { 'Unknown' }
+
+			# Create the root setup cfg from the module default and merge any provided setup cfg files on top of it. Registered configuration callbacks may alter it.
+			[PSADTNXT.Configuration.NxtIniDocument]$setupCfgObj = Import-NXTSetupCfg -Path $SetupCfg -ScriptDirectory $ScriptDirectory -DeploymentType $nxtDeploymentType -DeploymentSystem $deploymentSystem
 
 			# Load the package configuration
 			[PSADTNXT.Deployment.Configuration.NxtPackageConfigurationModel]$packageConfig = Import-NXTPackageConfig -ScriptDirectory $ScriptDirectory -SetupCfg $setupCfgObj
 
-			# Determine multiple use parameters before constructing the hashtable
-			[PSADTNXT.Deployment.NxtDeploymentType]$nxtDeploymentType = if ($Invocation.BoundParameters.ContainsKey('DeploymentType')) { $Invocation.BoundParameters['DeploymentType'] } else { [PSADTNXT.Deployment.NxtDeploymentType]::Install }
 			[System.String]$installName = [PSADTNXT.Extensions.NxtStringExtensions]::ToFileNameCompatible(
 				[System.String]::Join('_',
 					@(
@@ -101,7 +104,7 @@
 				SessionClass                = [PSADTNXT.Foundation.NxtDeploymentSession]
 
 				# External NXT parameters
-				DeploymentSystem            = if ($Invocation.BoundParameters.ContainsKey('DeploymentSystem')) { $Invocation.BoundParameters['DeploymentSystem'] } else { 'Unknown' }
+				DeploymentSystem            = $deploymentSystem
 				DeployAppScriptPath         = $Invocation.MyCommand.Definition
 				DeployAppScriptSessionState = $PSCmdlet.SessionState
 				PackageConfig               = $packageConfig

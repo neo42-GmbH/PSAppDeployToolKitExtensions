@@ -22,7 +22,7 @@ namespace PSADTNXT.Deployment.Configuration.Legacy
 				.Concat(GetLegacyVariables(adtEnvironment, legacyModel))
 				.Concat(extraVariables);
 
-			using var ps = PowerShell.Create(NxtPowerShell.GetExpansionSessionState(sessionStateVariables));
+			using var ps = NxtPowerShell.GetExpansionShell(sessionStateVariables);
 
 			// Set obsolet values to placeholders so self-referencing variables do not cause issues
 #pragma warning disable CS0618
