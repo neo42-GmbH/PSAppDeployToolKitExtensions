@@ -57,9 +57,12 @@
 			# Determine if restart conditions are met
 			[System.Boolean]$isTrigger = $WhenTriggerDeployment.ToBool() -and $parameters.ContainsKey('DeploymentType') -and [PSADTNXT.Deployment.NxtDeploymentType]::new($parameters.DeploymentType).IsTrigger
 			[System.Boolean]$is32on64 = $When32on64Bit.ToBool() -and [System.Environment]::Is64BitOperatingSystem -and -not [System.Environment]::Is64BitProcess
+			[System.Collections.Generic.List[System.String]]$reasons = [System.Collections.Generic.List[System.String]]::new()
+			if ($isTrigger) { $reasons.Add('trigger deploymenttype') }
+			if ($is32on64) { $reasons.Add('32-bit process on 64-bit OS') }
 
-			if (-not ($isTrigger -or $is32on64)) { return }
-			$PSCmdlet.WriteWarning('Restarting the script...')
+			if (-not $reasons) { return }
+			$PSCmdlet.WriteWarning("Restarting the script because of $([System.String]::Join(' and ', $reasons))...")
 
 			# Clear the DeploymentType parameter from the Trigger indicator
 			if ($isTrigger) { $parameters.DeploymentType = $parameters.DeploymentType -replace '^Trigger', [System.String]::Empty }

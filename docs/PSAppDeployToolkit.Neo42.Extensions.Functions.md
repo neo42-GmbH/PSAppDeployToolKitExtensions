@@ -1,5 +1,88 @@
 ﻿# Functions in PSAppDeployToolkit.Neo42.Extensions module
 
+## Add-NXTConfigurationCallback
+
+Adds a callback that is invoked during the session configuration, before a deployment session is opened.
+
+### SYNTAX
+
+```PowerShell
+Add-NXTConfigurationCallback
+    [-Callback] <CommandInfo[]>
+    [-HookPoint] <ConfigurationHookPoint[]>
+    [-Prepend]
+    [<CommonParameters>]
+```
+
+### DESCRIPTION
+
+The Add-NXTConfigurationCallback function registers a command that is invoked by New-NXTSessionParameter at the specified configuration hook point.
+This allows extension modules to alter the configuration before the session is opened:
+- SetupCfg: The Setup.cfg can be changed before the toolkit overrides are applied and the package configuration is constructed from it.
+The callback is invoked with a single parameter named Context of type [PSADTNXT.Configuration.NxtConfigurationContext].
+As no session exists at this point, Get-ADTSession is not available within the callback.
+Throwing an exception within the callback aborts the session configuration.
+
+### EXAMPLES
+
+#### Example 1
+
+```PowerShell
+Add-NXTConfigurationCallback -HookPoint SetupCfg -Callback (Get-Command -Name 'My-SetupCfgModification')
+```
+
+This example registers the 'My-SetupCfgModification' function, which will be invoked with the -Context parameter after the Setup.cfg files are merged.
+
+### INPUTS
+
+**This function does not take any pipeline input.**
+
+### OUTPUTS
+
+**This function does not return any output.**
+
+### PARAMETERS
+
+#### -Callback
+
+The command information object representing the function to be invoked.
+
+|Property|Value|
+|:---|:---|
+|Type:|CommandInfo[]|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -HookPoint
+
+The configuration hook point at which the callback should be invoked.
+
+|Property|Value|
+|:---|:---|
+|Type:|ConfigurationHookPoint[]|
+|Enum values:|SetupCfg|
+|Position:|1|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -Prepend
+
+Add the callback to the top of the list.
+
+|Property|Value|
+|:---|:---|
+|Type:|SwitchParameter|
+|Position:|Named|
+|Default value:|None|
+|Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 ## Add-NXTContent
 
 Replaces `Add-Content` with neo42 encoding handling for files.
@@ -861,6 +944,56 @@ Returns the XML document if specified.
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+## Clear-NXTConfigurationCallback
+
+Clears all configuration callbacks of a hook point.
+
+### SYNTAX
+
+```PowerShell
+Clear-NXTConfigurationCallback
+    [-HookPoint] <ConfigurationHookPoint[]>
+    [<CommonParameters>]
+```
+
+### DESCRIPTION
+
+This function removes all callbacks that were previously added with Add-NXTConfigurationCallback from the specified hook points.
+
+### EXAMPLES
+
+#### Example 1
+
+```PowerShell
+Clear-NXTConfigurationCallback -HookPoint SetupCfg
+```
+
+Clears all callbacks attached to SetupCfg.
+
+### INPUTS
+
+**This function does not take any pipeline input.**
+
+### OUTPUTS
+
+**This function does not return any output.**
+
+### PARAMETERS
+
+#### -HookPoint
+
+The configuration hook points to clear.
+
+|Property|Value|
+|:---|:---|
+|Type:|ConfigurationHookPoint[]|
+|Enum values:|SetupCfg|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
 |Accept pipeline input:|False|
 |Accept wildcard characters:|False|
 
@@ -4107,6 +4240,7 @@ New-NXTSessionParameter
 ### DESCRIPTION
 
 Collects all required parameters for the Open-ADTSession function and returns them as a dictionary for use with Open-ADTSession.
+Configuration callbacks registered with Add-NXTConfigurationCallback are invoked while the configuration is constructed.
 
 ### EXAMPLES
 
@@ -4207,6 +4341,70 @@ System.IO.DirectoryInfo - The created temporary folder.
 ### PARAMETERS
 
 **This function does not have any documented parameters.**
+## Remove-NXTConfigurationCallback
+
+Removes a specific configuration callback.
+
+### SYNTAX
+
+```PowerShell
+Remove-NXTConfigurationCallback
+    [-Callback] <CommandInfo[]>
+    [-HookPoint] <ConfigurationHookPoint[]>
+    [<CommonParameters>]
+```
+
+### DESCRIPTION
+
+The Remove-NXTConfigurationCallback function removes a callback that was previously added with Add-NXTConfigurationCallback.
+
+### EXAMPLES
+
+#### Example 1
+
+```PowerShell
+Remove-NXTConfigurationCallback -HookPoint SetupCfg -Callback (Get-Command -Name 'My-SetupCfgModification')
+```
+
+This example removes the callback function named 'My-SetupCfgModification' from the 'SetupCfg' hook point.
+
+### INPUTS
+
+**This function does not take any pipeline input.**
+
+### OUTPUTS
+
+**This function does not return any output.**
+
+### PARAMETERS
+
+#### -Callback
+
+The callback function to remove.
+
+|Property|Value|
+|:---|:---|
+|Type:|CommandInfo[]|
+|Position:|0|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
+#### -HookPoint
+
+The configuration hook point the callback is attached to.
+
+|Property|Value|
+|:---|:---|
+|Type:|ConfigurationHookPoint[]|
+|Enum values:|SetupCfg|
+|Position:|1|
+|Default value:|None|
+|Required:|True|
+|Accept pipeline input:|False|
+|Accept wildcard characters:|False|
+
 ## Remove-NXTDeploymentCallback
 
 Removes a specific hook.

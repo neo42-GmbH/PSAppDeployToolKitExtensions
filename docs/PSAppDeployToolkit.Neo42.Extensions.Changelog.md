@@ -65,7 +65,7 @@
   - Customers to write their own extensions without having to edit the deployment file internals.
   - Neo42 to provide **deployment system specific modules** using this mechanism to enhance the deployment experience.
   - You can hook into the deployment process without having to edit the deployment script itself by using the `Add-NxtDeploymentCallBack` function within your module.
-
+  - You can alter the configuration before the session is opened by using the `Add-NXTConfigurationCallback` function within your module. The `SetupCfg` hook point allows changes to the Setup.cfg before GPO overrides are applied and the package config is constructed from it.
 - We support **GPO based configuration** for the toolkit configuration. The ADMX/ADML files can be obtained from Github. For our ADMX to load, import the PSADT GPO first.
   - The GPO has an extra feature to override Setup.cfg values to define these values centrally.
 
