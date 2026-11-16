@@ -36,8 +36,7 @@
 			$processorKey.Close()
 
 			# Domain information
-			[System.DirectoryServices.ActiveDirectory.Domain]$domain = try { [System.DirectoryServices.ActiveDirectory.Domain]::GetComputerDomain() } catch { $null }
-			$newEnvironment['envComputerADNetbiosDomain'] = if ($domain) { [PSADTNXT.DirectoryServices.ActiveDirectory.NxtDirectory]::GetNetbiosNameForDomain($domain.Name) } else { $null }
+			$newEnvironment['envComputerADNetbiosDomain'] = [PSADTNXT.DirectoryServices.ActiveDirectory.NxtDirectory]::GetComputerDomainNetbiosName()
 
 			# Architecture based information
 			$newEnvironment['envWindowsBits'] = if ([System.Environment]::Is64BitOperatingSystem) { [System.Byte]64 } else { [System.Byte]32 }

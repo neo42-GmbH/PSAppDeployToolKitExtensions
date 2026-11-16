@@ -11,28 +11,33 @@ namespace PSADTNXT.DirectoryServices.ActiveDirectory
 	public static class NxtDirectory
 	{
 		/// <summary>
-		/// Gets the NetBIOS name of a domain given its DNS name by calling the DsGetDcName function from the Windows API.
+		/// Gets the NetBIOS name of the domain the local computer is joined to by calling the NetGetJoinInformation function from the Windows API.
 		/// </summary>
-		/// <param name="dnsName">The DNS name of the domain for which to retrieve the NetBIOS name.</param>
-		/// <returns>The NetBIOS name of the specified domain.</returns>
+		/// <remarks>
+		/// The information is read from the local join state, so no line of sight to a domain controller is required.
+		/// </remarks>
+		/// <returns>The NetBIOS name of the computer's domain, or <see langword="null"/> if the computer is not joined to a domain.</returns>
 		/// <exception cref="Win32Exception">Thrown when the underlying Windows API call fails.</exception>
-		public static string GetNetbiosNameForDomain(string dnsName)
+		public static string? GetComputerDomainNetbiosName()
 		{
-			var result = Netapi32.DsGetDcName("", dnsName, IntPtr.Zero, "", 0x80020000, out var pDomainInfo);
+			var result = Netapi32.NetGetJoinInformation(null, out var pNameBuffer, out var joinStatus);
 			try
 			{
 				if (result != 0)
 				{
 					throw new Win32Exception(result);
 				}
-				var dcinfo = Marshal.PtrToStructure<DOMAIN_CONTROLLER_INFO>(pDomainInfo);
-				return dcinfo.DomainName ?? string.Empty;
+				if (joinStatus != NETSETUP_JOIN_STATUS.NetSetupDomainName)
+				{
+					return null;
+				}
+				return Marshal.PtrToStringUni(pNameBuffer);
 			}
 			finally
 			{
-				if (pDomainInfo != IntPtr.Zero)
+				if (pNameBuffer != IntPtr.Zero)
 				{
-					_ = Netapi32.NetApiBufferFree(pDomainInfo);
+					_ = Netapi32.NetApiBufferFree(pNameBuffer);
 				}
 			}
 		}
