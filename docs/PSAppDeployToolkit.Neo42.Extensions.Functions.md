@@ -1487,7 +1487,7 @@ The product GUID that you want to convert into an installer product code.
 |Property|Value|
 |:---|:---|
 |Type:|Guid|
-|Aliases:|ProductGuid|
+|Aliases:|ProductCode, ProductGuid|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
