@@ -172,7 +172,7 @@
 			"label": "Copy Template",
 			"type": "shell",
 			"hide": true,
-			"command": "New-Item -Path '${workspaceFolder}${/}build' -ItemType Directory -ErrorAction Ignore; Copy-Item -Recurse -Path '${workspaceFolder}${/}template${/}*' -Destination '${workspaceFolder}${/}build' -ErrorAction Ignore; exit 0",
+			"command": "if (Test-Path -LiteralPath '${workspaceFolder}${/}build${/}neo42PackageConfig.json') { Write-Host 'Template already present in build folder, skipping copy.'; exit 0 }; New-Item -Path '${workspaceFolder}${/}build' -ItemType Directory -ErrorAction Ignore; Copy-Item -Recurse -Path '${workspaceFolder}${/}template${/}*' -Destination '${workspaceFolder}${/}build' -ErrorAction Ignore; exit 0",
 			"group": "build",
 			"promptOnClose": false,
 			"presentation": {
