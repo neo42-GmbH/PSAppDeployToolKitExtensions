@@ -17,7 +17,7 @@
 				Copy-NXTPackageToCache -ADTSession $ADTSession
 			}
 
-			Invoke-NXTShortcutOperation -ADTSession $ADTSession -Purge:$($ADTSession.NXT.SetupCfg['Options']['DESKTOPSHORTCUT'] -ne '1')
+			Invoke-NXTShortcutOperation -ADTSession $ADTSession -Purge:$($ADTSession.NXT.SetupCfg['Options']['DesktopShortcut'] -ne '1')
 
 			Invoke-NXTArpKeyOperation -ADTSession $ADTSession
 

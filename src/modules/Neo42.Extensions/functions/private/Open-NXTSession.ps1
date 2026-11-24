@@ -71,10 +71,10 @@
 			if ($adtSession.NXT.DeploymentType.IsMachinePart) { Clear-NXTUserEnvironmentVariable }
 
 			# Apply config overrides from setup config to the toolkit config
-			if ($adtSession.NXT.SetupCfg['Options']['SHOWBALLOONNOTIFICATIONS'] -eq '1') {
+			if ($adtSession.NXT.SetupCfg['Options']['ShowBalloonNotifications'] -eq '1') {
 				$adtConfig['UI']['BalloonNotifications'] = $true
 			}
-			elseif ($adtSession.NXT.SetupCfg['Options']['SHOWBALLOONNOTIFICATIONS'] -eq '0') {
+			elseif ($adtSession.NXT.SetupCfg['Options']['ShowBalloonNotifications'] -eq '0') {
 				$adtConfig['UI']['BalloonNotifications'] = $false
 			}
 

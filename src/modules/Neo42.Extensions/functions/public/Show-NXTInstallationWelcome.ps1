@@ -113,25 +113,25 @@
 			# Apply deployment defaults if specified
 			if ($DeploymentDefaults) {
 				if (-not $PSBoundParameters.ContainsKey('CloseProcesses')) { $CloseProcesses = $ADTSession.NXT.CloseProcesses }
-				if (-not $PSBoundParameters.ContainsKey('ContinueType')) { $ContinueType = $ADTSession.NXT.SetupCfg['AskKillProcesses']['CONTINUETYPE'] }
-				if (-not $PSBoundParameters.ContainsKey('MinimizeWindows')) { $MinimizeWindows = $ADTSession.NXT.SetupCfg['AskKillProcesses']['MINIMIZEALLWINDOWS'] -eq '1' }
-				if (-not $PSBoundParameters.ContainsKey('NotTopMost')) { $NotTopMost = $ADTSession.NXT.SetupCfg['AskKillProcesses']['TOPMOSTWINDOW'] -eq '0' }
+				if (-not $PSBoundParameters.ContainsKey('ContinueType')) { $ContinueType = $ADTSession.NXT.SetupCfg['AskKillProcesses']['ContinueType'] }
+				if (-not $PSBoundParameters.ContainsKey('MinimizeWindows')) { $MinimizeWindows = $ADTSession.NXT.SetupCfg['AskKillProcesses']['MinimizeAllWindows'] -eq '1' }
+				if (-not $PSBoundParameters.ContainsKey('NotTopMost')) { $NotTopMost = $ADTSession.NXT.SetupCfg['AskKillProcesses']['TopMostWindow'] -eq '0' }
 				if (-not $PSBoundParameters.ContainsKey('PersistPrompt')) { $PersistPrompt = -not $NotTopMost }
-				if (-not $PSBoundParameters.ContainsKey('HideCloseButton')) { $HideCloseButton = $ADTSession.NXT.SetupCfg['AskKillProcesses']['USERCANCLOSEALL'] -eq '0' }
+				if (-not $PSBoundParameters.ContainsKey('HideCloseButton')) { $HideCloseButton = $ADTSession.NXT.SetupCfg['AskKillProcesses']['UserCanCloseAll'] -eq '0' }
 				if (-not $PSBoundParameters.ContainsKey('AllowMove')) { $AllowMove = $true }
-				if (-not $PSBoundParameters.ContainsKey('AllowDoNotDisturb')) { $AllowDoNotDisturb = $ADTSession.NXT.SetupCfg['AskKillProcesses']['DONOTDISTURB'] -eq '1' }
+				if (-not $PSBoundParameters.ContainsKey('AllowDoNotDisturb')) { $AllowDoNotDisturb = $ADTSession.NXT.SetupCfg['AskKillProcesses']['DoNotDisturb'] -eq '1' }
 				if (-not $PSBoundParameters.ContainsKey('BlockExecution')) { $BlockExecution = $adtConfig['NXT']['Toolkit']['BlockExecution'] }
-				if (-not $PSBoundParameters.ContainsKey('Timeout')) { $Timeout = [System.TimeSpan]::FromSeconds($ADTSession.NXT.SetupCfg['AskKillProcesses']['TIMEOUT']) }
+				if (-not $PSBoundParameters.ContainsKey('Timeout')) { $Timeout = [System.TimeSpan]::FromSeconds($ADTSession.NXT.SetupCfg['AskKillProcesses']['Timeout']) }
 				if (-not $PSBoundParameters.ContainsKey('CustomText')) { $CustomText = -not [System.String]::IsNullOrWhiteSpace($adtStrings['CloseAppsPrompt']['CustomMessage']) }
-				if (-not $PSBoundParameters.ContainsKey('DeferRunInterval') -and $ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERINTERVAL']) {
-					$DeferRunInterval = [System.TimeSpan]::FromMinutes($ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERINTERVAL'])
+				if (-not $PSBoundParameters.ContainsKey('DeferRunInterval') -and $ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferInterval']) {
+					$DeferRunInterval = [System.TimeSpan]::FromMinutes($ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferInterval'])
 				}
 
 				if ($ADTSession.NXT.DeploymentType.IsUninstall) {
 					$AllowDeferCloseProcesses = $false
 				}
-				elseif ($ADTSession.NXT.SetupCfg['AskKillProcesses']['ALLOWABORTBYUSER'] -eq '1') {
-					Write-ADTLogEntry -Severity Warning -Message 'Special SetupCfg option [ALLOWABORTBYUSER] was set to [1]. Any further defer option will be ignored and the user is allowed to defer indefinitely.'
+				elseif ($ADTSession.NXT.SetupCfg['AskKillProcesses']['AllowAbortByUser'] -eq '1') {
+					Write-ADTLogEntry -Severity Warning -Message 'Special SetupCfg option [AllowAbortByUser] was set to [1]. Any further defer option will be ignored and the user is allowed to defer indefinitely.'
 					$DeferTimes = 0
 					$DeferDays = 0
 					$DeferDeadline = $null
@@ -139,11 +139,11 @@
 					$AllowDeferCloseProcesses = $true
 				}
 				else {
-					if (-not $PSBoundParameters.ContainsKey('DeferTimes')) { $DeferTimes = $ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERTIMES'] }
-					if (-not $PSBoundParameters.ContainsKey('DeferDays')) { $DeferDays = $ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERDAYS'] }
+					if (-not $PSBoundParameters.ContainsKey('DeferTimes')) { $DeferTimes = $ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferTimes'] }
+					if (-not $PSBoundParameters.ContainsKey('DeferDays')) { $DeferDays = $ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferDays'] }
 
-					if (-not $PSBoundParameters.ContainsKey('DeferDeadline') -and -not [System.String]::IsNullOrWhiteSpace($ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERDEADLINE'])) {
-						$DeferDeadline = [System.DateTime]::Parse($ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERDEADLINE'])
+					if (-not $PSBoundParameters.ContainsKey('DeferDeadline') -and -not [System.String]::IsNullOrWhiteSpace($ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferDeadline'])) {
+						$DeferDeadline = [System.DateTime]::Parse($ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferDeadline'])
 					}
 					if (-not $PSBoundParameters.ContainsKey('AllowDeferCloseProcesses')) {
 						[System.Boolean]$hasDeferOption = $DeferTimes -or $DeferDays -or $DeferDeadline
@@ -236,13 +236,13 @@
 
 			# Return the defer exit code if the session has not reached the defer interval yet.
 			if ($AllowDeferCloseProcesses -and
-				$ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERINTERVAL'] -and
+				$ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferInterval'] -and
 				$ADTSession.DeployMode -eq [PSADT.Module.DeployMode]::Interactive -and
 				$deferHistory -and
 				$deferHistory.DeferRunIntervalLastTime -and
-				$deferHistory.DeferRunIntervalLastTime.Add([System.TimeSpan]::FromMinutes($ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERINTERVAL'])) -gt [System.DateTime]::Now
+				$deferHistory.DeferRunIntervalLastTime.Add([System.TimeSpan]::FromMinutes($ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferInterval'])) -gt [System.DateTime]::Now
 			) {
-				Write-ADTLogEntry -Severity Warning -Message "The last deployment attempt [$($deferHistory.DeferRunIntervalLastTime)] is less than the configured defer interval [$($ADTSession.NXT.SetupCfg['AskKillProcesses']['DEFERINTERVAL'])min] ago."
+				Write-ADTLogEntry -Severity Warning -Message "The last deployment attempt [$($deferHistory.DeferRunIntervalLastTime)] is less than the configured defer interval [$($ADTSession.NXT.SetupCfg['AskKillProcesses']['DeferInterval'])min] ago."
 				Close-ADTSession -ExitCode $adtConfig['UI']['DeferExitCode']
 			}
 
@@ -462,10 +462,10 @@
 		}
 
 		# Show the progress bar if enabled for the duration of the deployment
-		if ($ADTSession.NXT.SetupCfg['Options']['SHOWPROGRESS'] -eq '1') {
-			Show-ADTInstallationProgress -NotTopMost:($ADTSession.NXT.SetupCfg['AskKillProcesses']['TOPMOSTWINDOW'] -ne '2') -AllowMove
+		if ($ADTSession.NXT.SetupCfg['Options']['ShowProgress'] -eq '1') {
+			Show-ADTInstallationProgress -NotTopMost:($ADTSession.NXT.SetupCfg['AskKillProcesses']['TopMostWindow'] -ne '2') -AllowMove
 		}
-		elseif (-not $NoBalloonTip -and $ADTSession.NXT.SetupCfg['Options']['SHOWBALLOONNOTIFICATIONS'] -in @('1', '2')) {
+		elseif (-not $NoBalloonTip -and $ADTSession.NXT.SetupCfg['Options']['ShowBalloonNotifications'] -in @('1', '2')) {
 			Show-ADTBalloonTip -BalloonTipIcon Info -BalloonTipText $adtStrings['BalloonTip']['Start'][$ADTSession.DeploymentType.ToString()]
 		}
 

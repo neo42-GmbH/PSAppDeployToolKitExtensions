@@ -24,7 +24,7 @@
 			# Restart apps that were closed during the deployment
 			if (-not $adtSession.NXT.DeploymentType.IsUninstall -and
 				$adtSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Complete -and
-				$adtSession.NXT.SetupCfg['AskKillProcesses']['OPENCLOSEDAPPS'] -eq '1' -and
+				$adtSession.NXT.SetupCfg['AskKillProcesses']['OpenClosedApps'] -eq '1' -and
 				$adtSession.NXT.ClosedProcesses
 			) {
 				Write-ADTLogEntry -Message 'Reopening previously closed processes as configured in the package.'
@@ -65,8 +65,8 @@
 			if ($adtSession.NXT.DeploymentType.IsMachinePart) { Register-NXTPackage -ADTSession $adtSession }
 
 			# Only explicitly show the progress balloon it will not be shown by Close-ADTInstallationProgress anyway
-			if ($adtSession.NXT.SetupCfg['Options']['SHOWPROGRESS'] -ne '1' -and
-				$adtSession.NXT.SetupCfg['Options']['SHOWBALLOONNOTIFICATIONS'] -in @('1', '2')
+			if ($adtSession.NXT.SetupCfg['Options']['ShowProgress'] -ne '1' -and
+				$adtSession.NXT.SetupCfg['Options']['ShowBalloonNotifications'] -in @('1', '2')
 			) {
 				[System.Windows.Forms.ToolTipIcon]$icon = switch ($adtSession.GetDeploymentStatus()) {
 					([PSADT.Module.DeploymentStatus]::FastRetry) { [System.Windows.Forms.ToolTipIcon]::Warning }
@@ -77,18 +77,18 @@
 			}
 
 			# Show the restart prompt if configured
-			if ($adtSession.NXT.SetupCfg['Options']['SHOWRESTARTPROMPT'] -eq '1' -and
+			if ($adtSession.NXT.SetupCfg['Options']['ShowRestartPrompt'] -eq '1' -and
 				$adtSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::RestartRequired
 			) {
-				Show-ADTInstallationRestartPrompt -NoCountdown -AllowMove -NotTopMost:($adtSession.NXT.SetupCfg['AskKillProcesses']['TOPMOSTWINDOW'] -ne '2')
+				Show-ADTInstallationRestartPrompt -NoCountdown -AllowMove -NotTopMost:($adtSession.NXT.SetupCfg['AskKillProcesses']['TopMostWindow'] -ne '2')
 			}
 
 			# Show the error message to the user if activated
 			if ($adtSession.GetDeploymentStatus() -eq [PSADT.Module.DeploymentStatus]::Error -and
-				$adtSession.NXT.SetupCfg['Options']['SHOWPROGRESS'] -eq '1'
+				$adtSession.NXT.SetupCfg['Options']['ShowProgress'] -eq '1'
 			) {
 				$null = Show-ADTInstallationPrompt -ButtonRightText OK -NoWait `
-					-NotTopMost:($adtSession.NXT.SetupCfg['AskKillProcesses']['TOPMOSTWINDOW'] -ne '2') `
+					-NotTopMost:($adtSession.NXT.SetupCfg['AskKillProcesses']['TopMostWindow'] -ne '2') `
 					-Title $adtStrings['BalloonTip']['Error'][$adtSession.DeploymentType.ToString()] `
 					-Message ([System.String]::Format(
 						$adtStrings['NXT']['ErrorMessage'],
