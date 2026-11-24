@@ -196,7 +196,7 @@
 			else {
 				[System.Int32]$settingIdx = 0
 				foreach ($packageCfgSetting in $packageCfgSection.Value.GetEnumerator()) {
-					if (-not $setupCfg[$packageCfgSection.Key].ContainsKey($packageCfgSetting.Key) -and $packageCfgSection.Key -notin $sectionReferenceExclusions) {
+					if (-not $setupCfg[$packageCfgSection.Key].ContainsKey($packageCfgSetting.Key) -and $packageCfgSetting.Key -notin $sectionReferenceExclusions) {
 						$setupCfg[$packageCfgSection.Key].Insert($settingIdx, $packageCfgSetting.Key, $packageCfgSetting.Value, $packageCfgSection.Value.GetComment($packageCfgSetting.Key))
 					}
 					$settingIdx++
