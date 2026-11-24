@@ -21,7 +21,7 @@
 	param (
 		[Parameter(Position = 0, Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
 		[ValidateNotNull()]
-		[Alias('ProductCode')]
+		[Alias('ProductCode', 'ProductGuid')]
 		[System.Guid]
 		$Guid
 	)
