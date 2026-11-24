@@ -34,7 +34,7 @@
 		[System.String]$moduleBase = $ExecutionContext.SessionState.Module.ModuleBase
 		[System.String[]]$copyFromPackage = @('Setup.ico', 'Files', 'SupportFiles', 'neo42PackageConfig.json', 'neo42PackageConfig.psd1')
 		[System.String[]]$copyFromReference = @('PSAppDeployToolkit*', 'DeployNxtApplication.exe', 'Config', 'neo42PackageMetadata.json')
-		[System.String[]]$setupCfgReferenceMigrationExclusions = @('Options.DESKTOPSHORTCUT')
+		[System.String[]]$setupCfgReferenceMigrationExclusions = @('Options.DesktopShortcut')
 
 		[System.Management.Automation.ScriptBlock[]]$migrations = @(
 			{ # v4.0 Deploy-Application

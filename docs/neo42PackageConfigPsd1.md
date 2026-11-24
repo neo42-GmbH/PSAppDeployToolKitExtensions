@@ -84,7 +84,7 @@ Additionally:
 | Variable | Content |
 |:---------|:--------|
 | All PSADT environment variables, e.g. `$envProgramFiles`, `$envProgramData`, `$envWinDir`, `$envOSArchitecture` | Provided by the PSADT environment table. See the [PSADT documentation](https://psappdeploytoolkit.com) and the [variable reference](./PSAppDeployToolkit.Neo42.Extensions.Variables.md). |
-| `$SetupCfg` | The merged, **read-only** `Setup.cfg` settings of the package. Read a value with `$SetupCfg['<Section>']['<KEY>']`, e.g. `$SetupCfg['Options']['SOFTMIGRATION']`. This allows dynamic values depending on the customer configuration. |
+| `$SetupCfg` | The merged, **read-only** `Setup.cfg` settings of the package. Read a value with `$SetupCfg['<Section>']['<KEY>']`, e.g. `$SetupCfg['Options']['SoftMigration']`. This allows dynamic values depending on the customer configuration. |
 
 ### Meta variables
 
@@ -247,7 +247,7 @@ Soft migration takes ownership of an application that is already installed in th
 
 A soft migration is only considered if all of the following apply:
 
-- `Enabled` is `$true` and `SOFTMIGRATION=1` is set in the `Options` section of the `Setup.cfg`.
+- `Enabled` is `$true` and `SoftMigration=1` is set in the `Options` section of the `Setup.cfg`.
 - The deployment is an installation (not a repair) and no process has been run yet.
 - No registered package with the same `GUID` and an equal or higher version exists.
 
@@ -281,8 +281,8 @@ Shortcuts in the public desktop or public start menu that are managed by the pac
 
 Shortcuts are processed at the end of the deployment:
 
-- Installation with `DESKTOPSHORTCUT=1` in the `Options` section of the `Setup.cfg`: `Create` and `Copy` are applied, `Delete` shortcuts are removed.
-- Installation without `DESKTOPSHORTCUT=1`: **all** managed shortcuts are removed.
+- Installation with `DesktopShortcut=1` in the `Options` section of the `Setup.cfg`: `Create` and `Copy` are applied, `Delete` shortcuts are removed.
+- Installation without `DesktopShortcut=1`: **all** managed shortcuts are removed.
 - Uninstallation: **all** managed shortcuts are removed.
 
 ### ManagedApplications

@@ -80,7 +80,7 @@ return $MyInvocation
 		}
 
 		It 'Should reflect the setup cfg' {
-			$params['SetupCfg']['Options']['DESKTOPSHORTCUT'] | Should -Be '1'
+			$params['SetupCfg']['Options']['DesktopShortcut'] | Should -Be '1'
 		}
 
 		It 'Should reflect the invocation' {
@@ -105,7 +105,7 @@ return $MyInvocation
 			$callbackDir = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "NxtPester_$([System.Guid]::NewGuid().ToString('N'))")
 			$null = New-Item -ItemType Directory -Path $callbackDir
 			Copy-Item -LiteralPath "$packageDir\Deploy-Application.ps1" -Destination $callbackDir
-			(Get-Content -LiteralPath "$packageDir\neo42PackageConfig.psd1" -Raw).Replace("Author       = 'neo42 Pester'", "Author       = `$SetupCfg['Options']['DESKTOPSHORTCUT']") |
+			(Get-Content -LiteralPath "$packageDir\neo42PackageConfig.psd1" -Raw).Replace("Author       = 'neo42 Pester'", "Author       = `$SetupCfg['Options']['DesktopShortcut']") |
 				Set-Content -LiteralPath "$callbackDir\neo42PackageConfig.psd1" -Encoding UTF8
 
 			$captured = @{}
@@ -113,11 +113,11 @@ return $MyInvocation
 				param ([PSADTNXT.Configuration.NxtConfigurationContext]$Context)
 				$captured['Context'] = $Context
 				$captured['Order'] += @('Set')
-				$Context.SetupCfg['Options']['DESKTOPSHORTCUT'] = '1'
+				$Context.SetupCfg['Options']['DesktopShortcut'] = '1'
 			}
 			function Set-PesterInvalidValue {
 				param ([PSADTNXT.Configuration.NxtConfigurationContext]$Context)
-				$Context.SetupCfg['Options']['DESKTOPSHORTCUT'] = '5'
+				$Context.SetupCfg['Options']['DesktopShortcut'] = '5'
 			}
 			function Write-PesterOrder {
 				param ([PSADTNXT.Configuration.NxtConfigurationContext]$Context)
@@ -155,7 +155,7 @@ return $MyInvocation
 		It 'Should apply callback changes before the package config is constructed' {
 			Add-NXTConfigurationCallback -HookPoint SetupCfg -Callback (Get-Command -Name 'Set-PesterDesktopShortcut')
 			$result = New-NXTSessionParameter -Invocation $callbackInvocation -ScriptDirectory $callbackDir -SetupCfg @()
-			$result['SetupCfg']['Options']['DESKTOPSHORTCUT'] | Should -Be '1'
+			$result['SetupCfg']['Options']['DesktopShortcut'] | Should -Be '1'
 			$result['PackageConfig'].Package.Author | Should -Be '1'
 		}
 
@@ -176,10 +176,10 @@ return $MyInvocation
 		}
 
 		It 'Should apply toolkit overrides after the callbacks' {
-			$adtConfig['NXT']['SetupCfg'] = @{ Overrides = @{ Pester = 'Options;DESKTOPSHORTCUT;0' } }
+			$adtConfig['NXT']['SetupCfg'] = @{ Overrides = @{ Pester = 'Options;DesktopShortcut;0' } }
 			Add-NXTConfigurationCallback -HookPoint SetupCfg -Callback (Get-Command -Name 'Set-PesterDesktopShortcut')
 			$result = New-NXTSessionParameter -Invocation $callbackInvocation -ScriptDirectory $callbackDir -SetupCfg @()
-			$result['SetupCfg']['Options']['DESKTOPSHORTCUT'] | Should -Be '0'
+			$result['SetupCfg']['Options']['DesktopShortcut'] | Should -Be '0'
 			$result['PackageConfig'].Package.Author | Should -Be '0'
 		}
 

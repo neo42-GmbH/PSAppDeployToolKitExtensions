@@ -4,7 +4,7 @@
 
 - **Files**: The `AppDeployToolkit` folder and its content has been removed or was merged into a new module structure.
 
-- **SetupCfg**: `AskKillProcesses.ALLOWABORTBYUSER` now equates to unlimited deferrals, removing the need for a dedicated abort option.
+- **SetupCfg**: `AskKillProcesses.AllowAbortByUser` now equates to unlimited deferrals, removing the need for a dedicated abort option.
 
 - **PackageConfig**: The `neo42PackageConfig.json` format is now considered legacy. A new `neo42PackageConfig.psd1` format has been introduced. The legacy format is still supported but will be deprecated in future releases.
 
@@ -35,19 +35,19 @@
 - The old `CustomAppDeployToolkitUi.ps1` has been moved to the module in the `Scripts` directory. The file has been heavily overhauled to be compatible with v4 and should no longer be edited. Any customizations should be done via PSADT's native UI customization options. The neo42 Application Package Center will offer suitable pipeline tasks to customize the UI.
   - The UI does no longer require extension code and encoded objects.
 
-- A configurable **progress bar** has been added. It can be enabled via the Setup.cfg option `Options.SHOWPROGRESS`. The dialog will be shown for the duration of the deployment.
+- A configurable **progress bar** has been added. It can be enabled via the Setup.cfg option `Options.ShowProgress`. The dialog will be shown for the duration of the deployment.
 
 - The UI **accent color** is now configurable via the Toolkit configuration `UI.FluentAccentColor` and `UI.FluentAccentColorDark`. The legacy neo42 AppKillProcesses window supports this new setting.
 
-- A hard **defer deadline** can now be specified via the Setup.cfg option `AskKillProcesses.DEFERDEADLINE`. This allows to specify a date and time after which the installation cannot be deferred anymore. The soonest of all defer options will be the one applied.
+- A hard **defer deadline** can now be specified via the Setup.cfg option `AskKillProcesses.DeferDeadline`. This allows to specify a date and time after which the installation cannot be deferred anymore. The soonest of all defer options will be the one applied.
 
-- A minimum **defer interval** can now be specified via the Setup.cfg option `AskKillProcesses.DEFERINTERVAL`. This allows to specify a minimum time in minutes that must pass after a deferral before another attempt at the deployment is allowed. This is useful to suppress quick consecutive retries in case of fast retry exit codes by the deployment system. Make sure this is compatible with your deployment system's retry logic to avoid unexpected behavior.
+- A minimum **defer interval** can now be specified via the Setup.cfg option `AskKillProcesses.DeferInterval`. This allows to specify a minimum time in minutes that must pass after a deferral before another attempt at the deployment is allowed. This is useful to suppress quick consecutive retries in case of fast retry exit codes by the deployment system. Make sure this is compatible with your deployment system's retry logic to avoid unexpected behavior.
 
-- The toolkit can now attempt to **reopen applications** that were closed due to the deployment. This can be enabled via the Setup.cfg option `AskKillProcesses.OPENCLOSEDAPPS`. Please note that this feature is implemented on a best effort basis and might not work for all applications.
+- The toolkit can now attempt to **reopen applications** that were closed due to the deployment. This can be enabled via the Setup.cfg option `AskKillProcesses.OpenClosedApps`. Please note that this feature is implemented on a best effort basis and might not work for all applications.
 
-- An option to respect **Do Not Disturb** cues has been added. A Setup.cfg option `AskKillProcesses.DONOTDISTURB` allows to suppress the deployment UI if the user has enabled Do Not Disturb on their system. Do not disturb is equivalent to deferring the deployment.
+- An option to respect **Do Not Disturb** cues has been added. A Setup.cfg option `AskKillProcesses.DoNotDisturb` allows to suppress the deployment UI if the user has enabled Do Not Disturb on their system. Do not disturb is equivalent to deferring the deployment.
 
-- A **restart prompt** can now be shown by the toolkit itself. This can be enabled via the Setup.cfg option `Options.SHOWRESTARTPROMPT`. If the deployment is in interactive mode, the user will be prompted to restart the system with a window that cannot be dismissed without action. In silent mode, the dialog will be suppressed and no action will be taken.
+- A **restart prompt** can now be shown by the toolkit itself. This can be enabled via the Setup.cfg option `Options.ShowRestartPrompt`. If the deployment is in interactive mode, the user will be prompted to restart the system with a window that cannot be dismissed without action. In silent mode, the dialog will be suppressed and no action will be taken.
 
 - The option to cancel a dialog was merged into the deferral logic. The user must now be able to defer the deployment if cancelling was previously allowed. The differentiation between cancel and defer was ambiguous and lead to undesired behavior in certain scenarios. Deferring and cancelling had the same effect of ending the deployment temporarily.
 
@@ -68,6 +68,8 @@
   - You can alter the configuration before the session is opened by using the `Add-NXTConfigurationCallback` function within your module. The `SetupCfg` hook point allows changes to the Setup.cfg before GPO overrides are applied and the package config is constructed from it.
 - We support **GPO based configuration** for the toolkit configuration. The ADMX/ADML files can be obtained from Github. For our ADMX to load, import the PSADT GPO first.
   - The GPO has an extra feature to override Setup.cfg values to define these values centrally.
+
+- The Setup.cfg setting names are now written in **PascalCase** (e.g. `DesktopShortcut` instead of `DESKTOPSHORTCUT`) for better readability. Section and setting names are case-insensitive, so existing `Setup.cfg`/`CustomSetup.cfg` files and GPO overrides using the old upper case names keep working.
 
 - There are a multitude new toolkit options to more granularly control the behavior of the the extension. Options include:
   - Settings to control the PowerShell environment like action preference, encoding or strict mode settings.
