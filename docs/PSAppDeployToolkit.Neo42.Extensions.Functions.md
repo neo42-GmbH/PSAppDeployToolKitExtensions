@@ -181,6 +181,7 @@ The literal path to the file(s) to add content to.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -459,6 +460,7 @@ The literal path to the folder(s) to add permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -511,6 +513,7 @@ The user(s) or group(s) to grant full control permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|FullControlPermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -524,6 +527,7 @@ The user(s) or group(s) to grant write permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|WritePermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -537,6 +541,7 @@ The user(s) or group(s) to grant modify permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|ModifyPermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -550,6 +555,7 @@ The user(s) or group(s) to grant read and execute permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|ReadAndExecutePermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -626,6 +632,7 @@ The path(s) to add to the PATH variable.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|FullName|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -757,6 +764,7 @@ The path to the XML file(s) to add the node to.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|FilePath|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -770,6 +778,7 @@ The literal path to the XML file(s) to add the node to.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -861,6 +870,7 @@ The XPath to the node(s) to add the new node to.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|NodePath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -1098,6 +1108,7 @@ The version to compare.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|DetectedVersion|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1111,6 +1122,7 @@ The target version to compare against.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|TargetVersion|
 |Position:|1|
 |Default value:|None|
 |Required:|True|
@@ -1164,6 +1176,7 @@ The escaped string that you want to convert into a list of components.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|UninstallString|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1214,6 +1227,7 @@ The Base64-encoded and compressed string to decode.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|EncodedObject|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1410,6 +1424,7 @@ The object to convert.
 |Property|Value|
 |:---|:---|
 |Type:|Object|
+|Aliases:|Object|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1472,6 +1487,7 @@ The product GUID that you want to convert into an installer product code.
 |Property|Value|
 |:---|:---|
 |Type:|Guid|
+|Aliases:|ProductGuid|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1536,6 +1552,7 @@ The dictionary object to convert. If the keys are integers, they will be treated
 |Property|Value|
 |:---|:---|
 |Type:|Hashtable|
+|Aliases:|BoundParameters, PSBoundParameters, ArgumentList|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -1811,6 +1828,7 @@ The literal path to the file(s) to expand variables in.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -2155,6 +2173,7 @@ The literal path to the file(s) to get content from.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -2295,6 +2314,7 @@ A string representing the drive letter.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|DriveLetter, DriveName|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -2379,6 +2399,7 @@ A string representing the drive letter.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|DriveLetter, DriveName|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -2462,6 +2483,7 @@ The literal path to the file(s) to check for encoding.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -2603,6 +2625,7 @@ Specifies the path to the folder(s) to calculate the size of. Wildcards are supp
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|FolderPath|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -2616,6 +2639,7 @@ Specifies the literal path to the folder(s) to calculate the size of.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -2733,6 +2757,7 @@ The process ID of the child process.
 |Property|Value|
 |:---|:---|
 |Type:|Int32|
+|Aliases:|Pid, ProcessId|
 |Position:|0|
 |Default value:|$PID|
 |Required:|False|
@@ -2823,6 +2848,7 @@ The process ID of the process to get the tree for.
 |Property|Value|
 |:---|:---|
 |Type:|Int32|
+|Aliases:|Pid, ProcessId|
 |Position:|0|
 |Default value:|$PID|
 |Required:|False|
@@ -2940,6 +2966,7 @@ Filters the results based on the specified package ID.
 |Property|Value|
 |:---|:---|
 |Type:|Guid|
+|Aliases:|PackageGUID|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -2979,6 +3006,7 @@ Filters the results based on the specified registry packages key.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|RegPackagesKey, RegistryKey|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -3204,6 +3232,7 @@ The literal path to the XML file(s) to remove the node from.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -3295,6 +3324,7 @@ The name of the attribute to retrieve from the node(s) instead of the node itsel
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|AttributeName|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -3429,6 +3459,7 @@ The literal path to the INI file(s) to import.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -3602,6 +3633,7 @@ The literal path to the XML file(s) to import.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -3767,6 +3799,7 @@ The path or other identifier of the installer.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|Path, FilePath, FullName|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -4098,6 +4131,7 @@ The user(s) or group(s) to grant full control permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|FullControlPermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -4111,6 +4145,7 @@ The user(s) or group(s) to grant write permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|WritePermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -4124,6 +4159,7 @@ The user(s) or group(s) to grant modify permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|ModifyPermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -4137,6 +4173,7 @@ The user(s) or group(s) to grant read and execute permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|ReadAndExecutePermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -4548,6 +4585,7 @@ The literal path to the folder(s) to remove.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -4613,6 +4651,7 @@ The path to the root folder to stop the recursion at.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|RootPathToRecurseUpTo|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -4694,6 +4733,7 @@ The literal path to the INI file(s) to remove.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -4787,6 +4827,7 @@ The registry key(s) to remove.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|PSPath, Name, Path|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -4875,6 +4916,7 @@ The path(s) to remove from the PATH variable.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|FullName|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -5083,6 +5125,7 @@ The literal path to the XML file(s) to remove the node from.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -5347,6 +5390,7 @@ The literal path to resolve.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -5601,6 +5645,7 @@ The literal path to the file(s) to set content to.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -5806,6 +5851,7 @@ The literal path to the folder(s) to set permissions on.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -5858,6 +5904,7 @@ The user(s) or group(s) to grant full control permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|FullControlPermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -5871,6 +5918,7 @@ The user(s) or group(s) to grant write permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|WritePermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -5884,6 +5932,7 @@ The user(s) or group(s) to grant modify permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|ModifyPermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -5897,6 +5946,7 @@ The user(s) or group(s) to grant read and execute permissions to.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|ReadAndExecutePermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -6060,6 +6110,7 @@ The literal path to the XML file(s) to update the node in.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -6628,6 +6679,7 @@ The ID of the process to stop. Id 0 is not allowed.
 |Property|Value|
 |:---|:---|
 |Type:|Int32[]|
+|Aliases:|Pid, ProcessId|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -6718,6 +6770,7 @@ The path to the file to test.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|LiteralPath, PSPath|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -6787,6 +6840,7 @@ The path to the folder whose permissions are to be checked.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|FullName|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -6800,6 +6854,7 @@ The user(s) or group(s) that should have full control permissions.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|FullControlPermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -6813,6 +6868,7 @@ The user(s) or group(s) that should have write permissions.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|WritePermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -6826,6 +6882,7 @@ The user(s) or group(s) that should have modify permissions.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|ModifyPermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -6839,6 +6896,7 @@ The user(s) or group(s) that should have read and execute permissions.
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference[]|
+|Aliases:|ReadAndExecutePermissions|
 |Position:|Named|
 |Default value:|None|
 |Required:|False|
@@ -6931,6 +6989,7 @@ The process ID to check.
 |Property|Value|
 |:---|:---|
 |Type:|Int32|
+|Aliases:|Pid, ProcessId|
 |Position:|0|
 |Default value:|$PID|
 |Required:|False|
@@ -7018,6 +7077,7 @@ The ID(s) of the process to check for.
 |Property|Value|
 |:---|:---|
 |Type:|Int32|
+|Aliases:|Pid, ProcessId|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -7086,6 +7146,7 @@ The path to the file to search in.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|LiteralPath, PSPath|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -7099,6 +7160,7 @@ The query string to search for in the file.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|SearchString|
 |Position:|1|
 |Default value:|None|
 |Required:|True|
@@ -7201,6 +7263,7 @@ The Identifier (e.g. Sid) of the user to check the theme for. If not specified, 
 |Property|Value|
 |:---|:---|
 |Type:|IdentityReference|
+|Aliases:|SID|
 |Position:|0|
 |Default value:|[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value|
 |Required:|False|
@@ -7264,6 +7327,7 @@ The path to the XML file(s) to test the node in.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|LiteralPath, PSPath|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -7509,6 +7573,7 @@ If not specified, the target is resolved from the application found by the Crite
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|Path, FullName|
 |Position:|0|
 |Default value:|None|
 |Required:|False|
@@ -7961,6 +8026,7 @@ The literal path to the file(s) to update.
 |Property|Value|
 |:---|:---|
 |Type:|String[]|
+|Aliases:|PSPath|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -8013,6 +8079,7 @@ The string to search for in the file(s).
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|SearchString|
 |Position:|1|
 |Default value:|None|
 |Required:|True|
@@ -8026,6 +8093,7 @@ The string to replace the query string with.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|ReplaceString|
 |Position:|2|
 |Default value:|None|
 |Required:|True|
@@ -8149,6 +8217,7 @@ The path to the file to check.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|LiteralPath, PSPath|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -8269,6 +8338,7 @@ The path to the file or directory to monitor.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|LiteralPath, PSPath|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
@@ -8448,6 +8518,7 @@ The ID of the process to monitor.
 |Property|Value|
 |:---|:---|
 |Type:|Int32|
+|Aliases:|Pid, ProcessId|
 |Position:|Named|
 |Default value:|None|
 |Required:|True|
@@ -8583,6 +8654,7 @@ The path to the registry key to monitor.
 |Property|Value|
 |:---|:---|
 |Type:|String|
+|Aliases:|PSPath, Name|
 |Position:|0|
 |Default value:|None|
 |Required:|True|
