@@ -34,7 +34,7 @@
 		[System.String]$moduleBase = $ExecutionContext.SessionState.Module.ModuleBase
 		[System.String[]]$copyFromPackage = @('Setup.ico', 'Files', 'SupportFiles', 'neo42PackageConfig.json', 'neo42PackageConfig.psd1')
 		[System.String[]]$copyFromReference = @('PSAppDeployToolkit*', 'DeployNxtApplication.exe', 'Config', 'neo42PackageMetadata.json')
-		[System.String[]]$setupCfgReferenceMigrationExclusions = @('Options.DESKTOPSHORTCUT')
+		[System.String[]]$setupCfgReferenceMigrationExclusions = @('Options.DesktopShortcut')
 
 		[System.Management.Automation.ScriptBlock[]]$migrations = @(
 			{ # v4.0 Deploy-Application
@@ -187,22 +187,27 @@
 		[PSADTNXT.Configuration.NxtIniDocument]$setupCfg = [PSADTNXT.Configuration.NxtIniDocument]::CreateFrom("$($Reference.FullName)\Setup.cfg")
 
 		# Merge new reference settings and update comments
+		# Sections and settings that are not part of the reference are placed at the top
+		# Excluded settings keep the package value if the package contains them, otherwise the reference value is used
 		[System.Int32]$sectionIdx = 0
 		foreach ($packageCfgSection in $packageCfg.GetEnumerator()) {
 			[System.String[]]$sectionReferenceExclusions = $setupCfgReferenceMigrationExclusions | Where-Object { $_ -like "$($packageCfgSection.Key).*" } | ForEach-Object { $_.Split('.', 2)[-1] }
 			if (-not $setupCfg.ContainsKey($packageCfgSection.Key)) {
 				$setupCfg.Insert($sectionIdx, $packageCfgSection.Key, $packageCfgSection.Value, $packageCfg.GetComment($packageCfgSection.Key))
+				$sectionIdx++
+				continue
 			}
-			else {
-				[System.Int32]$settingIdx = 0
-				foreach ($packageCfgSetting in $packageCfgSection.Value.GetEnumerator()) {
-					if (-not $setupCfg[$packageCfgSection.Key].ContainsKey($packageCfgSetting.Key) -and $packageCfgSection.Key -notin $sectionReferenceExclusions) {
-						$setupCfg[$packageCfgSection.Key].Insert($settingIdx, $packageCfgSetting.Key, $packageCfgSetting.Value, $packageCfgSection.Value.GetComment($packageCfgSetting.Key))
-					}
+
+			[System.Int32]$settingIdx = 0
+			foreach ($packageCfgSetting in $packageCfgSection.Value.GetEnumerator()) {
+				if (-not $setupCfg[$packageCfgSection.Key].ContainsKey($packageCfgSetting.Key)) {
+					$setupCfg[$packageCfgSection.Key].Insert($settingIdx, $packageCfgSetting.Key, $packageCfgSetting.Value, $packageCfgSection.Value.GetComment($packageCfgSetting.Key))
 					$settingIdx++
 				}
+				elseif ($packageCfgSetting.Key -in $sectionReferenceExclusions) {
+					$setupCfg[$packageCfgSection.Key][$packageCfgSetting.Key] = $packageCfgSetting.Value
+				}
 			}
-			$sectionIdx++
 		}
 
 		[System.IO.File]::WriteAllText("$($Output.FullName)\Setup.cfg", $setupCfg.Export(), [System.Text.UTF8Encoding]::new($false))

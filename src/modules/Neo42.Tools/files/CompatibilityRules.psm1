@@ -111,7 +111,7 @@ function Measure-NXTCustomMigration {
 							'UserPartOnInstallation' { '$adtSession.NXT.Install.UserPart' }
 							'UserPartOnUninstallation' { '$adtSession.NXT.Uninstall.UserPart' }
 							'UserPartRevision' { '$adtSession.NXT.UserPartRevision' }
-							'DisplayVersion' { '$adtSession.AppVersion' }
+							'DisplayVersion' { '$adtSession.NXT.Detection.TargetVersion' }
 							'InstallLocation' { '$adtSession.NXT.InstallLocation' }
 							'InstFile' { '$adtSession.NXT.Install.Target' }
 							'InstPara' { '$adtSession.NXT.Install.Arguments' }
@@ -137,13 +137,13 @@ function Measure-NXTCustomMigration {
 					}
 				}
 			}
-			@{ # Migrate commonly used expression $(Get-NxtCurrentDisplayVersion).DisplayVersion
+			@{ # Migrate commonly used expression $(Get-NxtCurrentDisplayVersion).DisplayVersion and (Get-NxtInstalledApplication).DisplayVersion
 				Filter      = {
 					$args[0] -is [System.Management.Automation.Language.MemberExpressionAst] -and
 					$args[0].Member.Value -eq 'DisplayVersion' -and
-					$args[0].Expression.Extent.Text -match '\(Get\-NxtCurrentDisplayVersion\)$'
+					$args[0].Expression.Extent.Text -match '\(Get\-Nxt(CurrentDisplayVersion|InstalledApplication)\)$'
 				}
-				Replacement = '$adtSession.NXT.Detection.Application.DisplayVersion'
+				Replacement = '$($adtSession.NXT.Detection.Application | Select-Object -ExpandProperty DisplayVersion)'
 			}
 		)
 	}

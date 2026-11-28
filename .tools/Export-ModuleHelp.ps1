@@ -211,6 +211,9 @@ foreach ($functionInfo in $publicFunctions) {
 			$null = $functionMd.AppendLine('|Property|Value|')
 			$null = $functionMd.AppendLine('|:---|:---|')
 			$null = $functionMd.AppendLine("|Type:|$(Format-TypeName $parameterMetadata.ParameterType)|")
+			if ($parameterMetadata.Aliases.Count -gt 0) {
+				$null = $functionMd.AppendLine("|Aliases:|$([System.String]::Join(', ', $parameterMetadata.Aliases))|")
+			}
 			[System.Type]$enumType = if ($parameterMetadata.ParameterType.IsEnum) {
 				$parameterMetadata.ParameterType
 			}

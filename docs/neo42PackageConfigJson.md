@@ -71,7 +71,7 @@ Values marked with 🔤 in the reference may contain PowerShell variables (e.g. 
 | Variable | Content |
 |:---------|:--------|
 | All PSADT environment variables (e.g. `$envProgramData`, `$envWinDir`) | Provided by the PSADT session environment. Accessible with and without the `$global:` prefix. |
-| `$SetupCfg` (also `$global:SetupCfg`) | The merged, **read-only** `Setup.cfg` settings (module default, `Setup.cfg` and `CustomSetup.cfg` of the package). Read a value with `$($SetupCfg['<Section>']['<KEY>'])`, e.g. `$($SetupCfg['Options']['SOFTMIGRATION'])`. This allows dynamic values depending on the customer configuration. |
+| `$SetupCfg` (also `$global:SetupCfg`) | The merged, **read-only** `Setup.cfg` settings (module default, `Setup.cfg` and `CustomSetup.cfg` of the package). Read a value with `$($SetupCfg['<Section>']['<KEY>'])`, e.g. `$($SetupCfg['Options']['SoftMigration'])`. This allows dynamic values depending on the customer configuration. |
 | `$global:PackageConfig` | The legacy configuration itself (e.g. `$global:PackageConfig.AppVendor`). Values that are expanded later in the sequence see the already expanded values of earlier ones. |
 | `$global:ProgramFilesDir`, `ProgramFilesDirx86`, `ProgramW6432`, `CommonFilesDir`, `CommonFilesDirx86`, `CommonProgramW6432`, `RegSoftwarePath`, `RegSoftwarePathx86`, `System` | Architecture dependent, see [below](#architecture-dependent-variables). **Recommended to use inside defined values first!** |
 | `$global:UserPartDir` | Always empty. |
@@ -411,8 +411,8 @@ Public desktop shortcuts are translated to `ManagedShortcuts` with `Location = D
 
 | Value | Type | Req. | Expand | Description |
 |:------|:-----|:----:|:------:|:------------|
-| `CommonDesktopShortcutsToDelete` | string list | | 🔤 | Names of public desktop shortcuts to delete (`Delete`). Always deleted on uninstallation; also deleted on installation if `DESKTOPSHORTCUT=1` is set in the `Setup.cfg`, to clear the desktop for shortcuts created by the setup. Entries that are also a target of a copied shortcut are skipped. |
-| `CommonStartMenuShortcutsToCopyToCommonDesktop` | list | | | Shortcuts to copy (`Copy`) from the public start menu to the public desktop. Only copied if `DESKTOPSHORTCUT=1` is set in the `Setup.cfg`. |
+| `CommonDesktopShortcutsToDelete` | string list | | 🔤 | Names of public desktop shortcuts to delete (`Delete`). Always deleted on uninstallation; also deleted on installation if `DesktopShortcut=1` is set in the `Setup.cfg`, to clear the desktop for shortcuts created by the setup. Entries that are also a target of a copied shortcut are skipped. |
+| `CommonStartMenuShortcutsToCopyToCommonDesktop` | list | | | Shortcuts to copy (`Copy`) from the public start menu to the public desktop. Only copied if `DesktopShortcut=1` is set in the `Setup.cfg`. |
 
 **`CommonStartMenuShortcutsToCopyToCommonDesktop`** items:
 
